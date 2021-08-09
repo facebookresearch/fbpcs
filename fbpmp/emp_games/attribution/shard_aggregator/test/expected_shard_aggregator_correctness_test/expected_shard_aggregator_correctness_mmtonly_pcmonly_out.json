@@ -1,0 +1,17 @@
+{
+    "last_click_1d": {
+        "measurement": {
+            "1": {
+                "sales": 1001,
+                "convs": 1
+            }
+        },
+        "pcm_ify": [
+            {
+                "campaign_bits": 99,
+                "conversion_bits": 3,
+                "count": 1
+            }
+        ]
+    }
+}

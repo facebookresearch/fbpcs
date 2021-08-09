@@ -1,0 +1,123 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+#include "DataPreparationHelpers.h"
+
+#include <folly/logging/xlog.h>
+#include <filesystem>
+#include <iomanip>
+#include <istream>
+#include <ostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <re2/re2.h>
+
+namespace pid::combiner {
+
+void headerColumnsToPlural(
+    std::istream& dataFile,
+    std::vector<std::string> columnsToConvert,
+    std::ostream& outFile) {
+  XLOG(INFO) << "Started converting columns to plural. Columns to convert: <"
+             << vectorToString(columnsToConvert) << ">";
+
+  const std::string kCommaSplitRegex = R"(([^,]+),?)";
+
+  std::string line;
+  std::string row;
+
+  getline(dataFile, line);
+  std::vector<std::string> header = split(kCommaSplitRegex, line);
+  std::vector<std::string> newHeader;
+  for (auto i = 0; i < header.size(); i++) {
+    auto useOriginalColumn = true;
+    for (auto j = 0; j < columnsToConvert.size(); j++) {
+      if (header.at(i) == columnsToConvert.at(j)) {
+        useOriginalColumn = false;
+        newHeader.push_back(header.at(i) + "s");
+      }
+    }
+    if (useOriginalColumn) {
+      newHeader.push_back((header.at(i)));
+    }
+  }
+
+  XLOG(INFO) << "New header: <" << vectorToString(newHeader) << ">";
+  outFile << vectorToString(newHeader) << "\n";
+
+  while (getline(dataFile, row)) {
+    outFile << row << "\n";
+  }
+  XLOG(INFO) << "Finished converting header";
+}
+std::vector<std::string> split(const std::string& delim, std::string& str) {
+  // Preprocessing step: Remove spaces if any
+  str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+  std::vector<std::string> tokens;
+  re2::RE2 rgx{delim};
+  re2::StringPiece input{str}; // Wrap a StringPiece around it
+
+  std::string token;
+  while (RE2::Consume(&input, rgx, &token)) {
+    tokens.push_back(token);
+  }
+  return tokens;
+}
+
+size_t headerIndex(
+    const std::vector<std::string>& header,
+    const std::string& columnName) {
+  auto idIter = std::find(header.begin(), header.end(), columnName);
+  if (idIter == header.end()) {
+    std::stringstream ss;
+    ss << columnName << " column missing from input header\n";
+    throw std::out_of_range{ss.str()};
+  }
+  return std::distance(header.begin(), idIter);
+}
+
+std::string vectorToStringWithReplacement(
+    const std::vector<std::string>& vec,
+    size_t swapIndex,
+    std::string swapValue) {
+  std::stringstream buf;
+  bool first = true;
+  for (int i = 0; i < vec.size(); ++i) {
+    if (i == swapIndex) {
+      if (!first) {
+        buf << "," << swapValue;
+      } else {
+        buf << swapValue << ",";
+      }
+      continue;
+    }
+
+    if (!first) {
+      buf << ",";
+    }
+    buf << vec.at(i);
+    first = false;
+  }
+  return buf.str();
+}
+
+std::vector<std::string> splitList(const std::string& s) {
+  const std::string kCommaSplitRegex = ",";
+  // TODO: Check that first and last are [] characters
+  // TODO: Using something like a stringview could make this more efficient
+  // NOTE: we use -2 here because we want to exclude both the first and end char
+  // and C++ substr uses "count" as the second parameter.
+  auto innerString = s.substr(1, s.size() - 2);
+  std::vector<std::string> res;
+  folly::split(kCommaSplitRegex, innerString, res);
+  return res;
+}
+} // namespace pid::combiner

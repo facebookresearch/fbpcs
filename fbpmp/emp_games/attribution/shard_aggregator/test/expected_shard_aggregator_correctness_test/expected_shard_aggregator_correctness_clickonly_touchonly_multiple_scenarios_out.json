@@ -1,0 +1,46 @@
+{
+    "last_click_1d": {
+        "measurement": {
+            "0": {
+                "sales": 0,
+                "convs": 0
+            },
+            "1": {
+                "sales": 14117,
+                "convs": 10
+            },
+            "2": {
+                "sales": 9080,
+                "convs": 6
+            },
+            "3": {
+                "sales": 5044,
+                "convs": 2
+            }
+        }
+    },
+    "last_touch_1d": {
+        "measurement": {
+            "0": {
+                "sales": 0,
+                "convs": 0
+            },
+            "1": {
+                "sales": 12127,
+                "convs": 10
+            },
+            "2": {
+                "sales": 12133,
+                "convs": 9
+            },
+            "3": {
+                "sales": 5048,
+                "convs": 2
+            },
+            "4": {
+                "sales": 0,
+                "convs": 0
+            }
+        }
+    }
+}

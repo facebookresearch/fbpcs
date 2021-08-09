@@ -1,0 +1,10 @@
+pid_dependency:
+  task_definition: pid-worker:1
+  ecs:
+    cluster: TODO
+    subnet: TODO
+    security_group: TODO
+  s3_creds:
+    access_key_id: TODO
+    access_key_data: TODO
+    region: us-west-2

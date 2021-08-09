@@ -1,0 +1,22 @@
+{
+    "last_touch_1d": {
+        "measurement": {
+            "1": {
+                "sales": 18205,
+                "convs": 13
+            },
+            "2": {
+                "sales": 12133,
+                "convs": 9
+            },
+            "3": {
+                "sales": 5048,
+                "convs": 2
+            },
+            "4": {
+                "sales": 0,
+                "convs": 0
+            }
+        }
+    }
+}
