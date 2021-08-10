@@ -9,8 +9,11 @@ set -e
 REAL_INSTANCE_REPO=$(realpath 'fbpmp_instances')
 mkdir -p "$REAL_INSTANCE_REPO"
 
+REAL_CREDENTIALS_PATH="${HOME}/.aws/credentials"
+
 DOCKER_INSTANCE_REPO='/fbpmp_instances'
 DOCKER_CONFIG_PATH="/config.yml"
+DOCKER_CREDENTIALS_PATH="/root/.aws/credentials"
 
 ECR_URL='539290649537.dkr.ecr.us-west-2.amazonaws.com'
 IMAGE_NAME='pl-coordinator-env'
@@ -93,6 +96,7 @@ function run_fbpmp() {
     docker run --rm \
         -v "$real_config_path":"$DOCKER_CONFIG_PATH" \
         -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
+        -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
         ${DOCKER_IMAGE} "${docker_cmd[@]}"
 }
 
