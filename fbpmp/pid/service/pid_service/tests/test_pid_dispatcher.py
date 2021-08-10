@@ -30,8 +30,8 @@ dependency:
             coordination_objects:
                 pid_ip_addrs:
                     value: ip_config.txt
-AWSAccessKeyConfig:
-    class: fbpmp.pid.entity.simple_aws_access_key_config.SimpleAWSAccessKeyConfig
+CloudCredentialService:
+    class: fbpmp.pid.service.credential_service.simple_cloud_credential_service.SimpleCloudCredentialService
     constructor:
         access_key_id: key_id
         access_key_data: key_data

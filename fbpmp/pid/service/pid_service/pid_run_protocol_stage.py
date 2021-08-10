@@ -18,7 +18,7 @@ from fbpcs.util import reflect
 from fbpcs.util.typing import checked_cast
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
-from fbpmp.pid.entity.aws_access_key_config import AWSAccessKeyConfig
+from fbpmp.pid.service.credential_service.cloud_credential_service import CloudCredentialService
 from fbpmp.pid.entity.pid_instance import PIDStageStatus
 from fbpmp.pid.entity.pid_stages import UnionPIDStage
 from fbpmp.pid.repository.pid_instance import PIDInstanceRepository
@@ -51,20 +51,20 @@ class PIDProtocolRunStage(PIDStage):
             onedocker_binary_config=onedocker_binary_config,
         )
 
-        self.aws_access_key_config = self._build_aws_access_key_config(
-            config["AWSAccessKeyConfig"]
+        self.cloud_credential_service = self._build_cloud_credential_service(
+            config["CloudCredentialService"]
         )
         self.server_ips = server_ips
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     @staticmethod
-    def _build_aws_access_key_config(config: Dict[str, Any]) -> AWSAccessKeyConfig:
+    def _build_cloud_credential_service(config: Dict[str, Any]) -> CloudCredentialService:
         cls = reflect.get_class(config["class"])
         res = cls(**config.get("constructor", {}))
-        if not isinstance(res, AWSAccessKeyConfig):
+        if not isinstance(res, CloudCredentialService):
             typename = str(type(res))
             raise ValueError(
-                f"Class created via reflection should be of type AWSAccessKeyConfig but is of type {typename}"
+                f"Class created via reflection should be of type CloudCredentialService but is of type {typename}"
             )
         return res
 
@@ -293,7 +293,7 @@ class PIDProtocolRunStage(PIDStage):
         # to running in AWS and would not support other container services.
         env_vars = {
             "RUST_LOG": "info",
-            **self.aws_access_key_config.get_creds(),
+            **self.cloud_credential_service.get_creds(),
         }
         return env_vars
 

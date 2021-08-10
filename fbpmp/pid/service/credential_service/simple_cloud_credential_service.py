@@ -6,10 +6,10 @@
 
 from typing import Dict
 
-from fbpmp.pid.entity.aws_access_key_config import AWSAccessKeyConfig
+from fbpmp.pid.service.credential_service.cloud_credential_service import CloudCredentialService
 
 
-class SimpleAWSAccessKeyConfig(AWSAccessKeyConfig):
+class SimpleCloudCredentialService(CloudCredentialService):
     def __init__(self, access_key_id: str, access_key_data: str):
         self.access_key_id = access_key_id
         self.access_key_data = access_key_data

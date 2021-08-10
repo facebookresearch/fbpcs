@@ -8,7 +8,7 @@ import abc
 from typing import Dict
 
 
-class AWSAccessKeyConfig(abc.ABC):
+class CloudCredentialService(abc.ABC):
     @abc.abstractmethod
     def get_creds(self) -> Dict[str, str]:
         pass
