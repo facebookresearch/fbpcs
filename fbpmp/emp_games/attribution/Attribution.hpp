@@ -195,7 +195,7 @@ const std::vector<PrivateAttribution> computeAttributionsForId(
       // and it is preferred over the existing touchpoint
       auto isNewTouchpointAttributable =
           attributionRule.isAttributable(tp, conv);
-      auto isNewTouchpointValid = tp.isValid();
+      auto isNewTouchpointValid = tp.isValid;
       auto isExistingTouchpointInvalid = !attribution.hasAttributedTouchpoint;
       auto isNewTouchpointPreferred = isExistingTouchpointInvalid |
           attributionRule.isNewTouchpointPreferred(tp, attribution.tp);

@@ -31,11 +31,17 @@ struct Touchpoint {
   }
   friend std::ostream& operator<<(std::ostream& os, const Touchpoint& tp) {
     return os << (tp.isClick ? "Click{" : "View{") << "id=" << tp.id
-              << ", adId=" << tp.adId << ", ts=" << tp.ts << ", campaignMetadata=" << tp.campaignMetadata << "}";
+              << ", adId=" << tp.adId << ", ts=" << tp.ts
+              << ", campaignMetadata=" << tp.campaignMetadata << "}";
+  }
+
+  bool isValid() const {
+    return ts > 0;
   }
 };
 
 struct PrivateTouchpoint {
+  emp::Bit isValid;
   emp::Bit isClick;
   emp::Integer adId;
   Timestamp ts;
@@ -45,19 +51,22 @@ struct PrivateTouchpoint {
 #define EMP_BIT_SIZE (static_cast<int>(emp::Bit::bool_size()))
 
   explicit PrivateTouchpoint(
+      const emp::Bit& _isValid,
       const emp::Bit& _isClick,
       const emp::Integer& _adId,
       const Timestamp& _ts,
       const emp::Integer& _id,
       const emp::Integer& _campaignMetadata)
-      : isClick{_isClick},
+      : isValid{_isValid},
+        isClick{_isClick},
         adId{_adId},
         ts{_ts},
         id{_id},
         campaignMetadata{_campaignMetadata} {}
 
   explicit PrivateTouchpoint()
-      : isClick{false, emp::PUBLIC},
+      : isValid{false, emp::PUBLIC},
+        isClick{false, emp::PUBLIC},
         adId{INT_SIZE, -1, emp::PUBLIC},
         ts{-1},
         id{INT_SIZE, INVALID_TP_ID, emp::PUBLIC},
@@ -69,29 +78,27 @@ struct PrivateTouchpoint {
       // rather than emp::block* like other emp primitives. Making an explicit
       // static+cast is required for the compiler to select the right
       // constructor (otherwise the empty constructor is used).
-      : isClick{static_cast<const emp::block&>(*b)},
+      : isValid{static_cast<const emp::block&>(*b)},
+        isClick{static_cast<const emp::block&>(*(b + EMP_BIT_SIZE))},
         // TODO there has to be a better way to do this addition, rather than
         // being forced to do it all inline?
-        adId{INT_SIZE, b + EMP_BIT_SIZE},
-        ts{b + EMP_BIT_SIZE + INT_SIZE},
-        id{INT_SIZE, b + EMP_BIT_SIZE + INT_SIZE + ts.length()},
+        adId{INT_SIZE, b + 2 * EMP_BIT_SIZE},
+        ts{b + 2 * EMP_BIT_SIZE + INT_SIZE},
+        id{INT_SIZE, b + 2 * EMP_BIT_SIZE + INT_SIZE + ts.length()},
         campaignMetadata{
             INT_SIZE,
-            b + EMP_BIT_SIZE + ts.length() + 2 * INT_SIZE} {}
+            b + 2 * EMP_BIT_SIZE + ts.length() + 2 * INT_SIZE} {}
 
   PrivateTouchpoint select(const emp::Bit& useRhs, const PrivateTouchpoint& rhs)
       const {
-    return PrivateTouchpoint{/* isClick */ isClick.select(useRhs, rhs.isClick),
-                             /* adId */ adId.select(useRhs, rhs.adId),
-                             /* ts */ ts.select(useRhs, rhs.ts),
-                             /* id */ id.select(useRhs, rhs.id),
-                             /* campaignMetadata */ campaignMetadata.select(useRhs, rhs.campaignMetadata)};
-  }
-
-  // Checking if timestamp > 0
-  emp::Bit isValid() const {
-    const Timestamp one{1};
-    return ts >= one;
+    return PrivateTouchpoint{
+        /* isValid */ isValid.select(useRhs, rhs.isValid),
+        /* isClick */ isClick.select(useRhs, rhs.isClick),
+        /* adId */ adId.select(useRhs, rhs.adId),
+        /* ts */ ts.select(useRhs, rhs.ts),
+        /* id */ id.select(useRhs, rhs.id),
+        /* campaignMetadata */
+        campaignMetadata.select(useRhs, rhs.campaignMetadata)};
   }
 
   // string conversion support
@@ -116,7 +123,7 @@ struct PrivateTouchpoint {
   // emp::batcher serialization support
   template <typename... Args>
   static size_t bool_size(Args...) {
-    return emp::Bit::bool_size() + Timestamp::bool_size() +
+    return 2 * emp::Bit::bool_size() + Timestamp::bool_size() +
         3 * emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
   }
 
@@ -124,7 +131,10 @@ struct PrivateTouchpoint {
   static void bool_data(bool* data, const Touchpoint& tp) {
     auto offset = 0;
 
-    emp::Bit::bool_data(data, tp.isClick);
+    emp::Bit::bool_data(data, tp.isValid());
+    offset += emp::Bit::bool_size();
+
+    emp::Bit::bool_data(data + offset, tp.isClick);
     offset += emp::Bit::bool_size();
 
     emp::Integer::bool_data(data + offset, INT_SIZE, tp.adId);
