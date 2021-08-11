@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "fbpmp/data_processing/id_combiner/IdInsert.h"
-#include "fbpmp/data_processing/id_combiner/DataPreparationHelpers.h"
+#include "IdInsert.h"
+#include "DataPreparationHelpers.h"
 
 #include <filesystem>
 #include <fstream>

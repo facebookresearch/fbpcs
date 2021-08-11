@@ -66,12 +66,7 @@ install(TARGETS pid_preparer DESTINATION bin)
 
 # id combiner library
 file(GLOB id_combiner_lib_src
-  id_combiner/AddPaddingToCols.cpp
-  id_combiner/DataPreparationHelpers.cpp
-  id_combiner/DataValidation.cpp
-  id_combiner/GroupBy.cpp
-  id_combiner/IdSwap.cpp
-  id_combiner/SortIntegralValues.cpp)
+  "id_combiner/**.cpp")
 add_library(idcombiner STATIC
   ${id_combiner_lib_src})
 target_link_libraries(
