@@ -16,7 +16,7 @@ docker run --rm \
     -v "$USERDIR/sample-output:/output" \
     --network=host emp_game:latest \
         lift_calculator \
-        --role=1 \
+        --party=1 \
         --input_directory=/input \
         --input_filenames="publisher_0,publisher_1" \
         --output_directory=/output \
@@ -29,7 +29,7 @@ docker run --rm \
     -v "$USERDIR/sample-output:/output" \
     --network=host emp_game:latest \
         lift_calculator \
-        --role=2 \
+        --party=2 \
         --server_ip=127.0.0.1 \
         --input_directory=/input \
         --input_filenames="partner_4_convs_0,partner_4_convs_1" \
