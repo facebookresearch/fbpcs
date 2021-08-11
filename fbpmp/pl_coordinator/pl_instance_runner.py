@@ -25,9 +25,9 @@ from fbpmp.pl_coordinator.pl_service_wrapper import (
     aggregate,
     cancel_current_stage,
 )
-from fbpmp.private_lift.entity.privatelift_instance import (
-    PrivateLiftRole,
-    PrivateLiftInstanceStatus,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+    PrivateComputationInstanceStatus,
 )
 
 
@@ -57,28 +57,28 @@ STAGE_OUTPUT_SUFFIX = {
     PrivateLiftStage.AGGREGATE: "_mpc_aggregated.json",
 }
 READY_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateLiftInstanceStatus.CREATED,
-    PrivateLiftStage.COMPUTE: PrivateLiftInstanceStatus.ID_MATCHING_COMPLETED,
-    PrivateLiftStage.AGGREGATE: PrivateLiftInstanceStatus.COMPUTATION_COMPLETED,
+    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.CREATED,
+    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
 }
 STARTED_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateLiftInstanceStatus.ID_MATCHING_STARTED,
-    PrivateLiftStage.COMPUTE: PrivateLiftInstanceStatus.COMPUTATION_STARTED,
-    PrivateLiftStage.AGGREGATE: PrivateLiftInstanceStatus.AGGREGATION_STARTED,
+    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.AGGREGATION_STARTED,
 }
 FAILED_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateLiftInstanceStatus.ID_MATCHING_FAILED,
-    PrivateLiftStage.COMPUTE: PrivateLiftInstanceStatus.COMPUTATION_FAILED,
-    PrivateLiftStage.AGGREGATE: PrivateLiftInstanceStatus.AGGREGATION_FAILED,
+    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.COMPUTATION_FAILED,
+    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.AGGREGATION_FAILED,
 }
 COMPLETED_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateLiftInstanceStatus.ID_MATCHING_COMPLETED,
-    PrivateLiftStage.COMPUTE: PrivateLiftInstanceStatus.COMPUTATION_COMPLETED,
-    PrivateLiftStage.AGGREGATE: PrivateLiftInstanceStatus.AGGREGATION_COMPLETED,
+    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
 }
 INVALID_STATUS_LIST = [
-    PrivateLiftInstanceStatus.UNKNOWN,
-    PrivateLiftInstanceStatus.PROCESSING_REQUEST,
+    PrivateComputationInstanceStatus.UNKNOWN,
+    PrivateComputationInstanceStatus.PROCESSING_REQUEST,
 ]
 
 STAGE_TIMEOUT = {
@@ -171,19 +171,19 @@ class PrivateLiftCalcInstance:
     """
 
     def __init__(
-        self, instance_id: str, logger: logging.Logger, role: PrivateLiftRole
+        self, instance_id: str, logger: logging.Logger, role: PrivateComputationRole
     ) -> None:
         self.instance_id: str = instance_id
         self.logger: logging.Logger = logger
-        self.role: PrivateLiftRole = role
-        self.status: PrivateLiftInstanceStatus = PrivateLiftInstanceStatus.UNKNOWN
+        self.role: PrivateComputationRole = role
+        self.status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.UNKNOWN
 
     def update_instance(self) -> None:
         raise NotImplementedError(
             "This is a parent method to be overrided and should not be called."
         )
 
-    def status_ready(self, status: PrivateLiftInstanceStatus) -> bool:
+    def status_ready(self, status: PrivateComputationInstanceStatus) -> bool:
         self.logger.info(f"{self.role} instance status: {self.status}.")
         return self.status is status
 
@@ -215,8 +215,8 @@ class PrivateLiftCalcInstance:
 
     def wait_instance_status(
         self,
-        status: PrivateLiftInstanceStatus,
-        fail_status: PrivateLiftInstanceStatus,
+        status: PrivateComputationInstanceStatus,
+        fail_status: PrivateComputationInstanceStatus,
         timeout: int,
     ) -> None:
         self.logger.info(f"Poll {self.role} instance expecting status: {status}.")
@@ -273,7 +273,7 @@ class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
     def __init__(
         self, instance_id: str, logger: logging.Logger, client: PLGraphAPIClient
     ) -> None:
-        super().__init__(instance_id, logger, PrivateLiftRole.PUBLISHER)
+        super().__init__(instance_id, logger, PrivateComputationRole.PUBLISHER)
         self.client: PLGraphAPIClient = client
         self.server_ips: Optional[List[str]] = None
         self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
@@ -289,7 +289,7 @@ class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
             )
         self.server_ips = response.get("server_ips")
 
-    def status_ready(self, status: PrivateLiftInstanceStatus) -> bool:
+    def status_ready(self, status: PrivateComputationInstanceStatus) -> bool:
         self.logger.info(
             f"{self.role} instance status: {self.status}, server ips: {self.server_ips}."
         )
@@ -312,7 +312,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         input_path: str,
         logger: logging.Logger,
     ) -> None:
-        super().__init__(instance_id, logger, PrivateLiftRole.PARTNER)
+        super().__init__(instance_id, logger, PrivateComputationRole.PARTNER)
         self.config: Dict[str, Any] = config
         self.input_path: str = input_path
         try:
@@ -320,7 +320,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         except RuntimeError:
             self.logger.info(f"Creating new partner instance {self.instance_id}")
             self.status = create_instance(
-                self.config, self.instance_id, PrivateLiftRole.PARTNER, self.logger
+                self.config, self.instance_id, PrivateComputationRole.PARTNER, self.logger
             ).status
         self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
 

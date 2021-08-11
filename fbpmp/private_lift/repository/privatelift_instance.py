@@ -8,20 +8,20 @@
 
 import abc
 
-from fbpmp.private_lift.entity.privatelift_instance import PrivateLiftInstance
+from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstance
 
 
 class PrivateLiftInstanceRepository(abc.ABC):
     @abc.abstractmethod
-    def create(self, instance: PrivateLiftInstance) -> None:
+    def create(self, instance: PrivateComputationInstance) -> None:
         pass
 
     @abc.abstractmethod
-    def read(self, instance_id: str) -> PrivateLiftInstance:
+    def read(self, instance_id: str) -> PrivateComputationInstance:
         pass
 
     @abc.abstractmethod
-    def update(self, instance: PrivateLiftInstance) -> None:
+    def update(self, instance: PrivateComputationInstance) -> None:
         pass
 
     @abc.abstractmethod

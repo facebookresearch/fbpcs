@@ -53,7 +53,7 @@ from fbpmp.pl_coordinator.pl_service_wrapper import (
     cancel_current_stage,
 )
 from fbpmp.pl_coordinator.pl_study_runner import run_study
-from fbpmp.private_lift.entity.privatelift_instance import PrivateLiftRole
+from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationRole
 
 
 def main():
@@ -82,7 +82,7 @@ def main():
                 schema.And(
                     schema.Use(str.upper),
                     lambda s: s in ("PUBLISHER", "PARTNER"),
-                    schema.Use(PrivateLiftRole),
+                    schema.Use(PrivateComputationRole),
                 ),
             ),
             "--objective_ids": schema.Or(None, schema.Use(lambda arg: arg.split(","))),

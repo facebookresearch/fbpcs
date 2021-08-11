@@ -23,7 +23,7 @@ from fbpmp.pl_coordinator.pl_instance_runner import (
     READY_STATUS,
     PRIVATE_LIFT_STAGES,
 )
-from fbpmp.private_lift.entity.privatelift_instance import PrivateLiftInstanceStatus
+from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
 
 # study information fields
 TYPE = "type"
@@ -253,7 +253,7 @@ def _get_cell_obj_instance(
             "latest_data_ts"
         ] and (
             created_time > current_time - INSTANCE_LIFESPAN
-            or status is PrivateLiftInstanceStatus.AGGREGATION_COMPLETED
+            or status is PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
         ):
             cell_obj_instance[cell_id][objective_id]["instance_id"] = instance_data[
                 "id"

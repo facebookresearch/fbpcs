@@ -22,12 +22,12 @@ from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
 from fbpmp.private_lift.entity.pce_config import PCEConfig
 
 
-class PrivateLiftRole(Enum):
+class PrivateComputationRole(Enum):
     PUBLISHER = "PUBLISHER"
     PARTNER = "PARTNER"
 
 
-class PrivateLiftInstanceStatus(Enum):
+class PrivateComputationInstanceStatus(Enum):
     UNKNOWN = "UNKNOWN"
     CREATED = "CREATED"
     ID_MATCHING_STARTED = "ID_MATCHING_STARTED"
@@ -45,18 +45,18 @@ class PrivateLiftInstanceStatus(Enum):
     PROCESSING_REQUEST = "PROCESSING_REQUEST"
 
 
-UnionedPLInstance = Union[PIDInstance, MPCInstance, PostProcessingInstance]
-UniondePLInstanceStatus = Union[
+UnionedPCInstance = Union[PIDInstance, MPCInstance, PostProcessingInstance]
+UniondePCInstanceStatus = Union[
     PIDInstanceStatus, MPCInstanceStatus, PostProcessingInstanceStatus
 ]
 
 
 @dataclass
-class PrivateLiftInstance(InstanceBase):
+class PrivateComputationInstance(InstanceBase):
     instance_id: str
-    role: PrivateLiftRole
-    instances: List[UnionedPLInstance]
-    status: PrivateLiftInstanceStatus
+    role: PrivateComputationRole
+    instances: List[UnionedPCInstance]
+    status: PrivateComputationInstanceStatus
     status_update_ts: int
     retry_counter: int = 0
     # TODO: once the product is stabilized, we can enable this

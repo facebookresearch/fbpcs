@@ -9,22 +9,22 @@ import logging
 from typing import List, Dict
 
 import requests
-from fbpmp.private_lift.entity.privatelift_instance import PrivateLiftInstanceStatus
+from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
 
 URL = "https://graph.facebook.com/v9.0"
 GRAPHAPI_INSTANCE_STATUSES = {
-    "CREATED": PrivateLiftInstanceStatus.CREATED,
-    "INSTANCE_FAILURE": PrivateLiftInstanceStatus.UNKNOWN,
-    "ID_MATCH_STARTED": PrivateLiftInstanceStatus.ID_MATCHING_STARTED,
-    "ID_MATCH_COMPLETED": PrivateLiftInstanceStatus.ID_MATCHING_COMPLETED,
-    "ID_MATCH_FAILED": PrivateLiftInstanceStatus.ID_MATCHING_FAILED,
-    "COMPUTATION_STARTED": PrivateLiftInstanceStatus.COMPUTATION_STARTED,
-    "COMPUTATION_COMPLETED": PrivateLiftInstanceStatus.COMPUTATION_COMPLETED,
-    "COMPUTATION_FAILED": PrivateLiftInstanceStatus.COMPUTATION_FAILED,
-    "AGGREGATION_STARTED": PrivateLiftInstanceStatus.AGGREGATION_STARTED,
-    "RESULT_READY": PrivateLiftInstanceStatus.AGGREGATION_COMPLETED,
-    "AGGREGATION_FAILED": PrivateLiftInstanceStatus.AGGREGATION_FAILED,
-    "PROCESSING_REQUEST": PrivateLiftInstanceStatus.PROCESSING_REQUEST,
+    "CREATED": PrivateComputationInstanceStatus.CREATED,
+    "INSTANCE_FAILURE": PrivateComputationInstanceStatus.UNKNOWN,
+    "ID_MATCH_STARTED": PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+    "ID_MATCH_COMPLETED": PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+    "ID_MATCH_FAILED": PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+    "COMPUTATION_STARTED": PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+    "COMPUTATION_COMPLETED": PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+    "COMPUTATION_FAILED": PrivateComputationInstanceStatus.COMPUTATION_FAILED,
+    "AGGREGATION_STARTED": PrivateComputationInstanceStatus.AGGREGATION_STARTED,
+    "RESULT_READY": PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
+    "AGGREGATION_FAILED": PrivateComputationInstanceStatus.AGGREGATION_FAILED,
+    "PROCESSING_REQUEST": PrivateComputationInstanceStatus.PROCESSING_REQUEST,
 }
 
 

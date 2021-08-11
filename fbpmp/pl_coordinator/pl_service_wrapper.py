@@ -19,10 +19,10 @@ from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_service_config import OneDockerServiceConfig
 from fbpmp.pid.entity.pid_instance import PIDProtocol, PIDInstance
 from fbpmp.pid.service.pid_service.pid import PIDService
-from fbpmp.private_lift.entity.privatelift_instance import (
-    PrivateLiftRole,
-    PrivateLiftInstance,
-    PrivateLiftInstanceStatus,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+    PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
 )
 from fbpmp.private_lift.service.privatelift import PrivateLiftService
 
@@ -33,12 +33,12 @@ DEFAULT_CONCURRENCY = 4
 def create_instance(
     config: Dict[str, Any],
     instance_id: str,
-    role: PrivateLiftRole,
+    role: PrivateComputationRole,
     logger: logging.Logger,
     num_containers: Optional[int] = None,
     input_path: Optional[str] = None,
     output_dir: Optional[str] = None,
-) -> PrivateLiftInstance:
+) -> PrivateComputationInstance:
     pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
     instance = pl_service.create_instance(
         instance_id=instance_id,
@@ -237,7 +237,7 @@ def run_post_processing_handlers(
 
 def get(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
-) -> PrivateLiftInstance:
+) -> PrivateComputationInstance:
     """
     The purpose of `get` is to get the updated status of the pl instance with id instance_id.
     We only call pl_service.update_instance() under XXX_STARTED status because otherwise we could run into
@@ -248,9 +248,9 @@ def get(
     pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
     instance = pl_service.get_instance(instance_id)
     if instance.status in [
-        PrivateLiftInstanceStatus.ID_MATCHING_STARTED,
-        PrivateLiftInstanceStatus.COMPUTATION_STARTED,
-        PrivateLiftInstanceStatus.AGGREGATION_STARTED,
+        PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+        PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+        PrivateComputationInstanceStatus.AGGREGATION_STARTED,
     ]:
         instance = pl_service.update_instance(instance_id)
     logger.info(instance)
@@ -265,7 +265,7 @@ def get_server_ips(
     pl_instance = pl_service.instance_repository.read(instance_id)
 
     # This utility should only be used to get ips from a publisher instance
-    if pl_instance.role != PrivateLiftRole.PUBLISHER:
+    if pl_instance.role != PrivateComputationRole.PUBLISHER:
         logger.warning("Unable to get server ips from a partner instance")
         return
 
@@ -324,7 +324,7 @@ def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) ->
 
 def cancel_current_stage(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
-) -> PrivateLiftInstance:
+) -> PrivateComputationInstance:
     pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
     instance = pl_service.cancel_current_stage(instance_id=instance_id)
     logger.info("Done canceling the current stage")

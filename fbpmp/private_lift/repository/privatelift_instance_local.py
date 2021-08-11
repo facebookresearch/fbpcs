@@ -7,7 +7,7 @@
 # pyre-strict
 
 from fbpcs.repository.instance_local import LocalInstanceRepository
-from fbpmp.private_lift.entity.privatelift_instance import PrivateLiftInstance
+from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstance
 from fbpmp.private_lift.repository.privatelift_instance import (
     PrivateLiftInstanceRepository,
 )
@@ -17,13 +17,13 @@ class LocalPrivateLiftInstanceRepository(PrivateLiftInstanceRepository):
     def __init__(self, base_dir: str) -> None:
         self.repo = LocalInstanceRepository(base_dir)
 
-    def create(self, instance: PrivateLiftInstance) -> None:
+    def create(self, instance: PrivateComputationInstance) -> None:
         self.repo.create(instance)
 
-    def read(self, instance_id: str) -> PrivateLiftInstance:
-        return PrivateLiftInstance.loads_schema(self.repo.read(instance_id))
+    def read(self, instance_id: str) -> PrivateComputationInstance:
+        return PrivateComputationInstance.loads_schema(self.repo.read(instance_id))
 
-    def update(self, instance: PrivateLiftInstance) -> None:
+    def update(self, instance: PrivateComputationInstance) -> None:
         self.repo.update(instance)
 
     def delete(self, instance_id: str) -> None:

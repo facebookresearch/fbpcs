@@ -9,10 +9,10 @@ import string
 import unittest
 
 from fbpcs.entity.mpc_instance import MPCInstance, MPCRole
-from fbpmp.private_lift.entity.privatelift_instance import (
-    PrivateLiftInstance,
-    PrivateLiftInstanceStatus,
-    PrivateLiftRole,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpmp.private_lift.repository.privatelift_instance_local import (
     LocalPrivateLiftInstanceRepository,
@@ -32,11 +32,11 @@ class TestLocalPLInstanceRepository(unittest.TestCase):
 
     def test_read(self):
         instance_id = self._get_random_id()
-        test_read_pl_instance = PrivateLiftInstance(
+        test_read_pl_instance = PrivateComputationInstance(
             instance_id=instance_id,
-            role=PrivateLiftRole.PUBLISHER,
+            role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
-            status=PrivateLiftInstanceStatus.CREATED,
+            status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
         )
         self.repo.create(test_read_pl_instance)
@@ -45,11 +45,11 @@ class TestLocalPLInstanceRepository(unittest.TestCase):
 
     def test_update(self):
         instance_id = self._get_random_id()
-        test_update_pl_instance = PrivateLiftInstance(
+        test_update_pl_instance = PrivateComputationInstance(
             instance_id=instance_id,
-            role=PrivateLiftRole.PUBLISHER,
+            role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
-            status=PrivateLiftInstanceStatus.CREATED,
+            status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
         )
         # Create a new MPC instance to be added to instances

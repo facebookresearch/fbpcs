@@ -11,7 +11,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from fbpmp.private_lift.entity.privatelift_instance import PrivateLiftInstance
+    from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstance
     from fbpmp.private_lift.service.privatelift import PrivateLiftService
 
 
@@ -25,6 +25,6 @@ class PostProcessingHandlerStatus(Enum):
 class PostProcessingHandler(abc.ABC):
     @abc.abstractmethod
     async def run(
-        self, pl_service: "PrivateLiftService", pl_instance: "PrivateLiftInstance"
+        self, pl_service: "PrivateLiftService", pl_instance: "PrivateComputationInstance"
     ) -> None:
         raise NotImplementedError
