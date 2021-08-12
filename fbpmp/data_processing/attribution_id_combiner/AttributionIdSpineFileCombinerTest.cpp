@@ -152,8 +152,7 @@ TEST_F(AttributionIdSpineFileCombinerTest, TestPartnerPaddingLimit) {
       "id_4,600,26,7",
       "id_4,700,27,8",
       "id_4,800,28,9",
-      "id_4,900,29,10",
-      "id_5,1000,75,11"};
+      "id_4,900,29,10"};
   std::vector<std::string> spineInput = {
       "AAAA,id_1", "BBBB,id_2", "CCCC,", "DDDD,", "EEEE,id_3", "FFFF,id_4"};
   std::vector<std::string> expectedOutput = {

@@ -7,6 +7,7 @@
 
 #include "IdSwap.h"
 #include "DataPreparationHelpers.h"
+#include "folly/Optional.h"
 
 #include <filesystem>
 #include <fstream>
@@ -46,7 +47,23 @@ void idSwap(
   // Output the header swapping out id_ for private_id_
   outFile << vectorToString(header) << "\n";
 
-  // Build a map for <private_id to id_> from spineId file
+  // Build a map for <id_ to private_id> from the spineId File
+  std::unordered_map<std::string, std::string> idToPrivateIDMap;
+  std::string spineRow;
+  while (getline(spineIdFile, spineRow)) {
+    std::vector<std::string> cols;
+    folly::split(kCommaSplitRegex, spineRow, cols);
+    // expect col 1 in spineIdFile to contain the id_
+    auto priv_id = cols.at(0);
+    auto row_id = cols.at(1);
+    if (row_id != "") {
+      idToPrivateIDMap[row_id] = priv_id;
+    }
+  }
+  spineIdFile.clear();
+  spineIdFile.seekg(0);
+
+  // Build a map for <id_ to data> from data file
   std::unordered_map<std::string, std::vector<std::vector<std::string>>>
       idToDataMap;
 
@@ -63,8 +80,17 @@ void idSwap(
                  << "header: " << vectorToString(header) << "\n";
       std::exit(1);
     }
+    // Verifying that every id in the dataFile has a corresponding
+    // private_id mapped in the spineFile else throwing
+    auto rowId = rowVec.at(idColumnIdx);
+    auto idSearch = idToPrivateIDMap.find(rowId);
+    if (idSearch == idToPrivateIDMap.end()) {
+      XLOG(FATAL) << "ID is missing in the spineID file '\n'" << rowId
+                  << " does not have a corresponding private_id"
+                  << "\n";
+    }
 
-    idToDataMap[rowVec.at(idColumnIdx)].push_back(rowVec);
+    idToDataMap[rowId].push_back(rowVec);
   }
 
   // Output each row from dataFile to outFile, swapping out id_ for private_id_

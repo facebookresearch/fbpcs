@@ -156,7 +156,7 @@ TEST_F(IdSwapTest, IdColumnIndexLastCol) {
 }
 
 // Id missing in spine
-// We'd expect the id row to be missing in output
+// We'd expect an error to be thrown here
 // Some mismatch between pid service output and dataFile
 TEST_F(IdSwapTest, MissingPrivateIdsSpine) {
   std::vector<std::string> dataInput = {
@@ -173,10 +173,16 @@ TEST_F(IdSwapTest, MissingPrivateIdsSpine) {
       "EEEE,375,300",
       "FFFF,400,400"};
 
-  runTest(dataInput, spineInput, expectedOutput);
+  vectorStringToStream(dataInput, dataStream_);
+  vectorStringToStream(spineInput, spineStream_);
+
+  ASSERT_DEATH(
+      pid::combiner::idSwap(dataStream_, spineStream_, outputStream_),
+      "ID is missing in the spineID file");
 }
 
 // Spine id contains an id_ that doesn't exist in data
+// IdSwap doesnt do anything since insert handles this
 TEST_F(IdSwapTest, MissingPrivateIdsInData) {
   std::vector<std::string> dataInput = {
       "id_,event_timestamp,value", "111,200,200", "222,375,300", "333,400,400"};
