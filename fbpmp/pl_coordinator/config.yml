@@ -22,9 +22,10 @@ privatelift:
       is_validating: false
       synthetic_shard_path: TODO
     OneDockerBinaryConfig:
-      constructor:
-        tmp_directory: /tmp
-        binary_version: latest
+      default:
+        constructor:
+          tmp_directory: /tmp
+          binary_version: latest
     OneDockerServiceConfig:
       constructor:
         task_definition: TODO_ONEDOCKER_TASK_DEFINITION

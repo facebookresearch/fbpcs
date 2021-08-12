@@ -30,9 +30,10 @@ private_attribution:
       is_validating: false
       synthetic_shard_path:
     OneDockerBinaryConfig:
-      constructor:
-        tmp_directory: /tmp
-        binary_version: latest
+      default:
+        constructor:
+          tmp_directory: /tmp
+          binary_version: latest
     OneDockerServiceConfig:
       constructor:
         # TODO: Change this value with pl-task task definition in the following format (see Container Definitions section inside selected task definition revision):

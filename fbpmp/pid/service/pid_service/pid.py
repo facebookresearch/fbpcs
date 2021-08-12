@@ -7,7 +7,7 @@
 # pyre-strict
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcs.service.onedocker import OneDockerService
 from fbpcs.service.storage import StorageService
@@ -30,7 +30,7 @@ class PIDService:
         onedocker_svc: OneDockerService,
         storage_svc: StorageService,
         instance_repository: PIDInstanceRepository,
-        onedocker_binary_config: OneDockerBinaryConfig,
+        onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
     ) -> None:
         """Constructor of PIDService
         Keyword arguments:
@@ -41,7 +41,7 @@ class PIDService:
         self.onedocker_svc = onedocker_svc
         self.storage_svc = storage_svc
         self.instance_repository = instance_repository
-        self.onedocker_binary_config = onedocker_binary_config
+        self.onedocker_binary_config_map = onedocker_binary_config_map
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     def create_instance(
@@ -107,7 +107,7 @@ class PIDService:
             role=instance.pid_role,
             onedocker_svc=self.onedocker_svc,
             storage_svc=self.storage_svc,
-            onedocker_binary_config=self.onedocker_binary_config,
+            onedocker_binary_config_map=self.onedocker_binary_config_map,
             fail_fast=fail_fast,
             server_ips=server_ips,
             data_path=instance.data_path,

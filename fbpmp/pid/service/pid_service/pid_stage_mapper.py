@@ -4,11 +4,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcs.service.onedocker import OneDockerService
 from fbpcs.service.storage import StorageService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
+from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.pid.entity.pid_stages import UnionPIDStage
 from fbpmp.pid.repository.pid_instance import PIDInstanceRepository
 from fbpmp.pid.service.pid_service.pid_prepare_stage import PIDPrepareStage
@@ -36,7 +37,7 @@ class PIDStageMapper:
         instance_repository: PIDInstanceRepository,
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
-        onedocker_binary_config: OneDockerBinaryConfig,
+        onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         server_ips: Optional[List[str]] = None,
     ) -> PIDStage:
         if stage is UnionPIDStage.PUBLISHER_SHARD:
@@ -46,7 +47,7 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config,
+                onedocker_binary_config_map[OneDockerBinaryNames.SHARDER_HASHED_FOR_PID.value],
             )
         elif stage is UnionPIDStage.PUBLISHER_PREPARE:
             return PIDPrepareStage(
@@ -55,7 +56,7 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config,
+                onedocker_binary_config_map[OneDockerBinaryNames.UNION_PID_PREPARER.value],
             )
         elif stage is UnionPIDStage.PUBLISHER_RUN_PID:
             return PIDProtocolRunStage(
@@ -64,7 +65,7 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config,
+                onedocker_binary_config_map[OneDockerBinaryNames.PID_SERVER.value],
                 server_ips,
             )
         elif stage is UnionPIDStage.ADV_SHARD:
@@ -74,7 +75,7 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config,
+                onedocker_binary_config_map[OneDockerBinaryNames.SHARDER_HASHED_FOR_PID.value],
             )
         elif stage is UnionPIDStage.ADV_PREPARE:
             return PIDPrepareStage(
@@ -83,7 +84,7 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config,
+                onedocker_binary_config_map[OneDockerBinaryNames.UNION_PID_PREPARER.value],
             )
         elif stage is UnionPIDStage.ADV_RUN_PID:
             return PIDProtocolRunStage(
@@ -92,7 +93,7 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config,
+                onedocker_binary_config_map[OneDockerBinaryNames.PID_CLIENT.value],
                 server_ips,
             )
         else:

@@ -7,7 +7,7 @@
 import asyncio
 import logging
 import pathlib
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
 from fbpcs.service.onedocker import OneDockerService
@@ -47,7 +47,7 @@ class PIDDispatcher(Dispatcher):
         role: PIDRole,
         onedocker_svc: OneDockerService,
         storage_svc: StorageService,
-        onedocker_binary_config: OneDockerBinaryConfig,
+        onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         fail_fast: bool,
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
@@ -72,7 +72,7 @@ class PIDDispatcher(Dispatcher):
                 instance_repository=self.instance_repository,
                 storage_svc=storage_svc,
                 onedocker_svc=onedocker_svc,
-                onedocker_binary_config=onedocker_binary_config,
+                onedocker_binary_config_map=onedocker_binary_config_map,
                 server_ips=server_ips,
             )
             enum_to_stage_map[node] = stage

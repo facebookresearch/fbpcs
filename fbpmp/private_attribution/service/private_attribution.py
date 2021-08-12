@@ -9,7 +9,7 @@
 import asyncio
 import logging
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcs.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
 from fbpcs.service.mpc import MPCService
@@ -21,6 +21,7 @@ from fbpmp.data_processing.attribution_id_combiner.attribution_id_spine_combiner
 from fbpmp.data_processing.sharding.sharding import ShardType
 from fbpmp.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
+from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpmp.pid.entity.pid_instance import PIDProtocol, PIDRole
 from fbpmp.pid.service.pid_service.pid import PIDService
@@ -60,7 +61,7 @@ class PrivateAttributionService:
         mpc_svc: MPCService,
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,
-        onedocker_binary_config: OneDockerBinaryConfig,
+        onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         storage_svc: StorageService,
     ) -> None:
         """Constructor of PrivateAttributionService
@@ -71,7 +72,7 @@ class PrivateAttributionService:
         self.mpc_svc = mpc_svc
         self.pid_svc = pid_svc
         self.onedocker_svc = onedocker_svc
-        self.onedocker_binary_config = onedocker_binary_config
+        self.onedocker_binary_config_map = onedocker_binary_config_map
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     def create_instance(
@@ -272,6 +273,9 @@ class PrivateAttributionService:
         combine_output_path = output_path + "_combine"
         # execute combiner step
         combiner_service = CppAttributionIdSpineCombinerService()
+        binary_config = self.onedocker_binary_config_map[
+            OneDockerBinaryNames.ATTRIBUTION_ID_SPINE_COMBINER.value
+        ]
         await combiner_service.combine_on_container_async(
             spine_path=pa_instance.spine_path,
             data_path=pa_instance.pid_stage_out_data_path,
@@ -279,9 +283,9 @@ class PrivateAttributionService:
             num_shards=pa_instance.num_pid_containers,
             run_name=pa_instance.instance_id if log_cost_to_s3 else "",
             onedocker_svc=self.onedocker_svc,
-            tmp_directory=self.onedocker_binary_config.tmp_directory,
+            tmp_directory=binary_config.tmp_directory,
             padding_size=pa_instance.padding_size,
-            binary_version=self.onedocker_binary_config.binary_version,
+            binary_version=binary_config.binary_version,
         )
 
         logging.info("Finished running CombinerService, starting to reshard")
@@ -312,6 +316,9 @@ class PrivateAttributionService:
                 f"Output base path to sharder: {output_path}, {shard_index_offset=}"
             )
 
+            binary_config = self.onedocker_binary_config_map[
+                OneDockerBinaryNames.SHARDER.value
+            ]
             coro = sharder.shard_on_container_async(
                 shard_type=ShardType.ROUND_ROBIN,
                 filepath=path_to_shard,
@@ -319,8 +326,8 @@ class PrivateAttributionService:
                 file_start_index=shard_index_offset,
                 num_output_files=shards_per_file,
                 onedocker_svc=self.onedocker_svc,
-                binary_version=self.onedocker_binary_config.binary_version,
-                tmp_directory=self.onedocker_binary_config.tmp_directory,
+                binary_version=binary_config.binary_version,
+                tmp_directory=binary_config.tmp_directory,
             )
             coros.append(coro)
 
@@ -364,6 +371,7 @@ class PrivateAttributionService:
         game_name: str,
         mpc_role: MPCRole,
         num_containers: int,
+        binary_version: str,
         server_ips: Optional[List[str]] = None,
         game_args: Optional[List[Dict[str, Any]]] = None,
         container_timeout: Optional[int] = None,
@@ -379,7 +387,7 @@ class PrivateAttributionService:
         return await self.mpc_svc.start_instance_async(
             instance_id=instance_id,
             server_ips=server_ips,
-            version=self.onedocker_binary_config.binary_version,
+            version=binary_version,
             timeout=timeout,
         )
 
@@ -443,11 +451,15 @@ class PrivateAttributionService:
             }
             for i in range(pa_instance.num_mpc_containers)
         ]
+        binary_config = self.onedocker_binary_config_map[
+            OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value
+        ]
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
             mpc_role=self._map_pa_role_to_mpc_role(pa_instance.role),
             num_containers=pa_instance.num_mpc_containers,
+            binary_version=binary_config.binary_version,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=container_timeout,
@@ -541,11 +553,15 @@ class PrivateAttributionService:
                 "run_name": pa_instance.instance_id if log_cost_to_s3 else "",
             }
         ]
+        binary_config = self.onedocker_binary_config_map[
+            OneDockerBinaryNames.SHARD_AGGREGATOR.value
+        ]
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
             game_name=game,
             mpc_role=self._map_pa_role_to_mpc_role(pa_instance.role),
             num_containers=1,
+            binary_version=binary_config.binary_version,
             server_ips=server_ips,
             # Below are all kwargs
             game_args=game_args,

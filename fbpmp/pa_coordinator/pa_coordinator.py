@@ -28,8 +28,9 @@ Options:
 """
 import logging
 import os
+from collections import defaultdict
 from pathlib import Path, PurePath
-from typing import Any, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional
 
 import schema
 from docopt import docopt
@@ -68,7 +69,7 @@ def _build_pa_service(
     repository_service = repository_class(
         **pa_instance_repository_config["constructor"]
     )
-    onedocker_binary_config = _build_onedocker_binary_cfg(
+    onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
         pa_config["dependency"]["OneDockerBinaryConfig"]
     )
     onedocker_service_config = _build_onedocker_service_cfg(
@@ -93,10 +94,10 @@ def _build_pa_service(
             pid_config,
             onedocker_service,
             storage_service,
-            onedocker_binary_config,
+            onedocker_binary_config_map,
         ),
         onedocker_service,
-        onedocker_binary_config,
+        onedocker_binary_config_map,
         storage_service,
     )
 
@@ -158,6 +159,18 @@ def _build_onedocker_binary_cfg(
     return OneDockerBinaryConfig(**onedocker_binary_config["constructor"])
 
 
+def _build_onedocker_binary_cfg_map(
+    onedocker_binary_configs: Dict[str, Dict[str, Any]]
+) -> DefaultDict[str, OneDockerBinaryConfig]:
+    onedocker_binary_cfg_map = defaultdict(
+        lambda: _build_onedocker_binary_cfg(onedocker_binary_configs["default"])
+    )
+    for binary_name, config in onedocker_binary_configs.items():
+        onedocker_binary_cfg_map[binary_name] = _build_onedocker_binary_cfg(config)
+
+    return onedocker_binary_cfg_map
+
+
 def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
     container_service = _build_container_service(
         config["private_attribution"]["dependency"]["ContainerService"]
@@ -180,7 +193,7 @@ def _build_pid_service(
     pid_config: Dict[str, Any],
     onedocker_service: OneDockerService,
     storage_service: StorageService,
-    onedocker_binary_config: OneDockerBinaryConfig,
+    onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
 ) -> PIDService:
     pidinstance_repository_config = pid_config["dependency"]["PIDInstanceRepository"]
     repository_class = reflect.get_class(pidinstance_repository_config["class"])
@@ -191,7 +204,7 @@ def _build_pid_service(
         onedocker_service,
         storage_service,
         repository_service,
-        onedocker_binary_config,
+        onedocker_binary_config_map,
     )
 
 

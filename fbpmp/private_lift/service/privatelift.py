@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, TypeVar, Tuple, Iterator
+from typing import DefaultDict, Dict, List, Optional, Any, TypeVar, Tuple, Iterator
 
 from fbpcs.entity.container_instance import ContainerInstanceStatus
 from fbpcs.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
@@ -22,6 +22,7 @@ from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
 from fbpmp.data_processing.sharding.sharding import ShardType
 from fbpmp.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
+from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpmp.pid.entity.pid_instance import PIDProtocol, PIDRole
 from fbpmp.pid.entity.pid_stages import UnionPIDStage
@@ -88,7 +89,7 @@ class PrivateLiftService:
         mpc_svc: MPCService,
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,
-        onedocker_binary_config: OneDockerBinaryConfig,
+        onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
     ) -> None:
         """Constructor of PrivateLiftService
         instance_repository -- repository to CRUD PrivateComputationInstance
@@ -97,7 +98,7 @@ class PrivateLiftService:
         self.mpc_svc = mpc_svc
         self.pid_svc = pid_svc
         self.onedocker_svc = onedocker_svc
-        self.onedocker_binary_config = onedocker_binary_config
+        self.onedocker_binary_config_map = onedocker_binary_config_map
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     # TODO T88759390: make an async version of this function
@@ -385,6 +386,7 @@ class PrivateLiftService:
         else:
             self.logger.info(f"[{self}] Starting CppLiftIdSpineCombinerService")
             combiner_service = CppLiftIdSpineCombinerService()
+            binary_name = OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
             await combiner_service.combine_on_container_async(
                 spine_path=spine_path,
                 data_path=data_path,
@@ -393,8 +395,8 @@ class PrivateLiftService:
                 if pl_instance.is_validating
                 else num_containers,
                 onedocker_svc=self.onedocker_svc,
-                binary_version=self.onedocker_binary_config.binary_version,
-                tmp_directory=self.onedocker_binary_config.tmp_directory,
+                binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
+                tmp_directory=self.onedocker_binary_config_map[binary_name].tmp_directory,
             )
 
         logging.info("Finished running CombinerService, starting to reshard")
@@ -435,6 +437,7 @@ class PrivateLiftService:
             if skip_tasks_on_container:
                 self.logger.info(f"[{self}] Skipping sharding on container")
             else:
+                binary_name = OneDockerBinaryNames.SHARDER.value
                 coro = sharder.shard_on_container_async(
                     shard_type=ShardType.ROUND_ROBIN,
                     filepath=path_to_shard,
@@ -442,8 +445,8 @@ class PrivateLiftService:
                     file_start_index=shard_index_offset,
                     num_output_files=num_new_shards_per_file,
                     onedocker_svc=self.onedocker_svc,
-                    binary_version=self.onedocker_binary_config.binary_version,
-                    tmp_directory=self.onedocker_binary_config.tmp_directory,
+                    binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
+                    tmp_directory=self.onedocker_binary_config_map[binary_name].tmp_directory,
                 )
                 coros.append(coro)
 
@@ -572,11 +575,13 @@ class PrivateLiftService:
 
         # Create and start MPC instance to run MPC compute
         logging.info("Starting to run MPC instance.")
+        binary_name=OneDockerBinaryNames.LIFT_COMPUTE.value
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
             mpc_role=self._map_pl_role_to_mpc_role(pl_instance.role),
             num_containers=len(game_args),
+            binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=container_timeout,
@@ -704,11 +709,13 @@ class PrivateLiftService:
                     "first_shard_index": synthetic_data_shard_start_index,
                 },
             ]
+            binary_name=OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
                 game_name="shard_aggregator",
                 mpc_role=self._map_pl_role_to_mpc_role(pl_instance.role),
                 num_containers=2,
+                binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
                 server_ips=server_ips,
                 game_args=game_args,
                 container_timeout=container_timeout,
@@ -723,11 +730,13 @@ class PrivateLiftService:
                     "output_path": output_path,
                 },
             ]
+            binary_name=OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
                 game_name="shard_aggregator",
                 mpc_role=self._map_pl_role_to_mpc_role(pl_instance.role),
                 num_containers=1,
+                binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
                 server_ips=server_ips,
                 game_args=game_args,
                 container_timeout=container_timeout,
@@ -960,6 +969,7 @@ class PrivateLiftService:
         game_name: str,
         mpc_role: MPCRole,
         num_containers: int,
+        binary_version: str,
         server_ips: Optional[List[str]] = None,
         game_args: Optional[List[Dict[str, Any]]] = None,
         container_timeout: Optional[int] = None,
@@ -975,7 +985,7 @@ class PrivateLiftService:
             instance_id=instance_id,
             server_ips=server_ips,
             timeout=container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
-            version=self.onedocker_binary_config.binary_version,
+            version=binary_version,
         )
 
     def _map_pl_role_to_mpc_role(self, pl_role: PrivateComputationRole) -> MPCRole:

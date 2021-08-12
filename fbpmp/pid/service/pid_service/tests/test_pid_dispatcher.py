@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
+from collections import defaultdict
 from unittest.mock import mock_open, patch, MagicMock
 
 from fbpcs.service.container_aws import AWSContainerService
@@ -64,7 +65,7 @@ class TestPIDDispatcher(unittest.TestCase):
                     role=PIDRole.PUBLISHER,
                     storage_svc="STORAGE",
                     onedocker_svc="ONEDOCKER",
-                    onedocker_binary_config="OD_CONFIG",
+                    onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                     fail_fast=True,
                 )
 
@@ -97,7 +98,7 @@ class TestPIDDispatcher(unittest.TestCase):
                 role=PIDRole.PUBLISHER,
                 storage_svc=mock_s3_storage_service,
                 onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config=self.onedocker_binary_config,
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=True,
             )
         constructed_map = {}
@@ -150,7 +151,7 @@ class TestPIDDispatcher(unittest.TestCase):
                 role=PIDRole.PUBLISHER,
                 storage_svc=mock_s3_storage_service,
                 onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config=self.onedocker_binary_config,
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 data_path="data.txt",
                 spine_path="spine.txt",
                 fail_fast=True,
@@ -203,7 +204,7 @@ class TestPIDDispatcher(unittest.TestCase):
                 role=PIDRole.PARTNER,
                 storage_svc=mock_s3_storage_service,
                 onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config=self.onedocker_binary_config,
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=True,
             )
         constructed_map = {}
@@ -284,7 +285,7 @@ class TestPIDDispatcher(unittest.TestCase):
                 role=pid_role,
                 storage_svc=mock_s3_storage_service,
                 onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config="OD_CONFIG",
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=True,
             )
 
@@ -335,7 +336,7 @@ class TestPIDDispatcher(unittest.TestCase):
                 role=PIDRole.PARTNER,
                 storage_svc=mock_s3_storage_service,
                 onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config="OD_CONFIG",
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=False,
             )
 
@@ -418,7 +419,7 @@ class TestPIDDispatcher(unittest.TestCase):
                 role=PIDRole.PARTNER,
                 storage_svc=mock_s3_storage_service,
                 onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config="OD_CONFIG",
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 data_path="data.txt",
                 spine_path="spine.txt",
                 fail_fast=False,
@@ -519,7 +520,7 @@ class TestPIDDispatcher(unittest.TestCase):
                 role=PIDRole.PARTNER,
                 storage_svc=mock_s3_storage_service,
                 onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config="OD_CONFIG",
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=False,
             )
 

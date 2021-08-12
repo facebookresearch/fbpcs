@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
+from collections import defaultdict
 from unittest.mock import MagicMock, call, patch
 
 from fbpcs.entity.container_instance import ContainerInstance, ContainerInstanceStatus
@@ -15,6 +16,7 @@ from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
 )
 from fbpmp.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
+from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.onedocker_service_config import OneDockerServiceConfig
 from fbpmp.pcf.tests.async_utils import to_sync
 from fbpmp.pid.entity.pid_instance import (
@@ -74,9 +76,11 @@ class TestPrivateLiftService(unittest.TestCase):
             task_definition="test_task_definition",
         )
 
-        self.onedocker_binary_config = OneDockerBinaryConfig(
-            tmp_directory="/test_tmp_directory/",
-            binary_version="latest"
+        self.onedocker_binary_config_map = defaultdict(
+            lambda: OneDockerBinaryConfig(
+                tmp_directory="/test_tmp_directory/",
+                binary_version="latest"
+            )
         )
 
         self.onedocker_service = OneDockerService(
@@ -95,7 +99,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instance_repository=pid_instance_repository,
             storage_svc=storage_svc,
             onedocker_svc=self.onedocker_service,
-            onedocker_binary_config=self.onedocker_binary_config,
+            onedocker_binary_config_map=self.onedocker_binary_config_map,
         )
 
         self.pl_service = PrivateLiftService(
@@ -103,7 +107,7 @@ class TestPrivateLiftService(unittest.TestCase):
             mpc_svc=self.mpc_service,
             pid_svc=self.pid_service,
             onedocker_svc=self.onedocker_service,
-            onedocker_binary_config=self.onedocker_binary_config,
+            onedocker_binary_config_map=self.onedocker_binary_config_map,
         )
 
     def test_create_instance(self):
@@ -720,12 +724,16 @@ class TestPrivateLiftService(unittest.TestCase):
             "output_directory": output_directory,
             "concurrency": 1,
         }
+        binary_version = self.onedocker_binary_config_map[
+            OneDockerBinaryNames.LIFT_COMPUTE.value
+        ].binary_version
 
         await self.pl_service._create_and_start_mpc_instance(
             instance_id=instance_id,
             game_name=game_name,
             mpc_role=mpc_role,
             num_containers=num_containers,
+            binary_version=binary_version,
             container_timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
             server_ips=server_ips,
             game_args=game_args,
@@ -748,7 +756,7 @@ class TestPrivateLiftService(unittest.TestCase):
                 instance_id=instance_id,
                 server_ips=server_ips,
                 timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
-                version=self.onedocker_binary_config.binary_version,
+                version=binary_version,
             ),
             self.pl_service.mpc_svc.start_instance_async.call_args,
         )
@@ -837,14 +845,17 @@ class TestPrivateLiftService(unittest.TestCase):
                 output_path=test_output_path,
                 dry_run=True,
             )
+            binary_config = self.onedocker_binary_config_map[
+                OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
+            ]
             mock_combine.assert_called_once_with(
                 spine_path=test_spine_path,
                 data_path=test_data_path,
                 output_path=test_intermediate_output_path,
                 num_shards=test_num_containers,
                 onedocker_svc=self.onedocker_service,
-                binary_version=self.onedocker_binary_config.binary_version,
-                tmp_directory=self.onedocker_binary_config.tmp_directory,
+                binary_version=binary_config.binary_version,
+                tmp_directory=binary_config.tmp_directory,
             )
             mock_shard.assert_called()
 
