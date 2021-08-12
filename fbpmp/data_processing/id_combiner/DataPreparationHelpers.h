@@ -28,6 +28,9 @@ void headerColumnsToPlural(
     std::ostream& outFile);
 
 std::vector<std::string> split(const std::string& delim, std::string& str);
+std::vector<std::string> splitByComma(
+    std::string& str,
+    bool supportInnerBrackets);
 
 std::string vectorToStringWithReplacement(
     const std::vector<std::string>& vec,

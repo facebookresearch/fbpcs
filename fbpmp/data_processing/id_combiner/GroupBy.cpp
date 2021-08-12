@@ -52,6 +52,9 @@ void groupBy(
   std::unordered_map<std::string, std::vector<std::vector<std::string>>>
       idToRows;
 
+  // Store the order of traversal of the file to retain order
+  std::vector<std::string> traversedOrder;
+  std::unordered_set<std::string> hasBeenTraversed;
   while (getline(inFile, row)) {
     std::vector<std::string> cols;
     folly::split(kCommaSplitRegex, row, cols);
@@ -63,9 +66,12 @@ void groupBy(
                   << "Header: " << line << '\n'
                   << "Row   : " << row << '\n';
     }
-
-    auto row_id = cols.at(groupByColumnIndex);
-    idToRows[row_id].push_back(cols);
+    auto rowId = cols.at(groupByColumnIndex);
+    if (hasBeenTraversed.count(rowId) == 0) {
+      hasBeenTraversed.insert(rowId);
+      traversedOrder.push_back(rowId);
+    }
+    idToRows[rowId].push_back(cols);
   }
 
   // build new map that aggregates common values into lists
@@ -93,25 +99,24 @@ void groupBy(
   // values to the output file
   // note that for columns that were not specified in columnsToAggregate, we
   // output a single value rather than a list of values
-  for (const auto& keyVal : newIdToRows) {
-    auto curr_row = keyVal.second;
-    for (auto i = 0; i < curr_row.size(); i++) {
+  for (const auto& id : traversedOrder) {
+    auto currRow = newIdToRows.at(id);
+    for (auto i = 0; i < currRow.size(); i++) {
       if (std::find(
               columnsToAggregate.begin(),
               columnsToAggregate.end(),
               header.at(i)) != columnsToAggregate.end()) {
-        outFile << "[" << vectorToString(curr_row.at(i)) << "]";
+        outFile << "[" << vectorToString(currRow.at(i)) << "]";
       } else { // just write out the first value in the list
-        outFile << curr_row.at(i).at(0);
+        outFile << currRow.at(i).at(0);
       }
 
-      if (i < curr_row.size() - 1) {
+      if (i < currRow.size() - 1) {
         outFile << ",";
       }
     }
     outFile << "\n";
   }
-
   XLOG(INFO) << "[C++ GroupBy] Finished.\n";
 }
 } // namespace pid::combiner

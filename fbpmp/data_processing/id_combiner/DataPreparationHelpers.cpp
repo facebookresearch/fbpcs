@@ -72,6 +72,25 @@ std::vector<std::string> split(const std::string& delim, std::string& str) {
   return tokens;
 }
 
+std::vector<std::string> splitByComma(
+    std::string& str,
+    bool supportInnerBrackets) {
+  if (supportInnerBrackets) {
+    // The pattern here indicates that it's looking for a \[, gets all
+    // non-brackets [^\]], then the \]. Otherwise |,
+    // it will get all the non commas [^,]. The surrounding () makes it
+    // a capture group. ,? means there may or may not be a comma
+    return split(R"((\[[^\]]+\]|[^,]+),?)", str);
+  } else {
+    // split internally uses RE2 which relies on
+    // consuming patterns. The pattern here indicates
+    // it will get all the non commas [^,]. The surrounding () makes it
+    // a capture group. ,? means there may or may not be a comma
+
+    return split("([^,]+),?", str);
+  }
+}
+
 size_t headerIndex(
     const std::vector<std::string>& header,
     const std::string& columnName) {
