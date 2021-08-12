@@ -32,6 +32,7 @@
 #include "../id_combiner/GroupBy.h"
 #include "../id_combiner/IdInsert.h"
 #include "../id_combiner/IdSwap.h"
+#include "../id_combiner/SortIds.h"
 #include "../id_combiner/SortIntegralValues.h"
 #include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcf/io/IInputStream.h"
@@ -104,8 +105,18 @@ void LiftIdSpineFileCombiner::combineFile() {
         std::find(aggregatedCols.begin(), aggregatedCols.end(), "id_"));
 
     std::stringstream groupByOutFile;
-    pid::combiner::groupBy(
-        idSwapOutFile, "id_", aggregatedCols, groupByOutFile);
+    std::stringstream groupByUnsortedOutFile;
+    if (FLAGS_sort_strategy == "sort") {
+      pid::combiner::groupBy(
+          idSwapOutFile, "id_", aggregatedCols, groupByUnsortedOutFile);
+      pid::combiner::sortIds(groupByUnsortedOutFile, groupByOutFile);
+    } else if (FLAGS_sort_strategy == "keep_original") {
+      pid::combiner::groupBy(
+          idSwapOutFile, "id_", aggregatedCols, groupByOutFile);
+    } else {
+      XLOG(FATAL) << "Invalid sort strategy '" << FLAGS_sort_strategy
+                  << "'. Expected 'sort' or 'keep_original'.";
+    }
 
     // add "s" to all aggregated column headers
     std::stringstream renamedColsFile;

@@ -24,7 +24,10 @@ class LiftIdSpineFileCombiner {
       std::filesystem::path spinePath,
       std::filesystem::path outputPath,
       std::filesystem::path tmpDirectory)
-      : dataPath_{dataPath}, spinePath_{spinePath}, outputPath_{outputPath} , tmpDirectory_{tmpDirectory} {}
+      : dataPath_{dataPath},
+        spinePath_{spinePath},
+        outputPath_{outputPath},
+        tmpDirectory_{tmpDirectory} {}
 
   void combineFile();
 

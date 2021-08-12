@@ -27,6 +27,7 @@ class CppAttributionIdSpineCombinerService:
         run_name: str,
         tmp_directory: str,
         padding_size: int,
+        sort_strategy: str,
     ) -> str:
         # TODO: Probably put exe in an env variable?
         # Try to align with existing paths
@@ -38,6 +39,7 @@ class CppAttributionIdSpineCombinerService:
                 f"--run_name={run_name}",
                 f"--tmp_directory={tmp_directory}",
                 f"--padding_size={padding_size}",
+                f"--sort_strategy={sort_strategy}",
             ]
         )
         return cmd_args
@@ -53,6 +55,7 @@ class CppAttributionIdSpineCombinerService:
         tmp_directory: str,
         padding_size: int,
         binary_version: str,
+        sort_strategy: str = "sort",
         container_timeout: Optional[int] = None,
     ) -> None:
         asyncio.run(
@@ -66,6 +69,7 @@ class CppAttributionIdSpineCombinerService:
                 tmp_directory,
                 padding_size,
                 binary_version,
+                sort_strategy,
                 container_timeout,
             )
         )
@@ -81,6 +85,7 @@ class CppAttributionIdSpineCombinerService:
         tmp_directory: str,
         padding_size: int,
         binary_version: str,
+        sort_strategy: str = "sort",
         container_timeout: Optional[int] = None,
     ) -> None:
         logger = logging.getLogger(__name__)
@@ -101,6 +106,7 @@ class CppAttributionIdSpineCombinerService:
                 run_name,
                 tmp_directory,
                 padding_size,
+                sort_strategy,
             )
             cmd_args_list.append(cmd_args)
 

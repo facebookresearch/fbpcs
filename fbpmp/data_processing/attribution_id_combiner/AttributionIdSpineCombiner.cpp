@@ -18,8 +18,8 @@
 #include "../common/FilepathHelpers.h"
 #include "../common/S3CopyFromLocalUtil.h"
 #include "AttributionIdSpineCombinerOptions.h"
-#include "AttributionIdSpineFileCombiner.h"
 #include "AttributionIdSpineCombinerUtil.h"
+#include "AttributionIdSpineFileCombiner.h"
 #include "fbpcf/aws/AwsSdk.h"
 #include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcf/io/IInputStream.h"
@@ -27,10 +27,8 @@
 // TODO Task: T93622832
 #include "../common/CostEstimation.h"
 
-
 int main(int argc, char** argv) {
-
-  measurement::private_attribution::CostEstimation cost {"data_processing"};
+  measurement::private_attribution::CostEstimation cost{"data_processing"};
   cost.start();
 
   folly::init(&argc, &argv);
@@ -43,7 +41,8 @@ int main(int argc, char** argv) {
   XLOG(INFO) << "Starting data_prcessing run on: data_path:" << FLAGS_data_path
              << ", spine_path: " << FLAGS_spine_path
              << ", output_path: " << FLAGS_output_path
-             << ", tmp_directory: " << FLAGS_tmp_directory;
+             << ", tmp_directory: " << FLAGS_tmp_directory
+             << ", sorting_strategy: " << FLAGS_sort_strategy;
 
   auto dataInStreamPtr = fbpcf::io::getInputStream(FLAGS_data_path);
   auto spineInStreamPtr = fbpcf::io::getInputStream(FLAGS_spine_path);
@@ -82,12 +81,15 @@ int main(int argc, char** argv) {
 
   cost.end();
   XLOG(INFO) << cost.getEstimatedCostString();
-  if (FLAGS_run_name != ""){
+  if (FLAGS_run_name != "") {
     std::string runName = folly::to<std::string>(
-                              cost.getApplication(), "_",
-                              FLAGS_run_name, "_",
-                              measurement::private_attribution::getDateString());
-    XLOG(INFO) << cost.writeToS3(runName, cost.getEstimatedCostDynamic(runName));
+        cost.getApplication(),
+        "_",
+        FLAGS_run_name,
+        "_",
+        measurement::private_attribution::getDateString());
+    XLOG(INFO) << cost.writeToS3(
+        runName, cost.getEstimatedCostDynamic(runName));
   }
 
   return 0;

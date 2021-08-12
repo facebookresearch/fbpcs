@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   std::filesystem::path tmpDirectory{FLAGS_tmp_directory};
 
   pid::LiftIdSpineFileCombiner combiner{
-      FLAGS_data_path, FLAGS_spine_path, FLAGS_output_path, tmpDirectory,};
+      FLAGS_data_path, FLAGS_spine_path, FLAGS_output_path, tmpDirectory};
   combiner.combineFile();
 
   return 0;

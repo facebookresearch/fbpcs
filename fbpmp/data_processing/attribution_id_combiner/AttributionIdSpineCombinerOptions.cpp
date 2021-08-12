@@ -21,3 +21,7 @@ DEFINE_string(
     "/tmp/",
     "Directory where temporary files should be saved before final write");
 DEFINE_string(run_name, "", "User given name used to write cost info in S3");
+DEFINE_string(
+    sort_strategy,
+    "sort",
+    "Sorting strategy selected for the output data - options: (sort|keep_original)");
