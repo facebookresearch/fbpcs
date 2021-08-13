@@ -44,15 +44,14 @@ def prompt(key: str, replacements: Dict[str, str], accept_all: bool = False) -> 
     return response
 
 
-def build_replacements_from_config(config: Dict[str, Any]) -> Dict[str, str]:
+def build_replacements_from_config(config: Dict[str, Any]) -> Dict[str, Any]:
     # Assume we can only update leaf nodes, otherwise things get weird
     replacements = {}
     for k, v in config.items():
         if isinstance(v, str):
             replacements[k] = v
         elif isinstance(v, list):
-            # Reading from a list is unsupported
-            continue
+            replacements[k] = v
         elif isinstance(v, dict):
             # Recurse
             replacements.update(build_replacements_from_config(v))
@@ -62,7 +61,7 @@ def build_replacements_from_config(config: Dict[str, Any]) -> Dict[str, str]:
 def update_dict(
     d: Dict[str, Any],
     replace_key: str,
-    replacements: Optional[Dict[str, str]] = None,
+    replacements: Optional[Dict[str, Any]] = None,
     accept_all: bool = False,
 ) -> None:
     # Funny case where we *can't* use default Python coalescing (var or {})
@@ -79,9 +78,18 @@ def update_dict(
             replacements[k] = new_value
             d[k] = new_value
         elif isinstance(v, list) and replace_key in v:
-            new_value = prompt(k, replacements, accept_all)
-            replacements[k] = new_value
-            d[k] = new_value.split(",")
+            # Special case based on intent of writing [TODO] in a yaml file
+            # We don't want to fill that in like [[subnet-123]] and accidentally
+            # nest the array even further
+            if len(v) == 1 and k in replacements:
+                d[k] = replacements[k]
+            else:
+                # Honestly, we probably shouldn't allow something like this
+                # This branch can only be hit in a case where a yaml file looks
+                # like key: [val1, TODO, val2] which would be awkward
+                new_value = prompt(k, replacements, accept_all)
+                replacements[k] = new_value
+                d[k] = new_value.split(",")
         elif isinstance(v, dict):
             # Recurse
             update_dict(v, replace_key, replacements, accept_all)

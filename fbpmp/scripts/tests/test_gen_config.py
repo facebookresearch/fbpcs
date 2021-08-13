@@ -44,9 +44,10 @@ class TestGenConfig(unittest.TestCase):
             "c": {"d": "e"}
         }
         # This will look weird, but basically we expect to keep all "leaf"
-        # nodes as replacement values, excluding lists
+        # nodes as replacement values, but also including basic lists
         expected = {
             "a": "123",
+            "b": ["1", "2", "3"],
             "d": "e",
         }
         res = gen_config.build_replacements_from_config(config)
