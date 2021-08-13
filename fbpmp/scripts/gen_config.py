@@ -14,6 +14,7 @@ Usage:
 Options:
     -r --replace=<k>    Key to traverse for replacement [default: TODO]
     -a --accept_all     Do not re-prompt if we already have an accepted input for the given key
+    -f --from=<other>   Copy values from another config
     -h --help           Show this help text
 """
 
@@ -41,6 +42,21 @@ def prompt(key: str, replacements: Dict[str, str], accept_all: bool = False) -> 
     if len(response) == 0:
         response = replacements.get(key, "")
     return response
+
+
+def build_replacements_from_config(config: Dict[str, Any]) -> Dict[str, str]:
+    # Assume we can only update leaf nodes, otherwise things get weird
+    replacements = {}
+    for k, v in config.items():
+        if isinstance(v, str):
+            replacements[k] = v
+        elif isinstance(v, list):
+            # Reading from a list is unsupported
+            continue
+        elif isinstance(v, dict):
+            # Recurse
+            replacements.update(build_replacements_from_config(v))
+    return replacements
 
 
 def update_dict(
@@ -73,7 +89,11 @@ def update_dict(
 
 def gen_config(args: Dict[str, Any]) -> None:
     config = yaml.load(args["<input_path>"])
-    update_dict(config, args["--replace"], None, args["--accept_all"])
+    replacements = {}
+    if "--from" in args:
+        other_config = yaml.load(args["--from"])
+        replacements = build_replacements_from_config(other_config)
+    update_dict(config, args["--replace"], replacements, args["--accept_all"])
 
     # Coalesce: output to new_output_path if present, otherwise overwrite
     output_path = args["<new_output_path>"] or args["<input_path>"]
@@ -89,6 +109,7 @@ def main():
             ),
             "--replace": str,
             "--accept_all": bool,
+            "--from": schema.Or(None, str),
             "--help": bool,
         }
     )

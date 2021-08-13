@@ -37,6 +37,21 @@ class TestGenConfig(unittest.TestCase):
             res = gen_config.prompt("key", replacements={"key": "baz"})
             self.assertEqual(res, "baz")
 
+    def test_build_replacements_from_config(self):
+        config = {
+            "a": "123",
+            "b": ["1", "2", "3"],
+            "c": {"d": "e"}
+        }
+        # This will look weird, but basically we expect to keep all "leaf"
+        # nodes as replacement values, excluding lists
+        expected = {
+            "a": "123",
+            "d": "e",
+        }
+        res = gen_config.build_replacements_from_config(config)
+        self.assertEqual(res, expected)
+
     @patch("builtins.input", return_value="new")
     def test_update_dict(self, mock_input):
         # Simple replacement (call prompt 1 time)
@@ -76,5 +91,5 @@ class TestGenConfig(unittest.TestCase):
         gen_config.gen_config(args)
 
         mock_load.assert_called_once_with("foo")
-        mock_update.assert_called_once_with("LOAD", "REPLACE", None, True)
+        mock_update.assert_called_once_with("LOAD", "REPLACE", {}, True)
         mock_dump.assert_called_once_with("LOAD", "bar")
