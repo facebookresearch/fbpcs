@@ -14,10 +14,10 @@ import sys
 import tempfile
 from typing import List, Optional
 
-from fbpcs.entity.container_instance import ContainerInstanceStatus
-from fbpcs.service.onedocker import OneDockerService
+from fbpcp.entity.container_instance import ContainerInstanceStatus
+from fbpcp.service.onedocker import OneDockerService
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.service.storage import PathType, StorageService
+from fbpcp.service.storage import PathType, StorageService
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_service import (
     LiftIdSpineCombinerService,
 )

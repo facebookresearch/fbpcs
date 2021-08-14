@@ -6,8 +6,8 @@
 
 from typing import List
 
-from fbpcs.entity.mpc_game_config import MPCGameArgument, MPCGameConfig
-from fbpcs.repository.mpc_game_repository import MPCGameRepository
+from fbpcp.entity.mpc_game_config import MPCGameArgument, MPCGameConfig
+from fbpcp.repository.mpc_game_repository import MPCGameRepository
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 
 

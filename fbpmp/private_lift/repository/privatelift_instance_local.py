@@ -6,7 +6,7 @@
 
 # pyre-strict
 
-from fbpcs.repository.instance_local import LocalInstanceRepository
+from fbpcp.repository.instance_local import LocalInstanceRepository
 from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstance
 from fbpmp.private_lift.repository.privatelift_instance import (
     PrivateLiftInstanceRepository,

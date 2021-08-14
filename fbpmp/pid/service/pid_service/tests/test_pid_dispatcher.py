@@ -8,9 +8,9 @@ import unittest
 from collections import defaultdict
 from unittest.mock import mock_open, patch, MagicMock
 
-from fbpcs.service.container_aws import AWSContainerService
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage_s3 import S3StorageService
+from fbpcp.service.container_aws import AWSContainerService
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage_s3 import S3StorageService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.pcf.tests.async_utils import AsyncMock
 from fbpmp.pcf.tests.async_utils import to_sync
@@ -73,9 +73,9 @@ class TestPIDDispatcher(unittest.TestCase):
         "fbpmp.pid.service.coordination.file_coordination.FileCoordinationService",
         spec=FileCoordinationService,
     )
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
-    @patch("fbpcs.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     def test_union_pid_flow_valid_publisher_nodes(
         self,
@@ -124,9 +124,9 @@ class TestPIDDispatcher(unittest.TestCase):
         "fbpmp.pid.service.coordination.file_coordination.FileCoordinationService",
         spec=FileCoordinationService,
     )
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
-    @patch("fbpcs.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     def test_union_pid_flow_valid_publisher_nodes_with_data_path_spine_path(
         self,
@@ -179,9 +179,9 @@ class TestPIDDispatcher(unittest.TestCase):
         "fbpmp.pid.service.coordination.file_coordination.FileCoordinationService",
         spec=FileCoordinationService,
     )
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
-    @patch("fbpcs.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     def test_union_pid_flow_valid_partner_nodes(
         self,
@@ -229,9 +229,9 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDProtocolRunStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDPrepareStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDShardStage")
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
-    @patch("fbpcs.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     @to_sync
     async def test_union_pid_run_all_order(
@@ -300,9 +300,9 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDShardStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDPrepareStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDProtocolRunStage")
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
-    @patch("fbpcs.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     @to_sync
     async def test_union_pid_flow_valid_partner(
@@ -380,9 +380,9 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDShardStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDPrepareStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDProtocolRunStage")
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
-    @patch("fbpcs.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     @to_sync
     async def test_union_pid_flow_valid_partner_with_data_path_spine_path(
@@ -469,9 +469,9 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDPrepareStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDProtocolRunStage")
     @patch("fbpmp.pid.service.pid_service.pid_execution_map.get_execution_flow")
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
-    @patch("fbpcs.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     @to_sync
     async def test_valid_custom_flow(

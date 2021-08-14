@@ -9,7 +9,7 @@ import dataclasses
 import time
 from typing import Any, Dict, Optional
 
-from fbpcs.service.storage import StorageService
+from fbpcp.service.storage import StorageService
 
 # Default time to wait between checking for a coordination object
 SLEEP_INTERVAL_SECS = 5

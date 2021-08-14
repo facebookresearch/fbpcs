@@ -7,9 +7,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
-from fbpcs.entity.container_instance import ContainerInstance
-from fbpcs.service.container_aws import AWSContainerService
-from fbpcs.service.onedocker import OneDockerService
+from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.service.container_aws import AWSContainerService
+from fbpcp.service.onedocker import OneDockerService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.pcf.tests.async_utils import awaitable, to_sync
 from fbpmp.pid.entity.pid_instance import PIDStageStatus
@@ -75,7 +75,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         )
 
     @to_sync
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     async def test_run_publisher(self, mock_onedocker_service):
         ip = "192.0.2.0"
         mock_onedocker_service.start_containers_async = AsyncMock(
@@ -144,7 +144,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             self.assertEqual(mock_instance_repo.update.call_count, 5)
 
     @to_sync
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     async def test_run_partner(self, mock_onedocker_service):
         ip = "192.0.2.0"
         mock_onedocker_service.start_containers_async = AsyncMock(

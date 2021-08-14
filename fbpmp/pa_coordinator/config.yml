@@ -5,7 +5,7 @@ private_attribution:
       constructor:
         base_dir: /fbpmp_instances
     ContainerService:
-      class: fbpcs.service.container_aws.AWSContainerService
+      class: fbpcp.service.container_aws.AWSContainerService
       constructor:
         # AWS region - ex. us-west-2
         region: TODO
@@ -18,7 +18,7 @@ private_attribution:
         # AWS access secret
         access_key_data: TODO
     StorageService:
-      class: fbpcs.service.storage_s3.S3StorageService
+      class: fbpcp.service.storage_s3.S3StorageService
       constructor:
         # AWS region - ex. us-west-2
         region: TODO
@@ -51,12 +51,12 @@ pid:
 mpc:
   dependency:
     MPCGameService:
-      class: fbpcs.service.mpc_game.MPCGameService
+      class: fbpcp.service.mpc_game.MPCGameService
       dependency:
         PrivateAttributionGameRepository:
           class: fbpmp.private_attribution.repository.private_attribution_game.PrivateAttributionGameRepository
     MPCInstanceRepository:
-      class: fbpcs.repository.mpc_instance_local.LocalMPCInstanceRepository
+      class: fbpcp.repository.mpc_instance_local.LocalMPCInstanceRepository
       constructor:
         base_dir: /fbpmp_instances
     ShardingService:

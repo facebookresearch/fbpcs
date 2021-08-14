@@ -8,7 +8,7 @@ import unittest
 from typing import List
 from unittest.mock import patch
 
-from fbpcs.entity.mpc_game_config import MPCGameArgument
+from fbpcp.entity.mpc_game_config import MPCGameArgument
 from fbpmp.private_attribution.repository.private_attribution_game import (
     PrivateAttributionGameRepository,
 )

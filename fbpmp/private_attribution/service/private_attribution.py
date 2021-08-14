@@ -11,10 +11,10 @@ import logging
 import math
 from typing import Any, DefaultDict, Dict, List, Optional
 
-from fbpcs.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
-from fbpcs.service.mpc import MPCService
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage import StorageService
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
+from fbpcp.service.mpc import MPCService
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
 from fbpmp.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
     CppAttributionIdSpineCombinerService,
 )

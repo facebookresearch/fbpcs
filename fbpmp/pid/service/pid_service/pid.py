@@ -9,8 +9,8 @@
 import logging
 from typing import Any, DefaultDict, Dict, List, Optional
 
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage import StorageService
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.pid.entity.pid_instance import (
     PIDInstance,

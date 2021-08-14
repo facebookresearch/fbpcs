@@ -12,10 +12,10 @@ import logging
 from datetime import datetime, timezone
 from typing import DefaultDict, Dict, List, Optional, Any, TypeVar, Tuple, Iterator
 
-from fbpcs.entity.container_instance import ContainerInstanceStatus
-from fbpcs.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
-from fbpcs.service.mpc import MPCService
-from fbpcs.service.onedocker import OneDockerService
+from fbpcp.entity.container_instance import ContainerInstanceStatus
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
+from fbpcp.service.mpc import MPCService
+from fbpcp.service.onedocker import OneDockerService
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )

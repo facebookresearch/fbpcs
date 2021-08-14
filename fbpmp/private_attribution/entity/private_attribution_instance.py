@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Union
 
-from fbpcs.entity.instance_base import InstanceBase
-from fbpcs.entity.mpc_instance import MPCInstance, MPCInstanceStatus
+from fbpcp.entity.instance_base import InstanceBase
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpmp.pid.entity.pid_stages import UnionPIDStage
 from fbpmp.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP

@@ -8,7 +8,7 @@ import contextlib
 import os
 import pathlib
 
-from fbpcs.service.storage_s3 import S3StorageService
+from fbpcp.service.storage_s3 import S3StorageService
 from fbpmp.utils.buffered_s3_file_handler import BufferedS3Reader, BufferedS3Writer
 
 

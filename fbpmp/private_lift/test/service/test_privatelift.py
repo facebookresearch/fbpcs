@@ -8,9 +8,9 @@ import unittest
 from collections import defaultdict
 from unittest.mock import MagicMock, call, patch
 
-from fbpcs.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcs.service.mpc import MPCInstance, MPCInstanceStatus, MPCRole, MPCService
-from fbpcs.service.onedocker import OneDockerService
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.service.mpc import MPCInstance, MPCInstanceStatus, MPCRole, MPCService
+from fbpcp.service.onedocker import OneDockerService
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )
@@ -43,10 +43,10 @@ from libfb.py.asyncio.mock import AsyncMock
 
 class TestPrivateLiftService(unittest.TestCase):
     def setUp(self):
-        container_svc_patcher = patch("fbpcs.service.container_aws.AWSContainerService")
-        storage_svc_patcher = patch("fbpcs.service.storage_s3.S3StorageService")
+        container_svc_patcher = patch("fbpcp.service.container_aws.AWSContainerService")
+        storage_svc_patcher = patch("fbpcp.service.storage_s3.S3StorageService")
         mpc_instance_repo_patcher = patch(
-            "fbpcs.repository.mpc_instance_local.LocalMPCInstanceRepository"
+            "fbpcp.repository.mpc_instance_local.LocalMPCInstanceRepository"
         )
         pid_instance_repo_patcher = patch(
             "fbpmp.pid.repository.pid_instance_local.LocalPIDInstanceRepository"
@@ -54,7 +54,7 @@ class TestPrivateLiftService(unittest.TestCase):
         pl_instance_repo_patcher = patch(
             "fbpmp.private_lift.repository.privatelift_instance_local.LocalPrivateLiftInstanceRepository"
         )
-        mpc_game_svc_patcher = patch("fbpcs.service.mpc_game.MPCGameService")
+        mpc_game_svc_patcher = patch("fbpcp.service.mpc_game.MPCGameService")
         container_svc = container_svc_patcher.start()
         storage_svc = storage_svc_patcher.start()
         mpc_instance_repository = mpc_instance_repo_patcher.start()

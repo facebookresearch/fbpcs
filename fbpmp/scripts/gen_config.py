@@ -24,7 +24,7 @@ from typing import Any, Dict, Optional
 
 import docopt
 import schema
-from fbpcs.util import yaml
+from fbpcp.util import yaml
 
 
 def prompt(key: str, replacements: Dict[str, str], accept_all: bool = False) -> str:

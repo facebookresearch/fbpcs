@@ -9,12 +9,12 @@ import logging
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Optional
 
-from fbpcs.entity.mpc_instance import MPCInstance
-from fbpcs.service.container import ContainerService
-from fbpcs.service.mpc import MPCService
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage import StorageService
-from fbpcs.util import reflect
+from fbpcp.entity.mpc_instance import MPCInstance
+from fbpcp.service.container import ContainerService
+from fbpcp.service.mpc import MPCService
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
+from fbpcp.util import reflect
 from fbpmp.data_processing.sharding.sharding import ShardingService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_service_config import OneDockerServiceConfig

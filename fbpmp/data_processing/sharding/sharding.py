@@ -8,8 +8,8 @@ import abc
 import enum
 from typing import Optional
 
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage import StorageService
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
 
 
 class ShardType(enum.Enum):

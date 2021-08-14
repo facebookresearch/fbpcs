@@ -5,7 +5,7 @@ privatelift:
       constructor:
         base_dir: /fbpmp_instances
     ContainerService:
-      class: fbpcs.service.container_aws.AWSContainerService
+      class: fbpcp.service.container_aws.AWSContainerService
       constructor:
         region: TODO
         cluster: TODO
@@ -13,7 +13,7 @@ privatelift:
         access_key_id: TODO
         access_key_data: TODO
     StorageService:
-      class: fbpcs.service.storage_s3.S3StorageService
+      class: fbpcp.service.storage_s3.S3StorageService
       constructor:
         region: TODO
         access_key_id: TODO
@@ -45,12 +45,12 @@ pid:
 mpc:
   dependency:
     MPCGameService:
-      class: fbpcs.service.mpc_game.MPCGameService
+      class: fbpcp.service.mpc_game.MPCGameService
       dependency:
         PrivateLiftGameRepository:
           class: fbpmp.private_lift.repository.private_lift_game.PrivateLiftGameRepository
     MPCInstanceRepository:
-      class: fbpcs.repository.mpc_instance_local.LocalMPCInstanceRepository
+      class: fbpcp.repository.mpc_instance_local.LocalMPCInstanceRepository
       constructor:
         base_dir: /fbpmp_instances
     ShardingService:

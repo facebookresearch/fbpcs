@@ -34,11 +34,11 @@ from typing import Any, DefaultDict, Dict, List, Optional
 
 import schema
 from docopt import docopt
-from fbpcs.service.container import ContainerService
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.mpc import MPCService
-from fbpcs.service.storage import StorageService
-from fbpcs.util import reflect, yaml
+from fbpcp.service.container import ContainerService
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.mpc import MPCService
+from fbpcp.service.storage import StorageService
+from fbpcp.util import reflect, yaml
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_service_config import OneDockerServiceConfig
 from fbpmp.pid.entity.pid_instance import PIDProtocol

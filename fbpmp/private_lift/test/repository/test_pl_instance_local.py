@@ -8,7 +8,7 @@ import random
 import string
 import unittest
 
-from fbpcs.entity.mpc_instance import MPCInstance, MPCRole
+from fbpcp.entity.mpc_instance import MPCInstance, MPCRole
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,

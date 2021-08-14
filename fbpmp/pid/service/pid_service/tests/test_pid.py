@@ -7,8 +7,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage_s3 import S3StorageService
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage_s3 import S3StorageService
 from fbpmp.pcf.tests.async_utils import to_sync
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDProtocol, PIDRole
 from fbpmp.pid.service.pid_service.pid import PIDService
@@ -30,8 +30,8 @@ TEST_HMAC_KEY = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
 class TestPIDService(unittest.TestCase):
     @patch("fbpmp.onedocker_binary_config.OneDockerBinaryConfig", spec="OneDockerBinaryConfig")
-    @patch("fbpcs.service.storage_s3.S3StorageService", spec=S3StorageService)
-    @patch("fbpcs.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     def setUp(
         self,

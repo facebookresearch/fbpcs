@@ -10,9 +10,9 @@ import pathlib
 from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage import StorageService
-from fbpcs.util import yaml
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
+from fbpcp.util import yaml
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.pid.entity.pid_instance import (
     PIDInstanceStatus,

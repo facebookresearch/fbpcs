@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 from typing import Dict, List, Optional
 
-from fbpcs.entity.container_instance import ContainerInstance
-from fbpcs.entity.instance_base import InstanceBase
+from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.instance_base import InstanceBase
 
 
 class PIDRole(IntEnum):

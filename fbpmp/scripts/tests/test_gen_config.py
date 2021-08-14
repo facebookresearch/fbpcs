@@ -79,8 +79,8 @@ class TestGenConfig(unittest.TestCase):
         self.assertEqual(d, expected)
         self.assertEqual(mock_input.call_count, 3)
 
-    @patch("fbpcs.util.yaml.load", return_value="LOAD")
-    @patch("fbpcs.util.yaml.dump")
+    @patch("fbpcp.util.yaml.load", return_value="LOAD")
+    @patch("fbpcp.util.yaml.dump")
     @patch("fbpmp.scripts.gen_config.update_dict")
     def test_gen_config(self, mock_update, mock_dump, mock_load):
         args = {

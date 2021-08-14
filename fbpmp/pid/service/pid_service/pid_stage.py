@@ -9,9 +9,9 @@ import logging
 import os
 from typing import Any, Dict, List
 
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage import PathType, StorageService
-from fbpcs.util import reflect
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import PathType, StorageService
+from fbpcp.util import reflect
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.pid.entity.pid_instance import PIDInstanceStatus, PIDStageStatus
 from fbpmp.pid.entity.pid_stages import UnionPIDStage

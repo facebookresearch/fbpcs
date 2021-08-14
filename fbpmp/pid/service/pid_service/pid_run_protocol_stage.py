@@ -8,14 +8,14 @@ import asyncio
 import logging
 from typing import Dict, Any, List, Optional
 
-from fbpcs.entity.container_instance import (
+from fbpcp.entity.container_instance import (
     ContainerInstance,
     ContainerInstanceStatus,
 )
-from fbpcs.service.onedocker import OneDockerService
-from fbpcs.service.storage import StorageService
-from fbpcs.util import reflect
-from fbpcs.util.typing import checked_cast
+from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
+from fbpcp.util import reflect
+from fbpcp.util.typing import checked_cast
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.pid.service.credential_service.cloud_credential_service import CloudCredentialService

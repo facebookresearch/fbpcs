@@ -37,7 +37,7 @@ from pathlib import Path, PurePath
 
 import schema
 from docopt import docopt
-from fbpcs.util import yaml
+from fbpcp.util import yaml
 from fbpmp.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpmp.pl_coordinator.pl_service_wrapper import (
     aggregate,

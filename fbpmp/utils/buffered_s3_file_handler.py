@@ -9,7 +9,7 @@ import pathlib
 import tempfile
 from typing import Optional
 
-from fbpcs.service.storage_s3 import S3StorageService
+from fbpcp.service.storage_s3 import S3StorageService
 
 
 class BufferedS3Reader(contextlib.AbstractContextManager):

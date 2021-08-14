@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Union, Optional
 
-from fbpcs.entity.instance_base import InstanceBase
-from fbpcs.entity.mpc_instance import MPCInstance, MPCInstanceStatus
+from fbpcp.entity.instance_base import InstanceBase
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpmp.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,

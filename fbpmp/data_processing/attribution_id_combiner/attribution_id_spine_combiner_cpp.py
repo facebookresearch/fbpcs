@@ -8,8 +8,8 @@ import asyncio
 import logging
 from typing import Optional
 
-from fbpcs.entity.container_instance import ContainerInstanceStatus
-from fbpcs.service.onedocker import OneDockerService
+from fbpcp.entity.container_instance import ContainerInstanceStatus
+from fbpcp.service.onedocker import OneDockerService
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.pid.service.pid_service.pid_stage import PIDStage
 
