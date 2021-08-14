@@ -1,12 +1,3 @@
-provider "aws" {
-  profile = "default"
-  region  = var.aws_region
-}
-
-terraform {
-  backend "s3" {}
-}
-
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -81,7 +72,7 @@ resource "aws_default_security_group" "default" {
     from_port   = 5000
     to_port     = 15500
     protocol    = "tcp"
-    cidr_blocks = var.publisher_vpc_cidrs
+    cidr_blocks = [var.publisher_vpc_cidr]
   }
 
   egress {
