@@ -3,21 +3,6 @@ output "aws_ecs_cluster_name" {
   description = "The name of the ecs cluster"
 }
 
-output "onedocker_task_definition_family" {
-  value       = aws_ecs_task_definition.onedocker_task_def.family
-  description = "The family of the onedocker task definition"
-}
-
-output "onedocker_task_definition_revision" {
-  value       = aws_ecs_task_definition.onedocker_task_def.revision
-  description = "The revision of the onedocker task definition"
-}
-
-output "onedocker_task_definition_container_definitons" {
-  value       = aws_ecs_task_definition.onedocker_task_def.container_definitions
-  description = "The container definitions in the onedocker task definition"
-}
-
 output "vpc_id" {
   value       = aws_vpc.main.id
   description = "The id of the provisioned VPC"
