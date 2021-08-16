@@ -33,8 +33,8 @@ variable "subnet1_cidr" {
   default     = "10.1.128.0/17"
 }
 
-variable "publisher_vpc_cidr" {
-  description = "Publisher's VPC's CIDR block, it should not overlap with existing VPCs' CIDR"
+variable "otherparty_vpc_cidr" {
+  description = "Other party's VPC's CIDR block, it should not overlap with existing VPCs' CIDR"
   default     = "10.0.0.0/16"
 }
 

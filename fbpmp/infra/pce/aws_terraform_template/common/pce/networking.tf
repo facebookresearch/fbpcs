@@ -68,11 +68,11 @@ resource "aws_default_security_group" "default" {
   }
 
   ingress {
-    description = "Open ports 5000-15500 to publisher VPC"
+    description = "Open ports 5000-15500 to other party VPC"
     from_port   = 5000
     to_port     = 15500
     protocol    = "tcp"
-    cidr_blocks = [var.publisher_vpc_cidr]
+    cidr_blocks = [var.otherparty_vpc_cidr]
   }
 
   egress {
