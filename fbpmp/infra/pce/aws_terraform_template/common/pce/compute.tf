@@ -1,12 +1,3 @@
-provider "aws" {
-  profile = "default"
-  region  = var.aws_region
-}
-
-terraform {
-  backend "s3" {}
-}
-
 resource "aws_ecs_cluster" "main" {
   name = "onedocker-cluster${var.tag_postfix}"
 

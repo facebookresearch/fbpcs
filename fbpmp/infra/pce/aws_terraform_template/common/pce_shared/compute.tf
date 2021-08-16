@@ -1,12 +1,3 @@
-provider "aws" {
-  profile = "default"
-  region  = var.aws_region
-}
-
-terraform {
-  backend "s3" {}
-}
-
 data "aws_arn" "ecs_task_execution_role_arn" {
   arn = "arn:aws:iam::${var.aws_account_id}:role/onedocker-ecs-task-execution-role${var.tag_postfix}"
 }
