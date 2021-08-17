@@ -15,6 +15,7 @@ from fbpcp.service.storage import StorageService
 from fbpcp.util import yaml
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.pid.entity.pid_instance import (
+    PIDInstance,
     PIDInstanceStatus,
     PIDProtocol,
     PIDRole,
@@ -114,50 +115,70 @@ class PIDDispatcher(Dispatcher):
                     enum_to_stage_map[node], enum_to_stage_map[connection]
                 )
 
+        instance = self.instance_repository.read(self.instance_id)
+        # if this is the first run, initialize the stages_status dict. Knowing
+        # all of the different possible stages will help the pid service determine when
+        # an instance is done later on.
+        if not instance.stages_status:
+            instance.stages_status = {
+                str(stage.stage_type): PIDStageStatus.UNKNOWN
+                for stage in enum_to_stage_map.values()
+            }
+            self.instance_repository.update(instance)
+
         # find out the beginning stages and add their input paths
         for stage_node in self._find_eligible_stages():
             self.stage_inputs[stage_node].add_to_inputs(input_path)
 
+    async def run_stage(
+        self, stage: PIDStage, wait_for_containers: Optional[bool] = True
+    ) -> PIDStageStatus:
+        if stage not in self._find_eligible_stages():
+            raise PIDStageFailureError(f"{stage} is not yet eligible to be run.")
+        instance = self.instance_repository.read(self.instance_id)
+        if (
+            instance.stages_status.get(str(stage.stage_type), None)
+            is PIDStageStatus.STARTED
+        ):
+            raise PIDStageFailureError(f"{stage} already has status STARTED")
+
+        res = await stage.run(self.stage_inputs[stage])
+        self.logger.info(f"{stage}: {res}")
+        if res is PIDStageStatus.FAILED:
+            self._update_instance_status(PIDInstanceStatus.FAILED)
+            raise PIDStageFailureError(f"Stage failed: {stage}")
+        elif res is PIDStageStatus.COMPLETED:
+            self._cleanup_complete_stages([stage])
+        return res
+
+    async def run_next(self) -> PIDInstanceStatus:
+        ready_stages = self._find_eligible_stages()
+        if not ready_stages:
+            self._update_instance_status(PIDInstanceStatus.COMPLETED)
+            return PIDInstanceStatus.COMPLETED
+
+        self._update_instance_status(PIDInstanceStatus.STARTED)
+
+        await asyncio.gather(*[self.run_stage(stage) for stage in ready_stages])
+        instance = self.instance_repository.read(self.instance_id)
+        return instance.status
+
     async def run_all(
         self,
     ) -> None:
-        ready_stages = self._find_eligible_stages()
+        status = PIDInstanceStatus.STARTED
+        while status is not PIDInstanceStatus.COMPLETED:
+            status = await self.run_next()
 
-        # Right before running any stages, write STARTED instance status to repo
-        instance = self.instance_repository.read(self.instance_id)
-        instance.status = PIDInstanceStatus.STARTED
-        self.instance_repository.update(instance)
-
-        iteration = 1
-        while ready_stages:
-            self.logger.info(f"Iteration {iteration} running stages {ready_stages}")
-            iteration += 1
-
-            # run all the eligible stages
-            res = await self._run_eligible_stages(ready_stages)
-            # validate if anything failed, if it did break
-            # TODO: add retry/smart failover logic in future
-            for stage, val in zip(ready_stages, res):
-                # throw exception if not succeeded
-                if val is not PIDStageStatus.COMPLETED:
-                    raise PIDStageFailureError(f"Stage failed: {stage}")
-
-            # clean up the complete stages
-            self._cleanup_complete_stages(ready_stages)
-
-            # get ready for the next set of eligible stages
-            ready_stages = self._find_eligible_stages()
         self.logger.info("Finished all stages in PIDDispatcher")
-
-        # Once successfully executed all stages, write COMPLETED instance status to repo
-        instance = self.instance_repository.read(self.instance_id)
-        instance.status = PIDInstanceStatus.COMPLETED
-        self.instance_repository.update(instance)
 
     def _find_eligible_stages(self) -> List[PIDStage]:
         # Create a queue and find out which are the stages
         # which don't depend on any other stages
         # These would be the very first ones to be executed
+
+        # clear out the already finished stages
+        self._cleanup_complete_stages()
         run_ready_stages = []
         for node in self.dag.nodes:
             if self.dag.in_degree(node) == 0:
@@ -171,12 +192,31 @@ class PIDDispatcher(Dispatcher):
             *[stage.run(self.stage_inputs[stage]) for stage in stages]
         )
 
-    def _cleanup_complete_stages(self, stages: List[PIDStage]) -> None:
+    def _cleanup_complete_stages(
+        self, finished_stages: Optional[List[PIDStage]] = None
+    ) -> None:
         # For all the done stages, update the next ones.
         # For successors, the input paths would depend on the
         # output paths of the currently finished stages
-        for stage in stages:
+
+        if not finished_stages:
+            instance = self.instance_repository.read(self.instance_id)
+            finished_stages = [
+                node
+                for node in self.dag.nodes
+                if self.dag.in_degree(node) == 0
+                and instance.stages_status.get(str(node.stage_type), None)
+                is PIDStageStatus.COMPLETED
+            ]
+        for stage in finished_stages:
             for next_stage in self.dag.successors(stage):
                 for output_path in self.stage_inputs[stage].output_paths:
                     self.stage_inputs[next_stage].add_to_inputs(output_path)
             self.dag.remove_node(stage)
+
+    def _update_instance_status(self, new_status: PIDInstanceStatus) -> PIDInstance:
+        instance = self.instance_repository.read(self.instance_id)
+        if instance.status is not new_status:
+            instance.status = new_status
+            self.instance_repository.update(instance)
+        return instance
