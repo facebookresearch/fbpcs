@@ -22,3 +22,13 @@ variable "vpc_id" {
   description = "requester's VPC id"
   default     = ""
 }
+
+variable "route_table_id" {
+  description = "The id of the route table"
+  default     = ""
+}
+
+variable "destination_cidr_block" {
+  description = "The CIDR block of the peer VPC"
+  default     = "10.0.0.0/16"
+}
