@@ -16,7 +16,11 @@ from fbpmp.pcf.tests.async_utils import AsyncMock
 from fbpmp.pcf.tests.async_utils import to_sync
 from fbpmp.pid.entity.pid_instance import PIDInstance
 from fbpmp.pid.entity.pid_instance import PIDProtocol, PIDRole, PIDStageStatus
-from fbpmp.pid.entity.pid_stages import PIDFlowUnsupportedError, UnionPIDStage
+from fbpmp.pid.entity.pid_stages import (
+    PIDStageFailureError,
+    PIDFlowUnsupportedError,
+    UnionPIDStage,
+)
 from fbpmp.pid.service.coordination.file_coordination import FileCoordinationService
 from fbpmp.pid.service.pid_service.pid_dispatcher import PIDDispatcher
 from fbpmp.pid.service.pid_service.pid_execution_map import PIDFlow
@@ -296,6 +300,167 @@ class TestPIDDispatcher(unittest.TestCase):
         self.assertEqual(len(dispatcher.dag.nodes), 0)
         # Expect each (mocked) node to have called run() once
         self.assertEqual(complete_mock.mock.call_count, 3)
+
+    @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDProtocolRunStage")
+    @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDPrepareStage")
+    @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDShardStage")
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
+    @to_sync
+    async def test_union_pid_run_stages_one_by_one(
+        self,
+        mock_instance_repo,
+        mock_aws_container_service,
+        mock_onedocker_service,
+        mock_s3_storage_service,
+        mock_pid_shard_stage,
+        mock_pid_prepare_stage,
+        mock_pid_run_protocol_stage,
+    ):
+        mock_pid_shard_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
+        mock_pid_prepare_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
+        mock_pid_run_protocol_stage().run = AsyncMock(
+            return_value=PIDStageStatus.COMPLETED
+        )
+
+        instance_id = "456"
+        protocol = PIDProtocol.UNION_PID
+        pid_role = PIDRole.PARTNER
+        num_shards = 50
+        input_path = "abc.text"
+        output_path = "def.txt"
+        pid_config = "config.yml"
+
+        dispatcher = PIDDispatcher(
+            instance_id=instance_id, instance_repository=mock_instance_repo
+        )
+
+        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
+            dispatcher.build_stages(
+                input_path=input_path,
+                output_path=output_path,
+                num_shards=num_shards,
+                pid_config=pid_config,
+                protocol=protocol,
+                role=pid_role,
+                storage_svc=mock_s3_storage_service,
+                onedocker_svc=mock_onedocker_service,
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+                fail_fast=True,
+            )
+
+        # pre-run DAG should have 3 nodes
+        self.assertEqual(len(dispatcher.dag.nodes), 3)
+        await dispatcher.run_stage(mock_pid_shard_stage())
+        self.assertEqual(len(dispatcher.dag.nodes), 2)
+
+        # attempt to run out of order
+        with self.assertRaises(PIDStageFailureError):
+            await dispatcher.run_stage(mock_pid_run_protocol_stage())
+        # dag should not have been affected
+        self.assertEqual(len(dispatcher.dag.nodes), 2)
+
+        # continue running in correct order
+        await dispatcher.run_stage(mock_pid_prepare_stage())
+        self.assertEqual(len(dispatcher.dag.nodes), 1)
+
+        await dispatcher.run_stage(mock_pid_run_protocol_stage())
+        self.assertEqual(len(dispatcher.dag.nodes), 0)
+
+        # attempt to rerun an already completed stage
+        with self.assertRaises(PIDStageFailureError):
+            await dispatcher.run_stage(mock_pid_run_protocol_stage())
+
+        # each stage should only have been called once
+        mock_pid_shard_stage().run.mock.assert_called_once()
+        mock_pid_prepare_stage().run.mock.assert_called_once()
+        mock_pid_run_protocol_stage().run.mock.assert_called_once()
+
+    @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDProtocolRunStage")
+    @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDPrepareStage")
+    @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDShardStage")
+    @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
+    @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
+    @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
+    @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
+    @to_sync
+    async def test_union_pid_run_only_unfinished_stages(
+        self,
+        mock_instance_repo,
+        mock_aws_container_service,
+        mock_onedocker_service,
+        mock_s3_storage_service,
+        mock_pid_shard_stage,
+        mock_pid_prepare_stage,
+        mock_pid_run_protocol_stage,
+    ):
+        mock_pid_shard_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
+        mock_pid_prepare_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
+        mock_pid_run_protocol_stage().run = AsyncMock(
+            return_value=PIDStageStatus.COMPLETED
+        )
+
+        instance_id = "456"
+        protocol = PIDProtocol.UNION_PID
+        pid_role = PIDRole.PARTNER
+        num_shards = 50
+        is_validating = False
+        input_path = "abc.text"
+        output_path = "def.txt"
+        pid_config = "config.yml"
+
+        dispatcher = PIDDispatcher(
+            instance_id=instance_id, instance_repository=mock_instance_repo
+        )
+
+        sample_pid_instance = self._get_sample_pid_instance(
+            instance_id=instance_id,
+            protocol=protocol,
+            pid_role=pid_role,
+            num_shards=num_shards,
+            is_validating=is_validating,
+            input_path=input_path,
+            output_path=output_path,
+        )
+        # make the instance think it has completed the shard stage previously
+        sample_pid_instance.stages_status[
+            str(mock_pid_shard_stage().stage_type)
+        ] = PIDStageStatus.COMPLETED
+        # make the instance think it has attempted and failed the prepare stage previously
+        sample_pid_instance.stages_status[
+            str(mock_pid_prepare_stage().stage_type)
+        ] = PIDStageStatus.FAILED
+        dispatcher.instance_repository.read = MagicMock(
+            return_value=sample_pid_instance
+        )
+
+        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
+            dispatcher.build_stages(
+                input_path=input_path,
+                output_path=output_path,
+                num_shards=num_shards,
+                pid_config=pid_config,
+                protocol=protocol,
+                role=pid_role,
+                storage_svc=mock_s3_storage_service,
+                onedocker_svc=mock_onedocker_service,
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+                fail_fast=True,
+            )
+
+        # pre-run DAG should have 2 nodes, since PID Shard is already finished
+        self.assertEqual(len(dispatcher.dag.nodes), 2)
+        await dispatcher.run_all()
+        # post run DAG should be empty
+        self.assertEqual(len(dispatcher.dag.nodes), 0)
+        # pid shard stage was already finished, so it should not be called again
+        mock_pid_shard_stage().run.mock.assert_not_called()
+        # prepare failed, so it should run again
+        mock_pid_prepare_stage().run.mock.assert_called_once()
+        # pid run was never attempted, so it should run
+        mock_pid_run_protocol_stage().run.mock.assert_called_once()
 
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDShardStage")
     @patch("fbpmp.pid.service.pid_service.pid_stage_mapper.PIDPrepareStage")
