@@ -6,7 +6,7 @@
 
 # pyre-strict
 
-from fbpcp.repository.instance_local import LocalInstanceRepository
+from fbpmp.common.repository.instance_local import LocalInstanceRepository
 from fbpmp.pid.entity.pid_instance import PIDInstance
 from fbpmp.pid.repository.pid_instance import PIDInstanceRepository
 

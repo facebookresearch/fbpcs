@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Union, Optional
 
-from fbpcp.entity.instance_base import InstanceBase
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
+from fbpmp.common.entity.instance_base import InstanceBase
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpmp.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
@@ -66,8 +66,10 @@ class PrivateComputationInstance(InstanceBase):
     num_containers: Optional[
         int
     ] = None  # assign when create instance; reused by id match, compute and aggregate
-    input_path: Optional[str] = None # assign when create instance; reused by id match
-    output_dir: Optional[str] = None # assign when create instance; reused by id match, compute and aggregate
+    input_path: Optional[str] = None  # assign when create instance; reused by id match
+    output_dir: Optional[
+        str
+    ] = None  # assign when create instance; reused by id match, compute and aggregate
     spine_path: Optional[str] = None  # assign when id match; reused by compute
     data_path: Optional[str] = None  # assign when id match; reused by compute
     compute_output_path: Optional[

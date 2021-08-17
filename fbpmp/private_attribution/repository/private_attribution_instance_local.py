@@ -8,7 +8,7 @@
 
 from typing import cast
 
-from fbpcp.repository.instance_local import LocalInstanceRepository
+from fbpmp.common.repository.instance_local import LocalInstanceRepository
 from fbpmp.private_attribution.entity.private_attribution_instance import (
     PrivateAttributionInstance,
 )

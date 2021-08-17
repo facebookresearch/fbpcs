@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Optional
 
-from fbpcp.entity.instance_base import InstanceBase
+from fbpmp.common.entity.instance_base import InstanceBase
 from fbpmp.post_processing_handler.post_processing_handler import (
     PostProcessingHandler,
     PostProcessingHandlerStatus,

@@ -11,7 +11,7 @@ from enum import Enum, IntEnum
 from typing import Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
-from fbpcp.entity.instance_base import InstanceBase
+from fbpmp.common.entity.instance_base import InstanceBase
 
 
 class PIDRole(IntEnum):

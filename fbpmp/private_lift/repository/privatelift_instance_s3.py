@@ -6,9 +6,11 @@
 
 # pyre-strict
 
-from fbpcp.repository.instance_s3 import S3InstanceRepository
 from fbpcp.service.storage_s3 import S3StorageService
-from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstance
+from fbpmp.common.repository.instance_s3 import S3InstanceRepository
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstance,
+)
 from fbpmp.private_lift.repository.privatelift_instance import (
     PrivateLiftInstanceRepository,
 )
