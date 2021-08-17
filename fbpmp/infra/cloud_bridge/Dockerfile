@@ -40,7 +40,7 @@ RUN terraform --version
 RUN mkdir /terraform_deployment
 ADD deploy.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
-ADD aws_terraform_template /terraform_deployment/terraform_scripts
+ADD data_ingestion /terraform_deployment/terraform_scripts
 ADD config.yml /terraform_deployment
 
 ##########################################
