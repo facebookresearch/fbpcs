@@ -17,35 +17,3 @@ variable "aws_account_id" {
   description = "your aws account id, that's used to create the task_execution_role and task_role"
   default     = ""
 }
-
-variable "vpc_cidr" {
-  description = "VPC's CIDR block, it should not overlap with existing VPCs' CIDR"
-  default     = "10.1.0.0/16"
-}
-
-variable "subnet0_cidr" {
-  description = "CIDR block of subnet 0"
-  default     = "10.1.0.0/17"
-}
-
-variable "subnet1_cidr" {
-  description = "CIDR block of subnet 1"
-  default     = "10.1.128.0/17"
-}
-
-variable "otherparty_vpc_cidr" {
-  description = "Other party's VPC's CIDR block, it should not overlap with existing VPCs' CIDR"
-  default     = "10.0.0.0/16"
-}
-
-variable "ingress_rules" {
-  default = {}
-  type = map(object({
-    description = string
-    from_port   = number
-    to_port     = number
-    protocol    = string
-    cidr_blocks = list(string)
-  }))
-  description = "Security group ingress rules"
-}
