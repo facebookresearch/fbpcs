@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from typing import DefaultDict, Dict, List, Optional, Any, TypeVar, Tuple, Iterator
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
@@ -579,7 +579,7 @@ class PrivateLiftService:
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
-            mpc_role=self._map_pl_role_to_mpc_role(pl_instance.role),
+            mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
             num_containers=len(game_args),
             binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
             server_ips=server_ips,
@@ -713,7 +713,7 @@ class PrivateLiftService:
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
                 game_name="shard_aggregator",
-                mpc_role=self._map_pl_role_to_mpc_role(pl_instance.role),
+                mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=2,
                 binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
                 server_ips=server_ips,
@@ -734,7 +734,7 @@ class PrivateLiftService:
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
                 game_name="shard_aggregator",
-                mpc_role=self._map_pl_role_to_mpc_role(pl_instance.role),
+                mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=1,
                 binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
                 server_ips=server_ips,
@@ -967,7 +967,7 @@ class PrivateLiftService:
         self,
         instance_id: str,
         game_name: str,
-        mpc_role: MPCRole,
+        mpc_party: MPCParty,
         num_containers: int,
         binary_version: str,
         server_ips: Optional[List[str]] = None,
@@ -977,7 +977,7 @@ class PrivateLiftService:
         self.mpc_svc.create_instance(
             instance_id=instance_id,
             game_name=game_name,
-            mpc_role=mpc_role,
+            mpc_party=mpc_party,
             num_workers=num_containers,
             game_args=game_args,
         )
@@ -988,10 +988,10 @@ class PrivateLiftService:
             version=binary_version,
         )
 
-    def _map_pl_role_to_mpc_role(self, pl_role: PrivateComputationRole) -> MPCRole:
+    def _map_pl_role_to_mpc_party(self, pl_role: PrivateComputationRole) -> MPCParty:
         return {
-            PrivateComputationRole.PUBLISHER: MPCRole.SERVER,
-            PrivateComputationRole.PARTNER: MPCRole.CLIENT,
+            PrivateComputationRole.PUBLISHER: MPCParty.SERVER,
+            PrivateComputationRole.PARTNER: MPCParty.CLIENT,
         }[pl_role]
 
     def _map_pl_role_to_pid_role(self, pl_role: PrivateComputationRole) -> PIDRole:

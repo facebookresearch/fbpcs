@@ -11,7 +11,7 @@ import logging
 import math
 from typing import Any, DefaultDict, Dict, List, Optional
 
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCRole
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
@@ -369,7 +369,7 @@ class PrivateAttributionService:
         self,
         instance_id: str,
         game_name: str,
-        mpc_role: MPCRole,
+        mpc_party: MPCParty,
         num_containers: int,
         binary_version: str,
         server_ips: Optional[List[str]] = None,
@@ -380,7 +380,7 @@ class PrivateAttributionService:
         self.mpc_svc.create_instance(
             instance_id=instance_id,
             game_name=game_name,
-            mpc_role=mpc_role,
+            mpc_party=mpc_party,
             num_workers=num_containers,
             game_args=game_args,
         )
@@ -457,7 +457,7 @@ class PrivateAttributionService:
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
-            mpc_role=self._map_pa_role_to_mpc_role(pa_instance.role),
+            mpc_party=self._map_pa_role_to_mpc_party(pa_instance.role),
             num_containers=pa_instance.num_mpc_containers,
             binary_version=binary_config.binary_version,
             server_ips=server_ips,
@@ -559,7 +559,7 @@ class PrivateAttributionService:
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
             game_name=game,
-            mpc_role=self._map_pa_role_to_mpc_role(pa_instance.role),
+            mpc_party=self._map_pa_role_to_mpc_party(pa_instance.role),
             num_containers=1,
             binary_version=binary_config.binary_version,
             server_ips=server_ips,
@@ -574,10 +574,10 @@ class PrivateAttributionService:
 
         return pa_instance
 
-    def _map_pa_role_to_mpc_role(self, pa_role: PrivateAttributionRole) -> MPCRole:
+    def _map_pa_role_to_mpc_party(self, pa_role: PrivateAttributionRole) -> MPCParty:
         return {
-            PrivateAttributionRole.PUBLISHER: MPCRole.SERVER,
-            PrivateAttributionRole.PARTNER: MPCRole.CLIENT,
+            PrivateAttributionRole.PUBLISHER: MPCParty.SERVER,
+            PrivateAttributionRole.PARTNER: MPCParty.CLIENT,
         }[pa_role]
 
     def _map_pa_role_to_pid_role(self, pa_role: PrivateAttributionRole) -> PIDRole:

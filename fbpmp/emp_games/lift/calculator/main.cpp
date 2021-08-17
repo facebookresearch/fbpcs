@@ -22,12 +22,7 @@
 #include <fbpcf/mpc/MpcAppExecutor.h>
 #include "CalculatorApp.h"
 
-// TODO: T96692057 will delete role, keeping for now so that code doesn't break
-// while mpc service still expects to be able to pass this in
-DEFINE_int32(role, 1, "1 = publisher, 2 = partner");
-// TODO: T96692057 if party is not 0, we know to use it instead of role.
-// (we prefer using party if it was specified)
-DEFINE_int32(party, 0, "1 = publisher, 2 = partner");
+DEFINE_int32(party, 1, "1 = publisher, 2 = partner");
 DEFINE_string(server_ip, "127.0.0.1", "Server's IP Address");
 DEFINE_int32(
     port,
@@ -139,7 +134,7 @@ int main(int argc, char** argv) {
       outputFileLogList << "\t\t" << outputFilepath << "\n";
     }
     XLOG(INFO) << "Running conversion lift with settings:\n"
-               << "\trole: " << FLAGS_role << "\n"
+               << "\tparty: " << FLAGS_party << "\n"
                << "\tserver_ip_address: " << FLAGS_server_ip << "\n"
                << "\tport: " << FLAGS_port << "\n"
                << "\tconcurrency: " << FLAGS_concurrency << "\n"
@@ -147,10 +142,7 @@ int main(int argc, char** argv) {
                << "\toutput: " << outputFileLogList.str();
   }
 
-  // TODO: T96692057 deprecate support for role.
-  // Prefer using party if it was specified
-  auto party = (FLAGS_party == 0) ? static_cast<fbpcf::Party>(FLAGS_role) :
-                                    static_cast<fbpcf::Party>(FLAGS_party);
+  auto party = static_cast<fbpcf::Party>(FLAGS_party);
 
   // since DEFINE_INT16 is not supported, cast int32_t FLAGS_concurrency to
   // int16_t is necessarys here

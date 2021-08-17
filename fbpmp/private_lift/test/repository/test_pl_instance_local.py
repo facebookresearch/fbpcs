@@ -8,7 +8,7 @@ import random
 import string
 import unittest
 
-from fbpcp.entity.mpc_instance import MPCInstance, MPCRole
+from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -26,7 +26,7 @@ class TestLocalPLInstanceRepository(unittest.TestCase):
         self.test_mpc_instance = MPCInstance.create_instance(
             instance_id=instance_id,
             game_name="conversion_lift",
-            mpc_role=MPCRole.SERVER,
+            mpc_party=MPCParty.SERVER,
             num_workers=2,
         )
 
@@ -57,7 +57,7 @@ class TestLocalPLInstanceRepository(unittest.TestCase):
         test_mpc_instance_new = MPCInstance.create_instance(
             instance_id=instance_id,
             game_name="aggregation",
-            mpc_role=MPCRole.SERVER,
+            mpc_party=MPCParty.SERVER,
             num_workers=1,
         )
         instances_new = [self.test_mpc_instance, test_mpc_instance_new]

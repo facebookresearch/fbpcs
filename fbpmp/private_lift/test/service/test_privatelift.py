@@ -9,7 +9,7 @@ from collections import defaultdict
 from unittest.mock import MagicMock, call, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcp.service.mpc import MPCInstance, MPCInstanceStatus, MPCRole, MPCService
+from fbpcp.service.mpc import MPCInstance, MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
@@ -128,7 +128,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance = MPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name="lift",
-            mpc_role=MPCRole.SERVER,
+            mpc_party=MPCParty.SERVER,
             num_workers=2,
         )
         test_pl_id = "test_pl_id"
@@ -373,7 +373,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_game_name = "lift"
         test_num_containers = 3
         test_num_files = 5
-        test_mpc_role = MPCRole.CLIENT
+        test_mpc_party = MPCParty.CLIENT
         test_input_base_path = "indir/infile"
         test_output_base_path = "outdir/outfile"
         test_concurrency = 2
@@ -415,7 +415,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance = MPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
-            mpc_role=test_mpc_role,
+            mpc_party=test_mpc_party,
             num_workers=test_num_containers,
         )
         self.pl_service._create_and_start_mpc_instance = AsyncMock(
@@ -450,8 +450,8 @@ class TestPrivateLiftService(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            test_mpc_role,
-            self.pl_service._create_and_start_mpc_instance.call_args[1]["mpc_role"],
+            test_mpc_party,
+            self.pl_service._create_and_start_mpc_instance.call_args[1]["mpc_party"],
         )
         self.assertEqual(
             test_server_ips,
@@ -477,7 +477,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance = MPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
-            mpc_role=MPCRole.CLIENT,
+            mpc_party=MPCParty.CLIENT,
             num_workers=test_num_containers,
             status=MPCInstanceStatus.FAILED,
         )
@@ -560,7 +560,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance = MPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name="lift",
-            mpc_role=MPCRole.SERVER,
+            mpc_party=MPCParty.SERVER,
             num_workers=test_num_containers,
             status=MPCInstanceStatus.COMPLETED,
         )
@@ -614,7 +614,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance = MPCInstance.create_instance(
             instance_id=test_pl_id + "_aggregate_metrics",
             game_name="shard_aggregator",
-            mpc_role=MPCRole.SERVER,
+            mpc_party=MPCParty.SERVER,
             num_workers=2,
             status=MPCInstanceStatus.FAILED,
         )
@@ -710,7 +710,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
         instance_id = "test_instance_id"
         game_name = "lift"
-        mpc_role = MPCRole.CLIENT
+        mpc_party = MPCParty.CLIENT
         num_containers = 4
         input_file = "input_file"
         output_file = "output_file"
@@ -731,7 +731,7 @@ class TestPrivateLiftService(unittest.TestCase):
         await self.pl_service._create_and_start_mpc_instance(
             instance_id=instance_id,
             game_name=game_name,
-            mpc_role=mpc_role,
+            mpc_party=mpc_party,
             num_containers=num_containers,
             binary_version=binary_version,
             container_timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
@@ -744,7 +744,7 @@ class TestPrivateLiftService(unittest.TestCase):
             call(
                 instance_id=instance_id,
                 game_name=game_name,
-                mpc_role=mpc_role,
+                mpc_party=mpc_party,
                 num_workers=num_containers,
                 game_args=game_args,
             ),
@@ -761,14 +761,14 @@ class TestPrivateLiftService(unittest.TestCase):
             self.pl_service.mpc_svc.start_instance_async.call_args,
         )
 
-    def test_map_pl_role_to_mpc_role(self):
+    def test_map_pl_role_to_mpc_party(self):
         self.assertEqual(
-            MPCRole.SERVER,
-            self.pl_service._map_pl_role_to_mpc_role(PrivateComputationRole.PUBLISHER),
+            MPCParty.SERVER,
+            self.pl_service._map_pl_role_to_mpc_party(PrivateComputationRole.PUBLISHER),
         )
         self.assertEqual(
-            MPCRole.CLIENT,
-            self.pl_service._map_pl_role_to_mpc_role(PrivateComputationRole.PARTNER),
+            MPCParty.CLIENT,
+            self.pl_service._map_pl_role_to_mpc_party(PrivateComputationRole.PARTNER),
         )
 
     def test_map_pl_role_to_pid_role(self):
@@ -786,7 +786,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance = MPCInstance.create_instance(
             instance_id="test_mpc_id",
             game_name="shard_aggregator",
-            mpc_role=MPCRole.SERVER,
+            mpc_party=MPCParty.SERVER,
             num_workers=2,
             status=MPCInstanceStatus.FAILED,
         )
@@ -916,14 +916,14 @@ class TestPrivateLiftService(unittest.TestCase):
         test_mpc_id = test_pl_id + "_compute_metrics"
         test_game_name = "lift"
         test_num_containers = 3
-        test_mpc_role = MPCRole.CLIENT
+        test_mpc_party = MPCParty.CLIENT
 
         # prepare the pl instance that will be read in to memory from the repository
         # at the beginning of the cancel_current_stage function
         mpc_instance_started = MPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
-            mpc_role=test_mpc_role,
+            mpc_party=test_mpc_party,
             num_workers=test_num_containers,
             status=MPCInstanceStatus.STARTED,
         )
@@ -940,7 +940,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance_canceled = MPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
-            mpc_role=test_mpc_role,
+            mpc_party=test_mpc_party,
             num_workers=test_num_containers,
             status=MPCInstanceStatus.CANCELED,
         )
@@ -988,7 +988,7 @@ class TestPrivateLiftService(unittest.TestCase):
         mpc_instance = MPCInstance.create_instance(
             instance_id="mpc_instance",
             game_name="lift",
-            mpc_role=MPCRole.SERVER,
+            mpc_party=MPCParty.SERVER,
             num_workers=2,
             status=MPCInstanceStatus.FAILED,
             containers=[
