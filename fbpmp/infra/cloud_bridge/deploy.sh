@@ -64,32 +64,31 @@ undeploy_aws_resources () {
     echo "Start undeploying..."
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/vpcpeering$tag_postfix.tfstate" "$aws_account_id"
-    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/ecs$tag_postfix.tfstate" "$aws_account_id"
-    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/networking$tag_postfix.tfstate" "$aws_account_id"
+    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce$tag_postfix.tfstate" "$aws_account_id"
+    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce_shared$tag_postfix.tfstate" "$aws_account_id"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/data_ingestion$tag_postfix.tfstate" "$aws_account_id"
     echo "All tfstate files exist. Continue..."
 
     echo "########################Delete VPC Peering connection########################"
-    cd /terraform_deployment/terraform_scripts/vpc_peering
+    cd /terraform_deployment/terraform_scripts/partner/vpc_peering
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
 
-    echo "########################Delete ECS related resources########################"
-    cd /terraform_deployment/terraform_scripts/ecs
+    echo "########################Delete PCE resources########################"
+    cd /terraform_deployment/terraform_scripts/common/pce
+    terraform destroy \
+        -auto-approve \
+        -var "aws_region=$region" \
+        -var "tag_postfix=$tag_postfix"
+
+    cd /terraform_deployment/terraform_scripts/common/pce_shared
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id"
-
-    echo "########################Delete networking related resources########################"
-    cd /terraform_deployment/terraform_scripts/networking
-    terraform destroy \
-        -auto-approve \
-        -var "aws_region=$region" \
-        -var "tag_postfix=$tag_postfix"
 
     echo "########################Delete Data Ingestion related resources########################"
     cd /terraform_deployment/terraform_scripts/data_ingestion
@@ -130,60 +129,48 @@ else
 fi
 
 
-# Install networking realted Terraform scripts
-echo "########################Deploy networking related Terraform scripts########################"
-cd /terraform_deployment/terraform_scripts/networking
+# Deploy PCE Terraform scripts
+onedocker_ecs_container_image='539290649537.dkr.ecr.us-west-2.amazonaws.com/one-docker-prod:latest'
+publisher_vpc_cidr='10.0.0.0/16'
+
+echo "########################Deploy PCE Terraform scripts########################"
+cd /terraform_deployment/terraform_scripts/common/pce_shared
 terraform init \
     -backend-config "bucket=$s3_bucket_for_storage" \
     -backend-config "region=$region" \
-    -backend-config "key=tfstate/networking$tag_postfix.tfstate"
-terraform apply \
-    -auto-approve \
-    -var "aws_region=$region" \
-    -var "tag_postfix=$tag_postfix" \
-    -var "publisher_vpc_cidrs=[\"10.0.0.0/16\"]"
-
-# Store the outputs into variables
-vpc_id=$(terraform output vpc_id | tr -d '"' )
-subnet0_id=$(terraform output subnet0_id | tr -d '"' )
-subnet1_id=$(terraform output subnet1_id | tr -d '"')
-pl_efs_security_group_id=$(terraform output pl_efs_security_group_id | tr -d '"')
-route_table_id=$(terraform output route_table_id | tr -d '"')
-
-# Install ecs realted Terraform scripts
-echo "########################Deploy ECS related Terraform scripts########################"
-cd /terraform_deployment/terraform_scripts/ecs
-terraform init \
-    -backend-config "bucket=$s3_bucket_for_storage" \
-    -backend-config "region=$region" \
-    -backend-config "key=tfstate/ecs$tag_postfix.tfstate"
+    -backend-config "key=tfstate/pce-shared$tag_postfix.tfstate"
 terraform apply \
     -auto-approve \
     -var "aws_region=$region" \
     -var "tag_postfix=$tag_postfix" \
     -var "aws_account_id=$aws_account_id" \
-    -var "subnet0_id=$subnet0_id" \
-    -var "subnet1_id=$subnet1_id" \
-    -var "pl_efs_security_group_id=$pl_efs_security_group_id" \
-    -var 'data_processing_ecs_container_image=539290649537.dkr.ecr.us-west-2.amazonaws.com/data-processing:latest' \
-    -var 'pid_ecs_container_image=539290649537.dkr.ecr.us-west-2.amazonaws.com/private-id:docker-built' \
-    -var 'pl_ecs_container_image=539290649537.dkr.ecr.us-west-2.amazonaws.com/one-docker-prod:latest'
+    -var "onedocker_ecs_container_image=$onedocker_ecs_container_image"
 
 # Store the outputs into variables
-aws_ecs_cluster_name=$(terraform output aws_ecs_cluster_name | tr -d '"')
-pid_task_definition_family=$(terraform output pid_task_definition_family | tr -d '"')
-pid_task_definition_revision=$(terraform output pid_task_definition_revision | tr -d '"')
-pid_task_definition_container_definiton_name=$(terraform output pid_task_definition_container_definitons | jq 'fromjson | .[].name' | tr -d '"')
-pl_task_definition_family=$(terraform output pl_task_definition_family | tr -d '"')
-pl_task_definition_revision=$(terraform output pl_task_definition_revision | tr -d '"')
-pl_task_definition_container_definiton_name=$(terraform output pl_task_definition_container_definitons | jq 'fromjson | .[].name' | tr -d '"')
-data_processing_task_definition_family=$(terraform output data_processing_task_definition_family | tr -d '"')
-data_processing_task_definition_revision=$(terraform output data_processing_task_definition_revision | tr -d '"')
-data_processing_task_definition_container_definiton_name=$(terraform output data_processing_task_definition_container_definitons | jq 'fromjson | .[].name' | tr -d '"')
+onedocker_task_definition_family=$(terraform output onedocker_task_definition_family | tr -d '"')
+onedocker_task_definition_revision=$(terraform output onedocker_task_definition_revision | tr -d '"')
+onedocker_task_definition_container_definiton_name=$(terraform output onedocker_task_definition_container_definitons | jq 'fromjson | .[].name' | tr -d '"')
 
-# Issue VPC Peering Connection to Publisher's VPC
+cd /terraform_deployment/terraform_scripts/common/pce
+terraform init \
+    -backend-config "bucket=$s3_bucket_for_storage" \
+    -backend-config "region=$region" \
+    -backend-config "key=tfstate/pce$tag_postfix.tfstate"
+terraform apply \
+    -auto-approve \
+    -var "aws_region=$region" \
+    -var "tag_postfix=$tag_postfix" \
+    -var "otherparty_vpc_cidr=$publisher_vpc_cidr"
+
+# Store the outputs into variables
+vpc_id=$(terraform output vpc_id | tr -d '"' )
+subnet0_id=$(terraform output subnet0_id | tr -d '"' )
+route_table_id=$(terraform output route_table_id | tr -d '"')
+aws_ecs_cluster_name=$(terraform output aws_ecs_cluster_name | tr -d '"')
+
+# Issue VPC Peering Connection to Publisher's VPC and add a route to the route table
 echo "########################Issue VPC Peering connection to Publisher's VPC########################"
-cd /terraform_deployment/terraform_scripts/vpc_peering
+cd /terraform_deployment/terraform_scripts/partner/vpc_peering
 terraform init \
     -backend-config "bucket=$s3_bucket_for_storage" \
     -backend-config "region=$region" \
@@ -194,24 +181,13 @@ terraform apply \
     -var "tag_postfix=$tag_postfix" \
     -var "peer_aws_account_id=$publisher_aws_account_id" \
     -var "peer_vpc_id=$publisher_vpc_id" \
-    -var "vpc_id=$vpc_id"
+    -var "vpc_id=$vpc_id" \
+    -var "route_table_id=$route_table_id" \
+    -var "destination_cidr_block=$publisher_vpc_cidr"
 
 # Store the outputs into variables
 vpc_peering_connection_id=$(terraform output vpc_peering_connection_id | tr -d '"' )
-
-# Add one route to the route table to route the traffic to the peering connection
-echo "########################Add one route to the route table########################"
-cd /terraform_deployment/terraform_scripts/traffic_route
-terraform init \
-    -backend-config "bucket=$s3_bucket_for_storage" \
-    -backend-config "region=$region" \
-    -backend-config "key=tfstate/trafficroute$tag_postfix.tfstate"
-
-terraform apply \
-    -auto-approve \
-    -var "route_table_id=$route_table_id" \
-    -var "destination_cidr_block=10.0.0.0/16" \
-    -var "vpc_peering_connection_id=$vpc_peering_connection_id"
+echo "VPC peering connection has been created. ID: $vpc_peering_connection_id"
 
 # Configure Data Ingestion Pipeline from CB to S3
 echo "########################Configure Data Ingestion Pipeline from CB to S3########################"
@@ -244,13 +220,9 @@ echo "Populated cluster with value $aws_ecs_cluster_name"
 sed -i "s/subnets: .*/subnets: [$subnet0_id]/g" config.yml
 echo "Populated subnets with value '[$subnet0_id]'"
 
-pid_task_definition=$pid_task_definition_family:$pid_task_definition_revision#$pid_task_definition_container_definiton_name
-sed -i "s/task_definition: \(TODO_PID\|pid-.*\)/task_definition: $pid_task_definition/g" config.yml
-echo "Populated PID - task_definition with value $pid_task_definition"
-
-pl_task_definition=$pl_task_definition_family:$pl_task_definition_revision#$pl_task_definition_container_definiton_name
-sed -i "s/task_definition: \(TODO_MPC\|pl-.*\)/task_definition: $pl_task_definition/g" config.yml
-echo "Populated MPC - task_definition with value $pl_task_definition"
+onedocker_task_definition=$onedocker_task_definition_family:$onedocker_task_definition_revision#$onedocker_task_definition_container_definiton_name
+sed -i "s/task_definition: TODO_ONEDOCKER_TASK_DEFINITION/task_definition: $onedocker_task_definition/g" config.yml
+echo "Populated Onedocker - task_definition with value $onedocker_task_definition"
 
 sed -i "/access_key_id/d" config.yml
 sed -i "/access_key_data/d" config.yml
