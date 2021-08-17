@@ -46,7 +46,7 @@ class PrivateComputationInstanceStatus(Enum):
 
 
 UnionedPCInstance = Union[PIDInstance, MPCInstance, PostProcessingInstance]
-UniondePCInstanceStatus = Union[
+UnionedPCInstanceStatus = Union[
     PIDInstanceStatus, MPCInstanceStatus, PostProcessingInstanceStatus
 ]
 

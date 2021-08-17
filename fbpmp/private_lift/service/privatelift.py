@@ -44,7 +44,7 @@ from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
     UnionedPCInstance,
-    UniondePCInstanceStatus,
+    UnionedPCInstanceStatus,
 )
 from fbpmp.private_lift.repository.privatelift_instance import (
     PrivateLiftInstanceRepository,
@@ -1022,7 +1022,7 @@ class PrivateLiftService:
 
         STAGE_TO_STATUS_MAPPER: Dict[
             str,
-            Dict[UniondePCInstanceStatus, PrivateComputationInstanceStatus],
+            Dict[UnionedPCInstanceStatus, PrivateComputationInstanceStatus],
         ] = {
             computation_str: {
                 MPCInstanceStatus.STARTED: PrivateComputationInstanceStatus.COMPUTATION_STARTED,
