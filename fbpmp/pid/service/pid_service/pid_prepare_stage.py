@@ -18,7 +18,9 @@ MAX_RETRY = 0
 
 
 class PIDPrepareStage(PIDStage):
-    async def run(self, stage_input: PIDStageInput) -> PIDStageStatus:
+    async def run(
+        self, stage_input: PIDStageInput, wait_for_containers: bool = True
+    ) -> PIDStageStatus:
         self.logger.info(f"[{self}] Called run")
         instance_id = stage_input.instance_id
         # First check that our input data is ready

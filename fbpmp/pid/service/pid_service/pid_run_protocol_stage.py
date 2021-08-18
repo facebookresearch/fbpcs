@@ -18,10 +18,12 @@ from fbpcp.util import reflect
 from fbpcp.util.typing import checked_cast
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
-from fbpmp.pid.service.credential_service.cloud_credential_service import CloudCredentialService
 from fbpmp.pid.entity.pid_instance import PIDStageStatus
 from fbpmp.pid.entity.pid_stages import UnionPIDStage
 from fbpmp.pid.repository.pid_instance import PIDInstanceRepository
+from fbpmp.pid.service.credential_service.cloud_credential_service import (
+    CloudCredentialService,
+)
 from fbpmp.pid.service.pid_service.pid_stage import PIDStage
 from fbpmp.pid.service.pid_service.pid_stage_input import PIDStageInput
 
@@ -58,7 +60,9 @@ class PIDProtocolRunStage(PIDStage):
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     @staticmethod
-    def _build_cloud_credential_service(config: Dict[str, Any]) -> CloudCredentialService:
+    def _build_cloud_credential_service(
+        config: Dict[str, Any]
+    ) -> CloudCredentialService:
         cls = reflect.get_class(config["class"])
         res = cls(**config.get("constructor", {}))
         if not isinstance(res, CloudCredentialService):
@@ -71,7 +75,8 @@ class PIDProtocolRunStage(PIDStage):
     async def run(
         self,
         stage_input: PIDStageInput,
-        container_timeout: Optional[int] = None
+        container_timeout: Optional[int] = None,
+        wait_for_containers: bool = True,
     ) -> PIDStageStatus:
         self.logger.info(f"[{self}] Called run")
         instance_id = stage_input.instance_id

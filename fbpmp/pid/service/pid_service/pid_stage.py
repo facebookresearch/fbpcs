@@ -37,7 +37,9 @@ class PIDStage(abc.ABC):
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     @abc.abstractmethod
-    async def run(self, stage_input: PIDStageInput) -> PIDStageStatus:
+    async def run(
+        self, stage_input: PIDStageInput, wait_for_containers: bool = True
+    ) -> PIDStageStatus:
         """
         Invoke the stage to actually execute. Derived classes must implement
         this method to handle their specific execution.
