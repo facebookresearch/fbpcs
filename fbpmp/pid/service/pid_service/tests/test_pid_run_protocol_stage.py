@@ -5,21 +5,20 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.container_aws import AWSContainerService
 from fbpcp.service.onedocker import OneDockerService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
-from fbpmp.pcf.tests.async_utils import awaitable, to_sync
+from fbpmp.pcf.tests.async_utils import to_sync
 from fbpmp.pid.entity.pid_instance import PIDStageStatus
 from fbpmp.pid.entity.pid_stages import UnionPIDStage
-from fbpmp.pid.repository.pid_instance_local import LocalPIDInstanceRepository
 from fbpmp.pid.service.coordination.file_coordination import FileCoordinationService
 from fbpmp.pid.service.pid_service.pid_run_protocol_stage import PIDProtocolRunStage
 from fbpmp.pid.service.pid_service.pid_stage_input import PIDStageInput
 from libfb.py.asyncio.mock import AsyncMock
-
+from libfb.py.testutil import data_provider
 
 CONFIG = {
     "dependency": {
@@ -39,7 +38,7 @@ CONFIG = {
         "constructor": {
             "access_key_id": "key_id",
             "access_key_data": "key_data",
-        }
+        },
     },
 }
 
@@ -74,24 +73,39 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             await adv_run_stage._ready(stage_input=stage_input),
         )
 
+    @data_provider(
+        lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
+    )
     @to_sync
+    @patch(
+        "fbpmp.pid.service.pid_service.pid_run_protocol_stage.wait_for_containers_async"
+    )
+    @patch("fbpcp.service.storage.StorageService")
+    @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
-    async def test_run_publisher(self, mock_onedocker_service):
+    async def test_run_publisher(
+        self,
+        mock_onedocker_service,
+        mock_instance_repo,
+        mock_storage_service,
+        mock_wait_for_containers_async,
+        wait_for_containers: bool,
+    ):
         ip = "192.0.2.0"
+        container = ContainerInstance(instance_id="123", ip_address=ip)
         mock_onedocker_service.start_containers_async = AsyncMock(
-            return_value=[ContainerInstance(instance_id="123", ip_address=ip)]
+            return_value=[container]
         )
-        mock_instance_repo = LocalPIDInstanceRepository(base_dir=".")
-        mock_instance_repo.read = MagicMock()
-        mock_instance_repo.update = MagicMock()
+        container.status = (
+            ContainerInstanceStatus.COMPLETED
+            if wait_for_containers
+            else ContainerInstanceStatus.STARTED
+        )
+        mock_wait_for_containers_async.return_value = [container]
 
         with patch.object(
             PIDProtocolRunStage, "files_exist"
         ) as mock_files_exist, patch.object(
-            PIDProtocolRunStage,
-            "_wait_for_containers",
-            return_value=awaitable(True),
-        ) as mock_wait_for_containers, patch.object(
             PIDProtocolRunStage, "put_server_ips"
         ) as mock_put_server_ips:
             mock_files_exist.return_value = True
@@ -105,7 +119,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
                 stage=UnionPIDStage.PUBLISHER_RUN_PID,
                 config=CONFIG,
                 instance_repository=mock_instance_repo,
-                storage_svc="STORAGE",
+                storage_svc=mock_storage_service,
                 onedocker_svc=mock_onedocker_service,
                 onedocker_binary_config=self.onedocker_binary_config,
             )
@@ -117,14 +131,22 @@ class TestPIDProtocolRunStage(unittest.TestCase):
                 instance_id=instance_id,
             )
 
-            # Check whether the run was completed
+            # if we are waiting for containers, then the stage should finish
+            # otherwise, it should start and then return
             self.assertEqual(
-                PIDStageStatus.COMPLETED,
-                await publisher_run_stage.run(stage_input=stage_input),
+                PIDStageStatus.COMPLETED
+                if wait_for_containers
+                else PIDStageStatus.STARTED,
+                await publisher_run_stage.run(
+                    stage_input=stage_input, wait_for_containers=wait_for_containers
+                ),
             )
 
             # Check create_instances_async was called with the correct parameters
-            mock_wait_for_containers.assert_called_once()
+            if wait_for_containers:
+                mock_wait_for_containers_async.assert_called_once()
+            else:
+                mock_wait_for_containers_async.assert_not_called()
             mock_onedocker_service.start_containers_async.assert_called_once()
             (
                 _,
@@ -137,30 +159,46 @@ class TestPIDProtocolRunStage(unittest.TestCase):
                 instance_id=instance_id, server_ips=[ip]
             )
 
-            # instance status is updated to READY, STARTED and COMPLETED,
-            # then containers STARTED and COMPLETED
+            # if wait for containers is False, there are 4 updates.
+            # if wait_for_containers is True, then there is another update
+            # that updates the instance status and containers to complete, so 5
             mock_instance_repo.read.assert_called_with(instance_id)
-            self.assertEqual(mock_instance_repo.read.call_count, 5)
-            self.assertEqual(mock_instance_repo.update.call_count, 5)
+            self.assertEqual(
+                mock_instance_repo.read.call_count, 4 + int(wait_for_containers)
+            )
+            self.assertEqual(
+                mock_instance_repo.update.call_count, 4 + int(wait_for_containers)
+            )
 
+    @data_provider(
+        lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
+    )
     @to_sync
+    @patch(
+        "fbpmp.pid.service.pid_service.pid_run_protocol_stage.wait_for_containers_async"
+    )
+    @patch("fbpcp.service.storage.StorageService")
+    @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
-    async def test_run_partner(self, mock_onedocker_service):
+    async def test_run_partner(
+        self,
+        mock_onedocker_service,
+        mock_instance_repo,
+        mock_storage_service,
+        mock_wait_for_containers_async,
+        wait_for_containers: bool,
+    ):
         ip = "192.0.2.0"
+        container = ContainerInstance(instance_id="123", ip_address=ip)
         mock_onedocker_service.start_containers_async = AsyncMock(
-            return_value=[ContainerInstance(instance_id="123", ip_address=ip)]
+            return_value=[container]
         )
-        mock_instance_repo = LocalPIDInstanceRepository(base_dir=".")
-        mock_instance_repo.read = MagicMock()
-        mock_instance_repo.update = MagicMock()
+        container.status = ContainerInstanceStatus.COMPLETED if wait_for_containers else ContainerInstanceStatus.STARTED
+        mock_wait_for_containers_async.return_value = [container]
 
         with patch.object(
             PIDProtocolRunStage, "files_exist"
         ) as mock_files_exist, patch.object(
-            PIDProtocolRunStage,
-            "_wait_for_containers",
-            return_value=awaitable(True),
-        ) as mock_wait_for_containers, patch.object(
             AWSContainerService,
             "create_instances_async",
             return_value=[ContainerInstance(instance_id="123", ip_address=ip)],
@@ -174,7 +212,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             input_path = "in"
             output_path = "out"
             ip_address = "192.0.2.0"
-            hostname = f"https://{ip_address}"
             mock_wait.return_value = True
             mock_get_payload.return_value = [ip_address]
 
@@ -183,7 +220,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
                 stage=UnionPIDStage.ADV_RUN_PID,
                 config=CONFIG,
                 instance_repository=mock_instance_repo,
-                storage_svc="STORAGE",
+                storage_svc=mock_storage_service,
                 onedocker_svc=mock_onedocker_service,
                 onedocker_binary_config=self.onedocker_binary_config,
                 server_ips=[ip_address],
@@ -196,21 +233,32 @@ class TestPIDProtocolRunStage(unittest.TestCase):
                 instance_id=instance_id,
             )
 
-            # Check whether the run was completed
+            # if we are waiting for containers, then the stage should finish
+            # otherwise, it should start and then return
             self.assertEqual(
-                PIDStageStatus.COMPLETED,
-                await adv_run_stage.run(stage_input=stage_input),
+                PIDStageStatus.COMPLETED if wait_for_containers else PIDStageStatus.STARTED,
+                await adv_run_stage.run(stage_input=stage_input, wait_for_containers=wait_for_containers),
             )
 
-            # Check reate_instances_async was called with the correct parameters
-            mock_wait_for_containers.assert_called_once()
+            # Check create_instances_async was called with the correct parameters
+            if wait_for_containers:
+                mock_wait_for_containers_async.assert_called_once()
+            else:
+                mock_wait_for_containers_async.assert_not_called()
+
             mock_onedocker_service.start_containers_async.assert_called_once()
             (
                 _,
                 called_kwargs,
             ) = mock_onedocker_service.start_containers_async.call_args_list[0]
-            # instance status is updated to READY, STARTED and COMPLETED,
-            # then containers STARTED and COMPLETED
+
+            # if wait for containers is False, there are 4 updates.
+            # if wait_for_containers is True, then there is another update
+            # that updates the instance status and containers to complete, so 5
             mock_instance_repo.read.assert_called_with(instance_id)
-            self.assertEqual(mock_instance_repo.read.call_count, 5)
-            self.assertEqual(mock_instance_repo.update.call_count, 5)
+            self.assertEqual(
+                mock_instance_repo.read.call_count, 4 + int(wait_for_containers)
+            )
+            self.assertEqual(
+                mock_instance_repo.update.call_count, 4 + int(wait_for_containers)
+            )
