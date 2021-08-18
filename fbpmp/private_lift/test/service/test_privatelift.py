@@ -78,8 +78,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
         self.onedocker_binary_config_map = defaultdict(
             lambda: OneDockerBinaryConfig(
-                tmp_directory="/test_tmp_directory/",
-                binary_version="latest"
+                tmp_directory="/test_tmp_directory/", binary_version="latest"
             )
         )
 
@@ -123,6 +122,61 @@ class TestPrivateLiftService(unittest.TestCase):
         self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
 
     def test_update_instance(self):
+        test_pl_id = "test_pl_id"
+        test_pid_id = test_pl_id + "_id_match"
+        test_pid_protocol = PIDProtocol.UNION_PID
+        test_num_containers = 2
+        test_pid_role = PIDRole.PUBLISHER
+        test_input_path = "pid_in"
+        test_output_path = "pid_out"
+        # create one PID instance to be put into PrivateComputationInstance
+        pid_instance = PIDInstance(
+            instance_id=test_pid_id,
+            protocol=test_pid_protocol,
+            pid_role=test_pid_role,
+            num_shards=test_num_containers,
+            input_path=test_input_path,
+            output_path=test_output_path,
+            status=PIDInstanceStatus.STARTED,
+        )
+
+        pl_instance = PrivateComputationInstance(
+            instance_id=test_pl_id,
+            role=PrivateComputationRole.PARTNER,
+            instances=[pid_instance],
+            status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+            status_update_ts=1600000000,
+        )
+
+        updated_pid_instance = pid_instance
+        updated_pid_instance.status = PIDInstanceStatus.COMPLETED
+        self.pl_service.pid_svc.update_instance = MagicMock(
+            return_value=updated_pid_instance
+        )
+
+        self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
+
+        # call update on the PrivateComputationInstance
+        updated_instance = self.pl_service.update_instance(instance_id=test_pl_id)
+
+        # check update instance called on the right pid instance
+        self.pl_service.pid_svc.update_instance.assert_called()
+        self.assertEqual(
+            test_pid_id, self.pl_service.pid_svc.update_instance.call_args[0][0]
+        )
+
+        # check update instance called on the right private lift instance
+        self.pl_service.instance_repository.update.assert_called()
+        self.assertEqual(
+            pl_instance, self.pl_service.instance_repository.update.call_args[0][0]
+        )
+
+        # check updated_instance has new status
+        self.assertEqual(
+            PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            updated_instance.status,
+        )
+
         # create one MPC instance to be put into PrivateComputationInstance
         test_mpc_id = "test_mpc_id"
         mpc_instance = MPCInstance.create_instance(
@@ -131,7 +185,7 @@ class TestPrivateLiftService(unittest.TestCase):
             mpc_party=MPCParty.SERVER,
             num_workers=2,
         )
-        test_pl_id = "test_pl_id"
+
         pl_instance = PrivateComputationInstance(
             instance_id=test_pl_id,
             role=PrivateComputationRole.PARTNER,
@@ -140,14 +194,13 @@ class TestPrivateLiftService(unittest.TestCase):
             status_update_ts=1600000000,
         )
 
-        self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
-
         updated_mpc_instance = mpc_instance
         updated_mpc_instance.status = MPCInstanceStatus.COMPLETED
         self.pl_service.mpc_svc.update_instance = MagicMock(
             return_value=updated_mpc_instance
         )
 
+        self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
         # call update on the PrivateComputationInstance
         updated_instance = self.pl_service.update_instance(instance_id=test_pl_id)
 
@@ -165,7 +218,8 @@ class TestPrivateLiftService(unittest.TestCase):
 
         # check updated_instance has new status
         self.assertEqual(
-            PrivateComputationInstanceStatus.COMPUTATION_COMPLETED, updated_instance.status
+            PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+            updated_instance.status,
         )
 
     def test_id_match(self):

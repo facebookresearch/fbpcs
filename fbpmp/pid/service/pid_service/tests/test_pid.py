@@ -7,10 +7,17 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpmp.pcf.tests.async_utils import to_sync
-from fbpmp.pid.entity.pid_instance import PIDInstance, PIDProtocol, PIDRole
+from fbpmp.pid.entity.pid_instance import (
+    PIDStageStatus,
+    PIDInstanceStatus,
+    PIDInstance,
+    PIDProtocol,
+    PIDRole,
+)
 from fbpmp.pid.service.pid_service.pid import PIDService
 from fbpmp.pid.service.pid_service.pid_dispatcher import PIDDispatcher
 
@@ -29,7 +36,10 @@ TEST_HMAC_KEY = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
 
 class TestPIDService(unittest.TestCase):
-    @patch("fbpmp.onedocker_binary_config.OneDockerBinaryConfig", spec="OneDockerBinaryConfig")
+    @patch(
+        "fbpmp.onedocker_binary_config.OneDockerBinaryConfig",
+        spec="OneDockerBinaryConfig",
+    )
     @patch("fbpcp.service.storage_s3.S3StorageService", spec=S3StorageService)
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
@@ -71,6 +81,115 @@ class TestPIDService(unittest.TestCase):
         self.assertEqual(TEST_DATA_PATH, create_call_params.data_path)
         self.assertEqual(TEST_SPINE_PATH, create_call_params.spine_path)
         self.assertEqual(TEST_HMAC_KEY, create_call_params.hmac_key)
+
+    def test_update_instance(self):
+        stage1 = "stage 1"
+        stage2 = "stage 2"
+
+        pid_instance = PIDInstance(
+            instance_id=TEST_INSTANCE_ID,
+            protocol=TEST_PROTOCOL,
+            pid_role=TEST_PID_ROLE,
+            num_shards=TEST_NUM_SHARDS,
+            input_path=TEST_INPUT_PATH,
+            output_path=TEST_INPUT_PATH,
+            status=PIDInstanceStatus.STARTED,
+            stages_status={
+                stage1: PIDStageStatus.UNKNOWN,
+                stage2: PIDStageStatus.UNKNOWN,
+            },
+        )
+
+        # no containers have spawned yet, so the status doesn't change
+        self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
+        pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
+        self.assertEqual(pid_instance.status, PIDInstanceStatus.STARTED)
+        self.assertEqual(
+            pid_instance.stages_status[stage1],
+            PIDStageStatus.UNKNOWN,
+        )
+
+        containers = [
+            self._create_container(i, ContainerInstanceStatus.STARTED) for i in range(2)
+        ]
+        pid_instance.stages_containers[stage1] = containers
+        self.pid_service.onedocker_svc.get_containers = MagicMock(
+            return_value=containers
+        )
+        # stage 1 containers are both in started state, so the stage status should be started
+        self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
+        pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
+        self.assertEqual(pid_instance.status, PIDInstanceStatus.STARTED)
+        self.assertEqual(
+            pid_instance.stages_status[stage1],
+            PIDStageStatus.STARTED,
+        )
+
+        # stage 1 containers are finished, so the stage status should be COMPLETED
+        self.pid_service.onedocker_svc.get_containers = MagicMock(
+            return_value=[
+                self._create_container(i, ContainerInstanceStatus.COMPLETED)
+                for i in range(2)
+            ]
+        )
+        self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
+        pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
+        self.assertEqual(pid_instance.status, PIDInstanceStatus.STARTED)
+        self.assertEqual(
+            pid_instance.stages_status[stage1],
+            PIDStageStatus.COMPLETED,
+        )
+
+        # start stage 2 containers
+        pid_instance.stages_containers[stage2] = [
+            self._create_container(i, ContainerInstanceStatus.STARTED) for i in range(2)
+        ]
+        # when we get them, have their updated status be failed
+        self.pid_service.onedocker_svc.get_containers = MagicMock(
+            return_value=[
+                self._create_container(i, ContainerInstanceStatus.FAILED)
+                for i in range(2)
+            ]
+        )
+        # shard stage containers are both in a failed state, so the stage status should be failed
+        # and the instance status should also be failed
+        self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
+        pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
+        self.assertEqual(pid_instance.status, PIDInstanceStatus.FAILED)
+        self.assertEqual(
+            pid_instance.stages_status[stage2],
+            PIDStageStatus.FAILED,
+        )
+
+        # start that stage over
+        pid_instance.status = PIDInstanceStatus.STARTED
+        pid_instance.stages_status[stage2] = PIDStageStatus.STARTED
+
+        # when we get containers this time, it will succeed
+        self.pid_service.onedocker_svc.get_containers = MagicMock(
+            return_value=[
+                self._create_container(i, ContainerInstanceStatus.COMPLETED)
+                for i in range(2)
+            ]
+        )
+        # shard stage containers are both in a completed state, so the stage status should be completed
+        # All stages are done, so instance status should also be completed
+        self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
+        pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
+        self.assertEqual(pid_instance.status, PIDInstanceStatus.COMPLETED)
+        self.assertEqual(
+            pid_instance.stages_status[stage2],
+            PIDStageStatus.COMPLETED,
+        )
+
+    def _create_container(
+        self, id: int, status: ContainerInstanceStatus
+    ) -> ContainerInstance:
+        return ContainerInstance(
+            f"arn:aws:ecs:region:account_id:task/container_id_{id}",
+            f"192.0.2.{id}",
+            status,
+        )
 
     @to_sync
     async def test_run_instance(self):
