@@ -40,7 +40,12 @@ class PIDShardStage(PIDStage):
             instance_id=instance_id, status=PIDStageStatus.STARTED
         )
         status = await self.shard(
-            input_paths[0], output_paths[0], num_shards, stage_input.hmac_key
+            instance_id,
+            input_paths[0],
+            output_paths[0],
+            num_shards,
+            stage_input.hmac_key,
+            wait_for_containers,
         )
 
         # if validating, copy synthetic shard and update instance.num_shards
@@ -65,16 +70,18 @@ class PIDShardStage(PIDStage):
 
     async def shard(
         self,
+        instance_id: str,
         input_path: str,
         output_path: str,
         num_shards: int,
         hmac_key: Optional[str] = None,
+        wait_for_containers: bool = True,
     ) -> PIDStageStatus:
         self.logger.info(f"[{self}] Starting CppShardingService")
         sharder = CppShardingService()
 
         try:
-            await sharder.shard_on_container_async(
+            container = await sharder.shard_on_container_async(
                 ShardType.HASHED_FOR_PID,
                 input_path,
                 output_base_path=output_path,
@@ -84,13 +91,20 @@ class PIDShardStage(PIDStage):
                 binary_version=self.onedocker_binary_config.binary_version,
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
                 hmac_key=hmac_key,
+                wait_for_containers=wait_for_containers,
             )
         except Exception as e:
             self.logger.exception(f"CppShardingService failed: {e}")
             return PIDStageStatus.FAILED
 
-        self.logger.info("All shards copied to destination path")
-        return PIDStageStatus.COMPLETED
+        await self.update_instance_containers(instance_id, [container])
+        if wait_for_containers:
+            self.logger.info("All shards copied to destination path")
+            return PIDStageStatus.COMPLETED
+        self.logger.info(
+            f"[{self}] Started CppShardingService on container {container}"
+        )
+        return PIDStageStatus.STARTED
 
     async def _ready(
         self,

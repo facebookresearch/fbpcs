@@ -8,6 +8,7 @@ import abc
 import enum
 from typing import Optional
 
+from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 
@@ -43,7 +44,8 @@ class ShardingService(abc.ABC):
         binary_version: str,
         tmp_directory: str = "/tmp/",
         hmac_key: Optional[str] = None,
-    ) -> None:
+        wait_for_containers: bool = True,
+    ) -> ContainerInstance:
         pass
 
     @abc.abstractmethod
@@ -58,5 +60,6 @@ class ShardingService(abc.ABC):
         binary_version: str,
         tmp_directory: str = "/tmp/",
         hmac_key: Optional[str] = None,
-    ) -> None:
+        wait_for_containers: bool = True,
+    ) -> ContainerInstance:
         pass
