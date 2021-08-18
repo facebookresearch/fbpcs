@@ -33,58 +33,7 @@ class ShardAggregatorValidationTest : public ::testing::Test {
   std::string baseDir_;
 };
 
-// Tests for original validation function
-TEST_F(ShardAggregatorValidationTest, TestValidMeasurementInput) {
-  auto validMap = folly::parseJson(
-      fbpcf::io::read(baseDir_ + "valid_measurement_shard.json"));
-  auto validData = std::vector<folly::dynamic>({validMap});
-  validateInputData(validData);
-}
-
-TEST_F(ShardAggregatorValidationTest, TestInvalidInputPCM) {
-  auto invalidMap =
-      folly::parseJson(fbpcf::io::read(baseDir_ + "invalid_pcm_shard.json"));
-  auto invalidData = std::vector<folly::dynamic>({invalidMap});
-  EXPECT_THROW(validateInputData(invalidData), InvalidFormatException);
-}
-
-TEST_F(ShardAggregatorValidationTest, TestInvalidInputLift) {
-  // should throw an error for lift inputs -- testing with aggregator_alice_0
-  auto invalidMap =
-      folly::parseJson(fbpcf::io::read(baseDir_ + "valid_lift_input.json"));
-  auto invalidData = std::vector<folly::dynamic>({invalidMap});
-  EXPECT_THROW(validateInputData(invalidData), InvalidFormatException);
-}
-
-TEST_F(ShardAggregatorValidationTest, TestInvalidInputBadStructure) {
-  auto invalidMap = folly::parseJson(
-      fbpcf::io::read(baseDir_ + "invalid_bad_structure.json"));
-  auto invalidData = std::vector<folly::dynamic>({invalidMap});
-  EXPECT_THROW(validateInputData(invalidData), InvalidFormatException);
-}
-
-TEST_F(ShardAggregatorValidationTest, TestInvalidInputEmptyMap0) {
-  auto invalidMap =
-      folly::parseJson(fbpcf::io::read(baseDir_ + "invalid_empty_map_0.json"));
-  auto invalidData = std::vector<folly::dynamic>({invalidMap});
-  EXPECT_THROW(validateInputData(invalidData), InvalidFormatException);
-}
-
-TEST_F(ShardAggregatorValidationTest, TestInvalidInputEmptyMap1) {
-  auto invalidMap =
-      folly::parseJson(fbpcf::io::read(baseDir_ + "invalid_empty_map_1.json"));
-  auto invalidData = std::vector<folly::dynamic>({invalidMap});
-  EXPECT_THROW(validateInputData(invalidData), InvalidFormatException);
-}
-
-TEST_F(ShardAggregatorValidationTest, TestInvalidAggregationName) {
-  auto invalidMap = folly::parseJson(
-      fbpcf::io::read(baseDir_ + "invalid_aggregation_name.json"));
-  auto invalidData = std::vector<folly::dynamic>({invalidMap});
-  EXPECT_THROW(validateInputData(invalidData), InvalidFormatException);
-}
-
-// Tests for new validation function -- ad object format
+// Tests for ad object format validation
 TEST_F(ShardAggregatorValidationTest, AdObjectTestValidMeasurementInput) {
   auto validMap = std::make_shared<private_measurement::AggMetrics>(
       private_measurement::AggMetrics::fromDynamic(folly::parseJson(
@@ -171,7 +120,7 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidAggregationName) {
       InvalidFormatException);
 }
 
-// Tests for new validation function -- lift
+// Tests for lift format validation
 TEST_F(ShardAggregatorValidationTest, LiftTestValidLiftInput) {
   auto validMap = std::make_shared<private_measurement::AggMetrics>(
       private_measurement::AggMetrics::fromDynamic(folly::parseJson(

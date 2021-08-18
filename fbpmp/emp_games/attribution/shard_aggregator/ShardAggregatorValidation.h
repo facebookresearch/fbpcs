@@ -19,7 +19,6 @@ class InvalidFormatException : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
-void validateInputData(const std::vector<folly::dynamic>& inputData);
 void validateInputDataAggMetrics(
     const std::vector<std::shared_ptr<private_measurement::AggMetrics>>&
         inputData,

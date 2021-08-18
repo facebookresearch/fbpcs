@@ -136,34 +136,6 @@ void validateLiftMetrics(
 } // namespace
 
 namespace measurement::private_attribution {
-void validateInputData(const std::vector<folly::dynamic>& inputData) {
-  if (inputData.size() < 1) {
-    throw InvalidFormatException("Input is empty");
-  }
-
-  for (const auto& ruleToMetrics : inputData) {
-    if (ruleToMetrics.size() < 1) {
-      throw InvalidFormatException("Map contains no rules");
-    }
-
-    for (const auto& [rule, metricsMap] : ruleToMetrics.items()) {
-      if (metricsMap.size() < 1) {
-        throw InvalidFormatException(
-            folly::sformat("Rule [{}] does not map to any metrics", rule));
-      }
-
-      for (const auto& [aggregationName, aggregationData] :
-           metricsMap.items()) {
-        if (aggregationName.asString().compare("measurement")) {
-          throw InvalidFormatException(folly::sformat(
-              "Unsupported aggregationName [{}] passed to Shard Aggregator",
-              aggregationName));
-        }
-      }
-    }
-  }
-}
-
 void validateInputDataAggMetrics(
     const std::vector<std::shared_ptr<AggMetrics>>& inputData,
     const std::string& metricsFormatType) {
