@@ -13,6 +13,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.pid.entity.pid_instance import (
+    PIDStageStatus,
     PIDInstance,
     PIDInstanceStatus,
     PIDProtocol,
@@ -20,6 +21,7 @@ from fbpmp.pid.entity.pid_instance import (
 )
 from fbpmp.pid.repository.pid_instance import PIDInstanceRepository
 from fbpmp.pid.service.pid_service.pid_dispatcher import PIDDispatcher
+from fbpmp.pid.service.pid_service.pid_stage import PIDStage
 
 
 class PIDService:
@@ -122,3 +124,31 @@ class PIDService:
     def get_instance(self, instance_id: str) -> PIDInstance:
         self.logger.info(f"Getting PID instance: {instance_id}")
         return self.instance_repository.read(instance_id)
+
+    def update_instance(self, instance_id: str) -> PIDInstance:
+        self.logger.info(f"Updating PID Instance: {instance_id}")
+        instance = self.instance_repository.read(instance_id)
+
+        if instance.status in [PIDInstanceStatus.COMPLETED, PIDInstanceStatus.FAILED]:
+            return instance
+
+        for stage, status in instance.stages_status.copy().items():
+            if status in [PIDStageStatus.COMPLETED, PIDStageStatus.FAILED]:
+                continue
+            containers = instance.stages_containers.get(stage, None)
+            if containers:
+                container_ids = [container.instance_id for container in containers]
+                containers = self.onedocker_svc.get_containers(container_ids)
+                new_stage_status = PIDStage.get_stage_status_from_containers(containers)
+                if new_stage_status is PIDStageStatus.FAILED:
+                    instance.status = PIDInstanceStatus.FAILED
+                instance.stages_status[stage] = new_stage_status
+                instance.stages_containers[stage] = containers
+        # if all of the stages are complete, then PID for instance is complete
+        if all(
+            status is PIDStageStatus.COMPLETED
+            for status in instance.stages_status.values()
+        ):
+            instance.status = PIDInstanceStatus.COMPLETED
+        self.instance_repository.update(instance)
+        return instance

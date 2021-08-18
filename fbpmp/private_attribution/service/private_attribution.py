@@ -121,8 +121,9 @@ class PrivateAttributionService:
             last_instance = pa_instance.instances[-1]
 
             if isinstance(last_instance, PIDInstance):
-                # PID service simply reads instance information from repo
-                pa_instance.instances[-1] = self.pid_svc.get_instance(
+                # PID service has to call update_instance to get the newest containers
+                # information in case they are still running
+                pa_instance.instances[-1] = self.pid_svc.update_instance(
                     last_instance.instance_id
                 )
             elif isinstance(last_instance, MPCInstance):

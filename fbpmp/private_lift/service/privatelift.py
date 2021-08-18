@@ -37,8 +37,6 @@ from fbpmp.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
     PostProcessingInstanceStatus,
 )
-from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
-from fbpmp.private_lift.entity.pce_config import PCEConfig
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -46,6 +44,8 @@ from fbpmp.private_computation.entity.private_computation_instance import (
     UnionedPCInstance,
     UnionedPCInstanceStatus,
 )
+from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
+from fbpmp.private_lift.entity.pce_config import PCEConfig
 from fbpmp.private_lift.repository.privatelift_instance import (
     PrivateLiftInstanceRepository,
 )
@@ -146,14 +146,17 @@ class PrivateLiftService:
         self.logger.info(f"Updating instance: {instance_id}")
         return self._update_instance(pl_instance=pl_instance)
 
-    def _update_instance(self, pl_instance: PrivateComputationInstance) -> PrivateComputationInstance:
+    def _update_instance(
+        self, pl_instance: PrivateComputationInstance
+    ) -> PrivateComputationInstance:
         if pl_instance.instances:
             # Only need to update the last stage/instance
             last_instance = pl_instance.instances[-1]
 
             if isinstance(last_instance, PIDInstance):
-                # PID service simply reads instance information from repo
-                pl_instance.instances[-1] = self.pid_svc.get_instance(
+                # PID service has to call update_instance to get the newest containers
+                # information in case they are still running
+                pl_instance.instances[-1] = self.pid_svc.update_instance(
                     last_instance.instance_id
                 )
             elif isinstance(last_instance, MPCInstance):
@@ -259,11 +262,15 @@ class PrivateLiftService:
             )
 
         # If num_containers or input_path is not given as a parameter, get it from pl instance
-        num_containers = self._get_param("num_containers", pl_instance.num_containers, num_containers)
+        num_containers = self._get_param(
+            "num_containers", pl_instance.num_containers, num_containers
+        )
         input_path = self._get_param("input_path", pl_instance.input_path, input_path)
 
         # If output_path is not given as a parameter, get it from pid_stage_output_base_path
-        output_path = self._get_param("output_path", pl_instance.pid_stage_output_base_path, output_path)
+        output_path = self._get_param(
+            "output_path", pl_instance.pid_stage_output_base_path, output_path
+        )
 
         # Create a new pid instance
         pid_instance_id = instance_id + "_id_match" + retry_counter_str
@@ -677,7 +684,9 @@ class PrivateLiftService:
         )
 
         # If output_path is not given as a parameter, get it from shard_aggregate_stage_output_path
-        output_path = self._get_param("output_path", pl_instance.shard_aggregate_stage_output_path, output_path)
+        output_path = self._get_param(
+            "output_path", pl_instance.shard_aggregate_stage_output_path, output_path
+        )
 
         if is_validating:
             # num_containers_real_data is the number of containers processing real data
@@ -1181,5 +1190,6 @@ class PrivateLiftService:
     ) -> bool:
         return (
             pl_instance.partial_container_retry_enabled
-            and pl_instance.status is PrivateComputationInstanceStatus.COMPUTATION_FAILED
+            and pl_instance.status
+            is PrivateComputationInstanceStatus.COMPUTATION_FAILED
         )
