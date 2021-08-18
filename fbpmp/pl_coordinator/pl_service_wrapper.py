@@ -117,8 +117,10 @@ def compute(
     # so it appears that the current status is still COMPUTATION_STARTED, which is an invalid status for retry.
     pl_instance = pl_service.update_instance(instance_id)
 
+    # TODO T98578552: Take away the option to specify required fields in the middle of a computation
+    output_path = output_path or pl_instance.compute_stage_output_base_path
     if not output_path:
-        output_path = pl_instance.compute_stage_output_base_path
+        raise ValueError("Unable to find output path for the compute stage")
     prepared_data_output_path = output_path + "_prepared"
 
     uploaded_files = pl_service.prepare_data(

@@ -20,6 +20,8 @@ from fbpmp.post_processing_handler.post_processing_instance import (
 )
 from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
 from fbpmp.private_lift.entity.pce_config import PCEConfig
+from fbpmp.pid.entity.pid_stages import UnionPIDStage
+from fbpmp.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
 
 
 class PrivateComputationRole(Enum):
@@ -59,16 +61,30 @@ class PrivateComputationInstance(InstanceBase):
     status: PrivateComputationInstanceStatus
     status_update_ts: int
     retry_counter: int = 0
-    # TODO: once the product is stabilized, we can enable this
-    partial_container_retry_enabled: bool = False
+    partial_container_retry_enabled: bool = False  # TODO T98578624: once the product is stabilized, we can enable this
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
-    num_pid_containers: Optional[int] = None
-    num_mpc_containers: Optional[int] = None
+
+    # TODO T98476320: make the following optional attributes non-optional. They are optional
+    # because at the time the instance is created, pl might not provide any or all of them.
     input_path: Optional[str] = None  # assign when create instance; reused by id match
     output_dir: Optional[
         str
     ] = None  # assign when create instance; reused by id match, compute and aggregate
+    hmac_key: Optional[str] = None
+    num_pid_containers: Optional[int] = None
+    num_mpc_containers: Optional[int] = None
+    num_files_per_mpc_container: Optional[int] = None
+    padding_size: Optional[int] = None
+
+    concurrency: int = 1
+    k_anonymity_threshold: int = 0
+    retry_counter: int = 0
+
+    # TODO T98157144: The 5 attributes below have to be present to keep the backward
+    # compatibility of pl thrift service and pl coordinator.
+    # Once Graph API and One-command CLI move to provide all the attributes
+    # above when creating an instance, we can then delete the attributes below.
     spine_path: Optional[str] = None  # assign when id match; reused by compute
     data_path: Optional[str] = None  # assign when id match; reused by compute
     compute_output_path: Optional[
@@ -78,6 +94,7 @@ class PrivateComputationInstance(InstanceBase):
     aggregated_result_path: Optional[
         str
     ] = None  # assign when aggregate; reused by post processing handlers
+
     breakdown_key: Optional[BreakdownKey] = None
     pce_config: Optional[PCEConfig] = None
     is_test: Optional[bool] = False  # set to be true for testing account ID
@@ -86,18 +103,45 @@ class PrivateComputationInstance(InstanceBase):
         return self.instance_id
 
     @property
-    def pid_stage_output_base_path(self) -> str:
-        # pyre-fixme[7]: Expected `str` but got `Optional[str]`.
+    def pid_stage_output_base_path(self) -> Optional[str]:
         return self._get_stage_output_path("pid_stage", "csv")
 
     @property
-    def compute_stage_output_base_path(self) -> str:
-        # pyre-fixme[7]: Expected `str` but got `Optional[str]`.
+    def pid_stage_output_spine_path(self) -> Optional[str]:
+        if not self.pid_stage_output_base_path:
+            return None
+
+        spine_path_suffix = (
+            STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_RUN_PID]
+            if self.role is PrivateComputationRole.PUBLISHER
+            else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_RUN_PID]
+        )
+
+        return f"{self.pid_stage_output_base_path}{spine_path_suffix}"
+
+    @property
+    def pid_stage_output_data_path(self) -> Optional[str]:
+        if not self.pid_stage_output_base_path:
+            return None
+
+        data_path_suffix = (
+            STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_SHARD]
+            if self.role is PrivateComputationRole.PUBLISHER
+            else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_SHARD]
+        )
+        return f"{self.pid_stage_output_base_path}{data_path_suffix}"
+
+    @property
+    def data_processing_output_path(self) -> Optional[str]:
+        return self._get_stage_output_path("data_processing_stage", "csv")
+
+
+    @property
+    def compute_stage_output_base_path(self) -> Optional[str]:
         return self._get_stage_output_path("compute_stage", "json")
 
     @property
-    def shard_aggregate_stage_output_path(self) -> str:
-        # pyre-fixme[7]: Expected `str` but got `Optional[str]`.
+    def shard_aggregate_stage_output_path(self) -> Optional[str]:
         return self._get_stage_output_path("shard_aggregation_stage", "json")
 
     def _get_stage_output_path(self, stage: str, extension_type: str) -> Optional[str]:
