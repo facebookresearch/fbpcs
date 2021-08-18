@@ -14,7 +14,9 @@ from fbpmp.pid.service.pid_service.pid_stage_input import PIDStageInput
 
 
 class PIDShardStage(PIDStage):
-    async def run(self, stage_input: PIDStageInput) -> PIDStageStatus:
+    async def run(
+        self, stage_input: PIDStageInput, wait_for_containers: bool = True
+    ) -> PIDStageStatus:
         self.logger.info(f"[{self}] Called run")
         instance_id = stage_input.instance_id
         status = await self._ready(stage_input)
