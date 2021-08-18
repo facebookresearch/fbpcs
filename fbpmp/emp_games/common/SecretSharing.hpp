@@ -90,68 +90,17 @@ const std::vector<PrivateBit<MY_ROLE>> privatelyShareBits(
   return out;
 }
 
-template <int MY_ROLE, int SOURCE_ROLE>
-const std::vector<emp::Integer> privatelyShareIntsFrom(
-    const std::vector<int64_t>& in,
-    int64_t numVals,
-    int bitLen) {
-  emp::Batcher batcher;
-
-  // Note that we must add an integer to both sides even though the data
-  // transfer happens in one direction. This is so the underlying
-  // library knows how much space to allocate. It's not exactly clear
-  // from the API that this is a requirement.
-  for (auto i = 0; i < numVals; ++i) {
-    if constexpr (MY_ROLE == SOURCE_ROLE) {
-      batcher.add<emp::Integer>(bitLen, in.at(i));
-    } else {
-      batcher.add<emp::Integer>(bitLen, 0);
-    }
-  }
-
-  batcher.make_semi_honest(SOURCE_ROLE);
-
-  std::vector<emp::Integer> out;
-  out.reserve(numVals);
-  for (auto i = 0; i < numVals; ++i) {
-    out.push_back(batcher.next<emp::Integer>());
-  }
-  return out;
-}
-
-template <int MY_ROLE, int SOURCE_ROLE>
-const std::vector<emp::Bit> privatelyShareBitsFrom(
-    const std::vector<int64_t>& in,
-    int64_t numVals) {
-  emp::Batcher batcher;
-
-  // Note that we must add a bit to both sides even though the data
-  // transfer happens in one direction. This is so the underlying
-  // library knows how much space to allocate. It's not exactly clear
-  // from the API that this is a requirement.
-  for (auto i = 0; i < numVals; ++i) {
-    if constexpr (MY_ROLE == SOURCE_ROLE) {
-      batcher.add<emp::Bit>(in.at(i));
-    } else {
-      batcher.add<emp::Bit>(0);
-    }
-  }
-
-  batcher.make_semi_honest(SOURCE_ROLE);
-
-  std::vector<emp::Bit> out;
-  out.reserve(numVals);
-  for (auto i = 0; i < numVals; ++i) {
-    out.push_back(batcher.next<emp::Bit>());
-  }
-  return out;
-}
-
-template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
+template <
+    int MY_ROLE,
+    int SOURCE_ROLE,
+    typename T,
+    typename O,
+    typename... BatcherArgs>
 const std::vector<O> privatelyShareArrayFrom(
     const std::vector<T>& in,
     int64_t numVals,
-    T nullValue) {
+    T nullValue,
+    BatcherArgs... batcherArgs) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
   XLOGF(
       DBG,
@@ -168,10 +117,10 @@ const std::vector<O> privatelyShareArrayFrom(
   // from the API that this is a requirement.
   for (auto i = 0; i < numVals; ++i) {
     if constexpr (MY_ROLE == SOURCE_ROLE) {
-      batcher.add<O>(in.at(i));
+      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., in.at(i));
     } else {
       T nullCopy = nullValue;
-      batcher.add<O>(nullCopy);
+      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., nullCopy);
     }
   }
 
