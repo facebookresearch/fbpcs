@@ -868,7 +868,8 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_prepare_data(self):
         test_pl_id = "test_pl_id"
-        test_num_containers = 2
+        test_num_pid_containers = 2
+        test_num_mpc_containers = 2
         test_spine_path = "spine_path"
         test_data_path = "data_path"
         test_intermediate_output_path = "out_path_combine"
@@ -882,7 +883,8 @@ class TestPrivateLiftService(unittest.TestCase):
             status_update_ts=1600000000,
             spine_path=test_spine_path,
             data_path=test_data_path,
-            num_containers=test_num_containers,
+            num_pid_containers=test_num_pid_containers,
+            num_mpc_containers=test_num_mpc_containers,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -906,7 +908,7 @@ class TestPrivateLiftService(unittest.TestCase):
                 spine_path=test_spine_path,
                 data_path=test_data_path,
                 output_path=test_intermediate_output_path,
-                num_shards=test_num_containers,
+                num_shards=test_num_pid_containers,
                 onedocker_svc=self.onedocker_service,
                 binary_version=binary_config.binary_version,
                 tmp_directory=binary_config.tmp_directory,
@@ -915,7 +917,8 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_prepare_data_tasks_skipped(self):
         test_pl_id = "test_pl_id"
-        test_num_containers = 2
+        test_num_pid_containers = 2
+        test_num_mpc_containers = 2
         test_spine_path = "spine_path"
         test_data_path = "data_path"
         test_output_path = "out_path"
@@ -929,7 +932,8 @@ class TestPrivateLiftService(unittest.TestCase):
             partial_container_retry_enabled=True,
             spine_path=test_spine_path,
             data_path=test_data_path,
-            num_containers=test_num_containers,
+            num_pid_containers=test_num_pid_containers,
+            num_mpc_containers=test_num_mpc_containers,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 

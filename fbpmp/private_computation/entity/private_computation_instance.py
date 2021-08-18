@@ -63,9 +63,8 @@ class PrivateComputationInstance(InstanceBase):
     partial_container_retry_enabled: bool = False
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
-    num_containers: Optional[
-        int
-    ] = None  # assign when create instance; reused by id match, compute and aggregate
+    num_pid_containers: Optional[int] = None
+    num_mpc_containers: Optional[int] = None
     input_path: Optional[str] = None  # assign when create instance; reused by id match
     output_dir: Optional[
         str

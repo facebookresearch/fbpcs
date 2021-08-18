@@ -125,7 +125,8 @@ class PrivateLiftService:
             status_update_ts=PrivateLiftService.get_ts_now(),
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
-            num_containers=num_containers,
+            num_pid_containers=num_containers,
+            num_mpc_containers=num_containers,
             input_path=input_path,
             output_dir=output_dir,
             breakdown_key=breakdown_key,
@@ -262,9 +263,12 @@ class PrivateLiftService:
             )
 
         # If num_containers or input_path is not given as a parameter, get it from pl instance
+        # TODO: disallow giving them as parameters; always get from instance
         num_containers = self._get_param(
-            "num_containers", pl_instance.num_containers, num_containers
+            "num_pid_containers", pl_instance.num_pid_containers, num_containers
         )
+        pl_instance.num_pid_containers = pl_instance.num_mpc_containers = num_containers
+
         input_path = self._get_param("input_path", pl_instance.input_path, input_path)
 
         # If output_path is not given as a parameter, get it from pid_stage_output_base_path
@@ -289,7 +293,6 @@ class PrivateLiftService:
         # Push PID instance to PrivateComputationInstance.instances and update PL Instance status
         pid_instance.status = PIDInstanceStatus.STARTED
         pl_instance.instances.append(pid_instance)
-        pl_instance.num_containers = num_containers
 
         # TODO T87544375: remove interdependency for PID internals
         spine_path_suffix = (
@@ -381,7 +384,7 @@ class PrivateLiftService:
 
         # If num_containers, spine_path or data_path is not given as a parameter, get it from pl instance.
         num_containers = self._get_param(
-            "num_containers", pl_instance.num_containers, num_containers
+            "num_pid_containers", pl_instance.num_pid_containers, num_containers
         )
         spine_path = self._get_param("spine_path", pl_instance.spine_path, spine_path)
         data_path = self._get_param("data_path", pl_instance.data_path, data_path)
@@ -695,7 +698,7 @@ class PrivateLiftService:
             # each of the containers, processing real or synthetic data, processes the same number of shards due to our resharding mechanism
             # num_shards representing the total number of shards which is equal to num_real_data_shards + num_synthetic_data_shards
             # hence, when num_containers_real_data and num_shards are given, num_synthetic_data_shards = num_shards / (num_containers_real_data + 1)
-            num_containers_real_data = pl_instance.num_containers
+            num_containers_real_data = pl_instance.num_pid_containers
             if num_containers_real_data is None:
                 raise ValueError("num_containers_real_data is None")
             num_synthetic_data_shards = num_shards // (num_containers_real_data + 1)
@@ -1126,7 +1129,7 @@ class PrivateLiftService:
         if not game_args:
             # If num_containers is not given, get it from pl instance.
             num_containers = self._get_param(
-                "num_containers", pl_instance.num_containers, num_containers
+                "num_mpc_containers", pl_instance.num_mpc_containers, num_containers
             )
             # update num_containers if is_vaildating = true
             if is_validating:
