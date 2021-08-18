@@ -29,67 +29,6 @@ PrivateInt<MY_ROLE> privatelyShareInt(int64_t in) {
   return PrivateInt<MY_ROLE>{myInt, theirInt};
 }
 
-template <int MY_ROLE>
-const std::vector<PrivateInt<MY_ROLE>> privatelyShareInts(
-    const std::vector<int64_t>& in,
-    std::optional<int64_t> numVals,
-    int32_t bitLen) {
-  // Batch transfer inputs
-  emp::Batcher myBatcher;
-  emp::Batcher theirBatcher;
-
-  // We create two batchers since we're sharing data bidirectionally
-  // Note that we must add an integer to both sides even though the data
-  // transfer happens in one direction. This is so the underlying
-  // library knows how much space to allocate. It's not exactly clear
-  // from the API that this is a requirement.
-  for (auto i = 0; i < numVals.value_or(in.size()); ++i) {
-    myBatcher.add<emp::Integer>(bitLen, i < in.size() ? in.at(i) : 0);
-    theirBatcher.add<emp::Integer>(bitLen, i < in.size() ? in.at(i) : 0);
-  }
-  myBatcher.make_semi_honest(MY_ROLE);
-  theirBatcher.make_semi_honest(otherRole(MY_ROLE));
-
-  // Convert to vectors
-  std::vector<PrivateInt<MY_ROLE>> out;
-  for (auto i = 0; i < numVals.value_or(in.size()); ++i) {
-    out.push_back(PrivateInt<MY_ROLE>{
-        myBatcher.next<emp::Integer>(), theirBatcher.next<emp::Integer>()});
-  }
-
-  return out;
-}
-
-template <int MY_ROLE>
-const std::vector<PrivateBit<MY_ROLE>> privatelyShareBits(
-    const std::vector<int64_t>& in,
-    std::optional<int64_t> numVals) {
-  // Batch transfer inputs
-  emp::Batcher myBatcher;
-  emp::Batcher theirBatcher;
-
-  // We create two batchers since we're sharing data bidirectionally
-  // Note that we must add a bit to both sides even though the data
-  // transfer happens in one direction. This is so the underlying
-  // library knows how much space to allocate. It's not exactly clear
-  // from the API that this is a requirement.
-  for (auto i = 0; i < numVals.value_or(in.size()); ++i) {
-    myBatcher.add<emp::Bit>(i < in.size() ? in.at(i) : 0);
-    theirBatcher.add<emp::Bit>(i < in.size() ? in.at(i) : 0);
-  }
-  myBatcher.make_semi_honest(MY_ROLE);
-  theirBatcher.make_semi_honest(otherRole(MY_ROLE));
-
-  // Convert to vectors
-  std::vector<PrivateBit<MY_ROLE>> out;
-  for (auto i = 0; i < numVals.value_or(in.size()); ++i) {
-    out.push_back(PrivateBit<MY_ROLE>{
-        myBatcher.next<emp::Bit>(), theirBatcher.next<emp::Bit>()});
-  }
-
-  return out;
-}
-
 template <
     int MY_ROLE,
     int SOURCE_ROLE,
