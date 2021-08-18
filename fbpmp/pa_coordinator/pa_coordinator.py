@@ -34,6 +34,7 @@ from typing import Any, DefaultDict, Dict, List, Optional
 
 import schema
 from docopt import docopt
+from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.service.container import ContainerService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.mpc import MPCService
@@ -41,13 +42,13 @@ from fbpcp.service.storage import StorageService
 from fbpcp.util import reflect, yaml
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_service_config import OneDockerServiceConfig
-from fbpmp.pid.entity.pid_instance import PIDProtocol
+from fbpmp.pid.entity.pid_instance import PIDInstance, PIDProtocol
 from fbpmp.pid.service.pid_service.pid import PIDService
-from fbpmp.private_attribution.entity.private_attribution_instance import (
-    PrivateAttributionInstance,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstance,
 )
-from fbpmp.private_attribution.entity.private_attribution_instance import (
-    PrivateAttributionRole,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
 )
 from fbpmp.private_attribution.service.private_attribution import (
     PrivateAttributionService,
@@ -216,7 +217,7 @@ def _build_storage_service(config: Dict[str, Any]) -> StorageService:
 def create_instance(
     config: Dict[str, Any],
     instance_id: str,
-    role: PrivateAttributionRole,
+    role: PrivateComputationRole,
     input_path: str,
     output_dir: str,
     hmac_key: str,
@@ -351,7 +352,7 @@ def aggregate_shards(
 
 def get_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
-) -> PrivateAttributionInstance:
+) -> PrivateComputationInstance:
     pa_service = _build_pa_service(
         config["private_attribution"], config["mpc"], config["pid"]
     )
@@ -370,7 +371,12 @@ def get_server_ips(
     )
 
     pa_instance = pa_service.update_instance(instance_id)
-    server_ips_list = pa_instance.instances[-1].server_ips
+
+    server_ips_list = None
+    last_instance = pa_instance.instances[-1]
+    if isinstance(last_instance, (PIDInstance, MPCInstance)):
+        server_ips_list = last_instance.server_ips
+
     if not server_ips_list:
         server_ips_list = []
     print(*server_ips_list, sep=",")
@@ -410,7 +416,7 @@ def main() -> None:
                 schema.And(
                     schema.Use(str.upper),
                     lambda s: s in ("PUBLISHER", "PARTNER"),
-                    schema.Use(PrivateAttributionRole),
+                    schema.Use(PrivateComputationRole),
                 ),
             ),
             "--k_anonymity_threshold": schema.Or(None, schema.Use(int)),

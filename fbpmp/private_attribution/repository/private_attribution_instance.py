@@ -8,22 +8,22 @@
 
 import abc
 
-from fbpmp.private_attribution.entity.private_attribution_instance import (
-    PrivateAttributionInstance,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstance,
 )
 
 
 class PrivateAttributionInstanceRepository(abc.ABC):
     @abc.abstractmethod
-    def create(self, instance: PrivateAttributionInstance) -> None:
+    def create(self, instance: PrivateComputationInstance) -> None:
         pass
 
     @abc.abstractmethod
-    def read(self, instance_id: str) -> PrivateAttributionInstance:
+    def read(self, instance_id: str) -> PrivateComputationInstance:
         pass
 
     @abc.abstractmethod
-    def update(self, instance: PrivateAttributionInstance) -> None:
+    def update(self, instance: PrivateComputationInstance) -> None:
         pass
 
     @abc.abstractmethod

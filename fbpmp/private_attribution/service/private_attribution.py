@@ -15,6 +15,7 @@ from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
+from fbpcp.util.typing import checked_cast
 from fbpmp.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
     CppAttributionIdSpineCombinerService,
 )
@@ -26,12 +27,12 @@ from fbpmp.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpmp.pid.entity.pid_instance import PIDProtocol, PIDRole
 from fbpmp.pid.service.pid_service.pid import PIDService
 from fbpmp.pid.service.pid_service.pid_stage import PIDStage
-from fbpmp.private_attribution.entity.private_attribution_instance import (
-    PrivateAttributionInstance,
-    PrivateAttributionInstanceStatus,
-    PrivateAttributionRole,
-    UnionedPAInstance,
-    UnionedPAInstanceStatus,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
+    PrivateComputationRole,
+    UnionedPCInstance,
+    UnionedPCInstanceStatus,
 )
 from fbpmp.private_attribution.repository.private_attribution_instance import (
     PrivateAttributionInstanceRepository,
@@ -78,7 +79,7 @@ class PrivateAttributionService:
     def create_instance(
         self,
         instance_id: str,
-        role: PrivateAttributionRole,
+        role: PrivateComputationRole,
         input_path: str,
         output_dir: str,
         hmac_key: str,
@@ -89,14 +90,15 @@ class PrivateAttributionService:
         logger: logging.Logger,
         concurrency: int = 1,
         k_anonymity_threshold: int = 0,
-    ) -> PrivateAttributionInstance:
+    ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
-        instance = PrivateAttributionInstance(
+        instance = PrivateComputationInstance(
             instance_id=instance_id,
             role=role,
             instances=[],
-            status=PrivateAttributionInstanceStatus.CREATED,
+            status=PrivateComputationInstanceStatus.CREATED,
+            status_update_ts=0,  # placeholder, not used by PA, will be used after PL+PA consolidation
             input_path=input_path,
             output_dir=output_dir,
             hmac_key=hmac_key,
@@ -111,7 +113,7 @@ class PrivateAttributionService:
         self.instance_repository.create(instance)
         return instance
 
-    def update_instance(self, instance_id: str) -> PrivateAttributionInstance:
+    def update_instance(self, instance_id: str) -> PrivateComputationInstance:
         pa_instance = self.instance_repository.read(instance_id)
 
         self.logger.info(f"Updating instance: {instance_id}")
@@ -152,7 +154,7 @@ class PrivateAttributionService:
         pid_config: Dict[str, Any],
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = False,
-    ) -> PrivateAttributionInstance:
+    ) -> PrivateComputationInstance:
         return asyncio.run(
             self.id_match_async(
                 instance_id=instance_id,
@@ -171,26 +173,26 @@ class PrivateAttributionService:
         pid_config: Dict[str, Any],
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = False,
-    ) -> PrivateAttributionInstance:
+    ) -> PrivateComputationInstance:
         # Get the updated instance
         pa_instance = self.update_instance(instance_id)
 
-        if pa_instance.role is PrivateAttributionRole.PARTNER and not server_ips:
+        if pa_instance.role is PrivateComputationRole.PARTNER and not server_ips:
             raise ValueError("Missing server_ips for Partner")
 
         # default to be an empty string
         retry_counter_str = ""
 
         # Validate status of the instance
-        if pa_instance.status is PrivateAttributionInstanceStatus.CREATED:
+        if pa_instance.status is PrivateComputationInstanceStatus.CREATED:
             pa_instance.retry_counter = 0
-        elif pa_instance.status is PrivateAttributionInstanceStatus.ID_MATCHING_FAILED:
+        elif pa_instance.status is PrivateComputationInstanceStatus.ID_MATCHING_FAILED:
             pa_instance.retry_counter += 1
             retry_counter_str = str(pa_instance.retry_counter)
         elif pa_instance.status in [
-            PrivateAttributionInstanceStatus.ID_MATCHING_STARTED,
-            PrivateAttributionInstanceStatus.COMPUTATION_STARTED,
-            PrivateAttributionInstanceStatus.AGGREGATION_STARTED,
+            PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+            PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+            PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         ]:
             # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
             # the instance is no longer in a running state before starting a new operation
@@ -203,25 +205,29 @@ class PrivateAttributionService:
             )
 
         # Create a new pid instance
+        # TODO T98557692: remove all checked_casts in this class.
+        # We will first have to make PL provide all attributes at PrivateComputationInstance
+        # instance creation time, then mark the attributes required in PrivateComputationInstance,
+        # then we can remove the checked_casts
         pid_instance_id = instance_id + "_id_match" + retry_counter_str
         pid_instance = self.pid_svc.create_instance(
             instance_id=pid_instance_id,
             protocol=PIDProtocol.UNION_PID,
             pid_role=self._map_pa_role_to_pid_role(pa_instance.role),
-            num_shards=pa_instance.num_pid_containers,
-            input_path=pa_instance.input_path,
-            output_path=pa_instance.pid_stage_output_base_path,
+            num_shards=checked_cast(int, pa_instance.num_pid_containers),
+            input_path=checked_cast(str, pa_instance.input_path),
+            output_path=checked_cast(str, pa_instance.pid_stage_output_base_path),
             hmac_key=pa_instance.hmac_key,
         )
 
-        # Push PID instance to PrivateAttributionInstance.instances and update PA Instance status
+        # Push PID instance to PrivateComputationInstance.instances and update PA Instance status
         pid_instance.status = PIDInstanceStatus.STARTED
         pa_instance.instances.append(pid_instance)
 
-        pid_instance.spine_path = pa_instance.spine_path
-        pid_instance.data_path = pa_instance.pid_stage_out_data_path
+        pid_instance.spine_path = checked_cast(str, pa_instance.pid_stage_output_spine_path)
+        pid_instance.data_path = checked_cast(str, pa_instance.pid_stage_output_data_path)
 
-        pa_instance.status = PrivateAttributionInstanceStatus.ID_MATCHING_STARTED
+        pa_instance.status = PrivateComputationInstanceStatus.ID_MATCHING_STARTED
         self.instance_repository.update(pa_instance)
         pa_instance = self.update_instance(instance_id)
 
@@ -264,13 +270,13 @@ class PrivateAttributionService:
         # Validate status of the instance
         if not dry_run and (
             pa_instance.status
-            is not PrivateAttributionInstanceStatus.ID_MATCHING_COMPLETED
+            is not PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED
         ):
             raise ValueError(
                 f"Instance {instance_id} has status {pa_instance.status}. Not ready for data prep stage."
             )
 
-        output_path = pa_instance.data_processing_output_path
+        output_path = checked_cast(str, pa_instance.data_processing_output_path)
         combine_output_path = output_path + "_combine"
         # execute combiner step
         combiner_service = CppAttributionIdSpineCombinerService()
@@ -278,14 +284,14 @@ class PrivateAttributionService:
             OneDockerBinaryNames.ATTRIBUTION_ID_SPINE_COMBINER.value
         ]
         await combiner_service.combine_on_container_async(
-            spine_path=pa_instance.spine_path,
-            data_path=pa_instance.pid_stage_out_data_path,
+            spine_path=checked_cast(str, pa_instance.pid_stage_output_spine_path),
+            data_path=checked_cast(str, pa_instance.pid_stage_output_data_path),
             output_path=combine_output_path,
-            num_shards=pa_instance.num_pid_containers,
+            num_shards=checked_cast(int, pa_instance.num_pid_containers),
             run_name=pa_instance.instance_id if log_cost_to_s3 else "",
             onedocker_svc=self.onedocker_svc,
             tmp_directory=binary_config.tmp_directory,
-            padding_size=pa_instance.padding_size,
+            padding_size=checked_cast(int, pa_instance.padding_size),
             binary_version=binary_config.binary_version,
         )
 
@@ -302,13 +308,13 @@ class PrivateAttributionService:
         all_output_paths = []
 
         coros = []
-        for shard_index in range(pa_instance.num_pid_containers):
+        for shard_index in range(checked_cast(int, pa_instance.num_pid_containers)):
             path_to_shard = PIDStage.get_sharded_filepath(
                 combine_output_path, shard_index
             )
             shards_per_file = math.ceil(
-                (pa_instance.num_mpc_containers / pa_instance.num_pid_containers)
-                * pa_instance.num_files_per_mpc_container
+                (checked_cast(int, pa_instance.num_mpc_containers) / checked_cast(int, pa_instance.num_pid_containers))
+                * checked_cast(int, pa_instance.num_files_per_mpc_container)
             )
             logging.info(f"Input path to sharder: {path_to_shard}")
             shard_index_offset = shard_index * shards_per_file
@@ -340,23 +346,23 @@ class PrivateAttributionService:
 
     def _validate_compute_attribute_inputs(
         self,
-        pa_instance: PrivateAttributionInstance,
+        pa_instance: PrivateComputationInstance,
         server_ips: Optional[List[str]],
         dry_run: Optional[bool],
     ) -> str:
-        if pa_instance.role is PrivateAttributionRole.PARTNER and not server_ips:
+        if pa_instance.role is PrivateComputationRole.PARTNER and not server_ips:
             raise ValueError("Missing server_ips")
 
         # default to be an empty string
         retry_counter_str = ""
 
         # Validate status of the instance
-        if pa_instance.status is PrivateAttributionInstanceStatus.ID_MATCHING_COMPLETED:
+        if pa_instance.status is PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED:
             pa_instance.retry_counter = 0
         elif pa_instance.status in [
-            PrivateAttributionInstanceStatus.COMPUTATION_FAILED,
-            PrivateAttributionInstanceStatus.COMPUTATION_STARTED,
-            PrivateAttributionInstanceStatus.COMPUTATION_COMPLETED,
+            PrivateComputationInstanceStatus.COMPUTATION_FAILED,
+            PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+            PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
         ]:
             pa_instance.retry_counter += 1
             retry_counter_str = str(pa_instance.retry_counter)
@@ -402,7 +408,7 @@ class PrivateAttributionService:
         dry_run: Optional[bool] = None,
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
-    ) -> PrivateAttributionInstance:
+    ) -> PrivateComputationInstance:
         return asyncio.run(
             self.compute_attribute_async(
                 instance_id=instance_id,
@@ -426,7 +432,7 @@ class PrivateAttributionService:
         dry_run: Optional[bool] = None,
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
-    ) -> PrivateAttributionInstance:
+    ) -> PrivateComputationInstance:
         # Get the updated instance
         pa_instance = self.update_instance(instance_id)
 
@@ -444,13 +450,13 @@ class PrivateAttributionService:
                 "attribution_rules": attribution_rule,
                 "concurrency": pa_instance.concurrency,
                 "num_files": pa_instance.num_files_per_mpc_container,
-                "file_start_index": i * pa_instance.num_files_per_mpc_container,
+                "file_start_index": i * checked_cast(int, pa_instance.num_files_per_mpc_container),
                 "use_xor_encryption": True,
                 "run_name": pa_instance.instance_id if log_cost_to_s3 else "",
                 "max_num_touchpoints": pa_instance.padding_size,
                 "max_num_conversions": pa_instance.padding_size,
             }
-            for i in range(pa_instance.num_mpc_containers)
+            for i in range(checked_cast(int, pa_instance.num_mpc_containers))
         ]
         binary_config = self.onedocker_binary_config_map[
             OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value
@@ -459,7 +465,7 @@ class PrivateAttributionService:
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
             mpc_party=self._map_pa_role_to_mpc_party(pa_instance.role),
-            num_containers=pa_instance.num_mpc_containers,
+            num_containers=checked_cast(int, pa_instance.num_mpc_containers),
             binary_version=binary_config.binary_version,
             server_ips=server_ips,
             game_args=game_args,
@@ -468,34 +474,34 @@ class PrivateAttributionService:
 
         logging.info("Finished running MPC instance.")
 
-        # Push MPC instance to PrivateAttributionInstance.instances and update PL Instance status
+        # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
         pa_instance.instances.append(mpc_instance)
-        pa_instance.status = PrivateAttributionInstanceStatus.COMPUTATION_STARTED
+        pa_instance.status = PrivateComputationInstanceStatus.COMPUTATION_STARTED
         self.instance_repository.update(pa_instance)
         return pa_instance
 
     def _validate_aggregate_shards_inputs(
         self,
-        pa_instance: PrivateAttributionInstance,
+        pa_instance: PrivateComputationInstance,
         server_ips: Optional[List[str]],
         dry_run: Optional[bool],
     ) -> str:
-        if pa_instance.role is PrivateAttributionRole.PARTNER and not server_ips:
+        if pa_instance.role is PrivateComputationRole.PARTNER and not server_ips:
             raise ValueError("Missing server_ips")
 
         # default to be an empty string
         retry_counter_str = ""
 
         # Validate status of the instance
-        if pa_instance.status is PrivateAttributionInstanceStatus.COMPUTATION_COMPLETED:
+        if pa_instance.status is PrivateComputationInstanceStatus.COMPUTATION_COMPLETED:
             pa_instance.retry_counter = 0
-        elif pa_instance.status is PrivateAttributionInstanceStatus.AGGREGATION_FAILED:
+        elif pa_instance.status is PrivateComputationInstanceStatus.AGGREGATION_FAILED:
             pa_instance.retry_counter += 1
             retry_counter_str = str(pa_instance.retry_counter)
         elif pa_instance.status in [
-            PrivateAttributionInstanceStatus.ID_MATCHING_STARTED,
-            PrivateAttributionInstanceStatus.COMPUTATION_STARTED,
-            PrivateAttributionInstanceStatus.AGGREGATION_STARTED,
+            PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+            PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+            PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         ]:
             # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
             # the instance is no longer in a running state before starting a new operation
@@ -516,7 +522,7 @@ class PrivateAttributionService:
         dry_run: Optional[bool],
         log_cost_to_s3: bool,
         container_timeout: Optional[int] = None,
-    ) -> PrivateAttributionInstance:
+    ) -> PrivateComputationInstance:
         return asyncio.run(
             self.aggregate_shards_async(
                 instance_id=instance_id,
@@ -536,7 +542,7 @@ class PrivateAttributionService:
         dry_run: Optional[bool],
         log_cost_to_s3: bool,
         container_timeout: Optional[int] = None,
-    ) -> PrivateAttributionInstance:
+    ) -> PrivateComputationInstance:
         pa_instance = pa_instance = self.update_instance(instance_id)
 
         retry_counter_str = self._validate_aggregate_shards_inputs(
@@ -570,21 +576,21 @@ class PrivateAttributionService:
         )
 
         pa_instance.instances.append(mpc_instance)
-        pa_instance.status = PrivateAttributionInstanceStatus.AGGREGATION_STARTED
+        pa_instance.status = PrivateComputationInstanceStatus.AGGREGATION_STARTED
         self.instance_repository.update(pa_instance)
 
         return pa_instance
 
-    def _map_pa_role_to_mpc_party(self, pa_role: PrivateAttributionRole) -> MPCParty:
+    def _map_pa_role_to_mpc_party(self, pa_role: PrivateComputationRole) -> MPCParty:
         return {
-            PrivateAttributionRole.PUBLISHER: MPCParty.SERVER,
-            PrivateAttributionRole.PARTNER: MPCParty.CLIENT,
+            PrivateComputationRole.PUBLISHER: MPCParty.SERVER,
+            PrivateComputationRole.PARTNER: MPCParty.CLIENT,
         }[pa_role]
 
-    def _map_pa_role_to_pid_role(self, pa_role: PrivateAttributionRole) -> PIDRole:
+    def _map_pa_role_to_pid_role(self, pa_role: PrivateComputationRole) -> PIDRole:
         return {
-            PrivateAttributionRole.PUBLISHER: PIDRole.PUBLISHER,
-            PrivateAttributionRole.PARTNER: PIDRole.PARTNER,
+            PrivateComputationRole.PUBLISHER: PIDRole.PUBLISHER,
+            PrivateComputationRole.PARTNER: PIDRole.PARTNER,
         }[pa_role]
 
     """
@@ -594,21 +600,21 @@ class PrivateAttributionService:
     """
 
     def _get_status_from_stage(
-        self, instance: UnionedPAInstance
-    ) -> Optional[PrivateAttributionInstanceStatus]:
+        self, instance: UnionedPCInstance
+    ) -> Optional[PrivateComputationInstanceStatus]:
         STAGE_TO_STATUS_MAPPER: Dict[
             str,
-            Dict[UnionedPAInstanceStatus, PrivateAttributionInstanceStatus],
+            Dict[UnionedPCInstanceStatus, PrivateComputationInstanceStatus],
         ] = {
             "compute": {
-                MPCInstanceStatus.STARTED: PrivateAttributionInstanceStatus.COMPUTATION_STARTED,
-                MPCInstanceStatus.COMPLETED: PrivateAttributionInstanceStatus.COMPUTATION_COMPLETED,
-                MPCInstanceStatus.FAILED: PrivateAttributionInstanceStatus.COMPUTATION_FAILED,
+                MPCInstanceStatus.STARTED: PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+                MPCInstanceStatus.COMPLETED: PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+                MPCInstanceStatus.FAILED: PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             },
             "PID": {
-                PIDInstanceStatus.STARTED: PrivateAttributionInstanceStatus.ID_MATCHING_STARTED,
-                PIDInstanceStatus.COMPLETED: PrivateAttributionInstanceStatus.ID_MATCHING_COMPLETED,
-                PIDInstanceStatus.FAILED: PrivateAttributionInstanceStatus.ID_MATCHING_FAILED,
+                PIDInstanceStatus.STARTED: PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                PIDInstanceStatus.COMPLETED: PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+                PIDInstanceStatus.FAILED: PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
             },
         }
 

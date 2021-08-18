@@ -9,8 +9,8 @@
 from typing import cast
 
 from fbpmp.common.repository.instance_local import LocalInstanceRepository
-from fbpmp.private_attribution.entity.private_attribution_instance import (
-    PrivateAttributionInstance,
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstance,
 )
 from fbpmp.private_attribution.repository.private_attribution_instance import (
     PrivateAttributionInstanceRepository,
@@ -21,13 +21,13 @@ class LocalPrivateAttributionInstanceRepository(PrivateAttributionInstanceReposi
     def __init__(self, base_dir: str) -> None:
         self.repo = LocalInstanceRepository(base_dir)
 
-    def create(self, instance: PrivateAttributionInstance) -> None:
+    def create(self, instance: PrivateComputationInstance) -> None:
         self.repo.create(instance)
 
-    def read(self, instance_id: str) -> PrivateAttributionInstance:
-        return PrivateAttributionInstance.loads_schema(self.repo.read(instance_id))
+    def read(self, instance_id: str) -> PrivateComputationInstance:
+        return PrivateComputationInstance.loads_schema(self.repo.read(instance_id))
 
-    def update(self, instance: PrivateAttributionInstance) -> None:
+    def update(self, instance: PrivateComputationInstance) -> None:
         self.repo.update(instance)
 
     def delete(self, instance_id: str) -> None:
