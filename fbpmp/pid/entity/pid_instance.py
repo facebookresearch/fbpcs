@@ -62,7 +62,7 @@ class PIDInstance(InstanceBase):
     data_path: Optional[str] = None
     spine_path: Optional[str] = None
     hmac_key: Optional[str] = None
-    containers: List[ContainerInstance] = field(default_factory=list)
+    stages_containers: Dict[str, List[ContainerInstance]] = field(default_factory=dict)
     stages_status: Dict[str, PIDStageStatus] = field(default_factory=dict)
     status: PIDInstanceStatus = PIDInstanceStatus.UNKNOWN
     server_ips: List[str] = field(default_factory=list)

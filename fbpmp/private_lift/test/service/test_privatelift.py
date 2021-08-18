@@ -803,7 +803,7 @@ class TestPrivateLiftService(unittest.TestCase):
             num_shards=4,
             input_path="input",
             output_path="output",
-            containers=[],
+            stages_containers={},
             stages_status={},
             status=PIDInstanceStatus.COMPLETED,
         )

@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Any, Dict, List
 
+from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
 from fbpcp.util import reflect
@@ -136,6 +137,37 @@ class PIDStage(abc.ABC):
             self.instance_repository.update(instance)
             self.logger.info(
                 f"Stage {self} wrote num_shards {num_shards} to instance {instance_id} in repository"
+            )
+
+    @staticmethod
+    def get_stage_status_from_containers(
+        containers: List[ContainerInstance],
+    ) -> PIDStageStatus:
+        statuses = [container.status for container in containers]
+        if ContainerInstanceStatus.FAILED in statuses:
+            return PIDStageStatus.FAILED
+        elif all(status is ContainerInstanceStatus.COMPLETED for status in statuses):
+            return PIDStageStatus.COMPLETED
+        elif ContainerInstanceStatus.STARTED in statuses:
+            return PIDStageStatus.STARTED
+        else:
+            return PIDStageStatus.UNKNOWN
+
+    async def update_instance_containers(
+        self, instance_id: str, containers: List[ContainerInstance]
+    ) -> None:
+        with self.instance_repository.lock:
+            # get the pid instance to be updated from repo
+            instance = self.instance_repository.read(instance_id)
+
+            # update instance.stages_containers
+            instance.stages_containers[str(self.stage_type)] = containers
+
+            # write updated instance to repo
+            self.instance_repository.update(instance)
+            container_ids = ",".join(container.instance_id for container in containers)
+            self.logger.info(
+                f"Stage {self} wrote containers {container_ids} to instance {instance_id} in repository"
             )
 
     async def update_instance_status(

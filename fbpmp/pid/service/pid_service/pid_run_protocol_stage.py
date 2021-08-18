@@ -127,7 +127,7 @@ class PIDProtocolRunStage(PIDStage):
                 return status
 
             # Write containers information to PID instance repository
-            await self._update_instance_containers(
+            await self.update_instance_containers(
                 instance_id=instance_id, containers=containers
             )
 
@@ -141,7 +141,7 @@ class PIDProtocolRunStage(PIDStage):
             # Wait until the containers are finished
             self.logger.info("Waiting for containers to finish")
             finished = await self._wait_for_containers(containers)
-            await self._update_instance_containers(
+            await self.update_instance_containers(
                 instance_id=instance_id, containers=containers
             )
             if not finished:
@@ -186,14 +186,14 @@ class PIDProtocolRunStage(PIDStage):
                 return status
 
             # Write containers information to PID instance repository
-            await self._update_instance_containers(
+            await self.update_instance_containers(
                 instance_id=instance_id, containers=containers
             )
 
             # Wait until the containers are finished
             self.logger.info("Waiting for containers to finish")
             finished = await self._wait_for_containers(containers)
-            await self._update_instance_containers(
+            await self.update_instance_containers(
                 instance_id=instance_id, containers=containers
             )
             if not finished:
@@ -301,21 +301,3 @@ class PIDProtocolRunStage(PIDStage):
             **self.cloud_credential_service.get_creds(),
         }
         return env_vars
-
-    async def _update_instance_containers(
-        self,
-        instance_id: str,
-        containers: List[ContainerInstance],
-    ) -> None:
-        with self.instance_repository.lock:
-            # get the pid instance to be updated from repo
-            instance = self.instance_repository.read(instance_id)
-
-            # add containers information to instance
-            instance.containers = containers
-
-            # write updated instance to repo
-            self.instance_repository.update(instance)
-            self.logger.info(
-                f"Stage {self} wrote {len(containers)} containers to instance {instance_id} in repository"
-            )
