@@ -19,50 +19,11 @@
 
 namespace private_measurement::secret_sharing {
 
-/**
- * Custom emp::Integer that can be used with these functions to allow
- * integers to be passed without providing an explicit length.
- */
-class Integer64 : public emp::Integer {
- public:
-  Integer64(int64_t input, int32_t party = emp::PUBLIC)
-      : emp::Integer{INT_SIZE, input, party} {}
-  Integer64(int32_t len, const void* b) : emp::Integer{len, b} {}
-
-  // batcher
-  template <typename... Args>
-  static size_t bool_size(Args... args) {
-    return emp::Integer::bool_size(INT_SIZE, std::forward<Args>(args)...);
-  }
-  static void bool_data(bool* data, long long num) {
-    return emp::Integer::bool_data(data, INT_SIZE, num);
-  }
-};
-
 /*
  * Share one emp::Integer bidirectionally between both parties
  */
 template <int MY_ROLE>
 PrivateInt<MY_ROLE> privatelyShareInt(int64_t in);
-
-/*
- * Share emp::Integers bidirectionally between both parties
- * numVals = number of items to share (if std::nullopt, use in.size())
- */
-template <int MY_ROLE>
-const std::vector<PrivateInt<MY_ROLE>> privatelyShareInts(
-    const std::vector<int64_t>& in,
-    std::optional<int64_t> numVals = std::nullopt,
-    int32_t bitLen = INT_SIZE);
-
-/*
- * Share emp::Bits bidirectionally between both parties
- * numVals = number of items to share (if std::nullopt, use in.size())
- */
-template <int MY_ROLE>
-const std::vector<PrivateBit<MY_ROLE>> privatelyShareBits(
-    const std::vector<int64_t>& in,
-    std::optional<int64_t> numVals = std::nullopt);
 
 /*
  * Share emp::Integers from SOURCE_ROLE to the opposite party
