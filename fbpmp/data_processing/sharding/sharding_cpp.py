@@ -13,9 +13,10 @@ import sys
 import tempfile
 from typing import Optional
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus
+from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
+from fbpmp.common.util.wait_for_containers import wait_for_containers_async
 from fbpmp.data_processing.sharding.sharding import ShardingService, ShardType
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.pid.service.pid_service.pid_stage import PIDStage
@@ -137,8 +138,9 @@ class CppShardingService(ShardingService):
         tmp_directory: str = "/tmp/",
         hmac_key: Optional[str] = None,
         container_timeout: Optional[int] = None,
-    ) -> None:
-        asyncio.run(
+        wait_for_containers: bool = True,
+    ) -> ContainerInstance:
+        return asyncio.run(
             self.shard_on_container_async(
                 shard_type,
                 filepath,
@@ -150,6 +152,7 @@ class CppShardingService(ShardingService):
                 tmp_directory,
                 hmac_key,
                 container_timeout,
+                wait_for_containers,
             )
         )
 
@@ -165,7 +168,8 @@ class CppShardingService(ShardingService):
         tmp_directory: str = "/tmp/",
         hmac_key: Optional[str] = None,
         container_timeout: Optional[int] = None,
-    ) -> None:
+        wait_for_containers: bool = True,
+    ) -> ContainerInstance:
         logger = logging.getLogger(__name__)
         timeout = container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC
         # TODO: Probably put exe in an env variable?
@@ -204,20 +208,11 @@ class CppShardingService(ShardingService):
             )
         )[0]
 
-        # Busy wait until the container is finished
-        status = ContainerInstanceStatus.UNKNOWN
-        logger.info("Task started, waiting for completion")
-        while status not in [
-            ContainerInstanceStatus.FAILED,
-            ContainerInstanceStatus.COMPLETED,
-        ]:
-            container = onedocker_svc.get_containers([container.instance_id])[0]
-            status = container.status
-            # Sleep 5 seconds between calls to avoid an unintentional DDoS
-            logger.debug(f"Latest status: {status}")
-            await asyncio.sleep(5)
-        logger.info(
-            f"Process finished with status: {status}, container_id: {container.instance_id}"
-        )
-        if status is not ContainerInstanceStatus.COMPLETED:
-            raise RuntimeError(f"Container {container.instance_id} failed.")
+        logger.info("Task started")
+        if wait_for_containers:
+            # Busy wait until the container is finished
+            # we're only passing one container, so we index with [0] again, as was done above
+            container = (await wait_for_containers_async(onedocker_svc, [container]))[0]
+            if container.status is ContainerInstanceStatus.FAILED:
+                raise RuntimeError(f"Container {container.instance_id} failed.")
+        return container
