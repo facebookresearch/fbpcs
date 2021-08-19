@@ -119,7 +119,7 @@ class PIDService:
         await dispatcher.run_all()
 
         # Return refreshed instance
-        return self.instance_repository.read(instance_id)
+        return self.update_instance(instance_id)
 
     def get_instance(self, instance_id: str) -> PIDInstance:
         self.logger.info(f"Getting PID instance: {instance_id}")

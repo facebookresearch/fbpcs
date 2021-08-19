@@ -153,26 +153,32 @@ class PIDDispatcher(Dispatcher):
             self._cleanup_complete_stages([stage])
         return res
 
-    async def run_next(self) -> PIDInstanceStatus:
+    async def run_next(self) -> bool:
         ready_stages = self._find_eligible_stages()
         if not ready_stages:
-            self._update_instance_status(PIDInstanceStatus.COMPLETED)
-            return PIDInstanceStatus.COMPLETED
+            self.logger.info("There are no eligible stages to run at this time")
+            return False
 
         self._update_instance_status(PIDInstanceStatus.STARTED)
 
-        await asyncio.gather(*[self.run_stage(stage) for stage in ready_stages])
-        instance = self.instance_repository.read(self.instance_id)
-        return instance.status
+        # if this is not the last stage (number of nodes != 1), wait for the containers
+        # if this is the last stage (number of nodes == 1), then do not wait for containers
+        await asyncio.gather(
+            *[
+                self.run_stage(stage, self.dag.number_of_nodes() != 1)
+                for stage in ready_stages
+            ]
+        )
+        return True
 
     async def run_all(
         self,
     ) -> None:
-        status = PIDInstanceStatus.STARTED
-        while status is not PIDInstanceStatus.COMPLETED:
-            status = await self.run_next()
+        res = True
+        while res:
+            res = await self.run_next()
 
-        self.logger.info("Finished all stages in PIDDispatcher")
+        self.logger.info("All eligible stages in PIDDispatcher have been ran")
 
     def _find_eligible_stages(self) -> List[PIDStage]:
         # Create a queue and find out which are the stages
@@ -181,9 +187,16 @@ class PIDDispatcher(Dispatcher):
 
         # clear out the already finished stages
         self._cleanup_complete_stages()
+        instance = self.instance_repository.read(self.instance_id)
         run_ready_stages = []
         for node in self.dag.nodes:
-            if self.dag.in_degree(node) == 0:
+            # nodes with no dependencies left and who have not already been
+            # started are eligible to be ran
+            if (
+                self.dag.in_degree(node) == 0
+                and instance.stages_status.get(str(node.stage_type), None)
+                is not PIDStageStatus.STARTED
+            ):
                 run_ready_stages.append(node)
         return run_ready_stages
 
