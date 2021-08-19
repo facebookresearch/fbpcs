@@ -7,31 +7,33 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
+from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpmp.data_processing.pid_preparer.union_pid_preparer_cpp import (
     CppUnionPIDDataPreparerService,
 )
 from fbpmp.pcf.tests.async_utils import to_sync
 from fbpmp.pid.entity.pid_instance import PIDStageStatus
 from fbpmp.pid.entity.pid_stages import UnionPIDStage
-from fbpmp.pid.repository.pid_instance_local import LocalPIDInstanceRepository
 from fbpmp.pid.service.pid_service.pid_prepare_stage import PIDPrepareStage
+from fbpmp.pid.service.pid_service.pid_stage import PIDStage
 from fbpmp.pid.service.pid_service.pid_stage_input import PIDStageInput
+from libfb.py.asyncio.mock import AsyncMock
+from libfb.py.testutil import data_provider
 
 
-CONFIG = {
-    "s3_coordination_file": "ip_config"
-}
-
-
-async def async_wrapper(value):
-    return value
+CONFIG = {"s3_coordination_file": "ip_config"}
 
 
 class TestPIDPrepareStage(unittest.TestCase):
+    @data_provider(
+        lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
+    )
     @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
     @to_sync
-    async def test_prepare(self, mock_instance_repo):
-        with patch.object(CppUnionPIDDataPreparerService, "prepare_on_container_async"):
+    async def test_prepare(self, mock_instance_repo, wait_for_containers):
+        with patch.object(
+            CppUnionPIDDataPreparerService, "prepare_on_container_async"
+        ), patch.object(PIDStage, "update_instance_containers"):
             stage = PIDPrepareStage(
                 stage=UnionPIDStage.PUBLISHER_PREPARE,
                 config=CONFIG,
@@ -46,27 +48,61 @@ class TestPIDPrepareStage(unittest.TestCase):
             )
 
             res = await stage.prepare(
-                input_path="in", output_path="out", num_shards=1, fail_fast=False
+                instance_id="123",
+                input_path="in",
+                output_path="out",
+                num_shards=1,
+                fail_fast=False,
+                wait_for_containers=wait_for_containers,
             )
-            self.assertEqual(res, PIDStageStatus.COMPLETED)
+            self.assertEqual(
+                res,
+                PIDStageStatus.COMPLETED
+                if wait_for_containers
+                else PIDStageStatus.STARTED,
+            )
 
-    @patch.object(
-        PIDPrepareStage,
-        "prepare",
-        return_value=async_wrapper(PIDStageStatus.COMPLETED),
+    @data_provider(
+        lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
     )
     @to_sync
-    async def test_run(self, mock_prepare):
-        mock_instance_repo = LocalPIDInstanceRepository(base_dir=".")
-        mock_instance_repo.read = MagicMock()
-        mock_instance_repo.update = MagicMock()
+    @patch(
+        "fbpmp.data_processing.pid_preparer.union_pid_preparer_cpp.wait_for_containers_async"
+    )
+    @patch("fbpcp.service.storage.StorageService")
+    @patch("fbpmp.pid.repository.pid_instance.PIDInstanceRepository")
+    @patch("fbpcp.service.onedocker.OneDockerService")
+    async def test_run(
+        self,
+        mock_onedocker_svc,
+        mock_instance_repo,
+        mock_storage_svc,
+        mock_wait_for_containers_async,
+        wait_for_containers: bool,
+    ):
+        ip = "192.0.2.0"
+        container = ContainerInstance(
+            instance_id="123", ip_address=ip, status=ContainerInstanceStatus.STARTED
+        )
+        mock_onedocker_svc.start_containers_async = AsyncMock(return_value=[container])
+        container.status = (
+            ContainerInstanceStatus.COMPLETED
+            if wait_for_containers
+            else ContainerInstanceStatus.STARTED
+        )
+        mock_wait_for_containers_async.return_value = [container]
+
         stage = PIDPrepareStage(
             stage=UnionPIDStage.PUBLISHER_PREPARE,
             config=CONFIG,
             instance_repository=mock_instance_repo,
-            storage_svc="STORAGE",
-            onedocker_svc="ONEDOCKER",
-            onedocker_binary_config="OD_CONFIG",
+            storage_svc=mock_storage_svc,
+            onedocker_svc=mock_onedocker_svc,
+            onedocker_binary_config=MagicMock(
+                task_definition="offline-task:1#container",
+                tmp_directory="/tmp/",
+                binary_version="latest",
+            ),
         )
         instance_id = "444"
         stage_input = PIDStageInput(
@@ -83,29 +119,52 @@ class TestPIDPrepareStage(unittest.TestCase):
                 stage=UnionPIDStage.PUBLISHER_PREPARE,
                 config=CONFIG,
                 instance_repository=mock_instance_repo,
-                storage_svc="STORAGE",
-                onedocker_svc="ONEDOCKER",
-                onedocker_binary_config="OD_CONFIG",
+                storage_svc=mock_storage_svc,
+                onedocker_svc=mock_onedocker_svc,
+                onedocker_binary_config=MagicMock(
+                    task_definition="offline-task:1#container",
+                    tmp_directory="/tmp/",
+                    binary_version="latest",
+                ),
             )
-            status = await stage.run(stage_input)
-            # instance status is updated to READY, STARTED, then COMPLETED
-            mock_instance_repo.read.assert_called_with(instance_id)
-            self.assertEqual(mock_instance_repo.read.call_count, 3)
-            self.assertEqual(mock_instance_repo.update.call_count, 3)
+            status = await stage.run(
+                stage_input, wait_for_containers=wait_for_containers
+            )
+            self.assertEqual(
+                PIDStageStatus.COMPLETED
+                if wait_for_containers
+                else PIDStageStatus.STARTED,
+                status,
+            )
 
-        # fail_fast = True
-        with patch.object(PIDPrepareStage, "files_exist") as mock_fe:
+            self.assertEqual(mock_onedocker_svc.start_containers_async.call_count, 2)
+            if wait_for_containers:
+                self.assertEqual(mock_wait_for_containers_async.call_count, 2)
+            else:
+                mock_wait_for_containers_async.assert_not_called()
+            mock_instance_repo.read.assert_called_with(instance_id)
+            self.assertEqual(mock_instance_repo.read.call_count, 4)
+            self.assertEqual(mock_instance_repo.update.call_count, 4)
+
+        fail_fast = True
+        with patch.object(PIDPrepareStage, "files_exist") as mock_fe, patch.object(
+            PIDPrepareStage, "prepare"
+        ) as mock_prepare:
             mock_fe.return_value = True
-            stage_input.fail_fast = True
-            await stage.run(stage_input)
+            stage_input.fail_fast = fail_fast
+            status = await stage.run(
+                stage_input, wait_for_containers=wait_for_containers
+            )
             mock_prepare.assert_called_with(
-                "in", "out", 2, True
-            )  # make sure the last parameter matches stage_input.fail_fast
+                instance_id, "in", "out", 2, fail_fast, wait_for_containers
+            )
 
         # Input not ready
         with patch.object(PIDPrepareStage, "files_exist") as mock_fe:
             mock_fe.return_value = False
-            status = await stage.run(stage_input)
+            status = await stage.run(
+                stage_input, wait_for_containers=wait_for_containers
+            )
             self.assertEqual(PIDStageStatus.FAILED, status)
 
         # Multiple input paths (invariant exception)
@@ -117,8 +176,14 @@ class TestPIDPrepareStage(unittest.TestCase):
                     stage=UnionPIDStage.PUBLISHER_PREPARE,
                     config=CONFIG,
                     instance_repository=mock_instance_repo,
-                    storage_svc="STORAGE",
-                    onedocker_svc="ONEDOCKER",
-                    onedocker_binary_config="OD_CONFIG",
+                    storage_svc=mock_storage_svc,
+                    onedocker_svc=mock_onedocker_svc,
+                    onedocker_binary_config=MagicMock(
+                        task_definition="offline-task:1#container",
+                        tmp_directory="/tmp/",
+                        binary_version="latest",
+                    ),
                 )
-                status = await stage.run(stage_input)
+                status = await stage.run(
+                    stage_input, wait_for_containers=wait_for_containers
+                )
