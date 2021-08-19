@@ -15,9 +15,10 @@ import sys
 import tempfile
 from typing import Optional
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus
+from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
+from fbpmp.common.util.wait_for_containers import wait_for_containers_async
 from fbpmp.data_processing.pid_preparer.preparer import UnionPIDDataPreparerService
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 
@@ -96,8 +97,9 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         tmp_directory: str = "/tmp/",
         max_retry: int = DEFAULT_MAX_RETRY,
         container_timeout: Optional[int] = None,
-    ) -> None:
-        asyncio.run(
+        wait_for_container: bool = True,
+    ) -> ContainerInstance:
+        return asyncio.run(
             self.prepare_on_container_async(
                 input_path,
                 output_path,
@@ -106,6 +108,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 tmp_directory,
                 max_retry,
                 container_timeout,
+                wait_for_container,
             )
         )
 
@@ -119,7 +122,8 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         tmp_directory: str = "/tmp/",
         max_retry: int = DEFAULT_MAX_RETRY,
         container_timeout: Optional[int] = None,
-    ) -> None:
+        wait_for_container: bool = True,
+    ) -> ContainerInstance:
         logger = logging.getLogger(__name__)
         timeout = container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC
         # TODO: Probably put exe in an env variable?
@@ -134,7 +138,8 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
 
         current_retry = 0
         status = ContainerInstanceStatus.UNKNOWN
-
+        exe = OneDockerBinaryNames.UNION_PID_PREPARER.value
+        container = None
         while status is not ContainerInstanceStatus.COMPLETED:
             # Retry for up to max_retry times on FAILED status
             if status is ContainerInstanceStatus.FAILED:
@@ -144,8 +149,9 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                     break
                 logger.info(f"Retry attempt ({current_retry}/{max_retry})")
 
-            exe = OneDockerBinaryNames.UNION_PID_PREPARER.value
-            logger.info(f"Starting container: <{onedocker_svc.task_definition}, {exe} {cmd_args}>")
+            logger.info(
+                f"Starting container: <{onedocker_svc.task_definition}, {exe} {cmd_args}>"
+            )
             # TODO: The ContainerService API for async instance creation only
             # applies to a list of cmds, so we have to immediately dereference
             # to take the first element
@@ -159,15 +165,16 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
             )[0]
 
             # Busy wait until the container is finished
-            status = ContainerInstanceStatus.UNKNOWN
-            logger.info("Task started, waiting for completion")
-            while status not in [
-                ContainerInstanceStatus.FAILED,
-                ContainerInstanceStatus.COMPLETED,
-            ]:
-                container = onedocker_svc.get_containers([container.instance_id])[0]
+            if wait_for_container:
+                container = (
+                    await wait_for_containers_async(onedocker_svc, [container])
+                )[0]
                 status = container.status
-                # Sleep 5 seconds between calls to avoid an unintentional DDoS
-                logger.debug(f"Latest status: {status}")
-                await asyncio.sleep(5)
-            logger.info(f"Process finished with status: {status}")
+            else:
+                return container
+        if container is None:
+            raise RuntimeError(
+                f"Failed to start any containers after {1 + current_retry} attempts"
+            )
+        logger.info(f"Process finished with status: {container.status}")
+        return container

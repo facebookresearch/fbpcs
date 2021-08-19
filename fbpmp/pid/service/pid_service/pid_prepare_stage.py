@@ -47,17 +47,24 @@ class PIDPrepareStage(PIDStage):
             instance_id=instance_id, status=PIDStageStatus.STARTED
         )
         status = await self.prepare(
-            input_paths[0], output_paths[0], num_shards, stage_input.fail_fast or False
+            instance_id,
+            input_paths[0],
+            output_paths[0],
+            num_shards,
+            stage_input.fail_fast or False,
+            wait_for_containers,
         )
         await self.update_instance_status(instance_id=instance_id, status=status)
         return status
 
     async def prepare(
         self,
+        instance_id: str,
         input_path: str,
         output_path: str,
         num_shards: int,
         fail_fast: bool,
+        wait_for_containers: bool = True,
     ) -> PIDStageStatus:
         self.logger.info(f"[{self}] Starting CppUnionPIDDataPreparerService")
         preparer = CppUnionPIDDataPreparerService()
@@ -74,10 +81,18 @@ class PIDPrepareStage(PIDStage):
                 binary_version=self.onedocker_binary_config.binary_version,
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
                 max_retry=0 if fail_fast else MAX_RETRY,
+                wait_for_container=wait_for_containers,
             )
             coroutines.append(coro)
 
         # Wait for all coroutines to finish
-        await asyncio.gather(*coroutines)
-        self.logger.info(f"[{self}] All sharded instances prepared")
-        return PIDStageStatus.COMPLETED
+        containers = await asyncio.gather(*coroutines)
+        # it thinks containers is Tuple[any], when in fact in is List[ContainerInstance]
+        # pyre-ignore
+        await self.update_instance_containers(instance_id, containers)
+        if wait_for_containers:
+            # already waited in preparer.prepare_on_container_async
+            self.logger.info(f"[{self}] All sharded instances prepared")
+            return PIDStageStatus.COMPLETED
+        self.logger.info(f"[{self}] All shard instance containers started")
+        return PIDStageStatus.STARTED
