@@ -11,7 +11,7 @@
 namespace measurement::private_attribution {
 
 int Timestamp::length() const {
-  return ts_.length;
+  return ts_.size();
 }
 
 emp::Bit Timestamp::geq(const Timestamp& rhs) const {
