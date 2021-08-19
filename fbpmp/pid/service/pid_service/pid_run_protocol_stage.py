@@ -4,18 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import asyncio
 import logging
 from typing import Dict, Any, List, Optional
 
-from fbpcp.entity.container_instance import (
-    ContainerInstance,
-    ContainerInstanceStatus,
-)
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcp.util import reflect
 from fbpcp.util.typing import checked_cast
+from fbpmp.common.util.wait_for_containers import wait_for_containers_async
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 from fbpmp.pid.entity.pid_instance import PIDStageStatus
@@ -96,9 +92,9 @@ class PIDProtocolRunStage(PIDStage):
             else stage_input.num_shards
         )
         if len(input_paths) != 1:
-            raise ValueError(f"Expexcted 1 input path, not {len(input_paths)}")
+            raise ValueError(f"Expected 1 input path, not {len(input_paths)}")
         if len(output_paths) != 1:
-            raise ValueError(f"Expexcted 1 output path, not {len(output_paths)}")
+            raise ValueError(f"Expected 1 output path, not {len(output_paths)}")
 
         await self.update_instance_status(
             instance_id=instance_id, status=PIDStageStatus.STARTED
@@ -139,17 +135,15 @@ class PIDProtocolRunStage(PIDStage):
             await self.put_server_ips(instance_id=instance_id, server_ips=ip_addresses)
 
             # Wait until the containers are finished
-            self.logger.info("Waiting for containers to finish")
-            finished = await self._wait_for_containers(containers)
-            await self.update_instance_containers(
-                instance_id=instance_id, containers=containers
-            )
-            if not finished:
-                status = PIDStageStatus.FAILED
-                await self.update_instance_status(
-                    instance_id=instance_id, status=status
+            if wait_for_containers:
+                self.logger.info("Waiting for containers to finish")
+                containers = await wait_for_containers_async(
+                    self.onedocker_svc, containers, SLEEP_UPDATE_SECONDS
                 )
-                return status
+                await self.update_instance_containers(
+                    instance_id=instance_id, containers=containers
+                )
+            status = self.get_stage_status_from_containers(containers)
         elif self.stage_type is UnionPIDStage.ADV_RUN_PID:
             server_ips = self.server_ips or []
             if not server_ips:
@@ -190,44 +184,20 @@ class PIDProtocolRunStage(PIDStage):
                 instance_id=instance_id, containers=containers
             )
 
-            # Wait until the containers are finished
-            self.logger.info("Waiting for containers to finish")
-            finished = await self._wait_for_containers(containers)
-            await self.update_instance_containers(
-                instance_id=instance_id, containers=containers
-            )
-            if not finished:
-                status = PIDStageStatus.FAILED
-                # write status to instance repo
-                await self.update_instance_status(
-                    instance_id=instance_id, status=status
+            if wait_for_containers:
+                # Wait until the containers are finished
+                self.logger.info("Waiting for containers to finish")
+                containers = await wait_for_containers_async(
+                    self.onedocker_svc, containers, SLEEP_UPDATE_SECONDS
                 )
-                return status
+                await self.update_instance_containers(
+                    instance_id=instance_id, containers=containers
+                )
+            status = self.get_stage_status_from_containers(containers)
 
-        self.logger.info("All sharded instance protocol executions complete")
-        status = PIDStageStatus.COMPLETED
+        self.logger.info(f"PID Run protocol status: {status}")
         await self.update_instance_status(instance_id=instance_id, status=status)
         return status
-
-    async def _wait_for_containers(self, containers: List[ContainerInstance]) -> bool:
-        for i, container in enumerate(containers):
-            instance_id = container.instance_id
-            end_states = {
-                ContainerInstanceStatus.COMPLETED,
-                ContainerInstanceStatus.FAILED,
-            }
-            status = container.status
-            while status not in end_states:
-                await asyncio.sleep(SLEEP_UPDATE_SECONDS)
-                container = self.onedocker_svc.get_containers([instance_id])[0]
-                status = container.status
-                containers[i] = container
-            if status != ContainerInstanceStatus.COMPLETED:
-                self.logger.warning(
-                    f"Container {instance_id} failed with status {status}"
-                )
-                return False
-        return True
 
     def _gen_command_args_list(
         self,
