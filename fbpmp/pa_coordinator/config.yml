@@ -56,7 +56,7 @@ mpc:
         PrivateAttributionGameRepository:
           class: fbpmp.private_attribution.repository.private_attribution_game.PrivateAttributionGameRepository
     MPCInstanceRepository:
-      class: fbpcp.repository.mpc_instance_local.LocalMPCInstanceRepository
+      class: fbpmp.common.repository.mpc_instance_local.LocalMPCInstanceRepository
       constructor:
         base_dir: /fbpmp_instances
     ShardingService:
