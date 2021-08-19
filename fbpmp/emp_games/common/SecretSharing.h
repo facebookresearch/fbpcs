@@ -26,25 +26,6 @@ template <int MY_ROLE>
 PrivateInt<MY_ROLE> privatelyShareInt(int64_t in);
 
 /*
- * Share emp::Integers from SOURCE_ROLE to the opposite party
- * numVals = number of items to share
- */
-template <int MY_ROLE, int SOURCE_ROLE>
-const std::vector<emp::Integer> privatelyShareIntsFrom(
-    const std::vector<int64_t>& in,
-    int64_t numVals,
-    int32_t bitLen = INT_SIZE);
-
-/*
- * Share emp::Bits from SOURCE_ROLE to the opposite party
- * numVals = number of items to share
- */
-template <int MY_ROLE, int SOURCE_ROLE>
-const std::vector<emp::Bit> privatelyShareBitsFrom(
-    const std::vector<int64_t>& in,
-    int64_t numVals);
-
-/*
  * Share an array of type T from SOURCE_ROLE to the opposite party,
  * return an array of type O.
  *
@@ -58,9 +39,42 @@ const std::vector<emp::Bit> privatelyShareBitsFrom(
  * numVals = number of items to share
  * nullValue = value to initialize for the non-source role.
  */
-template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
-const std::vector<O>
-privatelyShareArrayFrom(const std::vector<T>& in, int64_t numVals, T nullValue);
+template <
+    int MY_ROLE,
+    int SOURCE_ROLE,
+    typename T,
+    typename O,
+    typename... BatcherArgs>
+const std::vector<O> privatelyShareArrayFrom(
+    const std::vector<T>& in,
+    int64_t numVals,
+    T nullValue,
+    BatcherArgs... batcherArgs);
+
+/*
+ * Share emp::Integers from SOURCE_ROLE to the opposite party
+ * numVals = number of items to share
+ */
+template <int MY_ROLE, int SOURCE_ROLE>
+const std::vector<emp::Integer> privatelyShareIntsFrom(
+    const std::vector<int64_t>& in,
+    int64_t numVals,
+    int32_t bitLen = INT_SIZE) {
+  return privatelyShareArrayFrom<MY_ROLE, SOURCE_ROLE, int64_t, emp::Integer>(
+      in, numVals, 0, bitLen);
+}
+
+/*
+ * Share emp::Bits from SOURCE_ROLE to the opposite party
+ * numVals = number of items to share
+ */
+template <int MY_ROLE, int SOURCE_ROLE>
+const std::vector<emp::Bit> privatelyShareBitsFrom(
+    const std::vector<int64_t>& in,
+    int64_t numVals) {
+  return privatelyShareArrayFrom<MY_ROLE, SOURCE_ROLE, int64_t, emp::Bit>(
+      in, numVals, 0);
+}
 
 /*
  * Share an array of T arrays from SOURCE_ROLE to the opposite party,
