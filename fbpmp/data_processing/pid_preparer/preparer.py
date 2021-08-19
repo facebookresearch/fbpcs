@@ -9,6 +9,7 @@ import logging
 import pathlib
 from typing import Optional
 
+from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 
@@ -34,7 +35,8 @@ class UnionPIDDataPreparerService(abc.ABC):
         onedocker_svc: OneDockerService,
         binary_version: str,
         tmp_directory: str = "/tmp/",
-    ) -> None:
+        wait_for_container: bool = True,
+    ) -> ContainerInstance:
         pass
 
     @abc.abstractmethod
@@ -46,5 +48,6 @@ class UnionPIDDataPreparerService(abc.ABC):
         onedocker_svc: OneDockerService,
         binary_version: str,
         tmp_directory: str = "/tmp/",
-    ) -> None:
+        wait_for_container: bool = True,
+    ) -> ContainerInstance:
         pass
