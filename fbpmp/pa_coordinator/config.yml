@@ -1,7 +1,7 @@
 private_attribution:
   dependency:
-    PrivateAttributionInstanceRepository:
-      class: fbpmp.private_attribution.repository.private_attribution_instance_local.LocalPrivateAttributionInstanceRepository
+    PrivateComputationInstanceRepository:
+      class: fbpmp.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository
       constructor:
         base_dir: /fbpmp_instances
     ContainerService:

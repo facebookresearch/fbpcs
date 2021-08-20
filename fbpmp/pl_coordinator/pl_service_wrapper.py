@@ -390,7 +390,7 @@ def _build_pl_service(
     pl_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
 ) -> PrivateLiftService:
     plinstance_repository_config = pl_config["dependency"][
-        "PrivateLiftInstanceRepository"
+        "PrivateComputationInstanceRepository"
     ]
     repository_class = reflect.get_class(plinstance_repository_config["class"])
     repository_service = repository_class(**plinstance_repository_config["constructor"])

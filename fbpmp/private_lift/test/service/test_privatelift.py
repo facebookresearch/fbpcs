@@ -52,7 +52,7 @@ class TestPrivateLiftService(unittest.TestCase):
             "fbpmp.pid.repository.pid_instance_local.LocalPIDInstanceRepository"
         )
         pl_instance_repo_patcher = patch(
-            "fbpmp.private_lift.repository.privatelift_instance_local.LocalPrivateLiftInstanceRepository"
+            "fbpmp.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository"
         )
         mpc_game_svc_patcher = patch("fbpcp.service.mpc_game.MPCGameService")
         container_svc = container_svc_patcher.start()
