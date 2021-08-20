@@ -46,7 +46,7 @@ class TestPrivateLiftService(unittest.TestCase):
         container_svc_patcher = patch("fbpcp.service.container_aws.AWSContainerService")
         storage_svc_patcher = patch("fbpcp.service.storage_s3.S3StorageService")
         mpc_instance_repo_patcher = patch(
-            "fbpcp.repository.mpc_instance_local.LocalMPCInstanceRepository"
+            "fbpmp.common.repository.mpc_instance_local.LocalMPCInstanceRepository"
         )
         pid_instance_repo_patcher = patch(
             "fbpmp.pid.repository.pid_instance_local.LocalPIDInstanceRepository"
