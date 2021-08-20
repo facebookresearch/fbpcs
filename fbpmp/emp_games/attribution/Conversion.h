@@ -46,11 +46,11 @@ struct PrivateConversion {
   T reveal(int party = emp::PUBLIC) const {
     std::stringstream out;
     out << "Conv{ts=";
-    out << ts.reveal<std::string>(party);
+    out << ts.reveal<int64_t>(party);
     out << ", value=";
-    out << conv_value.reveal<std::string>(party);
+    out << conv_value.reveal<int64_t>(party);
     out << ", metadata=";
-    out << conv_metadata.reveal<std::string>(party);
+    out << conv_metadata.reveal<int64_t>(party);
     out << "}";
 
     return out.str();

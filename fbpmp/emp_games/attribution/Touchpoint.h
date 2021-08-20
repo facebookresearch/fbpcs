@@ -108,13 +108,13 @@ struct PrivateTouchpoint {
 
     out << (isClick.reveal<bool>(party) ? "Click{" : "View{");
     out << "id=";
-    out << id.reveal<std::string>(party);
+    out << id.reveal<int64_t>(party);
     out << ", adId=";
-    out << adId.reveal<std::string>(party);
+    out << adId.reveal<int64_t>(party);
     out << ", ts=";
-    out << ts.reveal<std::string>(party);
+    out << ts.reveal<int64_t>(party);
     out << ", campaignMetadata=";
-    out << campaignMetadata.reveal<std::string>(party);
+    out << campaignMetadata.reveal<int64_t>(party);
     out << "}";
 
     return out.str();
