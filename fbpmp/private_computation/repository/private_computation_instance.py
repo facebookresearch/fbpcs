@@ -13,7 +13,7 @@ from fbpmp.private_computation.entity.private_computation_instance import (
 )
 
 
-class PrivateAttributionInstanceRepository(abc.ABC):
+class PrivateComputationInstanceRepository(abc.ABC):
     @abc.abstractmethod
     def create(self, instance: PrivateComputationInstance) -> None:
         pass

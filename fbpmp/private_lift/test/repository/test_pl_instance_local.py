@@ -14,15 +14,15 @@ from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpmp.private_lift.repository.privatelift_instance_local import (
-    LocalPrivateLiftInstanceRepository,
+from fbpmp.private_computation.repository.private_computation_instance_local import (
+    LocalPrivateComputationInstanceRepository,
 )
 
 
 class TestLocalPLInstanceRepository(unittest.TestCase):
     def setUp(self):
         instance_id = self._get_random_id()
-        self.repo = LocalPrivateLiftInstanceRepository("./")
+        self.repo = LocalPrivateComputationInstanceRepository("./")
         self.test_mpc_instance = MPCInstance.create_instance(
             instance_id=instance_id,
             game_name="conversion_lift",

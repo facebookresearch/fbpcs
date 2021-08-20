@@ -6,20 +6,19 @@
 
 # pyre-strict
 
-from typing import cast
-
-from fbpmp.common.repository.instance_local import LocalInstanceRepository
+from fbpcp.service.storage_s3 import S3StorageService
+from fbpmp.common.repository.instance_s3 import S3InstanceRepository
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
-from fbpmp.private_attribution.repository.private_attribution_instance import (
-    PrivateAttributionInstanceRepository,
+from fbpmp.private_computation.repository.private_computation_instance import (
+    PrivateComputationInstanceRepository,
 )
 
 
-class LocalPrivateAttributionInstanceRepository(PrivateAttributionInstanceRepository):
-    def __init__(self, base_dir: str) -> None:
-        self.repo = LocalInstanceRepository(base_dir)
+class S3PrivateComputationInstanceRepository(PrivateComputationInstanceRepository):
+    def __init__(self, s3_storage_svc: S3StorageService, base_dir: str) -> None:
+        self.repo = S3InstanceRepository(s3_storage_svc, base_dir)
 
     def create(self, instance: PrivateComputationInstance) -> None:
         self.repo.create(instance)

@@ -46,8 +46,8 @@ from fbpmp.private_computation.entity.private_computation_instance import (
 )
 from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
 from fbpmp.private_lift.entity.pce_config import PCEConfig
-from fbpmp.private_lift.repository.privatelift_instance import (
-    PrivateLiftInstanceRepository,
+from fbpmp.private_computation.repository.private_computation_instance import (
+    PrivateComputationInstanceRepository,
 )
 from fbpmp.private_lift.service.errors import PLServiceValidationError
 
@@ -85,7 +85,7 @@ STAGE_FAILED_STATUSES: List[PrivateComputationInstanceStatus] = [
 class PrivateLiftService:
     def __init__(
         self,
-        instance_repository: PrivateLiftInstanceRepository,
+        instance_repository: PrivateComputationInstanceRepository,
         mpc_svc: MPCService,
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,

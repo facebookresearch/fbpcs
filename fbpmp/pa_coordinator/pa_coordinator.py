@@ -64,7 +64,7 @@ def _build_pa_service(
     pa_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
 ) -> PrivateAttributionService:
     pa_instance_repository_config = pa_config["dependency"][
-        "PrivateAttributionInstanceRepository"
+        "PrivateComputationInstanceRepository"
     ]
     repository_class = reflect.get_class(pa_instance_repository_config["class"])
     repository_service = repository_class(

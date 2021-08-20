@@ -34,8 +34,8 @@ from fbpmp.private_computation.entity.private_computation_instance import (
     UnionedPCInstance,
     UnionedPCInstanceStatus,
 )
-from fbpmp.private_attribution.repository.private_attribution_instance import (
-    PrivateAttributionInstanceRepository,
+from fbpmp.private_computation.repository.private_computation_instance import (
+    PrivateComputationInstanceRepository,
 )
 
 
@@ -58,7 +58,7 @@ class PrivateAttributionService:
 
     def __init__(
         self,
-        instance_repository: PrivateAttributionInstanceRepository,
+        instance_repository: PrivateComputationInstanceRepository,
         mpc_svc: MPCService,
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,

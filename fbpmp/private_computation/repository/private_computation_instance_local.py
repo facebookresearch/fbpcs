@@ -10,12 +10,12 @@ from fbpmp.common.repository.instance_local import LocalInstanceRepository
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
-from fbpmp.private_lift.repository.privatelift_instance import (
-    PrivateLiftInstanceRepository,
+from fbpmp.private_computation.repository.private_computation_instance import (
+    PrivateComputationInstanceRepository,
 )
 
 
-class LocalPrivateLiftInstanceRepository(PrivateLiftInstanceRepository):
+class LocalPrivateComputationInstanceRepository(PrivateComputationInstanceRepository):
     def __init__(self, base_dir: str) -> None:
         self.repo = LocalInstanceRepository(base_dir)
 

@@ -1,7 +1,7 @@
 privatelift:
   dependency:
-    PrivateLiftInstanceRepository:
-      class: fbpmp.private_lift.repository.privatelift_instance_local.LocalPrivateLiftInstanceRepository
+    PrivateComputationInstanceRepository:
+      class: fbpmp.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository
       constructor:
         base_dir: /fbpmp_instances
     ContainerService:
