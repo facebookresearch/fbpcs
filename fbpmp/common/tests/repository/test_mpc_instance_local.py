@@ -9,7 +9,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import mock_open, MagicMock, patch
 
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
+from fbpcp.entity.mpc_instance import MPCInstanceStatus, MPCParty
+from fbpmp.common.entity.pcs_mpc_instance import (
+    PCSMPCInstance,
+)
 from fbpmp.common.repository.mpc_instance_local import LocalMPCInstanceRepository
 
 TEST_BASE_DIR = Path("./")
@@ -25,7 +28,7 @@ ERROR_MSG_NOT_EXISTS = f"{TEST_INSTANCE_ID} does not exist"
 
 class TestLocalMPCInstanceRepository(unittest.TestCase):
     def setUp(self):
-        self.mpc_instance = MPCInstance.create_instance(
+        self.mpc_instance = PCSMPCInstance.create_instance(
             instance_id=TEST_INSTANCE_ID,
             game_name=TEST_GAME_NAME,
             mpc_party=TEST_MPC_PARTY,

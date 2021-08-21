@@ -16,6 +16,7 @@ from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
+from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )
@@ -163,8 +164,8 @@ class PrivateLiftService:
             elif isinstance(last_instance, MPCInstance):
                 # MPC service has to call update_instance to get the newest containers
                 # information in case they are still running
-                pl_instance.instances[-1] = self.mpc_svc.update_instance(
-                    last_instance.instance_id
+                pl_instance.instances[-1] = PCSMPCInstance.from_mpc_instance(
+                    self.mpc_svc.update_instance(last_instance.instance_id)
                 )
             elif isinstance(last_instance, PostProcessingInstance):
                 self.logger.info(
@@ -405,8 +406,12 @@ class PrivateLiftService:
                 if pl_instance.is_validating
                 else num_containers,
                 onedocker_svc=self.onedocker_svc,
-                binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
-                tmp_directory=self.onedocker_binary_config_map[binary_name].tmp_directory,
+                binary_version=self.onedocker_binary_config_map[
+                    binary_name
+                ].binary_version,
+                tmp_directory=self.onedocker_binary_config_map[
+                    binary_name
+                ].tmp_directory,
             )
 
         logging.info("Finished running CombinerService, starting to reshard")
@@ -455,8 +460,12 @@ class PrivateLiftService:
                     file_start_index=shard_index_offset,
                     num_output_files=num_new_shards_per_file,
                     onedocker_svc=self.onedocker_svc,
-                    binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
-                    tmp_directory=self.onedocker_binary_config_map[binary_name].tmp_directory,
+                    binary_version=self.onedocker_binary_config_map[
+                        binary_name
+                    ].binary_version,
+                    tmp_directory=self.onedocker_binary_config_map[
+                        binary_name
+                    ].tmp_directory,
                 )
                 coros.append(coro)
 
@@ -585,7 +594,7 @@ class PrivateLiftService:
 
         # Create and start MPC instance to run MPC compute
         logging.info("Starting to run MPC instance.")
-        binary_name=OneDockerBinaryNames.LIFT_COMPUTE.value
+        binary_name = OneDockerBinaryNames.LIFT_COMPUTE.value
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
@@ -600,7 +609,7 @@ class PrivateLiftService:
         logging.info("MPC instance started running.")
 
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        pl_instance.instances.append(mpc_instance)
+        pl_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         pl_instance = self._update_status(
             pl_instance=pl_instance,
             new_status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
@@ -721,13 +730,15 @@ class PrivateLiftService:
                     "first_shard_index": synthetic_data_shard_start_index,
                 },
             ]
-            binary_name=OneDockerBinaryNames.SHARD_AGGREGATOR.value
+            binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
                 game_name="shard_aggregator",
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=2,
-                binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
+                binary_version=self.onedocker_binary_config_map[
+                    binary_name
+                ].binary_version,
                 server_ips=server_ips,
                 game_args=game_args,
                 container_timeout=container_timeout,
@@ -742,19 +753,21 @@ class PrivateLiftService:
                     "output_path": output_path,
                 },
             ]
-            binary_name=OneDockerBinaryNames.SHARD_AGGREGATOR.value
+            binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
                 game_name="shard_aggregator",
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=1,
-                binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
+                binary_version=self.onedocker_binary_config_map[
+                    binary_name
+                ].binary_version,
                 server_ips=server_ips,
                 game_args=game_args,
                 container_timeout=container_timeout,
             )
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        pl_instance.instances.append(mpc_instance)
+        pl_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         self._update_status(
             pl_instance=pl_instance,
             new_status=PrivateComputationInstanceStatus.AGGREGATION_STARTED,
