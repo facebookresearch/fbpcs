@@ -19,7 +19,7 @@ from fbpmp.private_computation.repository.private_computation_instance_local imp
 )
 
 
-class TestLocalPLInstanceRepository(unittest.TestCase):
+class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
     def setUp(self):
         instance_id = self._get_random_id()
         self.repo = LocalPrivateComputationInstanceRepository("./")
@@ -32,20 +32,20 @@ class TestLocalPLInstanceRepository(unittest.TestCase):
 
     def test_read(self):
         instance_id = self._get_random_id()
-        test_read_pl_instance = PrivateComputationInstance(
+        test_read_private_computation_instance = PrivateComputationInstance(
             instance_id=instance_id,
             role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
         )
-        self.repo.create(test_read_pl_instance)
-        self.assertEqual(self.repo.read(instance_id), test_read_pl_instance)
+        self.repo.create(test_read_private_computation_instance)
+        self.assertEqual(self.repo.read(instance_id), test_read_private_computation_instance)
         self.repo.delete(instance_id)
 
     def test_update(self):
         instance_id = self._get_random_id()
-        test_update_pl_instance = PrivateComputationInstance(
+        test_update_private_computation_instance = PrivateComputationInstance(
             instance_id=instance_id,
             role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
@@ -53,7 +53,7 @@ class TestLocalPLInstanceRepository(unittest.TestCase):
             status_update_ts=1600000000,
         )
         # Create a new MPC instance to be added to instances
-        self.repo.create(test_update_pl_instance)
+        self.repo.create(test_update_private_computation_instance)
         test_mpc_instance_new = MPCInstance.create_instance(
             instance_id=instance_id,
             game_name="aggregation",
@@ -62,8 +62,8 @@ class TestLocalPLInstanceRepository(unittest.TestCase):
         )
         instances_new = [self.test_mpc_instance, test_mpc_instance_new]
         # Update instances
-        test_update_pl_instance.instances = instances_new
-        self.repo.update(test_update_pl_instance)
+        test_update_private_computation_instance.instances = instances_new
+        self.repo.update(test_update_private_computation_instance)
         # Assert instances is updated
         self.assertEqual(self.repo.read(instance_id).instances, instances_new)
         self.repo.delete(instance_id)
