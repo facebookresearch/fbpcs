@@ -8,8 +8,9 @@ import unittest
 import uuid
 from unittest.mock import MagicMock
 
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
+from fbpcp.entity.mpc_instance import MPCInstanceStatus, MPCParty
 from fbpcp.service.storage_s3 import S3StorageService
+from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpmp.common.repository.instance_s3 import S3InstanceRepository
 
 
@@ -27,7 +28,7 @@ class TestS3InstanceRepository(unittest.TestCase):
     def setUp(self):
         storage_svc = S3StorageService("us-west-1")
         self.s3_storage_repo = S3InstanceRepository(storage_svc, self.TEST_BASE_DIR)
-        self.mpc_instance = MPCInstance.create_instance(
+        self.mpc_instance = PCSMPCInstance.create_instance(
             instance_id=self.TEST_INSTANCE_ID,
             game_name=self.TEST_GAME_NAME,
             mpc_party=self.TEST_MPC_PARTY,
@@ -62,7 +63,7 @@ class TestS3InstanceRepository(unittest.TestCase):
         self.s3_storage_repo.s3_storage_svc.read = MagicMock(
             return_value=self.mpc_instance.dumps_schema()
         )
-        instance = MPCInstance.loads_schema(
+        instance = PCSMPCInstance.loads_schema(
             self.s3_storage_repo.read(self.mpc_instance)
         )
         self.assertEqual(self.mpc_instance, instance)

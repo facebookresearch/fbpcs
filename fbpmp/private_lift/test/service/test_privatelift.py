@@ -9,8 +9,9 @@ from collections import defaultdict
 from unittest.mock import MagicMock, call, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcp.service.mpc import MPCInstance, MPCInstanceStatus, MPCParty, MPCService
+from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
+from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )
@@ -179,7 +180,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
         # create one MPC instance to be put into PrivateComputationInstance
         test_mpc_id = "test_mpc_id"
-        mpc_instance = MPCInstance.create_instance(
+        mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name="lift",
             mpc_party=MPCParty.SERVER,
@@ -466,7 +467,7 @@ class TestPrivateLiftService(unittest.TestCase):
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
         # construct an MPC instance as the mocked object returned by _create_and_start_mpc_instance
-        mpc_instance = MPCInstance.create_instance(
+        mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
             mpc_party=test_mpc_party,
@@ -528,7 +529,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_mpc_id = test_pl_id + "_compute_metrics"
         test_game_name = "lift"
         test_num_containers = 2
-        mpc_instance = MPCInstance.create_instance(
+        mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
             mpc_party=MPCParty.CLIENT,
@@ -611,7 +612,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_output_file = "test_output_file"
         test_num_containers = 2
         test_num_shards = 80
-        mpc_instance = MPCInstance.create_instance(
+        mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name="lift",
             mpc_party=MPCParty.SERVER,
@@ -665,7 +666,7 @@ class TestPrivateLiftService(unittest.TestCase):
         # construct a pl_instance
         test_pl_id = "test_pl_id"
         test_compute_output_path = "test_output_file"
-        mpc_instance = MPCInstance.create_instance(
+        mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_pl_id + "_aggregate_metrics",
             game_name="shard_aggregator",
             mpc_party=MPCParty.SERVER,
@@ -837,7 +838,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_get_status_from_stage(self):
         # Test get status from an MPC stage
-        mpc_instance = MPCInstance.create_instance(
+        mpc_instance = PCSMPCInstance.create_instance(
             instance_id="test_mpc_id",
             game_name="shard_aggregator",
             mpc_party=MPCParty.SERVER,
@@ -978,7 +979,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
         # prepare the pl instance that will be read in to memory from the repository
         # at the beginning of the cancel_current_stage function
-        mpc_instance_started = MPCInstance.create_instance(
+        mpc_instance_started = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
             mpc_party=test_mpc_party,
@@ -995,7 +996,7 @@ class TestPrivateLiftService(unittest.TestCase):
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
         # prepare the mpc instance that's returned from mpc_service.stop_instance()
-        mpc_instance_canceled = MPCInstance.create_instance(
+        mpc_instance_canceled = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name=test_game_name,
             mpc_party=test_mpc_party,
@@ -1043,7 +1044,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_gen_game_args_to_retry(self):
         test_input = "test_input_retry"
-        mpc_instance = MPCInstance.create_instance(
+        mpc_instance = PCSMPCInstance.create_instance(
             instance_id="mpc_instance",
             game_name="lift",
             mpc_party=MPCParty.SERVER,

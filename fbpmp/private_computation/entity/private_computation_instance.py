@@ -11,17 +11,18 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Union, Optional
 
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
+from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpmp.common.entity.instance_base import InstanceBase
+from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
+from fbpmp.pid.entity.pid_stages import UnionPIDStage
+from fbpmp.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
 from fbpmp.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
     PostProcessingInstanceStatus,
 )
 from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
 from fbpmp.private_lift.entity.pce_config import PCEConfig
-from fbpmp.pid.entity.pid_stages import UnionPIDStage
-from fbpmp.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
 
 
 class PrivateComputationRole(Enum):
@@ -47,7 +48,7 @@ class PrivateComputationInstanceStatus(Enum):
     PROCESSING_REQUEST = "PROCESSING_REQUEST"
 
 
-UnionedPCInstance = Union[PIDInstance, MPCInstance, PostProcessingInstance]
+UnionedPCInstance = Union[PIDInstance, PCSMPCInstance, PostProcessingInstance]
 UnionedPCInstanceStatus = Union[
     PIDInstanceStatus, MPCInstanceStatus, PostProcessingInstanceStatus
 ]
@@ -61,7 +62,9 @@ class PrivateComputationInstance(InstanceBase):
     status: PrivateComputationInstanceStatus
     status_update_ts: int
     retry_counter: int = 0
-    partial_container_retry_enabled: bool = False  # TODO T98578624: once the product is stabilized, we can enable this
+    partial_container_retry_enabled: bool = (
+        False  # TODO T98578624: once the product is stabilized, we can enable this
+    )
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
 
@@ -134,7 +137,6 @@ class PrivateComputationInstance(InstanceBase):
     @property
     def data_processing_output_path(self) -> Optional[str]:
         return self._get_stage_output_path("data_processing_stage", "csv")
-
 
     @property
     def compute_stage_output_base_path(self) -> Optional[str]:
