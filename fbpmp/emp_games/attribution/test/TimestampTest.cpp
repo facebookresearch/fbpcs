@@ -20,7 +20,7 @@ TEST(TimestampTest, TestLength) {
     Timestamp ts1{86400};
     EXPECT_EQ(ts1.length(), 64);
 
-    Timestamp ts2{100, 0, 15359, Precision::MINUTES};
+    Timestamp ts2{100, emp::PUBLIC, 0, 15359, Precision::MINUTES};
     EXPECT_EQ(ts2.length(), 8);
   });
 }
@@ -62,7 +62,7 @@ TEST(TimestampTest, TestReveal) {
     EXPECT_EQ(ts1.reveal<int64_t>(), 1000);
     EXPECT_EQ(ts1.reveal<std::string>(), "1000");
 
-    Timestamp ts2{3000, -65536, 65535, Precision::MINUTES};
+    Timestamp ts2{3000, emp::PUBLIC, -65536, 65535, Precision::MINUTES};
     EXPECT_EQ(ts2.reveal<int64_t>(), 3000);
     EXPECT_EQ(ts2.reveal<std::string>(), "3000");
   });
