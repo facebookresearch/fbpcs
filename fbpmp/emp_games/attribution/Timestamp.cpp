@@ -25,7 +25,7 @@ emp::Bit Timestamp::equal(const Timestamp& rhs) const {
 }
 
 emp::Bit Timestamp::operator<(const int64_t rhs) const {
-  return !geq(Timestamp{rhs, minValue_, maxValue_, precision_});
+  return !geq(Timestamp{rhs, emp::PUBLIC, minValue_, maxValue_, precision_});
 }
 
 emp::Bit operator>(int64_t lhs, const Timestamp& rhs) {
