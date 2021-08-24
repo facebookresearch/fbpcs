@@ -13,14 +13,11 @@ output "vpc_cidr" {
   description = "The CIDR block of the provisioned VPC"
 }
 
-output "subnet0_id" {
-  value       = aws_subnet.subnet0.id
-  description = "The id of subnet 0"
-}
-
-output "subnet1_id" {
-  value       = aws_subnet.subnet1.id
-  description = "The id of subnet 1"
+output "subnets" {
+  value = [
+    for subnet in aws_subnet.subnets : subnet.id
+  ]
+  description = "The subnets in the region associated with this VPC"
 }
 
 output "security_group_id" {

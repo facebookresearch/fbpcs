@@ -12,23 +12,21 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-resource "aws_subnet" "subnet0" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.subnet0_cidr
-  availability_zone = data.aws_availability_zones.available.names[0]
-
-  tags = {
-    Name = "onedocker-subnet-0${var.tag_postfix}"
-  }
+locals {
+  az_names = data.aws_availability_zones.available.names
+  # newbits will be used by cidrsubnet function. Reference: https://www.terraform.io/docs/language/functions/cidrsubnet.html
+  # Here we set the value to 20 so the cidr could be x.x.x.x/20 that has 4096 hosts
+  cidr_newbits = 20 - tonumber(split("/", var.vpc_cidr)[1])
 }
 
-resource "aws_subnet" "subnet1" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.subnet1_cidr
-  availability_zone = data.aws_availability_zones.available.names[1]
-
+resource "aws_subnet" "subnets" {
+  for_each                = { for idx, az_name in local.az_names : idx => az_name }
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = cidrsubnet(var.vpc_cidr, local.cidr_newbits, each.key)
+  availability_zone       = local.az_names[each.key]
+  map_public_ip_on_launch = true
   tags = {
-    Name = "onedocker-subnet-1${var.tag_postfix}"
+    Name = "onedocker-subnet${var.tag_postfix}"
   }
 }
 

@@ -164,7 +164,7 @@ terraform apply \
 
 # Store the outputs into variables
 vpc_id=$(terraform output vpc_id | tr -d '"' )
-subnet0_id=$(terraform output subnet0_id | tr -d '"' )
+subnet_ids=$(terraform output subnets | tr -d '""[]\ \n')
 route_table_id=$(terraform output route_table_id | tr -d '"')
 aws_ecs_cluster_name=$(terraform output aws_ecs_cluster_name | tr -d '"')
 
@@ -217,8 +217,8 @@ echo "Populated region with value $region"
 sed -i "s/cluster: .*/cluster: $aws_ecs_cluster_name/g" config.yml
 echo "Populated cluster with value $aws_ecs_cluster_name"
 
-sed -i "s/subnets: .*/subnets: [$subnet0_id]/g" config.yml
-echo "Populated subnets with value '[$subnet0_id]'"
+sed -i "s/subnets: .*/subnets: [${subnet_ids}]/g" config.yml
+echo "Populated subnets with value '[${subnet_ids}]'"
 
 onedocker_task_definition=$onedocker_task_definition_family:$onedocker_task_definition_revision#$onedocker_task_definition_container_definiton_name
 sed -i "s/task_definition: TODO_ONEDOCKER_TASK_DEFINITION/task_definition: $onedocker_task_definition/g" config.yml
