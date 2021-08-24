@@ -16,6 +16,7 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
+from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpmp.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
     CppAttributionIdSpineCombinerService,
 )
@@ -131,8 +132,8 @@ class PrivateAttributionService:
             elif isinstance(last_instance, MPCInstance):
                 # MPC service has to call update_instance to get the newest containers
                 # information in case they are still running
-                pa_instance.instances[-1] = self.mpc_svc.update_instance(
-                    last_instance.instance_id
+                pa_instance.instances[-1] = PCSMPCInstance.from_mpc_instance(
+                    self.mpc_svc.update_instance(last_instance.instance_id)
                 )
             else:
                 raise ValueError("Unknow type of instance")
@@ -224,8 +225,12 @@ class PrivateAttributionService:
         pid_instance.status = PIDInstanceStatus.STARTED
         pa_instance.instances.append(pid_instance)
 
-        pid_instance.spine_path = checked_cast(str, pa_instance.pid_stage_output_spine_path)
-        pid_instance.data_path = checked_cast(str, pa_instance.pid_stage_output_data_path)
+        pid_instance.spine_path = checked_cast(
+            str, pa_instance.pid_stage_output_spine_path
+        )
+        pid_instance.data_path = checked_cast(
+            str, pa_instance.pid_stage_output_data_path
+        )
 
         pa_instance.status = PrivateComputationInstanceStatus.ID_MATCHING_STARTED
         self.instance_repository.update(pa_instance)
@@ -313,7 +318,10 @@ class PrivateAttributionService:
                 combine_output_path, shard_index
             )
             shards_per_file = math.ceil(
-                (checked_cast(int, pa_instance.num_mpc_containers) / checked_cast(int, pa_instance.num_pid_containers))
+                (
+                    checked_cast(int, pa_instance.num_mpc_containers)
+                    / checked_cast(int, pa_instance.num_pid_containers)
+                )
                 * checked_cast(int, pa_instance.num_files_per_mpc_container)
             )
             logging.info(f"Input path to sharder: {path_to_shard}")
@@ -450,7 +458,8 @@ class PrivateAttributionService:
                 "attribution_rules": attribution_rule,
                 "concurrency": pa_instance.concurrency,
                 "num_files": pa_instance.num_files_per_mpc_container,
-                "file_start_index": i * checked_cast(int, pa_instance.num_files_per_mpc_container),
+                "file_start_index": i
+                * checked_cast(int, pa_instance.num_files_per_mpc_container),
                 "use_xor_encryption": True,
                 "run_name": pa_instance.instance_id if log_cost_to_s3 else "",
                 "max_num_touchpoints": pa_instance.padding_size,
@@ -475,7 +484,7 @@ class PrivateAttributionService:
         logging.info("Finished running MPC instance.")
 
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        pa_instance.instances.append(mpc_instance)
+        pa_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         pa_instance.status = PrivateComputationInstanceStatus.COMPUTATION_STARTED
         self.instance_repository.update(pa_instance)
         return pa_instance
@@ -575,7 +584,7 @@ class PrivateAttributionService:
             container_timeout=container_timeout,
         )
 
-        pa_instance.instances.append(mpc_instance)
+        pa_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         pa_instance.status = PrivateComputationInstanceStatus.AGGREGATION_STARTED
         self.instance_repository.update(pa_instance)
 

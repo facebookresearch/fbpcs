@@ -6,9 +6,11 @@
 
 # pyre-strict
 
+
 from fbpcp.entity.mpc_instance import MPCInstance
-from fbpcp.repository.instance_local import LocalInstanceRepository
 from fbpcp.repository.mpc_instance import MPCInstanceRepository
+from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpmp.common.repository.instance_local import LocalInstanceRepository
 
 
 class LocalMPCInstanceRepository(MPCInstanceRepository):
@@ -16,13 +18,13 @@ class LocalMPCInstanceRepository(MPCInstanceRepository):
         self.repo = LocalInstanceRepository(base_dir)
 
     def create(self, instance: MPCInstance) -> None:
-        self.repo.create(instance)
+        self.repo.create(PCSMPCInstance.from_mpc_instance(instance))
 
-    def read(self, instance_id: str) -> MPCInstance:
-        return MPCInstance.loads_schema(self.repo.read(instance_id))
+    def read(self, instance_id: str) -> PCSMPCInstance:
+        return PCSMPCInstance.loads_schema(self.repo.read(instance_id))
 
     def update(self, instance: MPCInstance) -> None:
-        self.repo.update(instance)
+        self.repo.update(PCSMPCInstance.from_mpc_instance(instance))
 
     def delete(self, instance_id: str) -> None:
         self.repo.delete(instance_id)

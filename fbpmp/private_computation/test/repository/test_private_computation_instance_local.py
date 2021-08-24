@@ -8,7 +8,8 @@ import random
 import string
 import unittest
 
-from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
+from fbpcp.entity.mpc_instance import MPCParty
+from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -23,7 +24,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
     def setUp(self):
         instance_id = self._get_random_id()
         self.repo = LocalPrivateComputationInstanceRepository("./")
-        self.test_mpc_instance = MPCInstance.create_instance(
+        self.test_mpc_instance = PCSMPCInstance.create_instance(
             instance_id=instance_id,
             game_name="conversion_lift",
             mpc_party=MPCParty.SERVER,
@@ -40,7 +41,9 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status_update_ts=1600000000,
         )
         self.repo.create(test_read_private_computation_instance)
-        self.assertEqual(self.repo.read(instance_id), test_read_private_computation_instance)
+        self.assertEqual(
+            self.repo.read(instance_id), test_read_private_computation_instance
+        )
         self.repo.delete(instance_id)
 
     def test_update(self):
@@ -54,7 +57,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)
-        test_mpc_instance_new = MPCInstance.create_instance(
+        test_mpc_instance_new = PCSMPCInstance.create_instance(
             instance_id=instance_id,
             game_name="aggregation",
             mpc_party=MPCParty.SERVER,
