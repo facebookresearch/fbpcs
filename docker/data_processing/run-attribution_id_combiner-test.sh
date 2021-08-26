@@ -8,13 +8,13 @@ mkdir -p test-output
 USERDIR=$(pwd)
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-# Run from the root dir of emp_games so the sample paths exist
+# Run from the root dir of data_processing so the test paths exist
 cd "$SCRIPT_DIR" || exit
 
 docker run --rm \
-    -v "$SCRIPT_DIR/../test/attribution_id_combiner:/input" \
+    -v "$SCRIPT_DIR/../../fbpmp/data_processing/test/attribution_id_combiner:/input" \
     -v "$USERDIR/test-output:/output" \
-    --network=host data_processing:latest \
+    --network=host data-processing:latest \
         attribution_id_combiner \
         --spine_path=/input/spine_input.csv_0 \
         --data_path=/input/partner_input.csv_0 \

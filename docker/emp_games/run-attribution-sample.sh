@@ -12,9 +12,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR" || exit
 
 docker run --rm \
-    -v "$SCRIPT_DIR/../../attribution/test/shard_test_input/publisher:/input" \
+    -v "$SCRIPT_DIR/../../fbpmp/emp_games/attribution/test/shard_test_input/publisher:/input" \
     -v "$USERDIR/sample-output:/output" \
-    --network=host emp_game:latest \
+    --network=host emp-games:latest \
         attribution_calculator \
         --party=1 \
         --attribution_rules=last_click_1d \
@@ -26,9 +26,9 @@ docker run --rm \
         2>&1 publisher & # Fork to background so "partner" can run below
 
 docker run --rm \
-    -v "$SCRIPT_DIR/../../attribution/test/shard_test_input/partner:/input" \
+    -v "$SCRIPT_DIR/../../fbpmp/emp_games/attribution/test/shard_test_input/partner:/input" \
     -v "$USERDIR/sample-output:/output" \
-    --network=host emp_game:latest \
+    --network=host emp-games:latest \
         attribution_calculator \
         --party=2 \
         --server_ip=127.0.0.1 \

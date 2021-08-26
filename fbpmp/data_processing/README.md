@@ -8,33 +8,22 @@ fbcode locally to a docker capable machine (your laptop) or at a minimum copy th
 
 ### Prerequisite
 
-Data Processing docker image uses the fbpcf docker image as its base.  We currently do not have a public docker registry, so this will need to be build locally first.
-You have two options to build this image...
-* Option 1: Clone https://github.com/facebookresearch/fbpcf from github and simply run `build_docker.sh` in the root of the project
-* Option 2: (If you cloned fbcode locally) Goto fbsource/fbcode/measurement/private_measurement/oss and simply run "build_docker.sh" in the root of the project
+EMP Games docker image(s) uses the fbpcf docker image as its base.  The latest will automaticaly be pulled by the build_docker.sh.
 
-Note: If building locally you may need to increase the docker memory resources to 4GB in the preferences
+### `build-docker.sh data_processing` (building data processing image)
 
-### `build-docker.sh` (building emp game images)
-
-To build data processing and `data_processing:latest` docker image run the following script
-- `./build-docker.sh
+To build data processing and `data_processing:<TAG>` docker image run the following script
+- `./build-docker.sh data_processing`
   - build-docker currently only supports Ubuntu but we might support Alpine in the future
+Optionally specify:
+* `-t` to tag the image with a given tag (default is 'latest')
 
 ## Manual Testing
 
 ### Attribution ID Combiner
 
-Simply run `docker/run-attribution_id_combiner-test.sh` and output will be stored in `test-output` folder (created automatically)
+Simply run `docker/data_processing/run-attribution_id_combiner-test.sh` and output will be stored in `test-output` folder (created automatically)
 
-## Uploading to AWS Docker Registry
+## Extracting Binaries for Production (OneDocker)
 
-To upload to a new data_processing docker image to AWS
-
-Prerequisite: aws cli must be installed
-  - MacOS: `brew install awscli`
-
-Upload/update in AWS:
-- `aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 539290649537.dkr.ecr.us-west-2.amazonaws.com`
-- `docker tag data_processing:latest 539290649537.dkr.ecr.us-west-2.amazonaws.com/data-processing:latest`
-- `docker push 539290649537.dkr.ecr.us-west-2.amazonaws.com/data-processing:latest`
+To extract the binaries to upload to S3, simply run the `extract-docker-binaries.sh data_processing` script, and the binaries will be placed `binaries_out` folder

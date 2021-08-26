@@ -12,9 +12,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR" || exit
 
 docker run --rm \
-    -v "$SCRIPT_DIR/../../attribution/shard_aggregator/test/ad_object_format:/input" \
+    -v "$SCRIPT_DIR/../../fbpmp/emp_games/attribution/shard_aggregator/test/ad_object_format:/input" \
     -v "$USERDIR/sample-output:/output" \
-    --network=host emp_game:latest \
+    --network=host emp-games:latest \
         shard_aggregator \
         --party=1 \
         --input_base_path=/input/publisher_attribution_correctness_clickonly_clicktouch_out.json \
@@ -24,9 +24,9 @@ docker run --rm \
         2>&1 publisher & # Fork to background so "Bob" can run below
 
 docker run --rm \
-    -v "$SCRIPT_DIR/../../attribution/shard_aggregator/test/ad_object_format:/input" \
+    -v "$SCRIPT_DIR/../../fbpmp/emp_games/attribution/shard_aggregator/test/ad_object_format:/input" \
     -v "$USERDIR/sample-output:/output" \
-    --network=host emp_game:latest \
+    --network=host emp-games:latest \
         shard_aggregator \
         --party=2 \
         --input_base_path=/input/partner_attribution_correctness_clickonly_clicktouch_out.json \
