@@ -40,8 +40,8 @@ echo "The string '$tag_postfix' will be appended after the tag of the AWS resour
 echo "Your AWS acount ID is $aws_account_id"
 echo "Publisher's AWS account ID is $publisher_aws_account_id"
 echo "Publisher's VPC ID is $publisher_vpc_id"
-echo "The S3 bucket for storing the Terraform state file and/or lambda function is $s3_bucket_for_storage"
-echo "The S3 bucket for storing lambda processed events is $s3_bucket_data_pipeline, will be created in a short while...".
+echo "The S3 bucket for storing 1) Terraform state file, 2) AWS Lambda functions, and 3) config.yml is $s3_bucket_for_storage"
+echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline, will be created in a short while...".
 
 ##########################################
 # Helper functions
