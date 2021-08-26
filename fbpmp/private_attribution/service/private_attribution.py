@@ -253,8 +253,8 @@ class PrivateAttributionService:
         instance_id: str,
         dry_run: Optional[bool] = None,
         log_cost_to_s3: bool = False,
-    ) -> List[str]:
-        return asyncio.run(
+    ) -> None:
+        asyncio.run(
             self.prepare_data_async(
                 instance_id=instance_id,
                 dry_run=dry_run,
@@ -267,7 +267,7 @@ class PrivateAttributionService:
         instance_id: str,
         dry_run: Optional[bool] = None,
         log_cost_to_s3: bool = False,
-    ) -> List[str]:
+    ) -> None:
         self.logger.info(f"[{self}] Starting CppAttributionIdSpineCombinerService")
         # Get the updated instance
         pa_instance = self.update_instance(instance_id)
@@ -310,8 +310,6 @@ class PrivateAttributionService:
 
         logging.info("Instantiated sharder")
 
-        all_output_paths = []
-
         coros = []
         for shard_index in range(checked_cast(int, pa_instance.num_pid_containers)):
             path_to_shard = PIDStage.get_sharded_filepath(
@@ -349,8 +347,6 @@ class PrivateAttributionService:
         # Wait for all coroutines to finish
         await asyncio.gather(*coros)
         logging.info("All sharding coroutines finished")
-
-        return all_output_paths
 
     def _validate_compute_attribute_inputs(
         self,
