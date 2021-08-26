@@ -8,14 +8,11 @@ fbcode locally to a docker capable machine (your laptop) or at a minimum copy th
 
 ### Prerequisite
 
-EMP Games docker image(s) uses the fbpcf docker image as its base.  We currently do not have a public docker registry, so this will need to be build locally first.
-* Clone https://github.com/facebookresearch/fbpcf from github and simply run `build_docker.sh` in the root of the project
-
-Note: If building locally you may need to increase the docker memory resources to 4GB in the preferences
+EMP Games docker image(s) uses the fbpcf docker image as its base.  The latest will automatically be pulled by the build_docker.sh.
 
 ### `build-docker.sh` (building emp game images)
 
-To build the emp games and `emp_game:<TAG>` docker image run `./build-docker.sh`. build-docker currently only supports Ubuntu but we might support Alpine in the future
+To build the emp games and `emp_game:<TAG>` docker image run `./build-docker.sh emp_games`. build-docker currently only supports Ubuntu but we might support Alpine in the future
 
 Optionally specify:
 * `-t` to tag the image with a given tag (default is 'latest')
@@ -27,15 +24,15 @@ Manual testing scripts have been provided for the lift and attribution calculato
 
 ### Lift
 To run a sample attribution and shard against your newly built attribution docker image, the two scripts are available:
-* `docker/emp_game/run-lift-calculator-sample.sh`
-* `docker/emp_game/run-shard-aggregator-sample.sh`
+* `docker/emp_games/run-lift-calculator-sample.sh`
+* `docker/emp_games/run-shard-aggregator-sample.sh`
 
 
 ### Attribution
 To run a sample attribution and shard against your newly built attribution docker image, the two scripts are available:
-* `docker/emp_game/run-attribution-sample.sh`
-* `docker/emp_game/run-shard-aggregator-sample.sh`
+* `docker/emp_games/run-attribution-sample.sh`
+* `docker/emp_games/run-shard-aggregator-sample.sh`
 
 ## Extracting Binaries for Production (OneDocker)
 
-To extract the binaries to upload to S3, simply run the `extract-docker-binaries.sh` script, and the binaries will be placed `binaries_out` folder
+To extract the binaries to upload to S3, simply run the `extract-docker-binaries.sh emp_games` script, and the binaries will be placed `binaries_out` folder

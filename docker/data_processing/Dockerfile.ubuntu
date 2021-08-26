@@ -3,23 +3,23 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 ARG os_release="latest"
-FROM fbpcf/ubuntu:latest as dev
+ARG fbpcf_image="fbpcf/ubuntu:latest"
+
+FROM ${fbpcf_image} as dev
 
 RUN mkdir -p /root/build/data_processing
 WORKDIR /root/build/data_processing
 
-# attribution and shard_aggregation build and install
-COPY docker/CMakeLists.txt .
-COPY attribution_id_combiner/ ./attribution_id_combiner
-COPY common/ ./common
-COPY hash_slinging_salter/ ./hash_slinging_salter
-COPY id_combiner/ ./id_combiner
-COPY lift_id_combiner/ ./lift_id_combiner
-COPY pid_preparer/ ./pid_preparer
-COPY sharding/ ./sharding
-
-RUN mkdir -p /usr/local/include/measurement/private_measurement/pcf/oss
-RUN ln -s /usr/local/include/fbpcf /usr/local/include/measurement/private_measurement/pcf/oss/pcf
+# cmake files
+COPY docker/data_processing/CMakeLists.txt .
+# data processing build and install
+COPY fbpmp/data_processing/attribution_id_combiner/ ./attribution_id_combiner
+COPY fbpmp/data_processing/common/ ./common
+COPY fbpmp/data_processing/hash_slinging_salter/ ./hash_slinging_salter
+COPY fbpmp/data_processing/id_combiner/ ./id_combiner
+COPY fbpmp/data_processing/lift_id_combiner/ ./lift_id_combiner
+COPY fbpmp/data_processing/pid_preparer/ ./pid_preparer
+COPY fbpmp/data_processing/sharding/ ./sharding
 
 RUN cmake . -DTHREADING=ON -DEMP_USE_RANDOM_DEVICE=ON
 RUN make && make install

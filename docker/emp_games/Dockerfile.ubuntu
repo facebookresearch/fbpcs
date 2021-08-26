@@ -10,12 +10,13 @@ FROM ${fbpcf_image} as dev
 RUN mkdir -p /root/build/emp_game
 WORKDIR /root/build/emp_game
 
+# cmake files
+COPY docker/emp_games/CMakeLists.txt .
+COPY docker/emp_games/common.cmake .
 # attribution, lift and shard aggregator build and install
-COPY docker/emp_game/CMakeLists.txt .
-COPY docker/cmake/ ./cmake
-COPY attribution/ ./fbpmp/emp_games/attribution
-COPY lift/ ./fbpmp/emp_games/lift
-COPY common/ ./fbpmp/emp_games/common
+COPY fbpmp/emp_games/attribution/ ./fbpmp/emp_games/attribution
+COPY fbpmp/emp_games/lift/ ./fbpmp/emp_games/lift
+COPY fbpmp/emp_games/common/ ./fbpmp/emp_games/common
 
 RUN cmake . -DTHREADING=ON -DEMP_USE_RANDOM_DEVICE=ON
 RUN make && make install
