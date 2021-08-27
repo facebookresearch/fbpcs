@@ -39,6 +39,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             instances=[self.test_mpc_instance],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=40,
         )
         self.repo.create(test_read_private_computation_instance)
         self.assertEqual(
@@ -54,6 +55,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             instances=[self.test_mpc_instance],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=40,
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)
