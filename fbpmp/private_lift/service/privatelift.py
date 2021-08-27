@@ -315,8 +315,15 @@ class PrivateLiftService:
             if pl_instance.role is PrivateComputationRole.PUBLISHER
             else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_SHARD]
         )
-        pl_instance.spine_path = f"{output_path}{spine_path_suffix}"
-        pl_instance.data_path = f"{output_path}{data_path_suffix}"
+
+        # TODO T98578552: deprecate output_path, pl_instance.spine_path_tmp and pl_instance.data_path_tmp
+        # use pl_instance.pid_stage_output_spine_path and pl_instance.pid_stage_output_data_path as source of truth
+        spine_path = f"{output_path}{spine_path_suffix}"
+        data_path = f"{output_path}{data_path_suffix}"
+        if spine_path != pl_instance.pid_stage_output_spine_path:
+            pl_instance.spine_path_tmp = spine_path
+        if data_path != pl_instance.pid_stage_output_data_path:
+            pl_instance.data_path_tmp = data_path
 
         pl_instance = self._update_status(
             pl_instance=pl_instance,
@@ -338,21 +345,21 @@ class PrivateLiftService:
     def prepare_data(
         self,
         instance_id: str,
-        output_path: str,
         num_containers: Optional[int] = None,
         is_validating: Optional[bool] = False,
         spine_path: Optional[str] = None,
         data_path: Optional[str] = None,
+        output_path: Optional[str] = None,
         dry_run: Optional[bool] = None,
-    ) -> List[str]:
-        return asyncio.run(
+    ) -> None:
+        asyncio.run(
             self.prepare_data_async(
                 instance_id,
-                output_path,
                 num_containers,
                 is_validating,
                 spine_path,
                 data_path,
+                output_path,
                 dry_run,
             )
         )
@@ -361,13 +368,13 @@ class PrivateLiftService:
     async def prepare_data_async(
         self,
         instance_id: str,
-        output_path: str,
         num_containers: Optional[int] = None,
         is_validating: Optional[bool] = False,
         spine_path: Optional[str] = None,
         data_path: Optional[str] = None,
+        output_path: Optional[str] = None,
         dry_run: Optional[bool] = None,
-    ) -> List[str]:
+    ) -> None:
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
         #   for partner, PL-Coordinator should have updated it before calling this action.
@@ -396,10 +403,28 @@ class PrivateLiftService:
         num_containers = self._get_param(
             "num_pid_containers", pl_instance.num_pid_containers, num_containers
         )
-        spine_path = self._get_param("spine_path", pl_instance.spine_path, spine_path)
-        data_path = self._get_param("data_path", pl_instance.data_path, data_path)
 
-        combine_output_path = output_path + "_combine"
+        # TODO T98578552: deprecate pl_instance.spine_path_tmp, spine_path, pl_instance.data_path_tmp and data_path
+        # use pl_instance.pid_stage_output_spine_path and pl_instance.pid_stage_output_data_path as source of truth
+        spine_path_from_instance = (
+            pl_instance.spine_path_tmp or pl_instance.pid_stage_output_spine_path
+        )
+        data_path_from_instance = (
+            pl_instance.data_path_tmp or pl_instance.pid_stage_output_data_path
+        )
+        spine_path = self._get_param("spine_path", spine_path_from_instance, spine_path)
+        data_path = self._get_param("data_path", data_path_from_instance, data_path)
+
+        # TODO T98578552: deprecate output_path and pl_instance.data_processing_output_path_tmp
+        # use pl_instance.data_processing_output_path as source of truth
+        if output_path:
+            prepared_data_output_path = output_path + "_prepared"
+            pl_instance.data_processing_output_path_tmp = prepared_data_output_path
+            self.instance_repository.update(pl_instance)
+        else:
+            prepared_data_output_path = pl_instance.data_processing_output_path
+
+        combine_output_path = checked_cast(str, prepared_data_output_path) + "_combine"
         # execute combiner step
         if skip_tasks_on_container:
             self.logger.info(f"[{self}] Skipping CppLiftIdSpineCombinerService")
@@ -434,8 +459,6 @@ class PrivateLiftService:
 
         logging.info("Instantiated sharder")
 
-        all_output_paths = []
-
         coros = []
         for shard_index in range(
             num_containers + 1 if pl_instance.is_validating else num_containers
@@ -445,13 +468,8 @@ class PrivateLiftService:
             )
             logging.info(f"Input path to sharder: {path_to_shard}")
             shard_index_offset = shard_index * pl_instance.num_files_per_mpc_container
-            output_paths = [
-                PIDStage.get_sharded_filepath(output_path, shard + shard_index_offset)
-                for shard in range(pl_instance.num_files_per_mpc_container)
-            ]
-            all_output_paths += output_paths
             logging.info(
-                f"Output base path to sharder: {output_path}, {shard_index_offset=}"
+                f"Output base path to sharder: {prepared_data_output_path}, {shard_index_offset=}"
             )
 
             if skip_tasks_on_container:
@@ -461,7 +479,7 @@ class PrivateLiftService:
                 coro = sharder.shard_on_container_async(
                     shard_type=ShardType.ROUND_ROBIN,
                     filepath=path_to_shard,
-                    output_base_path=output_path,
+                    output_base_path=checked_cast(str, prepared_data_output_path),
                     file_start_index=shard_index_offset,
                     num_output_files=pl_instance.num_files_per_mpc_container,
                     onedocker_svc=self.onedocker_svc,
@@ -478,16 +496,13 @@ class PrivateLiftService:
         await asyncio.gather(*coros)
         logging.info("All sharding coroutines finished")
 
-        return all_output_paths
-
     # MPC step 1
     def compute_metrics(
         self,
         instance_id: str,
         game_name: str,
-        input_files: List[str],
-        output_files: List[str],
         concurrency: int,
+        output_path: Optional[str] = None,
         num_containers: Optional[int] = None,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
@@ -498,9 +513,8 @@ class PrivateLiftService:
             self.compute_metrics_async(
                 instance_id,
                 game_name,
-                input_files,
-                output_files,
                 concurrency,
+                output_path,
                 num_containers,
                 is_validating,
                 server_ips,
@@ -511,18 +525,19 @@ class PrivateLiftService:
 
     def calculate_file_start_index_and_num_shards(
         self,
-        input_files: List[str],
+        num_input_files: int,
         num_containers: int,
     ) -> Iterator[Tuple[int, int]]:
         """
         Calculate the file start index and number of shards to run per worker
         Examples:
-        len(input_files) = 4, num_containers = 4 -> [(0, 1), (1, 1), (2, 1), (3, 1)]
-        len(input_files) = 5, num_containers = 4 -> [(0, 2), (2, 1), (3, 1), (4, 1)]
-        len(input_files) = 6, num_containers = 4 -> [(0, 2), (2, 2), (4, 1), (5, 1)]
-        len(input_files) = 7, num_containers = 4 -> [(0, 2), (2, 2), (4, 2), (6, 1)]
-        len(input_files) = 8, num_containers = 4 -> [(0, 2), (2, 2), (4, 2), (6, 2)]
+        num_input_files = 4, num_containers = 4 -> [(0, 1), (1, 1), (2, 1), (3, 1)]
+        num_input_files = 5, num_containers = 4 -> [(0, 2), (2, 1), (3, 1), (4, 1)]
+        num_input_files = 6, num_containers = 4 -> [(0, 2), (2, 2), (4, 1), (5, 1)]
+        num_input_files = 7, num_containers = 4 -> [(0, 2), (2, 2), (4, 2), (6, 1)]
+        num_input_files = 8, num_containers = 4 -> [(0, 2), (2, 2), (4, 2), (6, 2)]
         """
+        input_files = ["tmp"] * num_input_files
         file_start_index = 0
         for i in range(num_containers):
             num_files = len(input_files[i::num_containers])
@@ -535,21 +550,14 @@ class PrivateLiftService:
         self,
         instance_id: str,
         game_name: str,
-        input_files: List[str],
-        output_files: List[str],
         concurrency: int,
+        output_path: Optional[str] = None,
         num_containers: Optional[int] = None,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = None,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
-        # validate len(input_files)==len(output_files)
-        if len(input_files) != len(output_files):
-            raise ValueError(
-                f"There're {len(input_files)} input file(s) but {len(output_files)} output file(s). # input files should equal to # output files"
-            )
-
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
         #   for partner, PL-Coordinator should have updated it before calling this action.
@@ -578,13 +586,25 @@ class PrivateLiftService:
                 f"Instance {instance_id} has status {pl_instance.status}. Not ready for computing metrics."
             )
 
+        # TODO T98578552: deprecate pl_instance.compute_output_path_tmp and output_path
+        # use pl_instance.compute_stage_output_base_path as source of truth
+        output_path = self._get_param(
+            "compute_stage_output_base_path",
+            pl_instance.compute_stage_output_base_path,
+            output_path,
+        )
+        if output_path != pl_instance.compute_stage_output_base_path:
+            pl_instance.compute_output_path_tmp = output_path
+
+        # TODO T98578552: deprecate num_containers
+        # use pl_instance.num_mpc_containers as source of truth
+        if num_containers and num_containers != pl_instance.num_mpc_containers:
+            pl_instance.num_mpc_containers = num_containers
+
         # Prepare arguments for lift game
         game_args = self._get_compute_metrics_game_args(
             pl_instance,
-            input_files,
-            output_files,
             concurrency,
-            num_containers,
             is_validating,
             dry_run,
             container_timeout,
@@ -619,9 +639,6 @@ class PrivateLiftService:
             pl_instance=pl_instance,
             new_status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
         )
-        pl_instance.compute_output_path = output_files[0][
-            :-2
-        ]  # get the 1st output_files and remove suffix "_0"
         pl_instance.num_mpc_containers = (
             pl_instance.num_mpc_containers or num_containers
         )
@@ -695,9 +712,13 @@ class PrivateLiftService:
             )
 
         # If input_path or num_shards is not given as a parameter, get it from pl instance.
-        input_path = self._get_param(
-            "input_path", pl_instance.compute_output_path, input_path
+        # TODO T98578552: deprecate pl_instance.compute_output_path_tmp and input_path
+        # use pl_instance.compute_stage_output_base_path as source of truth
+        input_path_from_instance = (
+            pl_instance.compute_output_path_tmp
+            or pl_instance.compute_stage_output_base_path
         )
+        input_path = self._get_param("input_path", input_path_from_instance, input_path)
         # TODO T98557692: remove all checked_casts in this class.
         num_shards = self._get_param(
             "num_shards",
@@ -707,9 +728,13 @@ class PrivateLiftService:
         )
 
         # If output_path is not given as a parameter, get it from shard_aggregate_stage_output_path
+        # TODO T98578552: deprecate pl_instance.aggregated_result_path_tmp and output_path
+        # use pl_instance.shard_aggregate_stage_output_path as source of truth
         output_path = self._get_param(
             "output_path", pl_instance.shard_aggregate_stage_output_path, output_path
         )
+        if output_path != pl_instance.shard_aggregate_stage_output_path:
+            pl_instance.aggregated_result_path_tmp = output_path
 
         if is_validating:
             # num_containers_real_data is the number of containers processing real data
@@ -783,7 +808,6 @@ class PrivateLiftService:
             pl_instance=pl_instance,
             new_status=PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         )
-        pl_instance.aggregated_result_path = output_path
         self.instance_repository.update(pl_instance)
         return pl_instance
 
@@ -879,8 +903,10 @@ class PrivateLiftService:
                 f"Instance {instance_id} has status {pl_instance.status}. Not ready for running post processing handlers."
             )
 
-        pl_instance.aggregated_result_path = (
-            pl_instance.aggregated_result_path or aggregated_result_path
+        pl_instance.aggregated_result_path_tmp = (
+            pl_instance.aggregated_result_path_tmp
+            or pl_instance.shard_aggregate_stage_output_path
+            or aggregated_result_path
         )
 
         post_processing_instance = PostProcessingInstance.create_instance(
@@ -1136,10 +1162,7 @@ class PrivateLiftService:
     def _get_compute_metrics_game_args(
         self,
         pl_instance: PrivateComputationInstance,
-        input_files: List[str],
-        output_files: List[str],
         concurrency: int,
-        num_containers: Optional[int] = None,
         is_validating: Optional[bool] = False,
         dry_run: Optional[bool] = None,
         container_timeout: Optional[int] = None,
@@ -1151,33 +1174,24 @@ class PrivateLiftService:
 
         # If this is a normal run, dry_run, or unable to get the game args to retry from mpc service
         if not game_args:
-            # If num_containers is not given, get it from pl instance.
-            num_containers = self._get_param(
-                "num_mpc_containers", pl_instance.num_mpc_containers, num_containers
-            )
+            num_containers = checked_cast(int, pl_instance.num_mpc_containers)
             # update num_containers if is_vaildating = true
             if is_validating:
                 num_containers += 1
 
-            # Note: input_files/output_files are actually "input_directory/input_filename" and
-            #   "output_directory/output_filename" respectively for each item in the list
-
-            # Example:
-            #   input_file: "my_directory/my_file_0"
-            #   input_base_path: my_directory/my_file
-            input_base_path = input_files[0].rsplit("_", 1)[0]
-            output_base_path = output_files[0].rsplit("_", 1)[0]
-
             game_args = [
                 {
-                    "input_base_path": input_base_path,
-                    "output_base_path": output_base_path,
+                    "input_base_path": pl_instance.data_processing_output_path_tmp
+                    or pl_instance.data_processing_output_path,
+                    "output_base_path": pl_instance.compute_output_path_tmp
+                    or pl_instance.compute_stage_output_base_path,
                     "file_start_index": file_start_index,
                     "num_files": num_files,
                     "concurrency": concurrency,
                 }
                 for file_start_index, num_files in self.calculate_file_start_index_and_num_shards(
-                    input_files, num_containers
+                    num_containers * pl_instance.num_files_per_mpc_container,
+                    num_containers,
                 )
             ]
 

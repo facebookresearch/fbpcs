@@ -88,12 +88,15 @@ class PrivateComputationInstance(InstanceBase):
     # compatibility of pl thrift service and pl coordinator.
     # Once Graph API and One-command CLI move to provide all the attributes
     # above when creating an instance, we can then delete the attributes below.
-    spine_path: Optional[str] = None  # assign when id match; reused by compute
-    data_path: Optional[str] = None  # assign when id match; reused by compute
-    compute_output_path: Optional[
+    spine_path_tmp: Optional[str] = None  # assign when id match; reused by compute
+    data_path_tmp: Optional[str] = None  # assign when id match; reused by compute
+    data_processing_output_path_tmp: Optional[
+        str
+    ] = None  # assign when prepare data; reused by compute metrics
+    compute_output_path_tmp: Optional[
         str
     ] = None  # assign when compute; reused by aggregate
-    aggregated_result_path: Optional[
+    aggregated_result_path_tmp: Optional[
         str
     ] = None  # assign when aggregate; reused by post processing handlers
 
