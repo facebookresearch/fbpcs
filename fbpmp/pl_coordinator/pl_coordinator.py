@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> [--num_containers=<num_containers> --input_path=<input_path> --output_dir=<output_dir>] [options]
+    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> [--num_containers=<num_containers> --input_path=<input_path> --output_dir=<output_dir> --num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--num_containers=<num_containers> --input_path=<input_path> --output_path=<output_path> --server_ips=<server_ips> --hmac_key=<base64_key> --fail_fast --dry_run] [options]
     pl-coordinator compute <instance_id> --config=<config_file> [(--num_containers=<num_containers> --spine_path=<spine_path> --data_path=<data_path>) --output_path=<output_path> --server_ips=<server_ips> --concurrency=<concurrency> --dry_run] [options]
     pl-coordinator aggregate <instance_id> --config=<config_file> [(--input_path=<input_path> --num_shards=<num_shards>) --output_path=<output_path> --server_ips=<server_ips> --dry_run] [options]
@@ -53,7 +53,9 @@ from fbpmp.pl_coordinator.pl_service_wrapper import (
     cancel_current_stage,
 )
 from fbpmp.pl_coordinator.pl_study_runner import run_study
-from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationRole
+from fbpmp.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+)
 
 
 def main():
@@ -95,6 +97,7 @@ def main():
             "--aggregated_result_path": schema.Or(None, str),
             "--expected_result_path": schema.Or(None, str),
             "--num_containers": schema.Or(None, schema.Use(int)),
+            "--num_files_per_mpc_container": schema.Or(None, schema.Use(int)),
             "--num_shards": schema.Or(None, schema.Use(int)),
             "--server_ips": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--concurrency": schema.Or(None, schema.Use(int)),
@@ -126,6 +129,7 @@ def main():
             role=arguments["--role"],
             logger=logger,
             num_containers=arguments["--num_containers"],
+            num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
             input_path=arguments["--input_path"],
             output_dir=arguments["--output_dir"],
         )

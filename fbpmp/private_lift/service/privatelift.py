@@ -16,6 +16,7 @@ from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
+from fbpcp.util.typing import checked_cast
 from fbpmp.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpmp.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
@@ -45,11 +46,11 @@ from fbpmp.private_computation.entity.private_computation_instance import (
     UnionedPCInstance,
     UnionedPCInstanceStatus,
 )
-from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
-from fbpmp.private_lift.entity.pce_config import PCEConfig
 from fbpmp.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
+from fbpmp.private_lift.entity.breakdown_key import BreakdownKey
+from fbpmp.private_lift.entity.pce_config import PCEConfig
 from fbpmp.private_lift.service.errors import PLServiceValidationError
 
 T = TypeVar("T")
@@ -65,6 +66,11 @@ so that they take more than a few hours to run.
 """
 DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 43200
 
+MAX_ROWS_PER_PID_CONTAINER = 10_000_000
+TARGET_ROWS_PER_MPC_CONTAINER = 250_000
+NUM_NEW_SHARDS_PER_FILE: int = round(
+    MAX_ROWS_PER_PID_CONTAINER / TARGET_ROWS_PER_MPC_CONTAINER
+)
 
 # List of stages with 'STARTED' status.
 STAGE_STARTED_STATUSES: List[PrivateComputationInstanceStatus] = [
@@ -110,6 +116,7 @@ class PrivateLiftService:
         num_containers: Optional[int] = None,
         input_path: Optional[str] = None,
         output_dir: Optional[str] = None,
+        num_files_per_mpc_container: Optional[int] = None,
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         breakdown_key: Optional[BreakdownKey] = None,
@@ -124,6 +131,8 @@ class PrivateLiftService:
             instances=[],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=PrivateLiftService.get_ts_now(),
+            num_files_per_mpc_container=num_files_per_mpc_container
+            or NUM_NEW_SHARDS_PER_FILE,
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
             num_pid_containers=num_containers,
@@ -420,11 +429,7 @@ class PrivateLiftService:
         #     note we need each file to be sharded into the same # of files
         #     because we want to keep the data of each existing file to run
         #     on the same container
-        MAX_ROWS_PER_PID_CONTAINER = 10000000
-        TARGET_ROWS_PER_MPC_CONTAINER = 250000
-        num_new_shards_per_file = round(
-            MAX_ROWS_PER_PID_CONTAINER / TARGET_ROWS_PER_MPC_CONTAINER
-        )
+
         sharder = CppShardingService()
 
         logging.info("Instantiated sharder")
@@ -439,10 +444,10 @@ class PrivateLiftService:
                 combine_output_path, shard_index
             )
             logging.info(f"Input path to sharder: {path_to_shard}")
-            shard_index_offset = shard_index * num_new_shards_per_file
+            shard_index_offset = shard_index * pl_instance.num_files_per_mpc_container
             output_paths = [
                 PIDStage.get_sharded_filepath(output_path, shard + shard_index_offset)
-                for shard in range(num_new_shards_per_file)
+                for shard in range(pl_instance.num_files_per_mpc_container)
             ]
             all_output_paths += output_paths
             logging.info(
@@ -458,7 +463,7 @@ class PrivateLiftService:
                     filepath=path_to_shard,
                     output_base_path=output_path,
                     file_start_index=shard_index_offset,
-                    num_output_files=num_new_shards_per_file,
+                    num_output_files=pl_instance.num_files_per_mpc_container,
                     onedocker_svc=self.onedocker_svc,
                     binary_version=self.onedocker_binary_config_map[
                         binary_name
@@ -617,7 +622,9 @@ class PrivateLiftService:
         pl_instance.compute_output_path = output_files[0][
             :-2
         ]  # get the 1st output_files and remove suffix "_0"
-        pl_instance.compute_num_shards = len(output_files)
+        pl_instance.num_mpc_containers = (
+            pl_instance.num_mpc_containers or num_containers
+        )
         self.instance_repository.update(pl_instance)
         return pl_instance
 
@@ -691,8 +698,12 @@ class PrivateLiftService:
         input_path = self._get_param(
             "input_path", pl_instance.compute_output_path, input_path
         )
+        # TODO T98557692: remove all checked_casts in this class.
         num_shards = self._get_param(
-            "num_shards", pl_instance.compute_num_shards, num_shards
+            "num_shards",
+            checked_cast(int, pl_instance.num_mpc_containers)
+            * pl_instance.num_files_per_mpc_container,
+            num_shards,
         )
 
         # If output_path is not given as a parameter, get it from shard_aggregate_stage_output_path
