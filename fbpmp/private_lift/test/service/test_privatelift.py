@@ -36,6 +36,7 @@ from fbpmp.private_lift.service.errors import PLServiceValidationError
 from fbpmp.private_lift.service.privatelift import (
     PrivateLiftService,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+    NUM_NEW_SHARDS_PER_FILE,
 )
 
 # TODO T94666166: libfb won't work in OSS
@@ -147,6 +148,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[pid_instance],
             status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
 
         updated_pid_instance = pid_instance
@@ -193,6 +195,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[mpc_instance],
             status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
 
         updated_mpc_instance = mpc_instance
@@ -242,6 +245,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -331,6 +335,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         pid_instance = PIDInstance(
             instance_id=test_pid_id,
@@ -383,6 +388,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -407,6 +413,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -463,6 +470,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -542,6 +550,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[mpc_instance],
             status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
         self.pl_service.mpc_svc.update_instance = MagicMock(return_value=mpc_instance)
@@ -584,6 +593,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -611,7 +621,6 @@ class TestPrivateLiftService(unittest.TestCase):
         test_mpc_id = test_pl_id + "_compute_metrics"
         test_output_file = "test_output_file"
         test_num_containers = 2
-        test_num_shards = 80
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name="lift",
@@ -625,8 +634,9 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[mpc_instance],
             status=PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            num_mpc_containers=test_num_containers,
             compute_output_path=test_output_file,
-            compute_num_shards=test_num_shards,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
         self.pl_service.mpc_svc.update_instance = MagicMock(return_value=mpc_instance)
@@ -643,7 +653,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_game_args = [
             {
                 "input_base_path": test_output_file,
-                "num_shards": test_num_shards,
+                "num_shards": test_num_containers * NUM_NEW_SHARDS_PER_FILE,
                 "metrics_format_type": "lift",
                 "output_path": "output_path",
             }
@@ -679,8 +689,9 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[mpc_instance],
             status=PrivateComputationInstanceStatus.AGGREGATION_FAILED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            num_mpc_containers=1,
             compute_output_path=test_compute_output_path,
-            compute_num_shards=80,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
         self.pl_service.mpc_svc.update_instance = MagicMock(return_value=mpc_instance)
@@ -710,12 +721,15 @@ class TestPrivateLiftService(unittest.TestCase):
     def test_aggregate_metrics_dry_run(self):
         # construct a pl_instance
         test_pl_id = "test_pl_id"
+        test_num_mpc_containers = 1
         pl_instance = PrivateComputationInstance(
             instance_id=test_pl_id,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            num_mpc_containers=test_num_mpc_containers,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -724,13 +738,12 @@ class TestPrivateLiftService(unittest.TestCase):
         # call aggregate_metrics with ad-hoc input_path and num_shards
         test_output_path = "test_output_path"
         test_input_path = "input_overwrite"
-        test_num_shards = 10
         test_format_type = "lift"
         test_game_args = [
             {
                 "input_base_path": test_input_path,
                 "metrics_format_type": test_format_type,
-                "num_shards": test_num_shards,
+                "num_shards": test_num_mpc_containers * NUM_NEW_SHARDS_PER_FILE,
                 "output_path": test_output_path,
             }
         ]
@@ -738,7 +751,6 @@ class TestPrivateLiftService(unittest.TestCase):
             instance_id=test_pl_id,
             output_path=test_output_path,
             input_path=test_input_path,
-            num_shards=test_num_shards,
             server_ips=["192.0.2.0", "192.0.2.1"],
             dry_run=True,
         )
@@ -882,6 +894,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             spine_path=test_spine_path,
             data_path=test_data_path,
             num_pid_containers=test_num_pid_containers,
@@ -930,6 +943,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[],
             status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             partial_container_retry_enabled=True,
             spine_path=test_spine_path,
             data_path=test_data_path,
@@ -992,6 +1006,7 @@ class TestPrivateLiftService(unittest.TestCase):
             instances=[mpc_instance_started],
             status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
@@ -1076,6 +1091,7 @@ class TestPrivateLiftService(unittest.TestCase):
             is_validating=False,
             status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             status_update_ts=1600000000,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
 
         game_args = self.pl_service._gen_game_args_to_retry(pl_instance)
