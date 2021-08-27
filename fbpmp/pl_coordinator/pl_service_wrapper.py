@@ -36,18 +36,20 @@ def create_instance(
     instance_id: str,
     role: PrivateComputationRole,
     logger: logging.Logger,
-    num_containers: Optional[int] = None,
-    num_files_per_mpc_container: Optional[int] = None,
     input_path: Optional[str] = None,
     output_dir: Optional[str] = None,
+    num_pid_containers: Optional[int] = None,
+    num_mpc_containers: Optional[int] = None,
+    num_files_per_mpc_container: Optional[int] = None,
 ) -> PrivateComputationInstance:
     pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
     instance = pl_service.create_instance(
         instance_id=instance_id,
         role=role,
-        num_containers=num_containers,
         input_path=input_path,
         output_dir=output_dir,
+        num_pid_containers=num_pid_containers,
+        num_mpc_containers=num_mpc_containers,
         num_files_per_mpc_container=num_files_per_mpc_container,
         is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
             "is_validating"
