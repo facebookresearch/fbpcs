@@ -1,0 +1,60 @@
+FROM ubuntu:20.04
+ENV TZ=America/Los_Angeles
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+##########################################
+# Install packages
+##########################################
+RUN apt-get update && apt-get install -y \
+    curl \
+    jq \
+    python3.8 \
+    python3-pip \
+    unzip \
+    sudo
+
+##########################################
+# Install python modules
+##########################################
+RUN pip install \
+    awscli \
+    docopt~=0.6 \
+    schema~=0.7 \
+    jmespath~=0.10 \
+    s3transfer~=0.3 \
+    parameterized~=0.7 \
+    psutil~=5.8 \
+    fbpcp==0.1.3
+
+##########################################
+# Install Terraform
+##########################################
+ENV TERRAFORM_VERSION 0.14.9
+
+# Download Terraform
+RUN cd /usr/local/bin && \
+    curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o terraform.zip && \
+    unzip terraform.zip && \
+    rm terraform.zip
+
+# Check that it's installed
+RUN terraform --version
+
+##########################################
+# Copy deploy.sh and Terraform scripts
+##########################################
+RUN mkdir /terraform_deployment
+ADD deploy.sh /terraform_deployment
+ADD util.sh /terraform_deployment
+RUN chmod +x /terraform_deployment/deploy.sh
+RUN chmod +x /terraform_deployment/util.sh
+ADD aws_terraform_template /terraform_deployment/terraform_scripts
+CMD ["/bin/bash"]
+WORKDIR terraform_deployment
+
+##########################################
+# Set onedocker env variables
+##########################################
+ENV PATH="/terraform_deployment:${PATH}"
+ENV ONEDOCKER_REPOSITORY_PATH="LOCAL"
+ENV ONEDOCKER_EXE_PATH="/terraform_deployment/"
