@@ -61,6 +61,7 @@ class PrivateComputationInstance(InstanceBase):
     instances: List[UnionedPCInstance]
     status: PrivateComputationInstanceStatus
     status_update_ts: int
+    num_files_per_mpc_container: int
     retry_counter: int = 0
     partial_container_retry_enabled: bool = (
         False  # TODO T98578624: once the product is stabilized, we can enable this
@@ -77,7 +78,6 @@ class PrivateComputationInstance(InstanceBase):
     hmac_key: Optional[str] = None
     num_pid_containers: Optional[int] = None
     num_mpc_containers: Optional[int] = None
-    num_files_per_mpc_container: Optional[int] = None
     padding_size: Optional[int] = None
 
     concurrency: int = 1
@@ -93,7 +93,6 @@ class PrivateComputationInstance(InstanceBase):
     compute_output_path: Optional[
         str
     ] = None  # assign when compute; reused by aggregate
-    compute_num_shards: Optional[int] = None  # assign when compute; reused by aggregate
     aggregated_result_path: Optional[
         str
     ] = None  # assign when aggregate; reused by post processing handlers
