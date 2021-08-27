@@ -47,8 +47,8 @@ mpc:
     MPCGameService:
       class: fbpcp.service.mpc_game.MPCGameService
       dependency:
-        PrivateLiftGameRepository:
-          class: fbpmp.private_lift.repository.private_lift_game.PrivateLiftGameRepository
+        PrivateComputationGameRepository:
+          class: fbpmp.private_computation.repository.private_computation_game.PrivateComputationGameRepository
     MPCInstanceRepository:
       class: fbpmp.common.repository.mpc_instance_local.LocalMPCInstanceRepository
       constructor:

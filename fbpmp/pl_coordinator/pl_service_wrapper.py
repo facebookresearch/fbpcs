@@ -373,7 +373,7 @@ def _build_mpc_service(
     )
 
     mpc_game_config = config["dependency"]["MPCGameService"]
-    pl_game_repo_config = mpc_game_config["dependency"]["PrivateLiftGameRepository"]
+    pl_game_repo_config = mpc_game_config["dependency"]["PrivateComputationGameRepository"]
     pl_game_repo_class = reflect.get_class(pl_game_repo_config["class"])
     pl_game_repo = pl_game_repo_class()
     mpc_game_class = reflect.get_class(mpc_game_config["class"])

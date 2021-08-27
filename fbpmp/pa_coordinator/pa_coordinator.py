@@ -127,7 +127,7 @@ def _build_mpc_service(
 
     mpc_game_config = config["dependency"]["MPCGameService"]
     pa_game_repo_config = mpc_game_config["dependency"][
-        "PrivateAttributionGameRepository"
+        "PrivateComputationGameRepository"
     ]
     pa_game_repo_class = reflect.get_class(pa_game_repo_config["class"])
     pa_game_repo = pa_game_repo_class()
