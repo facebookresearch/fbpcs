@@ -26,7 +26,8 @@ struct Conversion {
     return a.ts == b.ts && a.conv_value == b.conv_value;
   }
   friend std::ostream& operator<<(std::ostream& os, const Conversion& conv) {
-    return os << "Conv{ts=" << conv.ts << ", value=" << conv.conv_value << ", metadata=" << conv.conv_metadata << "}";
+    return os << "Conv{ts=" << conv.ts << ", value=" << conv.conv_value
+              << ", metadata=" << conv.conv_metadata << "}";
   }
 };
 
@@ -34,6 +35,12 @@ struct PrivateConversion {
   Timestamp ts;
   emp::Integer conv_value;
   emp::Integer conv_metadata;
+
+  PrivateConversion(
+      const Timestamp& _ts,
+      const emp::Integer& _conv_value,
+      const emp::Integer& _conv_metadata)
+      : ts{_ts}, conv_value{_conv_value}, conv_metadata{_conv_metadata} {}
 
   // emp::batcher based construction support
   PrivateConversion(int len, const emp::block* b)
