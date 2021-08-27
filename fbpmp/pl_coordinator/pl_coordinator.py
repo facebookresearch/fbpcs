@@ -148,13 +148,6 @@ def main():
             dry_run=arguments["--dry_run"],
         )
     elif arguments["compute"]:
-        if (
-            arguments["--spine_path"] == arguments["--output_path"]
-            or arguments["--data_path"] == arguments["--output_path"]
-        ):
-            raise ValueError(
-                "spine_path/data_path and output_path must NOT be the same."
-            )
         logger.info(f"Compute instance: {instance_id}")
         compute(
             config=config,
