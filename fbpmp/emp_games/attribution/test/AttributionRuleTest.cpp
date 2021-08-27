@@ -33,7 +33,7 @@ PrivateConversion createConversion(int64_t ts) {
 class AttributionRuleTest
     : public testing::TestWithParam<std::pair<int64_t, int64_t>> {};
 
-TEST_P(AttributionRuleTest, TestIsAttributable) {
+TEST_P(AttributionRuleTest, TestRule) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     auto [clickWindowDurationInDays, impWindowDurationInDays] = GetParam();
     auto isClickOnlyAttributionRule = impWindowDurationInDays == 0;
@@ -81,6 +81,38 @@ TEST_P(AttributionRuleTest, TestIsAttributable) {
     conv = createConversion(tpTime + impWindowDurationInDays * 86400);
 
     EXPECT_FALSE(attributionRule.isAttributable(tp, conv).reveal<bool>());
+
+    auto oldClickTp = createTouchpoint(/*isClick*/ true, 100);
+    auto newClickTp = createTouchpoint(/*isClick*/ true, 200);
+
+    auto oldImpTp = createTouchpoint(/*isClick*/ false, 100);
+    auto newImpTp = createTouchpoint(/*isClick*/ false, 200);
+
+    // Prefer the newer touchpoint if both are clicks
+    EXPECT_TRUE(attributionRule.isNewTouchpointPreferred(newClickTp, oldClickTp)
+                    .reveal<bool>());
+    EXPECT_TRUE(attributionRule.isNewTouchpointPreferred(oldClickTp, oldClickTp)
+                    .reveal<bool>());
+    EXPECT_FALSE(
+        attributionRule.isNewTouchpointPreferred(oldClickTp, newClickTp)
+            .reveal<bool>());
+
+    // Prefer the newer touchpoint if both are impressions
+    EXPECT_TRUE(attributionRule.isNewTouchpointPreferred(newImpTp, oldImpTp)
+                    .reveal<bool>());
+    EXPECT_TRUE(attributionRule.isNewTouchpointPreferred(oldImpTp, oldImpTp)
+                    .reveal<bool>());
+    EXPECT_FALSE(attributionRule.isNewTouchpointPreferred(oldImpTp, newImpTp)
+                     .reveal<bool>());
+
+    if (!isClickOnlyAttributionRule) {
+      // Prefer clicks over impressions
+      EXPECT_TRUE(attributionRule.isNewTouchpointPreferred(oldClickTp, newImpTp)
+                      .reveal<bool>());
+      EXPECT_FALSE(
+          attributionRule.isNewTouchpointPreferred(newImpTp, oldClickTp)
+              .reveal<bool>());
+    }
   });
 }
 
