@@ -123,9 +123,8 @@ def compute(
     output_path = output_path or pl_instance.compute_stage_output_base_path
     if not output_path:
         raise ValueError("Unable to find output path for the compute stage")
-    prepared_data_output_path = output_path + "_prepared"
 
-    uploaded_files = pl_service.prepare_data(
+    pl_service.prepare_data(
         instance_id=instance_id,
         num_containers=num_containers,
         is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
@@ -133,21 +132,17 @@ def compute(
         ],
         spine_path=spine_path,
         data_path=data_path,
-        output_path=prepared_data_output_path,
+        output_path=output_path,
         dry_run=dry_run,
     )
 
-    logging.info(f"Uploaded files: {uploaded_files}")
     logging.info("Finished preparing data, starting compute metrics...")
-
-    output_files = [f"{output_path}_{i}" for i in range(len(uploaded_files))]
 
     instance = pl_service.compute_metrics(
         instance_id=instance_id,
         game_name=GAME_NAME,
-        input_files=uploaded_files,
-        output_files=output_files,
         concurrency=concurrency or DEFAULT_CONCURRENCY,
+        output_path=output_path,
         num_containers=num_containers,
         is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
             "is_validating"
