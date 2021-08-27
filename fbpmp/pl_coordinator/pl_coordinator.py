@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> [--num_containers=<num_containers> --input_path=<input_path> --output_dir=<output_dir> --num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
+    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> [--input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--num_containers=<num_containers> --input_path=<input_path> --output_path=<output_path> --server_ips=<server_ips> --hmac_key=<base64_key> --fail_fast --dry_run] [options]
     pl-coordinator compute <instance_id> --config=<config_file> [(--num_containers=<num_containers> --spine_path=<spine_path> --data_path=<data_path>) --output_path=<output_path> --server_ips=<server_ips> --concurrency=<concurrency> --dry_run] [options]
     pl-coordinator aggregate <instance_id> --config=<config_file> [(--input_path=<input_path> --num_shards=<num_shards>) --output_path=<output_path> --server_ips=<server_ips> --dry_run] [options]
@@ -97,6 +97,8 @@ def main():
             "--aggregated_result_path": schema.Or(None, str),
             "--expected_result_path": schema.Or(None, str),
             "--num_containers": schema.Or(None, schema.Use(int)),
+            "--num_pid_containers": schema.Or(None, schema.Use(int)),
+            "--num_mpc_containers": schema.Or(None, schema.Use(int)),
             "--num_files_per_mpc_container": schema.Or(None, schema.Use(int)),
             "--num_shards": schema.Or(None, schema.Use(int)),
             "--server_ips": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
@@ -128,10 +130,11 @@ def main():
             instance_id=instance_id,
             role=arguments["--role"],
             logger=logger,
-            num_containers=arguments["--num_containers"],
-            num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
             input_path=arguments["--input_path"],
             output_dir=arguments["--output_dir"],
+            num_pid_containers=arguments["--num_pid_containers"],
+            num_mpc_containers=arguments["--num_mpc_containers"],
+            num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
         )
     elif arguments["id_match"]:
         logger.info(f"Run id match on instance: {instance_id}")
