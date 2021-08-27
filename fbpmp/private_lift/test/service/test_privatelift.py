@@ -434,35 +434,11 @@ class TestPrivateLiftService(unittest.TestCase):
         test_mpc_id = test_pl_id + "_compute_metrics"
         test_game_name = "lift"
         test_num_containers = 3
-        test_num_files = 5
         test_mpc_party = MPCParty.CLIENT
-        test_input_base_path = "indir/infile"
-        test_output_base_path = "outdir/outfile"
+        test_input_path = "indir/infile"
+        test_output_dir = "outdir"
         test_concurrency = 2
         test_server_ips = ["192.0.2.0", "192.0.2.1", "192.0.2.2"]
-        test_game_args = [
-            {
-                "input_base_path": test_input_base_path,
-                "output_base_path": test_output_base_path,
-                "file_start_index": 0,
-                "num_files": 2,
-                "concurrency": test_concurrency,
-            },
-            {
-                "input_base_path": test_input_base_path,
-                "output_base_path": test_output_base_path,
-                "file_start_index": 2,
-                "num_files": 2,
-                "concurrency": test_concurrency,
-            },
-            {
-                "input_base_path": test_input_base_path,
-                "output_base_path": test_output_base_path,
-                "file_start_index": 4,
-                "num_files": 1,
-                "concurrency": test_concurrency,
-            },
-        ]
 
         pl_instance = PrivateComputationInstance(
             instance_id=test_pl_id,
@@ -471,7 +447,34 @@ class TestPrivateLiftService(unittest.TestCase):
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             status_update_ts=1600000000,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            input_path=test_input_path,
+            output_dir=test_output_dir,
         )
+
+        test_game_args = [
+            {
+                "input_base_path": pl_instance.data_processing_output_path,
+                "output_base_path": pl_instance.compute_stage_output_base_path,
+                "file_start_index": 0,
+                "num_files": NUM_NEW_SHARDS_PER_FILE,
+                "concurrency": test_concurrency,
+            },
+            {
+                "input_base_path": pl_instance.data_processing_output_path,
+                "output_base_path": pl_instance.compute_stage_output_base_path,
+                "file_start_index": NUM_NEW_SHARDS_PER_FILE * 1,
+                "num_files": NUM_NEW_SHARDS_PER_FILE,
+                "concurrency": test_concurrency,
+            },
+            {
+                "input_base_path": pl_instance.data_processing_output_path,
+                "output_base_path": pl_instance.compute_stage_output_base_path,
+                "file_start_index": NUM_NEW_SHARDS_PER_FILE * 2,
+                "num_files": NUM_NEW_SHARDS_PER_FILE,
+                "concurrency": test_concurrency,
+            },
+        ]
+
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
         # construct an MPC instance as the mocked object returned by _create_and_start_mpc_instance
@@ -490,10 +493,6 @@ class TestPrivateLiftService(unittest.TestCase):
             instance_id=test_pl_id,
             game_name=test_game_name,
             num_containers=test_num_containers,
-            input_files=[f"{test_input_base_path}_{i}" for i in range(test_num_files)],
-            output_files=[
-                f"{test_output_base_path}_{i}" for i in range(test_num_files)
-            ],
             concurrency=test_concurrency,
             server_ips=test_server_ips,
         )
@@ -551,6 +550,7 @@ class TestPrivateLiftService(unittest.TestCase):
             status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             status_update_ts=1600000000,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            output_dir="output_dir",
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
         self.pl_service.mpc_svc.update_instance = MagicMock(return_value=mpc_instance)
@@ -562,8 +562,6 @@ class TestPrivateLiftService(unittest.TestCase):
             instance_id=test_pl_id,
             game_name=test_game_name,
             num_containers=test_num_containers,
-            input_files=["infile_0", "infile_1"],
-            output_files=["outfile_0", "outfile_1"],
             concurrency=2,
             server_ips=["192.0.2.0", "192.0.2.1"],
         )
@@ -603,8 +601,6 @@ class TestPrivateLiftService(unittest.TestCase):
                 instance_id=test_pl_id,
                 game_name=test_game_name,
                 num_containers=test_num_containers,
-                input_files=[],
-                output_files=[],
                 concurrency=test_concurrency,
             )
 
@@ -636,7 +632,7 @@ class TestPrivateLiftService(unittest.TestCase):
             status_update_ts=1600000000,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             num_mpc_containers=test_num_containers,
-            compute_output_path=test_output_file,
+            compute_output_path_tmp=test_output_file,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
         self.pl_service.mpc_svc.update_instance = MagicMock(return_value=mpc_instance)
@@ -691,7 +687,7 @@ class TestPrivateLiftService(unittest.TestCase):
             status_update_ts=1600000000,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             num_mpc_containers=1,
-            compute_output_path=test_compute_output_path,
+            compute_output_path_tmp=test_compute_output_path,
         )
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
         self.pl_service.mpc_svc.update_instance = MagicMock(return_value=mpc_instance)
@@ -885,7 +881,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_num_mpc_containers = 2
         test_spine_path = "spine_path"
         test_data_path = "data_path"
-        test_intermediate_output_path = "out_path_combine"
+        test_intermediate_output_path = "out_path_prepared_combine"
         test_output_path = "out_path"
 
         pl_instance = PrivateComputationInstance(
@@ -895,8 +891,8 @@ class TestPrivateLiftService(unittest.TestCase):
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
-            spine_path=test_spine_path,
-            data_path=test_data_path,
+            spine_path_tmp=test_spine_path,
+            data_path_tmp=test_data_path,
             num_pid_containers=test_num_pid_containers,
             num_mpc_containers=test_num_mpc_containers,
         )
@@ -945,8 +941,8 @@ class TestPrivateLiftService(unittest.TestCase):
             status_update_ts=1600000000,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             partial_container_retry_enabled=True,
-            spine_path=test_spine_path,
-            data_path=test_data_path,
+            spine_path_tmp=test_spine_path,
+            data_path_tmp=test_data_path,
             num_pid_containers=test_num_pid_containers,
             num_mpc_containers=test_num_mpc_containers,
         )
@@ -1037,23 +1033,23 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_calculate_file_start_index_and_num_shards(self):
         self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards([0] * 4, 4)),
+            list(self.pl_service.calculate_file_start_index_and_num_shards(4, 4)),
             [(0, 1), (1, 1), (2, 1), (3, 1)],
         )
         self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards([0] * 5, 4)),
+            list(self.pl_service.calculate_file_start_index_and_num_shards(5, 4)),
             [(0, 2), (2, 1), (3, 1), (4, 1)],
         )
         self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards([0] * 6, 4)),
+            list(self.pl_service.calculate_file_start_index_and_num_shards(6, 4)),
             [(0, 2), (2, 2), (4, 1), (5, 1)],
         )
         self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards([0] * 7, 4)),
+            list(self.pl_service.calculate_file_start_index_and_num_shards(7, 4)),
             [(0, 2), (2, 2), (4, 2), (6, 1)],
         )
         self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards([0] * 8, 4)),
+            list(self.pl_service.calculate_file_start_index_and_num_shards(8, 4)),
             [(0, 2), (2, 2), (4, 2), (6, 2)],
         )
 
