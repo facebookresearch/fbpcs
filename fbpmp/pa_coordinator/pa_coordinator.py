@@ -36,22 +36,22 @@ import schema
 from docopt import docopt
 from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.service.container import ContainerService
-from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.mpc import MPCService
+from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcp.util import reflect, yaml
 from fbpmp.onedocker_binary_config import OneDockerBinaryConfig
 from fbpmp.onedocker_service_config import OneDockerServiceConfig
 from fbpmp.pid.entity.pid_instance import PIDInstance, PIDProtocol
 from fbpmp.pid.service.pid_service.pid import PIDService
+from fbpmp.private_attribution.service.private_attribution import (
+    PrivateAttributionService,
+)
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
 from fbpmp.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
-)
-from fbpmp.private_attribution.service.private_attribution import (
-    PrivateAttributionService,
 )
 
 DEFAULT_HMAC_KEY: str = ""
@@ -86,10 +86,7 @@ def _build_pa_service(
     return PrivateAttributionService(
         repository_service,
         _build_mpc_service(
-            mpc_config,
-            onedocker_service_config,
-            container_service,
-            storage_service
+            mpc_config, onedocker_service_config, container_service, storage_service
         ),
         _build_pid_service(
             pid_config,
@@ -181,9 +178,11 @@ def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) ->
     )
     mpc_service = _build_mpc_service(
         config["mpc"],
-        _build_onedocker_service_cfg(config["private_attribution"]["dependency"]["OneDockerServiceConfig"]),
+        _build_onedocker_service_cfg(
+            config["private_attribution"]["dependency"]["OneDockerServiceConfig"]
+        ),
         container_service,
-        storage_service
+        storage_service,
     )
     # calling update_instance here to get the newest container information
     instance = mpc_service.update_instance(instance_id)
@@ -284,13 +283,12 @@ def prepare_compute_input(
         config["private_attribution"], config["mpc"], config["pid"]
     )
 
-    uploaded_files = pa_service.prepare_data(
+    pa_service.prepare_data(
         instance_id=instance_id,
         dry_run=dry_run,
         log_cost_to_s3=log_cost_to_s3,
     )
 
-    logging.info(f"Uploaded files: {uploaded_files}")
     logging.info("Finished preparing data")
 
 
@@ -382,10 +380,10 @@ def get_server_ips(
     print(*server_ips_list, sep=",")
     return server_ips_list
 
+
 def print_instance(
-    config: Dict[str, Any],
-    instance_id: str,
-    logger: logging.Logger) -> None:
+    config: Dict[str, Any], instance_id: str, logger: logging.Logger
+) -> None:
     print(get_instance(config, instance_id, logger))
 
 
