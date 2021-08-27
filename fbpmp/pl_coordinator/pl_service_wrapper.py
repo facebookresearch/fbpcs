@@ -37,6 +37,7 @@ def create_instance(
     role: PrivateComputationRole,
     logger: logging.Logger,
     num_containers: Optional[int] = None,
+    num_files_per_mpc_container: Optional[int] = None,
     input_path: Optional[str] = None,
     output_dir: Optional[str] = None,
 ) -> PrivateComputationInstance:
@@ -47,6 +48,7 @@ def create_instance(
         num_containers=num_containers,
         input_path=input_path,
         output_dir=output_dir,
+        num_files_per_mpc_container=num_files_per_mpc_container,
         is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
@@ -318,8 +320,12 @@ def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) ->
     )
     mpc_service = _build_mpc_service(
         config["mpc"],
-        _build_onedocker_service_cfg(config["privatelift"]["dependency"]["OneDockerServiceConfig"]),
-        container_service, storage_service)
+        _build_onedocker_service_cfg(
+            config["privatelift"]["dependency"]["OneDockerServiceConfig"]
+        ),
+        container_service,
+        storage_service,
+    )
     # calling update_instance here to get the newest container information
     instance = mpc_service.update_instance(instance_id)
     logger.info(instance)
@@ -353,7 +359,8 @@ def _build_onedocker_service(
     container_service: ContainerService,
     task_definition: str,
 ) -> OneDockerService:
-  return OneDockerService(container_service, task_definition)
+    return OneDockerService(container_service, task_definition)
+
 
 def _build_mpc_service(
     config: Dict[str, Any],
@@ -401,7 +408,8 @@ def _build_pl_service(
         pl_config["dependency"]["OneDockerServiceConfig"]
     )
     onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
-        pl_config["dependency"]["OneDockerBinaryConfig"])
+        pl_config["dependency"]["OneDockerBinaryConfig"]
+    )
     onedocker_service = _build_onedocker_service(
         container_service, onedocker_service_config.task_definition
     )
@@ -409,10 +417,7 @@ def _build_pl_service(
     return PrivateLiftService(
         repository_service,
         _build_mpc_service(
-            mpc_config,
-            onedocker_service_config,
-            container_service,
-            storage_service
+            mpc_config, onedocker_service_config, container_service, storage_service
         ),
         _build_pid_service(
             pid_config,
