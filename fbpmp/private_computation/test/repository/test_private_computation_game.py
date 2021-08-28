@@ -9,14 +9,14 @@ from typing import List
 from unittest.mock import patch
 
 from fbpcp.entity.mpc_game_config import MPCGameArgument
-from fbpmp.private_attribution.repository.private_attribution_game import (
-    PrivateAttributionGameRepository,
+from fbpmp.private_computation.repository.private_computation_game import (
+    PrivateComputationGameRepository,
 )
 
 
-class TestPrivateattributionGameRepository(unittest.TestCase):
+class TestPrivateComputationGameRepository(unittest.TestCase):
     @patch(
-        "fbpmp.private_attribution.repository.private_attribution_game.PA_GAME_CONFIG",
+        "fbpmp.private_computation.repository.private_computation_game.PRIVATE_COMPUTATION_GAME_CONFIG",
         {
             "attribution_compute_dev": {
                 "onedocker_package_name": "private_attribution/compute-dev",
@@ -30,19 +30,19 @@ class TestPrivateattributionGameRepository(unittest.TestCase):
         },
     )
     def setUp(self):
-        self.pa_game_repository = PrivateAttributionGameRepository()
+        self.game_repository = PrivateComputationGameRepository()
 
     def test_get_game(self):
-        pa_game_config = self.pa_game_repository.pa_game_config
+        game_config = self.game_repository.private_computation_game_config
         expected_game_name = "attribution_compute_dev"
-        expected_onedocker_package_name = pa_game_config[expected_game_name][
+        expected_onedocker_package_name = game_config[expected_game_name][
             "onedocker_package_name"
         ]
-        attribution_game_config = self.pa_game_repository.get_game(expected_game_name)
+        attribution_game_config = self.game_repository.get_game(expected_game_name)
 
         expected_arguments: List[MPCGameArgument] = [
             MPCGameArgument(name=argument["name"], required=argument["required"])
-            for argument in pa_game_config[expected_game_name]["arguments"]
+            for argument in game_config[expected_game_name]["arguments"]
         ]
         self.assertEqual(attribution_game_config.game_name, expected_game_name)
         self.assertEqual(
@@ -56,4 +56,4 @@ class TestPrivateattributionGameRepository(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, f"Game {unsupported_game_name} is not supported."
         ):
-            self.pa_game_repository.get_game(unsupported_game_name)
+            self.game_repository.get_game(unsupported_game_name)

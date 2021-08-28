@@ -11,7 +11,27 @@ from fbpcp.repository.mpc_game_repository import MPCGameRepository
 from fbpmp.onedocker_binary_names import OneDockerBinaryNames
 
 
-PA_GAME_CONFIG = {
+PRIVATE_COMPUTATION_GAME_CONFIG = {
+    "lift": {
+        "onedocker_package_name": OneDockerBinaryNames.LIFT_COMPUTE.value,
+        "arguments": [
+            {"name": "input_base_path", "required": True},
+            {"name": "output_base_path", "required": True},
+            {"name": "file_start_index", "required": False},
+            {"name": "num_files", "required": True},
+            {"name": "concurrency", "required": True},
+        ],
+    },
+    "shard_aggregator": {
+        "onedocker_package_name": OneDockerBinaryNames.SHARD_AGGREGATOR.value,
+        "arguments": [
+            {"name": "input_base_path", "required": True},
+            {"name": "num_shards", "required": True},
+            {"name": "output_path", "required": True},
+            {"name": "metrics_format_type", "required": True},
+            {"name": "first_shard_index", "required": False},
+        ],
+    },
     "attribution_compute": {
         "onedocker_package_name": OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value,
         "arguments": [
@@ -38,15 +58,15 @@ PA_GAME_CONFIG = {
 }
 
 
-class PrivateAttributionGameRepository(MPCGameRepository):
+class PrivateComputationGameRepository(MPCGameRepository):
     def __init__(self) -> None:
-        self.pa_game_config = PA_GAME_CONFIG
+        self.private_computation_game_config = PRIVATE_COMPUTATION_GAME_CONFIG
 
     def get_game(self, name: str) -> MPCGameConfig:
-        if name not in self.pa_game_config:
+        if name not in self.private_computation_game_config:
             raise ValueError(f"Game {name} is not supported.")
 
-        game_config = self.pa_game_config[name]
+        game_config = self.private_computation_game_config[name]
         arguments: List[MPCGameArgument] = [
             MPCGameArgument(name=argument["name"], required=argument["required"])
             for argument in game_config["arguments"]
