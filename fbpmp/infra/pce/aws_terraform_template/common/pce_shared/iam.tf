@@ -1,5 +1,8 @@
 resource "aws_iam_role" "onedocker_ecs_task_execution_role" {
   name = "onedocker-ecs-task-execution-role${var.tag_postfix}"
+  tags = {
+    "pce:pce-id" = var.pce_id
+  }
 
   assume_role_policy = <<EOF
 {
@@ -20,6 +23,9 @@ EOF
 
 resource "aws_iam_role" "onedocker_ecs_task_role" {
   name = "onedocker-ecs-task-role${var.tag_postfix}"
+  tags = {
+    "pce:pce-id" = var.pce_id
+  }
 
   assume_role_policy = <<EOF
 {
