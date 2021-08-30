@@ -9,7 +9,7 @@ set -e
 usage() {
     echo "Usage: deploy.sh
         [ -r | AWS region, e.g. us-west-2 ]
-        [ -t | Tag that going to be appended after the resource name]
+        [ -t | Tag that going to use as the PCE id and appended after the resource name]
         [ -a | Your AWS account ID]
         [ -p | Publisher's AWS account ID]
         [ -v | Publisher's VPC Id]
@@ -24,7 +24,7 @@ undeploy=false
 while getopts ":r:t:a:p:v:s:d:u" opt; do
     case $opt in
         r ) region=$OPTARG ;;
-        t ) tag_postfix=$OPTARG ;;
+        t ) pce_id=$OPTARG ;;
         a ) aws_account_id=$OPTARG ;;
         p ) publisher_aws_account_id=$OPTARG ;;
         v ) publisher_vpc_id=$OPTARG ;;
@@ -34,6 +34,8 @@ while getopts ":r:t:a:p:v:s:d:u" opt; do
         * ) usage ;;
     esac
 done
+
+tag_postfix="-${pce_id}"
 
 echo "AWS region is $region."
 echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
@@ -75,20 +77,23 @@ undeploy_aws_resources () {
         -auto-approve \
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
+        -var "pce_id=$pce_id"
 
     echo "########################Delete PCE resources########################"
     cd /terraform_deployment/terraform_scripts/common/pce
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
-        -var "tag_postfix=$tag_postfix"
+        -var "tag_postfix=$tag_postfix" \
+        -var "pce_id=$pce_id"
 
     cd /terraform_deployment/terraform_scripts/common/pce_shared
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
-        -var "aws_account_id=$aws_account_id"
+        -var "aws_account_id=$aws_account_id" \
+        -var "pce_id=$pce_id"
 
     echo "########################Delete Data Ingestion related resources########################"
     cd /terraform_deployment/terraform_scripts/data_ingestion
@@ -138,13 +143,14 @@ cd /terraform_deployment/terraform_scripts/common/pce_shared
 terraform init \
     -backend-config "bucket=$s3_bucket_for_storage" \
     -backend-config "region=$region" \
-    -backend-config "key=tfstate/pce-shared$tag_postfix.tfstate"
+    -backend-config "key=tfstate/pce_shared$tag_postfix.tfstate"
 terraform apply \
     -auto-approve \
     -var "aws_region=$region" \
     -var "tag_postfix=$tag_postfix" \
     -var "aws_account_id=$aws_account_id" \
-    -var "onedocker_ecs_container_image=$onedocker_ecs_container_image"
+    -var "onedocker_ecs_container_image=$onedocker_ecs_container_image" \
+    -var "pce_id=$pce_id"
 
 # Store the outputs into variables
 onedocker_task_definition_family=$(terraform output onedocker_task_definition_family | tr -d '"')
@@ -160,7 +166,8 @@ terraform apply \
     -auto-approve \
     -var "aws_region=$region" \
     -var "tag_postfix=$tag_postfix" \
-    -var "otherparty_vpc_cidr=$publisher_vpc_cidr"
+    -var "otherparty_vpc_cidr=$publisher_vpc_cidr" \
+    -var "pce_id=$pce_id"
 
 # Store the outputs into variables
 vpc_id=$(terraform output vpc_id | tr -d '"' )
@@ -183,7 +190,8 @@ terraform apply \
     -var "peer_vpc_id=$publisher_vpc_id" \
     -var "vpc_id=$vpc_id" \
     -var "route_table_id=$route_table_id" \
-    -var "destination_cidr_block=$publisher_vpc_cidr"
+    -var "destination_cidr_block=$publisher_vpc_cidr" \
+    -var "pce_id=$pce_id"
 
 # Store the outputs into variables
 vpc_peering_connection_id=$(terraform output vpc_peering_connection_id | tr -d '"' )
