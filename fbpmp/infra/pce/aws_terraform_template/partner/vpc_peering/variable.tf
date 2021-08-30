@@ -32,3 +32,8 @@ variable "destination_cidr_block" {
   description = "The CIDR block of the peer VPC"
   default     = "10.0.0.0/16"
 }
+
+variable "pce_id" {
+  type        = string
+  description = "The identifier for marking the cloud resources are in PCE"
+}
