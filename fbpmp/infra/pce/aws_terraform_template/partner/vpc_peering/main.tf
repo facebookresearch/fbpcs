@@ -13,6 +13,7 @@ resource "aws_vpc_peering_connection" "vpc_peering_conn" {
   vpc_id        = var.vpc_id
 
   tags = {
-    Name = "onedocker-vpc-peering${var.tag_postfix}"
+    Name         = "onedocker-vpc-peering${var.tag_postfix}"
+    "pce:pce-id" = var.pce_id
   }
 }

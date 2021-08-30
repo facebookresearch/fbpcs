@@ -29,3 +29,8 @@ variable "ingress_rules" {
   }))
   description = "Security group ingress rules"
 }
+
+variable "pce_id" {
+  type        = string
+  description = "The identifier for marking the cloud resources are in PCE"
+}

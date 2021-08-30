@@ -2,7 +2,8 @@ resource "aws_ecs_cluster" "main" {
   name = "onedocker-cluster${var.tag_postfix}"
 
   tags = {
-    pce-tag = "cluster${var.tag_postfix}"
+    pce-tag      = "cluster${var.tag_postfix}"
+    "pce:pce-id" = var.pce_id
   }
 
   capacity_providers = ["FARGATE"]

@@ -17,3 +17,8 @@ variable "aws_account_id" {
   description = "your aws account id, that's used to create the task_execution_role and task_role"
   default     = ""
 }
+
+variable "pce_id" {
+  type        = string
+  description = "The identifier for marking the cloud resources are in PCE"
+}

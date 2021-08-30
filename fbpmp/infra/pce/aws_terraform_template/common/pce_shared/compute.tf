@@ -14,7 +14,10 @@ resource "aws_ecs_task_definition" "onedocker_task_def" {
   task_role_arn            = data.aws_arn.ecs_task_role.arn
   execution_role_arn       = data.aws_arn.ecs_task_execution_role_arn.arn
   requires_compatibilities = ["FARGATE"]
-  container_definitions    = <<DEFINITION
+  tags = {
+    "pce:pce-id" = var.pce_id
+  }
+  container_definitions = <<DEFINITION
 [
   {
     "name": "onedocker-container${var.tag_postfix}",
