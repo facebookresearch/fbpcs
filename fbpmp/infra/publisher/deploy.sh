@@ -10,7 +10,7 @@ source ./util.sh
 
 usage() {
     echo "Usage: deploy.sh <deploy|undeploy>
-        [ -t, --tag | Tag that going to be appended after the resource name]
+        [ -t, --tag | A unique identifier to identify resources in this deployment]
         [ -r, --region | AWS region, e.g. us-west-2 ]
         [ -a, --account_id | Publisher's AWS account ID]
         [ -p, --partner_account_id | Partner's AWS account ID]
@@ -34,7 +34,7 @@ shift
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        -t|--tag) tag_postfix="$2" ;;
+        -t|--tag) pce_id="$2" ;;
         -r|--region) region="$2" ;;
         -a|--account_id) aws_account_id="$2" ;;
         -p|--partner_account_id) partner_aws_account_id="$2" ;;
@@ -47,8 +47,10 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+tag_postfix="-${pce_id}"
+
 echo "AWS region is $region."
-echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
+echo "The string '$tag_postfix' will be appended after the name of the AWS resources."
 echo "Publisher's AWS acount ID is $aws_account_id"
 echo "Publisher's VPC CIDR is $vpc_cidr"
 echo "Partner's AWS account ID is $partner_aws_account_id"
@@ -70,7 +72,8 @@ undeploy_aws_resources () {
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
-        -var "tag_postfix=$tag_postfix"
+        -var "tag_postfix=$tag_postfix" \
+        -var "pce_id=$pce_id"
 }
 
 deploy_aws_resources () {
@@ -88,7 +91,8 @@ deploy_aws_resources () {
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "vpc_cidr=$vpc_cidr" \
-        -var "otherparty_vpc_cidr=$partner_vpc_cidr"
+        -var "otherparty_vpc_cidr=$partner_vpc_cidr" \
+        -var "pce_id=$pce_id"
 
     # Print the output
     echo "######################## PCE terraform output ########################"
