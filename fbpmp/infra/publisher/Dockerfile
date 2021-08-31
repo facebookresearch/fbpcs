@@ -24,7 +24,7 @@ RUN pip install \
     s3transfer~=0.3 \
     parameterized~=0.7 \
     psutil~=5.8 \
-    fbpcp==0.1.3
+    fbpcp==0.1.4
 
 ##########################################
 # Install Terraform
