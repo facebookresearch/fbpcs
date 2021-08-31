@@ -42,7 +42,9 @@ def create_instance(
     num_mpc_containers: Optional[int] = None,
     num_files_per_mpc_container: Optional[int] = None,
 ) -> PrivateComputationInstance:
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
     instance = pl_service.create_instance(
         instance_id=instance_id,
         role=role,
@@ -51,7 +53,7 @@ def create_instance(
         num_pid_containers=num_pid_containers,
         num_mpc_containers=num_mpc_containers,
         num_files_per_mpc_container=num_files_per_mpc_container,
-        is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
+        is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
     )
@@ -72,7 +74,9 @@ def id_match(
     hmac_key: Optional[str] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
 
     # run pid instance through pid service invoked from pl service
     pl_service.id_match(
@@ -82,12 +86,12 @@ def id_match(
         input_path=input_path,
         output_path=output_path,
         fail_fast=fail_fast,
-        is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
+        is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
-        synthetic_shard_path=config["privatelift"]["dependency"]["ValidationConfig"][
-            "synthetic_shard_path"
-        ],
+        synthetic_shard_path=config["private_computation"]["dependency"][
+            "ValidationConfig"
+        ]["synthetic_shard_path"],
         pid_config=config["pid"],
         server_ips=server_ips,
         hmac_key=hmac_key,
@@ -114,7 +118,9 @@ def compute(
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
 
     # This call is necessary because it could be the case that last compute failed and this is a valid retry,
     # but because it's possible that the "get" command never gets called to update the instance since the last step started,
@@ -129,7 +135,7 @@ def compute(
     pl_service.prepare_data(
         instance_id=instance_id,
         num_containers=num_containers,
-        is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
+        is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
         spine_path=spine_path,
@@ -146,7 +152,7 @@ def compute(
         concurrency=concurrency or DEFAULT_CONCURRENCY,
         output_path=output_path,
         num_containers=num_containers,
-        is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
+        is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
         server_ips=server_ips,
@@ -167,7 +173,9 @@ def aggregate(
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
 
     # This call is necessary because it could be the case that last aggregate failed and this is a valid retry,
     # or last compute succeeded and this is a regular aggregate. Either way, because it's possible that
@@ -180,7 +188,7 @@ def aggregate(
         output_path=output_path,
         input_path=input_path,
         num_shards=num_shards,
-        is_validating=config["privatelift"]["dependency"]["ValidationConfig"][
+        is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
         server_ips=server_ips,
@@ -197,7 +205,9 @@ def validate(
     aggregated_result_path: str,
     expected_result_path: str,
 ) -> None:
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
     pl_service.validate_metrics(
         instance_id=instance_id,
         aggregated_result_path=aggregated_result_path,
@@ -216,7 +226,9 @@ def run_post_processing_handlers(
         logger.warning(f"No post processing configuration found for {instance_id=}")
         return
 
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
 
     post_processing_handlers = {
         name: reflect.get_class(handler_config["class"])(
@@ -247,7 +259,9 @@ def get(
     MPCInstance to this pl instance. Because pl_service.update_instance() also writes to this pl instance, it could
     accidentally erase that PID or MPCInstance.
     """
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
     instance = pl_service.get_instance(instance_id)
     if instance.status in [
         PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
@@ -262,7 +276,9 @@ def get(
 def get_server_ips(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> None:
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
 
     pl_instance = pl_service.instance_repository.read(instance_id)
 
@@ -284,19 +300,19 @@ def get_server_ips(
 
 def get_pid(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
     container_service = _build_container_service(
-        config["privatelift"]["dependency"]["ContainerService"]
+        config["private_computation"]["dependency"]["ContainerService"]
     )
     onedocker_service_config = _build_onedocker_service_cfg(
-        config["privatelift"]["dependency"]["OneDockerServiceConfig"]
+        config["private_computation"]["dependency"]["OneDockerServiceConfig"]
     )
     onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
-        config["privatelift"]["dependency"]["OneDockerBinaryConfig"]
+        config["private_computation"]["dependency"]["OneDockerBinaryConfig"]
     )
     onedocker_service = _build_onedocker_service(
         container_service, onedocker_service_config.task_definition
     )
     storage_service = _build_storage_service(
-        config["privatelift"]["dependency"]["StorageService"]
+        config["private_computation"]["dependency"]["StorageService"]
     )
     pid_service = _build_pid_service(
         config["pid"],
@@ -310,15 +326,15 @@ def get_pid(config: Dict[str, Any], instance_id: str, logger: logging.Logger) ->
 
 def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
     container_service = _build_container_service(
-        config["privatelift"]["dependency"]["ContainerService"]
+        config["private_computation"]["dependency"]["ContainerService"]
     )
     storage_service = _build_storage_service(
-        config["privatelift"]["dependency"]["StorageService"]
+        config["private_computation"]["dependency"]["StorageService"]
     )
     mpc_service = _build_mpc_service(
         config["mpc"],
         _build_onedocker_service_cfg(
-            config["privatelift"]["dependency"]["OneDockerServiceConfig"]
+            config["private_computation"]["dependency"]["OneDockerServiceConfig"]
         ),
         container_service,
         storage_service,
@@ -331,7 +347,9 @@ def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) ->
 def cancel_current_stage(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
-    pl_service = _build_pl_service(config["privatelift"], config["mpc"], config["pid"])
+    pl_service = _build_pl_service(
+        config["private_computation"], config["mpc"], config["pid"]
+    )
     instance = pl_service.cancel_current_stage(instance_id=instance_id)
     logger.info("Done canceling the current stage")
     return instance
@@ -373,7 +391,9 @@ def _build_mpc_service(
     )
 
     mpc_game_config = config["dependency"]["MPCGameService"]
-    pl_game_repo_config = mpc_game_config["dependency"]["PrivateComputationGameRepository"]
+    pl_game_repo_config = mpc_game_config["dependency"][
+        "PrivateComputationGameRepository"
+    ]
     pl_game_repo_class = reflect.get_class(pl_game_repo_config["class"])
     pl_game_repo = pl_game_repo_class()
     mpc_game_class = reflect.get_class(mpc_game_config["class"])

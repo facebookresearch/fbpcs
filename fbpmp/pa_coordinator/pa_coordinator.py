@@ -171,15 +171,15 @@ def _build_onedocker_binary_cfg_map(
 
 def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
     container_service = _build_container_service(
-        config["private_attribution"]["dependency"]["ContainerService"]
+        config["private_computation"]["dependency"]["ContainerService"]
     )
     storage_service = _build_storage_service(
-        config["private_attribution"]["dependency"]["StorageService"]
+        config["private_computation"]["dependency"]["StorageService"]
     )
     mpc_service = _build_mpc_service(
         config["mpc"],
         _build_onedocker_service_cfg(
-            config["private_attribution"]["dependency"]["OneDockerServiceConfig"]
+            config["private_computation"]["dependency"]["OneDockerServiceConfig"]
         ),
         container_service,
         storage_service,
@@ -229,7 +229,7 @@ def create_instance(
     k_anonymity_threshold: int = DEFAULT_K_ANONYMITY_THRESHOLD,
 ) -> None:
     pa_service = _build_pa_service(
-        config["private_attribution"], config["mpc"], config["pid"]
+        config["private_computation"], config["mpc"], config["pid"]
     )
     instance = pa_service.create_instance(
         instance_id=instance_id,
@@ -257,7 +257,7 @@ def id_match(
     dry_run: Optional[bool] = False,
 ) -> None:
     pa_service = _build_pa_service(
-        config["private_attribution"], config["mpc"], config["pid"]
+        config["private_computation"], config["mpc"], config["pid"]
     )
 
     # run pid instance through pid service invoked from pa service
@@ -280,7 +280,7 @@ def prepare_compute_input(
     log_cost_to_s3: bool = False,
 ) -> None:
     pa_service = _build_pa_service(
-        config["private_attribution"], config["mpc"], config["pid"]
+        config["private_computation"], config["mpc"], config["pid"]
     )
 
     pa_service.prepare_data(
@@ -304,7 +304,7 @@ def compute_attribution(
     log_cost_to_s3: bool = False,
 ) -> None:
     pa_service = _build_pa_service(
-        config["private_attribution"], config["mpc"], config["pid"]
+        config["private_computation"], config["mpc"], config["pid"]
     )
     logging.info("Starting compute metrics...")
 
@@ -332,7 +332,7 @@ def aggregate_shards(
     log_cost_to_s3: bool = False,
 ) -> None:
     pa_service = _build_pa_service(
-        config["private_attribution"], config["mpc"], config["pid"]
+        config["private_computation"], config["mpc"], config["pid"]
     )
 
     pa_service.update_instance(instance_id)
@@ -352,7 +352,7 @@ def get_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
     pa_service = _build_pa_service(
-        config["private_attribution"], config["mpc"], config["pid"]
+        config["private_computation"], config["mpc"], config["pid"]
     )
 
     pa_instance = pa_service.update_instance(instance_id)
@@ -365,7 +365,7 @@ def get_server_ips(
     instance_id: str,
 ) -> List[str]:
     pa_service = _build_pa_service(
-        config["private_attribution"], config["mpc"], config["pid"]
+        config["private_computation"], config["mpc"], config["pid"]
     )
 
     pa_instance = pa_service.update_instance(instance_id)
