@@ -217,7 +217,7 @@ terraform apply \
 
 echo "########################Finished AWS Infrastructure Deployment########################"
 
-echo "########################Start populating config.yml########################"
+echo "########################Start populating config.yml ########################"
 cd /terraform_deployment
 sed -i "s/region: .*/region: $region/g" config.yml
 echo "Populated region with value $region"
@@ -236,6 +236,6 @@ sed -i "/access_key_id/d" config.yml
 sed -i "/access_key_data/d" config.yml
 echo "Removed the credential lines"
 
-echo "########################Upload config.yml to S3########################"
+echo "########################Upload config.ymls to S3########################"
 cd /terraform_deployment
 aws s3api put-object --bucket "$s3_bucket_for_storage" --key "config.yml" --body ./config.yml
