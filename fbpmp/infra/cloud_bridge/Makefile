@@ -59,7 +59,7 @@ external_deps: config.yml aws_terraform_template
 	@echo "Dependencies Copied\n"
 
 config.yml:
-	cp ../../pl_coordinator/config.yml .
+	cp ../../private_computation_cli/config.yml .
 
 aws_terraform_template:
 	cp -r ../pce/aws_terraform_template .
