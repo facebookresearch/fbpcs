@@ -13,20 +13,21 @@ GITHUB_PACKAGES="ghcr.io/facebookresearch"
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <emp_games|data_processing> [-u] [-t TAG]
+Usage: $PROG_NAME <package: emp_games|data_processing|onedocker> [-u] [-t TAG]
 
 package:
   emp_games - builds the emp_games docker image
   data_processing - builds the data_processing docker image
+  onedocker - A OneDocker docker image containing emp_games and data_processing
 -u: builds the docker images against ubuntu (default)
 -f: force use of latest fbpcf from ghcr.io/facebookresearch
 -t TAG: tags the image with the given tag (default: latest)
 EOF
   exit 1
 }
-PACKAGES="emp_games data_processing"
+AVAILABLE_PACKAGES="emp_games data_processing onedocker"
 PACKAGE=$1
-if [[ ! " $PACKAGES " =~ $PACKAGE ]]; then
+if [[ ! " $AVAILABLE_PACKAGES " =~ $PACKAGE ]]; then
    usage
 fi
 shift
@@ -69,12 +70,18 @@ else
   fi
 fi
 
+# Local Docker Image Dependencies
+if [ "$PACKAGE" = "onedocker" ]; then
+ PACKAGE="emp_games data_processing onedocker"
+fi
+
 for P in $PACKAGE; do
   DOCKER_PACKAGE=${P/_/-}
   printf "\nBuilding %s %s docker image...\n" "${P}" "${IMAGE_PREFIX}"
   docker build  \
+    --build-arg tag="${TAG}" \
     --build-arg os_release="${OS_RELEASE}" \
     --build-arg fbpcf_image="${FBPCF_IMAGE}" \
     --compress \
-    -t "${DOCKER_PACKAGE}:${TAG}" -f "docker/${P}/Dockerfile${DOCKER_EXTENSION}" .
+    -t "fbpcs/${DOCKER_PACKAGE}:${TAG}" -f "docker/${P}/Dockerfile${DOCKER_EXTENSION}" .
 done
