@@ -43,6 +43,9 @@ class CostEstimation {
     if (app == "attribution") {
       s3Path_ = "pa-logs";
     }
+    else if (app == "attribution_experimental") {
+      s3Path_ = "attr-logs";
+    }
     else if (app == "data_processing") {
       s3Path_ = "dp-logs";
     }
