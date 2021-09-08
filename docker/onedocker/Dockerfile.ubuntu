@@ -4,8 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 ARG os_release="latest"
 ARG tag="latest"
-FROM data-processing:${tag} as data_processing
-FROM emp-games:${tag} as emp_games
+FROM fbpcs/data-processing:${tag} as data_processing
+FROM fbpcs/emp-games:${tag} as emp_games
 
 FROM ubuntu:${os_release}
 # Set the timezone
