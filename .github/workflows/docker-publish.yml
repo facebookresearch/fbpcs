@@ -1,0 +1,114 @@
+name: Publish OneDocker image
+
+on:
+  schedule:
+    - cron: '0 17 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Manually running this workflow will skip "Check New Commits" step and build image directly'
+        default: 'Run'
+
+env:
+  DISTRO: ubuntu
+  REGISTRY: ghcr.io
+  LOCAL_IMAGE_NAME: fbpcs/onedocker
+  RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
+  PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
+  TIME_RANGE: 24 hours
+
+jobs:
+  new_commits_check:
+    runs-on: ubuntu-latest
+    name: Check New Commmits
+    outputs:
+      new_commits: ${{ steps.new_commits.outputs.new_commits }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print latest commit id
+        run: echo ${{ github.sha }}
+
+      - name: Check new commits (only for scheduled events)
+        if: ${{ github.event_name == 'schedule' }}
+        id: new_commits
+        run: test -z $(git rev-list --after="${{ env.TIME_RANGE }}" ${{ github.sha }}) && echo "::set-output name=new_commits::no" || echo "::set-output name=new_commits::yes"
+
+
+  build_image:
+    needs: new_commits_check
+    if : needs.new_commits_check.outputs.new_commits == 'yes' || github.event_name == 'workflow_dispatch'
+    name: Build Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build onedocker image in rc
+        run: |
+          ./build-docker.sh onedocker -t rc
+
+      # tests will be added here once we have one script for all tests ready
+      #- name: Tests name
+      #  timeout-minutes: 3
+      #  working-directory: ./
+      #  run: |
+      #    ./XXX.sh
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Tag docker image
+        run: |
+          docker tag ${{ env.LOCAL_IMAGE_NAME }}:rc ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+          docker tag ${{ env.LOCAL_IMAGE_NAME }}:rc ${{ env.RC_REGISTRY_IMAGE_NAME }}:rc
+
+      - name: Push image with to rc registry
+        run: |
+          docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
+
+  # Before E2E tests in place, we require manual approval to tag this image as "latest"
+  prod_push:
+    needs: build_image
+    runs-on: ubuntu-latest
+    name: Push to Prod
+    environment: 'prod'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+     - uses: actions/checkout@v2
+
+     - name: Log into registry ${{ env.REGISTRY }}
+       uses: docker/login-action@v1
+       with:
+         registry: ${{ env.REGISTRY }}
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
+
+     - name: Pull image from rc registry
+       run: |
+        docker pull ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+
+     - name: Set output
+       id: vars
+       run: echo ::set-output name=ref::${GITHUB_REF##*/}
+
+     - name: Tag image
+       run: |
+        docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+        docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:latest
+        docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ steps.vars.outputs.ref }}
+
+     - name: Push docker image to prod registry
+       run: |
+        docker push --all-tags ${{ env.PROD_REGISTRY_IMAGE_NAME }}
