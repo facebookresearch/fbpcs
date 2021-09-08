@@ -11,7 +11,7 @@ from typing import List, Dict
 import requests
 from fbpmp.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
 
-URL = "https://graph.facebook.com/v9.0"
+URL = "https://graph.facebook.com/v11.0"
 GRAPHAPI_INSTANCE_STATUSES = {
     "CREATED": PrivateComputationInstanceStatus.CREATED,
     "INSTANCE_FAILURE": PrivateComputationInstanceStatus.UNKNOWN,
