@@ -26,6 +26,11 @@ resource "aws_iam_role_policy_attachment" "glue_service" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
+resource "aws_iam_role_policy_attachment" "glue_console_access" {
+  role       = "${aws_iam_role.glue_service_role.id}"
+  policy_arn = "arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess"
+}
+
 resource "aws_iam_role_policy" "s3_policy" {
   name   = "s3-policy${var.tag_postfix}"
   role   = "${aws_iam_role.glue_service_role.id}"
@@ -88,7 +93,7 @@ resource "aws_glue_crawler" "mpc_events_crawler" {
 
   s3_target {
     path       = "s3://${var.data_processing_output_bucket}"
-    exclusions = ["processing-failed**"]
+    exclusions = ["processing-failed**", "semi-automated-app-data-ingestion/**"]
   }
 
   schedule = "cron(0 * * * ? *)"

@@ -18,8 +18,7 @@ client = boto3.client("glue")
 
 # Variables for the job:
 # same name as the aws_glue_job resource in glue.tf
-# [TODO]: in deploy.sh replace the hardcoded name with shell edits (i.e., sed i...)
-glueJobName = "glue-ETL"
+glueJobName = 'TO_BE_UPDATED_DURING_DEPLOYMENT'
 
 # Define Lambda function
 def lambda_handler(event, context):
@@ -39,8 +38,7 @@ def lambda_handler(event, context):
         s3_bucket = s3_info["bucket"]["name"]
         s3_object_key = s3_info["object"]["key"]
         s3_read_path = s3_bucket + "/" + s3_object_key
-        # [TODO: current s3_write_path is hardcoded, will be updated when integrating into deploy.sh]
-        s3_write_path = "semi-automated-app-event-ingestion/write/"
+        s3_write_path = 'TO_BE_UPDATED_DURING_DEPLOYMENT'
         logger.info("s3_read_path: " + s3_read_path)
         response = client.start_job_run(
             JobName=glueJobName,
