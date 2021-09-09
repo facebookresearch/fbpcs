@@ -1,6 +1,6 @@
 resource "aws_s3_bucket_object" "upload_glue_ETL" {
-  bucket = "${var.app_data_input_bucket_id}"
-  key    = "semi-automated-app-data-ingestion/glue_ETL.py"
+  bucket = var.app_data_input_bucket_id
+  key    = "semi-automated-data-ingestion/glue_ETL.py"
   source = "glue_ETL.py"
   etag   = filemd5("glue_ETL.py")
 }
@@ -58,7 +58,7 @@ EOF
 
 resource "aws_iam_role_policy" "kms_policy_glue" {
   name   = "kms-policy${var.tag_postfix}"
-  role   = "${aws_iam_role.glue_ETL_role.id}"
+  role   = aws_iam_role.glue_ETL_role.id
   policy = <<EOF
 {
   "Version": "2012-10-17",
