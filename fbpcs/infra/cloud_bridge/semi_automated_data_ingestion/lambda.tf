@@ -2,39 +2,22 @@ resource "aws_kms_key" "s3_kms_key" {
   description = "This key is used to encrypt bucket objects"
 }
 
-resource "aws_s3_bucket" "app_data_bucket" {
-  bucket = "${var.app_data_input_bucket}${var.tag_postfix}"
-  versioning {
-    enabled = true
-  }
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.s3_kms_key.arn
-        sse_algorithm     = "aws:kms"
-      }
-      bucket_key_enabled = true
-    }
-  }
-
-}
-
 data "archive_file" "zip_lambda" {
   type        = "zip"
   source_file = "lambda_trigger.py"
-  output_path = "${var.lambda_trigger_s3_key}"
+  output_path = "semi-automated-data-ingestion/${var.lambda_trigger_s3_key}"
 }
 
 resource "aws_s3_bucket_object" "upload_lambda_trigger" {
-  bucket = "${var.app_data_input_bucket}${var.tag_postfix}"
-  key    = "${var.lambda_trigger_s3_key}"
+  bucket = "${var.app_data_input_bucket_id"
+  key    = "semi-automated-data-ingestion/${var.lambda_trigger_s3_key}"
   source = "${var.lambda_trigger_s3_key}"
   etag   = filemd5("lambda_trigger.py")
 
 }
 
 resource "aws_iam_role" "lambda_iam" {
-  name = "lambda-iam${var.tag_postfix}"
+  name = "lambda-trigger-iam${var.tag_postfix}"
 
   assume_role_policy = <<EOF
 {
@@ -53,9 +36,8 @@ resource "aws_iam_role" "lambda_iam" {
 EOF
 }
 
-
 resource "aws_lambda_function" "lambda_trigger" {
-  s3_bucket     = "${var.app_data_input_bucket}"
+  s3_bucket     = "${var.app_data_input_bucket_id}"
   s3_key        = "${var.lambda_trigger_s3_key}"
   function_name = "semi-automated-data-ingestion-trigger${var.tag_postfix}"
   role          = aws_iam_role.lambda_iam.arn
@@ -70,7 +52,7 @@ resource "aws_lambda_function" "lambda_trigger" {
 }
 
 resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = aws_s3_bucket.app_data_bucket.id
+  bucket = "${var.app_data_input_bucket_id}"
   lambda_function {
     lambda_function_arn = aws_lambda_function.lambda_trigger.arn
     events              = ["s3:ObjectCreated:*"]
@@ -83,7 +65,7 @@ resource "aws_lambda_permission" "allow_bucket" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_trigger.arn
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.app_data_bucket.arn
+  source_arn    = "${var.app_data_input_bucket_arn}"
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_glue_service_role" {
