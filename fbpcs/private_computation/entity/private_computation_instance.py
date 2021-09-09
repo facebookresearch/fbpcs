@@ -14,6 +14,7 @@ from typing import List, Union, Optional
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
@@ -164,4 +165,34 @@ class PrivateComputationInstance(InstanceBase):
             f"{self.instance_id}_out_dir",
             stage,
             f"out.{extension_type}",
+        )
+
+    @property
+    def combiner_binary_name(self) -> str:
+        return (
+            OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
+            if self.game_type is PrivateComputationGameType.LIFT
+            else OneDockerBinaryNames.ATTRIBUTION_ID_SPINE_COMBINER.value
+        )
+
+    @property
+    def compute_binary_name(self) -> str:
+        return (
+            OneDockerBinaryNames.LIFT_COMPUTE.value
+            if self.game_type is PrivateComputationGameType.LIFT
+            else OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value
+        )
+
+    @property
+    def compute_game_name(self) -> str:
+        return (
+            "lift"
+            if self.game_type is PrivateComputationGameType.LIFT
+            else "attribution_compute"
+        )
+
+    @property
+    def metrics_format_type(self) -> str:
+        return (
+            "lift" if self.game_type is PrivateComputationGameType.LIFT else "ad_object"
         )

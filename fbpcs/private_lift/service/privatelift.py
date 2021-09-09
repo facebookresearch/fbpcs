@@ -10,7 +10,17 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timezone
-from typing import DefaultDict, Dict, List, Optional, Any, TypeVar, Tuple, Iterator
+from typing import (
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Any,
+    TypeVar,
+    Tuple,
+    Iterator,
+    Union,
+)
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
@@ -18,6 +28,9 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
+    CppAttributionIdSpineCombinerService,
+)
 from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )
@@ -1237,3 +1250,8 @@ class PrivateLiftService:
             and pl_instance.status
             is PrivateComputationInstanceStatus.COMPUTATION_FAILED
         )
+
+    def _get_combiner_service(
+        self, game_type: PrivateComputationGameType
+    ) -> Union[CppAttributionIdSpineCombinerService, CppLiftIdSpineCombinerService]:
+        return CppLiftIdSpineCombinerService() if game_type is PrivateComputationGameType.LIFT else CppAttributionIdSpineCombinerService()
