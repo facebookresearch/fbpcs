@@ -163,6 +163,8 @@ public class DeployController {
         return new DeploymentResult(
             DeploymentResultSuccessful.STATUS_FAILED, "Could not start deployment");
       } finally {
+        if (provisioningProcess != null && provisioningProcess.isAlive())
+          provisioningProcess.destroy();
         singleProvisioningLock.unlock();
       }
     } else {
@@ -176,6 +178,11 @@ public class DeployController {
     if (deploymentStatus.status == DeploymentStatusRunning.DEPLOYMENT_NOT_STARTED) {
       return new DeploymentStatus(
           DeploymentStatusRunning.DEPLOYMENT_NOT_STARTED, NO_UPDATES_MESSAGE);
+    }
+
+    if (provisioningProcess == null) {
+      deploymentStatus = new DeploymentStatus();
+      return deploymentStatus;
     }
 
     synchronized (singleUpdateMutex) {
