@@ -40,6 +40,7 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
@@ -134,6 +135,7 @@ class PrivateLiftService:
             status_update_ts=PrivateLiftService.get_ts_now(),
             num_files_per_mpc_container=num_files_per_mpc_container
             or NUM_NEW_SHARDS_PER_FILE,
+            game_type=PrivateComputationGameType.LIFT,
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
             num_pid_containers=num_pid_containers,

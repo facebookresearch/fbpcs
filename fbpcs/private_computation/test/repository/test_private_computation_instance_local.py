@@ -11,6 +11,7 @@ import unittest
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
@@ -40,6 +41,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             num_files_per_mpc_container=40,
+            game_type=PrivateComputationGameType.LIFT,
         )
         self.repo.create(test_read_private_computation_instance)
         self.assertEqual(
@@ -56,6 +58,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             num_files_per_mpc_container=40,
+            game_type=PrivateComputationGameType.LIFT,
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)
