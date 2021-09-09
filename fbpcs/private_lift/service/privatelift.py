@@ -446,8 +446,16 @@ class PrivateLiftService:
             self.logger.info(f"[{self}] Skipping CppLiftIdSpineCombinerService")
         else:
             self.logger.info(f"[{self}] Starting CppLiftIdSpineCombinerService")
-            combiner_service = CppLiftIdSpineCombinerService()
-            binary_name = OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
+
+            # put this check right now because otherwise Pyre complains that
+            # combiner_service.combine_on_container_async is called with wrong parameters
+            # TODO T100288161: unify combine_on_container_async interface to PL and PA
+            combiner_service = checked_cast(
+                CppLiftIdSpineCombinerService,
+                self._get_combiner_service(pl_instance.game_type),
+            )
+            binary_name = pl_instance.combiner_binary_name
+            binary_config = self.onedocker_binary_config_map[binary_name]
             await combiner_service.combine_on_container_async(
                 spine_path=spine_path,
                 data_path=data_path,
@@ -456,12 +464,8 @@ class PrivateLiftService:
                 if pl_instance.is_validating
                 else num_containers,
                 onedocker_svc=self.onedocker_svc,
-                binary_version=self.onedocker_binary_config_map[
-                    binary_name
-                ].binary_version,
-                tmp_directory=self.onedocker_binary_config_map[
-                    binary_name
-                ].tmp_directory,
+                binary_version=binary_config.binary_version,
+                tmp_directory=binary_config.tmp_directory,
             )
 
         logging.info("Finished running CombinerService, starting to reshard")
@@ -635,13 +639,14 @@ class PrivateLiftService:
 
         # Create and start MPC instance to run MPC compute
         logging.info("Starting to run MPC instance.")
-        binary_name = OneDockerBinaryNames.LIFT_COMPUTE.value
+        binary_name = pl_instance.compute_binary_name
+        binary_config = self.onedocker_binary_config_map[binary_name]
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
-            game_name=game_name,
+            game_name=pl_instance.compute_game_name,
             mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
             num_containers=len(game_args),
-            binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
+            binary_version=binary_config.binary_version,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=container_timeout,
@@ -765,19 +770,20 @@ class PrivateLiftService:
             num_synthetic_data_shards = num_shards // (num_containers_real_data + 1)
             num_real_data_shards = num_shards - num_synthetic_data_shards
             synthetic_data_shard_start_index = num_real_data_shards
+
             # Create and start MPC instance for real data shards and synthetic data shards
             game_args = [
                 {
                     "input_base_path": input_path,
                     "num_shards": num_real_data_shards,
-                    "metrics_format_type": "lift",
+                    "metrics_format_type": pl_instance.metrics_format_type,
                     "output_path": output_path,
                     "first_shard_index": 0,
                 },
                 {
                     "input_base_path": input_path,
                     "num_shards": num_synthetic_data_shards,
-                    "metrics_format_type": "lift",
+                    "metrics_format_type": pl_instance.metrics_format_type,
                     "output_path": output_path + "_synthetic_data_shards",
                     "first_shard_index": synthetic_data_shard_start_index,
                 },
@@ -800,7 +806,7 @@ class PrivateLiftService:
             game_args = [
                 {
                     "input_base_path": input_path,
-                    "metrics_format_type": "lift",
+                    "metrics_format_type": pl_instance.metrics_format_type,
                     "num_shards": num_shards,
                     "output_path": output_path,
                 },
@@ -1254,4 +1260,8 @@ class PrivateLiftService:
     def _get_combiner_service(
         self, game_type: PrivateComputationGameType
     ) -> Union[CppAttributionIdSpineCombinerService, CppLiftIdSpineCombinerService]:
-        return CppLiftIdSpineCombinerService() if game_type is PrivateComputationGameType.LIFT else CppAttributionIdSpineCombinerService()
+        return (
+            CppLiftIdSpineCombinerService()
+            if game_type is PrivateComputationGameType.LIFT
+            else CppAttributionIdSpineCombinerService()
+        )
