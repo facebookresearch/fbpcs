@@ -15,13 +15,15 @@ usage() {
         [ -v | Publisher's VPC Id]
         [ -s | S3 bucket name for storing tfstate/lambda function]
         [ -d | S3 bucket name for storing lambda processed results]
+        [ -b | build manual upload data pipeline. optional]
         [ -u | Undeploy]"
     exit 1
 }
 
 undeploy=false
+build_semi_automated_data_pipeline=false
 
-while getopts ":r:t:a:p:v:s:d:u" opt; do
+while getopts ":r:t:a:p:v:s:d:bu" opt; do
     case $opt in
         r ) region=$OPTARG ;;
         t ) pce_id=$OPTARG ;;
@@ -30,6 +32,7 @@ while getopts ":r:t:a:p:v:s:d:u" opt; do
         v ) publisher_vpc_id=$OPTARG ;;
         s ) s3_bucket_for_storage=$OPTARG ;;
         d ) s3_bucket_data_pipeline=$OPTARG ;;
+        b ) build_semi_automated_data_pipeline=true ;;
         u ) undeploy=true ;;
         * ) usage ;;
     esac
@@ -97,13 +100,29 @@ undeploy_aws_resources () {
 
     echo "########################Delete Data Ingestion related resources########################"
     cd /terraform_deployment/terraform_scripts/data_ingestion
-    # Exclude the s3 bucket because it can not be delted if it's not empty
+    # Exclude the s3 bucket because it can not be deleted if it's not empty
     terraform state rm aws_s3_bucket.bucket || true
     terraform destroy \
         -auto-approve \
         -var "region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id"
+
+    if "$build_semi_automated_data_pipeline"
+    then
+        echo "Undeploy Semi automated data_pipeline..."
+        check_s3_object_exist "$s3_bucket_for_storage" "tfstate/data_ingestion$tag_postfix.tfstate" "$aws_account_id"
+        echo "Semi automated data_pipeline tfstate file exists. Continue..."
+        cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
+        # Exclude the s3 bucket because it can not be deleted if it's not empty
+        terraform state rm aws_s3_bucket.bucket || true
+        terraform destroy \
+            -auto-approve \
+            -var "region=$region" \
+            -var "tag_postfix=$tag_postfix" \
+            -var "aws_account_id=$aws_account_id"
+    fi
+
 }
 
 ##########################################
@@ -118,7 +137,7 @@ then
 fi
 
 # Create the S3 bucket if it doesn't exist
-echo "########################Create S3 buckets if don't exist ########################"
+echo "######################## Create S3 buckets if don't exist ########################"
 if aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
 then
     echo "The bucket $s3_bucket_for_storage doesn't exist. Creating..."
@@ -213,7 +232,38 @@ terraform apply \
     -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
     -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
     -var "data_processing_lambda_s3_key=lambda.zip"
+# store the outputs from data ingestion pipeline output into variables
+app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
+app_data_input_bucket_arn=$(terraform output data_processing_output_bucket_arn | tr -d '"')
 
+if "$build_semi_automated_data_pipeline"
+then
+    echo "########################Configure Data Ingestion Pipeline from CB to S3########################"
+
+    # configure semi-automated data ingestion pipeline, if true
+    cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
+    echo "Updating trigger function configurations..."
+    sed -i "s/glueJobName = 'TO_BE_UPDATED_DURING_DEPLOYMENT'/glueJobName = 'glue-ETL$tag_postfix'/g" lambda_trigger.py
+    sed -i "s~s3_write_path = 'TO_BE_UPDATED_DURING_DEPLOYMENT'~s3_write_path = '$app_data_input_bucket_id'~g" lambda_trigger.py
+
+    echo "Running terraform installation..."
+    terraform init \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/glue_etl$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "lambda_trigger_s3_key=lambda_trigger.zip" \
+        -var "app_data_input_bucket=$s3_bucket_data_pipeline" \
+        -var "app_data_input_bucket_id=$app_data_input_bucket_id" \
+        -var "app_data_input_bucket_arn=$app_data_input_bucket_arn"
+
+    exit 0
+fi
 
 echo "########################Finished AWS Infrastructure Deployment########################"
 

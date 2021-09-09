@@ -8,6 +8,16 @@ variable "app_data_input_bucket" {
   default     = ""
 }
 
+variable "app_data_input_bucket_id" {
+  description = "The ID of the S3 bucket for advertisers to upload app data and necessary python scripts"
+  default     = ""
+}
+
+variable "app_data_input_bucket_arn" {
+  description = "The ARN of the S3 bucket for advertisers to upload app data and necessary python scripts"
+  default     = ""
+}
+
 variable "lambda_trigger_s3_key" {
   description = "Source S3 key for lambda trigger function used in semi-automated data ingestion"
   default     = ""
