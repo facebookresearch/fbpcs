@@ -16,8 +16,8 @@ data "archive_file" "zip_lambda" {
 }
 
 resource "aws_s3_bucket_object" "upload_lambda" {
-  bucket = "${var.data_processing_lambda_s3_bucket}"
-  key    = "${var.data_processing_lambda_s3_key}"
+  bucket = var.data_processing_lambda_s3_bucket
+  key    = var.data_processing_lambda_s3_key
   source = "lambda.zip"
   etag   = filemd5("data_transformation_lambda.py")
 }
@@ -91,19 +91,19 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "attach_lambda_access" {
-  role       = "${aws_iam_role.firehose_role.id}"
+  role       = aws_iam_role.firehose_role.id
   policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
 }
 
 
 resource "aws_iam_role_policy_attachment" "attach_s3_access" {
-  role       = "${aws_iam_role.firehose_role.id}"
+  role       = aws_iam_role.firehose_role.id
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_role_policy" "kms_policy_firehose" {
   name   = "firehose-kms-policy${var.tag_postfix}"
-  role   = "${aws_iam_role.firehose_role.id}"
+  role   = aws_iam_role.firehose_role.id
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -142,13 +142,13 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_kinesis_role" {
-  role       = "${aws_iam_role.lambda_iam.id}"
+  role       = aws_iam_role.lambda_iam.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"
 }
 
 resource "aws_lambda_function" "lambda_processor" {
-  s3_bucket     = "${var.data_processing_lambda_s3_bucket}"
-  s3_key        = "${var.data_processing_lambda_s3_key}"
+  s3_bucket     = var.data_processing_lambda_s3_bucket
+  s3_key        = var.data_processing_lambda_s3_key
   function_name = "cb-data-ingestion-stream-processor${var.tag_postfix}"
   role          = aws_iam_role.lambda_iam.arn
   handler       = "data_transformation_lambda.lambda_handler"
