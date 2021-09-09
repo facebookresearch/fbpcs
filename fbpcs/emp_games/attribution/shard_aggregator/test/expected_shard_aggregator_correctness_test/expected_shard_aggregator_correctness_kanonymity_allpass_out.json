@@ -1,0 +1,18 @@
+{
+    "last_click_1d": {
+        "measurement": {
+            "1": {
+                "sales": 694,
+                "convs": 144
+            },
+            "2": {
+                "sales": 975,
+                "convs": 186
+            },
+            "3": {
+                "sales": 750,
+                "convs": 157
+            }
+        }
+    }
+}
