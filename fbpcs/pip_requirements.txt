@@ -1,0 +1,13 @@
+boto3 ~= 1.11.11
+docopt ~= 0.6
+schema ~= 0.7
+pyyaml ~= 5.3
+dataclasses-json ~= 0.5
+jmespath ~= 0.10
+s3transfer ~= 0.3
+parameterized ~= 0.7
+tqdm ~= 4.55
+networkx ~= 2.5
+requests ~= 2.25
+psutil ~= 5.8
+fbpcp ~= 0.1.2

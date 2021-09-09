@@ -1,0 +1,68 @@
+{
+  "last_click_1d": {
+    "attribution": {
+      "0": {
+        "0": {
+          "is_attributed": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "conversion_bit": [
+            -1,
+            -1,
+            -1,
+            -1
+          ],
+          "campaign_bit": 0
+        },
+        "1": {
+          "is_attributed": [
+            false,
+            true,
+            false,
+            false
+          ],
+          "conversion_bit": [
+            -1,
+            5,
+            -1,
+            -1
+          ],
+          "campaign_bit": 165
+        },
+        "2": {
+          "is_attributed": [
+            false,
+            false,
+            true,
+            true
+          ],
+          "conversion_bit": [
+            -1,
+            -1,
+            6,
+            0
+          ],
+          "campaign_bit": 248
+        },
+        "3": {
+          "is_attributed": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "campaign_bit": 0,
+          "conversion_bit": [
+            -1,
+            -1,
+            -1,
+            -1
+          ]
+        }
+      }
+    }
+  }
+}
