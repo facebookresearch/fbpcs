@@ -8,7 +8,6 @@ import unittest
 from unittest.mock import patch
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
-from fbpcp.service.container_aws import AWSContainerService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pcf.tests.async_utils import to_sync
@@ -199,10 +198,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         with patch.object(
             PIDProtocolRunStage, "files_exist"
         ) as mock_files_exist, patch.object(
-            AWSContainerService,
-            "create_instances_async",
-            return_value=[ContainerInstance(instance_id="123", ip_address=ip)],
-        ) as mock_create_instances_async, patch.object(
             FileCoordinationService, "wait"
         ) as mock_wait, patch.object(
             FileCoordinationService, "get_payload"
