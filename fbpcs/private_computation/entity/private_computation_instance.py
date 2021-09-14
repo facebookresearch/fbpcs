@@ -48,6 +48,11 @@ class PrivateComputationInstanceStatus(Enum):
     PROCESSING_REQUEST = "PROCESSING_REQUEST"
 
 
+class PrivateComputationGameType(Enum):
+    LIFT = "LIFT"
+    ATTRIBUTION = "ATTRIBUTION"
+
+
 UnionedPCInstance = Union[PIDInstance, PCSMPCInstance, PostProcessingInstance]
 UnionedPCInstanceStatus = Union[
     PIDInstanceStatus, MPCInstanceStatus, PostProcessingInstanceStatus
@@ -62,6 +67,8 @@ class PrivateComputationInstance(InstanceBase):
     status: PrivateComputationInstanceStatus
     status_update_ts: int
     num_files_per_mpc_container: int
+    game_type: PrivateComputationGameType
+
     retry_counter: int = 0
     partial_container_retry_enabled: bool = (
         False  # TODO T98578624: once the product is stabilized, we can enable this
