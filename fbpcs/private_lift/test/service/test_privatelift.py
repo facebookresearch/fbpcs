@@ -29,6 +29,7 @@ from fbpcs.pid.entity.pid_instance import (
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
@@ -969,6 +970,7 @@ class TestPrivateLiftService(unittest.TestCase):
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            game_type=PrivateComputationGameType.LIFT,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
         )

@@ -29,6 +29,7 @@ from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
@@ -106,6 +107,7 @@ class PrivateAttributionService:
             num_pid_containers=num_pid_containers,
             num_mpc_containers=num_mpc_containers,
             num_files_per_mpc_container=num_files_per_mpc_container,
+            game_type=PrivateComputationGameType.ATTRIBUTION,
             padding_size=padding_size,
             concurrency=concurrency,
             k_anonymity_threshold=k_anonymity_threshold,
