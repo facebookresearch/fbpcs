@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> [--input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
+    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --hmac_key=<base64_key> --fail_fast --dry_run] [options]
     pl-coordinator compute <instance_id> --config=<config_file> [--server_ips=<server_ips> --concurrency=<concurrency> --dry_run] [options]
     pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
