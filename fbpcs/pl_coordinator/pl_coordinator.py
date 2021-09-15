@@ -11,17 +11,17 @@ CLI for running a Private Lift study
 
 Usage:
     pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> [--input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
-    pl-coordinator id_match <instance_id> --config=<config_file> [--num_containers=<num_containers> --input_path=<input_path> --output_path=<output_path> --server_ips=<server_ips> --hmac_key=<base64_key> --fail_fast --dry_run] [options]
-    pl-coordinator compute <instance_id> --config=<config_file> [(--num_containers=<num_containers> --spine_path=<spine_path> --data_path=<data_path>) --output_path=<output_path> --server_ips=<server_ips> --concurrency=<concurrency> --dry_run] [options]
-    pl-coordinator aggregate <instance_id> --config=<config_file> [(--input_path=<input_path> --num_shards=<num_shards>) --output_path=<output_path> --server_ips=<server_ips> --dry_run] [options]
+    pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --hmac_key=<base64_key> --fail_fast --dry_run] [options]
+    pl-coordinator compute <instance_id> --config=<config_file> [--server_ips=<server_ips> --concurrency=<concurrency> --dry_run] [options]
+    pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pl-coordinator run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
     pl-coordinator get <instance_id> --config=<config_file> [options]
     pl-coordinator get_server_ips <instance_id> --config=<config_file> [options]
     pl-coordinator get_pid <instance_id> --config=<config_file> [options]
     pl-coordinator get_mpc <instance_id> --config=<config_file> [options]
-    pl-coordinator run_instance <instance_id> --config=<config_file> --input_path=<input_path> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
-    pl-coordinator run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
+    pl-coordinator run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
+    pl-coordinator run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pl-coordinator run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pl-coordinator cancel_current_stage <instance_id> --config=<config_file> [options]
 
@@ -90,17 +90,16 @@ def main():
             "--objective_ids": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--input_path": schema.Or(None, str),
             "--input_paths": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
-            "--spine_path": schema.Or(None, str),
-            "--data_path": schema.Or(None, str),
-            "--output_path": schema.Or(None, str),
             "--output_dir": schema.Or(None, str),
             "--aggregated_result_path": schema.Or(None, str),
             "--expected_result_path": schema.Or(None, str),
-            "--num_containers": schema.Or(None, schema.Use(int)),
             "--num_pid_containers": schema.Or(None, schema.Use(int)),
             "--num_mpc_containers": schema.Or(None, schema.Use(int)),
             "--num_files_per_mpc_container": schema.Or(None, schema.Use(int)),
             "--num_shards": schema.Or(None, schema.Use(int)),
+            "--num_shards_list": schema.Or(
+                None, schema.Use(lambda arg: arg.split(","))
+            ),
             "--server_ips": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--concurrency": schema.Or(None, schema.Use(int)),
             "--hmac_key": schema.Or(None, str),
@@ -141,9 +140,6 @@ def main():
         id_match(
             config=config,
             instance_id=instance_id,
-            num_containers=arguments["--num_containers"],
-            input_path=arguments["--input_path"],
-            output_path=arguments["--output_path"],
             logger=logger,
             fail_fast=arguments["--fail_fast"],
             server_ips=arguments["--server_ips"],
@@ -155,10 +151,6 @@ def main():
         compute(
             config=config,
             instance_id=instance_id,
-            num_containers=arguments["--num_containers"],
-            spine_path=arguments["--spine_path"],
-            data_path=arguments["--data_path"],
-            output_path=arguments["--output_path"],
             concurrency=arguments["--concurrency"],
             logger=logger,
             server_ips=arguments["--server_ips"],
@@ -189,10 +181,7 @@ def main():
         aggregate(
             config=config,
             instance_id=instance_id,
-            output_path=arguments["--output_path"],
             logger=logger,
-            input_path=arguments["--input_path"],
-            num_shards=arguments["--num_shards"],
             server_ips=arguments["--server_ips"],
             dry_run=arguments["--dry_run"],
         )
@@ -211,6 +200,7 @@ def main():
             config=config,
             instance_id=instance_id,
             input_path=arguments["--input_path"],
+            num_shards=["--num_shards"],
             logger=logger,
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
@@ -220,6 +210,7 @@ def main():
             config=config,
             instance_ids=arguments["<instance_ids>"],
             input_paths=arguments["--input_paths"],
+            num_shards_list=arguments["--num_shards_list"],
             logger=logger,
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],

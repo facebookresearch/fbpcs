@@ -110,6 +110,7 @@ def run_instance(
     config: Dict[str, Any],
     instance_id: str,
     input_path: str,
+    num_shards: int,
     logger: logging.Logger,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
@@ -119,7 +120,14 @@ def run_instance(
         raise ValueError(f"num_tries must be between {MIN_TRIES} and {MAX_TRIES}.")
     client = PLGraphAPIClient(config["graphapi"]["access_token"], logger)
     instance_runner = PLInstanceRunner(
-        config, instance_id, input_path, logger, client, num_tries, dry_run
+        config,
+        instance_id,
+        input_path,
+        num_shards,
+        logger,
+        client,
+        num_tries,
+        dry_run,
     )
     logger.info(f"Running private lift for instance {instance_id}")
     instance_runner.run()
@@ -129,6 +137,7 @@ def run_instances(
     config: Dict[str, Any],
     instance_ids: List[str],
     input_paths: List[str],
+    num_shards_list: List[str],
     logger: logging.Logger,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
@@ -137,18 +146,23 @@ def run_instances(
         raise ValueError(
             "Number of instances and number of input paths must be the same"
         )
+    if len(input_paths) is not len(num_shards_list):
+        raise ValueError(
+            "Number of input paths and number of num_shards must be the same"
+        )
     if not MIN_NUM_INSTANCES <= len(instance_ids) <= MAX_NUM_INSTANCES:
         raise ValueError(
             f"Number of instances must be between {MIN_NUM_INSTANCES} and {MAX_NUM_INSTANCES}"
         )
     processes = list(
         map(
-            lambda instance_id, input_path: Process(
+            lambda instance_id, input_path, num_shards: Process(
                 target=run_instance,
                 kwargs={
                     "config": config,
                     "instance_id": instance_id,
                     "input_path": input_path,
+                    "num_shards": num_shards,
                     "logger": LoggerAdapter(logger=logger, prefix=instance_id),
                     "num_tries": num_tries,
                     "dry_run": dry_run,
@@ -156,6 +170,7 @@ def run_instances(
             ),
             instance_ids,
             input_paths,
+            num_shards_list,
         )
     )
     for process in processes:
@@ -176,7 +191,9 @@ class PrivateLiftCalcInstance:
         self.instance_id: str = instance_id
         self.logger: logging.Logger = logger
         self.role: PrivateComputationRole = role
-        self.status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.UNKNOWN
+        self.status: PrivateComputationInstanceStatus = (
+            PrivateComputationInstanceStatus.UNKNOWN
+        )
 
     def update_instance(self) -> None:
         raise NotImplementedError(
@@ -310,17 +327,26 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         instance_id: str,
         config: Dict[str, Any],
         input_path: str,
+        num_shards: int,
         logger: logging.Logger,
     ) -> None:
         super().__init__(instance_id, logger, PrivateComputationRole.PARTNER)
         self.config: Dict[str, Any] = config
         self.input_path: str = input_path
+        self.output_dir: str = self.get_output_dir_from_input_path(input_path)
         try:
             self.status = get(self.config, self.instance_id, self.logger).status
         except RuntimeError:
             self.logger.info(f"Creating new partner instance {self.instance_id}")
             self.status = create_instance(
-                self.config, self.instance_id, PrivateComputationRole.PARTNER, self.logger
+                config=self.config,
+                instance_id=self.instance_id,
+                role=PrivateComputationRole.PARTNER,
+                logger=self.logger,
+                input_path=self.input_path,
+                output_dir=self.output_dir,
+                num_pid_containers=num_shards,
+                num_mpc_containers=num_shards,
             ).status
         self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
 
@@ -330,22 +356,16 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
     def cancel_current_stage(self) -> None:
         cancel_current_stage(self.config, self.instance_id, self.logger)
 
-    def get_output_path_for_stage(self, stage: PrivateLiftStage) -> str:
-        return self.input_path.replace(
-            ".csv", "_" + self.instance_id + STAGE_OUTPUT_SUFFIX[stage]
-        )
+    def get_output_dir_from_input_path(self, input_path: str) -> str:
+        return input_path[: input_path.rfind("/")]
 
     def run_stage(self, server_ips: List[str], stage: PrivateLiftStage) -> None:
-        output_path = self.get_output_path_for_stage(stage)
         if self.should_invoke_operation(stage):
             try:
                 if stage is PrivateLiftStage.ID_MATCH:
                     id_match(
                         config=self.config,
                         instance_id=self.instance_id,
-                        num_containers=len(server_ips),
-                        input_path=self.input_path,
-                        output_path=output_path,
                         server_ips=server_ips,
                         logger=self.logger,
                         dry_run=None,
@@ -354,11 +374,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                     compute(
                         config=self.config,
                         instance_id=self.instance_id,
-                        output_path=output_path,
                         logger=self.logger,
-                        num_containers=None,
-                        spine_path=None,
-                        data_path=None,
                         concurrency=None,
                         server_ips=server_ips,
                         dry_run=None,
@@ -367,10 +383,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                     aggregate(
                         config=self.config,
                         instance_id=self.instance_id,
-                        output_path=output_path,
                         logger=self.logger,
-                        input_path=None,
-                        num_shards=None,
                         server_ips=server_ips,
                         dry_run=None,
                     )
@@ -388,6 +401,7 @@ class PLInstanceRunner:
         config: Dict[str, Any],
         instance_id: str,
         input_path: str,
+        num_shards: int,
         logger: logging.Logger,
         client: PLGraphAPIClient,
         num_tries: int,
@@ -397,7 +411,11 @@ class PLInstanceRunner:
         self.instance_id = instance_id
         self.publisher = PrivateLiftPublisherInstance(instance_id, logger, client)
         self.partner = PrivateLiftPartnerInstance(
-            instance_id, config, input_path, logger
+            instance_id=instance_id,
+            config=config,
+            input_path=input_path,
+            num_shards=num_shards,
+            logger=logger,
         )
         self.num_tries = num_tries
         self.dry_run = dry_run
@@ -446,7 +464,7 @@ class PLInstanceRunner:
             try:
                 if self.is_finished():
                     self.logger.info(
-                        f"Private Lift run completed for instance {self.instance_id}. View results at {self.partner.get_output_path_for_stage(PRIVATE_LIFT_STAGES[-1])}"
+                        f"Private Lift run completed for instance {self.instance_id}. View results at {self.partner.output_dir}"
                     )
                     return
                 valid_stage = self.wait_valid_stage(WAIT_VALID_STAGE_TIMEOUT)
@@ -480,9 +498,7 @@ class PLInstanceRunner:
         # wait for stage to complete
         self.wait_stage_complete(stage)
 
-    def wait_stage_complete(
-        self, stage: PrivateLiftStage
-    ) -> None:
+    def wait_stage_complete(self, stage: PrivateLiftStage) -> None:
         start_status = STARTED_STATUS[stage]
         complete_status = COMPLETED_STATUS[stage]
         fail_status = FAILED_STATUS[stage]
@@ -493,19 +509,33 @@ class PLInstanceRunner:
         while time() < start_time + timeout:
             self.publisher.update_instance()
             self.partner.update_instance()
-            self.logger.info(f"Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.")
-            if self.publisher.status is complete_status and self.partner.status is complete_status:
+            self.logger.info(
+                f"Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
+            )
+            if (
+                self.publisher.status is complete_status
+                and self.partner.status is complete_status
+            ):
                 self.logger.info(f"Stage {stage.value} is complete.")
                 return
-            if self.publisher.status is fail_status or self.partner.status is fail_status:
-                if self.publisher.status is fail_status and self.partner.status is start_status and cancel_time <= CANCEL_STAGE_TIMEOUT:
+            if (
+                self.publisher.status is fail_status
+                or self.partner.status is fail_status
+            ):
+                if (
+                    self.publisher.status is fail_status
+                    and self.partner.status is start_status
+                    and cancel_time <= CANCEL_STAGE_TIMEOUT
+                ):
                     # wait 5 minutes for partner to become fail status on its own
                     # if not, only perform 'cancel_stage' one time
                     if cancel_time == CANCEL_STAGE_TIMEOUT:
                         self.logger.error(f"Canceling partner stage {stage.value}.")
                         self.partner.cancel_current_stage()
                     else:
-                        self.logger.info(f"Waiting to cancel partner stage {stage.value}.")
+                        self.logger.info(
+                            f"Waiting to cancel partner stage {stage.value}."
+                        )
                     # only cancel once
                     cancel_time += POLL_INTERVAL
                 else:

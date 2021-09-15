@@ -67,9 +67,6 @@ def id_match(
     instance_id: str,
     logger: logging.Logger,
     fail_fast: bool = False,
-    num_containers: Optional[int] = None,
-    input_path: Optional[str] = None,
-    output_path: Optional[str] = None,
     server_ips: Optional[List[str]] = None,
     hmac_key: Optional[str] = None,
     dry_run: Optional[bool] = False,
@@ -82,9 +79,6 @@ def id_match(
     pl_service.id_match(
         instance_id=instance_id,
         protocol=PIDProtocol.UNION_PID,
-        num_containers=num_containers,
-        input_path=input_path,
-        output_path=output_path,
         fail_fast=fail_fast,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
@@ -110,10 +104,6 @@ def compute(
     config: Dict[str, Any],
     instance_id: str,
     logger: logging.Logger,
-    num_containers: Optional[int] = None,
-    spine_path: Optional[str] = None,
-    data_path: Optional[str] = None,
-    output_path: Optional[str] = None,
     concurrency: Optional[int] = None,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
@@ -125,22 +115,14 @@ def compute(
     # This call is necessary because it could be the case that last compute failed and this is a valid retry,
     # but because it's possible that the "get" command never gets called to update the instance since the last step started,
     # so it appears that the current status is still COMPUTATION_STARTED, which is an invalid status for retry.
-    pl_instance = pl_service.update_instance(instance_id)
+    pl_service.update_instance(instance_id)
 
     # TODO T98578552: Take away the option to specify required fields in the middle of a computation
-    output_path = output_path or pl_instance.compute_stage_output_base_path
-    if not output_path:
-        raise ValueError("Unable to find output path for the compute stage")
-
     pl_service.prepare_data(
         instance_id=instance_id,
-        num_containers=num_containers,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
-        spine_path=spine_path,
-        data_path=data_path,
-        output_path=output_path,
         dry_run=dry_run,
     )
 
@@ -150,8 +132,6 @@ def compute(
         instance_id=instance_id,
         game_name=GAME_NAME,
         concurrency=concurrency or DEFAULT_CONCURRENCY,
-        output_path=output_path,
-        num_containers=num_containers,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
@@ -167,9 +147,6 @@ def aggregate(
     config: Dict[str, Any],
     instance_id: str,
     logger: logging.Logger,
-    input_path: Optional[str] = None,
-    num_shards: Optional[int] = None,
-    output_path: Optional[str] = None,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
@@ -185,9 +162,6 @@ def aggregate(
 
     instance = pl_service.aggregate_metrics(
         instance_id=instance_id,
-        output_path=output_path,
-        input_path=input_path,
-        num_shards=num_shards,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
