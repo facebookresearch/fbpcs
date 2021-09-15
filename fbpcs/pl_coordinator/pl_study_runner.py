@@ -23,7 +23,9 @@ from fbpcs.pl_coordinator.pl_instance_runner import (
     READY_STATUS,
     PRIVATE_LIFT_STAGES,
 )
-from fbpcs.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstanceStatus,
+)
 
 # study information fields
 TYPE = "type"
@@ -159,9 +161,16 @@ def run_study(
     for chunk in chunks:
         instance_ids = list(chunk.keys())
         chunk_input_paths = list(map(lambda x: x["input_path"], chunk.values()))
+        chunk_num_shards = list(map(lambda x: x["num_shards"], chunk.values()))
         logger.info(f"Start running instances {instance_ids}.")
         run_instances(
-            config, instance_ids, chunk_input_paths, logger, num_tries, dry_run
+            config,
+            instance_ids,
+            chunk_input_paths,
+            chunk_num_shards,
+            logger,
+            num_tries,
+            dry_run,
         )
         logger.info(f"Finished running instances {instance_ids}.")
 
@@ -226,11 +235,13 @@ def _get_cell_obj_instance(
         cell_data = json.loads(cell_data)
         cell_id = str(cell_data["breakdowns"]["cell_id"])
         latest_data_ts = cell_data["latest_data_ts"]
+        num_shards = cell_data["num_shards"]
         cell_obj_instance[cell_id] = {}
         for objective_id in objectives_data:
             cell_obj_instance[cell_id][objective_id] = {
                 "latest_data_ts": latest_data_ts,
                 "input_path": objectives_data[objective_id],
+                "num_shards": num_shards,
             }
     # for these cell-obj pairs, find those with valid instances
     for instance_data in instances_data:
@@ -330,6 +341,7 @@ def _instance_to_input_path(
                     "cell_id": cell_id,
                     "objective_id": objective_id,
                     "input_path": data["input_path"],
+                    "num_shards": data["num_shards"],
                 }
     return instance_input_path
 
