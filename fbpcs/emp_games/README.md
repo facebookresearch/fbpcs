@@ -3,20 +3,27 @@ This document describes common use cases (building, testing, extracting) for the
 
 ## Building
 
-Note: At this time, FB does not allow docker builds on FB devservers.  In order to build emp_games docker image(s) you will need to either clone
-fbcode locally to a docker capable machine (your laptop) or at a minimum copy the "emp_games" folder to a machine to a capable of using docker.
-
 ### Prerequisite
 
 EMP Games docker image(s) uses the fbpcf docker image as its base.  The latest will automatically be pulled by the build_docker.sh.
 
-### `build-docker.sh` (building emp game images)
+### Building emp-game Image (`build-docker.sh` Script)
 
-To build the emp games and `emp_game:<TAG>` docker image run `./build-docker.sh emp_games`. build-docker currently only supports Ubuntu but we might support Alpine in the future
+```
+Usage: build-docker.sh <package: emp_games|data_processing|onedocker> [-u] [-t <tag>]
 
-Optionally specify:
-* `-t` to tag the image with a given tag (default is 'latest')
+package:
+  emp_games - builds the emp-games docker image
+-u: builds the docker images against ubuntu (default)
+-f: force use of latest fbpcf from ghcr.io/facebookresearch
+-t <tag>: tags the image with the given tag (default: latest)
+```
 
+To build the emp games docker image as `emp-game:<tag>`, run `./build-docker.sh emp_games -t <tag>`.
+
+If `<tag>` is ommited, then `latest` will be used as default.
+
+`build-docker.sh` currently only supports Ubuntu but we might support Alpine in the future.
 
 ## Manual Testing
 
@@ -26,7 +33,6 @@ Manual testing scripts have been provided for the lift and attribution calculato
 To run a sample attribution and shard against your newly built attribution docker image, the two scripts are available:
 * `docker/emp_games/run-lift-calculator-sample.sh`
 * `docker/emp_games/run-shard-aggregator-sample.sh`
-
 
 ### Attribution
 To run a sample attribution and shard against your newly built attribution docker image, the two scripts are available:
