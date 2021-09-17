@@ -119,12 +119,14 @@ class TestPrivateLiftService(unittest.TestCase):
         self.test_num_containers = 2
         self.test_input_path = "in_path"
         self.test_output_dir = "out_dir"
+        self.test_game_type = PrivateComputationGameType.LIFT
 
     def test_create_instance(self):
         test_role = PrivateComputationRole.PUBLISHER
         self.pl_service.create_instance(
             instance_id=self.test_pl_id,
             role=test_role,
+            game_type=self.test_game_type,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
             num_pid_containers=self.test_num_containers,
