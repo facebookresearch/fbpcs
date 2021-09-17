@@ -51,6 +51,9 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
+from fbpcs.private_computation.service.private_computation_service_data import (
+    PrivateComputationServiceData,
+)
 from fbpcs.private_lift.entity.breakdown_key import BreakdownKey
 from fbpcs.private_lift.entity.pce_config import PCEConfig
 from fbpcs.private_lift.service.errors import PLServiceValidationError
@@ -434,8 +437,19 @@ class PrivateLiftService:
             self.logger.info(f"[{self}] Skipping CppLiftIdSpineCombinerService")
         else:
             self.logger.info(f"[{self}] Starting CppLiftIdSpineCombinerService")
-            combiner_service = CppLiftIdSpineCombinerService()
-            binary_name = OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
+
+            # put checked_cast here because otherwise Pyre complains that
+            # combiner_service.combine_on_container_async is called with wrong parameters
+            stage_data = PrivateComputationServiceData.get(
+                pl_instance.game_type
+            ).combiner_stage
+
+            combiner_service = checked_cast(
+                CppLiftIdSpineCombinerService,
+                stage_data.service,
+            )
+            binary_name = stage_data.binary_name
+            binary_config = self.onedocker_binary_config_map[binary_name]
             await combiner_service.combine_on_container_async(
                 spine_path=spine_path,
                 data_path=data_path,
@@ -444,12 +458,8 @@ class PrivateLiftService:
                 if pl_instance.is_validating
                 else num_containers,
                 onedocker_svc=self.onedocker_svc,
-                binary_version=self.onedocker_binary_config_map[
-                    binary_name
-                ].binary_version,
-                tmp_directory=self.onedocker_binary_config_map[
-                    binary_name
-                ].tmp_directory,
+                binary_version=binary_config.binary_version,
+                tmp_directory=binary_config.tmp_directory,
             )
 
         logging.info("Finished running CombinerService, starting to reshard")
@@ -623,13 +633,20 @@ class PrivateLiftService:
 
         # Create and start MPC instance to run MPC compute
         logging.info("Starting to run MPC instance.")
-        binary_name = OneDockerBinaryNames.LIFT_COMPUTE.value
+
+        stage_data = PrivateComputationServiceData.get(
+            pl_instance.game_type
+        ).compute_stage
+        binary_name = stage_data.binary_name
+        game_name = checked_cast(str, stage_data.game_name)
+
+        binary_config = self.onedocker_binary_config_map[binary_name]
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
             mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
             num_containers=len(game_args),
-            binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
+            binary_version=binary_config.binary_version,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=container_timeout,
