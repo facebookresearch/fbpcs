@@ -435,7 +435,6 @@ class PrivateLiftService:
     def compute_metrics(
         self,
         instance_id: str,
-        game_name: str,
         concurrency: int,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
@@ -445,7 +444,6 @@ class PrivateLiftService:
         return asyncio.run(
             self.compute_metrics_async(
                 instance_id,
-                game_name,
                 concurrency,
                 is_validating,
                 server_ips,
@@ -480,7 +478,6 @@ class PrivateLiftService:
     async def compute_metrics_async(
         self,
         instance_id: str,
-        game_name: str,
         concurrency: int,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,

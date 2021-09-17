@@ -26,10 +26,8 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
-from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_lift.service.privatelift import PrivateLiftService
 
-GAME_NAME = GameNames.LIFT.value
 DEFAULT_CONCURRENCY = 4
 
 
@@ -134,7 +132,6 @@ def compute(
 
     instance = pl_service.compute_metrics(
         instance_id=instance_id,
-        game_name=GAME_NAME,
         concurrency=concurrency or DEFAULT_CONCURRENCY,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
