@@ -443,7 +443,6 @@ class TestPrivateLiftService(unittest.TestCase):
         # call compute_metrics
         self.pl_service.compute_metrics(
             instance_id=test_pl_id,
-            game_name=test_game_name,
             concurrency=test_concurrency,
             server_ips=test_server_ips,
         )
@@ -505,7 +504,6 @@ class TestPrivateLiftService(unittest.TestCase):
         # call compute_metrics
         self.pl_service.compute_metrics(
             instance_id=self.test_pl_id,
-            game_name=test_game_name,
             concurrency=2,
             server_ips=["192.0.2.0", "192.0.2.1"],
         )
@@ -525,7 +523,6 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_partner_missing_server_ips(self):
         test_pl_id = "test_pl_id"
-        test_game_name = GameNames.LIFT.value
         test_concurrency = 2
 
         pl_instance = self.create_sample_instance(
@@ -537,7 +534,6 @@ class TestPrivateLiftService(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.pl_service.compute_metrics(
                 instance_id=test_pl_id,
-                game_name=test_game_name,
                 concurrency=test_concurrency,
             )
 
