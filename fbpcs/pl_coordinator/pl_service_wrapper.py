@@ -21,6 +21,7 @@ from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
     PrivateComputationRole,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -42,6 +43,7 @@ def create_instance(
     num_pid_containers: Optional[int] = None,
     num_mpc_containers: Optional[int] = None,
     num_files_per_mpc_container: Optional[int] = None,
+    game_type: Optional[PrivateComputationGameType] = None,
 ) -> PrivateComputationInstance:
     pl_service = _build_pl_service(
         config["private_computation"], config["mpc"], config["pid"]
@@ -49,6 +51,7 @@ def create_instance(
     instance = pl_service.create_instance(
         instance_id=instance_id,
         role=role,
+        game_type=game_type or PrivateComputationGameType.LIFT,
         input_path=input_path,
         output_dir=output_dir,
         num_pid_containers=num_pid_containers,
