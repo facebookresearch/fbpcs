@@ -35,6 +35,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     UnionedPCInstance,
 )
+from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_lift.service.errors import PLServiceValidationError
 from fbpcs.private_lift.service.privatelift import (
     PrivateLiftService,
@@ -192,7 +193,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_mpc_id = "test_mpc_id"
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
-            game_name="lift",
+            game_name=GameNames.LIFT.value,
             mpc_party=MPCParty.SERVER,
             num_workers=2,
         )
@@ -396,7 +397,7 @@ class TestPrivateLiftService(unittest.TestCase):
     def test_compute_metrics(self):
         test_pl_id = "test_pl_id"
         test_mpc_id = test_pl_id + "_compute_metrics"
-        test_game_name = "lift"
+        test_game_name = GameNames.LIFT.value
         test_num_containers = 2
         test_mpc_party = MPCParty.CLIENT
         test_concurrency = 2
@@ -481,7 +482,7 @@ class TestPrivateLiftService(unittest.TestCase):
     def test_compute_metrics_rerun(self):
         # construct a pl_instance
         test_mpc_id = self.test_pl_id + "_compute_metrics"
-        test_game_name = "lift"
+        test_game_name = GameNames.LIFT.value
 
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
@@ -522,7 +523,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_partner_missing_server_ips(self):
         test_pl_id = "test_pl_id"
-        test_game_name = "lift"
+        test_game_name = GameNames.LIFT.value
         test_concurrency = 2
 
         pl_instance = self.create_sample_instance(
@@ -550,7 +551,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_mpc_id = self.test_pl_id + "_compute_metrics"
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
-            game_name="lift",
+            game_name=GameNames.LIFT.value,
             mpc_party=MPCParty.SERVER,
             num_workers=self.test_num_containers,
             status=MPCInstanceStatus.COMPLETED,
@@ -580,7 +581,7 @@ class TestPrivateLiftService(unittest.TestCase):
         ]
         # check a new MPC instance handling metrics aggregation was to be created
         self.assertEqual(
-            "shard_aggregator",
+            GameNames.SHARD_AGGREGATOR.value,
             self.pl_service._create_and_start_mpc_instance.call_args[1]["game_name"],
         )
         self.assertEqual(
@@ -597,7 +598,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_pl_id = "test_pl_id"
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_pl_id + "_aggregate_metrics",
-            game_name="shard_aggregator",
+            game_name=GameNames.SHARD_AGGREGATOR.value,
             mpc_party=MPCParty.SERVER,
             num_workers=2,
             status=MPCInstanceStatus.FAILED,
@@ -659,7 +660,7 @@ class TestPrivateLiftService(unittest.TestCase):
         # check a new MPC instance handling metrics aggregation was to be created
         # with the overwritten input_path and num_shards
         self.assertEqual(
-            "shard_aggregator",
+            GameNames.SHARD_AGGREGATOR.value,
             self.pl_service._create_and_start_mpc_instance.call_args[1]["game_name"],
         )
         self.assertEqual(
@@ -677,7 +678,7 @@ class TestPrivateLiftService(unittest.TestCase):
         self.pl_service.mpc_svc.start_instance_async = AsyncMock()
 
         instance_id = "test_instance_id"
-        game_name = "lift"
+        game_name = GameNames.LIFT.value
         mpc_party = MPCParty.CLIENT
         num_containers = 4
         input_file = "input_file"
@@ -753,7 +754,7 @@ class TestPrivateLiftService(unittest.TestCase):
         # Test get status from an MPC stage
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id="test_mpc_id",
-            game_name="shard_aggregator",
+            game_name=GameNames.SHARD_AGGREGATOR.value,
             mpc_party=MPCParty.SERVER,
             num_workers=2,
             status=MPCInstanceStatus.FAILED,
@@ -852,7 +853,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_cancel_current_stage(self):
         test_mpc_id = self.test_pl_id + "_compute_metrics"
-        test_game_name = "lift"
+        test_game_name = GameNames.LIFT.value
         test_mpc_party = MPCParty.CLIENT
 
         # prepare the pl instance that will be read in to memory from the repository
@@ -922,7 +923,7 @@ class TestPrivateLiftService(unittest.TestCase):
         test_input = "test_input_retry"
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id="mpc_instance",
-            game_name="lift",
+            game_name=GameNames.LIFT.value,
             mpc_party=MPCParty.SERVER,
             num_workers=2,
             status=MPCInstanceStatus.FAILED,

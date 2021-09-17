@@ -25,9 +25,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_lift.service.privatelift import PrivateLiftService
 
-GAME_NAME = "lift"
+GAME_NAME = GameNames.LIFT.value
 DEFAULT_CONCURRENCY = 4
 
 
