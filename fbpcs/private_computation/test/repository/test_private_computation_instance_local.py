@@ -42,6 +42,10 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status_update_ts=1600000000,
             num_files_per_mpc_container=40,
             game_type=PrivateComputationGameType.LIFT,
+            input_path="in",
+            output_dir="out",
+            num_pid_containers=4,
+            num_mpc_containers=4,
         )
         self.repo.create(test_read_private_computation_instance)
         self.assertEqual(
@@ -59,6 +63,10 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status_update_ts=1600000000,
             num_files_per_mpc_container=40,
             game_type=PrivateComputationGameType.LIFT,
+            input_path="in",
+            output_dir="out",
+            num_pid_containers=4,
+            num_mpc_containers=4,
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)

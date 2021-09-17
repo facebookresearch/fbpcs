@@ -545,7 +545,6 @@ class TestPrivateLiftService(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.pl_service.aggregate_metrics(
                 instance_id=test_pl_id,
-                output_path="output_path",
             )
 
     def test_aggregate_metrics(self):
