@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from enum import Enum
 from typing import List
 
 from fbpcp.entity.mpc_game_config import MPCGameArgument, MPCGameConfig
@@ -11,8 +12,15 @@ from fbpcp.repository.mpc_game_repository import MPCGameRepository
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 
 
+class GameNames(Enum):
+    LIFT = "lift"
+    SHARD_AGGREGATOR = "shard_aggregator"
+    ATTRIBUTION_COMPUTE = "attribution_compute"
+    ATTRIBUTION_SHARD_AGGREGATOR = "attribution_shard_aggregator"
+
+
 PRIVATE_COMPUTATION_GAME_CONFIG = {
-    "lift": {
+    GameNames.LIFT.value: {
         "onedocker_package_name": OneDockerBinaryNames.LIFT_COMPUTE.value,
         "arguments": [
             {"name": "input_base_path", "required": True},
@@ -22,7 +30,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
             {"name": "concurrency", "required": True},
         ],
     },
-    "shard_aggregator": {
+    GameNames.SHARD_AGGREGATOR.value: {
         "onedocker_package_name": OneDockerBinaryNames.SHARD_AGGREGATOR.value,
         "arguments": [
             {"name": "input_base_path", "required": True},
@@ -32,7 +40,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
             {"name": "first_shard_index", "required": False},
         ],
     },
-    "attribution_compute": {
+    GameNames.ATTRIBUTION_COMPUTE.value: {
         "onedocker_package_name": OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value,
         "arguments": [
             {"name": "aggregators", "required": True},
@@ -45,7 +53,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
             {"name": "use_xor_encryption", "required": True},
         ],
     },
-    "attribution_shard_aggregator": {
+    GameNames.ATTRIBUTION_SHARD_AGGREGATOR.value: {
         "onedocker_package_name": OneDockerBinaryNames.SHARD_AGGREGATOR.value,
         "arguments": [
             {"name": "input_base_path", "required": True},
