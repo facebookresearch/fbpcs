@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
+    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--game_type=<game_type> --num_files_per_mpc_container=<num_files_per_mpc_container>] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --hmac_key=<base64_key> --fail_fast --dry_run] [options]
     pl-coordinator compute <instance_id> --config=<config_file> [--server_ips=<server_ips> --concurrency=<concurrency> --dry_run] [options]
     pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
@@ -55,6 +55,7 @@ from fbpcs.pl_coordinator.pl_service_wrapper import (
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
+    PrivateComputationGameType,
 )
 
 
@@ -85,6 +86,14 @@ def main():
                     schema.Use(str.upper),
                     lambda s: s in ("PUBLISHER", "PARTNER"),
                     schema.Use(PrivateComputationRole),
+                ),
+            ),
+            "--game_type": schema.Or(
+                None,
+                schema.And(
+                    schema.Use(str.upper),
+                    lambda s: s in ("LIFT", "ATTRIBUTION"),
+                    schema.Use(PrivateComputationGameType),
                 ),
             ),
             "--objective_ids": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
@@ -134,6 +143,7 @@ def main():
             num_pid_containers=arguments["--num_pid_containers"],
             num_mpc_containers=arguments["--num_mpc_containers"],
             num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
+            game_type=arguments["--game_type"],
         )
     elif arguments["id_match"]:
         logger.info(f"Run id match on instance: {instance_id}")

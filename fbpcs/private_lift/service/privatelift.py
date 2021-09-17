@@ -118,6 +118,7 @@ class PrivateLiftService:
         self,
         instance_id: str,
         role: PrivateComputationRole,
+        game_type: PrivateComputationGameType,
         input_path: Optional[str] = None,
         output_dir: Optional[str] = None,
         num_pid_containers: Optional[int] = None,
@@ -139,7 +140,7 @@ class PrivateLiftService:
             status_update_ts=PrivateLiftService.get_ts_now(),
             num_files_per_mpc_container=num_files_per_mpc_container
             or NUM_NEW_SHARDS_PER_FILE,
-            game_type=PrivateComputationGameType.LIFT,
+            game_type=game_type,
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
             num_pid_containers=num_pid_containers,
