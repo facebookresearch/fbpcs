@@ -47,6 +47,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     UnionedPCInstance,
     UnionedPCInstanceStatus,
 )
+from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
@@ -752,6 +753,7 @@ class PrivateLiftService:
             num_synthetic_data_shards = num_shards // (num_containers_real_data + 1)
             num_real_data_shards = num_shards - num_synthetic_data_shards
             synthetic_data_shard_start_index = num_real_data_shards
+
             # Create and start MPC instance for real data shards and synthetic data shards
             game_args = [
                 {
@@ -772,7 +774,7 @@ class PrivateLiftService:
             binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
-                game_name="shard_aggregator",
+                game_name=GameNames.SHARD_AGGREGATOR.value,
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=2,
                 binary_version=self.onedocker_binary_config_map[
@@ -795,7 +797,7 @@ class PrivateLiftService:
             binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
-                game_name="shard_aggregator",
+                game_name=GameNames.SHARD_AGGREGATOR.value,
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=1,
                 binary_version=self.onedocker_binary_config_map[
@@ -1074,22 +1076,16 @@ class PrivateLiftService:
     def _get_status_from_stage(
         self, instance: UnionedPCInstance
     ) -> Optional[PrivateComputationInstanceStatus]:
-        computation_str = "computation"
         MPC_GAME_TO_STAGE_MAPPER: Dict[str, str] = {
-            "conversion_lift": computation_str,
-            "converter_lift": computation_str,
-            "secret_share_lift": computation_str,
-            "lift": computation_str,
-            "secret_share_conversion_lift": computation_str,
-            "secret_share_converter_lift": computation_str,
-            "shard_aggregator": "aggregation",
+            GameNames.LIFT.value: "computation",
+            GameNames.SHARD_AGGREGATOR.value: "aggregation",
         }
 
         STAGE_TO_STATUS_MAPPER: Dict[
             str,
             Dict[UnionedPCInstanceStatus, PrivateComputationInstanceStatus],
         ] = {
-            computation_str: {
+            "computation": {
                 MPCInstanceStatus.STARTED: PrivateComputationInstanceStatus.COMPUTATION_STARTED,
                 MPCInstanceStatus.COMPLETED: PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
                 MPCInstanceStatus.FAILED: PrivateComputationInstanceStatus.COMPUTATION_FAILED,
