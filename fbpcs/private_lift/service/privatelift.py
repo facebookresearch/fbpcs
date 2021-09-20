@@ -704,13 +704,16 @@ class PrivateLiftService:
     def validate_metrics(
         self,
         instance_id: str,
-        aggregated_result_path: str,
         expected_result_path: str,
+        aggregated_result_path: Optional[str] = None,
     ) -> None:
+        pl_instance = self.get_instance(instance_id)
         storage_service = self.mpc_svc.storage_svc
         expected_results_dict = json.loads(storage_service.read(expected_result_path))
         aggregated_results_dict = json.loads(
-            storage_service.read(aggregated_result_path)
+            storage_service.read(
+                aggregated_result_path or pl_instance.shard_aggregate_stage_output_path
+            )
         )
         if expected_results_dict == aggregated_results_dict:
             self.logger.info(
