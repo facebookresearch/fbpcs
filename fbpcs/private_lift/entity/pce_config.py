@@ -18,8 +18,8 @@ from dataclasses_json import dataclass_json
 class PCEConfig:
     subnets: List[str]
     cluster: str
-    data_processing_task_definition: str
     region: str
+    onedocker_task_definition: str
 
     def __str__(self) -> str:
         # pyre-ignore
