@@ -37,7 +37,6 @@ python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
   --config="${config}" \
   --num_containers=${num_mpc_containers} \
   --num_files_per_mpc_container=${num_files_per_mpc_container} \
-  --game=attribution_compute_prod \
   --attribution_rule=${attribution_rule} \
   --aggregation_type=measurement \
   --concurrency=${concurrency} \
