@@ -39,10 +39,35 @@ bool LiftMetrics::operator==(const LiftMetrics& other) const noexcept {
       testClickers == other.testClickers &&
       controlClickers == other.controlClickers &&
       reachedConversions == other.reachedConversions &&
-      reachedValue == other.reachedValue;
+      reachedValue == other.reachedValue &&
+      testConvHistogram == other.testConvHistogram &&
+      controlConvHistogram == other.controlConvHistogram;
 }
 
 LiftMetrics LiftMetrics::operator+(const LiftMetrics& other) const noexcept {
+  std::vector<int64_t> addedTestConvHistogram;
+  // TODO: Could be replaced with zip_longest and map
+  // Iterate over the longer histogram
+  for (size_t i = 0;
+       i < testConvHistogram.size() || i < other.testConvHistogram.size();
+       ++i) {
+    auto a = i < testConvHistogram.size() ? testConvHistogram.at(i) : 0;
+    auto b =
+        i < other.testConvHistogram.size() ? other.testConvHistogram.at(i) : 0;
+    addedTestConvHistogram.push_back(a + b);
+  }
+
+  std::vector<int64_t> addedControlConvHistogram;
+  for (size_t i = 0;
+       i < controlConvHistogram.size() || i < other.controlConvHistogram.size();
+       ++i) {
+    auto a = i < controlConvHistogram.size() ? controlConvHistogram.at(i) : 0;
+    auto b = i < other.controlConvHistogram.size()
+        ? other.controlConvHistogram.at(i)
+        : 0;
+    addedControlConvHistogram.push_back(a + b);
+  }
+
   return LiftMetrics{
       testPopulation + other.testPopulation,
       controlPopulation + other.controlPopulation,
@@ -69,10 +94,36 @@ LiftMetrics LiftMetrics::operator+(const LiftMetrics& other) const noexcept {
       testClickers + other.testClickers,
       controlClickers + other.controlClickers,
       reachedConversions + other.reachedConversions,
-      reachedValue + other.reachedValue};
+      reachedValue + other.reachedValue,
+      addedTestConvHistogram,
+      addedControlConvHistogram};
 }
 
 LiftMetrics LiftMetrics::operator^(const LiftMetrics& other) const noexcept {
+  std::vector<int64_t> xoredTestConvHistogram;
+  // TODO: Could be replaced with zip_longest and map
+  // Iterate over the longer histogram
+  for (size_t i = 0;
+       i < testConvHistogram.size() || i < other.testConvHistogram.size();
+       ++i) {
+    auto a = i < testConvHistogram.size() ? testConvHistogram.at(i) : 0;
+    auto b =
+        i < other.testConvHistogram.size() ? other.testConvHistogram.at(i) : 0;
+    xoredTestConvHistogram.push_back(a ^ b);
+  }
+
+  std::vector<int64_t> xoredControlConvHistogram;
+  // Iterate over the longer histogram
+  for (size_t i = 0;
+       i < controlConvHistogram.size() || i < other.controlConvHistogram.size();
+       ++i) {
+    auto a = i < controlConvHistogram.size() ? controlConvHistogram.at(i) : 0;
+    auto b = i < other.controlConvHistogram.size()
+        ? other.controlConvHistogram.at(i)
+        : 0;
+    xoredControlConvHistogram.push_back(a ^ b);
+  }
+
   return LiftMetrics{
       testPopulation ^ other.testPopulation,
       controlPopulation ^ other.controlPopulation,
@@ -99,7 +150,9 @@ LiftMetrics LiftMetrics::operator^(const LiftMetrics& other) const noexcept {
       testClickers ^ other.testClickers,
       controlClickers ^ other.controlClickers,
       reachedConversions ^ other.reachedConversions,
-      reachedValue ^ other.reachedValue};
+      reachedValue ^ other.reachedValue,
+      xoredTestConvHistogram,
+      xoredControlConvHistogram};
 }
 
 std::ostream& operator<<(std::ostream& os, const LiftMetrics& obj) noexcept {
@@ -117,6 +170,11 @@ LiftMetrics LiftMetrics::fromJson(const std::string& str) {
 }
 
 folly::dynamic LiftMetrics::toDynamic() const {
+  auto testConvHistogramDynamic =
+      folly::dynamic(testConvHistogram.begin(), testConvHistogram.end());
+  auto controlConvHistogramDynamic =
+      folly::dynamic(controlConvHistogram.begin(), controlConvHistogram.end());
+
   return folly::dynamic::object(
       "testPopulation", testPopulation)(
       "controlPopulation", controlPopulation)(
@@ -143,11 +201,15 @@ folly::dynamic LiftMetrics::toDynamic() const {
       "testClickers", testClickers)(
       "controlClickers", controlClickers)(
       "reachedConversions", reachedConversions)(
-      "reachedValue", reachedValue);
+      "reachedValue", reachedValue)(
+      "testConvHistogram", testConvHistogramDynamic)(
+      "controlConvHistogram", controlConvHistogramDynamic);
 }
 
 LiftMetrics LiftMetrics::fromDynamic(const folly::dynamic& obj) {
   LiftMetrics metrics;
+  std::vector<int64_t> testConvHistogram;
+  std::vector<int64_t> controlConvHistogram;
 
   metrics.testPopulation = obj["testPopulation"].asInt();
   metrics.controlPopulation = obj["controlPopulation"].asInt();
@@ -175,6 +237,16 @@ LiftMetrics LiftMetrics::fromDynamic(const folly::dynamic& obj) {
   metrics.controlClickers = obj["controlClickers"].asInt();
   metrics.reachedConversions = obj["reachedConversions"].asInt();
   metrics.reachedValue = obj["reachedValue"].asInt();
+
+  for (const auto& val : obj["testConvHistogram"]) {
+    testConvHistogram.push_back(val.asInt());
+  }
+  metrics.testConvHistogram = std::move(testConvHistogram);
+
+  for (const auto& val : obj["controlConvHistogram"]) {
+    controlConvHistogram.push_back(val.asInt());
+  }
+  metrics.controlConvHistogram = std::move(controlConvHistogram);
 
   return metrics;
 }
