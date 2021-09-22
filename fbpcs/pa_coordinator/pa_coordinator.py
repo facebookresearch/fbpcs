@@ -44,9 +44,6 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDProtocol
 from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.private_attribution.service.private_attribution import (
-    PrivateAttributionService,
-)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationGameType,
@@ -60,46 +57,6 @@ DEFAULT_HMAC_KEY: str = ""
 DEFAULT_PADDING_SIZE: int = 4
 DEFAULT_CONCURRENCY: int = 1
 DEFAULT_K_ANONYMITY_THRESHOLD: int = 0
-
-
-def _build_pa_service(
-    pa_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
-) -> PrivateAttributionService:
-    pa_instance_repository_config = pa_config["dependency"][
-        "PrivateComputationInstanceRepository"
-    ]
-    repository_class = reflect.get_class(pa_instance_repository_config["class"])
-    repository_service = repository_class(
-        **pa_instance_repository_config["constructor"]
-    )
-    onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
-        pa_config["dependency"]["OneDockerBinaryConfig"]
-    )
-    onedocker_service_config = _build_onedocker_service_cfg(
-        pa_config["dependency"]["OneDockerServiceConfig"]
-    )
-    container_service = _build_container_service(
-        pa_config["dependency"]["ContainerService"]
-    )
-    onedocker_service = _build_onedocker_service(
-        container_service, onedocker_service_config.task_definition
-    )
-    storage_service = _build_storage_service(pa_config["dependency"]["StorageService"])
-    return PrivateAttributionService(
-        repository_service,
-        _build_mpc_service(
-            mpc_config, onedocker_service_config, container_service, storage_service
-        ),
-        _build_pid_service(
-            pid_config,
-            onedocker_service,
-            storage_service,
-            onedocker_binary_config_map,
-        ),
-        onedocker_service,
-        onedocker_binary_config_map,
-        storage_service,
-    )
 
 
 def _build_private_computation_service(
@@ -392,7 +349,7 @@ def aggregate_shards(
 def get_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
-    pa_service = _build_pa_service(
+    pa_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
@@ -405,7 +362,7 @@ def get_server_ips(
     config: Dict[str, Any],
     instance_id: str,
 ) -> List[str]:
-    pa_service = _build_pa_service(
+    pa_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
