@@ -9,6 +9,7 @@
 
 #include "folly/logging/xlog.h"
 
+#include "../../common/Functional.h"
 #include "../common/GroupedLiftMetrics.h"
 #include <fbpcf/mpc/EmpGame.h>
 
@@ -324,9 +325,7 @@ OutputMetrics<MY_ROLE>::calculateValidPurchases() {
           numConversionsPerUser_ /* arraySize */, QUICK_BITS /* bitLen */);
 
   XLOG(INFO) << "Calculate valid purchases";
-  return private_measurement::secret_sharing::zip_and_map<
-      emp::Integer, std::vector<emp::Integer>, std::vector<emp::Bit>>(
-      opportunityTimestamps, purchaseTimestampArrays,
+  return private_measurement::functional::zip_apply(
       [](emp::Integer oppTs,
          std::vector<emp::Integer> purchaseTsArray) -> std::vector<emp::Bit> {
         std::vector<emp::Bit> vec;
@@ -335,7 +334,9 @@ OutputMetrics<MY_ROLE>::calculateValidPurchases() {
           vec.push_back(purchaseTs + ten > oppTs);
         }
         return vec;
-      });
+      },
+      opportunityTimestamps.begin(), opportunityTimestamps.end(),
+      purchaseTimestampArrays.begin());
 }
 
 template <int32_t MY_ROLE>
@@ -437,9 +438,7 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
       privatelyShareIntArraysFromPartner<MY_ROLE>(
           inputData_.getPurchaseTimestampArrays(), n_, /* numVals */
           numConversionsPerUser_ /* arraySize */, QUICK_BITS /* bitLen */);
-  auto matchArrays = private_measurement::secret_sharing::zip_and_map<
-      emp::Bit, emp::Integer, std::vector<emp::Integer>, emp::Bit>(
-      populationBits, opportunityTimestamps, purchaseTimestampArrays,
+  auto matchArrays = private_measurement::functional::zip_apply(
       [](emp::Bit isUser, emp::Integer opportunityTimestamp,
          std::vector<emp::Integer> purchaseTimestampArray) -> emp::Bit {
         const emp::Integer zero =
@@ -453,7 +452,10 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
           isUserMatched = isUserMatched | (purchaseTS > zero);
         }
         return isUserMatched & validOpportunity;
-      });
+      },
+      populationBits.begin(), populationBits.end(),
+      opportunityTimestamps.begin(), purchaseTimestampArrays.begin());
+
   if (groupType == GroupType::TEST) {
     metrics_.testMatchCount = sum(matchArrays);
   } else {
@@ -575,14 +577,13 @@ void OutputMetrics<MY_ROLE>::calculateSpend(
                                                FULL_BITS);
 
   std::vector<emp::Integer> spendArray =
-      private_measurement::secret_sharing::zip_and_map<emp::Bit, emp::Integer,
-                                                       emp::Integer>(
-          populationBits, totalSpend,
+      private_measurement::functional::zip_apply(
           [](emp::Bit isUser, emp::Integer totalSpend) -> emp::Integer {
             const emp::Integer zero =
                 emp::Integer{private_measurement::INT_SIZE, 0, emp::PUBLIC};
             return emp::If(isUser, totalSpend, zero);
-          });
+          },
+          populationBits.begin(), populationBits.end(), totalSpend.begin());
 
   if (groupType == GroupType::TEST) {
     metrics_.testSpend = sum(spendArray);
@@ -614,9 +615,7 @@ void OutputMetrics<MY_ROLE>::calculateReachedConversions(
   }
 
   std::vector<std::vector<emp::Bit>> reachedConversions =
-      private_measurement::secret_sharing::zip_and_map<
-          std::vector<emp::Bit>, emp::Bit, std::vector<emp::Bit>>(
-          validPurchaseArrays, reachedArray,
+      private_measurement::functional::zip_apply(
           [](std::vector<emp::Bit> validPurchases,
              emp::Bit reached) -> std::vector<emp::Bit> {
             std::vector<emp::Bit> res;
@@ -624,7 +623,10 @@ void OutputMetrics<MY_ROLE>::calculateReachedConversions(
               res.emplace_back(validPurchase & reached);
             }
             return res;
-          });
+          },
+          validPurchaseArrays.begin(), validPurchaseArrays.end(),
+          reachedArray.begin());
+
   if (groupType == GroupType::TEST) {
     metrics_.reachedConversions = sum(reachedConversions);
   } else {
@@ -653,10 +655,7 @@ void OutputMetrics<MY_ROLE>::calculateValue(
     const std::vector<emp::Bit> &reachedArray) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " value";
   std::vector<std::vector<emp::Integer>> valueArrays =
-      private_measurement::secret_sharing::zip_and_map<
-          std::vector<emp::Bit>, std::vector<emp::Integer>,
-          std::vector<emp::Integer>>(
-          eventArrays, purchaseValueArrays,
+      private_measurement::functional::zip_apply(
           [](std::vector<emp::Bit> testEvents,
              std::vector<emp::Integer> purchaseValues)
               -> std::vector<emp::Integer> {
@@ -672,13 +671,12 @@ void OutputMetrics<MY_ROLE>::calculateValue(
                   emp::If(testEvents.at(i), purchaseValues.at(i), zero));
             }
             return vec;
-          });
+          },
+          eventArrays.begin(), eventArrays.end(), purchaseValueArrays.begin());
 
   std::vector<std::vector<emp::Integer>> reachedValue;
   if (groupType == GroupType::TEST) {
-    reachedValue = private_measurement::secret_sharing::zip_and_map<
-        std::vector<emp::Integer>, emp::Bit, std::vector<emp::Integer>>(
-        valueArrays, reachedArray,
+    reachedValue = private_measurement::functional::zip_apply(
         [](std::vector<emp::Integer> validValues,
            emp::Bit reached) -> std::vector<emp::Integer> {
           std::vector<emp::Integer> vec;
@@ -688,7 +686,8 @@ void OutputMetrics<MY_ROLE>::calculateValue(
             vec.emplace_back(emp::If(reached, validValue, zero));
           }
           return vec;
-        });
+        },
+        valueArrays.begin(), valueArrays.end(), reachedArray.begin());
 
     metrics_.testValue = sum(valueArrays);
     metrics_.reachedValue = sum(reachedValue);
@@ -718,9 +717,7 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
     const std::vector<std::vector<emp::Integer>> &purchaseValueSquaredArrays,
     const std::vector<std::vector<emp::Bit>> &eventArrays) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " value squared";
-  auto squaredValues = private_measurement::secret_sharing::zip_and_map<
-      std::vector<emp::Bit>, std::vector<emp::Integer>, emp::Integer>(
-      eventArrays, purchaseValueSquaredArrays,
+  auto squaredValues = private_measurement::functional::zip_apply(
       [](std::vector<emp::Bit> events,
          std::vector<emp::Integer> purchaseValuesSquared) -> emp::Integer {
         emp::Integer sumSquared{purchaseValuesSquared.at(0).size(), 0,
@@ -740,7 +737,9 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
           tookAccumulationAlready = tookAccumulationAlready | events.at(i);
         }
         return sumSquared;
-      });
+      },
+      eventArrays.begin(), eventArrays.end(),
+      purchaseValueSquaredArrays.begin());
 
   if (groupType == GroupType::TEST) {
     metrics_.testValueSquared = sum(squaredValues);
