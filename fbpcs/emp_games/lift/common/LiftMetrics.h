@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+
 #include "folly/dynamic.h"
 
 namespace private_lift {
@@ -42,6 +43,8 @@ struct LiftMetrics {
   int64_t controlClickers;
   int64_t reachedConversions;
   int64_t reachedValue;
+  std::vector<int64_t> testConvHistogram;
+  std::vector<int64_t> controlConvHistogram;
 
   bool operator==(const LiftMetrics& other) const noexcept;
   LiftMetrics operator+(const LiftMetrics& other) const noexcept;
