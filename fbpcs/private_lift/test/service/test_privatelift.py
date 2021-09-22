@@ -41,6 +41,7 @@ from fbpcs.private_lift.service.privatelift import (
     PrivateLiftService,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     NUM_NEW_SHARDS_PER_FILE,
+    DEFAULT_K_ANONYMITY_THRESHOLD,
 )
 
 # TODO T94666166: libfb won't work in OSS
@@ -541,11 +542,11 @@ class TestPrivateLiftService(unittest.TestCase):
 
         # exception because role is partner but server ips are not given
         with self.assertRaises(ValueError):
-            self.pl_service.aggregate_metrics(
+            self.pl_service.aggregate_shards(
                 instance_id=test_pl_id,
             )
 
-    def test_aggregate_metrics(self):
+    def test_aggregate_shards(self):
         # construct a pl_instance with an mpc_instance handling metrics computation
         test_mpc_id = self.test_pl_id + "_compute_metrics"
         mpc_instance = PCSMPCInstance.create_instance(
@@ -564,8 +565,8 @@ class TestPrivateLiftService(unittest.TestCase):
 
         self.pl_service._create_and_start_mpc_instance = AsyncMock()
 
-        # call aggregate_metrics
-        self.pl_service.aggregate_metrics(
+        # call aggregate_shards
+        self.pl_service.aggregate_shards(
             instance_id=self.test_pl_id,
             server_ips=["192.0.2.0", "192.0.2.1"],
         )
@@ -573,9 +574,11 @@ class TestPrivateLiftService(unittest.TestCase):
         test_game_args = [
             {
                 "input_base_path": pl_instance.compute_stage_output_base_path,
-                "num_shards": self.test_num_containers * NUM_NEW_SHARDS_PER_FILE,
                 "metrics_format_type": "lift",
+                "num_shards": self.test_num_containers * NUM_NEW_SHARDS_PER_FILE,
                 "output_path": pl_instance.shard_aggregate_stage_output_path,
+                "threshold": pl_instance.k_anonymity_threshold,
+                "run_name": "",
             }
         ]
         # check a new MPC instance handling metrics aggregation was to be created
@@ -592,11 +595,11 @@ class TestPrivateLiftService(unittest.TestCase):
             PrivateComputationInstanceStatus.AGGREGATION_STARTED, pl_instance.status
         )
 
-    def test_aggregate_metrics_rerun(self):
+    def test_aggregate_shards_rerun(self):
         # construct a pl_instance
         test_pl_id = "test_pl_id"
         mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=test_pl_id + "_aggregate_metrics",
+            instance_id=test_pl_id + "_aggregate_shards",
             game_name=GameNames.SHARD_AGGREGATOR.value,
             mpc_party=MPCParty.SERVER,
             num_workers=2,
@@ -612,8 +615,8 @@ class TestPrivateLiftService(unittest.TestCase):
 
         self.pl_service._create_and_start_mpc_instance = AsyncMock()
 
-        # call aggregate_metrics
-        self.pl_service.aggregate_metrics(
+        # call aggregate_shards
+        self.pl_service.aggregate_shards(
             instance_id=test_pl_id,
             server_ips=["192.0.2.0", "192.0.2.1"],
         )
@@ -624,14 +627,14 @@ class TestPrivateLiftService(unittest.TestCase):
         # check a new MPC instance handling metrics aggregation was to be created
         self.assertEqual(2, len(pl_instance.instances))
         self.assertEqual(
-            test_pl_id + "_aggregate_metrics1",
+            test_pl_id + "_aggregate_shards1",
             self.pl_service._create_and_start_mpc_instance.call_args[1]["instance_id"],
         )
         self.assertEqual(
             PrivateComputationInstanceStatus.AGGREGATION_STARTED, pl_instance.status
         )
 
-    def test_aggregate_metrics_dry_run(self):
+    def test_aggregate_shards_dry_run(self):
         # construct a pl_instance
         pl_instance = self.create_sample_instance(
             status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
@@ -640,17 +643,19 @@ class TestPrivateLiftService(unittest.TestCase):
 
         self.pl_service._create_and_start_mpc_instance = AsyncMock()
 
-        # call aggregate_metrics with ad-hoc input_path and num_shards
+        # call aggregate_shards with ad-hoc input_path and num_shards
         test_format_type = "lift"
         test_game_args = [
             {
                 "input_base_path": pl_instance.compute_stage_output_base_path,
-                "metrics_format_type": test_format_type,
                 "num_shards": self.test_num_containers * NUM_NEW_SHARDS_PER_FILE,
+                "metrics_format_type": test_format_type,
                 "output_path": pl_instance.shard_aggregate_stage_output_path,
+                "threshold": pl_instance.k_anonymity_threshold,
+                "run_name": "",
             }
         ]
-        self.pl_service.aggregate_metrics(
+        self.pl_service.aggregate_shards(
             instance_id=self.test_pl_id,
             server_ips=["192.0.2.0", "192.0.2.1"],
             dry_run=True,
@@ -952,4 +957,5 @@ class TestPrivateLiftService(unittest.TestCase):
             game_type=PrivateComputationGameType.LIFT,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
+            k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD,
         )

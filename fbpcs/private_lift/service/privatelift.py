@@ -11,7 +11,7 @@ import json
 import logging
 import math
 from datetime import datetime, timezone
-from typing import DefaultDict, Dict, List, Optional, Any, TypeVar, Tuple, Iterator
+from typing import DefaultDict, Dict, List, Optional, Any, TypeVar
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
@@ -600,32 +600,35 @@ class PrivateLiftService:
         return pl_instance
 
     # MPC step 2
-    def aggregate_metrics(
+    def aggregate_shards(
         self,
         instance_id: str,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = False,
+        log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
         return asyncio.run(
-            self.aggregate_metrics_async(
+            self.aggregate_shards_async(
                 instance_id,
                 is_validating,
                 server_ips,
                 dry_run,
+                log_cost_to_s3,
                 container_timeout,
             )
         )
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
-    # Make an async version of aggregate_metrics() so that it can be called by Thrift
-    async def aggregate_metrics_async(
+    # Make an async version of aggregate_shards() so that it can be called by Thrift
+    async def aggregate_shards_async(
         self,
         instance_id: str,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = False,
+        log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
         # It's expected that the pl instance is in an updated status because:
@@ -634,7 +637,7 @@ class PrivateLiftService:
         pl_instance = self.get_instance(instance_id)
 
         if pl_instance.role is PrivateComputationRole.PARTNER and not server_ips:
-            raise ValueError("Missing server_ips")
+            raise ValueError("Missing server_ips for Partner")
 
         # default to be an empty string
         retry_counter_str = ""
@@ -660,6 +663,16 @@ class PrivateLiftService:
             pl_instance.num_mpc_containers * pl_instance.num_files_per_mpc_container
         )
 
+        # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type
+        metrics_format_type = (
+            "lift"
+            if pl_instance.game_type is PrivateComputationGameType.LIFT
+            else "ad_object"
+        )
+
+        binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
+        binary_config = self.onedocker_binary_config_map[binary_name]
+
         if is_validating:
             # num_containers_real_data is the number of containers processing real data
             # synthetic data is processed by a dedicated extra container, and this container is always the last container,
@@ -679,28 +692,30 @@ class PrivateLiftService:
                 {
                     "input_base_path": pl_instance.compute_stage_output_base_path,
                     "num_shards": num_real_data_shards,
-                    "metrics_format_type": "lift",
+                    "metrics_format_type": metrics_format_type,
                     "output_path": pl_instance.shard_aggregate_stage_output_path,
                     "first_shard_index": 0,
+                    "threshold": pl_instance.k_anonymity_threshold,
+                    "run_name": pl_instance.instance_id if log_cost_to_s3 else "",
                 },
                 {
                     "input_base_path": pl_instance.compute_stage_output_base_path,
                     "num_shards": num_synthetic_data_shards,
-                    "metrics_format_type": "lift",
+                    "metrics_format_type": metrics_format_type,
                     "output_path": pl_instance.shard_aggregate_stage_output_path
                     + "_synthetic_data_shards",
                     "first_shard_index": synthetic_data_shard_start_index,
+                    "threshold": pl_instance.k_anonymity_threshold,
+                    "run_name": pl_instance.instance_id if log_cost_to_s3 else "",
                 },
             ]
-            binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
+
             mpc_instance = await self._create_and_start_mpc_instance(
-                instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
+                instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
                 game_name=GameNames.SHARD_AGGREGATOR.value,
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=2,
-                binary_version=self.onedocker_binary_config_map[
-                    binary_name
-                ].binary_version,
+                binary_version=binary_config.binary_version,
                 server_ips=server_ips,
                 game_args=game_args,
                 container_timeout=container_timeout,
@@ -710,20 +725,19 @@ class PrivateLiftService:
             game_args = [
                 {
                     "input_base_path": pl_instance.compute_stage_output_base_path,
-                    "metrics_format_type": "lift",
+                    "metrics_format_type": metrics_format_type,
                     "num_shards": num_shards,
                     "output_path": pl_instance.shard_aggregate_stage_output_path,
+                    "threshold": pl_instance.k_anonymity_threshold,
+                    "run_name": pl_instance.instance_id if log_cost_to_s3 else "",
                 },
             ]
-            binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
-                instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
+                instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
                 game_name=GameNames.SHARD_AGGREGATOR.value,
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=1,
-                binary_version=self.onedocker_binary_config_map[
-                    binary_name
-                ].binary_version,
+                binary_version=binary_config.binary_version,
                 server_ips=server_ips,
                 game_args=game_args,
                 container_timeout=container_timeout,
