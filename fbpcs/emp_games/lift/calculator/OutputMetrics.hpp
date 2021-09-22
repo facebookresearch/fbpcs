@@ -59,7 +59,7 @@ template <int32_t MY_ROLE> std::string OutputMetrics<MY_ROLE>::playGame() {
   // Print each cohort header. Note that the publisher won't know anything
   // about the group header (only a generic index for which group we are
   // currently outputting.
-  for (auto i = 0; i < cohortMetrics_.size(); ++i) {
+  for (size_t i = 0; i < cohortMetrics_.size(); ++i) {
     XLOG(INFO) << "\ncohort [" << i << "] results:";
     if (MY_ROLE == PARTNER) {
       // This section only applies if features were suppled instead of cohorts
@@ -111,7 +111,7 @@ void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream &outfile) {
   // Print each cohort header. Note that the publisher won't know anything
   // about the group header (only a generic index for which group we are
   // currently outputting.
-  for (auto i = 0; i < cohortMetrics_.size(); ++i) {
+  for (size_t i = 0; i < cohortMetrics_.size(); ++i) {
     auto subOut = cohortMetrics_.at(i);
     if (MY_ROLE == PARTNER) {
       auto features = inputData_.getGroupIdToFeatures().at(i);
@@ -307,8 +307,20 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculatePopulation(
   } else {
     metrics_.controlPopulation = reveal<int64_t>(sumInt);
   }
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
+        populationBits, publisherBitmasks_.at(i));
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testPopulation = sum(groupBits);
+    } else {
+      publisherBreakdowns_[i].controlPopulation = sum(groupBits);
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
         populationBits, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -386,7 +398,7 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
                                         emp::PUBLIC};
             emp::Bit anyValidPurchase{false, emp::PUBLIC};
 
-            for (auto i = 0; i < validPurchaseArray.size(); ++i) {
+            for (size_t i = 0; i < validPurchaseArray.size(); ++i) {
               auto cond = isUser & validPurchaseArray.at(i);
               auto newPurchase = cond & !anyValidPurchase;
               vec.push_back(cond);
@@ -439,8 +451,41 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
     }
   }
 
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    const auto &mask = publisherBitmasks_.at(i);
+    auto groupEventBits =
+        private_measurement::secret_sharing::multiplyBitmask(eventArrays, mask);
+    auto groupConverterBits =
+        private_measurement::secret_sharing::multiplyBitmask(converterArrays,
+                                                             mask);
+    auto groupEvents = sum(groupEventBits);
+    auto groupConverters = sum(groupConverterBits);
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        squaredNumConvs, mask);
+
+    std::vector<int64_t> groupConvHistogram;
+    for (size_t bin = 0; bin < convHistograms.size(); ++bin) {
+      auto binBits = private_measurement::secret_sharing::multiplyBitmask(
+          convHistograms.at(bin), mask);
+      groupConvHistogram.push_back(sum(binBits));
+    }
+
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testEvents = groupEvents;
+      publisherBreakdowns_[i].testConverters = groupConverters;
+      publisherBreakdowns_[i].testNumConvSquared = sum(groupInts);
+      publisherBreakdowns_[i].testConvHistogram = std::move(groupConvHistogram);
+    } else {
+      publisherBreakdowns_[i].controlEvents = groupEvents;
+      publisherBreakdowns_[i].controlConverters = groupConverters;
+      publisherBreakdowns_[i].controlNumConvSquared = sum(groupInts);
+      publisherBreakdowns_[i].controlConvHistogram = std::move(groupConvHistogram);
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     const auto &mask = partnerBitmasks_.at(i);
     auto groupEventBits =
         private_measurement::secret_sharing::multiplyBitmask(eventArrays, mask);
@@ -518,7 +563,20 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
   } else {
     metrics_.controlMatchCount = sum(matchArrays);
   }
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
+        matchArrays, publisherBitmasks_.at(i));
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testMatchCount = sum(groupBits);
+    } else {
+      publisherBreakdowns_[i].controlMatchCount = sum(groupBits);
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
         matchArrays, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -559,8 +617,24 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
     metrics_.controlImpressions = sum(impressionsArray);
     metrics_.controlReach = sum(reachArray);
   }
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        impressionsArray, publisherBitmasks_.at(i));
+    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
+        reachArray, publisherBitmasks_.at(i));
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testImpressions = sum(groupInts);
+      publisherBreakdowns_[i].testReach = sum(groupBits);
+    } else {
+      publisherBreakdowns_[i].controlImpressions = sum(groupInts);
+      publisherBreakdowns_[i].controlReach = sum(groupBits);
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         impressionsArray, partnerBitmasks_.at(i));
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
@@ -607,8 +681,23 @@ void OutputMetrics<MY_ROLE>::calculateClicks(
     metrics_.controlClicks = sum(clicksArray);
     metrics_.controlClickers = sum(clickersArray);
   }
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+
+  // And compute for breakdowns + cohorts
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        clicksArray, publisherBitmasks_.at(i));
+    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
+        clickersArray, publisherBitmasks_.at(i));
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testClicks = sum(groupInts);
+      publisherBreakdowns_[i].testClickers = sum(groupBits);
+    } else {
+      publisherBreakdowns_[i].controlClicks = sum(groupInts);
+      publisherBreakdowns_[i].controlClickers = sum(groupBits);
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         clicksArray, partnerBitmasks_.at(i));
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
@@ -647,8 +736,20 @@ void OutputMetrics<MY_ROLE>::calculateSpend(
   } else {
     metrics_.controlSpend = sum(spendArray);
   }
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        spendArray, publisherBitmasks_.at(i));
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testSpend = sum(groupInts);
+    } else {
+      publisherBreakdowns_[i].controlSpend = sum(groupInts);
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         spendArray, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -691,8 +792,20 @@ void OutputMetrics<MY_ROLE>::calculateReachedConversions(
         << "Calculation of reached conversions for control group not supported";
   }
 
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        reachedConversions, publisherBitmasks_.at(i));
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].reachedConversions = sum(groupInts);
+    } else {
+      XLOG(FATAL) << "Calculation of reached conversions for control group not "
+                     "supported";
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         reachedConversions, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -721,7 +834,7 @@ void OutputMetrics<MY_ROLE>::calculateValue(
               XLOG(FATAL) << "Numbers of test event bits and/or purchase "
                              "values are inconsistent.";
             }
-            for (auto i = 0; i < testEvents.size(); ++i) {
+            for (size_t i = 0; i < testEvents.size(); ++i) {
               const emp::Integer zero =
                   emp::Integer{purchaseValues.at(i).size(), 0, emp::PUBLIC};
               vec.emplace_back(
@@ -752,8 +865,23 @@ void OutputMetrics<MY_ROLE>::calculateValue(
     metrics_.controlValue = sum(valueArrays);
   }
 
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        valueArrays, publisherBitmasks_.at(i));
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testValue = sum(groupInts);
+      auto reachedGroupInts =
+          private_measurement::secret_sharing::multiplyBitmask(
+              reachedValue, publisherBitmasks_.at(i));
+      publisherBreakdowns_[i].reachedValue = sum(reachedGroupInts);
+    } else {
+      publisherBreakdowns_[i].controlValue = sum(groupInts);
+    }
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         valueArrays, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -784,7 +912,7 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
                          "are inconsistent.";
         }
         emp::Bit tookAccumulationAlready{false, emp::PUBLIC};
-        for (auto i = 0; i < events.size(); ++i) {
+        for (size_t i = 0; i < events.size(); ++i) {
           // If this event is valid and we haven't taken the accumulation yet,
           // use this value as the sumSquared accumulation.
           // emp::If(condition, true_case, false_case)
@@ -804,8 +932,19 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
     metrics_.controlValueSquared = sum(squaredValues);
   }
 
-  // And compute for cohorts
-  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+  // And compute for breakdowns + cohorts
+  // TODO: These could be abstracted into a common function
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    const auto &mask = publisherBitmasks_.at(i);
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        squaredValues, mask);
+    if (groupType == GroupType::TEST) {
+      publisherBreakdowns_[i].testValueSquared = sum(groupInts);
+    } else {
+      publisherBreakdowns_[i].controlValueSquared = sum(groupInts);
+    }
+  }
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     const auto &mask = partnerBitmasks_.at(i);
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         squaredValues, mask);
