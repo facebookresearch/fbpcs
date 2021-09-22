@@ -53,8 +53,17 @@ class OutputMetrics {
     return cohortMetrics_;
   }
 
-  int64_t getNumGroups() const {
-    return numGroups_;
+  const std::unordered_map<int64_t, OutputMetricsData>& getPublisherBreakdowns()
+      const {
+    return publisherBreakdowns_;
+  }
+
+  int64_t getNumPublisherBreakdowns() const {
+    return numPublisherBreakdowns_;
+  }
+
+  int64_t getNumPartnerCohorts() const {
+    return numPartnerCohorts_;
   }
 
   bool shouldUseXorEncryption() const {
@@ -77,6 +86,7 @@ class OutputMetrics {
   void validateNumRows();
 
   // Initialize the number of groups that will be used for cohort computations
+  // The publisher shares the number of groups for publisher breakdowns.
   // The partner shares the number of groups from its inputData and the *number
   // of groups* is revealed, but not the identities of those groups.
   void initNumGroups();
@@ -187,12 +197,16 @@ class OutputMetrics {
   bool useXorEncryption_;
   bool shouldSkipValues_;
   int32_t numConversionsPerUser_;
-  int64_t numGroups_;
+  int64_t numPublisherBreakdowns_;
+  int64_t numPartnerCohorts_;
   int64_t valueBits_;
   int64_t valueSquaredBits_;
   OutputMetricsData metrics_{isConversionLift_};
-  std::unordered_map<int64_t, std::vector<emp::Bit>> groupBitmasks_;
+
+  std::unordered_map<int64_t, std::vector<emp::Bit>> publisherBitmasks_;
+  std::unordered_map<int64_t, std::vector<emp::Bit>> partnerBitmasks_;
   std::unordered_map<int64_t, OutputMetricsData> cohortMetrics_;
+  std::unordered_map<int64_t, OutputMetricsData> publisherBreakdowns_;
 
   template <class T>
   T reveal(const emp::Integer& empInteger) const;

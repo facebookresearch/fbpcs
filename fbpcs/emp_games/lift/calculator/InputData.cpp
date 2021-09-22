@@ -201,7 +201,7 @@ void InputData::addFromCSV(
       numClicks_.push_back(parsed);
     } else if (column == "total_spend") {
       totalSpend_.push_back(parsed);
-    } else if (column == "cohort_id") {
+    } else if (column == "cohort_id" || column == "breakdown_id") {
       // Work-in-progress: we currently support cohort_id *or* feature columns
       groupIds_.push_back(parsed);
       // We use parsed + 1 because cohorts are zero-indexed
