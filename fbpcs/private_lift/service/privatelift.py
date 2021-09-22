@@ -91,6 +91,9 @@ STAGE_FAILED_STATUSES: List[PrivateComputationInstanceStatus] = [
     PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
 ]
 
+DEFAULT_PADDING_SIZE = 4
+DEFAULT_K_ANONYMITY_THRESHOLD = 100
+
 
 class PrivateLiftService:
     def __init__(
@@ -121,12 +124,16 @@ class PrivateLiftService:
         output_dir: str,
         num_pid_containers: int,
         num_mpc_containers: int,
+        concurrency: int,
         num_files_per_mpc_container: Optional[int] = None,
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         breakdown_key: Optional[BreakdownKey] = None,
         pce_config: Optional[PCEConfig] = None,
         is_test: Optional[bool] = False,
+        hmac_key: Optional[str] = None,
+        padding_size: int = DEFAULT_PADDING_SIZE,
+        k_anonymity_threshold: int = DEFAULT_K_ANONYMITY_THRESHOLD,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -148,6 +155,10 @@ class PrivateLiftService:
             breakdown_key=breakdown_key,
             pce_config=pce_config,
             is_test=is_test,
+            hmac_key=hmac_key,
+            padding_size=padding_size,
+            concurrency=concurrency,
+            k_anonymity_threshold=k_anonymity_threshold,
         )
 
         self.instance_repository.create(instance)
@@ -197,6 +208,7 @@ class PrivateLiftService:
                 pl_instance=pl_instance, new_status=new_status
             )
             self.instance_repository.update(pl_instance)
+            self.logger.info(f"Finished updating instance: {pl_instance.instance_id}")
 
         return pl_instance
 
@@ -247,7 +259,7 @@ class PrivateLiftService:
         pl_instance = self.get_instance(instance_id)
 
         if pl_instance.role is PrivateComputationRole.PARTNER and not server_ips:
-            raise ValueError("Missing server_ips")
+            raise ValueError("Missing server_ips for Partner")
 
         # default to be an empty string
         retry_counter_str = ""
@@ -271,6 +283,9 @@ class PrivateLiftService:
 
         # Create a new pid instance
         pid_instance_id = instance_id + "_id_match" + retry_counter_str
+        # TODO T101225909: remove the option here to pass in a hmac key at the id match stage
+        #   instead, always pass in at create_instance
+        pl_instance.hmac_key = hmac_key or pl_instance.hmac_key
         pid_instance = self.pid_svc.create_instance(
             instance_id=pid_instance_id,
             protocol=PIDProtocol.UNION_PID,
@@ -280,7 +295,7 @@ class PrivateLiftService:
             output_path=pl_instance.pid_stage_output_base_path,
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
-            hmac_key=hmac_key,
+            hmac_key=pl_instance.hmac_key,
         )
 
         # Push PID instance to PrivateComputationInstance.instances and update PL Instance status
@@ -513,9 +528,11 @@ class PrivateLiftService:
             )
 
         # Prepare arguments for lift game
+        # TODO T101225909: remove the option to pass in concurrency at the compute stage
+        #   instead, always pass in at create_instance
+        pl_instance.concurrency = concurrency or pl_instance.concurrency
         game_args = self._get_compute_metrics_game_args(
             pl_instance,
-            concurrency,
             is_validating,
             dry_run,
             container_timeout,
@@ -1041,7 +1058,6 @@ class PrivateLiftService:
     def _get_compute_metrics_game_args(
         self,
         pl_instance: PrivateComputationInstance,
-        concurrency: int,
         is_validating: Optional[bool] = False,
         dry_run: Optional[bool] = None,
         container_timeout: Optional[int] = None,
@@ -1064,7 +1080,7 @@ class PrivateLiftService:
                     "output_base_path": pl_instance.compute_stage_output_base_path,
                     "file_start_index": file_start_index,
                     "num_files": num_files,
-                    "concurrency": concurrency,
+                    "concurrency": pl_instance.concurrency,
                 }
                 for file_start_index, num_files in self.calculate_file_start_index_and_num_shards(
                     num_containers * pl_instance.num_files_per_mpc_container,

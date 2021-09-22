@@ -120,6 +120,7 @@ class TestPrivateLiftService(unittest.TestCase):
         self.test_input_path = "in_path"
         self.test_output_dir = "out_dir"
         self.test_game_type = PrivateComputationGameType.LIFT
+        self.test_concurrency = 1
 
     def test_create_instance(self):
         test_role = PrivateComputationRole.PUBLISHER
@@ -131,6 +132,7 @@ class TestPrivateLiftService(unittest.TestCase):
             output_dir=self.test_output_dir,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
+            concurrency=self.test_concurrency,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         # check instance_repository.create is called with the correct arguments
@@ -967,6 +969,7 @@ class TestPrivateLiftService(unittest.TestCase):
             status_update_ts=1600000000,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
+            concurrency=self.test_concurrency,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             game_type=PrivateComputationGameType.LIFT,
             input_path=self.test_input_path,

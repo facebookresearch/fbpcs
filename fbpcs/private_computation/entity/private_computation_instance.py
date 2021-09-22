@@ -72,6 +72,7 @@ class PrivateComputationInstance(InstanceBase):
     output_dir: str
     num_pid_containers: int
     num_mpc_containers: int
+    concurrency: int
 
     retry_counter: int = 0
     partial_container_retry_enabled: bool = (
@@ -85,7 +86,6 @@ class PrivateComputationInstance(InstanceBase):
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
 
-    concurrency: int = 1
     k_anonymity_threshold: int = 0
     retry_counter: int = 0
 
