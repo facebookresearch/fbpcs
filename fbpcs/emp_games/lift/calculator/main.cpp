@@ -71,7 +71,7 @@ DEFINE_bool(
     "Reveal output with XOR secret shares instead of in the clear to both parties");
 DEFINE_int32(
     num_conversions_per_user,
-    4,
+    25,
     "Cap and pad to this many conversions per user");
 DEFINE_int32(
     concurrency,

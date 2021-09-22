@@ -22,7 +22,7 @@ DEFINE_string(
 
 DEFINE_int32(
     multi_conversion_limit,
-    4,
+    25,
     "How many conversions to retain per id");
 DEFINE_string(
     sort_strategy,

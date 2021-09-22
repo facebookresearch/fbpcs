@@ -195,6 +195,7 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePublisher) {
 // Valid spine with some amount of overlap for partner
 // No opp_flag flag needed at the output level
 TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartner) {
+  FLAGS_multi_conversion_limit = 4;
   std::vector<std::string> dataInput = {
       "id_,event_timestamp,value",
       "123,125,100",
@@ -217,6 +218,7 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartner) {
 // Valid spine with some amount of overlap for partner, using hashed ids
 // No opp_flag flag needed at the output level
 TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartnerWithHashedId) {
+  FLAGS_multi_conversion_limit = 4;
   std::vector<std::string> dataInput = {
       "id_,event_timestamp,value",
       "cfcd208495d565ef66e7dff9f98764da,125,100",
@@ -245,6 +247,7 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartnerWithHashedId) {
 // No opp_flag flag needed at the output level
 // Multiple conversion needs to be processed
 TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartnerMultiConversion) {
+  FLAGS_multi_conversion_limit = 4;
   std::vector<std::string> dataInput = {
       "id_,event_timestamp,value",
       "123,125,102",
