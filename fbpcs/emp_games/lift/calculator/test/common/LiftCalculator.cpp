@@ -169,6 +169,15 @@ OutputMetricsData LiftCalculator::compute(
     eventTimestamps =
         parseArray(partsPartner.at(colNameToIndex.at("event_timestamps")));
 
+    // We can't initialize the convHistograms until we know how many events we
+    // will see. If we ever have a weird input where the rows have different
+    // lengths, doing this sort of "new max" will ensure this still works.
+    // Also remember to go one *past* the size to leave a bucket for 0 convs
+    for (size_t i = out.testConvHistogram.size(); i <= eventTimestamps.size(); ++i) {
+      out.testConvHistogram.push_back(0);
+      out.controlConvHistogram.push_back(0);
+    }
+
     auto valuesIdx = colNameToIndex.find("values") != colNameToIndex.end()
         ? colNameToIndex.at("values")
         : -1;
@@ -223,6 +232,7 @@ OutputMetricsData LiftCalculator::compute(
         out.testSpend += totalSpend;
         out.testReach += (numImpressions > 0 ? 1 : 0);
         out.testClickers += (numClicks > 0 ? 1 : 0);
+        ++out.testConvHistogram[convCount];
       } else {
         ++out.controlPopulation;
         for (auto i = 0; i < eventTimestamps.size(); ++i) {
@@ -254,6 +264,7 @@ OutputMetricsData LiftCalculator::compute(
         out.controlSpend += totalSpend;
         out.controlReach += (numImpressions > 0 ? 1 : 0);
         out.controlClickers += (numClicks > 0 ? 1 : 0);
+        ++out.controlConvHistogram[convCount];
       }
     }
   }
