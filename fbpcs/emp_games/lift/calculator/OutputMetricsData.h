@@ -7,9 +7,15 @@
 
 #pragma once
 
+#include <sstream>
+#include <vector>
+
+#include <folly/String.h>
+
 #include "../common/GroupedLiftMetrics.h"
 
 namespace private_lift {
+
 /*
  * Simple struct representing the metrics in a Lift computation
  */
@@ -40,6 +46,8 @@ struct OutputMetricsData {
   int64_t controlClickers = 0;
   int64_t reachedConversions = 0;
   int64_t reachedValue = 0;
+  std::vector<int64_t> testConvHistogram;
+  std::vector<int64_t> controlConvHistogram;
 
   OutputMetricsData() = default;
 
@@ -79,6 +87,8 @@ struct OutputMetricsData {
     os << "Control Clickers: " << out.controlClickers << "\n";
     os << "Reached Conversions: " << out.reachedConversions << "\n";
     os << "Reached Value: " << out.reachedValue << "\n";
+    os << "Test Conversion histogram: " << folly::join(',', out.testConvHistogram) << "\n";
+    os << "Control Conversion histogram: " << folly::join(',', out.controlConvHistogram) << "\n";
 
     return os;
   }
@@ -115,6 +125,8 @@ struct OutputMetricsData {
     metrics.controlClickers = controlClickers;
     metrics.reachedConversions = reachedConversions;
     metrics.reachedValue = reachedValue;
+    metrics.testConvHistogram = testConvHistogram;
+    metrics.controlConvHistogram = controlConvHistogram;
     return metrics;
   }
 
