@@ -12,7 +12,7 @@ CLI for running a Private Attribute study
 
 Usage:
     pa-coordinator create_instance <instance_id> --config=<config_file> --input_path=<input_path> --output_dir=<output_dir> --role=<pa_role> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container> --concurrency=<concurrency> [--padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key>] [options]
-    pa-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
+    pa-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --fail_fast --dry_run] [options]
     pa-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
     pa-coordinator compute_attribution <instance_id> --config=<config_file> --game=<game_name> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pa-coordinator aggregate_shards <instance_id> --config=<config_file> --game=<game_name> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
@@ -294,17 +294,19 @@ def id_match(
     config: Dict[str, Any],
     instance_id: str,
     logger: logging.Logger,
+    fail_fast: bool = False,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pa_service = _build_pa_service(
+    private_computation_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
     # run pid instance through pid service invoked from pa service
-    instance = pa_service.id_match(
+    instance = private_computation_service.id_match(
         instance_id=instance_id,
         protocol=PIDProtocol.UNION_PID,
+        fail_fast=fail_fast,
         pid_config=config["pid"],
         server_ips=server_ips,
         dry_run=dry_run,
@@ -462,6 +464,7 @@ def main() -> None:
             "--server_ips": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--concurrency": schema.Or(None, schema.Use(int)),
             "--hmac_key": schema.Or(None, str),
+            "--fail_fast": bool,
             "--dry_run": bool,
             "--log_path": schema.Or(None, schema.Use(Path)),
             "--log_cost_to_s3": schema.Or(None, schema.Use(bool)),
@@ -521,6 +524,7 @@ def main() -> None:
             config=config,
             instance_id=instance_id,
             logger=logger,
+            fail_fast=arguments["--fail_fast"],
             server_ips=arguments["--server_ips"],
             dry_run=arguments["--dry_run"],
         )
