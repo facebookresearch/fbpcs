@@ -156,6 +156,8 @@ template <int32_t MY_ROLE> std::string OutputMetrics<MY_ROLE>::toJson() const {
 }
 
 template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::validateNumRows() {
+  // TODO: We shouldn't be using MPC for this, it should just be shared over
+  // a normal network socket as part of the protocol setup
   auto numRows = privatelyShareInt<MY_ROLE>(n_);
   auto publisherNumRows = numRows.publisherInt().template reveal<int64_t>();
   auto partnerNumRows = numRows.partnerInt().template reveal<int64_t>();
@@ -171,20 +173,29 @@ template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::validateNumRows() {
 }
 
 template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::initNumGroups() {
-  XLOG(INFO) << "Set up number of groups and groupId share";
+  // TODO: We shouldn't be using MPC for this, it should just be shared over
+  // a normal network socket as part of the protocol setup
+  XLOG(INFO) << "Set up number of partner groups";
   // emp::Integer operates on int64_t values, so we do a static cast here
   // This is fine since we shouldn't be handling more than 2^63-1 groups...
-  auto numGroups = static_cast<int64_t>(inputData_.getNumGroups());
-  emp::Integer numGroupsInteger{private_measurement::INT_SIZE, numGroups,
-                                PARTNER};
-  numGroups_ = numGroupsInteger.reveal<int64_t>();
+  auto numGroups = privatelyShareInt<MY_ROLE>(inputData_.getNumGroups());
+  numPublisherBreakdowns_ = numGroups.publisherInt().template reveal<int64_t>();
+  numPartnerCohorts_ = numGroups.partnerInt().template reveal<int64_t>();
+
   // We pre-share the bitmasks for each group since they will be used
   // multiple times throughout the computation
-  for (auto i = 0; i < numGroups_; ++i) {
-    groupBitmasks_[i] =
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBitmasks_[i] =
+        privatelyShareBitsFromPublisher<MY_ROLE>(inputData_.bitmaskFor(i), n_);
+  }
+
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    partnerBitmasks_[i] =
         privatelyShareBitsFromPartner<MY_ROLE>(inputData_.bitmaskFor(i), n_);
   }
-  XLOG(INFO) << "Will be computing metrics for " << numGroups_ << " cohorts";
+  XLOG(INFO) << "Will be computing metrics for " << numPublisherBreakdowns_
+             << " publisher breakdowns and " << numPartnerCohorts_
+             << " partner cohorts";
 }
 
 template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::initShouldSkipValues() {
@@ -297,9 +308,9 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculatePopulation(
     metrics_.controlPopulation = reveal<int64_t>(sumInt);
   }
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        populationBits, groupBitmasks_.at(i));
+        populationBits, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].testPopulation = sum(groupBits);
     } else {
@@ -429,8 +440,8 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
   }
 
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
-    const auto &mask = groupBitmasks_.at(i);
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+    const auto &mask = partnerBitmasks_.at(i);
     auto groupEventBits =
         private_measurement::secret_sharing::multiplyBitmask(eventArrays, mask);
     auto groupConverterBits =
@@ -507,9 +518,9 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
   } else {
     metrics_.controlMatchCount = sum(matchArrays);
   }
-  for (auto i = 0; i < numGroups_; ++i) {
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        matchArrays, groupBitmasks_.at(i));
+        matchArrays, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].testMatchCount = sum(groupBits);
     } else {
@@ -549,11 +560,11 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
     metrics_.controlReach = sum(reachArray);
   }
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        impressionsArray, groupBitmasks_.at(i));
+        impressionsArray, partnerBitmasks_.at(i));
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        reachArray, groupBitmasks_.at(i));
+        reachArray, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].testImpressions = sum(groupInts);
       cohortMetrics_[i].testReach = sum(groupBits);
@@ -597,11 +608,11 @@ void OutputMetrics<MY_ROLE>::calculateClicks(
     metrics_.controlClickers = sum(clickersArray);
   }
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        clicksArray, groupBitmasks_.at(i));
+        clicksArray, partnerBitmasks_.at(i));
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        clickersArray, groupBitmasks_.at(i));
+        clickersArray, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].testClicks = sum(groupInts);
       cohortMetrics_[i].testClickers = sum(groupBits);
@@ -637,9 +648,9 @@ void OutputMetrics<MY_ROLE>::calculateSpend(
     metrics_.controlSpend = sum(spendArray);
   }
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        spendArray, groupBitmasks_.at(i));
+        spendArray, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].testSpend = sum(groupInts);
     } else {
@@ -681,9 +692,9 @@ void OutputMetrics<MY_ROLE>::calculateReachedConversions(
   }
 
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        reachedConversions, groupBitmasks_.at(i));
+        reachedConversions, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].reachedConversions = sum(groupInts);
     } else {
@@ -742,14 +753,14 @@ void OutputMetrics<MY_ROLE>::calculateValue(
   }
 
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        valueArrays, groupBitmasks_.at(i));
+        valueArrays, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].testValue = sum(groupInts);
       auto reachedGroupInts =
           private_measurement::secret_sharing::multiplyBitmask(
-              reachedValue, groupBitmasks_.at(i));
+              reachedValue, partnerBitmasks_.at(i));
       cohortMetrics_[i].reachedValue = sum(reachedGroupInts);
     } else {
       cohortMetrics_[i].controlValue = sum(groupInts);
@@ -794,8 +805,8 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
   }
 
   // And compute for cohorts
-  for (auto i = 0; i < numGroups_; ++i) {
-    const auto &mask = groupBitmasks_.at(i);
+  for (auto i = 0; i < numPartnerCohorts_; ++i) {
+    const auto &mask = partnerBitmasks_.at(i);
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         squaredValues, mask);
     if (groupType == GroupType::TEST) {
