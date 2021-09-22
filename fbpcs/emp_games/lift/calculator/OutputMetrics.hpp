@@ -347,12 +347,28 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
              << " conversions & converters";
 
+  // We are going to cleverly transpose this so we won't have to repeatedly
+  // do so below. vector[i] contains the histogram bitmask for bin i. This is in
+  // contrast to a "normal" return type for zip_and_map which would be output as
+  // a row-based vector of events. By transposing this ahead of time, we can
+  // use utilities like `sum` defined below.
+  std::vector<std::vector<emp::Bit>> convHistograms;
+  if (validPurchaseArrays.size() > 0) {
+    for (size_t i = 0; i <= validPurchaseArrays.at(0).size(); ++i) {
+      convHistograms.emplace_back();
+    }
+  }
+
+  // This code needs cleaned up. It's getting hard to understand.
+  // There's not a more advanced overload of zip_and_map, so we are now relying
+  // upon side-effects of the lambda. A later diff in this stack will attempt
+  // to nuke this and fix it properly.
   auto [eventArrays, converterArrays, squaredNumConvs] =
       private_measurement::secret_sharing::zip_and_map<
           emp::Bit, std::vector<emp::Bit>, std::vector<emp::Bit>, emp::Bit,
           emp::Integer>(
           populationBits, validPurchaseArrays,
-          [](emp::Bit isUser, std::vector<emp::Bit> validPurchaseArray)
+          [&convHistograms](emp::Bit isUser, std::vector<emp::Bit> validPurchaseArray)
               -> std::tuple<std::vector<emp::Bit>, emp::Bit, emp::Integer> {
             std::vector<emp::Bit> vec;
             emp::Integer numConvSquared{private_measurement::INT_SIZE, 0,
@@ -361,6 +377,7 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
 
             for (auto i = 0; i < validPurchaseArray.size(); ++i) {
               auto cond = isUser & validPurchaseArray.at(i);
+              auto newPurchase = cond & !anyValidPurchase;
               vec.push_back(cond);
               // If this event is valid and we haven't taken the accumulation
               // yet, use this value as the sumSquared accumulation. The number
@@ -370,21 +387,45 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
               auto convSquared = static_cast<int64_t>(numConv * numConv);
               emp::Integer numConvSquaredIfValid{numConvSquared.size(),
                                                  convSquared, emp::PUBLIC};
-              numConvSquared = emp::If(cond & !anyValidPurchase,
+              numConvSquared = emp::If(newPurchase,
                                        numConvSquaredIfValid, numConvSquared);
+
+              // Interpretation: at index `i`, we're detecting if we should
+              // increment the histogram at value `size() - i` because it means
+              // the user had `size() - i` *valid* conversions. So we set
+              // `convHistograms[numConv][_]` to true if this is the first valid
+              // purchase we have seen. It's a bit backwards from the above
+              // logic since we're not updating index `i` here, but it's
+              // unfortunately the simplest way to update the histogram. The
+              // alternative is to iterate another loop, which would be quite
+              // expensive to run in practice.
+              convHistograms[numConv].push_back(newPurchase);
               anyValidPurchase = anyValidPurchase | cond;
             }
-            return std::make_tuple(vec, anyValidPurchase, numConvSquared);
+            // If the person *never* converted, increment the zero bucket now
+            // Note that the isUser check is very important to avoid overcounting
+            convHistograms[0].push_back(isUser & !anyValidPurchase);
+            return std::make_tuple(
+                vec, anyValidPurchase, numConvSquared);
           });
 
   if (groupType == GroupType::TEST) {
     metrics_.testEvents = sum(eventArrays);
     metrics_.testConverters = sum(converterArrays);
     metrics_.testNumConvSquared = sum(squaredNumConvs);
+    // TODO: Computational shortcut possible by recognizing that bin 0
+    // is equivalent to population - sum(convs in other bins).
+    // We can avoid a relatively expensive bit sum.
+    for (size_t bin = 0; bin < convHistograms.size(); ++bin) {
+      metrics_.testConvHistogram.push_back(sum(convHistograms.at(bin)));
+    }
   } else {
     metrics_.controlEvents = sum(eventArrays);
     metrics_.controlConverters = sum(converterArrays);
     metrics_.controlNumConvSquared = sum(squaredNumConvs);
+    for (size_t bin = 0; bin < convHistograms.size(); ++bin) {
+      metrics_.controlConvHistogram.push_back(sum(convHistograms.at(bin)));
+    }
   }
 
   // And compute for cohorts
@@ -397,21 +438,26 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
                                                              mask);
     auto groupEvents = sum(groupEventBits);
     auto groupConverters = sum(groupConverterBits);
+    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
+        squaredNumConvs, mask);
+
+    std::vector<int64_t> groupConvHistogram;
+    for (size_t bin = 0; bin < convHistograms.size(); ++bin) {
+      auto binBits = private_measurement::secret_sharing::multiplyBitmask(
+          convHistograms.at(bin), mask);
+      groupConvHistogram.push_back(sum(binBits));
+    }
+
     if (groupType == GroupType::TEST) {
       cohortMetrics_[i].testEvents = groupEvents;
       cohortMetrics_[i].testConverters = groupConverters;
+      cohortMetrics_[i].testNumConvSquared = sum(groupInts);
+      cohortMetrics_[i].testConvHistogram = std::move(groupConvHistogram);
     } else {
       cohortMetrics_[i].controlEvents = groupEvents;
       cohortMetrics_[i].controlConverters = groupConverters;
-    }
-
-    // And also calculate per-group numConvSquared
-    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        squaredNumConvs, mask);
-    if (groupType == GroupType::TEST) {
-      cohortMetrics_[i].testNumConvSquared = sum(groupInts);
-    } else {
       cohortMetrics_[i].controlNumConvSquared = sum(groupInts);
+      cohortMetrics_[i].controlConvHistogram = std::move(groupConvHistogram);
     }
   }
   return eventArrays;
