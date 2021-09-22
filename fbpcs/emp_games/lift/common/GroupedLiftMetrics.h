@@ -16,6 +16,7 @@ namespace private_lift {
 struct GroupedLiftMetrics {
   LiftMetrics metrics;
   std::vector<LiftMetrics> cohortMetrics;
+  std::vector<LiftMetrics> publisherBreakdowns;
 
   bool operator==(const GroupedLiftMetrics& other) const noexcept;
   GroupedLiftMetrics operator+(const GroupedLiftMetrics& other) const noexcept;
