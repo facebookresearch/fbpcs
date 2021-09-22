@@ -480,53 +480,41 @@ class PrivateLiftService:
     def compute_metrics(
         self,
         instance_id: str,
-        concurrency: int,
+        concurrency: Optional[int] = None,
+        attribution_rule: Optional[str] = None,
+        aggregation_type: Optional[str] = None,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = None,
+        log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
         return asyncio.run(
             self.compute_metrics_async(
                 instance_id,
                 concurrency,
+                attribution_rule,
+                aggregation_type,
                 is_validating,
                 server_ips,
                 dry_run,
+                log_cost_to_s3,
                 container_timeout,
             )
         )
-
-    def calculate_file_start_index_and_num_shards(
-        self,
-        num_input_files: int,
-        num_containers: int,
-    ) -> Iterator[Tuple[int, int]]:
-        """
-        Calculate the file start index and number of shards to run per worker
-        Examples:
-        num_input_files = 4, num_containers = 4 -> [(0, 1), (1, 1), (2, 1), (3, 1)]
-        num_input_files = 5, num_containers = 4 -> [(0, 2), (2, 1), (3, 1), (4, 1)]
-        num_input_files = 6, num_containers = 4 -> [(0, 2), (2, 2), (4, 1), (5, 1)]
-        num_input_files = 7, num_containers = 4 -> [(0, 2), (2, 2), (4, 2), (6, 1)]
-        num_input_files = 8, num_containers = 4 -> [(0, 2), (2, 2), (4, 2), (6, 2)]
-        """
-        input_files = ["tmp"] * num_input_files
-        file_start_index = 0
-        for i in range(num_containers):
-            num_files = len(input_files[i::num_containers])
-            yield file_start_index, num_files
-            file_start_index += num_files
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of compute_metrics() so that it can be called by Thrift
     async def compute_metrics_async(
         self,
         instance_id: str,
-        concurrency: int,
+        concurrency: Optional[int] = None,
+        attribution_rule: Optional[str] = None,
+        aggregation_type: Optional[str] = None,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = None,
+        log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
         # It's expected that the pl instance is in an updated status because:
@@ -563,8 +551,11 @@ class PrivateLiftService:
         pl_instance.concurrency = concurrency or pl_instance.concurrency
         game_args = self._get_compute_metrics_game_args(
             pl_instance,
+            attribution_rule,
+            aggregation_type,
             is_validating,
             dry_run,
+            log_cost_to_s3,
             container_timeout,
         )
 
@@ -1005,6 +996,7 @@ class PrivateLiftService:
     ) -> Optional[PrivateComputationInstanceStatus]:
         MPC_GAME_TO_STAGE_MAPPER: Dict[str, str] = {
             GameNames.LIFT.value: "computation",
+            GameNames.ATTRIBUTION_COMPUTE.value: "computation",
             GameNames.SHARD_AGGREGATOR.value: "aggregation",
         }
 
@@ -1088,14 +1080,20 @@ class PrivateLiftService:
     def _get_compute_metrics_game_args(
         self,
         pl_instance: PrivateComputationInstance,
+        attribution_rule: Optional[str] = None,
+        aggregation_type: Optional[str] = None,
         is_validating: Optional[bool] = False,
         dry_run: Optional[bool] = None,
+        log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         game_args = []
+
         # If this is to recover from a previous MPC compute failure
         if self._ready_for_partial_container_retry(pl_instance) and not dry_run:
-            game_args = self._gen_game_args_to_retry(pl_instance)
+            game_args_to_retry = self._gen_game_args_to_retry(pl_instance)
+            if game_args_to_retry:
+                game_args = game_args_to_retry
 
         # If this is a normal run, dry_run, or unable to get the game args to retry from mpc service
         if not game_args:
@@ -1104,19 +1102,45 @@ class PrivateLiftService:
             if is_validating:
                 num_containers += 1
 
-            game_args = [
-                {
-                    "input_base_path": pl_instance.data_processing_output_path,
-                    "output_base_path": pl_instance.compute_stage_output_base_path,
-                    "file_start_index": file_start_index,
-                    "num_files": num_files,
-                    "concurrency": pl_instance.concurrency,
-                }
-                for file_start_index, num_files in self.calculate_file_start_index_and_num_shards(
-                    num_containers * pl_instance.num_files_per_mpc_container,
-                    num_containers,
-                )
-            ]
+            common_compute_game_args = {
+                "input_base_path": pl_instance.data_processing_output_path,
+                "output_base_path": pl_instance.compute_stage_output_base_path,
+                "num_files": pl_instance.num_files_per_mpc_container,
+                "concurrency": pl_instance.concurrency,
+            }
+
+            # TODO: we eventually will want to get rid of the if-else here, which will be
+            #   easy to do once the Lift and Attribution MPC compute games are consolidated
+            if pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
+                game_args = [
+                    {
+                        **common_compute_game_args,
+                        **{
+                            "aggregators": aggregation_type,
+                            "attribution_rules": attribution_rule,
+                            "file_start_index": i
+                            * pl_instance.num_files_per_mpc_container,
+                            "use_xor_encryption": True,
+                            "run_name": pl_instance.instance_id
+                            if log_cost_to_s3
+                            else "",
+                            "max_num_touchpoints": pl_instance.padding_size,
+                            "max_num_conversions": pl_instance.padding_size,
+                        },
+                    }
+                    for i in range(pl_instance.num_mpc_containers)
+                ]
+            elif pl_instance.game_type is PrivateComputationGameType.LIFT:
+                game_args = [
+                    {
+                        **common_compute_game_args,
+                        **{
+                            "file_start_index": i
+                            * pl_instance.num_files_per_mpc_container
+                        },
+                    }
+                    for i in range(pl_instance.num_mpc_containers)
+                ]
 
         return game_args
 
