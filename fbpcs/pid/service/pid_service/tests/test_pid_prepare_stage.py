@@ -5,9 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.data_processing.pid_preparer.union_pid_preparer_cpp import (
     CppUnionPIDDataPreparerService,
 )
@@ -20,20 +20,46 @@ from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
 
-
 CONFIG = {"s3_coordination_file": "ip_config"}
 
 
 class TestPIDPrepareStage(unittest.TestCase):
     @data_provider(
-        lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
+        lambda: (
+            {
+                "wait_for_containers": True,
+                "expected_container_status": ContainerInstanceStatus.COMPLETED,
+            },
+            {
+                "wait_for_containers": True,
+                "expected_container_status": ContainerInstanceStatus.FAILED,
+            },
+            {
+                "wait_for_containers": False,
+                "expected_container_status": ContainerInstanceStatus.STARTED,
+            },
+        )
     )
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
     @to_sync
-    async def test_prepare(self, mock_instance_repo, wait_for_containers):
+    async def test_prepare(
+        self,
+        mock_instance_repo,
+        wait_for_containers,
+        expected_container_status,
+    ):
         with patch.object(
             CppUnionPIDDataPreparerService, "prepare_on_container_async"
-        ), patch.object(PIDStage, "update_instance_containers"):
+        ) as mock_prepare_on_container_async, patch.object(
+            PIDStage, "update_instance_containers"
+        ):
+
+            container = ContainerInstance(
+                instance_id="123",
+                ip_address="192.0.2.0",
+                status=expected_container_status,
+            )
+            mock_prepare_on_container_async.return_value = container
             stage = PIDPrepareStage(
                 stage=UnionPIDStage.PUBLISHER_PREPARE,
                 config=CONFIG,
@@ -56,10 +82,8 @@ class TestPIDPrepareStage(unittest.TestCase):
                 wait_for_containers=wait_for_containers,
             )
             self.assertEqual(
+                PIDStage.get_stage_status_from_containers([container]),
                 res,
-                PIDStageStatus.COMPLETED
-                if wait_for_containers
-                else PIDStageStatus.STARTED,
             )
 
     @data_provider(

@@ -156,7 +156,20 @@ class TestPIDShardStage(unittest.TestCase):
                 )
 
     @data_provider(
-        lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
+        lambda: (
+            {
+                "wait_for_containers": True,
+                "expected_container_status": ContainerInstanceStatus.COMPLETED,
+            },
+            {
+                "wait_for_containers": True,
+                "expected_container_status": ContainerInstanceStatus.FAILED,
+            },
+            {
+                "wait_for_containers": False,
+                "expected_container_status": ContainerInstanceStatus.STARTED,
+            },
+        )
     )
     @patch.object(CppShardingService, "shard_on_container_async")
     @patch("fbpcp.service.storage.StorageService")
@@ -170,12 +183,19 @@ class TestPIDShardStage(unittest.TestCase):
         mock_storage_svc,
         mock_sharder,
         wait_for_containers: bool,
+        expected_container_status: ContainerInstanceStatus,
     ):
         with patch.object(PIDStage, "update_instance_containers"):
             test_onedocker_binary_config = OneDockerBinaryConfig(
                 tmp_directory="/test_tmp_directory/",
                 binary_version="latest",
             )
+            container = ContainerInstance(
+                instance_id="123",
+                ip_address="192.0.2.0",
+                status=expected_container_status,
+            )
+            mock_sharder.return_value = container
             stage = PIDShardStage(
                 stage=UnionPIDStage.PUBLISHER_SHARD,
                 config=CONFIG,
@@ -202,9 +222,7 @@ class TestPIDShardStage(unittest.TestCase):
                 wait_for_containers=wait_for_containers,
             )
             self.assertEqual(
-                PIDStageStatus.COMPLETED
-                if wait_for_containers
-                else PIDStageStatus.STARTED,
+                PIDStage.get_stage_status_from_containers([container]),
                 res,
             )
 

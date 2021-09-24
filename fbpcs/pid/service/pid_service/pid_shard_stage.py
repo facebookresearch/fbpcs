@@ -98,13 +98,9 @@ class PIDShardStage(PIDStage):
             return PIDStageStatus.FAILED
 
         await self.update_instance_containers(instance_id, [container])
-        if wait_for_containers:
-            self.logger.info("All shards copied to destination path")
-            return PIDStageStatus.COMPLETED
-        self.logger.info(
-            f"[{self}] Started CppShardingService on container {container}"
-        )
-        return PIDStageStatus.STARTED
+        status = self.get_stage_status_from_containers([container])
+        self.logger.info(f"PIDShardStatus is {status}")
+        return status
 
     async def _ready(
         self,
