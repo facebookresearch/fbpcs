@@ -55,6 +55,9 @@ from fbpcs.private_computation.service.private_computation_service_data import (
 from fbpcs.private_lift.entity.breakdown_key import BreakdownKey
 from fbpcs.private_lift.entity.pce_config import PCEConfig
 from fbpcs.private_lift.service.errors import PLServiceValidationError
+from fbpcs.private_computation.service.private_computation_stage_service import (
+    PrivateComputationStageService,
+)
 
 T = TypeVar("T")
 
@@ -199,6 +202,86 @@ class PrivateLiftService:
             self.instance_repository.update(pl_instance)
 
         return pl_instance
+
+    def run_stage(
+        self,
+        instance_id: str,
+        stage_svc: PrivateComputationStageService,
+        server_ips: Optional[List[str]] = None,
+        dry_run: bool = False,
+    ) -> PrivateComputationInstance:
+        return asyncio.run(
+            self.run_stage_async(instance_id, stage_svc, server_ips, dry_run)
+        )
+
+    def _get_validated_instance(
+        self,
+        instance_id: str,
+        stage_svc: PrivateComputationStageService,
+        server_ips: Optional[List[str]] = None,
+        dry_run: bool = False,
+    ) -> PrivateComputationInstance:
+        """
+        Gets a private computation instance and checks that it's ready to run a given
+        stage service
+        """
+        pc_instance = self.get_instance(instance_id)
+        if pc_instance.role is PrivateComputationRole.PARTNER and not server_ips:
+            raise ValueError("Missing server_ips")
+
+        # if the instance status is the complete status of the previous stage, then we can run the target stage
+        # e.g. if status == ID_MATCH_COMPLETE, then we can run COMPUTE_METRICS
+        if pc_instance.status is stage_svc.stage_type.previous_stage.completed_status:
+            pc_instance.retry_counter = 0
+        # if the instance status is the fail status of the target stage, then we can retry the target stage
+        # e.g. if status == COMPUTE_METRICS_FAILED, then we can run COMPUTE_METRICS
+        elif pc_instance.status is stage_svc.stage_type.failed_status:
+            pc_instance.retry_counter += 1
+        # if the instance status is a start status, it's running something already. Don't run another stage, even if dry_run=True
+        elif pc_instance.status in STAGE_STARTED_STATUSES:
+            raise ValueError(
+                f"Cannot start a new operation when instance {instance_id} has status {pc_instance.status}."
+            )
+        # if dry_run = True, then we can run the target stage. Otherwise, throw an error
+        elif not dry_run:
+            raise ValueError(
+                f"Instance {instance_id} has status {pc_instance.status}. Not ready for {stage_svc.stage_type}."
+            )
+
+        return pc_instance
+
+    async def run_stage_async(
+        self,
+        instance_id: str,
+        stage_svc: PrivateComputationStageService,
+        server_ips: Optional[List[str]] = None,
+        dry_run: bool = False,
+    ) -> PrivateComputationInstance:
+        """
+        Runs a stage for a given instance. If state of the instance is invalid (e.g. not ready to run a stage),
+        an exception will be thrown.
+        """
+
+        pc_instance = self._get_validated_instance(
+            instance_id, stage_svc, server_ips, dry_run
+        )
+
+        self._update_status(
+            pl_instance=pc_instance,
+            new_status=stage_svc.stage_type.start_status,
+        )
+        self.instance_repository.update(pc_instance)
+        try:
+            pc_instance = await stage_svc.run_async(pc_instance, server_ips)
+        except Exception as e:
+            self.logger.error(f"Caught exception when running {stage_svc.stage_type}")
+            self._update_status(
+                pl_instance=pc_instance, new_status=stage_svc.stage_type.failed_status
+            )
+            raise e
+        finally:
+            self.instance_repository.update(pc_instance)
+        return pc_instance
 
     # PID stage
     def id_match(
