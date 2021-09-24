@@ -87,12 +87,9 @@ class PIDPrepareStage(PIDStage):
 
         # Wait for all coroutines to finish
         containers = await asyncio.gather(*coroutines)
-        # it thinks containers is Tuple[any], when in fact in is List[ContainerInstance]
-        # pyre-ignore
+        containers = list(containers)
+
         await self.update_instance_containers(instance_id, containers)
-        if wait_for_containers:
-            # already waited in preparer.prepare_on_container_async
-            self.logger.info(f"[{self}] All sharded instances prepared")
-            return PIDStageStatus.COMPLETED
-        self.logger.info(f"[{self}] All shard instance containers started")
-        return PIDStageStatus.STARTED
+        status = self.get_stage_status_from_containers(containers)
+        self.logger.info(f"PIDPrepareStatus is {status}")
+        return status
