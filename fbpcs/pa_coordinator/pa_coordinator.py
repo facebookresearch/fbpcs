@@ -376,15 +376,14 @@ def aggregate_shards(
     dry_run: Optional[bool] = False,
     log_cost_to_s3: bool = False,
 ) -> None:
-    pa_service = _build_pa_service(
+    private_computation_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
-    pa_service.update_instance(instance_id)
+    private_computation_service.update_instance(instance_id)
 
-    instance = pa_service.aggregate_shards(
+    instance = private_computation_service.aggregate_shards(
         instance_id=instance_id,
-        game=game,
         server_ips=server_ips,
         dry_run=dry_run,
         log_cost_to_s3=log_cost_to_s3,
