@@ -241,7 +241,6 @@ class TestPrivateLiftService(unittest.TestCase):
         test_pid_role = PIDRole.PUBLISHER
         test_pid_config = {"key": "value"}
         test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
-        test_fail_fast = True
 
         pl_instance = self.create_sample_instance(
             status=PrivateComputationInstanceStatus.CREATED
@@ -267,7 +266,6 @@ class TestPrivateLiftService(unittest.TestCase):
             instance_id=self.test_pl_id,
             protocol=test_pid_protocol,
             pid_config=test_pid_config,
-            fail_fast=test_fail_fast,
             server_ips=["192.0.2.0", "192.0.2.1"],
             hmac_key=test_hmac_key,
         )
@@ -309,10 +307,6 @@ class TestPrivateLiftService(unittest.TestCase):
             test_pid_config,
             self.pid_service.run_instance.call_args[1]["pid_config"],
         )
-        self.assertEqual(
-            test_fail_fast,
-            self.pid_service.run_instance.call_args[1]["fail_fast"],
-        )
 
         self.pl_service.instance_repository.update.assert_called()
 
@@ -345,7 +339,6 @@ class TestPrivateLiftService(unittest.TestCase):
             instance_id=self.test_pl_id,
             protocol=test_pid_protocol,
             pid_config={"key": "value"},
-            fail_fast=False,
         )
 
         # check that the retry counter has been incremented
@@ -378,7 +371,6 @@ class TestPrivateLiftService(unittest.TestCase):
                 instance_id=test_pl_id,
                 protocol=PIDProtocol.UNION_PID,
                 pid_config={"key": "value"},
-                fail_fast=True,
             )
 
     def test_id_match_rerun_fail(self):
@@ -395,7 +387,6 @@ class TestPrivateLiftService(unittest.TestCase):
                 instance_id=test_pl_id,
                 protocol=PIDProtocol.UNION_PID,
                 pid_config={"key": "value"},
-                fail_fast=True,
             )
 
     def test_compute_metrics(self):
@@ -974,4 +965,5 @@ class TestPrivateLiftService(unittest.TestCase):
             game_type=PrivateComputationGameType.LIFT,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
+            fail_fast=True,
         )
