@@ -349,14 +349,13 @@ def compute_attribution(
     dry_run: Optional[bool] = False,
     log_cost_to_s3: bool = False,
 ) -> None:
-    pa_service = _build_pa_service(
+    private_computation_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
     logging.info("Starting compute metrics...")
 
-    instance = pa_service.compute_attribute(
+    instance = private_computation_service.compute_metrics(
         instance_id=instance_id,
-        game_name=game,
         attribution_rule=attribution_rule,
         aggregation_type=aggregation_type,
         server_ips=server_ips,
