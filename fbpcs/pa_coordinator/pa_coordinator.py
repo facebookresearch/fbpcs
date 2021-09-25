@@ -14,8 +14,8 @@ Usage:
     pa-coordinator create_instance <instance_id> --config=<config_file> --input_path=<input_path> --output_dir=<output_dir> --role=<pa_role> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container> --concurrency=<concurrency> [--padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast] [options]
     pa-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pa-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
-    pa-coordinator compute_attribution <instance_id> --config=<config_file> --game=<game_name> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
-    pa-coordinator aggregate_shards <instance_id> --config=<config_file> --game=<game_name> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
+    pa-coordinator compute_attribution <instance_id> --config=<config_file> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
+    pa-coordinator aggregate_shards <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pa-coordinator get_server_ips  <instance_id> --config=<config_file> [options]
     pa-coordinator get_instance <instance_id> --config=<config_file> [options]
     pa-coordinator print_instance <instance_id> --config=<config_file> [options]
@@ -298,7 +298,6 @@ def prepare_compute_input(
 def compute_attribution(
     config: Dict[str, Any],
     instance_id: str,
-    game: str,
     attribution_rule: str,
     aggregation_type: str,
     logger: logging.Logger,
@@ -327,7 +326,6 @@ def compute_attribution(
 def aggregate_shards(
     config: Dict[str, Any],
     instance_id: str,
-    game: str,
     logger: logging.Logger,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
@@ -403,7 +401,6 @@ def main() -> None:
             "--config": schema.And(schema.Use(PurePath), os.path.exists),
             "--input_path": schema.Or(None, str),
             "--output_dir": schema.Or(None, str),
-            "--game": schema.Or(None, str),
             "--aggregation_type": schema.Or(None, str),
             "--attribution_rule": schema.Or(None, str),
             "--num_pid_containers": schema.Or(None, schema.Use(int)),
@@ -500,7 +497,6 @@ def main() -> None:
         compute_attribution(
             config=config,
             instance_id=instance_id,
-            game=arguments["--game"],
             attribution_rule=arguments["--attribution_rule"],
             aggregation_type=arguments["--aggregation_type"],
             server_ips=arguments["--server_ips"],
@@ -512,7 +508,6 @@ def main() -> None:
         aggregate_shards(
             config=config,
             instance_id=instance_id,
-            game=arguments["--game"],
             server_ips=arguments["--server_ips"],
             logger=logger,
             dry_run=arguments["--dry_run"],

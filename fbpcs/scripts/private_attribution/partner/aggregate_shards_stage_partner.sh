@@ -36,7 +36,6 @@ python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
   --config="${config}" \
   --num_containers_previously_used=${num_mpc_containers_previously_used} \
   --num_files_per_mpc_container=${num_files_per_mpc_container} \
-  --game=attribution_shard_aggregator_prod \
   --threshold=${kanonymity_threshold} \
   --input_base_path="${partner_input_path}" \
   --output_path="${partner_output_path}" \
