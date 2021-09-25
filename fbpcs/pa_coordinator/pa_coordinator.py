@@ -51,7 +51,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
-from fbpcs.private_lift.service.privatelift import PrivateLiftService
+from fbpcs.private_computation.service.private_computation import (
+    PrivateComputationService,
+)
 
 DEFAULT_HMAC_KEY: str = ""
 DEFAULT_PADDING_SIZE: int = 4
@@ -61,7 +63,7 @@ DEFAULT_K_ANONYMITY_THRESHOLD: int = 0
 
 def _build_private_computation_service(
     pa_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
-) -> PrivateLiftService:
+) -> PrivateComputationService:
     instance_repository_config = pa_config["dependency"][
         "PrivateComputationInstanceRepository"
     ]
@@ -80,7 +82,7 @@ def _build_private_computation_service(
         container_service, onedocker_service_config.task_definition
     )
     storage_service = _build_storage_service(pa_config["dependency"]["StorageService"])
-    return PrivateLiftService(
+    return PrivateComputationService(
         repository_service,
         _build_mpc_service(
             mpc_config, onedocker_service_config, container_service, storage_service

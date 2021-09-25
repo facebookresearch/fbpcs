@@ -15,8 +15,12 @@ from fbpcs.post_processing_handler.exception import PostProcessingHandlerRuntime
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 
 if TYPE_CHECKING:
-    from fbpcs.private_computation.entity.private_computation_instance import PrivateComputationInstance
-    from fbpcs.private_lift.service.privatelift import PrivateLiftService
+    from fbpcs.private_computation.entity.private_computation_instance import (
+        PrivateComputationInstance,
+    )
+    from fbpcs.private_computation.service.private_computation import (
+        PrivateComputationService,
+    )
 
 
 class PostProcessingDummyHandler(PostProcessingHandler):
@@ -28,11 +32,13 @@ class PostProcessingDummyHandler(PostProcessingHandler):
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     async def run(
-        self, pl_service: "PrivateLiftService", pl_instance: "PrivateComputationInstance"
+        self,
+        private_computation_service: "PrivateComputationService",
+        private_computation_instance: "PrivateComputationInstance",
     ) -> None:
         if random.random() >= self.probability_of_failure:
             self.logger.info(
-                f"{pl_instance.instance_id=},{pl_instance.aggregated_result_path=}"
+                f"{private_computation_instance.instance_id=},{private_computation_instance.aggregated_result_path=}"
             )
         else:
             raise PostProcessingHandlerRuntimeError(
