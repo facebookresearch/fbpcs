@@ -163,7 +163,7 @@ def aggregate(
     # current status is still COMPUTATION_STARTED or AGGREGATION_STARTED, which is an invalid status for retry.
     pl_service.update_instance(instance_id)
 
-    instance = pl_service.aggregate_metrics(
+    instance = pl_service.aggregate_shards(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
