@@ -21,8 +21,8 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
     PostProcessingInstanceStatus,
 )
-from fbpcs.private_lift.entity.breakdown_key import BreakdownKey
-from fbpcs.private_lift.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
+from fbpcs.private_computation.entity.pce_config import PCEConfig
 
 
 class PrivateComputationRole(Enum):
