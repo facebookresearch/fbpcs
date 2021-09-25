@@ -47,6 +47,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_pid_containers=4,
             num_mpc_containers=4,
             concurrency=1,
+            fail_fast=True,
         )
         self.repo.create(test_read_private_computation_instance)
         self.assertEqual(
@@ -69,6 +70,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_pid_containers=4,
             num_mpc_containers=4,
             concurrency=1,
+            fail_fast=True,
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)
