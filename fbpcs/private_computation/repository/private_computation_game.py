@@ -16,7 +16,6 @@ class GameNames(Enum):
     LIFT = "lift"
     SHARD_AGGREGATOR = "shard_aggregator"
     ATTRIBUTION_COMPUTE = "attribution_compute"
-    ATTRIBUTION_SHARD_AGGREGATOR = "attribution_shard_aggregator"
 
 
 PRIVATE_COMPUTATION_GAME_CONFIG = {
@@ -37,6 +36,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
             {"name": "num_shards", "required": True},
             {"name": "output_path", "required": True},
             {"name": "metrics_format_type", "required": True},
+            {"name": "threshold", "required": True},
             {"name": "first_shard_index", "required": False},
         ],
     },
@@ -51,16 +51,6 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
             {"name": "num_files", "required": True},
             {"name": "file_start_index", "required": True},
             {"name": "use_xor_encryption", "required": True},
-        ],
-    },
-    GameNames.ATTRIBUTION_SHARD_AGGREGATOR.value: {
-        "onedocker_package_name": OneDockerBinaryNames.SHARD_AGGREGATOR.value,
-        "arguments": [
-            {"name": "input_base_path", "required": True},
-            {"name": "output_path", "required": True},
-            {"name": "threshold", "required": True},
-            {"name": "num_shards", "required": True},
-            {"name": "first_shard_index", "required": True},
         ],
     },
 }
