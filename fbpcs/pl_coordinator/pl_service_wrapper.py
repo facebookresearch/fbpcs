@@ -54,6 +54,7 @@ def create_instance(
         output_dir=output_dir,
         num_pid_containers=num_pid_containers,
         num_mpc_containers=num_mpc_containers,
+        concurrency=DEFAULT_CONCURRENCY,
         num_files_per_mpc_container=num_files_per_mpc_container,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
