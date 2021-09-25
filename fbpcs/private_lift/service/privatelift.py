@@ -9,6 +9,7 @@
 import asyncio
 import json
 import logging
+import math
 from datetime import datetime, timezone
 from typing import DefaultDict, Dict, List, Optional, Any, TypeVar, Tuple, Iterator
 
@@ -18,6 +19,9 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
+    CppAttributionIdSpineCombinerService,
+)
 from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )
@@ -406,12 +410,14 @@ class PrivateLiftService:
         instance_id: str,
         is_validating: Optional[bool] = False,
         dry_run: Optional[bool] = None,
+        log_cost_to_s3: bool = False,
     ) -> None:
         asyncio.run(
             self.prepare_data_async(
-                instance_id,
-                is_validating,
-                dry_run,
+                instance_id=instance_id,
+                is_validating=is_validating,
+                dry_run=dry_run,
+                log_cost_to_s3=log_cost_to_s3,
             )
         )
 
@@ -421,6 +427,7 @@ class PrivateLiftService:
         instance_id: str,
         is_validating: Optional[bool] = False,
         dry_run: Optional[bool] = None,
+        log_cost_to_s3: bool = False,
     ) -> None:
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
@@ -446,87 +453,31 @@ class PrivateLiftService:
             self._ready_for_partial_container_retry(pl_instance) and not dry_run
         )
 
-        combine_output_path = pl_instance.data_processing_output_path + "_combine"
-
-        num_containers = pl_instance.num_pid_containers
+        output_path = pl_instance.data_processing_output_path
+        combine_output_path = output_path + "_combine"
 
         # execute combiner step
         if skip_tasks_on_container:
-            self.logger.info(f"[{self}] Skipping CppLiftIdSpineCombinerService")
+            self.logger.info(f"[{self}] Skipping id spine combiner service")
         else:
-            self.logger.info(f"[{self}] Starting CppLiftIdSpineCombinerService")
+            self.logger.info(f"[{self}] Starting id spine combiner service")
 
-            # put checked_cast here because otherwise Pyre complains that
-            # combiner_service.combine_on_container_async is called with wrong parameters
-            stage_data = PrivateComputationServiceData.get(
-                pl_instance.game_type
-            ).combiner_stage
-
-            combiner_service = checked_cast(
-                CppLiftIdSpineCombinerService,
-                stage_data.service,
-            )
-            binary_name = stage_data.binary_name
-            binary_config = self.onedocker_binary_config_map[binary_name]
-            await combiner_service.combine_on_container_async(
-                spine_path=pl_instance.pid_stage_output_spine_path,
-                data_path=pl_instance.pid_stage_output_data_path,
-                output_path=combine_output_path,
-                num_shards=num_containers + 1
-                if pl_instance.is_validating
-                else num_containers,
-                onedocker_svc=self.onedocker_svc,
-                binary_version=binary_config.binary_version,
-                tmp_directory=binary_config.tmp_directory,
+            # TODO: we will write log_cost_to_s3 to the instance, so this function interface
+            #   will get simplified
+            await self._run_combiner_service(
+                pl_instance, combine_output_path, log_cost_to_s3
             )
 
-        logging.info("Finished running CombinerService, starting to reshard")
+        self.logger.info("Finished running CombinerService, starting to reshard")
 
         # reshard each file into x shards
         #     note we need each file to be sharded into the same # of files
         #     because we want to keep the data of each existing file to run
         #     on the same container
-
-        sharder = CppShardingService()
-
-        logging.info("Instantiated sharder")
-
-        coros = []
-        for shard_index in range(
-            num_containers + 1 if pl_instance.is_validating else num_containers
-        ):
-            path_to_shard = PIDStage.get_sharded_filepath(
-                combine_output_path, shard_index
-            )
-            logging.info(f"Input path to sharder: {path_to_shard}")
-            shard_index_offset = shard_index * pl_instance.num_files_per_mpc_container
-            logging.info(
-                f"Output base path to sharder: {pl_instance.data_processing_output_path}, {shard_index_offset=}"
-            )
-
-            if skip_tasks_on_container:
-                self.logger.info(f"[{self}] Skipping sharding on container")
-            else:
-                binary_name = OneDockerBinaryNames.SHARDER.value
-                coro = sharder.shard_on_container_async(
-                    shard_type=ShardType.ROUND_ROBIN,
-                    filepath=path_to_shard,
-                    output_base_path=pl_instance.data_processing_output_path,
-                    file_start_index=shard_index_offset,
-                    num_output_files=pl_instance.num_files_per_mpc_container,
-                    onedocker_svc=self.onedocker_svc,
-                    binary_version=self.onedocker_binary_config_map[
-                        binary_name
-                    ].binary_version,
-                    tmp_directory=self.onedocker_binary_config_map[
-                        binary_name
-                    ].tmp_directory,
-                )
-                coros.append(coro)
-
-        # Wait for all coroutines to finish
-        await asyncio.gather(*coros)
-        logging.info("All sharding coroutines finished")
+        if skip_tasks_on_container:
+            self.logger.info(f"[{self}] Skipping sharding on container")
+        else:
+            await self._run_sharder_service(pl_instance, combine_output_path)
 
     # MPC step 1
     def compute_metrics(
@@ -1209,3 +1160,99 @@ class PrivateLiftService:
             and pl_instance.status
             is PrivateComputationInstanceStatus.COMPUTATION_FAILED
         )
+
+    async def _run_combiner_service(
+        self,
+        pl_instance: PrivateComputationInstance,
+        combine_output_path: str,
+        log_cost_to_s3: bool,
+    ) -> None:
+        stage_data = PrivateComputationServiceData.get(
+            pl_instance.game_type
+        ).combiner_stage
+
+        binary_name = stage_data.binary_name
+        binary_config = self.onedocker_binary_config_map[binary_name]
+
+        common_combiner_args = {
+            "spine_path": pl_instance.pid_stage_output_spine_path,
+            "data_path": pl_instance.pid_stage_output_data_path,
+            "output_path": combine_output_path,
+            "num_shards": pl_instance.num_pid_containers + 1
+            if pl_instance.is_validating
+            else pl_instance.num_pid_containers,
+            "onedocker_svc": self.onedocker_svc,
+            "binary_version": binary_config.binary_version,
+            "tmp_directory": binary_config.tmp_directory,
+        }
+
+        # TODO T100977304: the if-else will be removed after the two combiners are consolidated
+        if pl_instance.game_type is PrivateComputationGameType.LIFT:
+            combiner_service = checked_cast(
+                CppLiftIdSpineCombinerService,
+                stage_data.service,
+            )
+            await combiner_service.combine_on_container_async(
+                # pyre-ignore [6] Incompatible parameter type
+                **common_combiner_args
+            )
+        elif pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
+            combiner_service = checked_cast(
+                CppAttributionIdSpineCombinerService,
+                stage_data.service,
+            )
+            common_combiner_args["run_name"] = (
+                pl_instance.instance_id if log_cost_to_s3 else ""
+            )
+            common_combiner_args["padding_size"] = checked_cast(
+                int, pl_instance.padding_size
+            )
+            await combiner_service.combine_on_container_async(
+                # pyre-ignore [6] Incompatible parameter type
+                **common_combiner_args
+            )
+
+    async def _run_sharder_service(
+        self, pl_instance: PrivateComputationInstance, combine_output_path: str
+    ) -> None:
+        sharder = CppShardingService()
+        self.logger.info("Instantiated sharder")
+
+        coros = []
+        for shard_index in range(
+            pl_instance.num_pid_containers + 1
+            if pl_instance.is_validating
+            else pl_instance.num_pid_containers
+        ):
+            path_to_shard = PIDStage.get_sharded_filepath(
+                combine_output_path, shard_index
+            )
+            self.logger.info(f"Input path to sharder: {path_to_shard}")
+
+            shards_per_file = math.ceil(
+                (pl_instance.num_mpc_containers / pl_instance.num_pid_containers)
+                * pl_instance.num_files_per_mpc_container
+            )
+            shard_index_offset = shard_index * shards_per_file
+            self.logger.info(
+                f"Output base path to sharder: {pl_instance.data_processing_output_path}, {shard_index_offset=}"
+            )
+
+            binary_config = self.onedocker_binary_config_map[
+                OneDockerBinaryNames.SHARDER.value
+            ]
+            coro = sharder.shard_on_container_async(
+                shard_type=ShardType.ROUND_ROBIN,
+                filepath=path_to_shard,
+                output_base_path=pl_instance.data_processing_output_path,
+                file_start_index=shard_index_offset,
+                num_output_files=shards_per_file,
+                onedocker_svc=self.onedocker_svc,
+                binary_version=binary_config.binary_version,
+                tmp_directory=binary_config.tmp_directory,
+            )
+            coros.append(coro)
+
+        # Wait for all coroutines to finish
+        await asyncio.gather(*coros)
+        self.logger.info("All sharding coroutines finished")
