@@ -78,44 +78,6 @@ class PrivateAttributionService:
         self.onedocker_binary_config_map = onedocker_binary_config_map
         self.logger: logging.Logger = logging.getLogger(__name__)
 
-    def create_instance(
-        self,
-        instance_id: str,
-        role: PrivateComputationRole,
-        input_path: str,
-        output_dir: str,
-        hmac_key: str,
-        num_pid_containers: int,
-        num_mpc_containers: int,
-        num_files_per_mpc_container: int,
-        padding_size: int,
-        logger: logging.Logger,
-        concurrency: int = 1,
-        k_anonymity_threshold: int = 0,
-    ) -> PrivateComputationInstance:
-        self.logger.info(f"Creating instance: {instance_id}")
-
-        instance = PrivateComputationInstance(
-            instance_id=instance_id,
-            role=role,
-            instances=[],
-            status=PrivateComputationInstanceStatus.CREATED,
-            status_update_ts=0,  # placeholder, not used by PA, will be used after PL+PA consolidation
-            input_path=input_path,
-            output_dir=output_dir,
-            hmac_key=hmac_key,
-            num_pid_containers=num_pid_containers,
-            num_mpc_containers=num_mpc_containers,
-            num_files_per_mpc_container=num_files_per_mpc_container,
-            game_type=PrivateComputationGameType.ATTRIBUTION,
-            padding_size=padding_size,
-            concurrency=concurrency,
-            k_anonymity_threshold=k_anonymity_threshold,
-        )
-
-        self.instance_repository.create(instance)
-        return instance
-
     def update_instance(self, instance_id: str) -> PrivateComputationInstance:
         pa_instance = self.instance_repository.read(instance_id)
 

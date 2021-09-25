@@ -42,6 +42,7 @@ def create_instance(
     num_mpc_containers: int,
     num_files_per_mpc_container: Optional[int] = None,
     game_type: Optional[PrivateComputationGameType] = None,
+    fail_fast: bool = False,
 ) -> PrivateComputationInstance:
     pl_service = _build_pl_service(
         config["private_computation"], config["mpc"], config["pid"]
@@ -59,6 +60,7 @@ def create_instance(
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
+        fail_fast=fail_fast,
     )
 
     logger.info(instance)
@@ -82,7 +84,6 @@ def id_match(
     pl_service.id_match(
         instance_id=instance_id,
         protocol=PIDProtocol.UNION_PID,
-        fail_fast=fail_fast,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
