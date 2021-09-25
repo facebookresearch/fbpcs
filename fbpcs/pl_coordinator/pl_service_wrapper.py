@@ -26,7 +26,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
-from fbpcs.private_lift.service.privatelift import PrivateLiftService
+from fbpcs.private_computation.service.private_computation import (
+    PrivateComputationService,
+)
 
 DEFAULT_CONCURRENCY = 4
 
@@ -232,7 +234,7 @@ def get(
     """
     The purpose of `get` is to get the updated status of the pl instance with id instance_id.
     We only call pl_service.update_instance() under XXX_STARTED status because otherwise we could run into
-    a race condition: when status is not XXX_STARTED, PrivateLiftService might be writing a new PID or
+    a race condition: when status is not XXX_STARTED, PrivateComputationService might be writing a new PID or
     MPCInstance to this pl instance. Because pl_service.update_instance() also writes to this pl instance, it could
     accidentally erase that PID or MPCInstance.
     """
@@ -389,7 +391,7 @@ def _build_mpc_service(
 
 def _build_pl_service(
     pl_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
-) -> PrivateLiftService:
+) -> PrivateComputationService:
     plinstance_repository_config = pl_config["dependency"][
         "PrivateComputationInstanceRepository"
     ]
@@ -408,7 +410,7 @@ def _build_pl_service(
         container_service, onedocker_service_config.task_definition
     )
     storage_service = _build_storage_service(pl_config["dependency"]["StorageService"])
-    return PrivateLiftService(
+    return PrivateComputationService(
         repository_service,
         _build_mpc_service(
             mpc_config, onedocker_service_config, container_service, storage_service

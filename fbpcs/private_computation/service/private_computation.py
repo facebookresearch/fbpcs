@@ -56,12 +56,12 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
-from fbpcs.private_lift.entity.breakdown_key import BreakdownKey
-from fbpcs.private_lift.entity.pce_config import PCEConfig
-from fbpcs.private_lift.service.errors import PLServiceValidationError
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
+from fbpcs.private_lift.entity.breakdown_key import BreakdownKey
+from fbpcs.private_lift.entity.pce_config import PCEConfig
+from fbpcs.private_lift.service.errors import PLServiceValidationError
 
 T = TypeVar("T")
 
@@ -102,7 +102,7 @@ DEFAULT_PADDING_SIZE = 4
 DEFAULT_K_ANONYMITY_THRESHOLD = 100
 
 
-class PrivateLiftService:
+class PrivateComputationService:
     def __init__(
         self,
         instance_repository: PrivateComputationInstanceRepository,
@@ -111,7 +111,7 @@ class PrivateLiftService:
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
     ) -> None:
-        """Constructor of PrivateLiftService
+        """Constructor of PrivateComputationService
         instance_repository -- repository to CRUD PrivateComputationInstance
         """
         self.instance_repository = instance_repository
@@ -150,7 +150,7 @@ class PrivateLiftService:
             role=role,
             instances=[],
             status=PrivateComputationInstanceStatus.CREATED,
-            status_update_ts=PrivateLiftService.get_ts_now(),
+            status_update_ts=PrivateComputationService.get_ts_now(),
             num_files_per_mpc_container=num_files_per_mpc_container
             or NUM_NEW_SHARDS_PER_FILE,
             game_type=game_type,
@@ -179,27 +179,31 @@ class PrivateLiftService:
 
     # TODO T88759390: make an async version of this function
     def update_instance(self, instance_id: str) -> PrivateComputationInstance:
-        pl_instance = self.instance_repository.read(instance_id)
+        private_computation_instance = self.instance_repository.read(instance_id)
         self.logger.info(f"Updating instance: {instance_id}")
-        return self._update_instance(pl_instance=pl_instance)
+        return self._update_instance(
+            private_computation_instance=private_computation_instance
+        )
 
     def _update_instance(
-        self, pl_instance: PrivateComputationInstance
+        self, private_computation_instance: PrivateComputationInstance
     ) -> PrivateComputationInstance:
-        if pl_instance.instances:
+        if private_computation_instance.instances:
             # Only need to update the last stage/instance
-            last_instance = pl_instance.instances[-1]
+            last_instance = private_computation_instance.instances[-1]
 
             if isinstance(last_instance, PIDInstance):
                 # PID service has to call update_instance to get the newest containers
                 # information in case they are still running
-                pl_instance.instances[-1] = self.pid_svc.update_instance(
-                    last_instance.instance_id
-                )
+                private_computation_instance.instances[
+                    -1
+                ] = self.pid_svc.update_instance(last_instance.instance_id)
             elif isinstance(last_instance, MPCInstance):
                 # MPC service has to call update_instance to get the newest containers
                 # information in case they are still running
-                pl_instance.instances[-1] = PCSMPCInstance.from_mpc_instance(
+                private_computation_instance.instances[
+                    -1
+                ] = PCSMPCInstance.from_mpc_instance(
                     self.mpc_svc.update_instance(last_instance.instance_id)
                 )
             elif isinstance(last_instance, PostProcessingInstance):
@@ -210,16 +214,19 @@ class PrivateLiftService:
                 raise ValueError("Unknown type of instance")
 
             new_status = (
-                self._get_status_from_stage(pl_instance.instances[-1])
-                or pl_instance.status
+                self._get_status_from_stage(private_computation_instance.instances[-1])
+                or private_computation_instance.status
             )
-            pl_instance = self._update_status(
-                pl_instance=pl_instance, new_status=new_status
+            private_computation_instance = self._update_status(
+                private_computation_instance=private_computation_instance,
+                new_status=new_status,
             )
-            self.instance_repository.update(pl_instance)
-            self.logger.info(f"Finished updating instance: {pl_instance.instance_id}")
+            self.instance_repository.update(private_computation_instance)
+            self.logger.info(
+                f"Finished updating instance: {private_computation_instance.instance_id}"
+            )
 
-        return pl_instance
+        return private_computation_instance
 
     def run_stage(
         self,
@@ -285,7 +292,7 @@ class PrivateLiftService:
         )
 
         self._update_status(
-            pl_instance=pc_instance,
+            private_computation_instance=pc_instance,
             new_status=stage_svc.stage_type.start_status,
         )
         self.instance_repository.update(pc_instance)
@@ -294,7 +301,8 @@ class PrivateLiftService:
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage_svc.stage_type}")
             self._update_status(
-                pl_instance=pc_instance, new_status=stage_svc.stage_type.failed_status
+                private_computation_instance=pc_instance,
+                new_status=stage_svc.stage_type.failed_status,
             )
             raise e
         finally:
@@ -342,64 +350,77 @@ class PrivateLiftService:
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
         #   for partner, PL-Coordinator should have updated it before calling this action.
-        pl_instance = self.get_instance(instance_id)
+        private_computation_instance = self.get_instance(instance_id)
 
-        if pl_instance.role is PrivateComputationRole.PARTNER and not server_ips:
+        if (
+            private_computation_instance.role is PrivateComputationRole.PARTNER
+            and not server_ips
+        ):
             raise ValueError("Missing server_ips for Partner")
 
         # default to be an empty string
         retry_counter_str = ""
 
         # Validate status of the instance
-        if pl_instance.status is PrivateComputationInstanceStatus.CREATED:
-            pl_instance.retry_counter = 0
-        elif pl_instance.status is PrivateComputationInstanceStatus.ID_MATCHING_FAILED:
-            pl_instance.retry_counter += 1
-            retry_counter_str = str(pl_instance.retry_counter)
-        elif pl_instance.status in STAGE_STARTED_STATUSES:
+        if (
+            private_computation_instance.status
+            is PrivateComputationInstanceStatus.CREATED
+        ):
+            private_computation_instance.retry_counter = 0
+        elif (
+            private_computation_instance.status
+            is PrivateComputationInstanceStatus.ID_MATCHING_FAILED
+        ):
+            private_computation_instance.retry_counter += 1
+            retry_counter_str = str(private_computation_instance.retry_counter)
+        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
             # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
             # the instance is no longer in a running state before starting a new operation
             raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {pl_instance.status}."
+                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
             )
         elif not dry_run:
             raise ValueError(
-                f"Instance {instance_id} has status {pl_instance.status}. Not ready for id matching."
+                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for id matching."
             )
 
         # Create a new pid instance
         pid_instance_id = instance_id + "_id_match" + retry_counter_str
         # TODO T101225909: remove the option here to pass in a hmac key at the id match stage
         #   instead, always pass in at create_instance
-        pl_instance.hmac_key = hmac_key or pl_instance.hmac_key
+        private_computation_instance.hmac_key = (
+            hmac_key or private_computation_instance.hmac_key
+        )
         pid_instance = self.pid_svc.create_instance(
             instance_id=pid_instance_id,
             protocol=PIDProtocol.UNION_PID,
-            pid_role=self._map_pl_role_to_pid_role(pl_instance.role),
-            num_shards=pl_instance.num_pid_containers,
-            input_path=pl_instance.input_path,
-            output_path=pl_instance.pid_stage_output_base_path,
+            pid_role=self._map_private_computation_role_to_pid_role(
+                private_computation_instance.role
+            ),
+            num_shards=private_computation_instance.num_pid_containers,
+            input_path=private_computation_instance.input_path,
+            output_path=private_computation_instance.pid_stage_output_base_path,
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
-            hmac_key=pl_instance.hmac_key,
+            hmac_key=private_computation_instance.hmac_key,
         )
 
         # Push PID instance to PrivateComputationInstance.instances and update PL Instance status
         pid_instance.status = PIDInstanceStatus.STARTED
-        pl_instance.instances.append(pid_instance)
+        private_computation_instance.instances.append(pid_instance)
 
-        pl_instance = self._update_status(
-            pl_instance=pl_instance,
+        private_computation_instance = self._update_status(
+            private_computation_instance=private_computation_instance,
             new_status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
         )
-        self.instance_repository.update(pl_instance)
+        self.instance_repository.update(private_computation_instance)
 
         # Run pid
         # With the current design, it won't return until everything is done
         await self.pid_svc.run_instance(
             instance_id=pid_instance_id,
             pid_config=pid_config,
-            fail_fast=pl_instance.fail_fast,
+            fail_fast=private_computation_instance.fail_fast,
             server_ips=server_ips,
         )
 
@@ -432,28 +453,29 @@ class PrivateLiftService:
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
         #   for partner, PL-Coordinator should have updated it before calling this action.
-        pl_instance = self.get_instance(instance_id)
+        private_computation_instance = self.get_instance(instance_id)
 
         # Validate status of the instance
         if not dry_run and (
-            pl_instance.status
+            private_computation_instance.status
             not in [
                 PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
                 PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             ]
         ):
             raise ValueError(
-                f"Instance {instance_id} has status {pl_instance.status}. Not ready for data prep stage."
+                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for data prep stage."
             )
 
         # If this request is made to recover from a previous mpc compute failure,
         #   then we skip the actual tasks running on containers. It's still necessary
         #   to run this function just because the caller needs the returned all_output_paths
         skip_tasks_on_container = (
-            self._ready_for_partial_container_retry(pl_instance) and not dry_run
+            self._ready_for_partial_container_retry(private_computation_instance)
+            and not dry_run
         )
 
-        output_path = pl_instance.data_processing_output_path
+        output_path = private_computation_instance.data_processing_output_path
         combine_output_path = output_path + "_combine"
 
         # execute combiner step
@@ -465,7 +487,7 @@ class PrivateLiftService:
             # TODO: we will write log_cost_to_s3 to the instance, so this function interface
             #   will get simplified
             await self._run_combiner_service(
-                pl_instance, combine_output_path, log_cost_to_s3
+                private_computation_instance, combine_output_path, log_cost_to_s3
             )
 
         self.logger.info("Finished running CombinerService, starting to reshard")
@@ -477,7 +499,9 @@ class PrivateLiftService:
         if skip_tasks_on_container:
             self.logger.info(f"[{self}] Skipping sharding on container")
         else:
-            await self._run_sharder_service(pl_instance, combine_output_path)
+            await self._run_sharder_service(
+                private_computation_instance, combine_output_path
+            )
 
     # MPC step 1
     def compute_metrics(
@@ -523,37 +547,48 @@ class PrivateLiftService:
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
         #   for partner, PL-Coordinator should have updated it before calling this action.
-        pl_instance = self.get_instance(instance_id)
+        private_computation_instance = self.get_instance(instance_id)
 
-        if pl_instance.role is PrivateComputationRole.PARTNER and not server_ips:
+        if (
+            private_computation_instance.role is PrivateComputationRole.PARTNER
+            and not server_ips
+        ):
             raise ValueError("Missing server_ips")
 
         # default to be an empty string
         retry_counter_str = ""
 
         # Validate status of the instance
-        if pl_instance.status is PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED:
-            pl_instance.retry_counter = 0
-        elif pl_instance.status is PrivateComputationInstanceStatus.COMPUTATION_FAILED:
-            pl_instance.retry_counter += 1
-            retry_counter_str = str(pl_instance.retry_counter)
-        elif pl_instance.status in STAGE_STARTED_STATUSES:
+        if (
+            private_computation_instance.status
+            is PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED
+        ):
+            private_computation_instance.retry_counter = 0
+        elif (
+            private_computation_instance.status
+            is PrivateComputationInstanceStatus.COMPUTATION_FAILED
+        ):
+            private_computation_instance.retry_counter += 1
+            retry_counter_str = str(private_computation_instance.retry_counter)
+        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
             # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
             # the instance is no longer in a running state before starting a new operation
             raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {pl_instance.status}."
+                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
             )
         elif not dry_run:
             raise ValueError(
-                f"Instance {instance_id} has status {pl_instance.status}. Not ready for computing metrics."
+                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for computing metrics."
             )
 
         # Prepare arguments for lift game
         # TODO T101225909: remove the option to pass in concurrency at the compute stage
         #   instead, always pass in at create_instance
-        pl_instance.concurrency = concurrency or pl_instance.concurrency
+        private_computation_instance.concurrency = (
+            concurrency or private_computation_instance.concurrency
+        )
         game_args = self._get_compute_metrics_game_args(
-            pl_instance,
+            private_computation_instance,
             attribution_rule,
             aggregation_type,
             is_validating,
@@ -573,7 +608,7 @@ class PrivateLiftService:
         logging.info("Starting to run MPC instance.")
 
         stage_data = PrivateComputationServiceData.get(
-            pl_instance.game_type
+            private_computation_instance.game_type
         ).compute_stage
         binary_name = stage_data.binary_name
         game_name = checked_cast(str, stage_data.game_name)
@@ -582,7 +617,9 @@ class PrivateLiftService:
         mpc_instance = await self._create_and_start_mpc_instance(
             instance_id=instance_id + "_compute_metrics" + retry_counter_str,
             game_name=game_name,
-            mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
+            mpc_party=self._map_private_computation_role_to_mpc_party(
+                private_computation_instance.role
+            ),
             num_containers=len(game_args),
             binary_version=binary_config.binary_version,
             server_ips=server_ips,
@@ -593,14 +630,16 @@ class PrivateLiftService:
         logging.info("MPC instance started running.")
 
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        pl_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
-        pl_instance = self._update_status(
-            pl_instance=pl_instance,
+        private_computation_instance.instances.append(
+            PCSMPCInstance.from_mpc_instance(mpc_instance)
+        )
+        private_computation_instance = self._update_status(
+            private_computation_instance=private_computation_instance,
             new_status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
         )
 
-        self.instance_repository.update(pl_instance)
-        return pl_instance
+        self.instance_repository.update(private_computation_instance)
+        return private_computation_instance
 
     # MPC step 2
     def aggregate_shards(
@@ -637,39 +676,49 @@ class PrivateLiftService:
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
         #   for partner, PL-Coordinator should have updated it before calling this action.
-        pl_instance = self.get_instance(instance_id)
+        private_computation_instance = self.get_instance(instance_id)
 
-        if pl_instance.role is PrivateComputationRole.PARTNER and not server_ips:
+        if (
+            private_computation_instance.role is PrivateComputationRole.PARTNER
+            and not server_ips
+        ):
             raise ValueError("Missing server_ips for Partner")
 
         # default to be an empty string
         retry_counter_str = ""
 
         # Validate status of the instance
-        if pl_instance.status is PrivateComputationInstanceStatus.COMPUTATION_COMPLETED:
-            pl_instance.retry_counter = 0
-        elif pl_instance.status is PrivateComputationInstanceStatus.AGGREGATION_FAILED:
-            pl_instance.retry_counter += 1
-            retry_counter_str = str(pl_instance.retry_counter)
-        elif pl_instance.status in STAGE_STARTED_STATUSES:
+        if (
+            private_computation_instance.status
+            is PrivateComputationInstanceStatus.COMPUTATION_COMPLETED
+        ):
+            private_computation_instance.retry_counter = 0
+        elif (
+            private_computation_instance.status
+            is PrivateComputationInstanceStatus.AGGREGATION_FAILED
+        ):
+            private_computation_instance.retry_counter += 1
+            retry_counter_str = str(private_computation_instance.retry_counter)
+        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
             # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
             # the instance is no longer in a running state before starting a new operation
             raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {pl_instance.status}."
+                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
             )
         elif not dry_run:
             raise ValueError(
-                f"Instance {instance_id} has status {pl_instance.status}. Not ready for aggregating metrics."
+                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for aggregating metrics."
             )
 
         num_shards = (
-            pl_instance.num_mpc_containers * pl_instance.num_files_per_mpc_container
+            private_computation_instance.num_mpc_containers
+            * private_computation_instance.num_files_per_mpc_container
         )
 
         # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type
         metrics_format_type = (
             "lift"
-            if pl_instance.game_type is PrivateComputationGameType.LIFT
+            if private_computation_instance.game_type is PrivateComputationGameType.LIFT
             else "ad_object"
         )
 
@@ -683,7 +732,7 @@ class PrivateLiftService:
             # each of the containers, processing real or synthetic data, processes the same number of shards due to our resharding mechanism
             # num_shards representing the total number of shards which is equal to num_real_data_shards + num_synthetic_data_shards
             # hence, when num_containers_real_data and num_shards are given, num_synthetic_data_shards = num_shards / (num_containers_real_data + 1)
-            num_containers_real_data = pl_instance.num_pid_containers
+            num_containers_real_data = private_computation_instance.num_pid_containers
             if num_containers_real_data is None:
                 raise ValueError("num_containers_real_data is None")
             num_synthetic_data_shards = num_shards // (num_containers_real_data + 1)
@@ -693,30 +742,36 @@ class PrivateLiftService:
             # Create and start MPC instance for real data shards and synthetic data shards
             game_args = [
                 {
-                    "input_base_path": pl_instance.compute_stage_output_base_path,
+                    "input_base_path": private_computation_instance.compute_stage_output_base_path,
                     "num_shards": num_real_data_shards,
                     "metrics_format_type": metrics_format_type,
-                    "output_path": pl_instance.shard_aggregate_stage_output_path,
+                    "output_path": private_computation_instance.shard_aggregate_stage_output_path,
                     "first_shard_index": 0,
-                    "threshold": pl_instance.k_anonymity_threshold,
-                    "run_name": pl_instance.instance_id if log_cost_to_s3 else "",
+                    "threshold": private_computation_instance.k_anonymity_threshold,
+                    "run_name": private_computation_instance.instance_id
+                    if log_cost_to_s3
+                    else "",
                 },
                 {
-                    "input_base_path": pl_instance.compute_stage_output_base_path,
+                    "input_base_path": private_computation_instance.compute_stage_output_base_path,
                     "num_shards": num_synthetic_data_shards,
                     "metrics_format_type": metrics_format_type,
-                    "output_path": pl_instance.shard_aggregate_stage_output_path
+                    "output_path": private_computation_instance.shard_aggregate_stage_output_path
                     + "_synthetic_data_shards",
                     "first_shard_index": synthetic_data_shard_start_index,
-                    "threshold": pl_instance.k_anonymity_threshold,
-                    "run_name": pl_instance.instance_id if log_cost_to_s3 else "",
+                    "threshold": private_computation_instance.k_anonymity_threshold,
+                    "run_name": private_computation_instance.instance_id
+                    if log_cost_to_s3
+                    else "",
                 },
             ]
 
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
                 game_name=GameNames.SHARD_AGGREGATOR.value,
-                mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
+                mpc_party=self._map_private_computation_role_to_mpc_party(
+                    private_computation_instance.role
+                ),
                 num_containers=2,
                 binary_version=binary_config.binary_version,
                 server_ips=server_ips,
@@ -727,18 +782,22 @@ class PrivateLiftService:
             # Create and start MPC instance
             game_args = [
                 {
-                    "input_base_path": pl_instance.compute_stage_output_base_path,
+                    "input_base_path": private_computation_instance.compute_stage_output_base_path,
                     "metrics_format_type": metrics_format_type,
                     "num_shards": num_shards,
-                    "output_path": pl_instance.shard_aggregate_stage_output_path,
-                    "threshold": pl_instance.k_anonymity_threshold,
-                    "run_name": pl_instance.instance_id if log_cost_to_s3 else "",
+                    "output_path": private_computation_instance.shard_aggregate_stage_output_path,
+                    "threshold": private_computation_instance.k_anonymity_threshold,
+                    "run_name": private_computation_instance.instance_id
+                    if log_cost_to_s3
+                    else "",
                 },
             ]
             mpc_instance = await self._create_and_start_mpc_instance(
                 instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
                 game_name=GameNames.SHARD_AGGREGATOR.value,
-                mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
+                mpc_party=self._map_private_computation_role_to_mpc_party(
+                    private_computation_instance.role
+                ),
                 num_containers=1,
                 binary_version=binary_config.binary_version,
                 server_ips=server_ips,
@@ -746,13 +805,15 @@ class PrivateLiftService:
                 container_timeout=container_timeout,
             )
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        pl_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
+        private_computation_instance.instances.append(
+            PCSMPCInstance.from_mpc_instance(mpc_instance)
+        )
         self._update_status(
-            pl_instance=pl_instance,
+            private_computation_instance=private_computation_instance,
             new_status=PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         )
-        self.instance_repository.update(pl_instance)
-        return pl_instance
+        self.instance_repository.update(private_computation_instance)
+        return private_computation_instance
 
     # TODO T88759390: make an async version of this function
     # Optioinal stage, validate the correctness of aggregated results for injected synthetic data
@@ -762,12 +823,13 @@ class PrivateLiftService:
         expected_result_path: str,
         aggregated_result_path: Optional[str] = None,
     ) -> None:
-        pl_instance = self.get_instance(instance_id)
+        private_computation_instance = self.get_instance(instance_id)
         storage_service = self.mpc_svc.storage_svc
         expected_results_dict = json.loads(storage_service.read(expected_result_path))
         aggregated_results_dict = json.loads(
             storage_service.read(
-                aggregated_result_path or pl_instance.shard_aggregate_stage_output_path
+                aggregated_result_path
+                or private_computation_instance.shard_aggregate_stage_output_path
             )
         )
         if expected_results_dict == aggregated_results_dict:
@@ -807,25 +869,28 @@ class PrivateLiftService:
         # It's expected that the pl instance is in an updated status because:
         #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
         #   for partner, PL-Coordinator should have updated it before calling this action.
-        pl_instance = self.get_instance(instance_id)
+        private_computation_instance = self.get_instance(instance_id)
         post_processing_handlers_statuses = None
 
         # default to be an empty string
         retry_counter_str = ""
 
         # Validate status of the instance
-        if pl_instance.status is PrivateComputationInstanceStatus.AGGREGATION_COMPLETED:
-            pl_instance.retry_counter = 0
+        if (
+            private_computation_instance.status
+            is PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
+        ):
+            private_computation_instance.retry_counter = 0
         elif (
-            pl_instance.status
+            private_computation_instance.status
             is PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED
         ):
-            pl_instance.retry_counter += 1
-            retry_counter_str = str(pl_instance.retry_counter)
+            private_computation_instance.retry_counter += 1
+            retry_counter_str = str(private_computation_instance.retry_counter)
             # copies the last instance's handler status so that we can
             # avoid reattempting already successfully completed handlers
-            if pl_instance.instances:
-                last_instance = pl_instance.instances[-1]
+            if private_computation_instance.instances:
+                last_instance = private_computation_instance.instances[-1]
                 if not isinstance(last_instance, PostProcessingInstance):
                     raise ValueError(
                         f"Expected PostProcessingInstance, found {type(last_instance)}"
@@ -838,15 +903,15 @@ class PrivateLiftService:
                     post_processing_handlers_statuses = (
                         last_instance.handler_statuses.copy()
                     )
-        elif pl_instance.status in STAGE_STARTED_STATUSES:
+        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
             # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
             # the instance is no longer in a running state before starting a new operation
             raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {pl_instance.status}."
+                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
             )
         elif not dry_run:
             raise ValueError(
-                f"Instance {instance_id} has status {pl_instance.status}. Not ready for running post processing handlers."
+                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for running post processing handlers."
             )
 
         post_processing_instance = PostProcessingInstance.create_instance(
@@ -856,21 +921,24 @@ class PrivateLiftService:
             status=PostProcessingInstanceStatus.STARTED,
         )
 
-        pl_instance.instances.append(post_processing_instance)
+        private_computation_instance.instances.append(post_processing_instance)
 
         self._update_status(
-            pl_instance=pl_instance,
+            private_computation_instance=private_computation_instance,
             new_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
         )
 
         # if any handlers fail, then the post_processing_instance status will be
-        # set to failed, as will the pl_instance status
-        # self.instance_repository.update(pl_instance) is called each time within
+        # set to failed, as will the private_computation_instance status
+        # self.instance_repository.update(private_computation_instance) is called each time within
         # the self._run_post_processing_handler method
         await asyncio.gather(
             *[
                 self._run_post_processing_handler(
-                    pl_instance, post_processing_instance, name, handler
+                    private_computation_instance,
+                    post_processing_instance,
+                    name,
+                    handler,
                 )
                 for name, handler in post_processing_handlers.items()
                 if post_processing_instance.handler_statuses[name]
@@ -880,61 +948,63 @@ class PrivateLiftService:
 
         # if any of the handlers failed, then there is no need to update the status or the instance repository.
         # if they all suceeded, post_processing_instance status will be something other than FAILED and
-        # post_processing_instance and pl_instance need status updates.
+        # post_processing_instance and private_computation_instance need status updates.
         if post_processing_instance.status != PostProcessingInstanceStatus.FAILED:
             post_processing_instance.status = PostProcessingInstanceStatus.COMPLETED
             self._update_status(
-                pl_instance=pl_instance,
+                private_computation_instance=private_computation_instance,
                 new_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
             )
             await asyncio.get_running_loop().run_in_executor(
-                None, self.instance_repository.update, pl_instance
+                None, self.instance_repository.update, private_computation_instance
             )
 
-        return pl_instance
+        return private_computation_instance
 
     def cancel_current_stage(
         self,
         instance_id: str,
     ) -> PrivateComputationInstance:
-        pl_instance = self.get_instance(instance_id)
+        private_computation_instance = self.get_instance(instance_id)
 
         # pre-checks to make sure it's in a cancel-able state
-        if pl_instance.status not in STAGE_STARTED_STATUSES:
+        if private_computation_instance.status not in STAGE_STARTED_STATUSES:
             raise ValueError(
-                f"Instance {instance_id} has status {pl_instance.status}. Nothing to cancel."
+                f"Instance {instance_id} has status {private_computation_instance.status}. Nothing to cancel."
             )
 
-        if not pl_instance.instances:
+        if not private_computation_instance.instances:
             raise ValueError(
                 f"Instance {instance_id} is in invalid state because no stages are registered under."
             )
 
         # cancel the running stage
-        last_instance = pl_instance.instances[-1]
+        last_instance = private_computation_instance.instances[-1]
         if isinstance(last_instance, MPCInstance):
             self.mpc_svc.stop_instance(instance_id=last_instance.instance_id)
         else:
             self.logger.warning(
                 f"Canceling the current stage of instance {instance_id} is not supported yet."
             )
-            return pl_instance
+            return private_computation_instance
 
         # post-checks to make sure the pl instance has the updated status
-        pl_instance = self._update_instance(pl_instance=pl_instance)
-        if pl_instance.status not in STAGE_FAILED_STATUSES:
+        private_computation_instance = self._update_instance(
+            private_computation_instance=private_computation_instance
+        )
+        if private_computation_instance.status not in STAGE_FAILED_STATUSES:
             raise ValueError(
-                f"Failed to cancel the current stage unexptectedly. Instance {instance_id} has status {pl_instance.status}"
+                f"Failed to cancel the current stage unexptectedly. Instance {instance_id} has status {private_computation_instance.status}"
             )
 
         self.logger.info(
             f"The current stage of instance {instance_id} has been canceled."
         )
-        return pl_instance
+        return private_computation_instance
 
     async def _run_post_processing_handler(
         self,
-        pl_instance: PrivateComputationInstance,
+        private_computation_instance: PrivateComputationInstance,
         post_processing_instance: PostProcessingInstance,
         handler_name: str,
         handler: PostProcessingHandler,
@@ -944,7 +1014,7 @@ class PrivateLiftService:
             handler_name
         ] = PostProcessingHandlerStatus.STARTED
         try:
-            await handler.run(self, pl_instance)
+            await handler.run(self, private_computation_instance)
             self.logger.info(f"Completed post processing handler: {handler_name=}")
             post_processing_instance.handler_statuses[
                 handler_name
@@ -957,12 +1027,12 @@ class PrivateLiftService:
             ] = PostProcessingHandlerStatus.FAILED
             post_processing_instance.status = PostProcessingInstanceStatus.FAILED
             self._update_status(
-                pl_instance=pl_instance,
+                private_computation_instance=private_computation_instance,
                 new_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
             )
         finally:
             await asyncio.get_running_loop().run_in_executor(
-                None, self.instance_repository.update, pl_instance
+                None, self.instance_repository.update, private_computation_instance
             )
 
     async def _create_and_start_mpc_instance(
@@ -990,17 +1060,21 @@ class PrivateLiftService:
             version=binary_version,
         )
 
-    def _map_pl_role_to_mpc_party(self, pl_role: PrivateComputationRole) -> MPCParty:
+    def _map_private_computation_role_to_mpc_party(
+        self, private_computation_role: PrivateComputationRole
+    ) -> MPCParty:
         return {
             PrivateComputationRole.PUBLISHER: MPCParty.SERVER,
             PrivateComputationRole.PARTNER: MPCParty.CLIENT,
-        }[pl_role]
+        }[private_computation_role]
 
-    def _map_pl_role_to_pid_role(self, pl_role: PrivateComputationRole) -> PIDRole:
+    def _map_private_computation_role_to_pid_role(
+        self, private_computation_role: PrivateComputationRole
+    ) -> PIDRole:
         return {
             PrivateComputationRole.PUBLISHER: PIDRole.PUBLISHER,
             PrivateComputationRole.PARTNER: PIDRole.PARTNER,
-        }[pl_role]
+        }[private_computation_role]
 
     """
     Get Private Lift instance status from the given instance that represents a stage.
@@ -1065,17 +1139,19 @@ class PrivateLiftService:
 
     def _update_status(
         self,
-        pl_instance: PrivateComputationInstance,
+        private_computation_instance: PrivateComputationInstance,
         new_status: PrivateComputationInstanceStatus,
     ) -> PrivateComputationInstance:
-        old_status = pl_instance.status
-        pl_instance.status = new_status
+        old_status = private_computation_instance.status
+        private_computation_instance.status = new_status
         if old_status != new_status:
-            pl_instance.status_update_ts = PrivateLiftService.get_ts_now()
-            self.logger.info(
-                f"Updating status of {pl_instance.instance_id} from {old_status} to {pl_instance.status} at time {pl_instance.status_update_ts}"
+            private_computation_instance.status_update_ts = (
+                PrivateComputationService.get_ts_now()
             )
-        return pl_instance
+            self.logger.info(
+                f"Updating status of {private_computation_instance.instance_id} from {old_status} to {private_computation_instance.status} at time {private_computation_instance.status_update_ts}"
+            )
+        return private_computation_instance
 
     def _get_param(
         self, param_name: str, instance_param: Optional[T], override_param: Optional[T]
@@ -1096,7 +1172,7 @@ class PrivateLiftService:
 
     def _get_compute_metrics_game_args(
         self,
-        pl_instance: PrivateComputationInstance,
+        private_computation_instance: PrivateComputationInstance,
         attribution_rule: Optional[str] = None,
         aggregation_type: Optional[str] = None,
         is_validating: Optional[bool] = False,
@@ -1107,55 +1183,66 @@ class PrivateLiftService:
         game_args = []
 
         # If this is to recover from a previous MPC compute failure
-        if self._ready_for_partial_container_retry(pl_instance) and not dry_run:
-            game_args_to_retry = self._gen_game_args_to_retry(pl_instance)
+        if (
+            self._ready_for_partial_container_retry(private_computation_instance)
+            and not dry_run
+        ):
+            game_args_to_retry = self._gen_game_args_to_retry(
+                private_computation_instance
+            )
             if game_args_to_retry:
                 game_args = game_args_to_retry
 
         # If this is a normal run, dry_run, or unable to get the game args to retry from mpc service
         if not game_args:
-            num_containers = pl_instance.num_mpc_containers
+            num_containers = private_computation_instance.num_mpc_containers
             # update num_containers if is_vaildating = true
             if is_validating:
                 num_containers += 1
 
             common_compute_game_args = {
-                "input_base_path": pl_instance.data_processing_output_path,
-                "output_base_path": pl_instance.compute_stage_output_base_path,
-                "num_files": pl_instance.num_files_per_mpc_container,
-                "concurrency": pl_instance.concurrency,
+                "input_base_path": private_computation_instance.data_processing_output_path,
+                "output_base_path": private_computation_instance.compute_stage_output_base_path,
+                "num_files": private_computation_instance.num_files_per_mpc_container,
+                "concurrency": private_computation_instance.concurrency,
             }
 
             # TODO: we eventually will want to get rid of the if-else here, which will be
             #   easy to do once the Lift and Attribution MPC compute games are consolidated
-            if pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
+            if (
+                private_computation_instance.game_type
+                is PrivateComputationGameType.ATTRIBUTION
+            ):
                 # TODO: we will write aggregation_type, attribution_rule and log_cost_to_s3
                 #   to the instance, so later this function interface will get simplified
                 game_args = self._get_attribution_game_args(
-                    pl_instance,
+                    private_computation_instance,
                     common_compute_game_args,
                     checked_cast(str, aggregation_type),
                     checked_cast(str, attribution_rule),
                     log_cost_to_s3,
                 )
 
-            elif pl_instance.game_type is PrivateComputationGameType.LIFT:
+            elif (
+                private_computation_instance.game_type
+                is PrivateComputationGameType.LIFT
+            ):
                 game_args = self._get_lift_game_args(
-                    pl_instance, common_compute_game_args
+                    private_computation_instance, common_compute_game_args
                 )
 
         return game_args
 
     def _gen_game_args_to_retry(
-        self, pl_instance: PrivateComputationInstance
+        self, private_computation_instance: PrivateComputationInstance
     ) -> Optional[List[Dict[str, Any]]]:
         # Get the last mpc instance
-        last_mpc_instance = pl_instance.instances[-1]
+        last_mpc_instance = private_computation_instance.instances[-1]
 
         # Validate the last instance
         if not isinstance(last_mpc_instance, MPCInstance):
             raise ValueError(
-                f"The last instance of PrivateComputationInstance {pl_instance.instance_id} is NOT an MPCInstance"
+                f"The last instance of PrivateComputationInstance {private_computation_instance.instance_id} is NOT an MPCInstance"
             )
 
         containers = last_mpc_instance.containers
@@ -1176,11 +1263,11 @@ class PrivateLiftService:
         return game_args_to_retry
 
     def _ready_for_partial_container_retry(
-        self, pl_instance: PrivateComputationInstance
+        self, private_computation_instance: PrivateComputationInstance
     ) -> bool:
         return (
-            pl_instance.partial_container_retry_enabled
-            and pl_instance.status
+            private_computation_instance.partial_container_retry_enabled
+            and private_computation_instance.status
             is PrivateComputationInstanceStatus.COMPUTATION_FAILED
         )
 
@@ -1282,7 +1369,7 @@ class PrivateLiftService:
 
     def _get_attribution_game_args(
         self,
-        pl_instance: PrivateComputationInstance,
+        private_computation_instance: PrivateComputationInstance,
         common_compute_game_args: Dict[str, Any],
         aggregation_type: str,
         attribution_rule: str,
@@ -1295,28 +1382,34 @@ class PrivateLiftService:
                 **{
                     "aggregators": aggregation_type,
                     "attribution_rules": attribution_rule,
-                    "file_start_index": i * pl_instance.num_files_per_mpc_container,
+                    "file_start_index": i
+                    * private_computation_instance.num_files_per_mpc_container,
                     "use_xor_encryption": True,
-                    "run_name": pl_instance.instance_id if log_cost_to_s3 else "",
-                    "max_num_touchpoints": pl_instance.padding_size,
-                    "max_num_conversions": pl_instance.padding_size,
+                    "run_name": private_computation_instance.instance_id
+                    if log_cost_to_s3
+                    else "",
+                    "max_num_touchpoints": private_computation_instance.padding_size,
+                    "max_num_conversions": private_computation_instance.padding_size,
                 },
             }
-            for i in range(pl_instance.num_mpc_containers)
+            for i in range(private_computation_instance.num_mpc_containers)
         ]
         return game_args
 
     def _get_lift_game_args(
         self,
-        pl_instance: PrivateComputationInstance,
+        private_computation_instance: PrivateComputationInstance,
         common_compute_game_args: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         game_args = []
         game_args = [
             {
                 **common_compute_game_args,
-                **{"file_start_index": i * pl_instance.num_files_per_mpc_container},
+                **{
+                    "file_start_index": i
+                    * private_computation_instance.num_files_per_mpc_container
+                },
             }
-            for i in range(pl_instance.num_mpc_containers)
+            for i in range(private_computation_instance.num_mpc_containers)
         ]
         return game_args
