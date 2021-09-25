@@ -36,13 +36,15 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     UnionedPCInstance,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
+from fbpcs.private_computation.service.errors import (
+    PrivateComputationServiceValidationError,
+)
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     NUM_NEW_SHARDS_PER_FILE,
     DEFAULT_K_ANONYMITY_THRESHOLD,
 )
-from fbpcs.private_lift.service.errors import PLServiceValidationError
 
 # TODO T94666166: libfb won't work in OSS
 from libfb.py.asyncio.mock import AsyncMock
@@ -922,7 +924,7 @@ class TestPrivateComputationService(unittest.TestCase):
             '{"subGroupMetrics":[],"metrics":{"controlClicks":1,"testSpend":0,"controlImpressions":0,"testImpressions":0,"controlMatchCount":0,"testMatchCount":0,"controlNumConvSquared":0,"testNumConvSquared":0,"testValueSquared":0,"controlValue":0,"testValue":0,"testConverters":0,"testConversions":0,"testPopulation":0,"controlClickers":0,"testClickers":0,"controlReach":0,"testReach":0,"controlSpend":0,"testClicks":0,"controlValueSquared":0,"controlConverters":0,"controlConversions":0,"controlPopulation":0}}',
             '{"subGroupMetrics":[],"metrics":{"testSpend":0,"controlClicks":0,"controlImpressions":0,"testImpressions":0,"controlMatchCount":0,"testMatchCount":0,"controlNumConvSquared":0,"testNumConvSquared":0,"testValueSquared":0,"controlValue":0,"testValue":0,"testConverters":0,"testConversions":0,"testPopulation":0,"controlClickers":0,"testClickers":0,"controlReach":0,"testReach":0,"controlSpend":0,"testClicks":0,"controlValueSquared":0,"controlConverters":0,"controlConversions":0,"controlPopulation":0}}',
         ]
-        with self.assertRaises(PLServiceValidationError):
+        with self.assertRaises(PrivateComputationServiceValidationError):
             self.private_computation_service.validate_metrics(
                 instance_id="test_id",
                 aggregated_result_path="aggregated_result_path",

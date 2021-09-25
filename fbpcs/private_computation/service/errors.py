@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-class PLServiceValidationError(ValueError):
+class PrivateComputationServiceValidationError(ValueError):
     """
-    Error raised when pl_service.validate_metrics found the aggregated resutls doesn't match the expected results.
+    Error raised when private_computation_service.validate_metrics found the aggregated results doesn't match the expected results.
     """

@@ -41,6 +41,8 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
     PostProcessingInstanceStatus,
 )
+from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
+from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -53,15 +55,15 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
+from fbpcs.private_computation.service.errors import (
+    PrivateComputationServiceValidationError,
+)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-from fbpcs.private_lift.entity.breakdown_key import BreakdownKey
-from fbpcs.private_lift.entity.pce_config import PCEConfig
-from fbpcs.private_lift.service.errors import PLServiceValidationError
 
 T = TypeVar("T")
 
@@ -837,7 +839,7 @@ class PrivateComputationService:
                 f"Aggregated results for instance {instance_id} on synthetic data is as expected."
             )
         else:
-            raise PLServiceValidationError(
+            raise PrivateComputationServiceValidationError(
                 f"Aggregated results for instance {instance_id} on synthetic data is NOT as expected."
             )
 
