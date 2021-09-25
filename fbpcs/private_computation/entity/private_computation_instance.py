@@ -85,7 +85,7 @@ class PrivateComputationInstance(InstanceBase):
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
 
-    concurrency: int = 1
+    concurrency: int = 1  # used only by MPC compute metrics stage. TODO: renamed it to compute_metrics_concurrency
     k_anonymity_threshold: int = 0
     retry_counter: int = 0
 

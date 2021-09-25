@@ -887,28 +887,6 @@ class TestPrivateLiftService(unittest.TestCase):
             PrivateComputationInstanceStatus.COMPUTATION_FAILED, pl_instance.status
         )
 
-    def test_calculate_file_start_index_and_num_shards(self):
-        self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards(4, 4)),
-            [(0, 1), (1, 1), (2, 1), (3, 1)],
-        )
-        self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards(5, 4)),
-            [(0, 2), (2, 1), (3, 1), (4, 1)],
-        )
-        self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards(6, 4)),
-            [(0, 2), (2, 2), (4, 1), (5, 1)],
-        )
-        self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards(7, 4)),
-            [(0, 2), (2, 2), (4, 2), (6, 1)],
-        )
-        self.assertEqual(
-            list(self.pl_service.calculate_file_start_index_and_num_shards(8, 4)),
-            [(0, 2), (2, 2), (4, 2), (6, 2)],
-        )
-
     def test_gen_game_args_to_retry(self):
         test_input = "test_input_retry"
         mpc_instance = PCSMPCInstance.create_instance(
