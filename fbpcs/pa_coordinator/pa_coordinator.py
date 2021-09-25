@@ -320,11 +320,16 @@ def prepare_compute_input(
     dry_run: Optional[bool] = False,
     log_cost_to_s3: bool = False,
 ) -> None:
-    pa_service = _build_pa_service(
+    private_computation_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
-    pa_service.prepare_data(
+    # Because it's possible that the "get" command never gets called to update the instance since the last step started,
+    # so it could appear that the current status is still XXX_STARTED when it should be XXX_FAILED or XXX_COMPLETED,
+    # so we need to explicitly call update_instance() here to get the current status.
+    private_computation_service.update_instance(instance_id)
+
+    private_computation_service.prepare_data(
         instance_id=instance_id,
         dry_run=dry_run,
         log_cost_to_s3=log_cost_to_s3,
