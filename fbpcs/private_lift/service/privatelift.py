@@ -137,6 +137,7 @@ class PrivateLiftService:
         hmac_key: Optional[str] = None,
         padding_size: int = DEFAULT_PADDING_SIZE,
         k_anonymity_threshold: int = DEFAULT_K_ANONYMITY_THRESHOLD,
+        fail_fast: bool = False,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -162,6 +163,7 @@ class PrivateLiftService:
             padding_size=padding_size,
             concurrency=concurrency,
             k_anonymity_threshold=k_anonymity_threshold,
+            fail_fast=fail_fast,
         )
 
         self.instance_repository.create(instance)
@@ -301,7 +303,6 @@ class PrivateLiftService:
         instance_id: str,
         protocol: PIDProtocol,
         pid_config: Dict[str, Any],
-        fail_fast: bool,
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         server_ips: Optional[List[str]] = None,
@@ -313,7 +314,6 @@ class PrivateLiftService:
                 instance_id,
                 protocol,
                 pid_config,
-                fail_fast,
                 is_validating,
                 synthetic_shard_path,
                 server_ips,
@@ -329,7 +329,6 @@ class PrivateLiftService:
         instance_id: str,
         protocol: PIDProtocol,
         pid_config: Dict[str, Any],
-        fail_fast: bool,
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         server_ips: Optional[List[str]] = None,
@@ -396,7 +395,7 @@ class PrivateLiftService:
         await self.pid_svc.run_instance(
             instance_id=pid_instance_id,
             pid_config=pid_config,
-            fail_fast=fail_fast,
+            fail_fast=pl_instance.fail_fast,
             server_ips=server_ips,
         )
 
