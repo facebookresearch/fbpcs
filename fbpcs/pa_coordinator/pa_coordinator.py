@@ -11,7 +11,7 @@ CLI for running a Private Attribute study
 
 
 Usage:
-    pa-coordinator create_instance <instance_id> --config=<config_file> --input_path=<input_path> --output_dir=<output_dir> --role=<pa_role> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container> [--padding_size=<padding_size> --concurrency=<concurrency> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key>] [options]
+    pa-coordinator create_instance <instance_id> --config=<config_file> --input_path=<input_path> --output_dir=<output_dir> --role=<pa_role> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container> --concurrency=<concurrency> [--padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key>] [options]
     pa-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pa-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
     pa-coordinator compute_attribution <instance_id> --config=<config_file> --game=<game_name> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
@@ -49,10 +49,12 @@ from fbpcs.private_attribution.service.private_attribution import (
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
+    PrivateComputationGameType,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
+from fbpcs.private_lift.service.privatelift import PrivateLiftService
 
 DEFAULT_HMAC_KEY: str = ""
 DEFAULT_PADDING_SIZE: int = 4
@@ -97,6 +99,43 @@ def _build_pa_service(
         onedocker_service,
         onedocker_binary_config_map,
         storage_service,
+    )
+
+
+def _build_private_computation_service(
+    pa_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
+) -> PrivateLiftService:
+    instance_repository_config = pa_config["dependency"][
+        "PrivateComputationInstanceRepository"
+    ]
+    repository_class = reflect.get_class(instance_repository_config["class"])
+    repository_service = repository_class(**instance_repository_config["constructor"])
+    onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
+        pa_config["dependency"]["OneDockerBinaryConfig"]
+    )
+    onedocker_service_config = _build_onedocker_service_cfg(
+        pa_config["dependency"]["OneDockerServiceConfig"]
+    )
+    container_service = _build_container_service(
+        pa_config["dependency"]["ContainerService"]
+    )
+    onedocker_service = _build_onedocker_service(
+        container_service, onedocker_service_config.task_definition
+    )
+    storage_service = _build_storage_service(pa_config["dependency"]["StorageService"])
+    return PrivateLiftService(
+        repository_service,
+        _build_mpc_service(
+            mpc_config, onedocker_service_config, container_service, storage_service
+        ),
+        _build_pid_service(
+            pid_config,
+            onedocker_service,
+            storage_service,
+            onedocker_binary_config_map,
+        ),
+        onedocker_service,
+        onedocker_binary_config_map,
     )
 
 
@@ -225,15 +264,16 @@ def create_instance(
     num_files_per_mpc_container: int,
     logger: logging.Logger,
     padding_size: int,
-    concurrency: int = DEFAULT_CONCURRENCY,
+    concurrency: int,
     k_anonymity_threshold: int = DEFAULT_K_ANONYMITY_THRESHOLD,
 ) -> None:
-    pa_service = _build_pa_service(
+    private_computation_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
-    instance = pa_service.create_instance(
+    instance = private_computation_service.create_instance(
         instance_id=instance_id,
         role=role,
+        game_type=PrivateComputationGameType.ATTRIBUTION,
         input_path=input_path,
         output_dir=output_dir,
         hmac_key=hmac_key,
@@ -243,7 +283,6 @@ def create_instance(
         padding_size=padding_size,
         concurrency=concurrency,
         k_anonymity_threshold=k_anonymity_threshold,
-        logger=logger,
     )
 
     logger.info(instance)
@@ -449,7 +488,6 @@ def main() -> None:
         # Optional arguments
         hmac_key: Optional[str] = arguments["--hmac_key"]
         padding_size: Optional[int] = arguments["--padding_size"]
-        concurrency: Optional[int] = arguments["--concurrency"]
         k_anonymity_threshold: Optional[int] = arguments["--k_anonymity_threshold"]
 
         create_instance(
@@ -463,7 +501,7 @@ def main() -> None:
             num_mpc_containers=arguments["--num_mpc_containers"],
             num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
             padding_size=padding_size or DEFAULT_PADDING_SIZE,
-            concurrency=concurrency or DEFAULT_CONCURRENCY,
+            concurrency=arguments["--concurrency"],
             k_anonymity_threshold=k_anonymity_threshold
             or DEFAULT_K_ANONYMITY_THRESHOLD,
             logger=logger,
