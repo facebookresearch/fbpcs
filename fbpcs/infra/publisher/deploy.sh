@@ -16,7 +16,8 @@ usage() {
         [ -p, --partner_account_id | Partner's AWS account ID]
         [ -c, --publisher_vpc_cidr | Publisher's VPC CIDR]
         [ -v, --partner_vpc_cidr | Partner's VPC CIDR]
-        [ -b, --bucket | S3 bucket name for storing tfstate]"
+        [ -b, --bucket | S3 bucket name for storing tfstate]
+        [ -s, --bucket_region | The region of the tfstate storage bucket]"
     exit 1
 }
 
@@ -41,6 +42,7 @@ while [ $# -gt 0 ]; do
         -c|--publisher_vpc_cidr) vpc_cidr="$2" ;;
         -v|--partner_vpc_cidr) partner_vpc_cidr="$2" ;;
         -b|--bucket) s3_bucket_for_storage="$2" ;;
+        -s|--bucket_region) s3_bucket_region="$2" ;;
         *) usage ;;
     esac
     shift
@@ -55,7 +57,7 @@ echo "Publisher's AWS acount ID is $aws_account_id"
 echo "Publisher's VPC CIDR is $vpc_cidr"
 echo "Partner's AWS account ID is $partner_aws_account_id"
 echo "Partner's VPC CIDR is $partner_vpc_cidr"
-echo "The S3 bucket for storing the Terraform state file is $s3_bucket_for_storage"
+echo "The S3 bucket for storing the Terraform state file is $s3_bucket_for_storage and it is in region $s3_bucket_region"
 
 undeploy_aws_resources () {
     echo "Start undeploying..."
@@ -67,7 +69,7 @@ undeploy_aws_resources () {
     cd /terraform_deployment/terraform_scripts/common/pce
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
-        -backend-config "region=$region" \
+        -backend-config "region=$s3_bucket_region" \
         -backend-config "key=tfstate/pce$tag_postfix.tfstate"
     terraform destroy \
         -auto-approve \
@@ -84,7 +86,7 @@ deploy_aws_resources () {
     cd /terraform_deployment/terraform_scripts/common/pce
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
-        -backend-config "region=$region" \
+        -backend-config "region=$s3_bucket_region" \
         -backend-config "key=tfstate/pce$tag_postfix.tfstate"
     terraform apply \
         -auto-approve \
