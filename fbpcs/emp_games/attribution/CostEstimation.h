@@ -46,6 +46,9 @@ class CostEstimation {
     else if (app == "computation_experimental") {
       s3Path_ = "attr-logs";
     }
+    else if (app == "xor_ss") {
+      s3Path_ = "ss-logs";
+    }
     else if (app == "data_processing") {
       s3Path_ = "dp-logs";
     }
