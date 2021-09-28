@@ -64,6 +64,7 @@ from fbpcs.private_computation.service.private_computation_service_data import (
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
+from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
 
 T = TypeVar("T")
 
@@ -277,6 +278,8 @@ class PrivateComputationService:
 
         return pc_instance
 
+    # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
+    # Make an async version of run_stage_async() so that it can be called by Thrift
     async def run_stage_async(
         self,
         instance_id: str,
@@ -308,7 +311,7 @@ class PrivateComputationService:
             )
             raise e
         finally:
-            self.instance_repository.update(pc_instance)
+            pc_instance = self._update_instance(pc_instance)
         return pc_instance
 
     # PID stage
@@ -336,8 +339,7 @@ class PrivateComputationService:
             )
         )
 
-    # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
-    # Make an async version of id_match() so that it can be called by Thrift
+    # TODD T101783992: delete this function and call run_stage directly
     async def id_match_async(
         self,
         instance_id: str,
@@ -349,84 +351,19 @@ class PrivateComputationService:
         hmac_key: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
-        # It's expected that the pl instance is in an updated status because:
-        #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
-        #   for partner, PL-Coordinator should have updated it before calling this action.
-        private_computation_instance = self.get_instance(instance_id)
-
-        if (
-            private_computation_instance.role is PrivateComputationRole.PARTNER
-            and not server_ips
-        ):
-            raise ValueError("Missing server_ips for Partner")
-
-        # default to be an empty string
-        retry_counter_str = ""
-
-        # Validate status of the instance
-        if (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.CREATED
-        ):
-            private_computation_instance.retry_counter = 0
-        elif (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.ID_MATCHING_FAILED
-        ):
-            private_computation_instance.retry_counter += 1
-            retry_counter_str = str(private_computation_instance.retry_counter)
-        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
-            # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
-            # the instance is no longer in a running state before starting a new operation
-            raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
-            )
-        elif not dry_run:
-            raise ValueError(
-                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for id matching."
-            )
-
-        # Create a new pid instance
-        pid_instance_id = instance_id + "_id_match" + retry_counter_str
-        # TODO T101225909: remove the option here to pass in a hmac key at the id match stage
-        #   instead, always pass in at create_instance
-        private_computation_instance.hmac_key = (
-            hmac_key or private_computation_instance.hmac_key
-        )
-        pid_instance = self.pid_svc.create_instance(
-            instance_id=pid_instance_id,
-            protocol=PIDProtocol.UNION_PID,
-            pid_role=self._map_private_computation_role_to_pid_role(
-                private_computation_instance.role
+        return await self.run_stage_async(
+            instance_id,
+            IdMatchStageService(
+                self.pid_svc,
+                pid_config,
+                protocol,
+                is_validating or False,
+                synthetic_shard_path,
+                hmac_key,
             ),
-            num_shards=private_computation_instance.num_pid_containers,
-            input_path=private_computation_instance.input_path,
-            output_path=private_computation_instance.pid_stage_output_base_path,
-            is_validating=is_validating,
-            synthetic_shard_path=synthetic_shard_path,
-            hmac_key=private_computation_instance.hmac_key,
+            server_ips,
+            dry_run or False,
         )
-
-        # Push PID instance to PrivateComputationInstance.instances and update PL Instance status
-        pid_instance.status = PIDInstanceStatus.STARTED
-        private_computation_instance.instances.append(pid_instance)
-
-        private_computation_instance = self._update_status(
-            private_computation_instance=private_computation_instance,
-            new_status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-        )
-        self.instance_repository.update(private_computation_instance)
-
-        # Run pid
-        # With the current design, it won't return until everything is done
-        await self.pid_svc.run_instance(
-            instance_id=pid_instance_id,
-            pid_config=pid_config,
-            fail_fast=private_computation_instance.fail_fast,
-            server_ips=server_ips,
-        )
-
-        return self.get_instance(instance_id)
 
     def prepare_data(
         self,
@@ -1068,14 +1005,6 @@ class PrivateComputationService:
         return {
             PrivateComputationRole.PUBLISHER: MPCParty.SERVER,
             PrivateComputationRole.PARTNER: MPCParty.CLIENT,
-        }[private_computation_role]
-
-    def _map_private_computation_role_to_pid_role(
-        self, private_computation_role: PrivateComputationRole
-    ) -> PIDRole:
-        return {
-            PrivateComputationRole.PUBLISHER: PIDRole.PUBLISHER,
-            PrivateComputationRole.PARTNER: PIDRole.PARTNER,
         }[private_computation_role]
 
     """
