@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "fbpcs/data_processing/common/BufferedReader.h"
+#include "BufferedReader.h"
 
 #include "fbpcf/io/LocalFileManager.h"
 
