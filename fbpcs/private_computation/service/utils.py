@@ -68,6 +68,23 @@ async def create_and_start_mpc_instance(
     game_args: Optional[List[Dict[str, Any]]] = None,
     container_timeout: Optional[int] = None,
 ) -> MPCInstance:
+    """Creates an MPC instance and runs MPC service with it
+
+    Args:
+        mpc_svc: creates and runs MPC instances
+        instance_id: unique id used to identify MPC instances
+        game_name: the name of the MPC game to run, e.g. lift
+        mpc_party: The role played by the MPC instance, e.g. SERVER or CLIENT
+        num_containers: number of cloud containers to spawn and run mpc with
+        binary_version: Onedocker version tag, e.g. latest
+        server_ips: ip addresses of the publisher's containers.
+        game_args: arguments that are passed to game binaries by onedocker
+        container_timeout: optional duration in seconds before cloud containers timeout
+
+    Returns:
+        return: an mpc instance started by mpc service
+    """
+
     mpc_svc.create_instance(
         instance_id=instance_id,
         game_name=game_name,
@@ -87,8 +104,16 @@ async def create_and_start_mpc_instance(
 def map_private_computation_role_to_mpc_party(
     private_computation_role: PrivateComputationRole,
 ) -> MPCParty:
-    """
-    TODO
+    """Convert PrivateComputationRole to MPCParty
+
+    Args:
+        pc_role: The role played in the private computation game, e.g. publisher or partner
+
+    Returns:
+        The MPCParty that corresponds to the given PrivateComputationRole, e.g. server or client
+
+    Exceptions:
+        ValueError: raised when there is no MPCParty associated with private_computation_role
     """
     if private_computation_role is PrivateComputationRole.PUBLISHER:
         return MPCParty.SERVER
@@ -101,6 +126,18 @@ def map_private_computation_role_to_mpc_party(
 def ready_for_partial_container_retry(
     private_computation_instance: PrivateComputationInstance,
 ) -> bool:
+    """Determines if private computation instance can attempt a partial container retry
+
+    During the computation stage, if some containers fail, it is possible to only retry the
+    containers that fail instead of starting from the beginning. This function determines if
+    the proper conditions and settings are met.
+
+    Args:
+        pc_instance: the private computation instance to attempt partial container retry with
+
+    Returns:
+        True if the instance can perform a partial container retry, False otherwise.
+    """
     return (
         private_computation_instance.partial_container_retry_enabled
         and private_computation_instance.status
@@ -111,6 +148,21 @@ def ready_for_partial_container_retry(
 def gen_mpc_game_args_to_retry(
     private_computation_instance: PrivateComputationInstance,
 ) -> Optional[List[Dict[str, Any]]]:
+    """Gets the game args associated with MPC containers that did not complete.
+
+    During the computation stage, if some containers fail, it is possible to only retry the
+    containers that fail instead of starting from the beginning. This function gets the game args
+    for the containers that did not complete.
+
+    Args:
+        pc_instance: the private computation instance to attempt partial container retry with
+
+    Returns:
+        MPC game args for containers that did not complete
+
+    Exceptions:
+        ValueError: raised when the last instance stored by private_computation_instance is NOT an MPCInstance
+    """
     # Get the last mpc instance
     last_mpc_instance = private_computation_instance.instances[-1]
 
