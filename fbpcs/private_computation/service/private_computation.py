@@ -13,8 +13,7 @@ import math
 from datetime import datetime, timezone
 from typing import DefaultDict, Dict, List, Optional, Any, TypeVar
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
@@ -30,7 +29,7 @@ from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
-from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.post_processing_handler.post_processing_handler import (
@@ -55,6 +54,9 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
+from fbpcs.private_computation.service.compute_metrics_stage_service import (
+    ComputeMetricsStageService,
+)
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
@@ -65,44 +67,18 @@ from fbpcs.private_computation.service.private_computation_service_data import (
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-
-T = TypeVar("T")
-
-"""
-43200 s = 12 hrs
-
-We want to be conservative on this timeout just in case:
-1) partner side is not able to connect in time. This is possible because it's a manual process
-to run partner containers and humans can be slow;
-2) during development, we add logic or complexity to the binaries running inside the containers
-so that they take more than a few hours to run.
-"""
-DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 43200
-
-MAX_ROWS_PER_PID_CONTAINER = 10_000_000
-TARGET_ROWS_PER_MPC_CONTAINER = 250_000
-NUM_NEW_SHARDS_PER_FILE: int = round(
-    MAX_ROWS_PER_PID_CONTAINER / TARGET_ROWS_PER_MPC_CONTAINER
+from fbpcs.private_computation.service.utils import (
+    create_and_start_mpc_instance,
+    map_private_computation_role_to_mpc_party,
+    ready_for_partial_container_retry,
+    NUM_NEW_SHARDS_PER_FILE,
+    STAGE_STARTED_STATUSES,
+    STAGE_FAILED_STATUSES,
+    DEFAULT_PADDING_SIZE,
+    DEFAULT_K_ANONYMITY_THRESHOLD,
 )
 
-# List of stages with 'STARTED' status.
-STAGE_STARTED_STATUSES: List[PrivateComputationInstanceStatus] = [
-    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-    PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-    PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-    PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
-]
-
-# List of stages with 'FAILED' status.
-STAGE_FAILED_STATUSES: List[PrivateComputationInstanceStatus] = [
-    PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-    PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-    PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-    PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
-]
-
-DEFAULT_PADDING_SIZE = 4
-DEFAULT_K_ANONYMITY_THRESHOLD = 100
+T = TypeVar("T")
 
 
 class PrivateComputationService:
@@ -410,7 +386,7 @@ class PrivateComputationService:
         #   then we skip the actual tasks running on containers. It's still necessary
         #   to run this function just because the caller needs the returned all_output_paths
         skip_tasks_on_container = (
-            self._ready_for_partial_container_retry(private_computation_instance)
+            ready_for_partial_container_retry(private_computation_instance)
             and not dry_run
         )
 
@@ -483,102 +459,22 @@ class PrivateComputationService:
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
-        # It's expected that the pl instance is in an updated status because:
-        #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
-        #   for partner, PL-Coordinator should have updated it before calling this action.
-        private_computation_instance = self.get_instance(instance_id)
-
-        if (
-            private_computation_instance.role is PrivateComputationRole.PARTNER
-            and not server_ips
-        ):
-            raise ValueError("Missing server_ips")
-
-        # default to be an empty string
-        retry_counter_str = ""
-
-        # Validate status of the instance
-        if (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED
-        ):
-            private_computation_instance.retry_counter = 0
-        elif (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.COMPUTATION_FAILED
-        ):
-            private_computation_instance.retry_counter += 1
-            retry_counter_str = str(private_computation_instance.retry_counter)
-        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
-            # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
-            # the instance is no longer in a running state before starting a new operation
-            raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
-            )
-        elif not dry_run:
-            raise ValueError(
-                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for computing metrics."
-            )
-
-        # Prepare arguments for lift game
-        # TODO T101225909: remove the option to pass in concurrency at the compute stage
-        #   instead, always pass in at create_instance
-        private_computation_instance.concurrency = (
-            concurrency or private_computation_instance.concurrency
-        )
-        game_args = self._get_compute_metrics_game_args(
-            private_computation_instance,
-            attribution_rule,
-            aggregation_type,
-            is_validating,
-            dry_run,
-            log_cost_to_s3,
-            container_timeout,
-        )
-
-        # We do this check here because depends on how game_args is generated, len(game_args) could be different,
-        #   but we will always expect server_ips == len(game_args)
-        if server_ips and len(server_ips) != len(game_args):
-            raise ValueError(
-                f"Unable to rerun MPC compute because there is a mismatch between the number of server ips given ({len(server_ips)}) and the number of containers ({len(game_args)}) to be spawned."
-            )
-
-        # Create and start MPC instance to run MPC compute
-        logging.info("Starting to run MPC instance.")
-
-        stage_data = PrivateComputationServiceData.get(
-            private_computation_instance.game_type
-        ).compute_stage
-        binary_name = stage_data.binary_name
-        game_name = checked_cast(str, stage_data.game_name)
-
-        binary_config = self.onedocker_binary_config_map[binary_name]
-        mpc_instance = await self._create_and_start_mpc_instance(
-            instance_id=instance_id + "_compute_metrics" + retry_counter_str,
-            game_name=game_name,
-            mpc_party=self._map_private_computation_role_to_mpc_party(
-                private_computation_instance.role
+        return await self.run_stage_async(
+            instance_id,
+            ComputeMetricsStageService(
+                self.onedocker_binary_config_map,
+                self.mpc_svc,
+                concurrency,
+                attribution_rule,
+                aggregation_type,
+                is_validating or False,
+                log_cost_to_s3,
+                container_timeout,
+                dry_run or False,
             ),
-            num_containers=len(game_args),
-            binary_version=binary_config.binary_version,
-            server_ips=server_ips,
-            game_args=game_args,
-            container_timeout=container_timeout,
+            server_ips,
+            dry_run or False,
         )
-
-        logging.info("MPC instance started running.")
-
-        # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        private_computation_instance.instances.append(
-            PCSMPCInstance.from_mpc_instance(mpc_instance)
-        )
-        private_computation_instance = self._update_status(
-            private_computation_instance=private_computation_instance,
-            new_status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-        )
-
-        self.instance_repository.update(private_computation_instance)
-        return private_computation_instance
 
     # MPC step 2
     def aggregate_shards(
@@ -705,10 +601,11 @@ class PrivateComputationService:
                 },
             ]
 
-            mpc_instance = await self._create_and_start_mpc_instance(
+            mpc_instance = await create_and_start_mpc_instance(
+                mpc_svc=self.mpc_svc,
                 instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
                 game_name=GameNames.SHARD_AGGREGATOR.value,
-                mpc_party=self._map_private_computation_role_to_mpc_party(
+                mpc_party=map_private_computation_role_to_mpc_party(
                     private_computation_instance.role
                 ),
                 num_containers=2,
@@ -731,10 +628,11 @@ class PrivateComputationService:
                     else "",
                 },
             ]
-            mpc_instance = await self._create_and_start_mpc_instance(
+            mpc_instance = await create_and_start_mpc_instance(
+                mpc_svc=self.mpc_svc,
                 instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
                 game_name=GameNames.SHARD_AGGREGATOR.value,
-                mpc_party=self._map_private_computation_role_to_mpc_party(
+                mpc_party=map_private_computation_role_to_mpc_party(
                     private_computation_instance.role
                 ),
                 num_containers=1,
@@ -974,39 +872,6 @@ class PrivateComputationService:
                 None, self.instance_repository.update, private_computation_instance
             )
 
-    async def _create_and_start_mpc_instance(
-        self,
-        instance_id: str,
-        game_name: str,
-        mpc_party: MPCParty,
-        num_containers: int,
-        binary_version: str,
-        server_ips: Optional[List[str]] = None,
-        game_args: Optional[List[Dict[str, Any]]] = None,
-        container_timeout: Optional[int] = None,
-    ) -> MPCInstance:
-        self.mpc_svc.create_instance(
-            instance_id=instance_id,
-            game_name=game_name,
-            mpc_party=mpc_party,
-            num_workers=num_containers,
-            game_args=game_args,
-        )
-        return await self.mpc_svc.start_instance_async(
-            instance_id=instance_id,
-            server_ips=server_ips,
-            timeout=container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
-            version=binary_version,
-        )
-
-    def _map_private_computation_role_to_mpc_party(
-        self, private_computation_role: PrivateComputationRole
-    ) -> MPCParty:
-        return {
-            PrivateComputationRole.PUBLISHER: MPCParty.SERVER,
-            PrivateComputationRole.PARTNER: MPCParty.CLIENT,
-        }[private_computation_role]
-
     """
     Get Private Lift instance status from the given instance that represents a stage.
     Return None when no status returned from the mapper, indicating that we do not want
@@ -1100,107 +965,6 @@ class PrivateComputationService:
             raise ValueError(f"Missing value for parameter {param_name}")
 
         return res
-
-    def _get_compute_metrics_game_args(
-        self,
-        private_computation_instance: PrivateComputationInstance,
-        attribution_rule: Optional[str] = None,
-        aggregation_type: Optional[str] = None,
-        is_validating: Optional[bool] = False,
-        dry_run: Optional[bool] = None,
-        log_cost_to_s3: bool = False,
-        container_timeout: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
-        game_args = []
-
-        # If this is to recover from a previous MPC compute failure
-        if (
-            self._ready_for_partial_container_retry(private_computation_instance)
-            and not dry_run
-        ):
-            game_args_to_retry = self._gen_game_args_to_retry(
-                private_computation_instance
-            )
-            if game_args_to_retry:
-                game_args = game_args_to_retry
-
-        # If this is a normal run, dry_run, or unable to get the game args to retry from mpc service
-        if not game_args:
-            num_containers = private_computation_instance.num_mpc_containers
-            # update num_containers if is_vaildating = true
-            if is_validating:
-                num_containers += 1
-
-            common_compute_game_args = {
-                "input_base_path": private_computation_instance.data_processing_output_path,
-                "output_base_path": private_computation_instance.compute_stage_output_base_path,
-                "num_files": private_computation_instance.num_files_per_mpc_container,
-                "concurrency": private_computation_instance.concurrency,
-            }
-
-            # TODO: we eventually will want to get rid of the if-else here, which will be
-            #   easy to do once the Lift and Attribution MPC compute games are consolidated
-            if (
-                private_computation_instance.game_type
-                is PrivateComputationGameType.ATTRIBUTION
-            ):
-                # TODO: we will write aggregation_type, attribution_rule and log_cost_to_s3
-                #   to the instance, so later this function interface will get simplified
-                game_args = self._get_attribution_game_args(
-                    private_computation_instance,
-                    common_compute_game_args,
-                    checked_cast(str, aggregation_type),
-                    checked_cast(str, attribution_rule),
-                    log_cost_to_s3,
-                )
-
-            elif (
-                private_computation_instance.game_type
-                is PrivateComputationGameType.LIFT
-            ):
-                game_args = self._get_lift_game_args(
-                    private_computation_instance, common_compute_game_args
-                )
-
-        return game_args
-
-    def _gen_game_args_to_retry(
-        self, private_computation_instance: PrivateComputationInstance
-    ) -> Optional[List[Dict[str, Any]]]:
-        # Get the last mpc instance
-        last_mpc_instance = private_computation_instance.instances[-1]
-
-        # Validate the last instance
-        if not isinstance(last_mpc_instance, MPCInstance):
-            raise ValueError(
-                f"The last instance of PrivateComputationInstance {private_computation_instance.instance_id} is NOT an MPCInstance"
-            )
-
-        containers = last_mpc_instance.containers
-        game_args = last_mpc_instance.game_args
-        game_args_to_retry = game_args
-
-        # We have to do the check here because occasionally when containers failed to spawn,
-        #   len(containers) < len(game_args), in which case we should not get game args from
-        #   failed containers; if we do, we will miss game args that belong to those containers
-        #   failed to be spawned
-        if containers and game_args and len(containers) == len(game_args):
-            game_args_to_retry = [
-                game_arg
-                for game_arg, container_instance in zip(game_args, containers)
-                if container_instance.status is not ContainerInstanceStatus.COMPLETED
-            ]
-
-        return game_args_to_retry
-
-    def _ready_for_partial_container_retry(
-        self, private_computation_instance: PrivateComputationInstance
-    ) -> bool:
-        return (
-            private_computation_instance.partial_container_retry_enabled
-            and private_computation_instance.status
-            is PrivateComputationInstanceStatus.COMPUTATION_FAILED
-        )
 
     async def _run_combiner_service(
         self,
@@ -1297,50 +1061,3 @@ class PrivateComputationService:
         # Wait for all coroutines to finish
         await asyncio.gather(*coros)
         self.logger.info("All sharding coroutines finished")
-
-    def _get_attribution_game_args(
-        self,
-        private_computation_instance: PrivateComputationInstance,
-        common_compute_game_args: Dict[str, Any],
-        aggregation_type: str,
-        attribution_rule: str,
-        log_cost_to_s3: bool,
-    ) -> List[Dict[str, Any]]:
-        game_args = []
-        game_args = [
-            {
-                **common_compute_game_args,
-                **{
-                    "aggregators": aggregation_type,
-                    "attribution_rules": attribution_rule,
-                    "file_start_index": i
-                    * private_computation_instance.num_files_per_mpc_container,
-                    "use_xor_encryption": True,
-                    "run_name": private_computation_instance.instance_id
-                    if log_cost_to_s3
-                    else "",
-                    "max_num_touchpoints": private_computation_instance.padding_size,
-                    "max_num_conversions": private_computation_instance.padding_size,
-                },
-            }
-            for i in range(private_computation_instance.num_mpc_containers)
-        ]
-        return game_args
-
-    def _get_lift_game_args(
-        self,
-        private_computation_instance: PrivateComputationInstance,
-        common_compute_game_args: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        game_args = []
-        game_args = [
-            {
-                **common_compute_game_args,
-                **{
-                    "file_start_index": i
-                    * private_computation_instance.num_files_per_mpc_container
-                },
-            }
-            for i in range(private_computation_instance.num_mpc_containers)
-        ]
-        return game_args
