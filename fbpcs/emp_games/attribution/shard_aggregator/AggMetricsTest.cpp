@@ -86,6 +86,7 @@ TEST_F(AggMetricsTest, TestParseLift) {
   XLOG(INFO) << metrics;
 
   ASSERT_EQ(metrics.getAtKey("cohortMetrics")->getAsList().size(), 2);
+  ASSERT_EQ(metrics.getAtKey("publisherBreakdowns")->getAsList().size(), 2);
   ASSERT_EQ(metrics.getAtKey("metrics")->getAsMap().size(), 26);
 
   // check a few values
@@ -109,6 +110,30 @@ TEST_F(AggMetricsTest, TestParseLift) {
       1825398531);
   EXPECT_EQ(
       metrics.getAtKey("cohortMetrics")
+          ->getAtIndex(1)
+          ->getAtKey("reachedValue")
+          ->getIntValue(),
+      2368649346);
+  EXPECT_EQ(
+      metrics.getAtKey("publisherBreakdowns")
+          ->getAtIndex(0)
+          ->getAtKey("controlValueSquared")
+          ->getIntValue(),
+      2988483738);
+  EXPECT_EQ(
+      metrics.getAtKey("publisherBreakdowns")
+          ->getAtIndex(0)
+          ->getAtKey("reachedValue")
+          ->getIntValue(),
+      1957171223);
+  EXPECT_EQ(
+      metrics.getAtKey("publisherBreakdowns")
+          ->getAtIndex(1)
+          ->getAtKey("controlValueSquared")
+          ->getIntValue(),
+      1825398531);
+  EXPECT_EQ(
+      metrics.getAtKey("publisherBreakdowns")
           ->getAtIndex(1)
           ->getAtKey("reachedValue")
           ->getIntValue(),

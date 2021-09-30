@@ -52,6 +52,11 @@ std::function<void(std::shared_ptr<AggMetrics>)> constructLiftThresholdChecker(
     for (const auto& cohort : metrics->getAtKey("cohortMetrics")->getAsList()) {
       applyLiftThresholdCondition(cohort, kAnonymityLevel, hiddenMetric);
     }
+
+    // apply to publisher breakdowns
+    for (const auto& breakdown : metrics->getAtKey("publisherBreakdowns")->getAsList()) {
+      applyLiftThresholdCondition(breakdown, kAnonymityLevel, hiddenMetric);
+    }
   };
 }
 
