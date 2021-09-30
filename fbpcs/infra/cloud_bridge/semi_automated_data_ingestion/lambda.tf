@@ -39,7 +39,7 @@ EOF
 resource "aws_lambda_function" "lambda_trigger" {
   s3_bucket     = var.app_data_input_bucket_id
   s3_key        = "semi-automated-data-ingestion/${var.lambda_trigger_s3_key}"
-  function_name = "semi-automated-data-ingestion-trigger${var.tag_postfix}"
+  function_name = "manual-upload-trigger${var.tag_postfix}"
   role          = aws_iam_role.lambda_iam.arn
   handler       = "lambda_trigger.lambda_handler"
   runtime       = "python3.8"

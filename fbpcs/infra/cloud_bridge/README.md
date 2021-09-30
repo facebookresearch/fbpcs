@@ -89,3 +89,6 @@ export TF_LOG_PATH=/tmp/deploy.log
 ```
 /bin/sh ./terraform_deploment/deploy.sh -r <> -a <> -p <> -v <> -s <> -d <> -t <> -b -u
 ```
+
+# Notes
+parameter tag (`-t`) cannot be too long. AWS function/variable name must have length less than or equal to 64.
