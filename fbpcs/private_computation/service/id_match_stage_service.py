@@ -117,6 +117,9 @@ class IdMatchStageService(PrivateComputationStageService):
 
         Returns:
             The PIDRole that corresponds to the given PrivateComputationRole, e.g. publisher or partner
+
+        Exceptions:
+            ValueError: raised when there is no PIDRole associated with private_computation_role
         """
         if pc_role is PrivateComputationRole.PUBLISHER:
             return PIDRole.PUBLISHER

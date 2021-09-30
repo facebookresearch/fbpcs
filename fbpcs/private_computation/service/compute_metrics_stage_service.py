@@ -38,6 +38,20 @@ from fbpcs.private_computation.service.utils import (
 
 
 class ComputeMetricsStageService(PrivateComputationStageService):
+    """Handles business logic for the private computation compute metrics stage
+
+    Private attributes:
+        _onedocker_binary_config_map: Stores a mapping from mpc game to OneDockerBinaryConfig (binary version and tmp directory)
+        _mpc_svc: creates and runs MPC instances
+        _concurrency: number of threads to run per container
+        _attribution_rule: TODO
+        _aggregation_type: TODO
+        _is_validating: TODO
+        _log_cost_to_s3: TODO
+        _container_timeout: optional duration in seconds before cloud containers timeout
+        _skip_partial_container_retry: don't perform a partial container retry, even if conditions are met.
+    """
+
     def __init__(
         self,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
@@ -67,6 +81,16 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         pc_instance: PrivateComputationInstance,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
+        """Runs the private computation compute metrics stage
+
+        Args:
+            pc_instance: the private computation instance to run compute metrics with
+            server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
+
+        Returns:
+            An updated version of pc_instance that stores an MPCInstance
+        """
+
         # Prepare arguments for lift game
         # TODO T101225909: remove the option to pass in concurrency at the compute stage
         #   instead, always pass in at create_instance
@@ -124,6 +148,17 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         self,
         private_computation_instance: PrivateComputationInstance,
     ) -> List[Dict[str, Any]]:
+        """Gets the game args passed to game binaries by onedocker
+
+        When onedocker spins up containers to run games, it unpacks a dictionary containing the
+        arguments required by the game binary being ran. This function prepares that dictionary.
+
+        Args:
+            pc_instance: the private computation instance to generate game args for
+
+        Returns:
+            MPC game args to be used by onedocker
+        """
         game_args = []
 
         # If this is to recover from a previous MPC compute failure
@@ -179,7 +214,18 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         private_computation_instance: PrivateComputationInstance,
         common_compute_game_args: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
-        game_args = []
+        """Gets lift specific game args to be passed to game binaries by onedocker
+
+        When onedocker spins up containers to run games, it unpacks a dictionary containing the
+        arguments required by the game binary being ran. This function prepares arguments specific to
+        lift games.
+
+        Args:
+            pc_instance: the private computation instance to generate game args for
+
+        Returns:
+            MPC game args to be used by onedocker
+        """
         game_args = [
             {
                 **common_compute_game_args,
@@ -197,6 +243,18 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         private_computation_instance: PrivateComputationInstance,
         common_compute_game_args: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
+        """Gets attribution specific game args to be passed to game binaries by onedocker
+
+        When onedocker spins up containers to run games, it unpacks a dictionary containing the
+        arguments required by the game binary being ran. This function prepares arguments specific to
+        attribution games.
+
+        Args:
+            pc_instance: the private computation instance to generate game args for
+
+        Returns:
+            MPC game args to be used by onedocker
+        """
         game_args = []
         game_args = [
             {
