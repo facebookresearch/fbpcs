@@ -1,6 +1,8 @@
 {
     "cohortMetrics": [
     ],
+    "publisherBreakdowns": [
+    ],
     "metrics": {
         "testValueSquared": 2949102338,
         "controlValueSquared": 2259601706,

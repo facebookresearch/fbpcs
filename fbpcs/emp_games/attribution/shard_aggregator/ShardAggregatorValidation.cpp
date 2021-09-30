@@ -96,17 +96,22 @@ void validateLiftMetrics(
         groupedLiftMetrics,
         "Expected grouped lift metrics to be stored in a map");
 
-    if (groupedLiftMetrics->getAsMap().size() != 2 ||
+    if (groupedLiftMetrics->getAsMap().size() != 3 ||
         groupedLiftMetrics->getAsMap().find("cohortMetrics") ==
             groupedLiftMetrics->getAsMap().end() ||
         groupedLiftMetrics->getAsMap().find("metrics") ==
+            groupedLiftMetrics->getAsMap().end() ||
+        groupedLiftMetrics->getAsMap().find("publisherBreakdowns") ==
             groupedLiftMetrics->getAsMap().end()) {
       throw InvalidFormatException(
-          "Map should contain cohortMetrics and metrics");
+          "Map should contain {metrics, cohortMetrics, publisherBreakdowns}");
     }
     checkIsList(
         groupedLiftMetrics->getAtKey("cohortMetrics"),
         "cohortMetrics should map to a list");
+    checkIsList(
+        groupedLiftMetrics->getAtKey("publisherBreakdowns"),
+        "publisherBreakdowns should map to a list");
     checkIsMap(
         groupedLiftMetrics->getAtKey("metrics"), "metrics should map to a map");
 
@@ -116,6 +121,22 @@ void validateLiftMetrics(
     for (std::size_t i = 0; i < cohortMetrics.size(); ++i) {
       checkIsMap(cohortMetrics.at(i), "Cohort {} should be a map");
       auto metrics = cohortMetrics.at(i)->getAsMap();
+      if (i == 0) {
+        for (const auto& [metric, value] : metrics) {
+          // build the expected metrics
+          metricsFound.emplace(metric);
+        }
+      } else {
+        checkMetrics(metrics, metricsFound);
+      }
+    }
+
+    // check publisher breakdowns
+    auto publisherBreakdowns =
+        groupedLiftMetrics->getAtKey("publisherBreakdowns")->getAsList();
+    for (std::size_t i = 0; i < publisherBreakdowns.size(); ++i) {
+      checkIsMap(publisherBreakdowns.at(i), "Breakdown {} should be a map");
+      auto metrics = publisherBreakdowns.at(i)->getAsMap();
       if (i == 0) {
         for (const auto& [metric, value] : metrics) {
           // build the expected metrics
