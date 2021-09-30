@@ -136,7 +136,6 @@ def _build_mpc_service(
 
     return MPCService(
         container_service,
-        storage_service,
         repository_service,
         task_definition,
         mpc_game_svc,

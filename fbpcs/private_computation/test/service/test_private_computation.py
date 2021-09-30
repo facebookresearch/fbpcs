@@ -115,7 +115,6 @@ class TestPrivateComputationService(unittest.TestCase):
 
         self.mpc_service = MPCService(
             container_svc=container_svc,
-            storage_svc=storage_svc,
             instance_repository=mpc_instance_repository,
             task_definition="test_task_definition",
             mpc_game_svc=mpc_game_svc,
@@ -912,8 +911,8 @@ class TestPrivateComputationService(unittest.TestCase):
             mock_shard.assert_not_called()
 
     def test_validate_metrics_results_doesnt_match(self):
-        self.private_computation_service.mpc_svc.storage_svc.read = MagicMock()
-        self.private_computation_service.mpc_svc.storage_svc.read.side_effect = [
+        self.private_computation_service.pid_svc.storage_svc.read = MagicMock()
+        self.private_computation_service.pid_svc.storage_svc.read.side_effect = [
             '{"subGroupMetrics":[],"metrics":{"controlClicks":1,"testSpend":0,"controlImpressions":0,"testImpressions":0,"controlMatchCount":0,"testMatchCount":0,"controlNumConvSquared":0,"testNumConvSquared":0,"testValueSquared":0,"controlValue":0,"testValue":0,"testConverters":0,"testConversions":0,"testPopulation":0,"controlClickers":0,"testClickers":0,"controlReach":0,"testReach":0,"controlSpend":0,"testClicks":0,"controlValueSquared":0,"controlConverters":0,"controlConversions":0,"controlPopulation":0}}',
             '{"subGroupMetrics":[],"metrics":{"testSpend":0,"controlClicks":0,"controlImpressions":0,"testImpressions":0,"controlMatchCount":0,"testMatchCount":0,"controlNumConvSquared":0,"testNumConvSquared":0,"testValueSquared":0,"controlValue":0,"testValue":0,"testConverters":0,"testConversions":0,"testPopulation":0,"controlClickers":0,"testClickers":0,"controlReach":0,"testReach":0,"controlSpend":0,"testClicks":0,"controlValueSquared":0,"controlConverters":0,"controlConversions":0,"controlPopulation":0}}',
         ]

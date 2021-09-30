@@ -58,13 +58,13 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
+from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
 
 T = TypeVar("T")
 
@@ -763,7 +763,7 @@ class PrivateComputationService:
         aggregated_result_path: Optional[str] = None,
     ) -> None:
         private_computation_instance = self.get_instance(instance_id)
-        storage_service = self.mpc_svc.storage_svc
+        storage_service = self.pid_svc.storage_svc
         expected_results_dict = json.loads(storage_service.read(expected_result_path))
         aggregated_results_dict = json.loads(
             storage_service.read(
