@@ -41,7 +41,8 @@ def lambda_handler(event, context):
             print(msg)
             continue
         row_data = decoded_data["serverSideEvent"]
-        # as of H2 2021, only it should only be "website".
+        data_source_id = decoded_data.get("pixelId")
+        # as of H2 2021, it should only be "website".
         action_source = row_data.get("action_source")
         timestamp = row_data.get("event_time")
         event_type = row_data.get("event_name")
@@ -60,6 +61,7 @@ def lambda_handler(event, context):
             continue
 
         data = {}
+        data["data_source_id"] = data_source_id
         data["timestamp"] = timestamp
         data["currency_type"] = currency_type
         data["conversion_value"] = conversion_value
