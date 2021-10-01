@@ -86,7 +86,6 @@ def id_match(
     # run pid instance through pid service invoked from pl service
     pl_service.id_match(
         instance_id=instance_id,
-        protocol=PIDProtocol.UNION_PID,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],

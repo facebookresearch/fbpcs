@@ -42,7 +42,7 @@ from fbpcp.service.storage import StorageService
 from fbpcp.util import reflect, yaml
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
-from fbpcs.pid.entity.pid_instance import PIDInstance, PIDProtocol
+from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -263,7 +263,6 @@ def id_match(
     # run pid instance through pid service invoked from pa service
     instance = private_computation_service.id_match(
         instance_id=instance_id,
-        protocol=PIDProtocol.UNION_PID,
         pid_config=config["pid"],
         server_ips=server_ips,
         dry_run=dry_run,
