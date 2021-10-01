@@ -12,6 +12,7 @@ terraform {
 data "archive_file" "lambda_source_package" {
   type        = "zip"
   source_dir  = "validation_utility/"
+  excludes    = ["validation_utility/tests/*"]
   output_path = "validation_lambda${var.tag_postfix}.zip"
 }
 
