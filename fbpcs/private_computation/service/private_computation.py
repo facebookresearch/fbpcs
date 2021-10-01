@@ -16,6 +16,7 @@ from typing import DefaultDict, Dict, List, Optional, Any, TypeVar
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
@@ -85,6 +86,7 @@ class PrivateComputationService:
     def __init__(
         self,
         instance_repository: PrivateComputationInstanceRepository,
+        storage_svc: StorageService,
         mpc_svc: MPCService,
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,
@@ -94,6 +96,7 @@ class PrivateComputationService:
         instance_repository -- repository to CRUD PrivateComputationInstance
         """
         self.instance_repository = instance_repository
+        self.storage_svc = storage_svc
         self.mpc_svc = mpc_svc
         self.pid_svc = pid_svc
         self.onedocker_svc = onedocker_svc
@@ -661,10 +664,9 @@ class PrivateComputationService:
         aggregated_result_path: Optional[str] = None,
     ) -> None:
         private_computation_instance = self.get_instance(instance_id)
-        storage_service = self.pid_svc.storage_svc
-        expected_results_dict = json.loads(storage_service.read(expected_result_path))
+        expected_results_dict = json.loads(self.storage_svc.read(expected_result_path))
         aggregated_results_dict = json.loads(
-            storage_service.read(
+            self.storage_svc.read(
                 aggregated_result_path
                 or private_computation_instance.shard_aggregate_stage_output_path
             )

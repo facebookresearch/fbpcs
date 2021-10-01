@@ -84,6 +84,7 @@ def _build_private_computation_service(
     storage_service = _build_storage_service(pa_config["dependency"]["StorageService"])
     return PrivateComputationService(
         repository_service,
+        storage_service,
         _build_mpc_service(
             mpc_config, onedocker_service_config, container_service, storage_service
         ),
