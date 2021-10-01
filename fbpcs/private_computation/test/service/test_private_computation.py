@@ -50,17 +50,16 @@ from fbpcs.private_computation.service.private_computation import (
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-
-# TODO T94666166: libfb won't work in OSS
-from libfb.py.asyncio.mock import AsyncMock
-from libfb.py.testutil import data_provider
-
 from fbpcs.private_computation.service.utils import (
     create_and_start_mpc_instance,
     gen_mpc_game_args_to_retry,
     map_private_computation_role_to_mpc_party,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
 )
+
+# TODO T94666166: libfb won't work in OSS
+from libfb.py.asyncio.mock import AsyncMock
+from libfb.py.testutil import data_provider
 
 
 def _get_valid_stages_data() -> List[Tuple[PrivateComputationStageType]]:
@@ -148,6 +147,7 @@ class TestPrivateComputationService(unittest.TestCase):
         self.test_output_dir = "out_dir"
         self.test_game_type = PrivateComputationGameType.LIFT
         self.test_concurrency = 1
+        self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
     def test_create_instance(self):
         test_role = PrivateComputationRole.PUBLISHER
@@ -161,6 +161,7 @@ class TestPrivateComputationService(unittest.TestCase):
             num_mpc_containers=self.test_num_containers,
             concurrency=self.test_concurrency,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            hmac_key=self.test_hmac_key,
         )
         # check instance_repository.create is called with the correct arguments
         self.private_computation_service.instance_repository.create.assert_called()
@@ -429,7 +430,6 @@ class TestPrivateComputationService(unittest.TestCase):
             )
 
         self.assertEqual(pl_instance.status, stage_type.failed_status)
-
 
     def test_partner_missing_server_ips(self):
         test_private_computation_id = "test_private_computation_id"
@@ -855,9 +855,7 @@ class TestPrivateComputationService(unittest.TestCase):
             instances=[mpc_instance],
         )
 
-        game_args = gen_mpc_game_args_to_retry(
-            private_computation_instance
-        )
+        game_args = gen_mpc_game_args_to_retry(private_computation_instance)
 
         self.assertEqual(1, len(game_args))  # only 1 failed container
         self.assertEqual(test_input, game_args[0]["input_filenames"])
@@ -883,4 +881,5 @@ class TestPrivateComputationService(unittest.TestCase):
             output_dir=self.test_output_dir,
             fail_fast=True,
             k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD,
+            hmac_key=self.test_hmac_key,
         )

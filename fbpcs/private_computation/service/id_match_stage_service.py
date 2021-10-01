@@ -7,14 +7,14 @@
 # pyre-strict
 
 from typing import Any, Dict, List, Optional
-from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationRole,
-)
 
 from fbpcs.pid.entity.pid_instance import PIDInstanceStatus, PIDProtocol, PIDRole
+from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_stage_type import (
     PrivateComputationStageType,
@@ -33,7 +33,6 @@ class IdMatchStageService(PrivateComputationStageService):
         _protocol: An enum consumed by PIDService to determine which protocol to use, e.g. UNION_PID.
         _is_validating: TODO
         _synthetic_shard_path: TODO
-        _hmac_key: A base64 encoded string containing an hmac salt. Used to transform each id into a HMAC_SHA256 hash
     """
 
     def __init__(
@@ -43,14 +42,12 @@ class IdMatchStageService(PrivateComputationStageService):
         protocol: PIDProtocol,
         is_validating: bool = False,
         synthetic_shard_path: Optional[str] = None,
-        hmac_key: Optional[str] = None,
     ) -> None:
         self._pid_svc = pid_svc
         self._pid_config = pid_config
         self._protocol = protocol
         self._is_validating = is_validating
         self._synthetic_shard_path = synthetic_shard_path
-        self._hmac_key = hmac_key
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of run_async() so that it can be called by Thrift
@@ -84,7 +81,7 @@ class IdMatchStageService(PrivateComputationStageService):
             is_validating=self._is_validating or pc_instance.is_validating,
             synthetic_shard_path=self._synthetic_shard_path
             or pc_instance.synthetic_shard_path,
-            hmac_key=self._hmac_key or pc_instance.hmac_key,
+            hmac_key=pc_instance.hmac_key,
         )
 
         # Push PID instance to PrivateComputationInstance.instances and update PL Instance status

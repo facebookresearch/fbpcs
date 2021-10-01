@@ -304,7 +304,6 @@ class PrivateComputationService:
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         server_ips: Optional[List[str]] = None,
-        hmac_key: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
         return asyncio.run(
@@ -315,7 +314,6 @@ class PrivateComputationService:
                 is_validating,
                 synthetic_shard_path,
                 server_ips,
-                hmac_key,
                 dry_run,
             )
         )
@@ -329,7 +327,6 @@ class PrivateComputationService:
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         server_ips: Optional[List[str]] = None,
-        hmac_key: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
         return await self.run_stage_async(
@@ -340,7 +337,6 @@ class PrivateComputationService:
                 protocol,
                 is_validating or False,
                 synthetic_shard_path,
-                hmac_key,
             ),
             server_ips,
             dry_run or False,

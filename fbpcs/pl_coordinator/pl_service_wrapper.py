@@ -42,6 +42,7 @@ def create_instance(
     output_dir: str,
     num_pid_containers: int,
     num_mpc_containers: int,
+    hmac_key: Optional[str] = None,
     num_files_per_mpc_container: Optional[int] = None,
     game_type: Optional[PrivateComputationGameType] = None,
     fail_fast: bool = False,
@@ -62,6 +63,7 @@ def create_instance(
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
+        hmac_key=hmac_key,
         fail_fast=fail_fast,
     )
 
@@ -75,7 +77,6 @@ def id_match(
     logger: logging.Logger,
     fail_fast: bool = False,
     server_ips: Optional[List[str]] = None,
-    hmac_key: Optional[str] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
     pl_service = _build_pl_service(
@@ -94,7 +95,6 @@ def id_match(
         ]["synthetic_shard_path"],
         pid_config=config["pid"],
         server_ips=server_ips,
-        hmac_key=hmac_key,
         dry_run=dry_run,
     )
 
