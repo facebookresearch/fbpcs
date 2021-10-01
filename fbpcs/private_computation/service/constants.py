@@ -8,6 +8,7 @@
 
 from typing import List
 
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
@@ -48,3 +49,4 @@ STAGE_FAILED_STATUSES: List[PrivateComputationInstanceStatus] = [
 
 DEFAULT_PADDING_SIZE = 4
 DEFAULT_K_ANONYMITY_THRESHOLD = 100
+DEFAULT_PID_PROTOCOL: PIDProtocol = PIDProtocol.UNION_PID

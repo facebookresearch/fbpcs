@@ -24,7 +24,6 @@ from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import (
     PIDInstance,
     PIDInstanceStatus,
-    PIDProtocol,
     PIDRole,
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
@@ -46,6 +45,7 @@ from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
     NUM_NEW_SHARDS_PER_FILE,
     DEFAULT_K_ANONYMITY_THRESHOLD,
+    DEFAULT_PID_PROTOCOL,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -174,14 +174,13 @@ class TestPrivateComputationService(unittest.TestCase):
 
     def test_update_instance(self):
         test_pid_id = self.test_private_computation_id + "_id_match"
-        test_pid_protocol = PIDProtocol.UNION_PID
         test_pid_role = PIDRole.PUBLISHER
         test_input_path = "pid_in"
         test_output_path = "pid_out"
         # create one PID instance to be put into PrivateComputationInstance
         pid_instance = PIDInstance(
             instance_id=test_pid_id,
-            protocol=test_pid_protocol,
+            protocol=DEFAULT_PID_PROTOCOL,
             pid_role=test_pid_role,
             num_shards=self.test_num_containers,
             input_path=test_input_path,
@@ -683,7 +682,7 @@ class TestPrivateComputationService(unittest.TestCase):
         # Test get status from the PID stage
         pid_instance = PIDInstance(
             instance_id="test_pid_id",
-            protocol=PIDProtocol.UNION_PID,
+            protocol=DEFAULT_PID_PROTOCOL,
             pid_role=PIDRole.PUBLISHER,
             num_shards=4,
             input_path="input",

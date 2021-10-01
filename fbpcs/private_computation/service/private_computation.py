@@ -30,7 +30,6 @@ from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
-from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.post_processing_handler.post_processing_handler import (
@@ -62,8 +61,9 @@ from fbpcs.private_computation.service.constants import (
     NUM_NEW_SHARDS_PER_FILE,
     STAGE_STARTED_STATUSES,
     STAGE_FAILED_STATUSES,
-    DEFAULT_PADDING_SIZE,
     DEFAULT_K_ANONYMITY_THRESHOLD,
+    DEFAULT_PADDING_SIZE,
+    DEFAULT_PID_PROTOCOL,
 )
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
@@ -299,7 +299,6 @@ class PrivateComputationService:
     def id_match(
         self,
         instance_id: str,
-        protocol: PIDProtocol,
         pid_config: Dict[str, Any],
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
@@ -309,7 +308,6 @@ class PrivateComputationService:
         return asyncio.run(
             self.id_match_async(
                 instance_id,
-                protocol,
                 pid_config,
                 is_validating,
                 synthetic_shard_path,
@@ -322,7 +320,6 @@ class PrivateComputationService:
     async def id_match_async(
         self,
         instance_id: str,
-        protocol: PIDProtocol,
         pid_config: Dict[str, Any],
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
@@ -334,7 +331,7 @@ class PrivateComputationService:
             IdMatchStageService(
                 self.pid_svc,
                 pid_config,
-                protocol,
+                DEFAULT_PID_PROTOCOL,
                 is_validating or False,
                 synthetic_shard_path,
             ),
