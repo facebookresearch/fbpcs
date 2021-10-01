@@ -23,7 +23,7 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
-from fbpcs.private_computation.service.utils import (
+from fbpcs.private_computation.service.constants import (
     NUM_NEW_SHARDS_PER_FILE,
 )
 

@@ -58,6 +58,13 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
+from fbpcs.private_computation.service.constants import (
+    NUM_NEW_SHARDS_PER_FILE,
+    STAGE_STARTED_STATUSES,
+    STAGE_FAILED_STATUSES,
+    DEFAULT_PADDING_SIZE,
+    DEFAULT_K_ANONYMITY_THRESHOLD,
+)
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
@@ -72,11 +79,6 @@ from fbpcs.private_computation.service.utils import (
     create_and_start_mpc_instance,
     map_private_computation_role_to_mpc_party,
     ready_for_partial_container_retry,
-    NUM_NEW_SHARDS_PER_FILE,
-    STAGE_STARTED_STATUSES,
-    STAGE_FAILED_STATUSES,
-    DEFAULT_PADDING_SIZE,
-    DEFAULT_K_ANONYMITY_THRESHOLD,
 )
 
 T = TypeVar("T")
