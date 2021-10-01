@@ -45,8 +45,10 @@ RUN terraform --version
 ##########################################
 RUN mkdir /terraform_deployment
 ADD deploy.sh /terraform_deployment
+ADD deploy-shared.sh /terraform_deployment
 ADD util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
+RUN chmod +x /terraform_deployment/deploy-shared.sh
 RUN chmod +x /terraform_deployment/util.sh
 ADD aws_terraform_template /terraform_deployment/terraform_scripts
 CMD ["/bin/bash"]
