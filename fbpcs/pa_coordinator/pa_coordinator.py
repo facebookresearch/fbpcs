@@ -11,10 +11,10 @@ CLI for running a Private Attribute study
 
 
 Usage:
-    pa-coordinator create_instance <instance_id> --config=<config_file> --input_path=<input_path> --output_dir=<output_dir> --role=<pa_role> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container> --concurrency=<concurrency> [--padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast] [options]
+    pa-coordinator create_instance <instance_id> --config=<config_file> --input_path=<input_path> --output_dir=<output_dir> --role=<pa_role> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> --num_files_per_mpc_container=<num_files_per_mpc_container> --concurrency=<concurrency>  --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> [--padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast] [options]
     pa-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pa-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
-    pa-coordinator compute_attribution <instance_id> --config=<config_file> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
+    pa-coordinator compute_attribution <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pa-coordinator aggregate_shards <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pa-coordinator get_server_ips  <instance_id> --config=<config_file> [options]
     pa-coordinator get_instance <instance_id> --config=<config_file> [options]
@@ -45,11 +45,13 @@ from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstance,
-    PrivateComputationGameType,
+    AggregationType,
+    AttributionRule,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationRole,
+    PrivateComputationInstance,
+    PrivateComputationGameType,
 )
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
@@ -221,6 +223,8 @@ def create_instance(
     num_pid_containers: int,
     num_mpc_containers: int,
     num_files_per_mpc_container: int,
+    attribution_rule: AttributionRule,
+    aggregation_type: AggregationType,
     logger: logging.Logger,
     padding_size: int,
     concurrency: int,
@@ -242,6 +246,8 @@ def create_instance(
         num_files_per_mpc_container=num_files_per_mpc_container,
         padding_size=padding_size,
         concurrency=concurrency,
+        attribution_rule=attribution_rule,
+        aggregation_type=aggregation_type,
         k_anonymity_threshold=k_anonymity_threshold,
         fail_fast=fail_fast,
     )
@@ -299,8 +305,6 @@ def prepare_compute_input(
 def compute_attribution(
     config: Dict[str, Any],
     instance_id: str,
-    attribution_rule: str,
-    aggregation_type: str,
     logger: logging.Logger,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
@@ -313,8 +317,6 @@ def compute_attribution(
 
     instance = private_computation_service.compute_metrics(
         instance_id=instance_id,
-        attribution_rule=attribution_rule,
-        aggregation_type=aggregation_type,
         server_ips=server_ips,
         dry_run=dry_run,
         log_cost_to_s3=log_cost_to_s3,
@@ -402,8 +404,8 @@ def main() -> None:
             "--config": schema.And(schema.Use(PurePath), os.path.exists),
             "--input_path": schema.Or(None, str),
             "--output_dir": schema.Or(None, str),
-            "--aggregation_type": schema.Or(None, str),
-            "--attribution_rule": schema.Or(None, str),
+            "--aggregation_type": schema.Or(None, schema.Use(AggregationType)),
+            "--attribution_rule": schema.Or(None, schema.Use(AttributionRule)),
             "--num_pid_containers": schema.Or(None, schema.Use(int)),
             "--num_mpc_containers": schema.Or(None, schema.Use(int)),
             "--num_files_per_mpc_container": schema.Or(None, schema.Use(int)),
@@ -461,6 +463,8 @@ def main() -> None:
             num_pid_containers=arguments["--num_pid_containers"],
             num_mpc_containers=arguments["--num_mpc_containers"],
             num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
+            attribution_rule=arguments["--attribution_rule"],
+            aggregation_type=arguments["--aggregation_type"],
             padding_size=padding_size or DEFAULT_PADDING_SIZE,
             concurrency=arguments["--concurrency"],
             k_anonymity_threshold=k_anonymity_threshold
@@ -498,8 +502,6 @@ def main() -> None:
         compute_attribution(
             config=config,
             instance_id=instance_id,
-            attribution_rule=arguments["--attribution_rule"],
-            aggregation_type=arguments["--aggregation_type"],
             server_ips=arguments["--server_ips"],
             logger=logger,
             dry_run=arguments["--dry_run"],

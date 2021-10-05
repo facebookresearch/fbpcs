@@ -10,7 +10,6 @@ config="./config.yml"
 s3_path_prefix="https://<s3_bucket>.s3.us-west-2.amazonaws.com/attribution/${USER}/E2E"
 compute_input_path="${s3_path_prefix}/prepare_data_stage/partner_output.csv"
 compute_output_path="${s3_path_prefix}/compute_stage/partner_output.csv"
-attribution_rule=last_touch_1d # last_touch_1d or last_click_1d
 server_ips=10.0.0.1 # ask Publisher
 num_mpc_containers=1 # ask Publisher
 num_files_per_mpc_container=1 # ask Publisher
@@ -37,8 +36,6 @@ python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
   --config="${config}" \
   --num_containers=${num_mpc_containers} \
   --num_files_per_mpc_container=${num_files_per_mpc_container} \
-  --attribution_rule=${attribution_rule} \
-  --aggregation_type=measurement \
   --concurrency=${concurrency} \
   --input_base_path="${compute_input_path}" \
   --output_base_path="${compute_output_path}" \

@@ -53,6 +53,19 @@ class PrivateComputationGameType(Enum):
     ATTRIBUTION = "ATTRIBUTION"
 
 
+class AttributionRule(Enum):
+    LAST_CLICK_1D = "last_click_1d"
+    LAST_CLICK_7D = "last_click_7d"
+    LAST_CLICK_28D = "last_click_28d"
+    LAST_TOUCH_1D = "last_touch_1d"
+    LAST_TOUCH_7D = "last_touch_7d"
+    LAST_TOUCH_28D = "last_touch_28d"
+
+
+class AggregationType(Enum):
+    MEASUREMENT = "measurement"
+
+
 UnionedPCInstance = Union[PIDInstance, PCSMPCInstance, PostProcessingInstance]
 UnionedPCInstanceStatus = Union[
     PIDInstanceStatus, MPCInstanceStatus, PostProcessingInstanceStatus
@@ -61,6 +74,17 @@ UnionedPCInstanceStatus = Union[
 
 @dataclass
 class PrivateComputationInstance(InstanceBase):
+    """Stores metadata of a private computation instance
+
+    Private attributes:
+        _attribution_rule: the rule that a conversion is attributed to an exposure (e.g., last_click_1d,
+                            last_click_28d, last_touch_1d, last_touch_28d). Not currently used by Lift.
+        _aggregation_type: the level the statistics are aggregated at (e.g., ad-object, which includes ad,
+                            campaign and campaign group). In the future, aggregation_type will also be
+                            used to infer the metrics_format_type argument of the shard aggregator game.
+                            Not currently used by Lift.
+    """
+
     instance_id: str
     role: PrivateComputationRole
     instances: List[UnionedPCInstance]
@@ -72,6 +96,9 @@ class PrivateComputationInstance(InstanceBase):
     output_dir: str
     num_pid_containers: int
     num_mpc_containers: int
+
+    attribution_rule: Optional[AttributionRule] = None
+    aggregation_type: Optional[AggregationType] = None
 
     retry_counter: int = 0
     partial_container_retry_enabled: bool = (

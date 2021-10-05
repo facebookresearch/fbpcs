@@ -31,8 +31,8 @@ class IdMatchStageService(PrivateComputationStageService):
         _pid_svc: Creates PID instances and runs PID SHARD, PID PREPARE, and PID RUN
         _pid_config: Consumed by PIDService to determine cloud credentials
         _protocol: An enum consumed by PIDService to determine which protocol to use, e.g. UNION_PID.
-        _is_validating: TODO
-        _synthetic_shard_path: TODO
+        _is_validating: if a test shard is injected to do run time correctness validation
+        _synthetic_shard_path: path to the test shard to be injected if _is_validating
     """
 
     def __init__(
