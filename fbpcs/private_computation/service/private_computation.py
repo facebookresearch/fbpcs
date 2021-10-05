@@ -54,6 +54,9 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
+from fbpcs.private_computation.service.aggregate_shards_stage_service import (
+    AggregateShardsStageService,
+)
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
@@ -76,8 +79,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
-    create_and_start_mpc_instance,
-    map_private_computation_role_to_mpc_party,
     ready_for_partial_container_retry,
 )
 
@@ -506,149 +507,18 @@ class PrivateComputationService:
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
-        # It's expected that the pl instance is in an updated status because:
-        #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
-        #   for partner, PL-Coordinator should have updated it before calling this action.
-        private_computation_instance = self.get_instance(instance_id)
-
-        if (
-            private_computation_instance.role is PrivateComputationRole.PARTNER
-            and not server_ips
-        ):
-            raise ValueError("Missing server_ips for Partner")
-
-        # default to be an empty string
-        retry_counter_str = ""
-
-        # Validate status of the instance
-        if (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.COMPUTATION_COMPLETED
-        ):
-            private_computation_instance.retry_counter = 0
-        elif (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.AGGREGATION_FAILED
-        ):
-            private_computation_instance.retry_counter += 1
-            retry_counter_str = str(private_computation_instance.retry_counter)
-        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
-            # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
-            # the instance is no longer in a running state before starting a new operation
-            raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
-            )
-        elif not dry_run:
-            raise ValueError(
-                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for aggregating metrics."
-            )
-
-        num_shards = (
-            private_computation_instance.num_mpc_containers
-            * private_computation_instance.num_files_per_mpc_container
+        return await self.run_stage_async(
+            instance_id,
+            AggregateShardsStageService(
+                self.onedocker_binary_config_map,
+                self.mpc_svc,
+                is_validating or False,
+                log_cost_to_s3,
+                container_timeout,
+            ),
+            server_ips,
+            dry_run or False,
         )
-
-        # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type
-        metrics_format_type = (
-            "lift"
-            if private_computation_instance.game_type is PrivateComputationGameType.LIFT
-            else "ad_object"
-        )
-
-        binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
-        binary_config = self.onedocker_binary_config_map[binary_name]
-
-        if is_validating:
-            # num_containers_real_data is the number of containers processing real data
-            # synthetic data is processed by a dedicated extra container, and this container is always the last container,
-            # hence synthetic_data_shard_start_index = num_real_data_shards
-            # each of the containers, processing real or synthetic data, processes the same number of shards due to our resharding mechanism
-            # num_shards representing the total number of shards which is equal to num_real_data_shards + num_synthetic_data_shards
-            # hence, when num_containers_real_data and num_shards are given, num_synthetic_data_shards = num_shards / (num_containers_real_data + 1)
-            num_containers_real_data = private_computation_instance.num_pid_containers
-            if num_containers_real_data is None:
-                raise ValueError("num_containers_real_data is None")
-            num_synthetic_data_shards = num_shards // (num_containers_real_data + 1)
-            num_real_data_shards = num_shards - num_synthetic_data_shards
-            synthetic_data_shard_start_index = num_real_data_shards
-
-            # Create and start MPC instance for real data shards and synthetic data shards
-            game_args = [
-                {
-                    "input_base_path": private_computation_instance.compute_stage_output_base_path,
-                    "num_shards": num_real_data_shards,
-                    "metrics_format_type": metrics_format_type,
-                    "output_path": private_computation_instance.shard_aggregate_stage_output_path,
-                    "first_shard_index": 0,
-                    "threshold": private_computation_instance.k_anonymity_threshold,
-                    "run_name": private_computation_instance.instance_id
-                    if log_cost_to_s3
-                    else "",
-                },
-                {
-                    "input_base_path": private_computation_instance.compute_stage_output_base_path,
-                    "num_shards": num_synthetic_data_shards,
-                    "metrics_format_type": metrics_format_type,
-                    "output_path": private_computation_instance.shard_aggregate_stage_output_path
-                    + "_synthetic_data_shards",
-                    "first_shard_index": synthetic_data_shard_start_index,
-                    "threshold": private_computation_instance.k_anonymity_threshold,
-                    "run_name": private_computation_instance.instance_id
-                    if log_cost_to_s3
-                    else "",
-                },
-            ]
-
-            mpc_instance = await create_and_start_mpc_instance(
-                mpc_svc=self.mpc_svc,
-                instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
-                game_name=GameNames.SHARD_AGGREGATOR.value,
-                mpc_party=map_private_computation_role_to_mpc_party(
-                    private_computation_instance.role
-                ),
-                num_containers=2,
-                binary_version=binary_config.binary_version,
-                server_ips=server_ips,
-                game_args=game_args,
-                container_timeout=container_timeout,
-            )
-        else:
-            # Create and start MPC instance
-            game_args = [
-                {
-                    "input_base_path": private_computation_instance.compute_stage_output_base_path,
-                    "metrics_format_type": metrics_format_type,
-                    "num_shards": num_shards,
-                    "output_path": private_computation_instance.shard_aggregate_stage_output_path,
-                    "threshold": private_computation_instance.k_anonymity_threshold,
-                    "run_name": private_computation_instance.instance_id
-                    if log_cost_to_s3
-                    else "",
-                },
-            ]
-            mpc_instance = await create_and_start_mpc_instance(
-                mpc_svc=self.mpc_svc,
-                instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
-                game_name=GameNames.SHARD_AGGREGATOR.value,
-                mpc_party=map_private_computation_role_to_mpc_party(
-                    private_computation_instance.role
-                ),
-                num_containers=1,
-                binary_version=binary_config.binary_version,
-                server_ips=server_ips,
-                game_args=game_args,
-                container_timeout=container_timeout,
-            )
-        # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        private_computation_instance.instances.append(
-            PCSMPCInstance.from_mpc_instance(mpc_instance)
-        )
-        self._update_status(
-            private_computation_instance=private_computation_instance,
-            new_status=PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-        )
-        self.instance_repository.update(private_computation_instance)
-        return private_computation_instance
 
     # TODO T88759390: make an async version of this function
     # Optioinal stage, validate the correctness of aggregated results for injected synthetic data
