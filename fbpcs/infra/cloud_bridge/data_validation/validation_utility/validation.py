@@ -17,6 +17,7 @@ ALL_REQUIRED_FIELDS: Set[str] = {
 }
 ONE_OR_MORE_REQUIRED_FIELDS: Set[str] = {'email','device_id'}
 HEADER_ROW_OFFSET = 1
+MAX_ERROR_LINES = 100
 
 class ValidationState:
     def __init__(self):
@@ -51,9 +52,10 @@ def validate_line(line: Dict[str, str], validation_state: ValidationState) -> No
     for field in ALL_REQUIRED_FIELDS:
         if field not in line or value_empty(line[field]):
             missing_required_field = True
-            if field in validation_state.lines_missing_required_field:
+            has_line_numbers = field in validation_state.lines_missing_required_field
+            if has_line_numbers and len(validation_state.lines_missing_required_field[field]) <= MAX_ERROR_LINES:
                 validation_state.lines_missing_required_field[field].append(current_line)
-            else:
+            elif not has_line_numbers:
                 validation_state.lines_missing_required_field[field] = [current_line]
 
     missing_all_required_fields = not any(
@@ -61,7 +63,7 @@ def validate_line(line: Dict[str, str], validation_state: ValidationState) -> No
         for field in ONE_OR_MORE_REQUIRED_FIELDS
     )
 
-    if missing_all_required_fields:
+    if missing_all_required_fields and len(validation_state.lines_missing_all_required_fields) <= MAX_ERROR_LINES:
         validation_state.lines_missing_all_required_fields.append(current_line)
 
     if missing_required_field or missing_all_required_fields:
@@ -77,14 +79,17 @@ def value_empty(value: Optional[str]) -> bool:
 
 def lines_missing_report(validation_state: ValidationState) -> List[str]:
     report = []
+    max_error_lines_message = f' (First {MAX_ERROR_LINES} lines shown)'
     for field, lines in validation_state.lines_missing_required_field.items():
-        error_lines = ','.join(map(str, lines))
-        report.append(f"Line numbers missing '{field}': {error_lines}\n")
+        max_lines = '' if len(lines) <= MAX_ERROR_LINES else max_error_lines_message
+        error_lines = ','.join(map(str, lines[:MAX_ERROR_LINES]))
+        report.append(f"Line numbers missing '{field}'{max_lines}: {error_lines}\n")
     if validation_state.lines_missing_all_required_fields:
+        max_lines = '' if len(validation_state.lines_missing_all_required_fields) <= MAX_ERROR_LINES else max_error_lines_message
         sorted_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
-        error_lines = ','.join(map(str, validation_state.lines_missing_all_required_fields))
+        error_lines = ','.join(map(str, validation_state.lines_missing_all_required_fields[:MAX_ERROR_LINES]))
         report.append(
-            f"Line numbers that are missing 1 or more of these required fields '{sorted_fields}': {error_lines}"
+            f"Line numbers that are missing 1 or more of these required fields '{sorted_fields}'{max_lines}: {error_lines}"
         )
     return report
 
