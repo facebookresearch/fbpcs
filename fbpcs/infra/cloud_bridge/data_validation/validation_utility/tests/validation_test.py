@@ -145,6 +145,50 @@ class TestValidation(TestCase):
             )
         )
 
+    def test_validate_checks_that_identity_fields_are_formatted_correctly(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
+            '1631204621,usd,5,Purchase,aaaaaaa,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,b-BbbbbbbbbbbbF-Abbbbbbbbbbbbbbb22-2222-222222222222-22222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,1234,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,c@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1111111111111111111111111111.111,website,b-BbbbbbbbbbbbF-Abbbbbbbbbbbbbbb22-2222-222222222222-22222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,b_BbbbbbbbbbbbF-Abbbbbbbbbbbbbbb22-2222-222222222222-22222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,10,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,Z,2021,09,09,16',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 7')
+        self.assertRegex(result, 'Rows with errors: 6')
+        self.assertRegex(result, 'Valid rows: 1')
+        self.assertRegex(result, "Line numbers with incorrect 'email' format: 2,4,5")
+        self.assertRegex(result, "Line numbers with incorrect 'device_id' format: 6,7,8")
+
+    def test_validate_checks_that_other_fields_are_formatted_correctly(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            'september-2021,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,12usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,ten,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,  Purchase   ,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,w,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '  1631204621 ,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd ,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd, 5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website ,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 10')
+        self.assertRegex(result, 'Rows with errors: 9')
+        self.assertRegex(result, 'Valid rows: 1')
+        self.assertRegex(result, "Line numbers with incorrect 'timestamp' format: 3,8")
+        self.assertRegex(result, "Line numbers with incorrect 'currency_type' format: 4,9")
+        self.assertRegex(result, "Line numbers with incorrect 'conversion_value' format: 5,10")
+        self.assertRegex(result, "Line numbers with incorrect 'event_type' format: 6")
+        self.assertRegex(result, "Line numbers with incorrect 'action_source' format: 7,11")
+
     def mock_lines_helper(self, lines: List[str]) -> Mock:
         encoded_lines = list(map(lambda line: line.encode('utf-8'), lines))
         return Mock(return_value = encoded_lines)
