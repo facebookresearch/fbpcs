@@ -60,6 +60,7 @@ class TestValidation(TestCase):
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 6')
         self.assertRegex(result, 'Rows with errors: 6')
+        self.assertRegex(result, 'Valid rows: 0')
 
     def test_validate_handles_quoted_csvs(self):
         body = Mock('body')
@@ -73,6 +74,41 @@ class TestValidation(TestCase):
         self.assertRegex(result, 'Total rows: 3')
         self.assertRegex(result, 'Valid rows: 1')
         self.assertRegex(result, 'Rows with errors: 2')
+
+    def test_validate_reports_which_rows_are_missing_which_field(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
+            '1631204621,,,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            ',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 4')
+        self.assertRegex(result, 'Rows with errors: 3')
+        self.assertRegex(result, 'Valid rows: 1')
+        self.assertRegex(result, "Line numbers missing 'timestamp': 4")
+        self.assertRegex(result, "Line numbers missing 'currency_type': 2,5")
+        self.assertRegex(result, "Line numbers missing 'conversion_value': 2")
+        self.assertRegex(result, "Line numbers missing 'action_source': 4,5")
+
+    def test_validate_reports_which_rows_are_missing_all_identity_fields(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,,website,,2021,09,09,16',
+            '1631204621,usd,5,Purchase,,website,,2021,09,09,16',
+            '1631204621,usd,5,Purchase,,website,,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+        ])
+        result = generate_from_body(body)
+        expected_required_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
+        self.assertRegex(result, 'Total rows: 5')
+        self.assertRegex(result, 'Rows with errors: 3')
+        self.assertRegex(result, 'Valid rows: 2')
+        self.assertRegex(result, f"Line numbers that are missing 1 or more of these required fields '{expected_required_fields}': 3,4,5")
 
     def mock_lines_helper(self, lines: List[str]) -> Mock:
         encoded_lines = list(map(lambda line: line.encode('utf-8'), lines))
