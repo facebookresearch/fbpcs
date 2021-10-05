@@ -16,6 +16,16 @@ ALL_REQUIRED_FIELDS: Set[str] = {
     'timestamp',
 }
 ONE_OR_MORE_REQUIRED_FIELDS: Set[str] = {'email','device_id'}
+HEADER_ROW_OFFSET = 1
+
+class ValidationState:
+    def __init__(self):
+        self.total_rows = 0
+        self.valid_rows = 0
+        self.error_rows = 0
+        self.header_validation_messages = []
+        self.lines_missing_required_field = {}
+        self.lines_missing_all_required_fields = []
 
 def validate_and_generate_report(bucket: str, key: str) -> str:
     s3_client = boto3.client('s3')
@@ -34,21 +44,49 @@ def header_contains_identity_fields(header_fields: List[str]) -> bool:
     intersection = ONE_OR_MORE_REQUIRED_FIELDS.intersection(set(header_fields))
     return len(intersection) > 0
 
-def is_line_valid(line: Dict[str, str]) -> bool:
+def validate_line(line: Dict[str, str], validation_state: ValidationState) -> None:
+    missing_required_field = False
+    missing_all_required_fields = False
+    current_line = validation_state.total_rows + HEADER_ROW_OFFSET
     for field in ALL_REQUIRED_FIELDS:
         if field not in line or value_empty(line[field]):
-            return False
+            missing_required_field = True
+            if field in validation_state.lines_missing_required_field:
+                validation_state.lines_missing_required_field[field].append(current_line)
+            else:
+                validation_state.lines_missing_required_field[field] = [current_line]
 
-    return any(
+    missing_all_required_fields = not any(
         field in line and not value_empty(line[field])
         for field in ONE_OR_MORE_REQUIRED_FIELDS
     )
+
+    if missing_all_required_fields:
+        validation_state.lines_missing_all_required_fields.append(current_line)
+
+    if missing_required_field or missing_all_required_fields:
+        validation_state.error_rows += 1
+    else:
+        validation_state.valid_rows += 1
 
 def value_empty(value: Optional[str]) -> bool:
     return (
         str(value).strip() == '' or
         value is None
     )
+
+def lines_missing_report(validation_state: ValidationState) -> List[str]:
+    report = []
+    for field, lines in validation_state.lines_missing_required_field.items():
+        error_lines = ','.join(map(str, lines))
+        report.append(f"Line numbers missing '{field}': {error_lines}\n")
+    if validation_state.lines_missing_all_required_fields:
+        sorted_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
+        error_lines = ','.join(map(str, validation_state.lines_missing_all_required_fields))
+        report.append(
+            f"Line numbers that are missing 1 or more of these required fields '{sorted_fields}': {error_lines}"
+        )
+    return report
 
 def generate_from_body(body: StreamingBody) -> str:
     validation_state = ValidationState()
@@ -59,11 +97,8 @@ def generate_from_body(body: StreamingBody) -> str:
         if valid_header_row:
             reader = csv.DictReader([valid_header_row, line_string])
             for parsed_line in reader:
-                if is_line_valid(parsed_line):
-                    validation_state.valid_rows += 1
-                else:
-                    validation_state.error_rows += 1
                 validation_state.total_rows += 1
+                validate_line(parsed_line, validation_state)
         else:
             header_row_valid = True
             raw_field_names = csv.DictReader([line_string]).fieldnames
@@ -96,11 +131,5 @@ def generate_from_body(body: StreamingBody) -> str:
     report.append(f'Valid rows: {validation_state.valid_rows}')
     report.append(f'Rows with errors: {validation_state.error_rows}')
     report.extend(validation_state.header_validation_messages)
+    report.extend(lines_missing_report(validation_state))
     return '\n'.join(report) + '\n'
-
-class ValidationState:
-    def __init__(self):
-        self.total_rows = 0
-        self.valid_rows = 0
-        self.error_rows = 0
-        self.header_validation_messages = []
