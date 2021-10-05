@@ -15,10 +15,12 @@ from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
+    AggregationType,
+    AttributionRule,
+    PrivateComputationInstance,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstance,
+    PrivateComputationGameType,
 )
 from fbpcs.private_computation.entity.private_computation_stage_type import (
     PrivateComputationStageType,
@@ -44,10 +46,8 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         _onedocker_binary_config_map: Stores a mapping from mpc game to OneDockerBinaryConfig (binary version and tmp directory)
         _mpc_svc: creates and runs MPC instances
         _concurrency: number of threads to run per container
-        _attribution_rule: TODO
-        _aggregation_type: TODO
-        _is_validating: TODO
-        _log_cost_to_s3: TODO
+        _is_validating: if a test shard is injected to do run time correctness validation
+        _log_cost_to_s3: if money cost of the computation will be logged to S3
         _container_timeout: optional duration in seconds before cloud containers timeout
         _skip_partial_container_retry: don't perform a partial container retry, even if conditions are met.
     """
@@ -57,8 +57,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         mpc_service: MPCService,
         concurrency: Optional[int] = None,
-        attribution_rule: Optional[str] = None,
-        aggregation_type: Optional[str] = None,
         is_validating: bool = False,
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
@@ -67,8 +65,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._mpc_service = mpc_service
         self._concurrency = concurrency
-        self._attribution_rule = attribution_rule
-        self._aggregation_type = aggregation_type
         self._is_validating = is_validating
         self._log_cost_to_s3 = log_cost_to_s3
         self._container_timeout = container_timeout
@@ -192,8 +188,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                 private_computation_instance.game_type
                 is PrivateComputationGameType.ATTRIBUTION
             ):
-                # TODO: we will write aggregation_type, attribution_rule and log_cost_to_s3
-                #   to the instance, so later this function interface will get simplified
                 game_args = self._get_attribution_game_args(
                     private_computation_instance,
                     common_compute_game_args,
@@ -256,12 +250,18 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             MPC game args to be used by onedocker
         """
         game_args = []
+        aggregation_type = checked_cast(
+            AggregationType, private_computation_instance.aggregation_type
+        )
+        attribution_rule = checked_cast(
+            AttributionRule, private_computation_instance.attribution_rule
+        )
         game_args = [
             {
                 **common_compute_game_args,
                 **{
-                    "aggregators": self._aggregation_type,
-                    "attribution_rules": self._attribution_rule,
+                    "aggregators": aggregation_type.value,
+                    "attribution_rules": attribution_rule.value,
                     "file_start_index": i
                     * private_computation_instance.num_files_per_mpc_container,
                     "use_xor_encryption": True,
