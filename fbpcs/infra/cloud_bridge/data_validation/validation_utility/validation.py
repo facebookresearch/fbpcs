@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import boto3
 import csv
 from botocore.response import StreamingBody
 from typing import Dict, List, Optional, Set
@@ -39,15 +38,6 @@ class ValidationState:
         self.lines_missing_all_required_fields = []
         self.lines_incorrect_field_format = {}
 
-def validate_and_generate_report(bucket: str, key: str) -> str:
-    s3_client = boto3.client('s3')
-    response = s3_client.get_object(Bucket=bucket, Key=key)
-    body = response['Body']
-    try:
-        return generate_from_body(body)
-    except BaseException as e:
-        return f'Something went wrong while validating the data. Exception details if available:\n{e}'
-
 def header_check_fields_missing(header_fields: List[str]) -> List[str]:
     fields_missing = ALL_REQUIRED_FIELDS.difference(set(header_fields))
     return sorted(fields_missing)
@@ -59,6 +49,17 @@ def header_contains_identity_fields(header_fields: List[str]) -> bool:
 def field_value_is_valid(value: str, regex: re.Pattern) -> bool:
     return value.strip() == value and regex.match(value) is not None
 
+def append_line_number_to_field(
+    field: str,
+    fields_lines: Dict[str, List[int]],
+    current_line: int
+) -> None:
+    has_line_numbers = field in fields_lines
+    if has_line_numbers and len(fields_lines[field]) <= MAX_ERROR_LINES:
+        fields_lines[field].append(current_line)
+    elif not has_line_numbers:
+        fields_lines[field] = [current_line]
+
 def validate_line(line: Dict[str, str], validation_state: ValidationState) -> None:
     missing_required_field = False
     missing_all_required_fields = True
@@ -67,18 +68,12 @@ def validate_line(line: Dict[str, str], validation_state: ValidationState) -> No
     for field in ALL_REQUIRED_FIELDS:
         if field not in line or value_empty(line[field]):
             missing_required_field = True
-            has_line_numbers = field in validation_state.lines_missing_required_field
-            if has_line_numbers and len(validation_state.lines_missing_required_field[field]) <= MAX_ERROR_LINES:
-                validation_state.lines_missing_required_field[field].append(current_line)
-            elif not has_line_numbers:
-                validation_state.lines_missing_required_field[field] = [current_line]
+            append_line_number_to_field(field, validation_state.lines_missing_required_field, current_line)
         else:
             field_is_valid = field_value_is_valid(line[field], FORMAT_VALIDATION_FOR_FIELD[field])
             if not field_is_valid:
                 pattern_validation_failed = True
-                if field not in validation_state.lines_incorrect_field_format:
-                    validation_state.lines_incorrect_field_format[field] = []
-                validation_state.lines_incorrect_field_format[field].append(current_line)
+                append_line_number_to_field(field, validation_state.lines_incorrect_field_format, current_line)
 
     for field in ONE_OR_MORE_REQUIRED_FIELDS:
         if field in line and not value_empty(line[field]):
@@ -86,9 +81,7 @@ def validate_line(line: Dict[str, str], validation_state: ValidationState) -> No
             field_is_valid = field_value_is_valid(line[field], FORMAT_VALIDATION_FOR_FIELD[field])
             if not field_is_valid:
                 pattern_validation_failed = True
-                if field not in validation_state.lines_incorrect_field_format:
-                    validation_state.lines_incorrect_field_format[field] = []
-                validation_state.lines_incorrect_field_format[field].append(current_line)
+                append_line_number_to_field(field, validation_state.lines_incorrect_field_format, current_line)
 
     if missing_all_required_fields and len(validation_state.lines_missing_all_required_fields) <= MAX_ERROR_LINES:
         validation_state.lines_missing_all_required_fields.append(current_line)
@@ -129,6 +122,38 @@ def lines_incorrect_format_report(validation_state: ValidationState) -> List[str
         report.append(f"Line numbers with incorrect '{field}' format{max_lines}: {error_lines}\n")
     return report
 
+def is_header_row_valid(line_string: str, validation_state: ValidationState) -> bool:
+    header_row_valid = True
+    raw_field_names = csv.DictReader([line_string]).fieldnames
+    header_fields = []
+    if raw_field_names:
+        for s in raw_field_names:
+            header_fields.append(s)
+    missing_fields = header_check_fields_missing(header_fields)
+    if len(missing_fields) > 0:
+        missing_fields_str = ','.join(missing_fields)
+        validation_state.header_validation_messages.append(
+            f'Header row not valid, missing `{missing_fields_str}` required fields.'
+        )
+        header_row_valid = False
+    if not header_contains_identity_fields(header_fields):
+        required_header_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
+        validation_state.header_validation_messages.append(
+            f'Header row not valid, at least one of `{required_header_fields}` is required.'
+        )
+        header_row_valid = False
+    return header_row_valid
+
+def generate_report(validation_state: ValidationState) -> str:
+    report = ['Validation Summary:']
+    report.append(f'Total rows: {validation_state.total_rows}')
+    report.append(f'Valid rows: {validation_state.valid_rows}')
+    report.append(f'Rows with errors: {validation_state.error_rows}')
+    report.extend(validation_state.header_validation_messages)
+    report.extend(lines_missing_report(validation_state))
+    report.extend(lines_incorrect_format_report(validation_state))
+    return '\n'.join(report) + '\n'
+
 def generate_from_body(body: StreamingBody) -> str:
     validation_state = ValidationState()
     valid_header_row = None
@@ -141,25 +166,7 @@ def generate_from_body(body: StreamingBody) -> str:
                 validation_state.total_rows += 1
                 validate_line(parsed_line, validation_state)
         else:
-            header_row_valid = True
-            raw_field_names = csv.DictReader([line_string]).fieldnames
-            header_fields = []
-            if raw_field_names:
-                for s in raw_field_names:
-                    header_fields.append(s)
-            missing_fields = header_check_fields_missing(header_fields)
-            if len(missing_fields) > 0:
-                missing_fields_str = ','.join(missing_fields)
-                validation_state.header_validation_messages.append(
-                    f'Header row not valid, missing `{missing_fields_str}` required fields.'
-                )
-                header_row_valid = False
-            if not header_contains_identity_fields(header_fields):
-                required_header_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
-                validation_state.header_validation_messages.append(
-                    f'Header row not valid, at least one of `{required_header_fields}` is required.'
-                )
-                header_row_valid = False
+            header_row_valid = is_header_row_valid(line_string, validation_state)
             if not header_row_valid:
                 validation_state.header_validation_messages.append(
                     'Validation processing stopped.'
@@ -167,11 +174,4 @@ def generate_from_body(body: StreamingBody) -> str:
                 break
             valid_header_row = line_string
 
-    report = ['Validation Summary:']
-    report.append(f'Total rows: {validation_state.total_rows}')
-    report.append(f'Valid rows: {validation_state.valid_rows}')
-    report.append(f'Rows with errors: {validation_state.error_rows}')
-    report.extend(validation_state.header_validation_messages)
-    report.extend(lines_missing_report(validation_state))
-    report.extend(lines_incorrect_format_report(validation_state))
-    return '\n'.join(report) + '\n'
+    return generate_report(validation_state)
