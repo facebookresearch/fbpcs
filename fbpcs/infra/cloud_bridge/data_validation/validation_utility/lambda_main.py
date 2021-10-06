@@ -11,6 +11,7 @@ import validation
 from datetime import datetime
 
 DEBUG_MODE = str(os.environ.get('VALIDATION_DEBUG_MODE')) == '1'
+DEFAULT_VALIDATION_RESULTS_S3_KEY = 'uploaded_events_validation_results'
 
 def debug_log(msg: str) -> None:
     if DEBUG_MODE:
@@ -48,13 +49,19 @@ def validate_and_generate_report(bucket: str, key: str) -> str:
 
 # context type is: awslambdaric.lambda_context.LambdaContext
 def lambda_handler(event, context):
-    output_bucket_name = os.environ.get('UPLOAD_AND_VALIDATION_S3_BUCKET')
-    output_bucket_key = os.environ.get('VALIDATION_RESULTS_S3_KEY')
-    if not (output_bucket_name and output_bucket_key):
-        raise Exception(f'Exception: missing either output_bucket_name: `{output_bucket_name}` or output_bucket_key: `{output_bucket_key}`')
+    output_bucket = os.environ.get('UPLOAD_AND_VALIDATION_S3_BUCKET')
+    if not output_bucket:
+        raise Exception(f'Exception: missing output_bucket: `{output_bucket}`')
+
+    output_key = os.environ.get('VALIDATION_RESULTS_S3_KEY')
+    upload_key = os.environ.get('EVENTS_DATA_UPLOAD_S3_KEY')
+    if not output_key and upload_key:
+        output_key = f'{upload_key}/{DEFAULT_VALIDATION_RESULTS_S3_KEY}'
+    elif not output_key:
+        output_key = DEFAULT_VALIDATION_RESULTS_S3_KEY
 
     debug_log(
-        f'output bucket: {output_bucket_name}\noutput key: {output_bucket_key}'
+        f'output bucket: {output_bucket}\noutput key: {output_key}'
     )
 
     try:
@@ -74,8 +81,8 @@ def lambda_handler(event, context):
             ])
 
             write_result_to_s3(
-                output_bucket_name,
-                output_bucket_key,
+                output_bucket,
+                output_key,
                 validation_result_file_path,
                 validation_results
             )

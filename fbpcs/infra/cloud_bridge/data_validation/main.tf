@@ -56,6 +56,7 @@ resource "aws_lambda_function" "upload_lambda_trigger" {
     variables = {
       VALIDATION_DEBUG_MODE           = var.validation_debug_mode
       UPLOAD_AND_VALIDATION_S3_BUCKET = var.upload_and_validation_s3_bucket
+      EVENTS_DATA_UPLOAD_S3_KEY       = var.events_data_upload_s3_key
       VALIDATION_RESULTS_S3_KEY       = var.validation_results_s3_key
     }
   }
@@ -81,8 +82,29 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
   depends_on = [aws_lambda_permission.allow_upload_bucket]
 }
 
-resource "aws_iam_role_policy" "s3_policy_lambda" {
+resource "aws_iam_role_policy" "s3_policy_lambda_upload_bucket_key" {
   name   = "lambda-s3-policy${var.tag_postfix}"
+  role   = aws_iam_role.lambda_iam.id
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": [
+          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}",
+          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "s3_policy_lambda_validation_bucket_key" {
+  name   = "lambda-s3-policy${var.tag_postfix}"
+  count  = var.validation_results_s3_key == "" ? 0 : 1
   role   = aws_iam_role.lambda_iam.id
   policy = <<EOF
 {
@@ -94,14 +116,6 @@ resource "aws_iam_role_policy" "s3_policy_lambda" {
       "Resource": [
           "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.validation_results_s3_key}",
           "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.validation_results_s3_key}/*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": "s3:*",
-      "Resource": [
-          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}",
-          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}/*"
       ]
     }
   ]

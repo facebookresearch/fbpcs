@@ -2,6 +2,8 @@
 This data validation lambda job is triggered when a CSV file is uploaded to the configured S3 bucket key at `s3://<upload_and_validation_s3_bucket>/<events_data_upload_s3_key>`.
 The job first checks if there is a valid header row, and if it finds one it then validates all of the rows.
 It then outputs the validation result to a file under the configured S3 key at `s3://<upload_and_validation_s3_bucket>/<validation_results_s3_key>`.
+If no <validation_results_s3_key> is specified, the validation result will be stored in the default key:
+* <events_data_upload_s3_key>/uploaded_events_validation_results
 
 Validation file output format example:
 ```
@@ -40,8 +42,12 @@ Line numbers with incorrect 'device_id' format: 14
   * `aws configure`
 * Terraform CLI
 * S3 bucket
-* 2 different S3 keys: 1 for upload, 1 for storing the validation output
+* S3 key where the CSV files will be uploaded
 * Tag postfix: a string added to the end of each created resource to avoid resource name collisions
+
+## Optional variables
+* validation_results_s3_key
+* validation_debug_mode
 
 ## Deployment
 ```

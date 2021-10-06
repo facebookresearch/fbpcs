@@ -24,7 +24,7 @@ variable "events_data_upload_s3_key" {
 }
 
 variable "validation_results_s3_key" {
-  description = "The bucket path where validation results will be stored. This should be a different basepath than the upload directory to avoid an infinite processing loop"
+  description = "the bucket path where validation results will be stored, this field is optional"
   default     = ""
 }
 
