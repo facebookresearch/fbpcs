@@ -169,7 +169,7 @@ class CostEstimation {
   std::string writeToS3(std::string run_name, folly::dynamic costDynamic){
 
     std::string costData = folly::toPrettyJson(costDynamic);
-    std::string s3FullPath = "https://" + s3Bucket_ + ".s3.us-west-2.amazonaws.com/" + s3Path_ + "/";
+    std::string s3FullPath = folly::to<std::string>("https://", s3Bucket_, ".s3.us-west-2.amazonaws.com/", s3Path_, "/");
     std::string filePath = folly::to<std::string>(s3FullPath, run_name, ".json");
 
     try{
