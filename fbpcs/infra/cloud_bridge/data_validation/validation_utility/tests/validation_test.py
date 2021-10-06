@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import re
 from typing import List
 from unittest import TestCase
 from unittest.mock import Mock
@@ -109,6 +110,40 @@ class TestValidation(TestCase):
         self.assertRegex(result, 'Rows with errors: 3')
         self.assertRegex(result, 'Valid rows: 2')
         self.assertRegex(result, f"Line numbers that are missing 1 or more of these required fields '{expected_required_fields}': 3,4,5")
+
+    def test_validate_report_lists_only_the_first_100_missing_lines_per_error(self):
+        body = Mock('body')
+        lines = [
+            'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+        ]
+        lines.extend(
+            [',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16'] * 100
+        )
+        lines.extend(
+            ['1631204621,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16'] * 101
+        )
+        lines.extend(
+            ['1631204621,usd,5,Purchase,,website,,2021,09,09,16'] * 200
+        )
+        body.iter_lines = self.mock_lines_helper(lines)
+        result = generate_from_body(body)
+        expected_lines_missing_timestamp = ','.join(map(str, range(3, 103)))
+        expected_lines_missing_event_type = ','.join(map(str, range(103, 203)))
+        expected_fields_all_missing = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
+        expected_warning = r'\(First 100 lines shown\)'
+        expected_lines_all_missing = ','.join(map(str, range(204,304)))
+        self.assertRegex(result, 'Total rows: 402')
+        self.assertRegex(result, 'Rows with errors: 401')
+        self.assertRegex(result, 'Valid rows: 1')
+        self.assertRegex(result, f"Line numbers missing 'timestamp': {expected_lines_missing_timestamp}")
+        self.assertRegex(result, f"Line numbers missing 'event_type' {expected_warning}: {expected_lines_missing_event_type}")
+        self.assertRegex(
+            result,
+            re.compile(
+                f"Line numbers that are missing 1 or more of these required fields '{expected_fields_all_missing}' {expected_warning}: {expected_lines_all_missing}"
+            )
+        )
 
     def mock_lines_helper(self, lines: List[str]) -> Mock:
         encoded_lines = list(map(lambda line: line.encode('utf-8'), lines))
