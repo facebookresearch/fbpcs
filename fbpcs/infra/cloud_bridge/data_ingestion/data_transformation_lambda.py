@@ -50,11 +50,12 @@ def lambda_handler(event, context):
         currency_type = row_data.get("custom_data", dummy_dict).get("currency")
         conversion_value = row_data.get("custom_data", dummy_dict).get("value")
         email = row_data.get("user_data", dummy_dict).get("em")
+        device_id = row_data.get("user_data", dummy_dict).get("madid")
 
         # make sure not all values are None
         if all(
             value is None
-            for value in [timestamp, currency_type, conversion_value, event_type, email]
+            for value in [timestamp, currency_type, conversion_value, event_type, email, device_id]
         ):
             msg = f"All essential columns are None/Null. Skip recordId: f{recordId}"
             print(msg)
@@ -67,6 +68,7 @@ def lambda_handler(event, context):
         data["conversion_value"] = conversion_value
         data["event_type"] = event_type
         data["email"] = email
+        data["device_id"] = device_id
         data["action_source"] = action_source
         # firehose need data to be b64-encoded
         data = json.dumps(data) + "\n"
