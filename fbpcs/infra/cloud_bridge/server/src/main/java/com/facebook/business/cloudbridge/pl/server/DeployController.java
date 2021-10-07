@@ -7,6 +7,11 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -26,45 +31,60 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class DeployController {
-  private Lock singleProvisioningLock = new ReentrantLock();
-  private Process provisioningProcess;
   private final String NO_UPDATES_MESSAGE = "No updates";
 
   private final Logger logger = LoggerFactory.getLogger(DeployController.class);
 
-  enum DeploymentStatusRunning {
-    DEPLOYMENT_NOT_STARTED,
-    DEPLOYMENT_RUNNING,
-    DEPLOYMENT_FINISHED
-  };
+  private Object singleUpdateMutex = new Object();
+  private Lock singleProvisioningLock = new ReentrantLock();
 
-  class DeploymentStatus {
-    DeploymentStatus(DeploymentStatusRunning status, String message) {
-      this.status = status;
-      this.message = message;
-    }
+  private Process provisioningProcess;
 
-    DeploymentStatus() {
-      this.status = DeploymentStatusRunning.DEPLOYMENT_NOT_STARTED;
-      this.message = null;
-    }
+  private DeploymentState deploymentState;
 
-    public DeploymentStatusRunning status;
-    public String message;
+  public DeployController() {
+    this.deploymentState = DeploymentState.STATE_NOT_STARTED;
   }
 
-  private Object singleUpdateMutex = new Object();
-  private DeploymentStatus deploymentStatus = new DeploymentStatus();
+  enum DeploymentState {
+    STATE_NOT_STARTED("not started"),
+    STATE_RUNNING("running"),
+    STATE_FINISHED("finished");
+
+    private String state;
+
+    private DeploymentState(String state) {
+      this.state = state;
+    }
+
+    @JsonValue
+    public String getState() {
+      return state;
+    }
+  };
 
   enum APIReturnStatus {
-    STATUS_SUCCESS,
-    STATUS_FAIL,
-    STATUS_ERROR
+    STATUS_SUCCESS("success"),
+    STATUS_FAIL("fail"),
+    STATUS_ERROR("error");
+
+    private String status;
+
+    APIReturnStatus(String status) {
+      this.status = status;
+    }
+
+    @JsonValue
+    public String getStatus() {
+      return status;
+    }
   }
 
   class DeploymentAPIReturn {
     public APIReturnStatus status;
     public String message;
+
+    @JsonInclude(Include.NON_NULL)
     public Object data;
 
     public DeploymentAPIReturn(APIReturnStatus status, String message) {
@@ -96,8 +116,7 @@ public class DeployController {
 
     if (singleProvisioningLock.tryLock()) {
       logger.info("  No deployment conflicts found");
-      deploymentStatus.status = DeploymentStatusRunning.DEPLOYMENT_RUNNING;
-      deploymentStatus.message = null;
+      deploymentState = DeploymentState.STATE_RUNNING;
 
       List<String> deployCommand = new ArrayList<String>();
       deployCommand.add("/bin/sh");
@@ -141,7 +160,7 @@ public class DeployController {
           logger.info("  Deployment process finished");
 
           synchronized (singleUpdateMutex) {
-            deploymentStatus.status = DeploymentStatusRunning.DEPLOYMENT_FINISHED;
+            deploymentState = DeploymentState.STATE_FINISHED;
           }
           int exitCode = provisioningProcess.exitValue();
           if (exitCode == 0) {
@@ -173,18 +192,23 @@ public class DeployController {
   }
 
   @GetMapping(path = "/v1/deployment", produces = "application/json")
-  public DeploymentStatus deploymentStatus() {
+  public DeploymentAPIReturn deploymentStatus() {
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode rootNode = mapper.createObjectNode();
+    rootNode.put("state", deploymentState.getState());
+
     logger.info("Received status command");
-    if (deploymentStatus.status == DeploymentStatusRunning.DEPLOYMENT_NOT_STARTED) {
+    if (deploymentState == DeploymentState.STATE_NOT_STARTED) {
       logger.info("  No deployment is running");
-      return new DeploymentStatus(
-          DeploymentStatusRunning.DEPLOYMENT_NOT_STARTED, NO_UPDATES_MESSAGE);
+      return new DeploymentAPIReturn(APIReturnStatus.STATUS_SUCCESS, NO_UPDATES_MESSAGE, rootNode);
     }
 
     if (provisioningProcess == null) {
-      logger.warn("  Deployment process unavailable, with status: " + deploymentStatus.status);
-      deploymentStatus = new DeploymentStatus();
-      return deploymentStatus;
+      String stateString =
+          "Deployment process unavailable, with status: " + deploymentState.getState();
+      deploymentState = DeploymentState.STATE_NOT_STARTED;
+      logger.warn("  " + stateString);
+      return new DeploymentAPIReturn(APIReturnStatus.STATUS_ERROR, stateString);
     }
 
     synchronized (singleUpdateMutex) {
@@ -203,14 +227,18 @@ public class DeployController {
       }
       logger.trace("  Read " + sb.length() + " chars from deployment process logs");
 
-      if (deploymentStatus.status == DeploymentStatusRunning.DEPLOYMENT_RUNNING) {
-        deploymentStatus.message = sb.length() == 0 ? NO_UPDATES_MESSAGE : sb.toString();
-        return deploymentStatus;
+      if (deploymentState == DeploymentState.STATE_RUNNING) {
+        String message = sb.length() == 0 ? NO_UPDATES_MESSAGE : sb.toString();
+        return new DeploymentAPIReturn(APIReturnStatus.STATUS_SUCCESS, message, rootNode);
       } else {
         logger.info("  Deployment finished");
-        deploymentStatus = new DeploymentStatus();
+
         provisioningProcess = null;
-        return new DeploymentStatus(DeploymentStatusRunning.DEPLOYMENT_FINISHED, sb.toString());
+
+        deploymentState = DeploymentState.STATE_FINISHED;
+        rootNode.put("state", deploymentState.getState());
+
+        return new DeploymentAPIReturn(APIReturnStatus.STATUS_SUCCESS, sb.toString(), rootNode);
       }
     }
   }
