@@ -14,9 +14,7 @@ if TYPE_CHECKING:
     from fbpcs.private_computation.entity.private_computation_instance import (
         PrivateComputationInstance,
     )
-    from fbpcs.private_computation.service.private_computation import (
-        PrivateComputationService,
-    )
+from fbpcp.service.storage import StorageService
 
 
 class PostProcessingHandlerStatus(Enum):
@@ -30,7 +28,7 @@ class PostProcessingHandler(abc.ABC):
     @abc.abstractmethod
     async def run(
         self,
-        private_computation_service: "PrivateComputationService",
+        storage_svc: StorageService,
         private_computation_instance: "PrivateComputationInstance",
     ) -> None:
         raise NotImplementedError
