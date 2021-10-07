@@ -18,7 +18,7 @@ ALL_REQUIRED_FIELDS: Set[str] = {
 ONE_OR_MORE_REQUIRED_FIELDS: Set[str] = {'email','device_id'}
 FORMAT_VALIDATION_FOR_FIELD: Dict[str, re.Pattern] = {
     'email': re.compile(r"^[a-f0-9]{64}$"),
-    'device_id': re.compile(r"^[a-fA-F0-9-]{64}$"),
+    'device_id': re.compile(r"^([a-fA-F0-9]{32}|[a-fA-F0-9-]{36})$"),
     'timestamp': re.compile(r"^[0-9]+$"),
     'currency_type': re.compile(r"^[a-z]+$"),
     'conversion_value': re.compile(r"^[0-9]+$"),

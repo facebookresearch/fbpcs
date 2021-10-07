@@ -51,12 +51,12 @@ class TestValidation(TestCase):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper([
             'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
-            ',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204619,,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204619,usd,,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204619,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            ',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204619,,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204619,usd,,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204619,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
             '1631204619,usd,5,Purchase,,website,,2021,09,09,16',
-            '1631204619,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204619,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
         ])
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 6')
@@ -80,10 +80,10 @@ class TestValidation(TestCase):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper([
             'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
-            '1631204621,,,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            ',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,,,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            ',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
         ])
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 4')
@@ -98,11 +98,11 @@ class TestValidation(TestCase):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper([
             'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
             '1631204621,usd,5,Purchase,,website,,2021,09,09,16',
             '1631204621,usd,5,Purchase,,website,,2021,09,09,16',
             '1631204621,usd,5,Purchase,,website,,2021,09,09,16',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
         ])
         result = generate_from_body(body)
         expected_required_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
@@ -115,13 +115,13 @@ class TestValidation(TestCase):
         body = Mock('body')
         lines = [
             'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
         ]
         lines.extend(
-            [',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16'] * 100
+            [',usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16'] * 100
         )
         lines.extend(
-            ['1631204621,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16'] * 101
+            ['1631204621,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16'] * 101
         )
         lines.extend(
             ['1631204621,usd,5,Purchase,,website,,2021,09,09,16'] * 200
@@ -149,12 +149,12 @@ class TestValidation(TestCase):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper([
             'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
-            '1631204621,usd,5,Purchase,aaaaaaa,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,b-BbbbbbbbbbbbF-Abbbbbbbbbbbbbbb22-2222-222222222222-22222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,1234,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,c@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1111111111111111111111111111.111,website,b-BbbbbbbbbbbbF-Abbbbbbbbbbbbbbb22-2222-222222222222-22222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,b_BbbbbbbbbbbbF-Abbbbbbbbbbbbbbb22-2222-222222222222-22222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,10,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaa,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bCdEbb-bbbbbbbb-2222222-222222-23456,2021,09,09,16',
+            '1631204621,usd,5,Purchase,1234,website,00000000-1111-2222-aaaa-bbbbbbbbbbbb,2021,09,09,16',
+            '1631204621,usd,5,Purchase,c@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1111111111111111111111111111.111,website,bbbb-bbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,b_dEbb-bbbbbbbb-2222222-222222-2-123,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222-12341234,2021,09,09,16',
             '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,Z,2021,09,09,16',
         ])
         result = generate_from_body(body)
@@ -162,22 +162,22 @@ class TestValidation(TestCase):
         self.assertRegex(result, 'Rows with errors: 6')
         self.assertRegex(result, 'Valid rows: 1')
         self.assertRegex(result, "Line numbers with incorrect 'email' format: 2,4,5")
-        self.assertRegex(result, "Line numbers with incorrect 'device_id' format: 6,7,8")
+        self.assertRegex(result, "Line numbers with incorrect 'device_id' format: 5,6,7,8")
 
     def test_validate_checks_that_other_fields_are_formatted_correctly(self):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper([
             'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            'september-2021,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,12usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd,ten,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd,5,  Purchase   ,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,w,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '  1631204621 ,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd ,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd, 5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
-            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website ,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb22222222222222222222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            'september-2021,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,12usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd,ten,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd,5,  Purchase   ,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,w,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '  1631204621 ,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd ,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd, 5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website ,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
         ])
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 10')
