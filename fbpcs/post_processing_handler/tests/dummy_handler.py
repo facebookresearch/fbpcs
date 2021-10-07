@@ -35,7 +35,7 @@ class PostProcessingDummyHandler(PostProcessingHandler):
     ) -> None:
         if random.random() >= self.probability_of_failure:
             self.logger.info(
-                f"{private_computation_instance.instance_id=},{private_computation_instance.aggregated_result_path=}"
+                f"{private_computation_instance.instance_id=},{private_computation_instance.shard_aggregate_stage_output_path}"
             )
         else:
             raise PostProcessingHandlerRuntimeError(
