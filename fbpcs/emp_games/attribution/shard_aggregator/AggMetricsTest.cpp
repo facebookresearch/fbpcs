@@ -87,7 +87,7 @@ TEST_F(AggMetricsTest, TestParseLift) {
 
   ASSERT_EQ(metrics.getAtKey("cohortMetrics")->getAsList().size(), 2);
   ASSERT_EQ(metrics.getAtKey("publisherBreakdowns")->getAsList().size(), 2);
-  ASSERT_EQ(metrics.getAtKey("metrics")->getAsMap().size(), 26);
+  ASSERT_EQ(metrics.getAtKey("metrics")->getAsMap().size(), 28);
 
   // check a few values
   EXPECT_EQ(

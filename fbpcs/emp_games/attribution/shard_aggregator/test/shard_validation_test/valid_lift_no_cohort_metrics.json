@@ -4,6 +4,8 @@
     "publisherBreakdowns": [
     ],
     "metrics": {
+        "controlConvHistogram": [1,2,3,4],
+        "testConvHistogram": [4,3,2,1],
         "testValueSquared": 2949102338,
         "controlValueSquared": 2259601706,
         "testNumConvSquared": 949102338,

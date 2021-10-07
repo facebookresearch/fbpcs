@@ -1,6 +1,8 @@
 {
     "cohortMetrics": [
         {
+            "controlConvHistogram": [-1,-1,-1,-1],
+            "testConvHistogram": [-1,-1,-1,-1],
             "controlClicks": -1,
             "controlImpressions": -1,
             "controlMatchCount": -1,
@@ -29,6 +31,8 @@
             "reachedValue": -1
         },
         {
+            "controlConvHistogram": [-1,-1,-1,-1],
+            "testConvHistogram": [-1,-1,-1,-1],
             "controlClicks": -1,
             "testMatchCount": -1,
             "controlImpressions": -1,
@@ -57,6 +61,8 @@
             "reachedValue": -1
         },
         {
+            "controlConvHistogram": [-1,-1,-1,-1],
+            "testConvHistogram": [-1,-1,-1,-1],
             "controlClicks": -1,
             "testMatchCount": -1,
             "controlImpressions": -1,
@@ -87,6 +93,8 @@
     ],
     "publisherBreakdowns": [
         {
+            "controlConvHistogram": [-1,-1,-1,-1],
+            "testConvHistogram": [-1,-1,-1,-1],
             "controlClicks": -1,
             "controlImpressions": -1,
             "controlMatchCount": -1,
@@ -115,6 +123,8 @@
             "reachedValue": -1
         },
         {
+            "controlConvHistogram": [-1,-1,-1,-1],
+            "testConvHistogram": [-1,-1,-1,-1],
             "controlClicks": -1,
             "testMatchCount": -1,
             "controlImpressions": -1,
@@ -143,6 +153,8 @@
             "reachedValue": -1
         },
         {
+            "controlConvHistogram": [-1,-1,-1,-1],
+            "testConvHistogram": [-1,-1,-1,-1],
             "controlClicks": -1,
             "testMatchCount": -1,
             "controlImpressions": -1,
@@ -172,6 +184,8 @@
         }
     ],
     "metrics": {
+        "controlConvHistogram": [-1,-1,-1,-1],
+        "testConvHistogram": [-1,-1,-1,-1],
         "controlClicks": -1,
         "controlImpressions": -1,
         "controlMatchCount": -1,

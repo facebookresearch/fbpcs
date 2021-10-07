@@ -26,11 +26,21 @@ void applyLiftThresholdCondition(
           liftMetrics->getAtKey("controlConverters")->getEmpIntValue() >=
       kAnonymityLevel;
   for (const auto& [key, value] : liftMetrics->getAsMap()) {
+    // TODO: Use std::string operator== instead of compare
     if (!key.compare("controlPopulation") || !key.compare("testPopulation")) {
+      // These two values are always revealed
       continue;
     }
-    value->setEmpIntValue(
-        emp::If(condition, value->getEmpIntValue(), hiddenMetric));
+    else if (key == "controlConvHistogram" || key == "testConvHistogram") {
+      auto& innerList = value->getAsList();
+      for (auto& innerValue : innerList) {
+        innerValue->setEmpIntValue(
+          emp::If(condition, innerValue->getEmpIntValue(), hiddenMetric));
+      }
+    } else {
+      value->setEmpIntValue(
+          emp::If(condition, value->getEmpIntValue(), hiddenMetric));
+    }
   }
 }
 } // namespace
