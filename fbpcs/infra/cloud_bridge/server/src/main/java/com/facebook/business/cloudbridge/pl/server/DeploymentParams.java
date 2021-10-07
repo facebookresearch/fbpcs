@@ -8,6 +8,8 @@
 package com.facebook.business.cloudbridge.pl.server;
 
 import com.amazonaws.regions.Regions;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class DeploymentParams {
   public String region;
@@ -17,9 +19,43 @@ public class DeploymentParams {
   public String storage;
   public String ingestionOutput;
   public String tag;
+  public LogLevel logLevel;
 
   public String awsAccessKeyId;
   public String awsSecretAccessKey;
+
+  enum LogLevel {
+    DISABLED("Disabled"),
+    ERROR("ERROR"),
+    WARNING("WARN"),
+    INFORMATION("INFO"),
+    DEBUG("DEBUG"),
+    TRACE("TRACE");
+
+    private final String level;
+
+    LogLevel() {
+      this.level = "DEBUG";
+    }
+
+    LogLevel(final String level) {
+      this.level = level;
+    }
+
+    public String getLevel() {
+      return this.level;
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public static LogLevel getLogLevelFromName(@JsonProperty("logLevel") String level) {
+      for (LogLevel l : LogLevel.values()) {
+        if (l.getLevel().equals(level)) {
+          return l;
+        }
+      }
+      return DEBUG;
+    }
+  }
 
   public boolean validRegion() {
     try {
@@ -80,5 +116,30 @@ public class DeploymentParams {
 
   public boolean validSecretAccessKey() {
     return awsSecretAccessKey != null && !awsSecretAccessKey.isEmpty();
+  }
+
+  public String toString() {
+    StringBuilder sb =
+        new StringBuilder()
+            .append("{region: ")
+            .append(region)
+            .append(", account ID: ")
+            .append(accountId)
+            .append(", publisher account ID: ")
+            .append(pubAccountId)
+            .append(", VPC ID: ")
+            .append(vpcId)
+            .append(", Configuration Storage: ")
+            .append(storage)
+            .append(", Ingestion Output Storage: ")
+            .append(ingestionOutput);
+    if (tag != null) {
+      sb.append(", Tag: ").append(tag);
+    }
+    if (logLevel != null) {
+      sb.append(", Terraform Log Level: ").append(logLevel);
+    }
+    sb.append("}");
+    return sb.toString();
   }
 }
