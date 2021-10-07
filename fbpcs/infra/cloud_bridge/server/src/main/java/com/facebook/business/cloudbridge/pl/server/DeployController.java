@@ -9,7 +9,14 @@ package com.facebook.business.cloudbridge.pl.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Semaphore;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -65,7 +72,7 @@ public class DeployController {
 
   @GetMapping(path = "/v1/deployment", produces = "application/json")
   public APIReturn deploymentStatus() {
-    logger.info("Received status command");
+    logger.info("Received status request");
 
     if (runner == null
         || runner.getDeploymentState() == DeploymentRunner.DeploymentState.STATE_NOT_STARTED) {
@@ -82,5 +89,43 @@ public class DeployController {
       rootNode.put("exitValue", runner.getExitValue());
 
     return new APIReturn(APIReturn.Status.STATUS_SUCCESS, runner.getOutput(), rootNode);
+  }
+
+  @GetMapping(path = "/v1/deployment/logs")
+  public byte[] downloadDeploymentLogs() {
+    logger.info("Received logs request");
+    ByteArrayOutputStream bo = new ByteArrayOutputStream();
+    try {
+      ZipOutputStream zout = new ZipOutputStream(bo);
+      compressIfExists("/tmp/server.log", "server.log", zout);
+      compressIfExists("/tmp/deploy.log", "deploy.log", zout);
+      zout.close();
+    } catch (IOException e) {
+      logger.debug(
+          "  Could not compress logs. Message: " + e.getMessage() + "\n" + e.getStackTrace());
+    }
+
+    logger.info("Logs request finalized");
+    return bo.toByteArray();
+  }
+
+  private void compressIfExists(String fullFilePath, String zipName, ZipOutputStream zout) {
+    Path file = Paths.get(fullFilePath);
+    logger.info("  Compressing \"" + fullFilePath + "\"");
+    if (Files.exists(file)) {
+      logger.trace("  File exists");
+      try {
+        byte[] bytes = Files.readAllBytes(file);
+        ZipEntry ze = new ZipEntry(zipName);
+        zout.putNextEntry(ze);
+        zout.write(bytes);
+        zout.closeEntry();
+      } catch (IOException e) {
+        logger.debug(
+            "  Could not read file. Message: " + e.getMessage() + "\n" + e.getStackTrace());
+      }
+    } else {
+      logger.debug("  File does not exist");
+    }
   }
 }
