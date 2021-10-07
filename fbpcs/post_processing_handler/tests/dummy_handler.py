@@ -13,14 +13,11 @@ from typing import TYPE_CHECKING
 
 from fbpcs.post_processing_handler.exception import PostProcessingHandlerRuntimeError
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
-
 if TYPE_CHECKING:
     from fbpcs.private_computation.entity.private_computation_instance import (
         PrivateComputationInstance,
     )
-    from fbpcs.private_computation.service.private_computation import (
-        PrivateComputationService,
-    )
+from fbpcp.service.storage import StorageService
 
 
 class PostProcessingDummyHandler(PostProcessingHandler):
@@ -33,7 +30,7 @@ class PostProcessingDummyHandler(PostProcessingHandler):
 
     async def run(
         self,
-        private_computation_service: "PrivateComputationService",
+        storage_svc: StorageService,
         private_computation_instance: "PrivateComputationInstance",
     ) -> None:
         if random.random() >= self.probability_of_failure:
