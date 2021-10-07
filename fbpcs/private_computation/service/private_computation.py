@@ -716,7 +716,7 @@ class PrivateComputationService:
             handler_name
         ] = PostProcessingHandlerStatus.STARTED
         try:
-            await handler.run(self, private_computation_instance)
+            await handler.run(self.storage_svc, private_computation_instance)
             self.logger.info(f"Completed post processing handler: {handler_name=}")
             post_processing_instance.handler_statuses[
                 handler_name
