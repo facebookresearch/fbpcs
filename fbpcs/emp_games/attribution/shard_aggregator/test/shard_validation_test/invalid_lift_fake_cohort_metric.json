@@ -1,6 +1,8 @@
 {
     "cohortMetrics": [
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquaredFake": 3350441960,
             "controlNumConvSquared": 350441960,
             "testValueSquared": 2014985121,
@@ -29,6 +31,8 @@
             "reachedValue": 2908667381
         },
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquared": 236216478,
             "testValueSquared": 3942206104,
             "controlNumConvSquared": 36216478,
@@ -57,6 +61,8 @@
             "reachedValue": 2361916971
         },
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquared": 36216478,
             "testValueSquared": 942206104,
             "controlNumConvSquared": 6216478,
@@ -87,6 +93,8 @@
     ],
     "publisherBreakdowns": [
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquaredFake": 3350441960,
             "controlNumConvSquared": 350441960,
             "testValueSquared": 2014985121,
@@ -115,6 +123,8 @@
             "reachedValue": 2908667381
         },
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquared": 236216478,
             "testValueSquared": 3942206104,
             "controlNumConvSquared": 36216478,
@@ -143,6 +153,8 @@
             "reachedValue": 2361916971
         },
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquared": 36216478,
             "testValueSquared": 942206104,
             "controlNumConvSquared": 6216478,
@@ -172,6 +184,8 @@
         }
     ],
     "metrics": {
+        "controlConvHistogram": [1,2,3,4],
+        "testConvHistogram": [4,3,2,1],
         "testValueSquared": 4205949011,
         "controlValueSquared": 3724585762,
         "testNumConvSquared": 205949011,

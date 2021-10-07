@@ -1,6 +1,8 @@
 {
     "cohortMetrics": [
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquared": 2988483738,
             "testValueSquared": 459307800,
             "controlNumConvSquared": 988483738,
@@ -29,6 +31,8 @@
             "reachedValue": 1957171223
         },
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "testValueSquared": 3691439230,
             "testNumConvSquared": 691439230,
             "controlValueSquared": 1825398531,
@@ -60,6 +64,8 @@
     ],
     "publisherBreakdowns": [
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "controlValueSquared": 2988483738,
             "testValueSquared": 459307800,
             "controlNumConvSquared": 988483738,
@@ -88,6 +94,8 @@
             "reachedValue": 1957171223
         },
         {
+            "controlConvHistogram": [1,2,3,4],
+            "testConvHistogram": [4,3,2,1],
             "testValueSquared": 3691439230,
             "testNumConvSquared": 691439230,
             "controlValueSquared": 1825398531,
@@ -118,6 +126,8 @@
         }
     ],
     "metrics": {
+        "controlConvHistogram": [1,2,3,4],
+        "testConvHistogram": [4,3,2,1],
         "testValueSquared": 1247379003,
         "controlValueSquared": 405497006,
         "testNumConvSquared": 247379003,

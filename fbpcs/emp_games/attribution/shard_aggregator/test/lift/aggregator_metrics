@@ -1,6 +1,8 @@
 {
     "cohortMetrics": [
         {
+            "controlConvHistogram": [0,0,0,0],
+            "testConvHistogram": [0,0,0,0],
             "controlValueSquared": 1498345844,
             "testValueSquared": 8688508308,
             "controlNumConvSquared": 1929258356,
@@ -29,6 +31,8 @@
             "reachedValue": 1605304674
         },
         {
+            "controlConvHistogram": [0,0,0,0],
+            "testConvHistogram": [0,0,0,0],
             "controlValueSquared": 7273179529,
             "testValueSquared": 6165631040,
             "controlNumConvSquared": 1539991433,
@@ -57,6 +61,8 @@
             "reachedValue": 10662098835
         },
         {
+            "controlConvHistogram": [0,0,0,0],
+            "testConvHistogram": [0,0,0,0],
             "controlValueSquared": 473773988,
             "testValueSquared": 879420933,
             "controlNumConvSquared": 1482532,
@@ -87,6 +93,8 @@
     ],
     "publisherBreakdowns": [
         {
+            "controlConvHistogram": [0,0,0,0],
+            "testConvHistogram": [0,0,0,0],
             "controlValueSquared": 1498345844,
             "testValueSquared": 8688508308,
             "controlNumConvSquared": 1929258356,
@@ -115,6 +123,8 @@
             "reachedValue": 1605304674
         },
         {
+            "controlConvHistogram": [0,0,0,0],
+            "testConvHistogram": [0,0,0,0],
             "controlValueSquared": 7273179529,
             "testValueSquared": 6165631040,
             "controlNumConvSquared": 1539991433,
@@ -143,6 +153,8 @@
             "reachedValue": 10662098835
         },
         {
+            "controlConvHistogram": [0,0,0,0],
+            "testConvHistogram": [0,0,0,0],
             "controlValueSquared": 473773988,
             "testValueSquared": 879420933,
             "controlNumConvSquared": 1482532,
@@ -172,6 +184,8 @@
         }
     ],
     "metrics": {
+        "controlConvHistogram": [0,0,0,0],
+        "testConvHistogram": [0,0,0,0],
         "testValueSquared": 7289318455,
         "controlValueSquared": 3950817466,
         "testNumConvSquared": 1060095031,
