@@ -6,6 +6,7 @@ ARG os_release="latest"
 ARG tag="latest"
 FROM fbpcs/data-processing:${tag} as data_processing
 FROM fbpcs/emp-games:${tag} as emp_games
+FROM ghcr.io/facebookresearch/private-id:${tag} as private_id
 
 FROM ubuntu:${os_release}
 # Set the timezone
@@ -43,11 +44,21 @@ RUN wget https://raw.githubusercontent.com/facebookresearch/fbpcp/main/onedocker
 RUN mkdir -p /root/onedocker/package
 
 # Copy emp_games and data_processing executables
-WORKDIR /usr/local/bin
 COPY --from=emp_games /usr/local/bin/. /usr/local/bin/.
 COPY --from=data_processing /usr/local/bin/. /usr/local/bin/.
+
+# Copy private_id executables: private-id-client and private-id-server
+COPY --from=private_id /opt/private-id/bin/private-id-client /usr/local/bin/private-id-client
+COPY --from=private_id /opt/private-id/bin/private-id-server /usr/local/bin/private-id-server
+
 # Link all the binaries into /root/onedocker/package
-RUN for b in $(ls attribution* lift* pid* shard*); do ln -s $(pwd)/$b /root/onedocker/package/$b; done
+WORKDIR /usr/local/bin
+RUN for b in $(ls attribution* lift* pid* shard* private-id*); do ln -s $(pwd)/$b /root/onedocker/package/$b; done
+
+# Link binaries name to match with onedocker binaries name
+RUN ln -s attribution_calculator /root/onedocker/package/compute
+RUN ln -s lift_calculator /root/onedocker/package/lift
+RUN ln -s shard_aggregator /root/onedocker/package/shard-aggregator
 
 WORKDIR /root
 CMD ["/bin/bash"]
