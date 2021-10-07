@@ -74,6 +74,9 @@ from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
 from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
+from fbpcs.private_computation.service.post_processing_stage_service import (
+    PostProcessingStageService,
+)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -568,100 +571,13 @@ class PrivateComputationService:
         aggregated_result_path: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
-        # It's expected that the pl instance is in an updated status because:
-        #   For publisher, a Chronos job is scheduled to update it every 60 seconds;
-        #   for partner, PL-Coordinator should have updated it before calling this action.
-        private_computation_instance = self.get_instance(instance_id)
-        post_processing_handlers_statuses = None
-
-        # default to be an empty string
-        retry_counter_str = ""
-
-        # Validate status of the instance
-        if (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
-        ):
-            private_computation_instance.retry_counter = 0
-        elif (
-            private_computation_instance.status
-            is PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED
-        ):
-            private_computation_instance.retry_counter += 1
-            retry_counter_str = str(private_computation_instance.retry_counter)
-            # copies the last instance's handler status so that we can
-            # avoid reattempting already successfully completed handlers
-            if private_computation_instance.instances:
-                last_instance = private_computation_instance.instances[-1]
-                if not isinstance(last_instance, PostProcessingInstance):
-                    raise ValueError(
-                        f"Expected PostProcessingInstance, found {type(last_instance)}"
-                    )
-                if (
-                    last_instance.handler_statuses.keys()
-                    == post_processing_handlers.keys()
-                ):
-                    self.logger.info("Copying statuses from last instance")
-                    post_processing_handlers_statuses = (
-                        last_instance.handler_statuses.copy()
-                    )
-        elif private_computation_instance.status in STAGE_STARTED_STATUSES:
-            # Whether this is a normal run or a test run with dry_run=True, we would like to make sure that
-            # the instance is no longer in a running state before starting a new operation
-            raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {private_computation_instance.status}."
-            )
-        elif not dry_run:
-            raise ValueError(
-                f"Instance {instance_id} has status {private_computation_instance.status}. Not ready for running post processing handlers."
-            )
-
-        post_processing_instance = PostProcessingInstance.create_instance(
-            instance_id=instance_id + "_post_processing" + retry_counter_str,
-            handlers=post_processing_handlers,
-            handler_statuses=post_processing_handlers_statuses,
-            status=PostProcessingInstanceStatus.STARTED,
+        return await self.run_stage_async(
+            instance_id,
+            PostProcessingStageService(
+                self.storage_svc, post_processing_handlers, aggregated_result_path
+            ),
+            dry_run=dry_run or False,
         )
-
-        private_computation_instance.instances.append(post_processing_instance)
-
-        self._update_status(
-            private_computation_instance=private_computation_instance,
-            new_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
-        )
-
-        # if any handlers fail, then the post_processing_instance status will be
-        # set to failed, as will the private_computation_instance status
-        # self.instance_repository.update(private_computation_instance) is called each time within
-        # the self._run_post_processing_handler method
-        await asyncio.gather(
-            *[
-                self._run_post_processing_handler(
-                    private_computation_instance,
-                    post_processing_instance,
-                    name,
-                    handler,
-                )
-                for name, handler in post_processing_handlers.items()
-                if post_processing_instance.handler_statuses[name]
-                != PostProcessingHandlerStatus.COMPLETED
-            ]
-        )
-
-        # if any of the handlers failed, then there is no need to update the status or the instance repository.
-        # if they all suceeded, post_processing_instance status will be something other than FAILED and
-        # post_processing_instance and private_computation_instance need status updates.
-        if post_processing_instance.status != PostProcessingInstanceStatus.FAILED:
-            post_processing_instance.status = PostProcessingInstanceStatus.COMPLETED
-            self._update_status(
-                private_computation_instance=private_computation_instance,
-                new_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
-            )
-            await asyncio.get_running_loop().run_in_executor(
-                None, self.instance_repository.update, private_computation_instance
-            )
-
-        return private_computation_instance
 
     def cancel_current_stage(
         self,
@@ -703,39 +619,6 @@ class PrivateComputationService:
             f"The current stage of instance {instance_id} has been canceled."
         )
         return private_computation_instance
-
-    async def _run_post_processing_handler(
-        self,
-        private_computation_instance: PrivateComputationInstance,
-        post_processing_instance: PostProcessingInstance,
-        handler_name: str,
-        handler: PostProcessingHandler,
-    ) -> None:
-        self.logger.info(f"Starting post processing handler: {handler_name=}")
-        post_processing_instance.handler_statuses[
-            handler_name
-        ] = PostProcessingHandlerStatus.STARTED
-        try:
-            await handler.run(self.storage_svc, private_computation_instance)
-            self.logger.info(f"Completed post processing handler: {handler_name=}")
-            post_processing_instance.handler_statuses[
-                handler_name
-            ] = PostProcessingHandlerStatus.COMPLETED
-        except Exception as e:
-            self.logger.exception(e)
-            self.logger.error(f"Failed post processing handler: {handler_name=}")
-            post_processing_instance.handler_statuses[
-                handler_name
-            ] = PostProcessingHandlerStatus.FAILED
-            post_processing_instance.status = PostProcessingInstanceStatus.FAILED
-            self._update_status(
-                private_computation_instance=private_computation_instance,
-                new_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
-            )
-        finally:
-            await asyncio.get_running_loop().run_in_executor(
-                None, self.instance_repository.update, private_computation_instance
-            )
 
     """
     Get Private Lift instance status from the given instance that represents a stage.
