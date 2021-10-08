@@ -45,7 +45,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
     Private attributes:
         _onedocker_binary_config_map: Stores a mapping from mpc game to OneDockerBinaryConfig (binary version and tmp directory)
         _mpc_svc: creates and runs MPC instances
-        _concurrency: number of threads to run per container
         _is_validating: if a test shard is injected to do run time correctness validation
         _log_cost_to_s3: if money cost of the computation will be logged to S3
         _container_timeout: optional duration in seconds before cloud containers timeout
@@ -56,7 +55,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         self,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         mpc_service: MPCService,
-        concurrency: Optional[int] = None,
         is_validating: bool = False,
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
@@ -64,7 +62,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
     ) -> None:
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._mpc_service = mpc_service
-        self._concurrency = concurrency
         self._is_validating = is_validating
         self._log_cost_to_s3 = log_cost_to_s3
         self._container_timeout = container_timeout
@@ -88,9 +85,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         """
 
         # Prepare arguments for lift game
-        # TODO T101225909: remove the option to pass in concurrency at the compute stage
-        #   instead, always pass in at create_instance
-        pc_instance.concurrency = self._concurrency or pc_instance.concurrency
         game_args = self._get_compute_metrics_game_args(
             pc_instance,
         )

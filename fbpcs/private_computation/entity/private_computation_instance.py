@@ -76,13 +76,14 @@ UnionedPCInstanceStatus = Union[
 class PrivateComputationInstance(InstanceBase):
     """Stores metadata of a private computation instance
 
-    Private attributes:
-        _attribution_rule: the rule that a conversion is attributed to an exposure (e.g., last_click_1d,
+    Public attributes:
+        attribution_rule: the rule that a conversion is attributed to an exposure (e.g., last_click_1d,
                             last_click_28d, last_touch_1d, last_touch_28d). Not currently used by Lift.
-        _aggregation_type: the level the statistics are aggregated at (e.g., ad-object, which includes ad,
+        aggregation_type: the level the statistics are aggregated at (e.g., ad-object, which includes ad,
                             campaign and campaign group). In the future, aggregation_type will also be
                             used to infer the metrics_format_type argument of the shard aggregator game.
                             Not currently used by Lift.
+        concurrency: number of threads to run per container at the MPC compute metrics stage
     """
 
     instance_id: str
@@ -112,7 +113,7 @@ class PrivateComputationInstance(InstanceBase):
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
 
-    concurrency: int = 1  # used only by MPC compute metrics stage. TODO: renamed it to compute_metrics_concurrency
+    concurrency: int = 1  # used only by MPC compute metrics stage. TODO T102588568: rename to compute_metrics_concurrency
     k_anonymity_threshold: int = 0
     retry_counter: int = 0
 
