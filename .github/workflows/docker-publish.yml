@@ -49,7 +49,7 @@ jobs:
 
       - name: Build onedocker image in rc
         run: |
-          ./build-docker.sh onedocker -t rc
+          ./build-docker.sh onedocker -t rc -f
 
       # tests will be added here once we have one script for all tests ready
       #- name: Tests name
