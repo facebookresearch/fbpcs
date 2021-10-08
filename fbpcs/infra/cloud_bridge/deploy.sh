@@ -74,42 +74,76 @@ check_s3_object_exist() {
 }
 
 undeploy_aws_resources () {
-    echo "Start undeploying..."
+    echo "Start undeploying AWS resource under PCE_shared..."
     echo "########################Check tfstate files########################"
-    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/vpcpeering$tag_postfix.tfstate" "$aws_account_id"
-    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce$tag_postfix.tfstate" "$aws_account_id"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce_shared$tag_postfix.tfstate" "$aws_account_id"
-    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/data_ingestion$tag_postfix.tfstate" "$aws_account_id"
-    echo "All tfstate files exist. Continue..."
-
-    echo "########################Delete VPC Peering connection########################"
-    cd /terraform_deployment/terraform_scripts/partner/vpc_peering
-    terraform destroy \
-        -auto-approve \
-        -var "aws_region=$region" \
-        -var "tag_postfix=$tag_postfix" \
-        -var "pce_id=$pce_id"
-
-    echo "########################Delete PCE resources########################"
-    cd /terraform_deployment/terraform_scripts/common/pce
-    terraform destroy \
-        -auto-approve \
-        -var "aws_region=$region" \
-        -var "tag_postfix=$tag_postfix" \
-        -var "pce_id=$pce_id"
+    echo "Related tfstate file exists. Continue..."
+    echo "########################Deleting########################"
 
     cd /terraform_deployment/terraform_scripts/common/pce_shared
+    terraform init \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/pce_shared$tag_postfix.tfstate"
+
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id" \
         -var "pce_id=$pce_id"
+    echo "Finished undeploying AWS resource under PCE_shared."
+    echo "Start undeploying AWS resource under PCE..."
+    echo "########################Check tfstate files########################"
+    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce$tag_postfix.tfstate" "$aws_account_id"
+    echo "Related tfstate file exists. Continue..."
+    echo "########################Deleting########################"
+    cd /terraform_deployment/terraform_scripts/common/pce
+    terraform init \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/pce$tag_postfix.tfstate"
 
-    echo "########################Delete Data Ingestion related resources########################"
+    terraform destroy \
+        -auto-approve \
+        -var "aws_region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "pce_id=$pce_id"
+    echo "Finished undeploying AWS resource under PCE."
+    echo "Start undeploying AWS resource under VPC peering..."
+    echo "########################Check tfstate files########################"
+    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/vpcpeering$tag_postfix.tfstate" "$aws_account_id"
+    echo "Related tfstate file exists. Continue..."
+    echo "########################Deleting########################"
+    cd /terraform_deployment/terraform_scripts/partner/vpc_peering
+    terraform init \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "aws_region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "pce_id=$pce_id"
+
+    echo "Finished undeploying AWS resource under VPC peering."
+    echo "Start undeploying AWS resource under Data Ingestion..."
+    echo "########################Check tfstate files########################"
+    check_s3_object_exist "$s3_bucket_for_storage" "tfstate/data_ingestion$tag_postfix.tfstate" "$aws_account_id"
+    echo "Related tfstate files exists. Continue..."
+    echo "########################Deleting########################"
+
     cd /terraform_deployment/terraform_scripts/data_ingestion
+
+    terraform init \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
+
     # Exclude the s3 bucket because it can not be deleted if it's not empty
     terraform state rm aws_s3_bucket.bucket || true
+
     terraform destroy \
         -auto-approve \
         -var "region=$region" \
@@ -119,9 +153,14 @@ undeploy_aws_resources () {
     if "$build_semi_automated_data_pipeline"
     then
         echo "Undeploy Semi automated data_pipeline..."
-        check_s3_object_exist "$s3_bucket_for_storage" "tfstate/data_ingestion$tag_postfix.tfstate" "$aws_account_id"
+        check_s3_object_exist "$s3_bucket_for_storage" "tfstate/glue_etl$tag_postfix.tfstate" "$aws_account_id"
         echo "Semi automated data_pipeline tfstate file exists. Continue..."
         cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
+        terraform init \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/glue_etl$tag_postfix.tfstate"
+
         # Exclude the s3 bucket because it can not be deleted if it's not empty
         terraform state rm aws_s3_bucket.bucket || true
         terraform destroy \
@@ -130,6 +169,8 @@ undeploy_aws_resources () {
             -var "tag_postfix=$tag_postfix" \
             -var "aws_account_id=$aws_account_id"
     fi
+
+    echo "Finished destroy all AWS resources, except for S3 buckets (can not be deleted if it's not empty)"
 
 }
 
@@ -246,7 +287,7 @@ app_data_input_bucket_arn=$(terraform output data_processing_output_bucket_arn |
 
 if "$build_semi_automated_data_pipeline"
 then
-    echo "########################Configure Data Ingestion Pipeline from CB to S3########################"
+    echo "########################Configure Semi-automated Data Ingestion Pipeline from CB to S3########################"
 
     # configure semi-automated data ingestion pipeline, if true
     cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
