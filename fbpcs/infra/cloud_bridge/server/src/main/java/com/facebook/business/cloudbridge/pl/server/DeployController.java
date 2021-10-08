@@ -30,7 +30,7 @@ public class DeployController {
   private Process provisioningProcess;
   private final String NO_UPDATES_MESSAGE = "No updates";
 
-  Logger logger = LoggerFactory.getLogger(DeployController.class);
+  private final Logger logger = LoggerFactory.getLogger(DeployController.class);
 
   enum DeploymentStatusRunning {
     DEPLOYMENT_NOT_STARTED,
@@ -80,55 +80,11 @@ public class DeployController {
   public DeploymentResult deploymentCreate(@RequestBody DeploymentParams deployment) {
     logger.info("Received deployment request: " + deployment.toString());
 
-    if (!deployment.validRegion()) {
-      logger.warn("  Invalid region: " + deployment.region);
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED, "Invalid Region: " + deployment.region);
+    try {
+      deployment.validate();
+    } catch (InvalidDeploymentArgumentException ex) {
+      return new DeploymentResult(DeploymentResultSuccessful.STATUS_FAILED, ex.getMessage());
     }
-    if (!deployment.validAccountID()) {
-      logger.warn("  Invalid account ID: " + deployment.accountId);
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED, "Invalid Account ID: " + deployment.accountId);
-    }
-    if (!deployment.validPubAccountID()) {
-      logger.warn("  Invalid publisher account ID: " + deployment.pubAccountId);
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED,
-          "Invalid Publisher Account ID: " + deployment.pubAccountId);
-    }
-    if (!deployment.validVpcID()) {
-      logger.warn("  Invalid VPC ID: " + deployment.vpcId);
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED, "Invalid VPC ID: " + deployment.vpcId);
-    }
-    if (!deployment.validTagPostfix()) {
-      logger.warn("  Invalid tag postfix: " + deployment.tag);
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED, "Invalid Tag Postfix: " + deployment.tag);
-    }
-    if (!deployment.validStorageID()) {
-      logger.warn("  Invalid terraform config storage bucket: " + deployment.storage);
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED,
-          "Invalid terraform config storage bucket: " + deployment.storage);
-    }
-    if (!deployment.validIngestionOutputID()) {
-      logger.warn("  Invalid data ingestion bucket: " + deployment.ingestionOutput);
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED,
-          "Invalid data ingestion bucket: " + deployment.ingestionOutput);
-    }
-    if (!deployment.validAccessKeyId()) {
-      logger.warn("  Invalid AWS access key ID");
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED, "Invalid AWS Access Key ID");
-    }
-    if (!deployment.validSecretAccessKey()) {
-      logger.warn("  Invalid AWS secret access key");
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_FAILED, "Invalid AWS Secret Access Key");
-    }
-
     logger.info("  Validated input");
 
     if (singleProvisioningLock.tryLock()) {
