@@ -174,9 +174,27 @@ undeploy_aws_resources () {
 
 }
 
+
+input_validation () {
+echo "######################input validation############################"
+echo "validate input: aws account id..."
+account_A=$(aws sts get-caller-identity |grep -o 'Account":.*' | tr -d '"' | tr -d ' ' | tr -d ',' | cut -d':' -f2)
+account_B=$aws_account_id
+if [ "$account_A" == "$account_B" ]
+then
+    echo "input AWS account is valid."
+else # not equal
+    echo "Error: the provided AWS account id does not match the configured [secret_key, access_key]"
+    exit 1
+fi
+}
 ##########################################
 # Main
 ##########################################
+
+# validate whether the input aws_account_id matches the account from the configured [secret_key, access_key] pair
+input_validation
+
 
 if "$undeploy"
 then
@@ -195,7 +213,8 @@ then
     echo "The bucket $s3_bucket_for_storage is created."
 elif aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "403" # no access to the bucket
 then
-    echo "You don't have access to the bucket $s3_bucket_for_storage. Please choose another name."
+    echo "the bucket $s3_bucket_for_storage is owned by a different account."
+    echo "Please check your whether your AWS account id $aws_account_id matches your secret key and access key provided"
     exit 1
 else
     echo "The bucket $s3_bucket_for_storage exists and you have access to it. Using it for storing Terraform state..."
