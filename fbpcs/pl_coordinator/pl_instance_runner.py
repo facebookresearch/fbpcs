@@ -375,7 +375,6 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         config=self.config,
                         instance_id=self.instance_id,
                         logger=self.logger,
-                        concurrency=None,
                         server_ips=server_ips,
                         dry_run=None,
                     )

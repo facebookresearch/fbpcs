@@ -430,7 +430,6 @@ class PrivateComputationService:
     def compute_metrics(
         self,
         instance_id: str,
-        concurrency: Optional[int] = None,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = None,
@@ -440,7 +439,6 @@ class PrivateComputationService:
         return asyncio.run(
             self.compute_metrics_async(
                 instance_id,
-                concurrency,
                 is_validating,
                 server_ips,
                 dry_run,
@@ -454,7 +452,6 @@ class PrivateComputationService:
     async def compute_metrics_async(
         self,
         instance_id: str,
-        concurrency: Optional[int] = None,
         is_validating: Optional[bool] = False,
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = None,
@@ -466,7 +463,6 @@ class PrivateComputationService:
             ComputeMetricsStageService(
                 self.onedocker_binary_config_map,
                 self.mpc_svc,
-                concurrency,
                 is_validating or False,
                 log_cost_to_s3,
                 container_timeout,

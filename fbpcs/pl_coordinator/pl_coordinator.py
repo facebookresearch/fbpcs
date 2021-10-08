@@ -10,9 +10,9 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--game_type=<game_type> --num_files_per_mpc_container=<num_files_per_mpc_container> --hmac_key=<base64_key> --fail_fast] [options]
+    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--concurrency=<concurrency> --game_type=<game_type> --num_files_per_mpc_container=<num_files_per_mpc_container> --hmac_key=<base64_key> --fail_fast] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
-    pl-coordinator compute <instance_id> --config=<config_file> [--server_ips=<server_ips> --concurrency=<concurrency> --dry_run] [options]
+    pl-coordinator compute <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pl-coordinator run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
@@ -142,6 +142,7 @@ def main():
             output_dir=arguments["--output_dir"],
             num_pid_containers=arguments["--num_pid_containers"],
             num_mpc_containers=arguments["--num_mpc_containers"],
+            concurrency=arguments["--concurrency"],
             num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
             game_type=arguments["--game_type"],
             hmac_key=arguments["--hmac_key"],
@@ -161,7 +162,6 @@ def main():
         compute(
             config=config,
             instance_id=instance_id,
-            concurrency=arguments["--concurrency"],
             logger=logger,
             server_ips=arguments["--server_ips"],
             dry_run=arguments["--dry_run"],

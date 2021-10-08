@@ -18,7 +18,7 @@ from fbpcp.util import reflect
 from fbpcs.data_processing.sharding.sharding import ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
-from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDInstance
+from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -42,6 +42,7 @@ def create_instance(
     output_dir: str,
     num_pid_containers: int,
     num_mpc_containers: int,
+    concurrency: Optional[int] = None,
     hmac_key: Optional[str] = None,
     num_files_per_mpc_container: Optional[int] = None,
     game_type: Optional[PrivateComputationGameType] = None,
@@ -58,7 +59,7 @@ def create_instance(
         output_dir=output_dir,
         num_pid_containers=num_pid_containers,
         num_mpc_containers=num_mpc_containers,
-        concurrency=DEFAULT_CONCURRENCY,
+        concurrency=concurrency or DEFAULT_CONCURRENCY,
         num_files_per_mpc_container=num_files_per_mpc_container,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
@@ -109,7 +110,6 @@ def compute(
     config: Dict[str, Any],
     instance_id: str,
     logger: logging.Logger,
-    concurrency: Optional[int] = None,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
@@ -135,7 +135,6 @@ def compute(
 
     instance = pl_service.compute_metrics(
         instance_id=instance_id,
-        concurrency=concurrency or DEFAULT_CONCURRENCY,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
