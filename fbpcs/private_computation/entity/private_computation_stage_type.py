@@ -4,10 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from enum import Enum
+
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
-from enum import Enum
 
 
 class PrivateComputationStageType(Enum):
@@ -20,7 +21,6 @@ class PrivateComputationStageType(Enum):
     An exception is raised at runtime if _order_ is inconsistent with the actual member order.
     """
 
-
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
     _order_ = "UNKNOWN CREATED ID_MATCH COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
@@ -32,31 +32,37 @@ class PrivateComputationStageType(Enum):
         PrivateComputationInstanceStatus.UNKNOWN,
         PrivateComputationInstanceStatus.UNKNOWN,
         PrivateComputationInstanceStatus.UNKNOWN,
+        False,
     )
     CREATED = (
         PrivateComputationInstanceStatus.UNKNOWN,
         PrivateComputationInstanceStatus.CREATED,
         PrivateComputationInstanceStatus.UNKNOWN,
+        False,
     )
     ID_MATCH = (
         PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
         PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
         PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+        True,
     )
     COMPUTE = (
         PrivateComputationInstanceStatus.COMPUTATION_STARTED,
         PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
         PrivateComputationInstanceStatus.COMPUTATION_FAILED,
+        True,
     )
     AGGREGATE = (
         PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         PrivateComputationInstanceStatus.AGGREGATION_FAILED,
+        True,
     )
     POST_PROCESSING_HANDLERS = (
         PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
         PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
         PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
+        False,
     )
 
     def __init__(
@@ -64,10 +70,12 @@ class PrivateComputationStageType(Enum):
         start_status: PrivateComputationInstanceStatus,
         completed_status: PrivateComputationInstanceStatus,
         failed_status: PrivateComputationInstanceStatus,
+        is_joint_stage: bool,
     ) -> None:
         self.start_status = start_status
         self.completed_status = completed_status
         self.failed_status = failed_status
+        self.is_joint_stage = is_joint_stage
 
     @property
     def next_stage(self) -> "PrivateComputationStageType":

@@ -386,7 +386,8 @@ class TestPrivateComputationService(unittest.TestCase):
         self, stage_type: PrivateComputationStageType
     ) -> None:
         """
-        tests that run_stage does not if role is partner and no server ips are specified
+        if it's a joint stage (partner requires server ips) but partner doesn't provide server ips, value error is thrown.
+        Otherwise, things run as they should.
         """
         ####################### PARTNER NO SERVER IPS ############################
         stage_svc = self._get_dummy_stage_svc(stage_type)
@@ -399,10 +400,16 @@ class TestPrivateComputationService(unittest.TestCase):
             return_value=pl_instance
         )
 
-        with self.assertRaises(ValueError):
+        if stage_type.is_joint_stage:
+            with self.assertRaises(ValueError):
+                pl_instance = self.private_computation_service.run_stage(
+                    pl_instance.instance_id, stage_svc
+                )
+        else:
             pl_instance = self.private_computation_service.run_stage(
                 pl_instance.instance_id, stage_svc
             )
+            self.assertEqual(pl_instance.status, stage_type.start_status)
 
     @data_provider(_get_valid_stages_data)
     def test_run_stage_fails(self, stage_type: PrivateComputationStageType) -> None:

@@ -7,12 +7,14 @@
 # pyre-strict
 
 import abc
-
 from typing import List, Optional
+
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
-from fbpcs.private_computation.entity.private_computation_stage_type import PrivateComputationStageType
+from fbpcs.private_computation.entity.private_computation_stage_type import (
+    PrivateComputationStageType,
+)
 
 
 class PrivateComputationStageService(abc.ABC):
@@ -25,6 +27,7 @@ class PrivateComputationStageService(abc.ABC):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        # TODO(T102471612): remove server_ips from run_async, move to subclass constructor instead
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         ...

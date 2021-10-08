@@ -245,7 +245,11 @@ class PrivateComputationService:
         stage service
         """
         pc_instance = self.get_instance(instance_id)
-        if pc_instance.role is PrivateComputationRole.PARTNER and not server_ips:
+        if (
+            stage_svc.stage_type.is_joint_stage
+            and pc_instance.role is PrivateComputationRole.PARTNER
+            and not server_ips
+        ):
             raise ValueError("Missing server_ips")
 
         # if the instance status is the complete status of the previous stage, then we can run the target stage
