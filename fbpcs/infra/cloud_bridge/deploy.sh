@@ -40,6 +40,14 @@ done
 
 tag_postfix="-${pce_id}"
 
+if [ -z ${TF_LOG+x} ]; then
+    echo "Terraform Detailed Error Logging Disabled"
+else
+    echo "Terraform Log Level: $TF_LOG"
+    echo "Terraform Log File: $TF_LOG_PATH"
+    echo
+fi
+
 echo "AWS region is $region."
 echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
 echo "Your AWS acount ID is $aws_account_id"

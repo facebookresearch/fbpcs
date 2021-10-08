@@ -135,6 +135,11 @@ public class DeployController {
         Map<String, String> env = pb.environment();
         env.put("AWS_ACCESS_KEY_ID", deployment.awsAccessKeyId);
         env.put("AWS_SECRET_ACCESS_KEY", deployment.awsSecretAccessKey);
+        if (deployment.logLevel != DeploymentParams.LogLevel.DISABLED) {
+          if (deployment.logLevel == null) deployment.logLevel = DeploymentParams.LogLevel.DEBUG;
+          env.put("TF_LOG", deployment.logLevel.getLevel());
+          env.put("TF_LOG_PATH", "/tmp/deploy.log");
+        }
 
         pb.redirectErrorStream(true);
         pb.directory(new File("/terraform_deployment"));
