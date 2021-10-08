@@ -32,10 +32,7 @@ from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
-from fbpcs.post_processing_handler.post_processing_handler import (
-    PostProcessingHandler,
-    PostProcessingHandlerStatus,
-)
+from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
     PostProcessingInstanceStatus,
