@@ -10,6 +10,8 @@ package com.facebook.business.cloudbridge.pl.server;
 import com.amazonaws.regions.Regions;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DeploymentParams {
   public String region;
@@ -23,6 +25,8 @@ public class DeploymentParams {
 
   public String awsAccessKeyId;
   public String awsSecretAccessKey;
+
+  private final Logger logger = LoggerFactory.getLogger(DeploymentParams.class);
 
   enum LogLevel {
     DISABLED("Disabled"),
@@ -116,6 +120,41 @@ public class DeploymentParams {
 
   public boolean validSecretAccessKey() {
     return awsSecretAccessKey != null && !awsSecretAccessKey.isEmpty();
+  }
+
+  private void logAndThrow(String message) throws InvalidDeploymentArgumentException {
+    logger.error("  " + message);
+    throw new InvalidDeploymentArgumentException(message);
+  }
+
+  public void validate() throws InvalidDeploymentArgumentException {
+    if (!validRegion()) {
+      logAndThrow("Invalid Region: " + region);
+    }
+    if (!validAccountID()) {
+      logAndThrow("Invalid Account ID: " + accountId);
+    }
+    if (!validPubAccountID()) {
+      logAndThrow("Invalid Publisher Account ID: " + pubAccountId);
+    }
+    if (!validVpcID()) {
+      logAndThrow("Invalid VPC ID: " + vpcId);
+    }
+    if (!validTagPostfix()) {
+      logAndThrow("Invalid Tag Postfix: " + tag);
+    }
+    if (!validStorageID()) {
+      logAndThrow("Invalid terraform config storage bucket: " + storage);
+    }
+    if (!validIngestionOutputID()) {
+      logAndThrow("Invalid data ingestion bucket: " + ingestionOutput);
+    }
+    if (!validAccessKeyId()) {
+      logAndThrow("Invalid AWS Access Key ID");
+    }
+    if (!validSecretAccessKey()) {
+      logAndThrow("Invalid AWS Secret Access Key");
+    }
   }
 
   public String toString() {
