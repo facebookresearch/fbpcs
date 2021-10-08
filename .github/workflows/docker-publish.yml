@@ -19,7 +19,7 @@ env:
 
 jobs:
   new_commits_check:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Check New Commmits
     outputs:
       new_commits: ${{ steps.new_commits.outputs.new_commits }}
@@ -39,7 +39,7 @@ jobs:
     needs: new_commits_check
     if : needs.new_commits_check.outputs.new_commits == 'yes' || github.event_name == 'workflow_dispatch'
     name: Build Image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
       packages: write
@@ -78,7 +78,7 @@ jobs:
   # Before E2E tests in place, we require manual approval to tag this image as "latest"
   prod_push:
     needs: build_image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Push to Prod
     environment: 'prod'
     permissions:
