@@ -56,34 +56,41 @@ public class DeployController {
   private Object singleUpdateMutex = new Object();
   private DeploymentStatus deploymentStatus = new DeploymentStatus();
 
-  enum DeploymentResultSuccessful {
+  enum APIReturnStatus {
     STATUS_SUCCESS,
-    STATUS_BLOCKED,
-    STATUS_FAILED,
-    STATUS_TIMEOUT
-  };
+    STATUS_FAIL,
+    STATUS_ERROR
+  }
 
-  class DeploymentResult {
-    DeploymentResult(DeploymentResultSuccessful status, String message) {
+  class DeploymentAPIReturn {
+    public APIReturnStatus status;
+    public String message;
+    public Object data;
+
+    public DeploymentAPIReturn(APIReturnStatus status, String message) {
       this.status = status;
       this.message = message;
+      this.data = null;
     }
 
-    public DeploymentResultSuccessful status;
-    public String message;
+    public DeploymentAPIReturn(APIReturnStatus status, String message, Object data) {
+      this.status = status;
+      this.message = message;
+      this.data = data;
+    }
   }
 
   @PostMapping(
       path = "/v1/deployment",
       consumes = "application/json",
       produces = "application/json")
-  public DeploymentResult deploymentCreate(@RequestBody DeploymentParams deployment) {
+  public DeploymentAPIReturn deploymentCreate(@RequestBody DeploymentParams deployment) {
     logger.info("Received deployment request: " + deployment.toString());
 
     try {
       deployment.validate();
     } catch (InvalidDeploymentArgumentException ex) {
-      return new DeploymentResult(DeploymentResultSuccessful.STATUS_FAILED, ex.getMessage());
+      return new DeploymentAPIReturn(APIReturnStatus.STATUS_FAIL, ex.getMessage());
     }
     logger.info("  Validated input");
 
@@ -139,23 +146,20 @@ public class DeployController {
           int exitCode = provisioningProcess.exitValue();
           if (exitCode == 0) {
             logger.info("  Deployment finished successfully");
-            return new DeploymentResult(
-                DeploymentResultSuccessful.STATUS_SUCCESS, "Deployed successfully");
+            return new DeploymentAPIReturn(APIReturnStatus.STATUS_SUCCESS, "Deployed successfully");
           } else {
             logger.error("  Deployment failed with exit code: " + String.valueOf(exitCode));
-            return new DeploymentResult(
-                DeploymentResultSuccessful.STATUS_FAILED,
+            return new DeploymentAPIReturn(
+                APIReturnStatus.STATUS_ERROR,
                 "Deployment failed with exit code: " + String.valueOf(exitCode));
           }
         } catch (InterruptedException e) {
           logger.error("  Deployment timed out. Message: " + e.getMessage());
-          return new DeploymentResult(
-              DeploymentResultSuccessful.STATUS_TIMEOUT, "Deployment timed out");
+          return new DeploymentAPIReturn(APIReturnStatus.STATUS_ERROR, "Deployment timed out");
         }
       } catch (IOException e) {
         logger.error("  Deployment could not be started. Message: " + e.getMessage());
-        return new DeploymentResult(
-            DeploymentResultSuccessful.STATUS_FAILED, "Could not start deployment");
+        return new DeploymentAPIReturn(APIReturnStatus.STATUS_FAIL, "Could not start deployment");
       } finally {
         if (provisioningProcess != null && provisioningProcess.isAlive())
           provisioningProcess.destroy();
@@ -163,8 +167,8 @@ public class DeployController {
       }
     } else {
       logger.error("  Another deployment is in progress");
-      return new DeploymentResult(
-          DeploymentResultSuccessful.STATUS_BLOCKED, "Another deployment is in progress");
+      return new DeploymentAPIReturn(
+          APIReturnStatus.STATUS_ERROR, "Another deployment is in progress");
     }
   }
 
