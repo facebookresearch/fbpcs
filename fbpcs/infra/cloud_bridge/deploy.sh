@@ -7,38 +7,47 @@
 set -e
 
 usage() {
-    echo "Usage: deploy.sh
-        [ -r | AWS region, e.g. us-west-2 ]
-        [ -t | Tag that going to use as the PCE id and appended after the resource name]
-        [ -a | Your AWS account ID]
-        [ -p | Publisher's AWS account ID]
-        [ -v | Publisher's VPC Id]
-        [ -s | S3 bucket name for storing tfstate/lambda function]
-        [ -d | S3 bucket name for storing lambda processed results]
-        [ -b | build manual upload data pipeline. optional]
-        [ -u | Undeploy]"
+    echo "Usage: deploy.sh <deploy|undeploy>
+        [ -r, --region | AWS region, e.g. us-west-2 ]
+        [ -t, --tag | Tag that going to use as the PCE id and appended after the resource name]
+        [ -a, --account_id | Your AWS account ID]
+        [ -p, --publisher_account_id | Publisher's AWS account ID]
+        [ -v, --publisher_vpc_id | Publisher's VPC Id]
+        [ -s, --config_storage_bucket | S3 bucket name for storing configs: tfstate/lambda function]
+        [ -d, --data_storage_bucket | S3 bucket name for storing lambda processed results]
+        [ -b, --build_semi_automated_data_pipeline | build semi automated (manual upload) data pipeline. value = true|false ]"
     exit 1
 }
 
+if [ $# -eq 0 ]; then
+    usage
+fi
+
 undeploy=false
-build_semi_automated_data_pipeline=false
+# build_semi_automated_data_pipeline=false
 
-while getopts ":r:t:a:p:v:s:d:bu" opt; do
-    case $opt in
-        r ) region=$OPTARG ;;
-        t ) pce_id=$OPTARG ;;
-        a ) aws_account_id=$OPTARG ;;
-        p ) publisher_aws_account_id=$OPTARG ;;
-        v ) publisher_vpc_id=$OPTARG ;;
-        s ) s3_bucket_for_storage=$OPTARG ;;
-        d ) s3_bucket_data_pipeline=$OPTARG ;;
-        b ) build_semi_automated_data_pipeline=true ;;
-        u ) undeploy=true ;;
-        * ) usage ;;
+case "$1" in
+    deploy) ;;
+    undeploy) undeploy=true ;;
+    *) usage ;;
+esac
+shift
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -r|--region) region="$2" ;;
+        -t|--tag) pce_id="$2" ;;
+        -a|--account_id) aws_account_id="$2" ;;
+        -p|--publisher_account_id) publisher_aws_account_id="$2" ;;
+        -v|--publisher_vpc_id) publisher_vpc_id="$2" ;;
+        -s|--config_storage_bucket) s3_bucket_for_storage="$2" ;;
+        -d|--data_storage_bucket) s3_bucket_data_pipeline="$2" ;;
+        -b|--build_semi_automated_data_pipeline) build_semi_automated_data_pipeline="$2" ;;
+        *) usage ;;
     esac
+    shift
+    shift
 done
-
-tag_postfix="-${pce_id}"
 
 if [ -z ${TF_LOG+x} ]; then
     echo "Terraform Detailed Error Logging Disabled"
@@ -47,14 +56,6 @@ else
     echo "Terraform Log File: $TF_LOG_PATH"
     echo
 fi
-
-echo "AWS region is $region."
-echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
-echo "Your AWS acount ID is $aws_account_id"
-echo "Publisher's AWS account ID is $publisher_aws_account_id"
-echo "Publisher's VPC ID is $publisher_vpc_id"
-echo "The S3 bucket for storing 1) Terraform state file, 2) AWS Lambda functions, and 3) config.yml is $s3_bucket_for_storage"
-echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline, will be created in a short while...".
 
 ##########################################
 # Helper functions
@@ -196,6 +197,16 @@ undeploy_aws_resources () {
 
 
 input_validation () {
+echo "AWS region is $region."
+echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
+echo "Your AWS acount ID is $aws_account_id"
+echo "Publisher's AWS account ID is $publisher_aws_account_id"
+echo "Publisher's VPC ID is $publisher_vpc_id"
+echo "The S3 bucket for storing 1) Terraform state file, 2) AWS Lambda functions, and 3) config.yml is $s3_bucket_for_storage"
+echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline, will be created in a short while...".
+echo "build semi automated data pipeline: $build_semi_automated_data_pipeline"
+
+
 echo "######################input validation############################"
 echo "validate input: aws account id..."
 account_A=$(aws sts get-caller-identity |grep -o 'Account":.*' | tr -d '"' | tr -d ' ' | tr -d ',' | cut -d':' -f2)
@@ -207,6 +218,15 @@ else # not equal
     echo "Error: the provided AWS account id does not match the configured [secret_key, access_key]"
     exit 1
 fi
+
+echo "validate input: build semi automated data pipeline..."
+if [ "$build_semi_automated_data_pipeline" = "true" ] || [ "$build_semi_automated_data_pipeline" = "false" ]
+then
+    echo "build_semi_automated_data_pipeline is valid."
+else
+    echo "Error: input for build_semi_automated_data_pipeline is invalid. please provide a value of true|false."
+    exit 1
+fi
 }
 
 
@@ -214,6 +234,8 @@ fi
 ##########################################
 # Main
 ##########################################
+tag_postfix="-${pce_id}"
+
 
 # validate inputs
 input_validation
