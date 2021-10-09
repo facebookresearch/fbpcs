@@ -73,6 +73,26 @@ check_s3_object_exist() {
     fi
 }
 
+create_s3_bucket() {
+    local bucket_name=$1
+    local region=$2
+    local aws_account_id=$3
+    echo "######################## Create S3 buckets if don't exist ########################"
+    if aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+    then
+        echo "The bucket $s3_bucket_for_storage doesn't exist. Creating..."
+        aws s3api create-bucket --bucket "$s3_bucket_for_storage" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
+        aws s3api put-bucket-versioning --bucket "$s3_bucket_for_storage" --versioning-configuration Status=Enabled
+        echo "The bucket $s3_bucket_for_storage is created."
+    elif aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "403" # no access to the bucket
+    then
+        echo "the bucket $s3_bucket_for_storage is owned by a different account."
+        echo "Please check your whether your AWS account id $aws_account_id matches your secret key and access key provided"
+        exit 1
+    else
+        echo "The bucket $s3_bucket_for_storage exists and you have access to it. Using it for storing Terraform state..."
+    fi
+}
 undeploy_aws_resources () {
     echo "Start undeploying AWS resource under PCE_shared..."
     echo "########################Check tfstate files########################"
@@ -188,6 +208,9 @@ else # not equal
     exit 1
 fi
 }
+
+
+
 ##########################################
 # Main
 ##########################################
@@ -204,21 +227,7 @@ then
 fi
 
 # Create the S3 bucket if it doesn't exist
-echo "######################## Create S3 buckets if don't exist ########################"
-if aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
-then
-    echo "The bucket $s3_bucket_for_storage doesn't exist. Creating..."
-    aws s3api create-bucket --bucket "$s3_bucket_for_storage" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
-    aws s3api put-bucket-versioning --bucket "$s3_bucket_for_storage" --versioning-configuration Status=Enabled
-    echo "The bucket $s3_bucket_for_storage is created."
-elif aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "403" # no access to the bucket
-then
-    echo "the bucket $s3_bucket_for_storage is owned by a different account."
-    echo "Please check your whether your AWS account id $aws_account_id matches your secret key and access key provided"
-    exit 1
-else
-    echo "The bucket $s3_bucket_for_storage exists and you have access to it. Using it for storing Terraform state..."
-fi
+create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
 
 
 # Deploy PCE Terraform scripts
