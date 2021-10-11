@@ -3,8 +3,7 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
 
   tags = {
-    Name         = "onedocker-vpc${var.tag_postfix}"
-    "pce:pce-id" = var.pce_id
+    Name = "onedocker-vpc${var.tag_postfix}"
   }
 }
 
@@ -27,8 +26,7 @@ resource "aws_subnet" "subnets" {
   availability_zone       = local.az_names[each.key]
   map_public_ip_on_launch = true
   tags = {
-    Name         = "onedocker-subnet${var.tag_postfix}"
-    "pce:pce-id" = var.pce_id
+    Name = "onedocker-subnet${var.tag_postfix}"
   }
 }
 
@@ -36,9 +34,12 @@ resource "aws_internet_gateway" "default" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name         = "onedocker-igw${var.tag_postfix}"
-    "pce:pce-id" = var.pce_id
+    Name = "onedocker-igw${var.tag_postfix}"
   }
+}
+
+resource "aws_default_route_table" "default" {
+  default_route_table_id = aws_vpc.main.main_route_table_id
 }
 
 resource "aws_route" "internet_access" {
@@ -84,7 +85,6 @@ resource "aws_default_security_group" "default" {
   }
 
   tags = {
-    Name         = "onedocker-security-group${var.tag_postfix}"
-    "pce:pce-id" = var.pce_id
+    Name = "onedocker-security-group${var.tag_postfix}"
   }
 }
