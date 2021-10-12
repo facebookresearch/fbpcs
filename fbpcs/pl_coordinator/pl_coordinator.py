@@ -39,7 +39,12 @@ import schema
 from docopt import docopt
 from fbpcp.util import yaml
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
-from fbpcs.pl_coordinator.pl_service_wrapper import (
+from fbpcs.pl_coordinator.pl_study_runner import run_study
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+    PrivateComputationGameType,
+)
+from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate,
     compute,
     create_instance,
@@ -51,11 +56,6 @@ from fbpcs.pl_coordinator.pl_service_wrapper import (
     run_post_processing_handlers,
     validate,
     cancel_current_stage,
-)
-from fbpcs.pl_coordinator.pl_study_runner import run_study
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationRole,
-    PrivateComputationGameType,
 )
 
 

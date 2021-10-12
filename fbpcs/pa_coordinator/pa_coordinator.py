@@ -28,22 +28,14 @@ Options:
 """
 import logging
 import os
-from collections import defaultdict
 from pathlib import Path, PurePath
-from typing import Any, DefaultDict, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import schema
 from docopt import docopt
 from fbpcp.entity.mpc_instance import MPCInstance
-from fbpcp.service.container import ContainerService
-from fbpcp.service.mpc import MPCService
-from fbpcp.service.onedocker import OneDockerService
-from fbpcp.service.storage import StorageService
-from fbpcp.util import reflect, yaml
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.onedocker_service_config import OneDockerServiceConfig
+from fbpcp.util import yaml
 from fbpcs.pid.entity.pid_instance import PIDInstance
-from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -53,164 +45,14 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationGameType,
 )
-from fbpcs.private_computation.service.private_computation import (
-    PrivateComputationService,
+from fbpcs.private_computation_cli.private_computation_service_wrapper import (
+    _build_private_computation_service,
 )
 
 DEFAULT_HMAC_KEY: str = ""
 DEFAULT_PADDING_SIZE: int = 4
 DEFAULT_CONCURRENCY: int = 1
 DEFAULT_K_ANONYMITY_THRESHOLD: int = 0
-
-
-def _build_private_computation_service(
-    pa_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
-) -> PrivateComputationService:
-    instance_repository_config = pa_config["dependency"][
-        "PrivateComputationInstanceRepository"
-    ]
-    repository_class = reflect.get_class(instance_repository_config["class"])
-    repository_service = repository_class(**instance_repository_config["constructor"])
-    onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
-        pa_config["dependency"]["OneDockerBinaryConfig"]
-    )
-    onedocker_service_config = _build_onedocker_service_cfg(
-        pa_config["dependency"]["OneDockerServiceConfig"]
-    )
-    container_service = _build_container_service(
-        pa_config["dependency"]["ContainerService"]
-    )
-    onedocker_service = _build_onedocker_service(
-        container_service, onedocker_service_config.task_definition
-    )
-    storage_service = _build_storage_service(pa_config["dependency"]["StorageService"])
-    return PrivateComputationService(
-        repository_service,
-        storage_service,
-        _build_mpc_service(
-            mpc_config, onedocker_service_config, container_service, storage_service
-        ),
-        _build_pid_service(
-            pid_config,
-            onedocker_service,
-            storage_service,
-            onedocker_binary_config_map,
-        ),
-        onedocker_service,
-        onedocker_binary_config_map,
-    )
-
-
-def _build_container_service(config: Dict[str, Any]) -> ContainerService:
-    container_class = reflect.get_class(config["class"])
-    return container_class(**config["constructor"])
-
-
-def _build_onedocker_service(
-    container_service: ContainerService,
-    task_definition: str,
-) -> OneDockerService:
-    return OneDockerService(container_service, task_definition)
-
-
-def _build_mpc_service(
-    config: Dict[str, Any],
-    onedocker_service_config: OneDockerServiceConfig,
-    container_service: ContainerService,
-    storage_service: StorageService,
-) -> MPCService:
-
-    mpcinstance_repository_config = config["dependency"]["MPCInstanceRepository"]
-    repository_class = reflect.get_class(mpcinstance_repository_config["class"])
-    repository_service = repository_class(
-        **mpcinstance_repository_config["constructor"]
-    )
-
-    mpc_game_config = config["dependency"]["MPCGameService"]
-    pa_game_repo_config = mpc_game_config["dependency"][
-        "PrivateComputationGameRepository"
-    ]
-    pa_game_repo_class = reflect.get_class(pa_game_repo_config["class"])
-    pa_game_repo = pa_game_repo_class()
-    mpc_game_class = reflect.get_class(mpc_game_config["class"])
-    mpc_game_svc = mpc_game_class(pa_game_repo)
-
-    task_definition = onedocker_service_config.task_definition
-
-    return MPCService(
-        container_service,
-        repository_service,
-        task_definition,
-        mpc_game_svc,
-    )
-
-
-def _build_onedocker_service_cfg(
-    onedocker_service_config: Dict[str, Any]
-) -> OneDockerServiceConfig:
-    return OneDockerServiceConfig(**onedocker_service_config["constructor"])
-
-
-def _build_onedocker_binary_cfg(
-    onedocker_binary_config: Dict[str, Any]
-) -> OneDockerBinaryConfig:
-    return OneDockerBinaryConfig(**onedocker_binary_config["constructor"])
-
-
-def _build_onedocker_binary_cfg_map(
-    onedocker_binary_configs: Dict[str, Dict[str, Any]]
-) -> DefaultDict[str, OneDockerBinaryConfig]:
-    onedocker_binary_cfg_map = defaultdict(
-        lambda: _build_onedocker_binary_cfg(onedocker_binary_configs["default"])
-    )
-    for binary_name, config in onedocker_binary_configs.items():
-        onedocker_binary_cfg_map[binary_name] = _build_onedocker_binary_cfg(config)
-
-    return onedocker_binary_cfg_map
-
-
-def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
-    container_service = _build_container_service(
-        config["private_computation"]["dependency"]["ContainerService"]
-    )
-    storage_service = _build_storage_service(
-        config["private_computation"]["dependency"]["StorageService"]
-    )
-    mpc_service = _build_mpc_service(
-        config["mpc"],
-        _build_onedocker_service_cfg(
-            config["private_computation"]["dependency"]["OneDockerServiceConfig"]
-        ),
-        container_service,
-        storage_service,
-    )
-    # calling update_instance here to get the newest container information
-    instance = mpc_service.update_instance(instance_id)
-    logger.info(instance)
-
-
-def _build_pid_service(
-    pid_config: Dict[str, Any],
-    onedocker_service: OneDockerService,
-    storage_service: StorageService,
-    onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-) -> PIDService:
-    pidinstance_repository_config = pid_config["dependency"]["PIDInstanceRepository"]
-    repository_class = reflect.get_class(pidinstance_repository_config["class"])
-    repository_service = repository_class(
-        **pidinstance_repository_config["constructor"]
-    )
-    return PIDService(
-        onedocker_service,
-        storage_service,
-        repository_service,
-        onedocker_binary_config_map,
-    )
-
-
-def _build_storage_service(config: Dict[str, Any]) -> StorageService:
-    storage_class = reflect.get_class(config["class"])
-    return storage_class(**config["constructor"])
 
 
 def create_instance(

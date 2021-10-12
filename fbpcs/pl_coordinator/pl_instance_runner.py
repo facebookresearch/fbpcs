@@ -17,17 +17,17 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import (
     PLGraphAPIClient,
     GRAPHAPI_INSTANCE_STATUSES,
 )
-from fbpcs.pl_coordinator.pl_service_wrapper import (
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+    PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     get,
     create_instance,
     id_match,
     compute,
     aggregate,
     cancel_current_stage,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationRole,
-    PrivateComputationInstanceStatus,
 )
 
 
