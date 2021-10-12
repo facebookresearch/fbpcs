@@ -48,10 +48,10 @@ def create_instance(
     game_type: Optional[PrivateComputationGameType] = None,
     fail_fast: bool = False,
 ) -> PrivateComputationInstance:
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
-    instance = pl_service.create_instance(
+    instance = pc_service.create_instance(
         instance_id=instance_id,
         role=role,
         game_type=game_type or PrivateComputationGameType.LIFT,
@@ -80,12 +80,12 @@ def id_match(
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
-    # run pid instance through pid service invoked from pl service
-    pl_service.id_match(
+    # run pid instance through pid service invoked from pc service
+    pc_service.id_match(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
@@ -98,11 +98,11 @@ def id_match(
         dry_run=dry_run,
     )
 
-    # At this point, pl instance has a pid instance. Pid dispatcher should have updated
+    # At this point, pc instance has a pid instance. Pid dispatcher should have updated
     # the pid instance to its newest status already, whether FAILED or COMPLETED,
-    # but pl instance has not been updated based on the pid instance.
+    # but pc instance has not been updated based on the pid instance.
     # So make this call here to keep them in sync.
-    instance = pl_service.update_instance(instance_id)
+    instance = pc_service.update_instance(instance_id)
     logger.info(instance)
 
 
@@ -113,17 +113,17 @@ def compute(
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
     # This call is necessary because it could be the case that last compute failed and this is a valid retry,
     # but because it's possible that the "get" command never gets called to update the instance since the last step started,
     # so it appears that the current status is still COMPUTATION_STARTED, which is an invalid status for retry.
-    pl_service.update_instance(instance_id)
+    pc_service.update_instance(instance_id)
 
     # TODO T98578552: Take away the option to specify required fields in the middle of a computation
-    pl_service.prepare_data(
+    pc_service.prepare_data(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
@@ -133,7 +133,7 @@ def compute(
 
     logging.info("Finished preparing data, starting compute metrics...")
 
-    instance = pl_service.compute_metrics(
+    instance = pc_service.compute_metrics(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
@@ -153,7 +153,7 @@ def aggregate(
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
@@ -161,9 +161,9 @@ def aggregate(
     # or last compute succeeded and this is a regular aggregate. Either way, because it's possible that
     # the "get" command never gets called to update the instance since the last step started, so it appears that the
     # current status is still COMPUTATION_STARTED or AGGREGATION_STARTED, which is an invalid status for retry.
-    pl_service.update_instance(instance_id)
+    pc_service.update_instance(instance_id)
 
-    instance = pl_service.aggregate_shards(
+    instance = pc_service.aggregate_shards(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
@@ -182,10 +182,10 @@ def validate(
     aggregated_result_path: str,
     expected_result_path: str,
 ) -> None:
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
-    pl_service.validate_metrics(
+    pc_service.validate_metrics(
         instance_id=instance_id,
         aggregated_result_path=aggregated_result_path,
         expected_result_path=expected_result_path,
@@ -203,7 +203,7 @@ def run_post_processing_handlers(
         logger.warning(f"No post processing configuration found for {instance_id=}")
         return
 
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
@@ -216,7 +216,7 @@ def run_post_processing_handlers(
         ].items()
     }
 
-    instance = pl_service.run_post_processing_handlers(
+    instance = pc_service.run_post_processing_handlers(
         instance_id=instance_id,
         post_processing_handlers=post_processing_handlers,
         aggregated_result_path=aggregated_result_path,
@@ -230,22 +230,22 @@ def get(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
     """
-    The purpose of `get` is to get the updated status of the pl instance with id instance_id.
-    We only call pl_service.update_instance() under XXX_STARTED status because otherwise we could run into
+    The purpose of `get` is to get the updated status of the pc instance with id instance_id.
+    We only call pc_service.update_instance() under XXX_STARTED status because otherwise we could run into
     a race condition: when status is not XXX_STARTED, PrivateComputationService might be writing a new PID or
-    MPCInstance to this pl instance. Because pl_service.update_instance() also writes to this pl instance, it could
+    MPCInstance to this pc instance. Because pc_service.update_instance() also writes to this pc instance, it could
     accidentally erase that PID or MPCInstance.
     """
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
-    instance = pl_service.get_instance(instance_id)
+    instance = pc_service.get_instance(instance_id)
     if instance.status in [
         PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
         PrivateComputationInstanceStatus.COMPUTATION_STARTED,
         PrivateComputationInstanceStatus.AGGREGATION_STARTED,
     ]:
-        instance = pl_service.update_instance(instance_id)
+        instance = pc_service.update_instance(instance_id)
     logger.info(instance)
     return instance
 
@@ -253,19 +253,19 @@ def get(
 def get_server_ips(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> None:
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
 
-    pl_instance = pl_service.instance_repository.read(instance_id)
+    pc_instance = pc_service.instance_repository.read(instance_id)
 
     # This utility should only be used to get ips from a publisher instance
-    if pl_instance.role != PrivateComputationRole.PUBLISHER:
+    if pc_instance.role != PrivateComputationRole.PUBLISHER:
         logger.warning("Unable to get server ips from a partner instance")
         return
 
     server_ips_list = None
-    last_instance = pl_instance.instances[-1]
+    last_instance = pc_instance.instances[-1]
     if isinstance(last_instance, (PIDInstance, MPCInstance)):
         server_ips_list = last_instance.server_ips
 
@@ -324,10 +324,10 @@ def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) ->
 def cancel_current_stage(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
-    pl_service = _build_pl_service(
+    pc_service = _build_private_computation_service(
         config["private_computation"], config["mpc"], config["pid"]
     )
-    instance = pl_service.cancel_current_stage(instance_id=instance_id)
+    instance = pc_service.cancel_current_stage(instance_id=instance_id)
     logger.info("Done canceling the current stage")
     return instance
 
@@ -368,13 +368,13 @@ def _build_mpc_service(
     )
 
     mpc_game_config = config["dependency"]["MPCGameService"]
-    pl_game_repo_config = mpc_game_config["dependency"][
+    pc_game_repo_config = mpc_game_config["dependency"][
         "PrivateComputationGameRepository"
     ]
-    pl_game_repo_class = reflect.get_class(pl_game_repo_config["class"])
-    pl_game_repo = pl_game_repo_class()
+    pc_game_repo_class = reflect.get_class(pc_game_repo_config["class"])
+    pc_game_repo = pc_game_repo_class()
     mpc_game_class = reflect.get_class(mpc_game_config["class"])
-    mpc_game_svc = mpc_game_class(pl_game_repo)
+    mpc_game_svc = mpc_game_class(pc_game_repo)
 
     task_definition = onedocker_service_config.task_definition
 
@@ -386,27 +386,27 @@ def _build_mpc_service(
     )
 
 
-def _build_pl_service(
-    pl_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
+def _build_private_computation_service(
+    pc_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
 ) -> PrivateComputationService:
-    plinstance_repository_config = pl_config["dependency"][
+    instance_repository_config = pc_config["dependency"][
         "PrivateComputationInstanceRepository"
     ]
-    repository_class = reflect.get_class(plinstance_repository_config["class"])
-    repository_service = repository_class(**plinstance_repository_config["constructor"])
+    repository_class = reflect.get_class(instance_repository_config["class"])
+    repository_service = repository_class(**instance_repository_config["constructor"])
     container_service = _build_container_service(
-        pl_config["dependency"]["ContainerService"]
+        pc_config["dependency"]["ContainerService"]
     )
     onedocker_service_config = _build_onedocker_service_cfg(
-        pl_config["dependency"]["OneDockerServiceConfig"]
+        pc_config["dependency"]["OneDockerServiceConfig"]
     )
     onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
-        pl_config["dependency"]["OneDockerBinaryConfig"]
+        pc_config["dependency"]["OneDockerBinaryConfig"]
     )
     onedocker_service = _build_onedocker_service(
         container_service, onedocker_service_config.task_definition
     )
-    storage_service = _build_storage_service(pl_config["dependency"]["StorageService"])
+    storage_service = _build_storage_service(pc_config["dependency"]["StorageService"])
     return PrivateComputationService(
         repository_service,
         storage_service,
