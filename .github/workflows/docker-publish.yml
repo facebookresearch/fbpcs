@@ -47,6 +47,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Remove unused images
+        run: |
+         docker image prune -af
+
       - name: Build onedocker image in rc
         run: |
           ./build-docker.sh onedocker -t rc -f
