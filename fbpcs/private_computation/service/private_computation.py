@@ -292,7 +292,6 @@ class PrivateComputationService:
             private_computation_instance=pc_instance,
             new_status=stage_svc.stage_type.start_status,
         )
-        self.instance_repository.update(pc_instance)
         try:
             pc_instance = await stage_svc.run_async(pc_instance, server_ips)
         except Exception as e:
