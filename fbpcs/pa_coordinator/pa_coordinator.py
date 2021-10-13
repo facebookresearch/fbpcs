@@ -74,7 +74,10 @@ def create_instance(
     fail_fast: bool = False,
 ) -> None:
     private_computation_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
     instance = private_computation_service.create_instance(
         instance_id=instance_id,
@@ -105,7 +108,10 @@ def id_match(
     dry_run: Optional[bool] = False,
 ) -> None:
     private_computation_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
     # run pid instance through pid service invoked from pa service
@@ -127,7 +133,10 @@ def prepare_compute_input(
     log_cost_to_s3: bool = False,
 ) -> None:
     private_computation_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
     # Because it's possible that the "get" command never gets called to update the instance since the last step started,
@@ -153,7 +162,10 @@ def compute_attribution(
     log_cost_to_s3: bool = False,
 ) -> None:
     private_computation_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
     logging.info("Starting compute metrics...")
 
@@ -177,7 +189,10 @@ def aggregate_shards(
     log_cost_to_s3: bool = False,
 ) -> None:
     private_computation_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
     private_computation_service.update_instance(instance_id)
@@ -195,11 +210,14 @@ def aggregate_shards(
 def get_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
-    pa_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+    private_computation_service = _build_private_computation_service(
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
-    pa_instance = pa_service.update_instance(instance_id)
+    pa_instance = private_computation_service.update_instance(instance_id)
     logger.info(pa_instance)
     return pa_instance
 
@@ -208,11 +226,14 @@ def get_server_ips(
     config: Dict[str, Any],
     instance_id: str,
 ) -> List[str]:
-    pa_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+    private_computation_service = _build_private_computation_service(
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
-    pa_instance = pa_service.update_instance(instance_id)
+    pa_instance = private_computation_service.update_instance(instance_id)
 
     server_ips_list = None
     last_instance = pa_instance.instances[-1]
