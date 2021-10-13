@@ -115,11 +115,8 @@ public class DeploymentRunner extends Thread {
     }
   }
 
-  private String readOutput() {
+  private String readOutput(BufferedReader stdout) {
     StringBuilder sb = new StringBuilder();
-    BufferedReader stdout =
-        new BufferedReader(new InputStreamReader(provisioningProcess.getInputStream()));
-
     try {
       String s;
       while (stdout.ready() && (s = stdout.readLine()) != null) {
@@ -154,15 +151,18 @@ public class DeploymentRunner extends Thread {
       provisioningProcess = pb.start();
       logger.info("  Creating deployment process");
 
+      BufferedReader stdout =
+          new BufferedReader(new InputStreamReader(provisioningProcess.getInputStream()));
+
       while (provisioningProcess.isAlive()) {
-        String output = readOutput();
-        logOutput(output);
+        logOutput(readOutput(stdout));
 
         try {
           Thread.sleep(500);
         } catch (InterruptedException e) {
         }
       }
+      logOutput(readOutput(stdout));
 
       exitValue = provisioningProcess.exitValue();
       logger.info("  Deployment process exited with value: " + exitValue);
