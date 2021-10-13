@@ -11,7 +11,7 @@ import json
 import logging
 import math
 from datetime import datetime, timezone
-from typing import DefaultDict, Dict, List, Optional, Any, TypeVar
+from typing import DefaultDict, Dict, List, Optional, Any, Type, TypeVar
 
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
@@ -143,6 +143,9 @@ class PrivateComputationService:
         padding_size: int = DEFAULT_PADDING_SIZE,
         k_anonymity_threshold: int = DEFAULT_K_ANONYMITY_THRESHOLD,
         fail_fast: bool = False,
+        stage_flow_cls: Type[
+            PrivateComputationBaseStageFlow
+        ] = PrivateComputationStageFlow,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -171,6 +174,7 @@ class PrivateComputationService:
             concurrency=concurrency,
             k_anonymity_threshold=k_anonymity_threshold,
             fail_fast=fail_fast,
+            _stage_flow_cls_name=stage_flow_cls.get_cls_name(),
         )
 
         self.instance_repository.create(instance)
