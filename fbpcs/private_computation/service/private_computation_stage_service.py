@@ -7,11 +7,33 @@
 # pyre-strict
 
 import abc
+from dataclasses import dataclass
+from typing import Any, Dict, DefaultDict
 from typing import List, Optional
 
+from fbpcp.service.mpc import MPCService
+from fbpcp.service.storage import StorageService
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
+
+
+@dataclass
+class PrivateComputationStageServiceArgs:
+    """
+    These are all arguments that are guaranteed to exist in the PrivateComputationService at service
+    creation time. A combination of these arguments is used to construct stage private computation stage services.
+    """
+
+    pid_svc: PIDService
+    pid_config: Dict[str, Any]
+    onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig]
+    mpc_svc: MPCService
+    storage_svc: StorageService
+    post_processing_handlers: Dict[str, PostProcessingHandler]
 
 
 class PrivateComputationStageService(abc.ABC):
@@ -20,7 +42,7 @@ class PrivateComputationStageService(abc.ABC):
     Any parameters necessary to run the stage that aren't provided by run_async should be passed to the subclass' constructor.
     """
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
