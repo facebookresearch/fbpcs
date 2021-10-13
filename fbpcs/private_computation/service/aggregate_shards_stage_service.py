@@ -19,9 +19,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
-from fbpcs.private_computation.entity.private_computation_stage_type import (
-    PrivateComputationStageType,
-)
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -163,6 +160,3 @@ class AggregateShardsStageService(PrivateComputationStageService):
         pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         return pc_instance
 
-    @property
-    def stage_type(self) -> PrivateComputationStageType:
-        return PrivateComputationStageType.AGGREGATE

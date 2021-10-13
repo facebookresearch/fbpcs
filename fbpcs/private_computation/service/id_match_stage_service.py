@@ -16,9 +16,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_stage_type import (
-    PrivateComputationStageType,
-)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -98,10 +95,6 @@ class IdMatchStageService(PrivateComputationStageService):
         )
 
         return pc_instance
-
-    @property
-    def stage_type(self) -> PrivateComputationStageType:
-        return PrivateComputationStageType.ID_MATCH
 
     @staticmethod
     def _map_private_computation_role_to_pid_role(
