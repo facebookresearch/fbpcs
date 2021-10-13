@@ -23,29 +23,14 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
+)
 
 
 class PrivateComputationRole(Enum):
     PUBLISHER = "PUBLISHER"
     PARTNER = "PARTNER"
-
-
-class PrivateComputationInstanceStatus(Enum):
-    UNKNOWN = "UNKNOWN"
-    CREATED = "CREATED"
-    ID_MATCHING_STARTED = "ID_MATCHING_STARTED"
-    ID_MATCHING_COMPLETED = "ID_MATCHING_COMPLETED"
-    ID_MATCHING_FAILED = "ID_MATCHING_FAILED"
-    COMPUTATION_STARTED = "COMPUTATION_STARTED"
-    COMPUTATION_COMPLETED = "COMPUTATION_COMPLETED"
-    COMPUTATION_FAILED = "COMPUTATION_FAILED"
-    AGGREGATION_STARTED = "AGGREGATION_STARTED"
-    AGGREGATION_COMPLETED = "AGGREGATION_COMPLETED"
-    AGGREGATION_FAILED = "AGGREGATION_FAILED"
-    POST_PROCESSING_HANDLERS_STARTED = "POST_PROCESSING_HANDLERS_STARTED"
-    POST_PROCESSING_HANDLERS_COMPLETED = "POST_PROCESSING_HANDLERS_COMPLETED"
-    POST_PROCESSING_HANDLERS_FAILED = "POST_PROCESSING_HANDLERS_FAILED"
-    PROCESSING_REQUEST = "PROCESSING_REQUEST"
 
 
 class PrivateComputationGameType(Enum):

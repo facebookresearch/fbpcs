@@ -22,9 +22,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
 )
-from fbpcs.private_computation.entity.private_computation_stage_type import (
-    PrivateComputationStageType,
-)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -127,9 +124,6 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         return pc_instance
 
-    @property
-    def stage_type(self) -> PrivateComputationStageType:
-        return PrivateComputationStageType.COMPUTE
 
     # TODO: Make an entity representation for game args that can dump a dict to pass
     # to mpc service. The entity will give us type checking and ensure that all args are

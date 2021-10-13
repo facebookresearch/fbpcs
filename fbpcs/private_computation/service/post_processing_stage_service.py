@@ -23,9 +23,6 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
-from fbpcs.private_computation.entity.private_computation_stage_type import (
-    PrivateComputationStageType,
-)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -118,9 +115,6 @@ class PostProcessingStageService(PrivateComputationStageService):
             post_processing_instance.status = PostProcessingInstanceStatus.COMPLETED
         return pc_instance
 
-    @property
-    def stage_type(self) -> PrivateComputationStageType:
-        return PrivateComputationStageType.POST_PROCESSING_HANDLERS
 
     async def _run_post_processing_handler(
         self,
