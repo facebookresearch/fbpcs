@@ -4,14 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from enum import Enum
-
-from fbpcs.private_computation.entity.private_computation_instance import (
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+    PrivateComputationStageFlowData,
+)
+from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
 
 
-class PrivateComputationStageType(Enum):
+class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
     """
     This enum lists all of the supported stage types and maps to their possible statuses.
     It also provides methods to get information about the next or previous stage.
@@ -23,74 +25,37 @@ class PrivateComputationStageType(Enum):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "UNKNOWN CREATED ID_MATCH COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED ID_MATCH COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
-    # map member name -> start, complete, and fail status
-    UNKNOWN = (
-        PrivateComputationInstanceStatus.UNKNOWN,
-        PrivateComputationInstanceStatus.UNKNOWN,
-        PrivateComputationInstanceStatus.UNKNOWN,
-        False,
-    )
-    CREATED = (
-        PrivateComputationInstanceStatus.UNKNOWN,
+    CREATED = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.CREATION_STARTED,
         PrivateComputationInstanceStatus.CREATED,
-        PrivateComputationInstanceStatus.UNKNOWN,
+        PrivateComputationInstanceStatus.CREATION_FAILED,
         False,
     )
-    ID_MATCH = (
+    ID_MATCH = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
         PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
         PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
         True,
     )
-    COMPUTE = (
+    COMPUTE = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.COMPUTATION_STARTED,
         PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
         PrivateComputationInstanceStatus.COMPUTATION_FAILED,
         True,
     )
-    AGGREGATE = (
+    AGGREGATE = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         True,
     )
-    POST_PROCESSING_HANDLERS = (
+    POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
         PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
         PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
         False,
     )
-
-    def __init__(
-        self,
-        start_status: PrivateComputationInstanceStatus,
-        completed_status: PrivateComputationInstanceStatus,
-        failed_status: PrivateComputationInstanceStatus,
-        is_joint_stage: bool,
-    ) -> None:
-        self.start_status = start_status
-        self.completed_status = completed_status
-        self.failed_status = failed_status
-        self.is_joint_stage = is_joint_stage
-
-    @property
-    def next_stage(self) -> "PrivateComputationStageType":
-        """
-        Get the enum member representing the next stage in the sequence
-        """
-        members = list(self.__class__)
-        index = (members.index(self) + 1) % len(members)
-        return members[index]
-
-    @property
-    def previous_stage(self) -> "PrivateComputationStageType":
-        """
-        Get the enum member representing the previous stage in the sequence
-        """
-        members = list(self.__class__)
-        index = max(0, members.index(self) - 1)
-        return members[index]

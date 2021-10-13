@@ -39,6 +39,9 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -48,6 +51,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     UnionedPCInstance,
     UnionedPCInstanceStatus,
+)
+from fbpcs.private_computation.entity.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.repository.private_computation_instance import (
@@ -222,18 +228,21 @@ class PrivateComputationService:
     def run_stage(
         self,
         instance_id: str,
+        stage: PrivateComputationBaseStageFlow,
         stage_svc: PrivateComputationStageService,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> PrivateComputationInstance:
         return asyncio.run(
-            self.run_stage_async(instance_id, stage_svc, server_ips, dry_run)
+            self.run_stage_async(
+                instance_id, stage, stage_svc, server_ips, dry_run
+            )
         )
 
     def _get_validated_instance(
         self,
         instance_id: str,
-        stage_svc: PrivateComputationStageService,
+        stage: PrivateComputationBaseStageFlow,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> PrivateComputationInstance:
@@ -243,7 +252,7 @@ class PrivateComputationService:
         """
         pc_instance = self.get_instance(instance_id)
         if (
-            stage_svc.stage_type.is_joint_stage
+            stage.is_joint_stage
             and pc_instance.role is PrivateComputationRole.PARTNER
             and not server_ips
         ):
@@ -251,21 +260,21 @@ class PrivateComputationService:
 
         # if the instance status is the complete status of the previous stage, then we can run the target stage
         # e.g. if status == ID_MATCH_COMPLETE, then we can run COMPUTE_METRICS
-        if pc_instance.status is stage_svc.stage_type.previous_stage.completed_status:
+        if pc_instance.status is stage.previous_stage.completed_status:
             pc_instance.retry_counter = 0
         # if the instance status is the fail status of the target stage, then we can retry the target stage
         # e.g. if status == COMPUTE_METRICS_FAILED, then we can run COMPUTE_METRICS
-        elif pc_instance.status is stage_svc.stage_type.failed_status:
+        elif pc_instance.status is stage.failed_status:
             pc_instance.retry_counter += 1
         # if the instance status is a start status, it's running something already. Don't run another stage, even if dry_run=True
-        elif pc_instance.status in STAGE_STARTED_STATUSES:
+        elif stage.is_started_status(pc_instance.status):
             raise ValueError(
                 f"Cannot start a new operation when instance {instance_id} has status {pc_instance.status}."
             )
         # if dry_run = True, then we can run the target stage. Otherwise, throw an error
         elif not dry_run:
             raise ValueError(
-                f"Instance {instance_id} has status {pc_instance.status}. Not ready for {stage_svc.stage_type}."
+                f"Instance {instance_id} has status {pc_instance.status}. Not ready for {stage}."
             )
 
         return pc_instance
@@ -275,6 +284,7 @@ class PrivateComputationService:
     async def run_stage_async(
         self,
         instance_id: str,
+        stage: PrivateComputationBaseStageFlow,
         stage_svc: PrivateComputationStageService,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
@@ -285,20 +295,21 @@ class PrivateComputationService:
         """
 
         pc_instance = self._get_validated_instance(
-            instance_id, stage_svc, server_ips, dry_run
+            instance_id, stage, server_ips, dry_run
         )
 
         self._update_status(
             private_computation_instance=pc_instance,
-            new_status=stage_svc.stage_type.start_status,
+            new_status=stage.started_status,
         )
+        self.logger.info(repr(stage))
         try:
             pc_instance = await stage_svc.run_async(pc_instance, server_ips)
         except Exception as e:
-            self.logger.error(f"Caught exception when running {stage_svc.stage_type}")
+            self.logger.error(f"Caught exception when running {stage}")
             self._update_status(
                 private_computation_instance=pc_instance,
-                new_status=stage_svc.stage_type.failed_status,
+                new_status=stage.failed_status,
             )
             raise e
         finally:
@@ -338,6 +349,7 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         return await self.run_stage_async(
             instance_id,
+            PrivateComputationStageFlow.ID_MATCH,
             IdMatchStageService(
                 self.pid_svc,
                 pid_config,
@@ -460,6 +472,7 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         return await self.run_stage_async(
             instance_id,
+            PrivateComputationStageFlow.COMPUTE,
             ComputeMetricsStageService(
                 self.onedocker_binary_config_map,
                 self.mpc_svc,
@@ -506,6 +519,7 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         return await self.run_stage_async(
             instance_id,
+            PrivateComputationStageFlow.AGGREGATE,
             AggregateShardsStageService(
                 self.onedocker_binary_config_map,
                 self.mpc_svc,
@@ -569,6 +583,7 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         return await self.run_stage_async(
             instance_id,
+            PrivateComputationStageFlow.POST_PROCESSING_HANDLERS,
             PostProcessingStageService(
                 self.storage_svc, post_processing_handlers, aggregated_result_path
             ),
