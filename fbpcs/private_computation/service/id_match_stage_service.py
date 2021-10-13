@@ -6,8 +6,10 @@
 
 # pyre-strict
 
+from fbpcs.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
 from typing import Any, Dict, List, Optional
 
+from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.entity.pid_instance import PIDInstanceStatus, PIDProtocol, PIDRole
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -16,7 +18,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_PID_PROTOCOL,
+)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -96,6 +100,43 @@ class IdMatchStageService(PrivateComputationStageService):
         )
 
         return pc_instance
+
+    def get_status(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> PrivateComputationInstanceStatus:
+        """Updates the PIDInstances and gets latest PrivateComputationInstance status
+
+        Arguments:
+            private_computation_instance: The PC instance that is being updated
+
+        Returns:
+            The latest status for private_computation_instance
+        """
+        status = pc_instance.status
+        if pc_instance.instances:
+            # Only need to update the last stage/instance
+            last_instance = pc_instance.instances[-1]
+            if not isinstance(last_instance, PIDInstance):
+                return status
+
+            # PID service has to call update_instance to get the newest containers
+            # information in case they are still running
+            pc_instance.instances[-1] = self._pid_svc.update_instance(
+                last_instance.instance_id
+            )
+
+            pid_instance_status = pc_instance.instances[-1].status
+
+            stage = pc_instance.current_stage
+            if pid_instance_status is PIDInstanceStatus.STARTED:
+                status = stage.started_status
+            elif pid_instance_status is PIDInstanceStatus.COMPLETED:
+                status = stage.completed_status
+            elif pid_instance_status is PIDInstanceStatus.FAILED:
+                status = stage.failed_status
+
+        return status
 
     @staticmethod
     def _map_private_computation_role_to_pid_role(

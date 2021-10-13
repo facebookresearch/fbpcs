@@ -22,6 +22,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstanceStatus,
+)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -33,6 +36,7 @@ from fbpcs.private_computation.service.utils import (
     gen_mpc_game_args_to_retry,
     map_private_computation_role_to_mpc_party,
     ready_for_partial_container_retry,
+    get_updated_pc_status_mpc_game,
 )
 
 
@@ -124,6 +128,19 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         return pc_instance
 
+    def get_status(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> PrivateComputationInstanceStatus:
+        """Updates the MPCInstances and gets latest PrivateComputationInstance status
+
+        Arguments:
+            private_computation_instance: The PC instance that is being updated
+
+        Returns:
+            The latest status for private_computation_instance
+        """
+        return get_updated_pc_status_mpc_game(pc_instance, self._mpc_service)
 
     # TODO: Make an entity representation for game args that can dump a dict to pass
     # to mpc service. The entity will give us type checking and ensure that all args are

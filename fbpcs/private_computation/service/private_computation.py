@@ -13,12 +13,11 @@ import math
 from datetime import datetime, timezone
 from typing import DefaultDict, Dict, List, Optional, Any, Type, TypeVar
 
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus
+from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
     CppAttributionIdSpineCombinerService,
 )
@@ -29,14 +28,9 @@ from fbpcs.data_processing.sharding.sharding import ShardType
 from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
-from fbpcs.post_processing_handler.post_processing_instance import (
-    PostProcessingInstance,
-    PostProcessingInstanceStatus,
-)
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
@@ -49,13 +43,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
-    UnionedPCInstance,
-    UnionedPCInstanceStatus,
 )
 from fbpcs.private_computation.entity.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
-from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
@@ -85,6 +76,7 @@ from fbpcs.private_computation.service.private_computation_service_data import (
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
+    PrivateComputationStageServiceArgs,
 )
 from fbpcs.private_computation.service.utils import (
     ready_for_partial_container_retry,
@@ -94,6 +86,7 @@ T = TypeVar("T")
 
 
 class PrivateComputationService:
+    # TODO(T103302669): [BE] Add documentation to PrivateComputationService class
     def __init__(
         self,
         instance_repository: PrivateComputationInstanceRepository,
@@ -117,6 +110,14 @@ class PrivateComputationService:
         self.pid_config = pid_config
         self.post_processing_handlers: Dict[str, PostProcessingHandler] = (
             post_processing_handlers or {}
+        )
+        self.stage_service_args = PrivateComputationStageServiceArgs(
+            self.pid_svc,
+            self.pid_config,
+            self.onedocker_binary_config_map,
+            self.mpc_svc,
+            self.storage_svc,
+            self.post_processing_handlers,
         )
         self.logger: logging.Logger = logging.getLogger(__name__)
 
@@ -195,43 +196,19 @@ class PrivateComputationService:
     def _update_instance(
         self, private_computation_instance: PrivateComputationInstance
     ) -> PrivateComputationInstance:
-        if private_computation_instance.instances:
-            # Only need to update the last stage/instance
-            last_instance = private_computation_instance.instances[-1]
-
-            if isinstance(last_instance, PIDInstance):
-                # PID service has to call update_instance to get the newest containers
-                # information in case they are still running
-                private_computation_instance.instances[
-                    -1
-                ] = self.pid_svc.update_instance(last_instance.instance_id)
-            elif isinstance(last_instance, MPCInstance):
-                # MPC service has to call update_instance to get the newest containers
-                # information in case they are still running
-                private_computation_instance.instances[
-                    -1
-                ] = PCSMPCInstance.from_mpc_instance(
-                    self.mpc_svc.update_instance(last_instance.instance_id)
-                )
-            elif isinstance(last_instance, PostProcessingInstance):
-                self.logger.info(
-                    "PostProcessingInstance doesn't have its own instance repository and is already updated"
-                )
-            else:
-                raise ValueError("Unknown type of instance")
-
-            new_status = (
-                self._get_status_from_stage(private_computation_instance.instances[-1])
-                or private_computation_instance.status
-            )
-            private_computation_instance = self._update_status(
-                private_computation_instance=private_computation_instance,
-                new_status=new_status,
-            )
-            self.instance_repository.update(private_computation_instance)
-            self.logger.info(
-                f"Finished updating instance: {private_computation_instance.instance_id}"
-            )
+        stage = private_computation_instance.current_stage
+        stage_svc = stage.get_stage_service(
+            self.stage_service_args
+        )
+        self.logger.info(f"Updating instance | {stage}={stage!r}")
+        new_status = stage_svc.get_status(
+            private_computation_instance
+        )
+        private_computation_instance = self._update_status(private_computation_instance, new_status)
+        self.instance_repository.update(private_computation_instance)
+        self.logger.info(
+            f"Finished updating instance: {private_computation_instance.instance_id}"
+        )
 
         return private_computation_instance
 
@@ -638,62 +615,6 @@ class PrivateComputationService:
         )
         return private_computation_instance
 
-    """
-    Get Private Lift instance status from the given instance that represents a stage.
-    Return None when no status returned from the mapper, indicating that we do not want
-    the current status of the given stage to decide the status of Private Lift instance.
-    """
-
-    def _get_status_from_stage(
-        self, instance: UnionedPCInstance
-    ) -> Optional[PrivateComputationInstanceStatus]:
-        MPC_GAME_TO_STAGE_MAPPER: Dict[str, str] = {
-            GameNames.LIFT.value: "computation",
-            GameNames.ATTRIBUTION_COMPUTE.value: "computation",
-            GameNames.SHARD_AGGREGATOR.value: "aggregation",
-        }
-
-        STAGE_TO_STATUS_MAPPER: Dict[
-            str,
-            Dict[UnionedPCInstanceStatus, PrivateComputationInstanceStatus],
-        ] = {
-            "computation": {
-                MPCInstanceStatus.STARTED: PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-                MPCInstanceStatus.COMPLETED: PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-                MPCInstanceStatus.FAILED: PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-                MPCInstanceStatus.CANCELED: PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-            },
-            "aggregation": {
-                MPCInstanceStatus.STARTED: PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-                MPCInstanceStatus.COMPLETED: PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
-                MPCInstanceStatus.FAILED: PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-                MPCInstanceStatus.CANCELED: PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-            },
-            "PID": {
-                PIDInstanceStatus.STARTED: PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-                PIDInstanceStatus.COMPLETED: PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-                PIDInstanceStatus.FAILED: PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-            },
-            "post_processing": {
-                PostProcessingInstanceStatus.STARTED: PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
-                PostProcessingInstanceStatus.COMPLETED: PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
-                PostProcessingInstanceStatus.FAILED: PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
-            },
-        }
-
-        stage: str
-        if isinstance(instance, MPCInstance):
-            stage = MPC_GAME_TO_STAGE_MAPPER[instance.game_name]
-        elif isinstance(instance, PIDInstance):
-            stage = "PID"
-        elif isinstance(instance, PostProcessingInstance):
-            stage = "post_processing"
-        else:
-            raise ValueError(f"Unknown stage in instance: {instance}")
-
-        status = STAGE_TO_STATUS_MAPPER[stage].get(instance.status)
-
-        return status
 
     @staticmethod
     def get_ts_now() -> int:
