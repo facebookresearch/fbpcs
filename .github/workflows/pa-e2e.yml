@@ -89,9 +89,9 @@ jobs:
         ./attribution_check_status.sh ${{ env.CONTAINER_NAME }}
        working-directory: ./fbpcs/tests/github/
 
-     - name: Attribution - Validate Results
+     - name: Attribution - Validate Result
        run: |
-        ./validate_results.sh attribution
+        ./validate_result.sh attribution
        working-directory: ./fbpcs/tests/github/
 
      - name: Cleanup
