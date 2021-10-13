@@ -20,6 +20,7 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationRole,
@@ -49,7 +50,10 @@ def create_instance(
     fail_fast: bool = False,
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
     instance = pc_service.create_instance(
         instance_id=instance_id,
@@ -81,7 +85,10 @@ def id_match(
     dry_run: Optional[bool] = False,
 ) -> None:
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
     # run pid instance through pid service invoked from pc service
@@ -114,7 +121,10 @@ def compute(
     dry_run: Optional[bool] = False,
 ) -> None:
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
     # This call is necessary because it could be the case that last compute failed and this is a valid retry,
@@ -154,7 +164,10 @@ def aggregate(
     dry_run: Optional[bool] = False,
 ) -> None:
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
     # This call is necessary because it could be the case that last aggregate failed and this is a valid retry,
@@ -183,13 +196,29 @@ def validate(
     expected_result_path: str,
 ) -> None:
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
     pc_service.validate_metrics(
         instance_id=instance_id,
         aggregated_result_path=aggregated_result_path,
         expected_result_path=expected_result_path,
     )
+
+
+def _get_post_processing_handlers(
+    config: Dict[str, Any]
+) -> Dict[str, PostProcessingHandler]:
+    if not config:
+        return {}
+    return {
+        name: reflect.get_class(handler_config["class"])(
+            **handler_config.get("constructor", {})
+        )
+        for name, handler_config in config["dependency"].items()
+    }
 
 
 def run_post_processing_handlers(
@@ -199,26 +228,16 @@ def run_post_processing_handlers(
     aggregated_result_path: Optional[str] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    if "post_processing_handlers" not in config:
-        logger.warning(f"No post processing configuration found for {instance_id=}")
-        return
 
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
-
-    post_processing_handlers = {
-        name: reflect.get_class(handler_config["class"])(
-            **handler_config.get("constructor", {})
-        )
-        for name, handler_config in config["post_processing_handlers"][
-            "dependency"
-        ].items()
-    }
 
     instance = pc_service.run_post_processing_handlers(
         instance_id=instance_id,
-        post_processing_handlers=post_processing_handlers,
         aggregated_result_path=aggregated_result_path,
         dry_run=dry_run,
     )
@@ -237,7 +256,10 @@ def get(
     accidentally erase that PID or MPCInstance.
     """
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
     instance = pc_service.get_instance(instance_id)
     if instance.status in [
@@ -254,7 +276,10 @@ def get_server_ips(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> None:
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
 
     pc_instance = pc_service.instance_repository.read(instance_id)
@@ -325,7 +350,10 @@ def cancel_current_stage(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
-        config["private_computation"], config["mpc"], config["pid"]
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
     )
     instance = pc_service.cancel_current_stage(instance_id=instance_id)
     logger.info("Done canceling the current stage")
@@ -387,7 +415,10 @@ def _build_mpc_service(
 
 
 def _build_private_computation_service(
-    pc_config: Dict[str, Any], mpc_config: Dict[str, Any], pid_config: Dict[str, Any]
+    pc_config: Dict[str, Any],
+    mpc_config: Dict[str, Any],
+    pid_config: Dict[str, Any],
+    pph_config: Dict[str, Any],
 ) -> PrivateComputationService:
     instance_repository_config = pc_config["dependency"][
         "PrivateComputationInstanceRepository"
@@ -421,6 +452,8 @@ def _build_private_computation_service(
         ),
         onedocker_service,
         onedocker_binary_config_map,
+        pid_config,
+        _get_post_processing_handlers(pph_config),
     )
 
 

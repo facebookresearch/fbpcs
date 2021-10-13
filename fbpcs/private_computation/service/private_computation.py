@@ -102,6 +102,8 @@ class PrivateComputationService:
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
+        pid_config: Dict[str, Any],
+        post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
     ) -> None:
         """Constructor of PrivateComputationService
         instance_repository -- repository to CRUD PrivateComputationInstance
@@ -112,6 +114,10 @@ class PrivateComputationService:
         self.pid_svc = pid_svc
         self.onedocker_svc = onedocker_svc
         self.onedocker_binary_config_map = onedocker_binary_config_map
+        self.pid_config = pid_config
+        self.post_processing_handlers: Dict[str, PostProcessingHandler] = (
+            post_processing_handlers or {}
+        )
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     # TODO T88759390: make an async version of this function
@@ -559,14 +565,12 @@ class PrivateComputationService:
     def run_post_processing_handlers(
         self,
         instance_id: str,
-        post_processing_handlers: Dict[str, PostProcessingHandler],
         aggregated_result_path: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
         return asyncio.run(
             self.run_post_processing_handlers_async(
                 instance_id,
-                post_processing_handlers,
                 aggregated_result_path,
                 dry_run,
             )
@@ -577,7 +581,6 @@ class PrivateComputationService:
     async def run_post_processing_handlers_async(
         self,
         instance_id: str,
-        post_processing_handlers: Dict[str, PostProcessingHandler],
         aggregated_result_path: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
@@ -585,7 +588,7 @@ class PrivateComputationService:
             instance_id,
             PrivateComputationStageFlow.POST_PROCESSING_HANDLERS,
             PostProcessingStageService(
-                self.storage_svc, post_processing_handlers, aggregated_result_path
+                self.storage_svc, self.post_processing_handlers, aggregated_result_path
             ),
             dry_run=dry_run or False,
         )
