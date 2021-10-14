@@ -48,7 +48,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
     compute,
     create_instance,
-    get,
+    get_instance,
     get_mpc,
     get_pid,
     get_server_ips,
@@ -177,7 +177,7 @@ def main():
         )
     elif arguments["get"]:
         logger.info(f"Get instance: {instance_id}")
-        get(config, instance_id, logger)
+        get_instance(config, instance_id, logger)
     elif arguments["get_server_ips"]:
         get_server_ips(config, instance_id, logger)
     elif arguments["get_pid"]:
