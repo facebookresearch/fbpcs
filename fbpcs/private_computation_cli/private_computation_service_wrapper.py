@@ -114,36 +114,77 @@ def compute(
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
-    pc_service = _build_private_computation_service(
+    prepare_compute_input(
+        config=config, instance_id=instance_id, logger=logger, dry_run=dry_run
+    )
+
+    compute_metrics(
+        config=config,
+        instance_id=instance_id,
+        logger=logger,
+        server_ips=server_ips,
+        dry_run=dry_run,
+    )
+
+
+def prepare_compute_input(
+    config: Dict[str, Any],
+    instance_id: str,
+    logger: logging.Logger,
+    dry_run: Optional[bool] = False,
+    log_cost_to_s3: bool = False,
+) -> None:
+    private_computation_service = _build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
     )
 
-    # This call is necessary because it could be the case that last compute failed and this is a valid retry,
-    # but because it's possible that the "get" command never gets called to update the instance since the last step started,
-    # so it appears that the current status is still COMPUTATION_STARTED, which is an invalid status for retry.
-    pc_service.update_instance(instance_id)
+    # Because it's possible that the "get" command never gets called to update the instance since the last step started,
+    # so it could appear that the current status is still XXX_STARTED when it should be XXX_FAILED or XXX_COMPLETED,
+    # so we need to explicitly call update_instance() here to get the current status.
+    private_computation_service.update_instance(instance_id)
 
-    # TODO T98578552: Take away the option to specify required fields in the middle of a computation
-    pc_service.prepare_data(
+    logging.info("Starting preparing data")
+
+    private_computation_service.prepare_data(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
         dry_run=dry_run,
+        log_cost_to_s3=log_cost_to_s3,
     )
 
-    logging.info("Finished preparing data, starting compute metrics...")
+    logging.info("Finished preparing data")
 
-    instance = pc_service.compute_metrics(
+
+def compute_metrics(
+    config: Dict[str, Any],
+    instance_id: str,
+    logger: logging.Logger,
+    server_ips: Optional[List[str]] = None,
+    dry_run: Optional[bool] = False,
+    log_cost_to_s3: bool = False,
+) -> None:
+    private_computation_service = _build_private_computation_service(
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
+    )
+
+    logging.info("Starting compute metrics...")
+
+    instance = private_computation_service.compute_metrics(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
         server_ips=server_ips,
         dry_run=dry_run,
+        log_cost_to_s3=log_cost_to_s3,
     )
 
     logging.info("Finished running compute stage")
