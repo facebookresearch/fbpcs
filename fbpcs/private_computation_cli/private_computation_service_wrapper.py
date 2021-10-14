@@ -353,6 +353,12 @@ def cancel_current_stage(
     return instance
 
 
+def print_instance(
+    config: Dict[str, Any], instance_id: str, logger: logging.Logger
+) -> None:
+    print(get_instance(config, instance_id, logger))
+
+
 def _build_container_service(config: Dict[str, Any]) -> ContainerService:
     container_class = reflect.get_class(config["class"])
     return container_class(**config["constructor"])
