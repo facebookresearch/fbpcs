@@ -91,7 +91,6 @@ class IdMatchStageService(PrivateComputationStageService):
         pc_instance.instances.append(pid_instance)
 
         # Run pid
-        # With the current design, it won't return until everything is done
         await self._pid_svc.run_instance(
             instance_id=pid_instance_id,
             pid_config=self._pid_config,
