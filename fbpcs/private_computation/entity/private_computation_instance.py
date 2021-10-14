@@ -23,6 +23,9 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -69,6 +72,9 @@ class PrivateComputationInstance(InstanceBase):
                             used to infer the metrics_format_type argument of the shard aggregator game.
                             Not currently used by Lift.
         concurrency: number of threads to run per container at the MPC compute metrics stage
+
+    Private attributes:
+        _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
     """
 
     instance_id: str
@@ -112,6 +118,9 @@ class PrivateComputationInstance(InstanceBase):
     breakdown_key: Optional[BreakdownKey] = None
     pce_config: Optional[PCEConfig] = None
     is_test: Optional[bool] = False  # set to be true for testing account ID
+    # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
+    # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
+    _stage_flow_cls_name: str = "PrivateComputationStageFlow"
 
     def get_instance_id(self) -> str:
         return self.instance_id
@@ -158,3 +167,9 @@ class PrivateComputationInstance(InstanceBase):
             stage,
             f"out.{extension_type}",
         )
+
+    @property
+    def current_stage(self) -> PrivateComputationBaseStageFlow:
+        return PrivateComputationBaseStageFlow.cls_name_to_cls(
+            self._stage_flow_cls_name
+        ).get_stage_from_status(self.status)

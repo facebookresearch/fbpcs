@@ -11,6 +11,23 @@ from fbpcs.private_computation.entity.private_computation_base_stage_flow import
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.aggregate_shards_stage_service import (
+    AggregateShardsStageService,
+)
+from fbpcs.private_computation.service.compute_metrics_stage_service import (
+    ComputeMetricsStageService,
+)
+from fbpcs.private_computation.service.dummy_stage_service import (
+    DummyStageService,
+)
+from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
+from fbpcs.private_computation.service.post_processing_stage_service import (
+    PostProcessingStageService,
+)
+from fbpcs.private_computation.service.private_computation_stage_service import (
+    PrivateComputationStageService,
+    PrivateComputationStageServiceArgs,
+)
 
 
 class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
@@ -59,3 +76,42 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
         False,
     )
+
+    def get_stage_service(
+        self, args: PrivateComputationStageServiceArgs
+    ) -> PrivateComputationStageService:
+        """
+        Maps PrivateComputationStageFlow instances to StageService instances
+
+        Arguments:
+            args: Common arguments initialized in PrivateComputationService that are consumed by stage services
+
+        Returns:
+            An instantiated StageService object corresponding to the StageFlow enum member caller.
+
+        Raises:
+            NotImplementedError: The subclass doesn't implement a stage service for a given StageFlow enum member
+        """
+        if self is self.CREATED:
+            return DummyStageService()
+        elif self is self.ID_MATCH:
+            return IdMatchStageService(
+                args.pid_svc,
+                args.pid_config,
+            )
+        elif self is self.COMPUTE:
+            return ComputeMetricsStageService(
+                args.onedocker_binary_config_map,
+                args.mpc_svc,
+            )
+        elif self is self.AGGREGATE:
+            return AggregateShardsStageService(
+                args.onedocker_binary_config_map,
+                args.mpc_svc,
+            )
+        elif self is self.POST_PROCESSING_HANDLERS:
+            return PostProcessingStageService(
+                args.storage_svc, args.post_processing_handlers
+            )
+        else:
+            raise NotImplementedError(f"No stage service configured for {self}")

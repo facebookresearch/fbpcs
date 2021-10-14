@@ -16,6 +16,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -36,7 +37,7 @@ class IdMatchStageService(PrivateComputationStageService):
         self,
         pid_svc: PIDService,
         pid_config: Dict[str, Any],
-        protocol: PIDProtocol,
+        protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         is_validating: bool = False,
         synthetic_shard_path: Optional[str] = None,
     ) -> None:
