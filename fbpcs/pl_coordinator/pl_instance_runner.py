@@ -22,7 +22,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    get,
+    get_instance,
     create_instance,
     id_match,
     compute,
@@ -335,7 +335,9 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         self.input_path: str = input_path
         self.output_dir: str = self.get_output_dir_from_input_path(input_path)
         try:
-            self.status = get(self.config, self.instance_id, self.logger).status
+            self.status = get_instance(
+                self.config, self.instance_id, self.logger
+            ).status
         except RuntimeError:
             self.logger.info(f"Creating new partner instance {self.instance_id}")
             self.status = create_instance(
@@ -351,7 +353,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
 
     def update_instance(self) -> None:
-        self.status = get(self.config, self.instance_id, self.logger).status
+        self.status = get_instance(self.config, self.instance_id, self.logger).status
 
     def cancel_current_stage(self) -> None:
         cancel_current_stage(self.config, self.instance_id, self.logger)
