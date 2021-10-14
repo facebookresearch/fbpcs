@@ -47,6 +47,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
+    id_match,
 )
 
 DEFAULT_HMAC_KEY: str = ""
@@ -95,31 +96,6 @@ def create_instance(
         aggregation_type=aggregation_type,
         k_anonymity_threshold=k_anonymity_threshold,
         fail_fast=fail_fast,
-    )
-
-    logger.info(instance)
-
-
-def id_match(
-    config: Dict[str, Any],
-    instance_id: str,
-    logger: logging.Logger,
-    server_ips: Optional[List[str]] = None,
-    dry_run: Optional[bool] = False,
-) -> None:
-    private_computation_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-
-    # run pid instance through pid service invoked from pa service
-    instance = private_computation_service.id_match(
-        instance_id=instance_id,
-        pid_config=config["pid"],
-        server_ips=server_ips,
-        dry_run=dry_run,
     )
 
     logger.info(instance)
