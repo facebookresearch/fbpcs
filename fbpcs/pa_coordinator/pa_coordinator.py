@@ -47,6 +47,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
+    aggregate_shards,
     id_match,
 )
 
@@ -153,33 +154,6 @@ def compute_attribution(
     )
 
     logging.info("Finished running compute stage")
-    logger.info(instance)
-
-
-def aggregate_shards(
-    config: Dict[str, Any],
-    instance_id: str,
-    logger: logging.Logger,
-    server_ips: Optional[List[str]] = None,
-    dry_run: Optional[bool] = False,
-    log_cost_to_s3: bool = False,
-) -> None:
-    private_computation_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-
-    private_computation_service.update_instance(instance_id)
-
-    instance = private_computation_service.aggregate_shards(
-        instance_id=instance_id,
-        server_ips=server_ips,
-        dry_run=dry_run,
-        log_cost_to_s3=log_cost_to_s3,
-    )
-
     logger.info(instance)
 
 

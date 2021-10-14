@@ -45,7 +45,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    aggregate,
+    aggregate_shards,
     compute,
     create_instance,
     get,
@@ -188,7 +188,7 @@ def main():
         get_mpc(config, instance_id, logger)
     elif arguments["aggregate"]:
         logger.info(f"Aggregate instance: {instance_id}")
-        aggregate(
+        aggregate_shards(
             config=config,
             instance_id=instance_id,
             logger=logger,

@@ -26,7 +26,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     create_instance,
     id_match,
     compute,
-    aggregate,
+    aggregate_shards,
     cancel_current_stage,
 )
 
@@ -379,7 +379,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         dry_run=None,
                     )
                 else:
-                    aggregate(
+                    aggregate_shards(
                         config=self.config,
                         instance_id=self.instance_id,
                         logger=self.logger,
