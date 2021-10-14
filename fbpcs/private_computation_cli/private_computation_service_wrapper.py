@@ -266,7 +266,7 @@ def get_instance(
 
 def get_server_ips(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
-) -> None:
+) -> List[str]:
     pc_service = _build_private_computation_service(
         config["private_computation"],
         config["mpc"],
@@ -277,9 +277,9 @@ def get_server_ips(
     pc_instance = pc_service.instance_repository.read(instance_id)
 
     # This utility should only be used to get ips from a publisher instance
-    if pc_instance.role != PrivateComputationRole.PUBLISHER:
+    if pc_instance.role is not PrivateComputationRole.PUBLISHER:
         logger.warning("Unable to get server ips from a partner instance")
-        return
+        return []
 
     server_ips_list = None
     last_instance = pc_instance.instances[-1]
@@ -290,6 +290,7 @@ def get_server_ips(
         server_ips_list = []
 
     print(*server_ips_list, sep=",")
+    return server_ips_list
 
 
 def get_pid(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
