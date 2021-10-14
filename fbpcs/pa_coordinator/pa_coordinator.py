@@ -42,12 +42,12 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstance,
     PrivateComputationGameType,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
     aggregate_shards,
+    get_instance,
     id_match,
 )
 
@@ -155,21 +155,6 @@ def compute_attribution(
 
     logging.info("Finished running compute stage")
     logger.info(instance)
-
-
-def get_instance(
-    config: Dict[str, Any], instance_id: str, logger: logging.Logger
-) -> PrivateComputationInstance:
-    private_computation_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-
-    pa_instance = private_computation_service.update_instance(instance_id)
-    logger.info(pa_instance)
-    return pa_instance
 
 
 def get_server_ips(
