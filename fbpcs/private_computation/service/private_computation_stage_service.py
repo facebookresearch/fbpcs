@@ -18,6 +18,7 @@ from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
+    PrivateComputationInstanceStatus
 )
 
 
@@ -49,4 +50,11 @@ class PrivateComputationStageService(abc.ABC):
         # TODO(T102471612): remove server_ips from run_async, move to subclass constructor instead
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
+        ...
+
+    @abc.abstractmethod
+    def get_status(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> PrivateComputationInstanceStatus:
         ...

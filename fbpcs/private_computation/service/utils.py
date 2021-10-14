@@ -11,7 +11,9 @@ from typing import Any, Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
+from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
+from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -153,3 +155,45 @@ def gen_mpc_game_args_to_retry(
         ]
 
     return game_args_to_retry
+
+
+def get_updated_pc_status_mpc_game(
+    private_computation_instance: PrivateComputationInstance,
+    mpc_svc: MPCService,
+) -> PrivateComputationInstanceStatus:
+    """Updates the MPCInstances and gets latest PrivateComputationInstance status
+
+    Arguments:
+        private_computation_instance: The PC instance that is being updated
+        mpc_svc: Used to update MPC instances stored on private_computation_instance
+
+    Returns:
+        The latest status for private_computation_instance
+    """
+    status = private_computation_instance.status
+    if private_computation_instance.instances:
+        # Only need to update the last stage/instance
+        last_instance = private_computation_instance.instances[-1]
+        if not isinstance(last_instance, MPCInstance):
+            return status
+
+        # MPC service has to call update_instance to get the newest containers
+        # information in case they are still running
+        private_computation_instance.instances[-1] = PCSMPCInstance.from_mpc_instance(
+            mpc_svc.update_instance(last_instance.instance_id)
+        )
+
+        mpc_instance_status = private_computation_instance.instances[-1].status
+
+        current_stage = private_computation_instance.current_stage
+        if mpc_instance_status is MPCInstanceStatus.STARTED:
+            status = current_stage.started_status
+        elif mpc_instance_status is MPCInstanceStatus.COMPLETED:
+            status = current_stage.completed_status
+        elif mpc_instance_status in (
+            MPCInstanceStatus.FAILED,
+            MPCInstanceStatus.CANCELED,
+        ):
+            status = current_stage.failed_status
+
+    return status

@@ -7,6 +7,7 @@
 # pyre-strict
 
 
+from fbpcs.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
 import asyncio
 import logging
 from typing import Dict, List, Optional
@@ -140,3 +141,35 @@ class PostProcessingStageService(PrivateComputationStageService):
                 handler_name
             ] = PostProcessingHandlerStatus.FAILED
             post_processing_instance.status = PostProcessingInstanceStatus.FAILED
+
+
+    def get_status(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> PrivateComputationInstanceStatus:
+        """Updates the PostProcessingInstances and gets latest PrivateComputationInstance status
+
+        Arguments:
+            private_computation_instance: The PC instance that is being updated
+
+        Returns:
+            The latest status for private_computation_instance
+        """
+        status = pc_instance.status
+        if pc_instance.instances:
+            # Only need to update the last stage/instance
+            last_instance = pc_instance.instances[-1]
+            if not isinstance(last_instance, PostProcessingInstance):
+                return status
+
+            post_processing_instance_status = pc_instance.instances[-1].status
+
+            stage = pc_instance.current_stage
+            if post_processing_instance_status is PostProcessingInstanceStatus.STARTED:
+                status = stage.started_status
+            elif post_processing_instance_status is PostProcessingInstanceStatus.COMPLETED:
+                status = stage.completed_status
+            elif post_processing_instance_status is PostProcessingInstanceStatus.FAILED:
+                status = stage.failed_status
+
+        return status

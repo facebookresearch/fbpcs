@@ -19,6 +19,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstanceStatus,
+)
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -26,6 +29,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.utils import (
     create_and_start_mpc_instance,
     map_private_computation_role_to_mpc_party,
+    get_updated_pc_status_mpc_game,
 )
 
 
@@ -124,7 +128,9 @@ class AggregateShardsStageService(PrivateComputationStageService):
 
             mpc_instance = await create_and_start_mpc_instance(
                 mpc_svc=self._mpc_service,
-                instance_id=pc_instance.instance_id + "_aggregate_shards" + str(pc_instance.retry_counter),
+                instance_id=pc_instance.instance_id
+                + "_aggregate_shards"
+                + str(pc_instance.retry_counter),
                 game_name=GameNames.SHARD_AGGREGATOR.value,
                 mpc_party=map_private_computation_role_to_mpc_party(pc_instance.role),
                 num_containers=2,
@@ -147,7 +153,9 @@ class AggregateShardsStageService(PrivateComputationStageService):
             ]
             mpc_instance = await create_and_start_mpc_instance(
                 mpc_svc=self._mpc_service,
-                instance_id=pc_instance.instance_id + "_aggregate_shards" + str(pc_instance.retry_counter),
+                instance_id=pc_instance.instance_id
+                + "_aggregate_shards"
+                + str(pc_instance.retry_counter),
                 game_name=GameNames.SHARD_AGGREGATOR.value,
                 mpc_party=map_private_computation_role_to_mpc_party(pc_instance.role),
                 num_containers=1,
@@ -160,3 +168,16 @@ class AggregateShardsStageService(PrivateComputationStageService):
         pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         return pc_instance
 
+    def get_status(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> PrivateComputationInstanceStatus:
+        """Updates the MPCInstances and gets latest PrivateComputationInstance status
+
+        Arguments:
+            private_computation_instance: The PC instance that is being updated
+
+        Returns:
+            The latest status for private_computation_instance
+        """
+        return get_updated_pc_status_mpc_game(pc_instance, self._mpc_service)

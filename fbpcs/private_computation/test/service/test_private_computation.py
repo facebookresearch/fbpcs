@@ -8,6 +8,7 @@ import unittest
 from collections import defaultdict
 from typing import List, Optional, Tuple
 from unittest.mock import MagicMock, call, patch
+from unittest.mock import Mock
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
@@ -289,6 +290,10 @@ class TestPrivateComputationService(unittest.TestCase):
                     # run_async will return whatever pc_instance privatelift.run_stage passes it
                     side_effect=lambda pc_instance, *args, **kwargs: pc_instance
                 ),
+                "get_status": Mock(
+                    # run_async will return whatever pc_instance privatelift.run_stage passes it
+                    side_effect=lambda pc_instance, *args, **kwargs: pc_instance.status
+                ),
             },
         )()
 
@@ -522,9 +527,16 @@ class TestPrivateComputationService(unittest.TestCase):
             num_workers=2,
             status=MPCInstanceStatus.FAILED,
         )
+        pc_instance = self.create_sample_instance(
+            PrivateComputationInstanceStatus.AGGREGATION_STARTED,
+            instances=[mpc_instance],
+        )
+        self.private_computation_service.mpc_svc.update_instance = MagicMock(
+            return_value=mpc_instance
+        )
         self.assertEqual(
             PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-            self.private_computation_service._get_status_from_stage(mpc_instance),
+            self.private_computation_service._update_instance(pc_instance).status,
         )
 
         # Test get status from the PID stage
@@ -539,9 +551,13 @@ class TestPrivateComputationService(unittest.TestCase):
             stages_status={},
             status=PIDInstanceStatus.COMPLETED,
         )
+        pc_instance = self.create_sample_instance(
+            PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+            instances=[pid_instance],
+        )
         self.assertEqual(
             PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-            self.private_computation_service._get_status_from_stage(pid_instance),
+            self.private_computation_service._update_instance(pc_instance).status,
         )
 
     def test_prepare_data(self):
