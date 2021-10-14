@@ -80,7 +80,6 @@ def id_match(
     config: Dict[str, Any],
     instance_id: str,
     logger: logging.Logger,
-    fail_fast: bool = False,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
 ) -> None:
@@ -92,7 +91,7 @@ def id_match(
     )
 
     # run pid instance through pid service invoked from pc service
-    pc_service.id_match(
+    instance = pc_service.id_match(
         instance_id=instance_id,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
@@ -105,11 +104,6 @@ def id_match(
         dry_run=dry_run,
     )
 
-    # At this point, pc instance has a pid instance. Pid dispatcher should have updated
-    # the pid instance to its newest status already, whether FAILED or COMPLETED,
-    # but pc instance has not been updated based on the pid instance.
-    # So make this call here to keep them in sync.
-    instance = pc_service.update_instance(instance_id)
     logger.info(instance)
 
 
