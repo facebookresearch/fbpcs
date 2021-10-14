@@ -25,8 +25,8 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationRole,
     PrivateComputationInstance,
-    PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import STAGE_STARTED_STATUSES
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
@@ -241,11 +241,11 @@ def run_post_processing_handlers(
     logger.info(instance)
 
 
-def get(
+def get_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
     """
-    The purpose of `get` is to get the updated status of the pc instance with id instance_id.
+    To get the updated status of the pc instance with id instance_id.
     We only call pc_service.update_instance() under XXX_STARTED status because otherwise we could run into
     a race condition: when status is not XXX_STARTED, PrivateComputationService might be writing a new PID or
     MPCInstance to this pc instance. Because pc_service.update_instance() also writes to this pc instance, it could
@@ -258,11 +258,7 @@ def get(
         config.get("post_processing_handlers", {}),
     )
     instance = pc_service.get_instance(instance_id)
-    if instance.status in [
-        PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-        PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-        PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-    ]:
+    if instance.status in STAGE_STARTED_STATUSES:
         instance = pc_service.update_instance(instance_id)
     logger.info(instance)
     return instance
