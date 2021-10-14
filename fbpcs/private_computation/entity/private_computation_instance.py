@@ -173,3 +173,14 @@ class PrivateComputationInstance(InstanceBase):
         return PrivateComputationBaseStageFlow.cls_name_to_cls(
             self._stage_flow_cls_name
         ).get_stage_from_status(self.status)
+
+    def get_next_runnable_stage(self) -> Optional[PrivateComputationBaseStageFlow]:
+        """Returns the next runnable stage in the instance's stage flow
+
+        * If the instance has a start status, return None
+        * If the instance has a failed status, return the current stage in the flow
+        * If the instance has a completed status, return the next stage in the flow (which could be None)
+        """
+        return PrivateComputationBaseStageFlow.cls_name_to_cls(
+            self._stage_flow_cls_name
+        ).get_next_runnable_stage_from_status(self.status)

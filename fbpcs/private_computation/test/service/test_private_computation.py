@@ -297,6 +297,42 @@ class TestPrivateComputationService(unittest.TestCase):
             },
         )()
 
+    def test_get_next_runnable_stage_completed_status(self) -> None:
+        flow = PrivateComputationStageFlow
+        status  = PrivateComputationInstanceStatus.CREATED
+
+        instance = self.create_sample_instance(status)
+        instance._stage_flow_cls_name = flow.get_cls_name()
+
+        self.assertEqual(flow.ID_MATCH, instance.get_next_runnable_stage())
+
+    def test_get_next_runnable_stage_failed_status(self) -> None:
+        flow = PrivateComputationStageFlow
+        status  = PrivateComputationInstanceStatus.ID_MATCHING_FAILED
+
+        instance = self.create_sample_instance(status)
+        instance._stage_flow_cls_name = flow.get_cls_name()
+
+        self.assertEqual(flow.ID_MATCH, instance.get_next_runnable_stage())
+
+    def test_get_next_runnable_stage_started_status(self) -> None:
+        flow = PrivateComputationStageFlow
+        status  = PrivateComputationInstanceStatus.ID_MATCHING_STARTED
+
+        instance = self.create_sample_instance(status)
+        instance._stage_flow_cls_name = flow.get_cls_name()
+
+        self.assertEqual(None, instance.get_next_runnable_stage())
+
+    def test_get_next_runnable_stage_nothing_left(self) -> None:
+        flow = PrivateComputationStageFlow
+        status  = PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED
+
+        instance = self.create_sample_instance(status)
+        instance._stage_flow_cls_name = flow.get_cls_name()
+
+        self.assertEqual(None, instance.get_next_runnable_stage())
+
     @data_provider(_get_valid_stages_data)
     def test_run_stage_correct_stage_order(
         self,
