@@ -150,12 +150,13 @@ def compute(
     logger.info(instance)
 
 
-def aggregate(
+def aggregate_shards(
     config: Dict[str, Any],
     instance_id: str,
     logger: logging.Logger,
     server_ips: Optional[List[str]] = None,
     dry_run: Optional[bool] = False,
+    log_cost_to_s3: bool = False,
 ) -> None:
     pc_service = _build_private_computation_service(
         config["private_computation"],
@@ -177,6 +178,7 @@ def aggregate(
         ],
         server_ips=server_ips,
         dry_run=dry_run,
+        log_cost_to_s3=log_cost_to_s3,
     )
 
     logger.info(instance)
