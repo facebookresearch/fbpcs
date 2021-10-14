@@ -33,9 +33,7 @@ from typing import Any, Dict, List, Optional
 
 import schema
 from docopt import docopt
-from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.util import yaml
-from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -48,6 +46,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
     aggregate_shards,
     get_instance,
+    get_server_ips,
     id_match,
 )
 
@@ -155,30 +154,6 @@ def compute_attribution(
 
     logging.info("Finished running compute stage")
     logger.info(instance)
-
-
-def get_server_ips(
-    config: Dict[str, Any],
-    instance_id: str,
-) -> List[str]:
-    private_computation_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-
-    pa_instance = private_computation_service.update_instance(instance_id)
-
-    server_ips_list = None
-    last_instance = pa_instance.instances[-1]
-    if isinstance(last_instance, (PIDInstance, MPCInstance)):
-        server_ips_list = last_instance.server_ips
-
-    if not server_ips_list:
-        server_ips_list = []
-    print(*server_ips_list, sep=",")
-    return server_ips_list
 
 
 def print_instance(
@@ -318,6 +293,7 @@ def main() -> None:
         get_server_ips(
             config=config,
             instance_id=instance_id,
+            logger=logger,
         )
     elif arguments["print_instance"]:
         print_instance(
