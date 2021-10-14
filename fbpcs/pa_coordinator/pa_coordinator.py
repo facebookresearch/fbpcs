@@ -48,6 +48,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     get_instance,
     get_server_ips,
     id_match,
+    print_instance,
 )
 
 DEFAULT_HMAC_KEY: str = ""
@@ -154,12 +155,6 @@ def compute_attribution(
 
     logging.info("Finished running compute stage")
     logger.info(instance)
-
-
-def print_instance(
-    config: Dict[str, Any], instance_id: str, logger: logging.Logger
-) -> None:
-    print(get_instance(config, instance_id, logger))
 
 
 def main() -> None:
