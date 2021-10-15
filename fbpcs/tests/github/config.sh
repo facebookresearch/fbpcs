@@ -21,13 +21,14 @@ export LIFT_PARTNER_NAME="pl_partner_github"
 export LIFT_COORDINATOR="python3.8 -m fbpcs.pl_coordinator.pl_coordinator"
 export LIFT_NUM_MPC_CONTAIENRS=2
 export LIFT_NUM_PID_CONTAINERS=2
-export LIFT_INPUT_FILE=$E2E_GITHUB_S3_URL/lift/inputs/publisher_e2e_input.csv
+export LIFT_PUBLISHER_INPUT_FILE=$E2E_GITHUB_S3_URL/lift/inputs/publisher_e2e_input.csv
+export LIFT_PARTNER_INPUT_FILE=$E2E_GITHUB_S3_URL/lift/inputs/partner_e2e_input.csv
 export LIFT_OUTPUT_DIR=$E2E_GITHUB_S3_URL/lift/outputs
 
 # Lift result comparision
 export LIFT_OUTPUT_PATH=s3://$E2E_S3_BUCKET/lift/outputs
 export LIFT_PUBLISHER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PUBLIHSER_NAME"_out_dir/shard_aggregation_stage/out.json
-export LIFT_PARTNER_AGGREGATION_OUTPUT=s$LIFT_OUTPUT_PATH/"$LIFT_PARTNER_NAME"_out_dir/shard_aggregation_stage/out.json
+export LIFT_PARTNER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PARTNER_NAME"_out_dir/shard_aggregation_stage/out.json
 
 export LIFT_RESUKT_PATH=s3://$E2E_S3_BUCKET/lift/results
 export LIFT_PUBLISHER_EXPECTED_RESULT=$LIFT_RESUKT_PATH/publisher_expected_result.json
@@ -46,7 +47,9 @@ export ATTRIBUTION_NUM_MPC_CONTAINERS=1
 export ATTRIBUTION_RULE="last_touch_1d"
 export ATTRIBUTION_TYPE="measurement"
 
-export ATTRIBUTION_INPUT_FILE=$E2E_GITHUB_S3_URL/attribution/inputs/publisher_e2e_input.csv
+export ATTRIBUTION_PUBLISHER_INPUT_FILE=$E2E_GITHUB_S3_URL/attribution/inputs/publisher_e2e_input.csv
+export ATTRIBUTION_PARTNER_INPUT_FILE=$E2E_GITHUB_S3_URL/attribution/inputs/partner_e2e_input.csv
+
 export ATTRIBUTION_OUTPUT_DIR=$E2E_GITHUB_S3_URL/attribution/outputs
 
 # Attribution result comparision

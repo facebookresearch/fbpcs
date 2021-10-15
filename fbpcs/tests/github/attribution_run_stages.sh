@@ -21,7 +21,7 @@ case "$stage" in
         echo "Create Attribution Publisher instance"
         $docker_command create_instance "$ATTRIBUTION_PUBLIHSER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE" \
-            --input_path="$ATTRIBUTION_INPUT_FILE" \
+            --input_path="$ATTRIBUTION_PUBLISHER_INPUT_FILE" \
             --output_dir="$ATTRIBUTION_OUTPUT_DIR" \
             --role=publisher \
             --num_pid_containers="$ATTRIBUTION_NUM_PID_CONTAINERS" \
@@ -33,7 +33,7 @@ case "$stage" in
         echo "Create Attribution Partner instance"
         $docker_command create_instance "$ATTRIBUTION_PARTNER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE" \
-            --input_path="$ATTRIBUTION_INPUT_FILE" \
+            --input_path="$ATTRIBUTION_PARTNER_INPUT_FILE" \
             --output_dir="$ATTRIBUTION_OUTPUT_DIR" \
             --role=partner \
             --num_pid_containers="$ATTRIBUTION_NUM_PID_CONTAINERS" \
