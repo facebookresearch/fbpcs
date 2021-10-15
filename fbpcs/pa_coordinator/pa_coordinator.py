@@ -29,7 +29,7 @@ Options:
 import logging
 import os
 from pathlib import Path, PurePath
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import schema
 from docopt import docopt
@@ -45,9 +45,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
     aggregate_shards,
+    compute_metrics,
     get_instance,
     get_server_ips,
     id_match,
+    prepare_compute_input,
     print_instance,
 )
 
@@ -99,61 +101,6 @@ def create_instance(
         fail_fast=fail_fast,
     )
 
-    logger.info(instance)
-
-
-def prepare_compute_input(
-    config: Dict[str, Any],
-    instance_id: str,
-    logger: logging.Logger,
-    dry_run: Optional[bool] = False,
-    log_cost_to_s3: bool = False,
-) -> None:
-    private_computation_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-
-    # Because it's possible that the "get" command never gets called to update the instance since the last step started,
-    # so it could appear that the current status is still XXX_STARTED when it should be XXX_FAILED or XXX_COMPLETED,
-    # so we need to explicitly call update_instance() here to get the current status.
-    private_computation_service.update_instance(instance_id)
-
-    private_computation_service.prepare_data(
-        instance_id=instance_id,
-        dry_run=dry_run,
-        log_cost_to_s3=log_cost_to_s3,
-    )
-
-    logging.info("Finished preparing data")
-
-
-def compute_attribution(
-    config: Dict[str, Any],
-    instance_id: str,
-    logger: logging.Logger,
-    server_ips: Optional[List[str]] = None,
-    dry_run: Optional[bool] = False,
-    log_cost_to_s3: bool = False,
-) -> None:
-    private_computation_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-    logging.info("Starting compute metrics...")
-
-    instance = private_computation_service.compute_metrics(
-        instance_id=instance_id,
-        server_ips=server_ips,
-        dry_run=dry_run,
-        log_cost_to_s3=log_cost_to_s3,
-    )
-
-    logging.info("Finished running compute stage")
     logger.info(instance)
 
 
@@ -267,7 +214,7 @@ def main() -> None:
         )
     elif arguments["compute_attribution"]:
         logger.info(f"Compute instance: {instance_id}")
-        compute_attribution(
+        compute_metrics(
             config=config,
             instance_id=instance_id,
             server_ips=arguments["--server_ips"],
