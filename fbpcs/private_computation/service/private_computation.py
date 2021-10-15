@@ -197,20 +197,37 @@ class PrivateComputationService:
         self, private_computation_instance: PrivateComputationInstance
     ) -> PrivateComputationInstance:
         stage = private_computation_instance.current_stage
-        stage_svc = stage.get_stage_service(
-            self.stage_service_args
-        )
+        stage_svc = stage.get_stage_service(self.stage_service_args)
         self.logger.info(f"Updating instance | {stage}={stage!r}")
-        new_status = stage_svc.get_status(
-            private_computation_instance
+        new_status = stage_svc.get_status(private_computation_instance)
+        private_computation_instance = self._update_status(
+            private_computation_instance, new_status
         )
-        private_computation_instance = self._update_status(private_computation_instance, new_status)
         self.instance_repository.update(private_computation_instance)
         self.logger.info(
             f"Finished updating instance: {private_computation_instance.instance_id}"
         )
 
         return private_computation_instance
+
+    def run_next(
+        self, instance_id: str, server_ips: Optional[List[str]]
+    ) -> PrivateComputationInstance:
+        return asyncio.run(self.run_next_async(instance_id, server_ips))
+
+    async def run_next_async(
+        self, instance_id: str, server_ips: Optional[List[str]]
+    ) -> PrivateComputationInstance:
+        """Fetches the next eligible stage in the instance's stage flow and runs it"""
+        pc_instance = self.get_instance(instance_id)
+        next_stage = pc_instance.get_next_runnable_stage()
+        if not next_stage:
+            self.logger.warning("There are no eligble stages to be ran at this time.")
+            return pc_instance
+        stage_svc = next_stage.get_stage_service(self.stage_service_args)
+        return await self.run_stage_async(
+            instance_id, next_stage, stage_svc, server_ips=server_ips
+        )
 
     def run_stage(
         self,
@@ -221,9 +238,7 @@ class PrivateComputationService:
         dry_run: bool = False,
     ) -> PrivateComputationInstance:
         return asyncio.run(
-            self.run_stage_async(
-                instance_id, stage, stage_svc, server_ips, dry_run
-            )
+            self.run_stage_async(instance_id, stage, stage_svc, server_ips, dry_run)
         )
 
     def _get_validated_instance(
@@ -614,7 +629,6 @@ class PrivateComputationService:
             f"The current stage of instance {instance_id} has been canceled."
         )
         return private_computation_instance
-
 
     @staticmethod
     def get_ts_now() -> int:
