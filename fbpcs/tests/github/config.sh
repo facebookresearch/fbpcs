@@ -21,6 +21,7 @@ export LIFT_PARTNER_NAME="pl_partner_github"
 export LIFT_COORDINATOR="python3.8 -m fbpcs.pl_coordinator.pl_coordinator"
 export LIFT_NUM_MPC_CONTAIENRS=2
 export LIFT_NUM_PID_CONTAINERS=2
+export LIFT_CONCURRENCY=4
 export LIFT_PUBLISHER_INPUT_FILE=$E2E_GITHUB_S3_URL/lift/inputs/publisher_e2e_input.csv
 export LIFT_PARTNER_INPUT_FILE=$E2E_GITHUB_S3_URL/lift/inputs/partner_e2e_input.csv
 export LIFT_OUTPUT_DIR=$E2E_GITHUB_S3_URL/lift/outputs
