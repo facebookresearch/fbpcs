@@ -16,6 +16,7 @@ Usage:
     pa-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
     pa-coordinator compute_attribution <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pa-coordinator aggregate_shards <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
+    pa-coordinator run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
     pa-coordinator get_server_ips  <instance_id> --config=<config_file> [options]
     pa-coordinator get_instance <instance_id> --config=<config_file> [options]
     pa-coordinator print_instance <instance_id> --config=<config_file> [options]
@@ -51,6 +52,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     id_match,
     prepare_compute_input,
     print_instance,
+    run_next
 )
 
 DEFAULT_HMAC_KEY: str = ""
@@ -114,6 +116,7 @@ def main() -> None:
             "prepare_compute_input": bool,
             "compute_attribution": bool,
             "aggregate_shards": bool,
+            "run_next": bool,
             "get_server_ips": bool,
             "<instance_id>": schema.Or(None, str),
             "--config": schema.And(schema.Use(PurePath), os.path.exists),
@@ -230,6 +233,14 @@ def main() -> None:
             logger=logger,
             dry_run=arguments["--dry_run"],
             log_cost_to_s3=arguments["--log_cost_to_s3"],
+        )
+    elif arguments["run_next"]:
+        logger.info(f"run_next instance: {instance_id}")
+        run_next(
+            config=config,
+            instance_id=instance_id,
+            logger=logger,
+            server_ips=arguments["--server_ips"],
         )
     elif arguments["get_server_ips"]:
         get_server_ips(

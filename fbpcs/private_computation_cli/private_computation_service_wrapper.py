@@ -281,6 +281,32 @@ def run_post_processing_handlers(
 
     logger.info(instance)
 
+def run_next(
+    config: Dict[str, Any],
+    instance_id: str,
+    logger: logging.Logger,
+    server_ips: Optional[List[str]] = None,
+) -> None:
+
+    pc_service = _build_private_computation_service(
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
+    )
+
+    # Because it's possible that the "get" command never gets called to update the instance since the last step started,
+    # so it could appear that the current status is still XXX_STARTED when it should be XXX_FAILED or XXX_COMPLETED,
+    # so we need to explicitly call update_instance() here to get the current status.
+    pc_service.update_instance(instance_id)
+
+    instance = pc_service.run_next(
+        instance_id=instance_id,
+        server_ips=server_ips
+    )
+
+    logger.info(instance)
+
 
 def get_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger

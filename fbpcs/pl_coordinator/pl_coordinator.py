@@ -16,6 +16,7 @@ Usage:
     pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pl-coordinator run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
+    pl-coordinator run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
     pl-coordinator get <instance_id> --config=<config_file> [options]
     pl-coordinator get_server_ips <instance_id> --config=<config_file> [options]
     pl-coordinator get_pid <instance_id> --config=<config_file> [options]
@@ -56,6 +57,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     run_post_processing_handlers,
     validate,
     cancel_current_stage,
+    run_next
 )
 
 
@@ -69,6 +71,7 @@ def main():
             "validate": bool,
             "run_post_processing_handlers": bool,
             "get": bool,
+            "run_next": bool,
             "get_server_ips": bool,
             "get_pid": bool,
             "get_mpc": bool,
@@ -174,6 +177,14 @@ def main():
             logger=logger,
             aggregated_result_path=arguments["--aggregated_result_path"],
             dry_run=arguments["--dry_run"],
+        )
+    elif arguments["run_next"]:
+        logger.info(f"run_next instance: {instance_id}")
+        run_next(
+            config=config,
+            instance_id=instance_id,
+            logger=logger,
+            server_ips=arguments["--server_ips"],
         )
     elif arguments["get"]:
         logger.info(f"Get instance: {instance_id}")
