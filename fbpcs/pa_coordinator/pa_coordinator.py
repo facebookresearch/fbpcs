@@ -52,7 +52,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     id_match,
     prepare_compute_input,
     print_instance,
-    run_next
+    run_next,
 )
 from fbpcs.utils.optional import unwrap_or_default
 
