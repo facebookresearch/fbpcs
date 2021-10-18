@@ -308,14 +308,14 @@ class PrivateComputationService:
         try:
             pc_instance = await stage_svc.run_async(pc_instance, server_ips)
         except Exception as e:
-            self.logger.error(f"Caught exception when running {stage}")
+            self.logger.error(f"Caught exception when running {stage}\n{e}")
             self._update_status(
                 private_computation_instance=pc_instance,
                 new_status=stage.failed_status,
             )
             raise e
         finally:
-            pc_instance = self._update_instance(pc_instance)
+            self.instance_repository.update(pc_instance)
         return pc_instance
 
     # PID stage
