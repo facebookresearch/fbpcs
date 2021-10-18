@@ -81,6 +81,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.utils import (
     ready_for_partial_container_retry,
 )
+from fbpcs.utils.optional import unwrap_or_default
 
 T = TypeVar("T")
 
@@ -141,8 +142,8 @@ class PrivateComputationService:
         pce_config: Optional[PCEConfig] = None,
         is_test: Optional[bool] = False,
         hmac_key: Optional[str] = None,
-        padding_size: int = DEFAULT_PADDING_SIZE,
-        k_anonymity_threshold: int = DEFAULT_K_ANONYMITY_THRESHOLD,
+        padding_size: Optional[int] = None,
+        k_anonymity_threshold: Optional[int] = None,
         fail_fast: bool = False,
         stage_flow_cls: Type[
             PrivateComputationBaseStageFlow
@@ -156,8 +157,9 @@ class PrivateComputationService:
             instances=[],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=PrivateComputationService.get_ts_now(),
-            num_files_per_mpc_container=num_files_per_mpc_container
-            or NUM_NEW_SHARDS_PER_FILE,
+            num_files_per_mpc_container=unwrap_or_default(
+                optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
+            ),
             game_type=game_type,
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
@@ -171,9 +173,13 @@ class PrivateComputationService:
             pce_config=pce_config,
             is_test=is_test,
             hmac_key=hmac_key,
-            padding_size=padding_size,
+            padding_size=unwrap_or_default(
+                optional=padding_size, default=DEFAULT_PADDING_SIZE
+            ),
             concurrency=concurrency,
-            k_anonymity_threshold=k_anonymity_threshold,
+            k_anonymity_threshold=unwrap_or_default(
+                optional=k_anonymity_threshold, default=DEFAULT_K_ANONYMITY_THRESHOLD
+            ),
             fail_fast=fail_fast,
             _stage_flow_cls_name=stage_flow_cls.get_cls_name(),
         )

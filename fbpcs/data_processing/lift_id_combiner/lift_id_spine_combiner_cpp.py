@@ -16,11 +16,11 @@ from typing import List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
-from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcp.service.storage import PathType, StorageService
 from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_service import (
     LiftIdSpineCombinerService,
 )
+from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 
 

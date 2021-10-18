@@ -30,7 +30,7 @@ Options:
 import logging
 import os
 from pathlib import Path, PurePath
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import schema
 from docopt import docopt
@@ -44,9 +44,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    _build_private_computation_service,
     aggregate_shards,
     compute_metrics,
+    create_instance,
     get_instance,
     get_server_ips,
     id_match,
@@ -54,56 +54,12 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     print_instance,
     run_next
 )
+from fbpcs.utils.optional import unwrap_or_default
 
 DEFAULT_HMAC_KEY: str = ""
 DEFAULT_PADDING_SIZE: int = 4
 DEFAULT_CONCURRENCY: int = 1
 DEFAULT_K_ANONYMITY_THRESHOLD: int = 0
-
-
-def create_instance(
-    config: Dict[str, Any],
-    instance_id: str,
-    role: PrivateComputationRole,
-    input_path: str,
-    output_dir: str,
-    hmac_key: str,
-    num_pid_containers: int,
-    num_mpc_containers: int,
-    num_files_per_mpc_container: int,
-    attribution_rule: AttributionRule,
-    aggregation_type: AggregationType,
-    logger: logging.Logger,
-    padding_size: int,
-    concurrency: int,
-    k_anonymity_threshold: int = DEFAULT_K_ANONYMITY_THRESHOLD,
-    fail_fast: bool = False,
-) -> None:
-    private_computation_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-    instance = private_computation_service.create_instance(
-        instance_id=instance_id,
-        role=role,
-        game_type=PrivateComputationGameType.ATTRIBUTION,
-        input_path=input_path,
-        output_dir=output_dir,
-        hmac_key=hmac_key,
-        num_pid_containers=num_pid_containers,
-        num_mpc_containers=num_mpc_containers,
-        num_files_per_mpc_container=num_files_per_mpc_container,
-        padding_size=padding_size,
-        concurrency=concurrency,
-        attribution_rule=attribution_rule,
-        aggregation_type=aggregation_type,
-        k_anonymity_threshold=k_anonymity_threshold,
-        fail_fast=fail_fast,
-    )
-
-    logger.info(instance)
 
 
 def main() -> None:
@@ -177,16 +133,20 @@ def main() -> None:
             input_path=arguments["--input_path"],
             output_dir=arguments["--output_dir"],
             role=arguments["--role"],
-            hmac_key=hmac_key or DEFAULT_HMAC_KEY,
+            game_type=PrivateComputationGameType.ATTRIBUTION,
+            hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             num_pid_containers=arguments["--num_pid_containers"],
             num_mpc_containers=arguments["--num_mpc_containers"],
             num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
             attribution_rule=arguments["--attribution_rule"],
             aggregation_type=arguments["--aggregation_type"],
-            padding_size=padding_size or DEFAULT_PADDING_SIZE,
+            padding_size=unwrap_or_default(
+                optional=padding_size, default=DEFAULT_PADDING_SIZE
+            ),
             concurrency=arguments["--concurrency"],
-            k_anonymity_threshold=k_anonymity_threshold
-            or DEFAULT_K_ANONYMITY_THRESHOLD,
+            k_anonymity_threshold=unwrap_or_default(
+                optional=k_anonymity_threshold, default=DEFAULT_K_ANONYMITY_THRESHOLD
+            ),
             logger=logger,
             fail_fast=arguments["--fail_fast"],
         )

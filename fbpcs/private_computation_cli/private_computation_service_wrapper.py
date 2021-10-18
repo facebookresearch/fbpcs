@@ -22,6 +22,8 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.private_computation_instance import (
+    AggregationType,
+    AttributionRule,
     PrivateComputationGameType,
     PrivateComputationRole,
     PrivateComputationInstance,
@@ -38,15 +40,19 @@ def create_instance(
     config: Dict[str, Any],
     instance_id: str,
     role: PrivateComputationRole,
+    game_type: PrivateComputationGameType,
     logger: logging.Logger,
     input_path: str,
     output_dir: str,
     num_pid_containers: int,
     num_mpc_containers: int,
+    attribution_rule: Optional[AttributionRule] = None,
+    aggregation_type: Optional[AggregationType] = None,
     concurrency: Optional[int] = None,
     hmac_key: Optional[str] = None,
     num_files_per_mpc_container: Optional[int] = None,
-    game_type: Optional[PrivateComputationGameType] = None,
+    padding_size: Optional[int] = None,
+    k_anonymity_threshold: Optional[int] = None,
     fail_fast: bool = False,
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
@@ -58,17 +64,21 @@ def create_instance(
     instance = pc_service.create_instance(
         instance_id=instance_id,
         role=role,
-        game_type=game_type or PrivateComputationGameType.LIFT,
+        game_type=game_type,
         input_path=input_path,
         output_dir=output_dir,
         num_pid_containers=num_pid_containers,
         num_mpc_containers=num_mpc_containers,
         concurrency=concurrency or DEFAULT_CONCURRENCY,
+        attribution_rule=attribution_rule,
+        aggregation_type=aggregation_type,
         num_files_per_mpc_container=num_files_per_mpc_container,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
         ],
         hmac_key=hmac_key,
+        padding_size=padding_size,
+        k_anonymity_threshold=k_anonymity_threshold,
         fail_fast=fail_fast,
     )
 

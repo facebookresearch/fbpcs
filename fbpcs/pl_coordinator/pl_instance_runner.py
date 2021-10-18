@@ -18,8 +18,9 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import (
     GRAPHAPI_INSTANCE_STATUSES,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationRole,
+    PrivateComputationGameType,
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     get_instance,
@@ -344,6 +345,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                 config=self.config,
                 instance_id=self.instance_id,
                 role=PrivateComputationRole.PARTNER,
+                game_type=PrivateComputationGameType.LIFT,
                 logger=self.logger,
                 input_path=self.input_path,
                 output_dir=self.output_dir,
