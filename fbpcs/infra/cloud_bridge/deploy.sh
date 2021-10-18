@@ -226,6 +226,15 @@ undeploy_aws_resources () {
 
 input_validation () {
 echo "######################input validation############################"
+echo "validate AWS credential..."
+if aws sts get-caller-identity 2>&1 | grep -q "error" # InvalidClientTokenId or SignatureDoesNotMatch
+then
+    echo "Error: AWS credential is invalid. Check your AWS Access Key ID, Secret Access Key, and signing method"
+    exit 1
+else
+    echo "Valid AWS credential. Continue..."
+fi
+
 echo "validate input: AWS region..."
 echo "Your AWS region is $region."
 export AWS_DEFAULT_REGION=us-east-1 # this is a dummy env variable
@@ -242,7 +251,18 @@ else
     exit 1
 fi
 
+echo "validate input: tag..."
+tag_regex="^([a-z0-9-][a-z0-9-]{1,20}[a-z0-9])$" # limit tag to 20 characters
 echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
+if echo "$tag_postfix" | grep -Eq "$tag_regex"
+then
+    echo "valid tag. Continue..."
+else
+    echo "Error: invalid tag format."
+    echo "make sure the tag length is less than 20 characters, and using lowercase letters, numbers and dash only."
+    exit 1
+fi
+
 echo "Publisher's AWS account ID is $publisher_aws_account_id"
 echo "Publisher's VPC ID is $publisher_vpc_id"
 echo "validate input: s3 buckets..."
