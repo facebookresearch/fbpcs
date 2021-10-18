@@ -54,7 +54,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
 }
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "${var.data_processing_output_bucket}${var.tag_postfix}"
+  bucket = var.data_processing_output_bucket
   versioning {
     enabled = true
   }
