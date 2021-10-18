@@ -49,6 +49,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+#### Terraform Logs
 if [ -z ${TF_LOG+x} ]; then
     echo "Terraform Detailed Error Logging Disabled"
 else
@@ -79,21 +80,48 @@ create_s3_bucket() {
     local region=$2
     local aws_account_id=$3
     echo "######################## Create S3 buckets if don't exist ########################"
-    if aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+    if aws s3api head-bucket --bucket "$bucket_name" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucket doesn't exist
     then
-        echo "The bucket $s3_bucket_for_storage doesn't exist. Creating..."
-        aws s3api create-bucket --bucket "$s3_bucket_for_storage" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
-        aws s3api put-bucket-versioning --bucket "$s3_bucket_for_storage" --versioning-configuration Status=Enabled
-        echo "The bucket $s3_bucket_for_storage is created."
-    elif aws s3api head-bucket --bucket "$s3_bucket_for_storage" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "403" # no access to the bucket
+        echo "The bucket $bucket_name doesn't exist. Creating..."
+        aws s3api create-bucket --bucket "$bucket_name" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
+        aws s3api put-bucket-versioning --bucket "$bucket_name" --versioning-configuration Status=Enabled
+        echo "The bucket $bucket_name is created."
+    elif aws s3api head-bucket --bucket "$bucket_name" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "403" # no access to the bucket
     then
-        echo "the bucket $s3_bucket_for_storage is owned by a different account."
+        echo "the bucket $bucket_name is owned by a different account."
         echo "Please check your whether your AWS account id $aws_account_id matches your secret key and access key provided"
         exit 1
     else
-        echo "The bucket $s3_bucket_for_storage exists and you have access to it. Using it for storing Terraform state..."
+        echo "The bucket $bucket_name exists and you have access to it. Using it for storing Terraform state..."
     fi
 }
+
+validate_bucket_name() {
+    # reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+    local bucket_name=$1
+    if [ "${bucket_name:0:4}" == "xn--" ]
+    then
+        echo "Error: invalid bucket name. Bucket names must not start with the prefix xn--"
+        exit 1
+    fi
+
+    if [ "${bucket_name: -8}" == "-s3alias" ]
+    then
+        echo "Error: invalid bucket name. Bucket names must not end with the suffix -s3alias."
+        exit 1
+    fi
+    aws_regex="^([a-z0-9][a-z0-9-]{1,61}[a-z0-9])$"
+    if echo "$bucket_name" | grep -Eq "$aws_regex"
+    then
+        echo "Valid bucket name. Continue..."
+    else
+        echo "Error: invalid bucket name. please check out bucket naming rules at: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html"
+        echo "Additionally, although valid, using dots is unrecommended by Amazon and as such we do not allow it."
+        exit 1
+    fi
+
+}
+
 undeploy_aws_resources () {
     echo "Start undeploying AWS resource under PCE_shared..."
     echo "########################Check tfstate files########################"
@@ -197,18 +225,54 @@ undeploy_aws_resources () {
 
 
 input_validation () {
-echo "AWS region is $region."
+echo "######################input validation############################"
+echo "validate input: AWS region..."
+echo "Your AWS region is $region."
+export AWS_DEFAULT_REGION=us-east-1 # this is a dummy env variable
+valid_region_list=$(aws ec2 describe-regions \
+    --all-regions \
+    --query "Regions[].{Name:RegionName}" \
+    --output text)
+
+if echo "$valid_region_list" | grep -q "$region"
+then
+    echo "valid AWS region."
+else
+    echo "invalid AWS region. Please check out AWS User Guide on Available Regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
+    exit 1
+fi
+
 echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
-echo "Your AWS acount ID is $aws_account_id"
 echo "Publisher's AWS account ID is $publisher_aws_account_id"
 echo "Publisher's VPC ID is $publisher_vpc_id"
+echo "validate input: s3 buckets..."
 echo "The S3 bucket for storing 1) Terraform state file, 2) AWS Lambda functions, and 3) config.yml is $s3_bucket_for_storage"
-echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline, will be created in a short while...".
-echo "build semi automated data pipeline: $build_semi_automated_data_pipeline"
+validate_bucket_name "$s3_bucket_for_storage"
+echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline$tag_postfix, will be created in a short while...".
+validate_bucket_name "$s3_bucket_data_pipeline$tag_postfix"
 
-
-echo "######################input validation############################"
+if "$undeploy"
+then
+    echo "making sure $s3_bucket_data_pipeline has been created previously..."
+    if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+    then
+        echo "Error: The bucket $s3_bucket_data_pipeline doesn't exist. Please verify your input (S3 bucket name)."
+        exit 1
+    else # bucket exists, we want the data-storage bucket to be new
+        echo "The bucket $s3_bucket_data_pipeline exists under Account $aws_account_id. Continue..."
+    fi
+else # deploy
+    echo "making sure $s3_bucket_data_pipeline is not an existing bucket..."
+    if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+    then
+        echo "The bucket $s3_bucket_data_pipeline doesn't exist. Continue..."
+    else # bucket exists, we want the data-storage bucket to be new
+        echo "The bucket $s3_bucket_data_pipeline already exists under Account $aws_account_id. Please choose another bucket name."
+        exit 1
+    fi
+fi
 echo "validate input: aws account id..."
+echo "Your AWS acount ID is $aws_account_id"
 account_A=$(aws sts get-caller-identity |grep -o 'Account":.*' | tr -d '"' | tr -d ' ' | tr -d ',' | cut -d':' -f2)
 account_B=$aws_account_id
 if [ "$account_A" == "$account_B" ]
@@ -220,6 +284,7 @@ else # not equal
 fi
 
 echo "validate input: build semi automated data pipeline..."
+echo "build semi automated data pipeline: $build_semi_automated_data_pipeline"
 if [ "$build_semi_automated_data_pipeline" = "true" ] || [ "$build_semi_automated_data_pipeline" = "false" ]
 then
     echo "build_semi_automated_data_pipeline is valid."
@@ -248,7 +313,7 @@ then
     exit 0
 fi
 
-# Create the S3 bucket if it doesn't exist
+# Create the S3 bucket (to store config files) if it doesn't exist
 create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
 
 
@@ -360,8 +425,6 @@ then
         -var "app_data_input_bucket=$s3_bucket_data_pipeline" \
         -var "app_data_input_bucket_id=$app_data_input_bucket_id" \
         -var "app_data_input_bucket_arn=$app_data_input_bucket_arn"
-
-    exit 0
 fi
 
 echo "########################Finished AWS Infrastructure Deployment########################"
