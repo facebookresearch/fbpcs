@@ -44,8 +44,8 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_stage_flow import (
-    PrivateComputationStageFlow,
+from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
+    PrivateComputationLegacyStageFlow,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -147,7 +147,7 @@ class PrivateComputationService:
         fail_fast: bool = False,
         stage_flow_cls: Type[
             PrivateComputationBaseStageFlow
-        ] = PrivateComputationStageFlow,
+        ] = PrivateComputationLegacyStageFlow,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -345,6 +345,19 @@ class PrivateComputationService:
             )
         )
 
+    def _override_stage_flow(
+        self, instance_id: str, flow: Type[PrivateComputationBaseStageFlow]
+    ) -> None:
+        """Replace the stage flow stored in an instance with a new flow"""
+        instance = self.get_instance(instance_id)
+        new_class_name = flow.get_cls_name()
+        if instance._stage_flow_cls_name != new_class_name:
+            self.logger.info(
+                f"Changing stage flow of instance {instance_id} from {instance._stage_flow_cls_name} to {new_class_name}"
+            )
+            instance._stage_flow_cls_name = new_class_name
+            self.instance_repository.update(instance)
+
     # TODD T101783992: delete this function and call run_stage directly
     async def id_match_async(
         self,
@@ -355,9 +368,12 @@ class PrivateComputationService:
         server_ips: Optional[List[str]] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
+        # if calling PC the legacy way, make sure that the legacy stage
+        # flow is being used
+        self._override_stage_flow(instance_id, PrivateComputationLegacyStageFlow)
         return await self.run_stage_async(
             instance_id,
-            PrivateComputationStageFlow.ID_MATCH,
+            PrivateComputationLegacyStageFlow.ID_MATCH,
             IdMatchStageService(
                 self.pid_svc,
                 pid_config,
@@ -478,9 +494,12 @@ class PrivateComputationService:
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
+        # if calling PC the legacy way, make sure that the legacy stage
+        # flow is being used
+        self._override_stage_flow(instance_id, PrivateComputationLegacyStageFlow)
         return await self.run_stage_async(
             instance_id,
-            PrivateComputationStageFlow.COMPUTE,
+            PrivateComputationLegacyStageFlow.COMPUTE,
             ComputeMetricsStageService(
                 self.onedocker_binary_config_map,
                 self.mpc_svc,
@@ -525,9 +544,12 @@ class PrivateComputationService:
         log_cost_to_s3: bool = False,
         container_timeout: Optional[int] = None,
     ) -> PrivateComputationInstance:
+        # if calling PC the legacy way, make sure that the legacy stage
+        # flow is being used
+        self._override_stage_flow(instance_id, PrivateComputationLegacyStageFlow)
         return await self.run_stage_async(
             instance_id,
-            PrivateComputationStageFlow.AGGREGATE,
+            PrivateComputationLegacyStageFlow.AGGREGATE,
             AggregateShardsStageService(
                 self.onedocker_binary_config_map,
                 self.mpc_svc,
@@ -586,9 +608,12 @@ class PrivateComputationService:
         aggregated_result_path: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
+        # if calling PC the legacy way, make sure that the legacy stage
+        # flow is being used
+        self._override_stage_flow(instance_id, PrivateComputationLegacyStageFlow)
         return await self.run_stage_async(
             instance_id,
-            PrivateComputationStageFlow.POST_PROCESSING_HANDLERS,
+            PrivateComputationLegacyStageFlow.POST_PROCESSING_HANDLERS,
             PostProcessingStageService(
                 self.storage_svc, self.post_processing_handlers, aggregated_result_path
             ),

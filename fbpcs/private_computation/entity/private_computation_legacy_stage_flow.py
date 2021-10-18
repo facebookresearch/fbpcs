@@ -30,7 +30,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 
 
-class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
+class PrivateComputationLegacyStageFlow(PrivateComputationBaseStageFlow):
     """
     This enum lists all of the supported stage types and maps to their possible statuses.
     It also provides methods to get information about the next or previous stage.
@@ -81,7 +81,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         self, args: PrivateComputationStageServiceArgs
     ) -> PrivateComputationStageService:
         """
-        Maps PrivateComputationStageFlow instances to StageService instances
+        Maps PrivateComputationLegacyStageFlow instances to StageService instances
 
         Arguments:
             args: Common arguments initialized in PrivateComputationService that are consumed by stage services
