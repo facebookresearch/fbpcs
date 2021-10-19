@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--concurrency=<concurrency> --game_type=<game_type> --num_files_per_mpc_container=<num_files_per_mpc_container> --hmac_key=<base64_key> --fail_fast] [options]
+    pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run] [options]
     pl-coordinator compute_metrics <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
@@ -43,6 +43,8 @@ from fbpcp.util import yaml
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.private_computation_instance import (
+    AggregationType,
+    AttributionRule,
     PrivateComputationRole,
     PrivateComputationGameType,
 )
@@ -110,6 +112,8 @@ def main():
             "--expected_result_path": schema.Or(None, str),
             "--num_pid_containers": schema.Or(None, schema.Use(int)),
             "--num_mpc_containers": schema.Or(None, schema.Use(int)),
+            "--aggregation_type": schema.Or(None, schema.Use(AggregationType)),
+            "--attribution_rule": schema.Or(None, schema.Use(AttributionRule)),
             "--num_files_per_mpc_container": schema.Or(None, schema.Use(int)),
             "--num_shards": schema.Or(None, schema.Use(int)),
             "--num_shards_list": schema.Or(
@@ -117,6 +121,8 @@ def main():
             ),
             "--server_ips": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--concurrency": schema.Or(None, schema.Use(int)),
+            "--padding_size": schema.Or(None, schema.Use(int)),
+            "--k_anonymity_threshold": schema.Or(None, schema.Use(int)),
             "--hmac_key": schema.Or(None, str),
             "--tries_per_stage": schema.Or(None, schema.Use(int)),
             "--fail_fast": bool,
@@ -139,19 +145,24 @@ def main():
 
     if arguments["create_instance"]:
         logger.info(f"Create instance: {instance_id}")
+
         create_instance(
             config=config,
             instance_id=instance_id,
             role=arguments["--role"],
+            game_type=arguments["--game_type"],
             logger=logger,
             input_path=arguments["--input_path"],
             output_dir=arguments["--output_dir"],
             num_pid_containers=arguments["--num_pid_containers"],
             num_mpc_containers=arguments["--num_mpc_containers"],
+            attribution_rule=arguments["--attribution_rule"],
+            aggregation_type=arguments["--aggregation_type"],
             concurrency=arguments["--concurrency"],
             num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
-            game_type=arguments["--game_type"],
             hmac_key=arguments["--hmac_key"],
+            padding_size=arguments["--padding_size"],
+            k_anonymity_threshold=arguments["--k_anonymity_threshold"],
             fail_fast=arguments["--fail_fast"],
         )
     elif arguments["id_match"]:
