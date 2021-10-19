@@ -14,7 +14,7 @@ Usage:
     pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
     pl-coordinator compute_metrics <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
-    pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
+    pl-coordinator aggregate_shards <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pl-coordinator validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pl-coordinator run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
     pl-coordinator run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
@@ -72,7 +72,7 @@ def main():
             "id_match": bool,
             "prepare_compute_input": bool,
             "compute_metrics": bool,
-            "aggregate": bool,
+            "aggregate_shards": bool,
             "validate": bool,
             "run_post_processing_handlers": bool,
             "get": bool,
@@ -222,7 +222,7 @@ def main():
     elif arguments["get_mpc"]:
         logger.info(f"Get MPC instance: {instance_id}")
         get_mpc(config, instance_id, logger)
-    elif arguments["aggregate"]:
+    elif arguments["aggregate_shards"]:
         logger.info(f"Aggregate instance: {instance_id}")
         aggregate_shards(
             config=config,
