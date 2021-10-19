@@ -23,12 +23,13 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    get_instance,
-    create_instance,
-    id_match,
-    compute,
     aggregate_shards,
     cancel_current_stage,
+    compute_metrics,
+    create_instance,
+    get_instance,
+    id_match,
+    prepare_compute_input,
 )
 
 
@@ -375,7 +376,13 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         dry_run=None,
                     )
                 elif stage is PrivateLiftStage.COMPUTE:
-                    compute(
+                    prepare_compute_input(
+                        config=self.config,
+                        instance_id=self.instance_id,
+                        logger=self.logger,
+                        dry_run=None,
+                    )
+                    compute_metrics(
                         config=self.config,
                         instance_id=self.instance_id,
                         logger=self.logger,
