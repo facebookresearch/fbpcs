@@ -18,7 +18,7 @@ Usage:
     pl-coordinator validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pl-coordinator run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
     pl-coordinator run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
-    pl-coordinator get <instance_id> --config=<config_file> [options]
+    pl-coordinator get_instance <instance_id> --config=<config_file> [options]
     pl-coordinator get_server_ips <instance_id> --config=<config_file> [options]
     pl-coordinator get_pid <instance_id> --config=<config_file> [options]
     pl-coordinator get_mpc <instance_id> --config=<config_file> [options]
@@ -61,7 +61,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     run_post_processing_handlers,
     validate,
     cancel_current_stage,
-    run_next
+    run_next,
 )
 
 
@@ -75,8 +75,8 @@ def main():
             "aggregate_shards": bool,
             "validate": bool,
             "run_post_processing_handlers": bool,
-            "get": bool,
             "run_next": bool,
+            "get_instance": bool,
             "get_server_ips": bool,
             "get_pid": bool,
             "get_mpc": bool,
@@ -211,7 +211,7 @@ def main():
             logger=logger,
             server_ips=arguments["--server_ips"],
         )
-    elif arguments["get"]:
+    elif arguments["get_instance"]:
         logger.info(f"Get instance: {instance_id}")
         get_instance(config, instance_id, logger)
     elif arguments["get_server_ips"]:
