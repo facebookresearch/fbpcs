@@ -54,13 +54,6 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     print_instance,
     run_next,
 )
-from fbpcs.utils.optional import unwrap_or_default
-
-DEFAULT_HMAC_KEY: str = ""
-DEFAULT_PADDING_SIZE: int = 4
-DEFAULT_CONCURRENCY: int = 1
-DEFAULT_K_ANONYMITY_THRESHOLD: int = 0
-
 
 def main() -> None:
     s = schema.Schema(
@@ -134,19 +127,15 @@ def main() -> None:
             output_dir=arguments["--output_dir"],
             role=arguments["--role"],
             game_type=PrivateComputationGameType.ATTRIBUTION,
-            hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
+            hmac_key=hmac_key,
             num_pid_containers=arguments["--num_pid_containers"],
             num_mpc_containers=arguments["--num_mpc_containers"],
             num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
             attribution_rule=arguments["--attribution_rule"],
             aggregation_type=arguments["--aggregation_type"],
-            padding_size=unwrap_or_default(
-                optional=padding_size, default=DEFAULT_PADDING_SIZE
-            ),
+            padding_size=padding_size,
             concurrency=arguments["--concurrency"],
-            k_anonymity_threshold=unwrap_or_default(
-                optional=k_anonymity_threshold, default=DEFAULT_K_ANONYMITY_THRESHOLD
-            ),
+            k_anonymity_threshold=k_anonymity_threshold,
             logger=logger,
             fail_fast=arguments["--fail_fast"],
         )
