@@ -60,6 +60,8 @@ from fbpcs.private_computation.service.constants import (
     NUM_NEW_SHARDS_PER_FILE,
     STAGE_STARTED_STATUSES,
     STAGE_FAILED_STATUSES,
+    DEFAULT_CONCURRENCY,
+    DEFAULT_HMAC_KEY,
     DEFAULT_K_ANONYMITY_THRESHOLD,
     DEFAULT_PADDING_SIZE,
     DEFAULT_PID_PROTOCOL,
@@ -132,7 +134,7 @@ class PrivateComputationService:
         output_dir: str,
         num_pid_containers: int,
         num_mpc_containers: int,
-        concurrency: int,
+        concurrency: Optional[int] = None,
         attribution_rule: Optional[AttributionRule] = None,
         aggregation_type: Optional[AggregationType] = None,
         num_files_per_mpc_container: Optional[int] = None,
@@ -172,11 +174,11 @@ class PrivateComputationService:
             breakdown_key=breakdown_key,
             pce_config=pce_config,
             is_test=is_test,
-            hmac_key=hmac_key,
+            hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             padding_size=unwrap_or_default(
                 optional=padding_size, default=DEFAULT_PADDING_SIZE
             ),
-            concurrency=concurrency,
+            concurrency=concurrency or DEFAULT_CONCURRENCY,
             k_anonymity_threshold=unwrap_or_default(
                 optional=k_anonymity_threshold, default=DEFAULT_K_ANONYMITY_THRESHOLD
             ),
