@@ -26,6 +26,7 @@ Usage:
     pl-coordinator run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pl-coordinator run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pl-coordinator cancel_current_stage <instance_id> --config=<config_file> [options]
+    pl-coordinator print_instance <instance_id> --config=<config_file> [options]
 
 Options:
     -h --help                Show this help
@@ -50,6 +51,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
+    cancel_current_stage,
     compute_metrics,
     create_instance,
     get_instance,
@@ -58,6 +60,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     get_server_ips,
     id_match,
     prepare_compute_input,
+    print_instance,
     run_post_processing_handlers,
     validate,
     cancel_current_stage,
@@ -84,6 +87,7 @@ def main():
             "run_instances": bool,
             "run_study": bool,
             "cancel_current_stage": bool,
+            "print_instance": bool,
             "<instance_id>": schema.Or(None, str),
             "<instance_ids>": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "<study_id>": schema.Or(None, str),
@@ -275,6 +279,12 @@ def main():
     elif arguments["cancel_current_stage"]:
         logger.info(f"Canceling the current running stage of instance: {instance_id}")
         cancel_current_stage(
+            config=config,
+            instance_id=instance_id,
+            logger=logger,
+        )
+    elif arguments["print_instance"]:
+        print_instance(
             config=config,
             instance_id=instance_id,
             logger=logger,
