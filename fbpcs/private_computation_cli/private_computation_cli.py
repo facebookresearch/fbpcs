@@ -17,6 +17,7 @@ Usage:
     pc-cli aggregate_shards <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pc-cli validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pc-cli run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
+    pc-cli run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
     pc-cli get_pid <instance_id> --config=<config_file> [options]
@@ -60,6 +61,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     id_match,
     prepare_compute_input,
     print_instance,
+    run_next,
     run_post_processing_handlers,
     validate,
 )
@@ -75,6 +77,7 @@ def main():
             "aggregate_shards": bool,
             "validate": bool,
             "run_post_processing_handlers": bool,
+            "run_next": bool,
             "get_instance": bool,
             "get_server_ips": bool,
             "get_pid": bool,
@@ -202,6 +205,14 @@ def main():
             logger=logger,
             aggregated_result_path=arguments["--aggregated_result_path"],
             dry_run=arguments["--dry_run"],
+        )
+    elif arguments["run_next"]:
+        logger.info(f"run_next instance: {instance_id}")
+        run_next(
+            config=config,
+            instance_id=instance_id,
+            logger=logger,
+            server_ips=arguments["--server_ips"],
         )
     elif arguments["get_instance"]:
         logger.info(f"Get instance: {instance_id}")
