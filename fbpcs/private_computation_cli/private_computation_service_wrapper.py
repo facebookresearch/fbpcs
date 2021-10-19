@@ -129,7 +129,7 @@ def prepare_compute_input(
         config.get("post_processing_handlers", {}),
     )
 
-    # Because it's possible that the "get" command never gets called to update the instance since the last step started,
+    # Because it's possible that the "get_instance" command never gets called to update the instance since the last step started,
     # so it could appear that the current status is still XXX_STARTED when it should be XXX_FAILED or XXX_COMPLETED,
     # so we need to explicitly call update_instance() here to get the current status.
     private_computation_service.update_instance(instance_id)
@@ -196,7 +196,7 @@ def aggregate_shards(
 
     # This call is necessary because it could be the case that last aggregate failed and this is a valid retry,
     # or last compute succeeded and this is a regular aggregate. Either way, because it's possible that
-    # the "get" command never gets called to update the instance since the last step started, so it appears that the
+    # the "get_instance" command never gets called to update the instance since the last step started, so it appears that the
     # current status is still COMPUTATION_STARTED or AGGREGATION_STARTED, which is an invalid status for retry.
     pc_service.update_instance(instance_id)
 
