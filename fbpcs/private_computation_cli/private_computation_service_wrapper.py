@@ -117,26 +117,6 @@ def id_match(
     logger.info(instance)
 
 
-def compute(
-    config: Dict[str, Any],
-    instance_id: str,
-    logger: logging.Logger,
-    server_ips: Optional[List[str]] = None,
-    dry_run: Optional[bool] = False,
-) -> None:
-    prepare_compute_input(
-        config=config, instance_id=instance_id, logger=logger, dry_run=dry_run
-    )
-
-    compute_metrics(
-        config=config,
-        instance_id=instance_id,
-        logger=logger,
-        server_ips=server_ips,
-        dry_run=dry_run,
-    )
-
-
 def prepare_compute_input(
     config: Dict[str, Any],
     instance_id: str,

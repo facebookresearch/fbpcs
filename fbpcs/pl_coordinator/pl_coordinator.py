@@ -12,7 +12,8 @@ CLI for running a Private Lift study
 Usage:
     pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--concurrency=<concurrency> --game_type=<game_type> --num_files_per_mpc_container=<num_files_per_mpc_container> --hmac_key=<base64_key> --fail_fast] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
-    pl-coordinator compute <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
+    pl-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run] [options]
+    pl-coordinator compute_metrics <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pl-coordinator validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pl-coordinator run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
@@ -47,13 +48,14 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
-    compute,
+    compute_metrics,
     create_instance,
     get_instance,
     get_mpc,
     get_pid,
     get_server_ips,
     id_match,
+    prepare_compute_input,
     run_post_processing_handlers,
     validate,
     cancel_current_stage,
@@ -66,7 +68,8 @@ def main():
         {
             "create_instance": bool,
             "id_match": bool,
-            "compute": bool,
+            "prepare_compute_input": bool,
+            "compute_metrics": bool,
             "aggregate": bool,
             "validate": bool,
             "run_post_processing_handlers": bool,
@@ -160,9 +163,17 @@ def main():
             server_ips=arguments["--server_ips"],
             dry_run=arguments["--dry_run"],
         )
-    elif arguments["compute"]:
+    elif arguments["prepare_compute_input"]:
+        logger.info(f"Prepare compute input for instance: {instance_id}")
+        prepare_compute_input(
+            config=config,
+            instance_id=instance_id,
+            logger=logger,
+            dry_run=arguments["--dry_run"],
+        )
+    elif arguments["compute_metrics"]:
         logger.info(f"Compute instance: {instance_id}")
-        compute(
+        compute_metrics(
             config=config,
             instance_id=instance_id,
             logger=logger,
