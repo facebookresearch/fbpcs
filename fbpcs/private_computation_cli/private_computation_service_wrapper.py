@@ -33,8 +33,6 @@ from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
 
-DEFAULT_CONCURRENCY = 4
-
 
 def create_instance(
     config: Dict[str, Any],
@@ -69,7 +67,7 @@ def create_instance(
         output_dir=output_dir,
         num_pid_containers=num_pid_containers,
         num_mpc_containers=num_mpc_containers,
-        concurrency=concurrency or DEFAULT_CONCURRENCY,
+        concurrency=concurrency,
         attribution_rule=attribution_rule,
         aggregation_type=aggregation_type,
         num_files_per_mpc_container=num_files_per_mpc_container,
