@@ -12,9 +12,9 @@ CLI for running a Private Lift study
 Usage:
     pl-coordinator create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast] [options]
     pl-coordinator id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
-    pl-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run] [options]
-    pl-coordinator compute_metrics <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
-    pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
+    pl-coordinator prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
+    pl-coordinator compute_metrics <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
+    pl-coordinator aggregate <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pl-coordinator validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pl-coordinator run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
     pl-coordinator run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
@@ -128,6 +128,7 @@ def main():
             "--fail_fast": bool,
             "--dry_run": bool,
             "--log_path": schema.Or(None, schema.Use(Path)),
+            "--log_cost_to_s3": schema.Or(None, schema.Use(bool)),
             "--verbose": bool,
             "--help": bool,
         }
@@ -181,6 +182,7 @@ def main():
             instance_id=instance_id,
             logger=logger,
             dry_run=arguments["--dry_run"],
+            log_cost_to_s3=arguments["--log_cost_to_s3"],
         )
     elif arguments["compute_metrics"]:
         logger.info(f"Compute instance: {instance_id}")
@@ -190,6 +192,7 @@ def main():
             logger=logger,
             server_ips=arguments["--server_ips"],
             dry_run=arguments["--dry_run"],
+            log_cost_to_s3=arguments["--log_cost_to_s3"],
         )
     elif arguments["run_post_processing_handlers"]:
         logger.info(f"post processing handlers instance: {instance_id}")
@@ -227,6 +230,7 @@ def main():
             logger=logger,
             server_ips=arguments["--server_ips"],
             dry_run=arguments["--dry_run"],
+            log_cost_to_s3=arguments["--log_cost_to_s3"],
         )
     elif arguments["validate"]:
         logger.info(f"Vallidate instance: {instance_id}")
