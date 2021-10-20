@@ -211,12 +211,12 @@ class PrivateComputationService:
         return private_computation_instance
 
     def run_next(
-        self, instance_id: str, server_ips: Optional[List[str]]
+        self, instance_id: str, server_ips: Optional[List[str]] = None
     ) -> PrivateComputationInstance:
         return asyncio.run(self.run_next_async(instance_id, server_ips))
 
     async def run_next_async(
-        self, instance_id: str, server_ips: Optional[List[str]]
+        self, instance_id: str, server_ips: Optional[List[str]] = None
     ) -> PrivateComputationInstance:
         """Fetches the next eligible stage in the instance's stage flow and runs it"""
         pc_instance = self.get_instance(instance_id)
