@@ -9,7 +9,6 @@
 import asyncio
 import json
 import logging
-import math
 from datetime import datetime, timezone
 from typing import DefaultDict, Dict, List, Optional, Any, Type, TypeVar
 
@@ -17,19 +16,8 @@ from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-from fbpcp.util.typing import checked_cast
-from fbpcs.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
-    CppAttributionIdSpineCombinerService,
-)
-from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
-    CppLiftIdSpineCombinerService,
-)
-from fbpcs.data_processing.sharding.sharding import ShardType
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
@@ -46,6 +34,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
     PrivateComputationLegacyStageFlow,
+)
+from fbpcs.private_computation.entity.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -73,8 +64,8 @@ from fbpcs.private_computation.service.id_match_stage_service import IdMatchStag
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
 )
-from fbpcs.private_computation.service.private_computation_service_data import (
-    PrivateComputationServiceData,
+from fbpcs.private_computation.service.prepare_data_stage_service import (
+    PrepareDataStageService,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -121,6 +112,7 @@ class PrivateComputationService:
             self.mpc_svc,
             self.storage_svc,
             self.post_processing_handlers,
+            self.onedocker_svc,
         )
         self.logger: logging.Logger = logging.getLogger(__name__)
 
@@ -149,7 +141,7 @@ class PrivateComputationService:
         fail_fast: bool = False,
         stage_flow_cls: Type[
             PrivateComputationBaseStageFlow
-        ] = PrivateComputationLegacyStageFlow,
+        ] = PrivateComputationStageFlow,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -436,33 +428,18 @@ class PrivateComputationService:
             and not dry_run
         )
 
-        output_path = private_computation_instance.data_processing_output_path
-        combine_output_path = output_path + "_combine"
-
         # execute combiner step
         if skip_tasks_on_container:
             self.logger.info(f"[{self}] Skipping id spine combiner service")
-        else:
-            self.logger.info(f"[{self}] Starting id spine combiner service")
-
-            # TODO: we will write log_cost_to_s3 to the instance, so this function interface
-            #   will get simplified
-            await self._run_combiner_service(
-                private_computation_instance, combine_output_path, log_cost_to_s3
-            )
-
-        self.logger.info("Finished running CombinerService, starting to reshard")
-
-        # reshard each file into x shards
-        #     note we need each file to be sharded into the same # of files
-        #     because we want to keep the data of each existing file to run
-        #     on the same container
-        if skip_tasks_on_container:
             self.logger.info(f"[{self}] Skipping sharding on container")
         else:
-            await self._run_sharder_service(
-                private_computation_instance, combine_output_path
+            stage_svc = PrepareDataStageService(
+                self.onedocker_svc,
+                self.onedocker_binary_config_map,
+                is_validating or False,
+                log_cost_to_s3,
             )
+            await stage_svc.run_async(private_computation_instance)
 
     # MPC step 1
     def compute_metrics(
@@ -699,99 +676,3 @@ class PrivateComputationService:
             raise ValueError(f"Missing value for parameter {param_name}")
 
         return res
-
-    async def _run_combiner_service(
-        self,
-        pl_instance: PrivateComputationInstance,
-        combine_output_path: str,
-        log_cost_to_s3: bool,
-    ) -> None:
-        stage_data = PrivateComputationServiceData.get(
-            pl_instance.game_type
-        ).combiner_stage
-
-        binary_name = stage_data.binary_name
-        binary_config = self.onedocker_binary_config_map[binary_name]
-
-        common_combiner_args = {
-            "spine_path": pl_instance.pid_stage_output_spine_path,
-            "data_path": pl_instance.pid_stage_output_data_path,
-            "output_path": combine_output_path,
-            "num_shards": pl_instance.num_pid_containers + 1
-            if pl_instance.is_validating
-            else pl_instance.num_pid_containers,
-            "onedocker_svc": self.onedocker_svc,
-            "binary_version": binary_config.binary_version,
-            "tmp_directory": binary_config.tmp_directory,
-        }
-
-        # TODO T100977304: the if-else will be removed after the two combiners are consolidated
-        if pl_instance.game_type is PrivateComputationGameType.LIFT:
-            combiner_service = checked_cast(
-                CppLiftIdSpineCombinerService,
-                stage_data.service,
-            )
-            await combiner_service.combine_on_container_async(
-                # pyre-ignore [6] Incompatible parameter type
-                **common_combiner_args
-            )
-        elif pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
-            combiner_service = checked_cast(
-                CppAttributionIdSpineCombinerService,
-                stage_data.service,
-            )
-            common_combiner_args["run_name"] = (
-                pl_instance.instance_id if log_cost_to_s3 else ""
-            )
-            common_combiner_args["padding_size"] = checked_cast(
-                int, pl_instance.padding_size
-            )
-            await combiner_service.combine_on_container_async(
-                # pyre-ignore [6] Incompatible parameter type
-                **common_combiner_args
-            )
-
-    async def _run_sharder_service(
-        self, pl_instance: PrivateComputationInstance, combine_output_path: str
-    ) -> None:
-        sharder = CppShardingService()
-        self.logger.info("Instantiated sharder")
-
-        coros = []
-        for shard_index in range(
-            pl_instance.num_pid_containers + 1
-            if pl_instance.is_validating
-            else pl_instance.num_pid_containers
-        ):
-            path_to_shard = PIDStage.get_sharded_filepath(
-                combine_output_path, shard_index
-            )
-            self.logger.info(f"Input path to sharder: {path_to_shard}")
-
-            shards_per_file = math.ceil(
-                (pl_instance.num_mpc_containers / pl_instance.num_pid_containers)
-                * pl_instance.num_files_per_mpc_container
-            )
-            shard_index_offset = shard_index * shards_per_file
-            self.logger.info(
-                f"Output base path to sharder: {pl_instance.data_processing_output_path}, {shard_index_offset=}"
-            )
-
-            binary_config = self.onedocker_binary_config_map[
-                OneDockerBinaryNames.SHARDER.value
-            ]
-            coro = sharder.shard_on_container_async(
-                shard_type=ShardType.ROUND_ROBIN,
-                filepath=path_to_shard,
-                output_base_path=pl_instance.data_processing_output_path,
-                file_start_index=shard_index_offset,
-                num_output_files=shards_per_file,
-                onedocker_svc=self.onedocker_svc,
-                binary_version=binary_config.binary_version,
-                tmp_directory=binary_config.tmp_directory,
-            )
-            coros.append(coro)
-
-        # Wait for all coroutines to finish
-        await asyncio.gather(*coros)
-        self.logger.info("All sharding coroutines finished")
