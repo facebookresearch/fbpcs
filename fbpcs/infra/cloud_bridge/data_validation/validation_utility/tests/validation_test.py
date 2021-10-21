@@ -159,10 +159,10 @@ class TestValidation(TestCase):
         ])
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 7')
-        self.assertRegex(result, 'Rows with errors: 6')
-        self.assertRegex(result, 'Valid rows: 1')
+        self.assertRegex(result, 'Rows with errors: 7')
+        self.assertRegex(result, 'Valid rows: 0')
         self.assertRegex(result, "Line numbers with incorrect 'email' format: 2,4,5")
-        self.assertRegex(result, "Line numbers with incorrect 'device_id' format: 5,6,7,8")
+        self.assertRegex(result, "Line numbers with incorrect 'device_id' format: 3,5,6,7,8")
 
     def test_validate_checks_that_other_fields_are_formatted_correctly(self):
         body = Mock('body')
