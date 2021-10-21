@@ -12,6 +12,7 @@ from typing import Any, Dict, DefaultDict
 from typing import List, Optional
 
 from fbpcp.service.mpc import MPCService
+from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.service.pid_service.pid import PIDService
@@ -35,6 +36,7 @@ class PrivateComputationStageServiceArgs:
     mpc_svc: MPCService
     storage_svc: StorageService
     post_processing_handlers: Dict[str, PostProcessingHandler]
+    onedocker_svc: OneDockerService
 
 
 class PrivateComputationStageService(abc.ABC):
