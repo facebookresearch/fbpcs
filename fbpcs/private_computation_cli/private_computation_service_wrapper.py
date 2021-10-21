@@ -28,7 +28,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     PrivateComputationInstance,
 )
-from fbpcs.private_computation.service.constants import STAGE_STARTED_STATUSES
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
@@ -313,7 +312,7 @@ def get_instance(
         config.get("post_processing_handlers", {}),
     )
     instance = pc_service.get_instance(instance_id)
-    if instance.status in STAGE_STARTED_STATUSES:
+    if instance.current_stage.is_started_status(instance.status):
         instance = pc_service.update_instance(instance_id)
     logger.info(instance)
     return instance
