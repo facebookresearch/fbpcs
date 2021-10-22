@@ -225,93 +225,96 @@ undeploy_aws_resources () {
 
 
 input_validation () {
-echo "######################input validation############################"
-echo "validate AWS credential..."
-if aws sts get-caller-identity 2>&1 | grep -q "error" # InvalidClientTokenId or SignatureDoesNotMatch
-then
-    echo "Error: AWS credential is invalid. Check your AWS Access Key ID, Secret Access Key, and signing method"
-    exit 1
-else
-    echo "Valid AWS credential. Continue..."
-fi
-
-echo "validate input: AWS region..."
-echo "Your AWS region is $region."
-export AWS_DEFAULT_REGION=us-east-1 # this is a dummy env variable
-valid_region_list=$(aws ec2 describe-regions \
-    --all-regions \
-    --query "Regions[].{Name:RegionName}" \
-    --output text)
-
-if echo "$valid_region_list" | grep -q "$region"
-then
-    echo "valid AWS region."
-else
-    echo "invalid AWS region. Please check out AWS User Guide on Available Regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
-    exit 1
-fi
-
-echo "validate input: tag..."
-tag_regex="^([a-z0-9-][a-z0-9-]{1,20}[a-z0-9])$" # limit tag to 20 characters
-echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
-if echo "$tag_postfix" | grep -Eq "$tag_regex"
-then
-    echo "valid tag. Continue..."
-else
-    echo "Error: invalid tag format."
-    echo "make sure the tag length is less than 20 characters, and using lowercase letters, numbers and dash only."
-    exit 1
-fi
-
-echo "Publisher's AWS account ID is $publisher_aws_account_id"
-echo "Publisher's VPC ID is $publisher_vpc_id"
-echo "validate input: s3 buckets..."
-echo "The S3 bucket for storing 1) Terraform state file, 2) AWS Lambda functions, and 3) config.yml is $s3_bucket_for_storage"
-validate_bucket_name "$s3_bucket_for_storage"
-echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline$tag_postfix, will be created in a short while...".
-validate_bucket_name "$s3_bucket_data_pipeline$tag_postfix"
-
-if "$undeploy"
-then
-    echo "making sure $s3_bucket_data_pipeline has been created previously..."
-    if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+    echo "######################input validation############################"
+    echo "validate AWS credential..."
+    if aws sts get-caller-identity 2>&1 | grep -q "error" # InvalidClientTokenId or SignatureDoesNotMatch
     then
-        echo "Error: The bucket $s3_bucket_data_pipeline doesn't exist. Please verify your input (S3 bucket name)."
+        echo "Error: AWS credential is invalid. Check your AWS Access Key ID, Secret Access Key, and signing method"
         exit 1
-    else # bucket exists, we want the data-storage bucket to be new
-        echo "The bucket $s3_bucket_data_pipeline exists under Account $aws_account_id. Continue..."
-    fi
-else # deploy
-    echo "making sure $s3_bucket_data_pipeline is not an existing bucket..."
-    if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+    elif aws sts get-caller-identity 2>&1 | grep -q "Could not connect to the endpoint URL"
     then
-        echo "The bucket $s3_bucket_data_pipeline doesn't exist. Continue..."
-    else # bucket exists, we want the data-storage bucket to be new
-        echo "The bucket $s3_bucket_data_pipeline already exists under Account $aws_account_id. Please choose another bucket name."
+        echo "Error: invalid AWS region. Please check out AWS User Guide on Available Regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
+        exit 1
+    else
+        echo "Valid AWS credential. Continue..."
+    fi
+
+    echo "validate input: AWS region..."
+    echo "Your AWS region is $region."
+    # using region us-west-1 to fetch all available regions
+    valid_region_list=$(aws ec2 describe-regions \
+        --region us-west-1 \
+        --query "Regions[].{Name:RegionName}" \
+        --output text)
+    if echo "$valid_region_list" | grep -q "$region"
+    then
+        echo "valid AWS region."
+    else
+        echo "invalid AWS region. Please check out AWS User Guide on Available Regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
         exit 1
     fi
-fi
-echo "validate input: aws account id..."
-echo "Your AWS acount ID is $aws_account_id"
-account_A=$(aws sts get-caller-identity |grep -o 'Account":.*' | tr -d '"' | tr -d ' ' | tr -d ',' | cut -d':' -f2)
-account_B=$aws_account_id
-if [ "$account_A" == "$account_B" ]
-then
-    echo "input AWS account is valid."
-else # not equal
-    echo "Error: the provided AWS account id does not match the configured [secret_key, access_key]"
-    exit 1
-fi
 
-echo "validate input: build semi automated data pipeline..."
-echo "build semi automated data pipeline: $build_semi_automated_data_pipeline"
-if [ "$build_semi_automated_data_pipeline" = "true" ] || [ "$build_semi_automated_data_pipeline" = "false" ]
-then
-    echo "build_semi_automated_data_pipeline is valid."
-else
-    echo "Error: input for build_semi_automated_data_pipeline is invalid. please provide a value of true|false."
-    exit 1
-fi
+    echo "validate input: tag..."
+    tag_regex="^([a-z0-9-][a-z0-9-]{1,20}[a-z0-9])$" # limit tag to 20 characters
+    echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
+    if echo "$tag_postfix" | grep -Eq "$tag_regex"
+    then
+        echo "valid tag. Continue..."
+    else
+        echo "Error: invalid tag format."
+        echo "make sure the tag length is less than 20 characters, and using lowercase letters, numbers and dash only."
+        exit 1
+    fi
+
+    echo "Publisher's AWS account ID is $publisher_aws_account_id"
+    echo "Publisher's VPC ID is $publisher_vpc_id"
+    echo "validate input: s3 buckets..."
+    echo "The S3 bucket for storing 1) Terraform state file, 2) AWS Lambda functions, and 3) config.yml is $s3_bucket_for_storage"
+    validate_bucket_name "$s3_bucket_for_storage"
+    echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline$tag_postfix, will be created in a short while...".
+    validate_bucket_name "$s3_bucket_data_pipeline$tag_postfix"
+
+    if "$undeploy"
+    then
+        echo "making sure $s3_bucket_data_pipeline has been created previously..."
+        if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+        then
+            echo "Error: The bucket $s3_bucket_data_pipeline doesn't exist. Please verify your input (S3 bucket name)."
+            exit 1
+        else # bucket exists, we want the data-storage bucket to be new
+            echo "The bucket $s3_bucket_data_pipeline exists under Account $aws_account_id. Continue..."
+        fi
+    else # deploy
+        echo "making sure $s3_bucket_data_pipeline is not an existing bucket..."
+        if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
+        then
+            echo "The bucket $s3_bucket_data_pipeline doesn't exist. Continue..."
+        else # bucket exists, we want the data-storage bucket to be new
+            echo "The bucket $s3_bucket_data_pipeline already exists under Account $aws_account_id. Please choose another bucket name."
+            exit 1
+        fi
+    fi
+    echo "validate input: aws account id..."
+    echo "Your AWS acount ID is $aws_account_id"
+    account_A=$(aws sts get-caller-identity |grep -o 'Account":.*' | tr -d '"' | tr -d ' ' | tr -d ',' | cut -d':' -f2)
+    account_B=$aws_account_id
+    if [ "$account_A" == "$account_B" ]
+    then
+        echo "input AWS account is valid."
+    else # not equal
+        echo "Error: the provided AWS account id does not match the configured [secret_key, access_key]"
+        exit 1
+    fi
+
+    echo "validate input: build semi automated data pipeline..."
+    echo "build semi automated data pipeline: $build_semi_automated_data_pipeline"
+    if [ "$build_semi_automated_data_pipeline" = "true" ] || [ "$build_semi_automated_data_pipeline" = "false" ]
+    then
+        echo "build_semi_automated_data_pipeline is valid."
+    else
+        echo "Error: input for build_semi_automated_data_pipeline is invalid. please provide a value of true|false."
+        exit 1
+    fi
 }
 
 
