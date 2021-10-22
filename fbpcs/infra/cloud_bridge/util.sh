@@ -33,20 +33,20 @@ validate_or_create_s3_bucket() {
     if [ -z "$error" ];
     then
         echo "The bucket $bucket_name exists and you have access to it. Continue..."
-    elif [ "$error" -eq "404" ];
+    elif [ "$error" -eq "404" ]
     then
         echo "The bucket $bucket_name doesn't exist. Creating..."
         aws s3api create-bucket --bucket "$bucket_name" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
         aws s3api put-bucket-versioning --bucket "$bucket_name" --versioning-configuration Status=Enabled
         echo "The bucket $bucket_name is created."
 
-    elif [ "$error" -eq "400" ];
+    elif [ "$error" -eq "400" ]
     then
         echo "Bad request when calling the HeadBucket operation."
         echo "Are you trying to reuse a recently deleted bucket? Please try to use a new bucket name, or tag."
         exit 1
 
-    elif [ "$error" -eq "403" ]; # no access to the bucket
+    elif [ "$error" -eq "403" ] # no access to the bucket
     then
         echo "the bucket $bucket_name is owned by a different account."
         echo "Please check your whether your AWS account id $aws_account_id matches your secret key and access key provided"
@@ -143,8 +143,8 @@ input_validation () {
     echo "validate input: s3 buckets..."
     echo "The S3 bucket for storing 1) Terraform state file, 2) AWS Lambda functions, and 3) config.yml is $s3_bucket_for_storage"
     validate_bucket_name "$s3_bucket_for_storage"
-    echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline$tag_postfix, will be created in a short while...".
-    validate_bucket_name "$s3_bucket_data_pipeline$tag_postfix"
+    echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline".
+    validate_bucket_name "$s3_bucket_data_pipeline"
 
     if "$undeploy"
     then
