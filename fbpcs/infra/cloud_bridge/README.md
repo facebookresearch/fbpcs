@@ -54,7 +54,8 @@ docker images cloudbridge-private_lift-server
 6. given the right docker image tag/id, do `docker run`
   * run the following command
 ```
-docker run -it --entrypoint=/bin/sh <image-name:image-tag>
+docker run -it --entrypoint=/bin/sh <image-name:image-tag>  (without the '<' and '>')
+example:  docker run -it --entrypoint=/bin/sh cloudbridge-private_lift-server:0.0.1
 ```
 7. show `deploy.sh` arguments and usage
   * run the following command
@@ -64,31 +65,60 @@ docker run -it --entrypoint=/bin/sh <image-name:image-tag>
 8. create environment variables on AWS credentials (while be removed eventually)
   * run the following command
 ```
+Note: If you don't have an AWS account, Please ask someone in the team to create a IAM role for you.
+
 export AWS_ACCESS_KEY_ID=<YOUR_OWN_AWS_ACCESS_KEY> \
 export AWS_SECRET_ACCESS_KEY=<YOUR_OWN_AWS_SECRET_ACCESS_KEY> \
 export TF_LOG=DEBUG \
 export TF_LOG_PATH=/tmp/deploy.log
 ```
 9. run `deploy.sh`
- * For standard `deploy`, run the following command
+ * For standard `deploy` and without any semi-automated data ingestion, run the following command
+
 ```
-/bin/sh ./terraform_deploment/deploy.sh -r <> -a <> -p <> -v <> -s <> -d <> -t <>
+/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+example: "/bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
 ```
 
- * For to deploy with semi-automated data ingestion, run the following command
+ * For standard `undeploy` and without any semi-automated data ingestion, run the following command
 ```
-/bin/sh ./terraform_deploment/deploy.sh -r <> -a <> -p <> -v <> -s <> -d <> -t <> -b
+/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+example: "/bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
+
 ```
 
- * To undeploy PCE and full/standard data ingestion, run the following command
+ * For deploy with semi-automated data ingestion and without using any bucket names, run the following command
 ```
-/bin/sh ./terraform_deploment/deploy.sh -r <> -a <> -p <> -v <> -s <> -d <> -t <> -u
+/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+
+example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b
+
 ```
 
-* To undeploy PCE and full/standard + manual data ingestion , run the following command
+ * For undeploy with semi-automated data ingestion and without using any bucket names, run the following command
 ```
-/bin/sh ./terraform_deploment/deploy.sh -r <> -a <> -p <> -v <> -s <> -d <> -t <> -b -u
+/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+
+example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b
+
 ```
+
+ * For deploy with semi-automated data ingestion and  using manual bucket names, run the following command
+```
+/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+
+example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name -optional -d data-storage-bucket-name-optional
+
+```
+
+ * For undeploy with semi-automated data ingestion and without using any bucket names, run the following command
+```
+/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+
+example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name -optional -d data-storage-bucket-name-optional
+```
+
 
 # Notes
 parameter tag (`-t`) cannot be too long. AWS function/variable name must have length less than or equal to 64.
+parameter s , d, b are optional
