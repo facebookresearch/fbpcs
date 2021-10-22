@@ -15,9 +15,9 @@ usage() {
         [ -a, --account_id | Your AWS account ID]
         [ -p, --publisher_account_id | Publisher's AWS account ID]
         [ -v, --publisher_vpc_id | Publisher's VPC Id]
-        [ -s, --config_storage_bucket | S3 bucket name for storing configs: tfstate/lambda function]
-        [ -d, --data_storage_bucket | S3 bucket name for storing lambda processed results]
-        [ -b, --build_semi_automated_data_pipeline | build semi automated (manual upload) data pipeline. value = true|false ]"
+        [ -s, --config_storage_bucket | optional. S3 bucket name for storing configs: tfstate/lambda function]
+        [ -d, --data_storage_bucket | optional. S3 bucket name for storing lambda processed results]
+        [ -b, --build_semi_automated_data_pipeline | optional. whether to build semi automated (manual upload) data pipeline ]"
     exit 1
 }
 
@@ -26,7 +26,7 @@ if [ $# -eq 0 ]; then
 fi
 
 undeploy=false
-# build_semi_automated_data_pipeline=false
+build_semi_automated_data_pipeline=false
 
 case "$1" in
     deploy) ;;
@@ -36,6 +36,7 @@ esac
 shift
 
 while [ $# -gt 0 ]; do
+    second_shift_flag=true
     case "$1" in
         -r|--region) region="$2" ;;
         -t|--tag) pce_id="$2" ;;
@@ -44,11 +45,11 @@ while [ $# -gt 0 ]; do
         -v|--publisher_vpc_id) publisher_vpc_id="$2" ;;
         -s|--config_storage_bucket) s3_bucket_for_storage="$2" ;;
         -d|--data_storage_bucket) s3_bucket_data_pipeline="$2" ;;
-        -b|--build_semi_automated_data_pipeline) build_semi_automated_data_pipeline="$2" ;;
+        -b|--build_semi_automated_data_pipeline) build_semi_automated_data_pipeline=true second_shift_flag=false ;;
         *) usage ;;
     esac
     shift
-    shift
+    test "$second_shift_flag" == "true" && shift
 done
 
 #### Terraform Logs
@@ -313,6 +314,21 @@ deploy_aws_resources() {
 # Main
 ##########################################
 tag_postfix="-${pce_id}"
+
+# if no input for bucket names, then go by default
+
+if [ -z ${s3_bucket_for_storage+x} ]
+then
+    # s3_bucket_for_storage is unset
+    s3_bucket_for_storage="fb-pc-config$tag_postfix"
+fi
+
+if [ -z ${s3_bucket_data_pipeline+x} ]
+then
+    # s3_bucket_data_pipeline is unset
+    s3_bucket_data_pipeline="fb-pc-data$tag_postfix"
+fi
+
 
 if "$undeploy"
 then
