@@ -97,10 +97,8 @@ public class DeploymentRunner extends Thread {
     deployCommand.add(deployment.storage);
     deployCommand.add("-d");
     deployCommand.add(deployment.ingestionOutput);
-    if (deployment.tag != null && !deployment.tag.isEmpty()) {
-      deployCommand.add("-t");
-      deployCommand.add(deployment.tag);
-    }
+    deployCommand.add("-t");
+    deployCommand.add(deployment.tag);
     logger.info("  Deploy command built: " + deployCommand);
   }
 
