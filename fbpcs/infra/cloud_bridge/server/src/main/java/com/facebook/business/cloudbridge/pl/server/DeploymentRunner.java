@@ -84,6 +84,7 @@ public class DeploymentRunner extends Thread {
     deployCommand = new ArrayList<String>();
     deployCommand.add("/bin/sh");
     deployCommand.add("/terraform_deployment/deploy.sh");
+    deployCommand.add("deploy");
     deployCommand.add("-r");
     deployCommand.add(deployment.region);
     deployCommand.add("-a");
