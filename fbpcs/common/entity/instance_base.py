@@ -20,7 +20,7 @@ class InstanceBase(DataClassJsonMixin):
         pass
 
     def __str__(self) -> str:
-        return self.to_json()
+        return self.dumps_schema()
 
     def dumps_schema(self) -> str:
         return self.schema().dumps(self)

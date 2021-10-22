@@ -426,11 +426,11 @@ class TestPIDDispatcher(unittest.TestCase):
         )
         # make the instance think it has completed the shard stage previously
         sample_pid_instance.stages_status[
-            str(mock_pid_shard_stage().stage_type)
+            mock_pid_shard_stage().stage_type
         ] = PIDStageStatus.COMPLETED
         # make the instance think it has attempted and failed the prepare stage previously
         sample_pid_instance.stages_status[
-            str(mock_pid_prepare_stage().stage_type)
+            mock_pid_prepare_stage().stage_type
         ] = PIDStageStatus.FAILED
         dispatcher.instance_repository.read = MagicMock(
             return_value=sample_pid_instance

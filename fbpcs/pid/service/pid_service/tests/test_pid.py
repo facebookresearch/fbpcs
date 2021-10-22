@@ -20,6 +20,7 @@ from fbpcs.pid.entity.pid_instance import (
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.pid_dispatcher import PIDDispatcher
+from fbpcs.pid.entity.pid_stages import UnionPIDStage
 
 
 TEST_INSTANCE_ID = "123"
@@ -83,8 +84,8 @@ class TestPIDService(unittest.TestCase):
         self.assertEqual(TEST_HMAC_KEY, create_call_params.hmac_key)
 
     def test_update_instance(self):
-        stage1 = "stage 1"
-        stage2 = "stage 2"
+        stage1 = UnionPIDStage.PUBLISHER_SHARD
+        stage2 = UnionPIDStage.PUBLISHER_PREPARE
 
         pid_instance = PIDInstance(
             instance_id=TEST_INSTANCE_ID,

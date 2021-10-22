@@ -161,7 +161,7 @@ class PIDStage(abc.ABC):
             instance = self.instance_repository.read(instance_id)
 
             # update instance.stages_containers
-            instance.stages_containers[str(self.stage_type)] = containers
+            instance.stages_containers[self.stage_type] = containers
 
             # write updated instance to repo
             self.instance_repository.update(instance)
@@ -180,7 +180,7 @@ class PIDStage(abc.ABC):
             instance = self.instance_repository.read(instance_id)
 
             # add stage status to instance
-            instance.stages_status[str(self.stage_type)] = status
+            instance.stages_status[self.stage_type] = status
 
             # update the instance status to be FAILED if stage status is FAILED
             if status is PIDStageStatus.FAILED:
