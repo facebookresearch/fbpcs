@@ -121,7 +121,7 @@ class PIDDispatcher(Dispatcher):
         # an instance is done later on.
         if not instance.stages_status:
             instance.stages_status = {
-                str(stage.stage_type): PIDStageStatus.UNKNOWN
+                stage.stage_type: PIDStageStatus.UNKNOWN
                 for stage in enum_to_stage_map.values()
             }
             self.instance_repository.update(instance)
@@ -137,7 +137,7 @@ class PIDDispatcher(Dispatcher):
             raise PIDStageFailureError(f"{stage} is not yet eligible to be run.")
         instance = self.instance_repository.read(self.instance_id)
         if (
-            instance.stages_status.get(str(stage.stage_type), None)
+            instance.stages_status.get(stage.stage_type, None)
             is PIDStageStatus.STARTED
         ):
             raise PIDStageFailureError(f"{stage} already has status STARTED")
@@ -194,7 +194,7 @@ class PIDDispatcher(Dispatcher):
             # started are eligible to be ran
             if (
                 self.dag.in_degree(node) == 0
-                and instance.stages_status.get(str(node.stage_type), None)
+                and instance.stages_status.get(node.stage_type, None)
                 is not PIDStageStatus.STARTED
             ):
                 run_ready_stages.append(node)
@@ -220,7 +220,7 @@ class PIDDispatcher(Dispatcher):
                 node
                 for node in self.dag.nodes
                 if self.dag.in_degree(node) == 0
-                and instance.stages_status.get(str(node.stage_type), None)
+                and instance.stages_status.get(node.stage_type, None)
                 is PIDStageStatus.COMPLETED
             ]
         for stage in finished_stages:

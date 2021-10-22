@@ -12,6 +12,7 @@ from typing import Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.instance_base import InstanceBase
+from fbpcs.pid.entity.pid_stages import UnionPIDStage
 
 
 class PIDRole(IntEnum):
@@ -62,8 +63,8 @@ class PIDInstance(InstanceBase):
     data_path: Optional[str] = None
     spine_path: Optional[str] = None
     hmac_key: Optional[str] = None
-    stages_containers: Dict[str, List[ContainerInstance]] = field(default_factory=dict)
-    stages_status: Dict[str, PIDStageStatus] = field(default_factory=dict)
+    stages_containers: Dict[UnionPIDStage, List[ContainerInstance]] = field(default_factory=dict)
+    stages_status: Dict[UnionPIDStage, PIDStageStatus] = field(default_factory=dict)
     status: PIDInstanceStatus = PIDInstanceStatus.UNKNOWN
     server_ips: List[str] = field(default_factory=list)
 
