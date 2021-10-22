@@ -4,7 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-
+# shellcheck disable=SC2155
+# Warning in validate_or_create_s3_bucket: Declare and assign separately to avoid masking return values.
 
 ##########################################
 # Helper functions
@@ -127,14 +128,14 @@ input_validation () {
 
 
     echo "validate input: tag..."
-    tag_regex="^([a-z0-9-][a-z0-9-]{1,20}[a-z0-9])$" # limit tag to 20 characters
+    tag_regex="^([a-z0-9][a-z0-9-]{1,18}[a-z0-9])$" # limit tag to 20 characters
     echo "The string '$tag_postfix' will be appended after the tag of the AWS resources."
     if echo "$tag_postfix" | grep -Eq "$tag_regex"
     then
         echo "valid tag. Continue..."
     else
         echo "Error: invalid tag format."
-        echo "make sure the tag length is less than 20 characters, and using lowercase letters, numbers and dash only."
+        echo "Making sure the tag length is less than 20 characters, using lowercase letters, numbers and dash only (but not starting with dash)."
         exit 1
     fi
 
