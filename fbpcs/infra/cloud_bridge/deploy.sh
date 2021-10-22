@@ -64,6 +64,9 @@ fi
 
 
 undeploy_aws_resources() {
+    # validate whether the input aws_account_id matches the account from the configured [secret_key, access_key] pair
+    input_validation "$region" "$pce_id" "$aws_account_id" "$publisher_aws_account_id" "$publisher_vpc_id" "$s3_bucket_for_storage" "$s3_bucket_data_pipeline" "$build_semi_automated_data_pipeline" "$undeploy"
+
     echo "Start undeploying AWS resource under PCE_shared..."
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce_shared$tag_postfix.tfstate" "$aws_account_id"
@@ -167,7 +170,7 @@ undeploy_aws_resources() {
 
 deploy_aws_resources() {
     # validate whether the input aws_account_id matches the account from the configured [secret_key, access_key] pair
-    input_validation "$region" "$tag_postfix" "$aws_account_id" "$publisher_aws_account_id" "$publisher_vpc_id" "$s3_bucket_for_storage" "$s3_bucket_data_pipeline" "$build_semi_automated_data_pipeline" "$undeploy"
+    input_validation "$region" "$pce_id" "$aws_account_id" "$publisher_aws_account_id" "$publisher_vpc_id" "$s3_bucket_for_storage" "$s3_bucket_data_pipeline" "$build_semi_automated_data_pipeline" "$undeploy"
     # Create the S3 bucket (to store config files) if it doesn't exist
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
 
