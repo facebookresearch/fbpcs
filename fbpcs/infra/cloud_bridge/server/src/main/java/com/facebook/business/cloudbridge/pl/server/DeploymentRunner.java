@@ -99,6 +99,9 @@ public class DeploymentRunner extends Thread {
     deployCommand.add(deployment.ingestionOutput);
     deployCommand.add("-t");
     deployCommand.add(deployment.tag);
+    if (deployment.enableSemiAutomatedDataIngestion) {
+      deployCommand.add("-b");
+    }
     logger.info("  Deploy command built: " + deployCommand);
   }
 
