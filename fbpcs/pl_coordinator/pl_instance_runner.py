@@ -398,7 +398,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         dry_run=None,
                     )
             except Exception as error:
-                self.logger.error(f"Error running partner {stage.value} {error}")
+                self.logger.exception(f"Error running partner {stage.value} {error}")
 
 
 class PLInstanceRunner:
