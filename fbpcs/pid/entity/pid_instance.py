@@ -66,6 +66,7 @@ class PIDInstance(InstanceBase):
     stages_containers: Dict[UnionPIDStage, List[ContainerInstance]] = field(default_factory=dict)
     stages_status: Dict[UnionPIDStage, PIDStageStatus] = field(default_factory=dict)
     status: PIDInstanceStatus = PIDInstanceStatus.UNKNOWN
+    current_stage: Optional[UnionPIDStage] = None
     server_ips: List[str] = field(default_factory=list)
 
     def get_instance_id(self) -> str:
