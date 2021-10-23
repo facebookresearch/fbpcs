@@ -142,12 +142,14 @@ class PIDDispatcher(Dispatcher):
         ):
             raise PIDStageFailureError(f"{stage} already has status STARTED")
 
+        self._update_instance_status(PIDInstanceStatus.STARTED, stage)
+
         res = await stage.run(
             self.stage_inputs[stage], wait_for_containers=wait_for_containers
         )
         self.logger.info(f"{stage}: {res}")
         if res is PIDStageStatus.FAILED:
-            self._update_instance_status(PIDInstanceStatus.FAILED)
+            self._update_instance_status(PIDInstanceStatus.FAILED, stage)
             raise PIDStageFailureError(f"Stage failed: {stage}")
         elif res is PIDStageStatus.COMPLETED:
             self._cleanup_complete_stages([stage])
@@ -158,8 +160,6 @@ class PIDDispatcher(Dispatcher):
         if not ready_stages:
             self.logger.info("There are no eligible stages to run at this time")
             return False
-
-        self._update_instance_status(PIDInstanceStatus.STARTED)
 
         # if this is not the last stage (number of nodes != 1), wait for the containers
         # if this is the last stage (number of nodes == 1), then do not wait for containers
@@ -229,9 +229,13 @@ class PIDDispatcher(Dispatcher):
                     self.stage_inputs[next_stage].add_to_inputs(output_path)
             self.dag.remove_node(stage)
 
-    def _update_instance_status(self, new_status: PIDInstanceStatus) -> PIDInstance:
+    def _update_instance_status(self, new_status: PIDInstanceStatus, current_stage: PIDStage) -> PIDInstance:
         instance = self.instance_repository.read(self.instance_id)
         if instance.status is not new_status:
             instance.status = new_status
+            instance.current_stage = current_stage.stage_type
+            self.instance_repository.update(instance)
+        elif instance.current_stage is not current_stage.stage_type:
+            instance.current_stage = current_stage.stage_type
             self.instance_repository.update(instance)
         return instance

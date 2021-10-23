@@ -144,6 +144,7 @@ class PIDService:
                     instance.status = PIDInstanceStatus.FAILED
                 instance.stages_status[stage] = new_stage_status
                 instance.stages_containers[stage] = containers
+                instance.current_stage = stage
         # if all of the stages are complete, then PID for instance is complete
         if all(
             status is PIDStageStatus.COMPLETED

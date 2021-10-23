@@ -105,6 +105,7 @@ class TestPIDService(unittest.TestCase):
         self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
         pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
         self.assertEqual(pid_instance.status, PIDInstanceStatus.STARTED)
+        self.assertIsNone(pid_instance.current_stage)
         self.assertEqual(
             pid_instance.stages_status[stage1],
             PIDStageStatus.UNKNOWN,
@@ -121,6 +122,7 @@ class TestPIDService(unittest.TestCase):
         self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
         pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
         self.assertEqual(pid_instance.status, PIDInstanceStatus.STARTED)
+        self.assertEqual(pid_instance.current_stage, stage1)
         self.assertEqual(
             pid_instance.stages_status[stage1],
             PIDStageStatus.STARTED,
@@ -136,6 +138,7 @@ class TestPIDService(unittest.TestCase):
         self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
         pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
         self.assertEqual(pid_instance.status, PIDInstanceStatus.STARTED)
+        self.assertEqual(pid_instance.current_stage, stage1)
         self.assertEqual(
             pid_instance.stages_status[stage1],
             PIDStageStatus.COMPLETED,
@@ -157,6 +160,7 @@ class TestPIDService(unittest.TestCase):
         self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
         pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
         self.assertEqual(pid_instance.status, PIDInstanceStatus.FAILED)
+        self.assertEqual(pid_instance.current_stage, stage2)
         self.assertEqual(
             pid_instance.stages_status[stage2],
             PIDStageStatus.FAILED,
@@ -178,6 +182,7 @@ class TestPIDService(unittest.TestCase):
         self.pid_service.instance_repository.read = MagicMock(return_value=pid_instance)
         pid_instance = self.pid_service.update_instance(TEST_INSTANCE_ID)
         self.assertEqual(pid_instance.status, PIDInstanceStatus.COMPLETED)
+        self.assertEqual(pid_instance.current_stage, stage2)
         self.assertEqual(
             pid_instance.stages_status[stage2],
             PIDStageStatus.COMPLETED,
