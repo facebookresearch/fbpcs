@@ -64,38 +64,41 @@ fi
 
 
 undeploy_aws_resources() {
-    # validate whether the input aws_account_id matches the account from the configured [secret_key, access_key] pair
+    # validate all the inputs
     input_validation "$region" "$pce_id" "$aws_account_id" "$publisher_aws_account_id" "$publisher_vpc_id" "$s3_bucket_for_storage" "$s3_bucket_data_pipeline" "$build_semi_automated_data_pipeline" "$undeploy"
 
     echo "Start undeploying AWS resource under PCE_shared..."
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce_shared$tag_postfix.tfstate" "$aws_account_id"
     echo "Related tfstate file exists. Continue..."
-    echo "########################Deleting########################"
+    echo "######################## Initializing terraform working directory before deleting resources ########################"
 
     cd /terraform_deployment/terraform_scripts/common/pce_shared
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce_shared$tag_postfix.tfstate"
-
+    echo "######################## Initializing terraform working directory completed!! ########################"
+    echo "######################## Undeploying AWS resources ########################"
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id" \
         -var "pce_id=$pce_id"
-    echo "Finished undeploying AWS resource under PCE_shared."
+    echo "Finished undeploying AWS resources under PCE_shared."
     echo "Start undeploying AWS resource under PCE..."
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce$tag_postfix.tfstate" "$aws_account_id"
     echo "Related tfstate file exists. Continue..."
-    echo "########################Deleting########################"
+    echo "######################## Initializing terraform working doirectory before deleting resources ########################"
     cd /terraform_deployment/terraform_scripts/common/pce
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce$tag_postfix.tfstate"
+    echo "######################## Initializing terraform working directory completed ########################"
+    echo "########################Deleting########################"
 
     terraform destroy \
         -auto-approve \
@@ -107,13 +110,14 @@ undeploy_aws_resources() {
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/vpcpeering$tag_postfix.tfstate" "$aws_account_id"
     echo "Related tfstate file exists. Continue..."
-    echo "########################Deleting########################"
+    echo "######################## Initializing terraform working doirectory before deleting resources ########################"
     cd /terraform_deployment/terraform_scripts/partner/vpc_peering
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
-
+    echo "######################## Initializing terraform working directory completed ########################"
+    echo "########################Deleting########################"
     terraform destroy \
         -auto-approve \
         -var "aws_region=$region" \
@@ -128,20 +132,21 @@ undeploy_aws_resources() {
     echo "########################Deleting########################"
 
     cd /terraform_deployment/terraform_scripts/data_ingestion
-
+    echo "######################## Initializing terraform working doirectory before deleting resources ########################"
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
-
+    echo "######################## Initializing terraform working doirectory completed ########################"
     # Exclude the s3 bucket because it can not be deleted if it's not empty
     terraform state rm aws_s3_bucket.bucket || true
-
+    echo "########################Deleting########################"
     terraform destroy \
         -auto-approve \
         -var "region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id"
+    echo "########################Deletion completed########################"
 
     if "$build_semi_automated_data_pipeline"
     then
@@ -169,7 +174,7 @@ undeploy_aws_resources() {
 
 
 deploy_aws_resources() {
-    # validate whether the input aws_account_id matches the account from the configured [secret_key, access_key] pair
+    # validate all the inputs
     input_validation "$region" "$pce_id" "$aws_account_id" "$publisher_aws_account_id" "$publisher_vpc_id" "$s3_bucket_for_storage" "$s3_bucket_data_pipeline" "$build_semi_automated_data_pipeline" "$undeploy"
     # Create the S3 bucket (to store config files) if it doesn't exist
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
@@ -179,12 +184,14 @@ deploy_aws_resources() {
     onedocker_ecs_container_image='539290649537.dkr.ecr.us-west-2.amazonaws.com/one-docker-prod:latest'
     publisher_vpc_cidr='10.0.0.0/16'
 
-    echo "########################Deploy PCE Terraform scripts########################"
+    echo "########################Initializing terraform working directory########################"
     cd /terraform_deployment/terraform_scripts/common/pce_shared
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce_shared$tag_postfix.tfstate"
+    echo "########################Initializing terraform working directory completed ########################"
+    echo "######################## Deploy PCE Terraform scripts started ########################"
     terraform apply \
         -auto-approve \
         -var "aws_region=$region" \
@@ -192,24 +199,27 @@ deploy_aws_resources() {
         -var "aws_account_id=$aws_account_id" \
         -var "onedocker_ecs_container_image=$onedocker_ecs_container_image" \
         -var "pce_id=$pce_id"
-
+    echo "######################## Deploy PCE Terraform scripts completed ########################"
     # Store the outputs into variables
     onedocker_task_definition_family=$(terraform output onedocker_task_definition_family | tr -d '"')
     onedocker_task_definition_revision=$(terraform output onedocker_task_definition_revision | tr -d '"')
     onedocker_task_definition_container_definiton_name=$(terraform output onedocker_task_definition_container_definitons | jq 'fromjson | .[].name' | tr -d '"')
 
     cd /terraform_deployment/terraform_scripts/common/pce
+    echo "########################Initializing terraform working directory########################"
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce$tag_postfix.tfstate"
+    echo "######################## Initializing terraform working directory completed ########################"
+    echo "######################## Deploy PCE Terraform scripts started ########################"
     terraform apply \
         -auto-approve \
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "otherparty_vpc_cidr=$publisher_vpc_cidr" \
         -var "pce_id=$pce_id"
-
+    echo "######################## Deploy PCE Terraform scripts completed ########################"
     # Store the outputs into variables
     vpc_id=$(terraform output vpc_id | tr -d '"' )
     subnet_ids=$(terraform output subnets | tr -d '""[]\ \n')
@@ -219,10 +229,13 @@ deploy_aws_resources() {
     # Issue VPC Peering Connection to Publisher's VPC and add a route to the route table
     echo "########################Issue VPC Peering connection to Publisher's VPC########################"
     cd /terraform_deployment/terraform_scripts/partner/vpc_peering
+    echo "######################## Initializing terraform working directory started ########################"
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
+    echo "######################## Initializing terraform working directory completed ########################"
+    echo "######################## Deploy PCE Terraform scripts started ########################"
     terraform apply \
         -auto-approve \
         -var "aws_region=$region" \
@@ -233,6 +246,7 @@ deploy_aws_resources() {
         -var "route_table_id=$route_table_id" \
         -var "destination_cidr_block=$publisher_vpc_cidr" \
         -var "pce_id=$pce_id"
+    echo "######################## Deploy PCE Terraform scripts completed ########################"
 
     # Store the outputs into variables
     vpc_peering_connection_id=$(terraform output vpc_peering_connection_id | tr -d '"' )
@@ -241,11 +255,13 @@ deploy_aws_resources() {
     # Configure Data Ingestion Pipeline from CB to S3
     echo "########################Configure Data Ingestion Pipeline from CB to S3########################"
     cd /terraform_deployment/terraform_scripts/data_ingestion
+    echo "######################## Initializing terraform working directory started ########################"
     terraform init \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
-
+    echo "######################## Initializing terraform working directory completed ########################"
+    echo "######################## Deploy PCE Terraform scripts started ########################"
     terraform apply \
         -auto-approve \
         -var "region=$region" \
@@ -254,6 +270,7 @@ deploy_aws_resources() {
         -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip"
+    echo "######################## Deploy PCE Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
     app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
     app_data_input_bucket_arn=$(terraform output data_processing_output_bucket_arn | tr -d '"')
@@ -268,12 +285,13 @@ deploy_aws_resources() {
         sed -i "s/glueJobName = 'TO_BE_UPDATED_DURING_DEPLOYMENT'/glueJobName = 'glue-ETL$tag_postfix'/g" lambda_trigger.py
         sed -i "s~s3_write_path = 'TO_BE_UPDATED_DURING_DEPLOYMENT'~s3_write_path = '$app_data_input_bucket_id'~g" lambda_trigger.py
 
-        echo "Running terraform installation..."
+        echo "######################## Initializing terraform working directory started ########################"
         terraform init \
             -backend-config "bucket=$s3_bucket_for_storage" \
             -backend-config "region=$region" \
             -backend-config "key=tfstate/glue_etl$tag_postfix.tfstate"
-
+        echo "######################## Initializing terraform working directory completed ########################"
+        echo "######################## Deploy PCE Terraform scripts started ########################"
         terraform apply \
             -auto-approve \
             -var "region=$region" \
@@ -283,6 +301,7 @@ deploy_aws_resources() {
             -var "app_data_input_bucket=$s3_bucket_data_pipeline" \
             -var "app_data_input_bucket_id=$app_data_input_bucket_id" \
             -var "app_data_input_bucket_arn=$app_data_input_bucket_arn"
+        echo "######################## Deploy PCE Terraform scripts completed ########################"
     fi
 
     echo "########################Finished AWS Infrastructure Deployment########################"
