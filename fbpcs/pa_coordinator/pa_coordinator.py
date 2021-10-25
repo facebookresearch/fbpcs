@@ -54,6 +54,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     print_instance,
     run_next,
 )
+from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
 def main() -> None:
     s = schema.Schema(
@@ -99,7 +100,7 @@ def main() -> None:
     )
 
     arguments = s.validate(docopt(__doc__))
-    config = yaml.load(Path(arguments["--config"]))
+    config = ConfigYamlDict.from_dict(yaml.load(Path(arguments["--config"])))
 
     log_path = arguments["--log_path"]
     log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO

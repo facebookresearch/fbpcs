@@ -6,6 +6,12 @@
 
 # pyre-strict
 
+class ConfigYamlFieldNotFoundError(KeyError):
+    """Raised when a ConfigYamlDict key access fails"""
+    def __init__(self, key: str) -> None:
+        msg = f"{key} is expected in your config.yml file but was not found. Please make sure your config is up to date."
+        super().__init__(msg)
+
 class ConfigYamlModuleImportError(ImportError):
     """Raised when a module path cannot be imported"""
     def __init__(self, class_path: str) -> None:
