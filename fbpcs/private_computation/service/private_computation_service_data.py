@@ -100,6 +100,14 @@ class PrivateComputationServiceData:
         service=None,
     )
 
+    DECOUPLED_AGGREGATION_STAGE_DATA: StageData = StageData(
+        binary_name=OneDockerBinaryNames.DECOUPLED_AGGREGATION.value,
+        game_name=BINARY_NAME_TO_GAME_NAME[
+            OneDockerBinaryNames.DECOUPLED_AGGREGATION.value
+        ],
+        service=None,
+    )
+
     @classmethod
     def get(
         cls, game_type: PrivateComputationGameType
