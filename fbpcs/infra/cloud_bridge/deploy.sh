@@ -343,12 +343,18 @@ if [ -z ${s3_bucket_for_storage+x} ]
 then
     # s3_bucket_for_storage is unset
     s3_bucket_for_storage="fb-pc-config$tag_postfix"
+else
+    # s3_bucket_for_storage is set, but add tags to it
+    s3_bucket_for_storage="$s3_bucket_for_storage$tag_postfix"
 fi
 
 if [ -z ${s3_bucket_data_pipeline+x} ]
 then
     # s3_bucket_data_pipeline is unset
     s3_bucket_data_pipeline="fb-pc-data$tag_postfix"
+else
+    # s3_bucket_data_pipeline is set, but add tags to it
+    s3_bucket_data_pipeline="$s3_bucket_data_pipeline$tag_postfix"
 fi
 
 

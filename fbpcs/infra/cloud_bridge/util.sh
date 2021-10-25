@@ -33,7 +33,7 @@ validate_or_create_s3_bucket() {
     local error=$(echo "$tmp" | grep -o '40[034]')
     if [ -z "$error" ];
     then
-        echo "The bucket $bucket_name exists and you have access to it. Continue..."
+        echo "The bucket $bucket_name already exists and you have access to it. Continue..."
     elif [ "$error" -eq "404" ]
     then
         echo "The bucket $bucket_name doesn't exist. Creating..."
