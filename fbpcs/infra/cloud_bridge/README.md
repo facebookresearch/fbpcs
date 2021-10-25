@@ -107,7 +107,7 @@ example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842
 ```
 /bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
 
-example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name -optional -d data-storage-bucket-name-optional
+example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name-optional -d data-storage-bucket-name-optional
 
 ```
 
@@ -115,7 +115,7 @@ example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 59251384279
 ```
 /bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
 
-example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name -optional -d data-storage-bucket-name-optional
+example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name-optional -d data-storage-bucket-name-optional
 ```
 
 
