@@ -16,6 +16,7 @@ class OneDockerBinaryNames(Enum):
     SHARDER_HASHED_FOR_PID        = "data_processing/sharder_hashed_for_pid"
     UNION_PID_PREPARER            = "data_processing/pid_preparer"
 
+    DECOUPLED_ATTRIBUTION = "private_attribution/decoupled_attribution"
     ATTRIBUTION_COMPUTE = "private_attribution/compute"
     SHARD_AGGREGATOR    = "private_attribution/shard-aggregator"
 
