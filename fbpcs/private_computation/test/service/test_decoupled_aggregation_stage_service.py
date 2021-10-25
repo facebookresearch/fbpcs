@@ -18,7 +18,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     AggregationType,
 )
-from fbpcs.private_computation.entity.private_computation_instance import (
+from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
@@ -105,8 +105,7 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
             instances=[],
-            # Add new decoupled flow and change this to - DECOUPLED_ATTRIBUTION_COMPLETED
-            status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_COMPLETED,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             aggregation_type=AggregationType.MEASUREMENT,
             status_update_ts=1600000000,
