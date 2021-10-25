@@ -10,15 +10,18 @@ from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcp.entity.mpc_instance import MPCInstance
+from fbpcp.repository.mpc_game_repository import MPCGameRepository
+from fbpcp.repository.mpc_instance import MPCInstanceRepository
 from fbpcp.service.container import ContainerService
 from fbpcp.service.mpc import MPCService
+from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-from fbpcp.util import reflect
 from fbpcs.data_processing.sharding.sharding import ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
+from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -28,9 +31,13 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     PrivateComputationInstance,
 )
+from fbpcs.private_computation.repository.private_computation_instance import (
+    PrivateComputationInstanceRepository,
+)
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
+from fbpcs.utils.config_yaml import reflect
 
 
 def create_instance(
@@ -238,9 +245,7 @@ def _get_post_processing_handlers(
     if not config:
         return {}
     return {
-        name: reflect.get_class(handler_config["class"])(
-            **handler_config.get("constructor", {})
-        )
+        name: reflect.get_instance(handler_config, PostProcessingHandler)
         for name, handler_config in config["dependency"].items()
     }
 
@@ -268,6 +273,7 @@ def run_post_processing_handlers(
 
     logger.info(instance)
 
+
 def run_next(
     config: Dict[str, Any],
     instance_id: str,
@@ -287,10 +293,7 @@ def run_next(
     # so we need to explicitly call update_instance() here to get the current status.
     pc_service.update_instance(instance_id)
 
-    instance = pc_service.run_next(
-        instance_id=instance_id,
-        server_ips=server_ips
-    )
+    instance = pc_service.run_next(instance_id=instance_id, server_ips=server_ips)
 
     logger.info(instance)
 
@@ -414,18 +417,15 @@ def print_instance(
 
 
 def _build_container_service(config: Dict[str, Any]) -> ContainerService:
-    container_class = reflect.get_class(config["class"])
-    return container_class(**config["constructor"])
+    return reflect.get_instance(config, ContainerService)
 
 
 def _build_storage_service(config: Dict[str, Any]) -> StorageService:
-    storage_class = reflect.get_class(config["class"])
-    return storage_class(**config["constructor"])
+    return reflect.get_instance(config, StorageService)
 
 
 def _build_sharding_service(config: Dict[str, Any]) -> ShardingService:
-    sharding_class = reflect.get_class(config["class"])
-    return sharding_class()
+    return reflect.get_instance(config, ShardingService)
 
 
 def _build_onedocker_service(
@@ -443,18 +443,16 @@ def _build_mpc_service(
 ) -> MPCService:
 
     mpcinstance_repository_config = config["dependency"]["MPCInstanceRepository"]
-    repository_class = reflect.get_class(mpcinstance_repository_config["class"])
-    repository_service = repository_class(
-        **mpcinstance_repository_config["constructor"]
+    repository_service = reflect.get_instance(
+        mpcinstance_repository_config, MPCInstanceRepository
     )
 
     mpc_game_config = config["dependency"]["MPCGameService"]
     pc_game_repo_config = mpc_game_config["dependency"][
         "PrivateComputationGameRepository"
     ]
-    pc_game_repo_class = reflect.get_class(pc_game_repo_config["class"])
-    pc_game_repo = pc_game_repo_class()
-    mpc_game_class = reflect.get_class(mpc_game_config["class"])
+    pc_game_repo = reflect.get_instance(pc_game_repo_config, MPCGameRepository)
+    mpc_game_class = reflect.get_class(mpc_game_config["class"], MPCGameService)
     mpc_game_svc = mpc_game_class(pc_game_repo)
 
     task_definition = onedocker_service_config.task_definition
@@ -476,8 +474,9 @@ def _build_private_computation_service(
     instance_repository_config = pc_config["dependency"][
         "PrivateComputationInstanceRepository"
     ]
-    repository_class = reflect.get_class(instance_repository_config["class"])
-    repository_service = repository_class(**instance_repository_config["constructor"])
+    repository_service = reflect.get_instance(
+        instance_repository_config, PrivateComputationInstanceRepository
+    )
     container_service = _build_container_service(
         pc_config["dependency"]["ContainerService"]
     )
@@ -517,9 +516,8 @@ def _build_pid_service(
     onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
 ) -> PIDService:
     pidinstance_repository_config = pid_config["dependency"]["PIDInstanceRepository"]
-    repository_class = reflect.get_class(pidinstance_repository_config["class"])
-    repository_service = repository_class(
-        **pidinstance_repository_config["constructor"]
+    repository_service = reflect.get_instance(
+        pidinstance_repository_config, PIDInstanceRepository
     )
 
     return PIDService(
