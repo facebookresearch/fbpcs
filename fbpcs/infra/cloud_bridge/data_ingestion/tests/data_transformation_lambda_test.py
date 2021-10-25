@@ -97,6 +97,68 @@ class TestDataIngestion(TestCase):
             decoded_dict['device_os_version']
         )
 
+    def test_user_data_fields(self):
+        record = self.sample_record_data
+        server_side_event = record['serverSideEvent']
+        server_side_event['user_data'] = {
+            'em': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111',
+            'madid': 'bbbbbbbbbbbbbbbb2222222222222222',
+            'ph': 'cccccccccccccccccccccccccccccccc33333333333333333333333333333333',
+            'client_ip_address': '123.123.123.123',
+            'client_user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 ' +
+                '(KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+            'fbc': 'fb.1.1554763741205.AbCdEfGhIjKlMnOpQrStUvWxYz1234567890',
+            'fbp': 'fb.1.1558571054389.1098115397'
+        }
+        event = self.sample_event(record)
+        result = lambda_handler(event, self.sample_context)
+        encoded_data = result['records'][0]['data']
+        decoded_data = base64.b64decode(encoded_data)
+        decoded_dict = json.loads(decoded_data)
+
+        self.assertEqual(
+            server_side_event['user_data']['em'],
+            decoded_dict['email']
+        )
+        self.assertEqual(
+            server_side_event['user_data']['madid'],
+            decoded_dict['device_id']
+        )
+        self.assertEqual(
+            server_side_event['user_data']['ph'],
+            decoded_dict['phone']
+        )
+        self.assertEqual(
+            server_side_event['user_data']['client_ip_address'],
+            decoded_dict['client_ip_address']
+        )
+        self.assertEqual(
+            server_side_event['user_data']['client_user_agent'],
+            decoded_dict['client_user_agent']
+        )
+        self.assertEqual(
+            server_side_event['user_data']['fbc'],
+            decoded_dict['click_id']
+        )
+        self.assertEqual(
+            server_side_event['user_data']['fbp'],
+            decoded_dict['login_id']
+        )
+
+    def test_required_user_fields(self):
+        fields = ['em', 'madid', 'ph', 'fbc', 'fbp']
+        for field in fields:
+            record =  {
+                'serverSideEvent': {
+                    'user_data': {
+                        field: 'test',
+                    }
+                }
+            }
+            event = self.sample_event(record)
+            result = lambda_handler(event, self.sample_context)
+            self.assertEqual(len(result['records']), 1)
+
     def sample_event(self, event):
         sample_encoded_data = base64.b64encode(json.dumps(event).encode('utf-8'))
         return {
