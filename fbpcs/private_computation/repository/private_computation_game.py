@@ -16,6 +16,7 @@ class GameNames(Enum):
     LIFT = "lift"
     SHARD_AGGREGATOR = "shard_aggregator"
     ATTRIBUTION_COMPUTE = "attribution_compute"
+    DECOUPLED_ATTRIBUTION = "decoupled_attribution"
 
 
 PRIVATE_COMPUTATION_GAME_CONFIG = {
@@ -51,6 +52,20 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
             {"name": "num_files", "required": True},
             {"name": "file_start_index", "required": True},
             {"name": "use_xor_encryption", "required": True},
+        ],
+    },
+    GameNames.DECOUPLED_ATTRIBUTION.value: {
+        "onedocker_package_name": OneDockerBinaryNames.DECOUPLED_ATTRIBUTION.value,
+        "arguments": [
+            {"name": "input_base_path", "required": True},
+            {"name": "output_base_path", "required": True},
+            {"name": "attribution_rules", "required": True},
+            {"name": "aggregators", "required": False},
+            {"name": "concurrency", "required": True},
+            {"name": "num_files", "required": True},
+            {"name": "file_start_index", "required": True},
+            {"name": "use_xor_encryption", "required": True},
+            {"name": "use_postfix", "required": True},
         ],
     },
 }
