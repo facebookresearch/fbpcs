@@ -44,8 +44,8 @@ class TestDataIngestion(TestCase):
         self.assertEqual(decoded_dict['currency_type'], server_side_event['custom_data']['currency'])
         self.assertEqual(decoded_dict['conversion_value'], server_side_event['custom_data']['value'])
         self.assertEqual(decoded_dict['event_type'], server_side_event['event_name'])
-        self.assertEqual(decoded_dict['email'], server_side_event['user_data']['em'])
-        self.assertEqual(decoded_dict['device_id'], server_side_event['user_data']['madid'])
+        self.assertEqual(decoded_dict['user_data']['email'], server_side_event['user_data']['em'])
+        self.assertEqual(decoded_dict['user_data']['device_id'], server_side_event['user_data']['madid'])
         self.assertEqual(decoded_dict['action_source'], server_side_event['action_source'])
 
     def test_server_side_event_error(self):
@@ -86,15 +86,15 @@ class TestDataIngestion(TestCase):
 
         self.assertEqual(
             server_side_event['custom_data']['custom_properties']['_cloudbridge_browser_name'],
-            decoded_dict['browser_name']
+            decoded_dict['user_data']['browser_name']
         )
         self.assertEqual(
             server_side_event['custom_data']['custom_properties']['_cloudbridge_device_os'],
-            decoded_dict['device_os']
+            decoded_dict['user_data']['device_os']
         )
         self.assertEqual(
             server_side_event['custom_data']['custom_properties']['_cloudbridge_device_os_version'],
-            decoded_dict['device_os_version']
+            decoded_dict['user_data']['device_os_version']
         )
 
     def test_user_data_fields(self):
@@ -118,32 +118,51 @@ class TestDataIngestion(TestCase):
 
         self.assertEqual(
             server_side_event['user_data']['em'],
-            decoded_dict['email']
+            decoded_dict['user_data']['email']
         )
         self.assertEqual(
             server_side_event['user_data']['madid'],
-            decoded_dict['device_id']
+            decoded_dict['user_data']['device_id']
         )
         self.assertEqual(
             server_side_event['user_data']['ph'],
-            decoded_dict['phone']
+            decoded_dict['user_data']['phone']
         )
         self.assertEqual(
             server_side_event['user_data']['client_ip_address'],
-            decoded_dict['client_ip_address']
+            decoded_dict['user_data']['client_ip_address']
         )
         self.assertEqual(
             server_side_event['user_data']['client_user_agent'],
-            decoded_dict['client_user_agent']
+            decoded_dict['user_data']['client_user_agent']
         )
         self.assertEqual(
             server_side_event['user_data']['fbc'],
-            decoded_dict['click_id']
+            decoded_dict['user_data']['click_id']
         )
         self.assertEqual(
             server_side_event['user_data']['fbp'],
-            decoded_dict['login_id']
+            decoded_dict['user_data']['login_id']
         )
+
+    def test_empty_user_data(self):
+        record = {
+            'serverSideEvent': {
+                'event_time': 1234,
+                'custom_data': {'currency': 'usd', 'value': 2},
+                'event_name': 'Purchase',
+                'user_data': {},
+                'action_source': 'website'
+            },
+            'pixelId': '4321'
+        }
+        event = self.sample_event(record)
+        result = lambda_handler(event, self.sample_context)
+        encoded_data = result['records'][0]['data']
+        decoded_data = base64.b64decode(encoded_data)
+        decoded_dict = json.loads(decoded_data)
+
+        self.assertEqual({}, decoded_dict['user_data'])
 
     def test_required_user_fields(self):
         fields = ['em', 'madid', 'ph', 'fbc', 'fbp']
