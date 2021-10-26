@@ -111,7 +111,7 @@ public class DeploymentParams {
   // Amazon tag identifier format can be found in
   // https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html
   public boolean validTagPostfix() {
-    return tag == null || tag.length() <= 256 && tag.matches("^[A-Za-z0-9\\s_.:/=+@-]*$");
+    return tag.matches("^([a-z0-9-][a-z0-9-]{1,18}[a-z0-9])$");
   }
 
   public boolean validAccessKeyId() {
@@ -141,7 +141,10 @@ public class DeploymentParams {
       logAndThrow("Invalid VPC ID: " + vpcId);
     }
     if (!validTagPostfix()) {
-      logAndThrow("Invalid Tag Postfix: " + tag);
+      logAndThrow(
+          "Invalid Tag Postfix: "
+              + tag
+              + "\nMake sure the tag length is less than 20 characters, and using lowercase letters, numbers and dash only.");
     }
     if (!validStorageID()) {
       logAndThrow("Invalid terraform config storage bucket: " + storage);
@@ -171,10 +174,9 @@ public class DeploymentParams {
             .append(", Configuration Storage: ")
             .append(storage)
             .append(", Ingestion Output Storage: ")
-            .append(ingestionOutput);
-    if (tag != null) {
-      sb.append(", Tag: ").append(tag);
-    }
+            .append(ingestionOutput)
+            .append(", Tag: ")
+            .append(tag);
     if (logLevel != null) {
       sb.append(", Terraform Log Level: ").append(logLevel);
     }
