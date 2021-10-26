@@ -21,6 +21,7 @@ public class DeploymentParams {
   public String storage;
   public String ingestionOutput;
   public String tag;
+  public boolean enableSemiAutomatedDataIngestion;
   public LogLevel logLevel;
 
   public String awsAccessKeyId;
@@ -176,7 +177,9 @@ public class DeploymentParams {
             .append(", Ingestion Output Storage: ")
             .append(ingestionOutput)
             .append(", Tag: ")
-            .append(tag);
+            .append(tag)
+            .append(", Enable Semi-Automated Data Ingestion: ")
+            .append(String.valueOf(enableSemiAutomatedDataIngestion));
     if (logLevel != null) {
       sb.append(", Terraform Log Level: ").append(logLevel);
     }
