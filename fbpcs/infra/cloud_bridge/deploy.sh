@@ -191,7 +191,7 @@ deploy_aws_resources() {
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce_shared$tag_postfix.tfstate"
     echo "########################Initializing terraform working directory completed ########################"
-    echo "######################## Deploy PCE Terraform scripts started ########################"
+    echo "######################## Deploy PCE SHARED Terraform scripts started ########################"
     terraform apply \
         -auto-approve \
         -var "aws_region=$region" \
@@ -199,7 +199,7 @@ deploy_aws_resources() {
         -var "aws_account_id=$aws_account_id" \
         -var "onedocker_ecs_container_image=$onedocker_ecs_container_image" \
         -var "pce_id=$pce_id"
-    echo "######################## Deploy PCE Terraform scripts completed ########################"
+    echo "######################## Deploy PCE SHARED Terraform scripts completed ########################"
     # Store the outputs into variables
     onedocker_task_definition_family=$(terraform output onedocker_task_definition_family | tr -d '"')
     onedocker_task_definition_revision=$(terraform output onedocker_task_definition_revision | tr -d '"')
@@ -235,7 +235,7 @@ deploy_aws_resources() {
         -backend-config "region=$region" \
         -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
     echo "######################## Initializing terraform working directory completed ########################"
-    echo "######################## Deploy PCE Terraform scripts started ########################"
+    echo "######################## Deploy VPC Peering Terraform scripts started ########################"
     terraform apply \
         -auto-approve \
         -var "aws_region=$region" \
@@ -246,7 +246,7 @@ deploy_aws_resources() {
         -var "route_table_id=$route_table_id" \
         -var "destination_cidr_block=$publisher_vpc_cidr" \
         -var "pce_id=$pce_id"
-    echo "######################## Deploy PCE Terraform scripts completed ########################"
+    echo "######################## Deploy VPC Peering Terraform scripts completed ########################"
 
     # Store the outputs into variables
     vpc_peering_connection_id=$(terraform output vpc_peering_connection_id | tr -d '"' )
@@ -261,7 +261,7 @@ deploy_aws_resources() {
         -backend-config "region=$region" \
         -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
     echo "######################## Initializing terraform working directory completed ########################"
-    echo "######################## Deploy PCE Terraform scripts started ########################"
+    echo "######################## Deploy Data Ingestion Terraform scripts started ########################"
     terraform apply \
         -auto-approve \
         -var "region=$region" \
@@ -270,7 +270,7 @@ deploy_aws_resources() {
         -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip"
-    echo "######################## Deploy PCE Terraform scripts completed ########################"
+    echo "######################## Deploy Data Ingestion Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
     app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
     app_data_input_bucket_arn=$(terraform output data_processing_output_bucket_arn | tr -d '"')
@@ -291,7 +291,7 @@ deploy_aws_resources() {
             -backend-config "region=$region" \
             -backend-config "key=tfstate/glue_etl$tag_postfix.tfstate"
         echo "######################## Initializing terraform working directory completed ########################"
-        echo "######################## Deploy PCE Terraform scripts started ########################"
+        echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts started ########################"
         terraform apply \
             -auto-approve \
             -var "region=$region" \
@@ -301,7 +301,7 @@ deploy_aws_resources() {
             -var "app_data_input_bucket=$s3_bucket_data_pipeline" \
             -var "app_data_input_bucket_id=$app_data_input_bucket_id" \
             -var "app_data_input_bucket_arn=$app_data_input_bucket_arn"
-        echo "######################## Deploy PCE Terraform scripts completed ########################"
+        echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
     fi
 
     echo "########################Finished AWS Infrastructure Deployment########################"
