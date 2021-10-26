@@ -104,6 +104,6 @@ resource "aws_glue_crawler" "mpc_events_crawler" {
   }
 
   recrawl_policy {
-    recrawl_behavior = "CRAWL_NEW_FOLDERS_ONLY"
+    recrawl_behavior = "CRAWL_EVERYTHING"
   }
 }
