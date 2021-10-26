@@ -94,9 +94,9 @@ public class DeploymentRunner extends Thread {
     deployCommand.add("-v");
     deployCommand.add(deployment.vpcId);
     deployCommand.add("-s");
-    deployCommand.add(deployment.storage);
+    deployCommand.add(deployment.configStorage);
     deployCommand.add("-d");
-    deployCommand.add(deployment.ingestionOutput);
+    deployCommand.add(deployment.dataStorage);
     deployCommand.add("-t");
     deployCommand.add(deployment.tag);
     if (deployment.enableSemiAutomatedDataIngestion) {
