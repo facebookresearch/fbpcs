@@ -93,11 +93,11 @@ public class DeploymentParams {
   }
 
   public boolean validConfigStorage() {
-    return validBucketID(configStorage);
+    return configStorage == null || validBucketID(configStorage);
   }
 
   public boolean validDataStorage() {
-    return validBucketID(dataStorage);
+    return dataStorage == null || validBucketID(dataStorage);
   }
 
   // Amazon S3 Buck identifier format can be found in
