@@ -74,7 +74,7 @@ undeploy_aws_resources() {
     echo "######################## Initializing terraform working directory before deleting resources ########################"
 
     cd /terraform_deployment/terraform_scripts/common/pce_shared
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce_shared$tag_postfix.tfstate"
@@ -93,7 +93,7 @@ undeploy_aws_resources() {
     echo "Related tfstate file exists. Continue..."
     echo "######################## Initializing terraform working doirectory before deleting resources ########################"
     cd /terraform_deployment/terraform_scripts/common/pce
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce$tag_postfix.tfstate"
@@ -112,7 +112,7 @@ undeploy_aws_resources() {
     echo "Related tfstate file exists. Continue..."
     echo "######################## Initializing terraform working doirectory before deleting resources ########################"
     cd /terraform_deployment/terraform_scripts/partner/vpc_peering
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
@@ -133,7 +133,7 @@ undeploy_aws_resources() {
 
     cd /terraform_deployment/terraform_scripts/data_ingestion
     echo "######################## Initializing terraform working doirectory before deleting resources ########################"
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
@@ -154,7 +154,7 @@ undeploy_aws_resources() {
         check_s3_object_exist "$s3_bucket_for_storage" "tfstate/glue_etl$tag_postfix.tfstate" "$aws_account_id"
         echo "Semi automated data_pipeline tfstate file exists. Continue..."
         cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
-        terraform init \
+        terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/glue_etl$tag_postfix.tfstate"
@@ -186,7 +186,7 @@ deploy_aws_resources() {
 
     echo "########################Initializing terraform working directory########################"
     cd /terraform_deployment/terraform_scripts/common/pce_shared
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce_shared$tag_postfix.tfstate"
@@ -207,7 +207,7 @@ deploy_aws_resources() {
 
     cd /terraform_deployment/terraform_scripts/common/pce
     echo "########################Initializing terraform working directory########################"
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/pce$tag_postfix.tfstate"
@@ -230,7 +230,7 @@ deploy_aws_resources() {
     echo "########################Issue VPC Peering connection to Publisher's VPC########################"
     cd /terraform_deployment/terraform_scripts/partner/vpc_peering
     echo "######################## Initializing terraform working directory started ########################"
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
@@ -256,7 +256,7 @@ deploy_aws_resources() {
     echo "########################Configure Data Ingestion Pipeline from CB to S3########################"
     cd /terraform_deployment/terraform_scripts/data_ingestion
     echo "######################## Initializing terraform working directory started ########################"
-    terraform init \
+    terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
@@ -286,7 +286,7 @@ deploy_aws_resources() {
         sed -i "s~s3_write_path = 'TO_BE_UPDATED_DURING_DEPLOYMENT'~s3_write_path = '$app_data_input_bucket_id'~g" lambda_trigger.py
 
         echo "######################## Initializing terraform working directory started ########################"
-        terraform init \
+        terraform init -reconfigure \
             -backend-config "bucket=$s3_bucket_for_storage" \
             -backend-config "region=$region" \
             -backend-config "key=tfstate/glue_etl$tag_postfix.tfstate"
