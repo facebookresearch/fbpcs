@@ -18,8 +18,8 @@ public class DeploymentParams {
   public String accountId;
   public String pubAccountId;
   public String vpcId;
-  public String storage;
-  public String ingestionOutput;
+  public String configStorage;
+  public String dataStorage;
   public String tag;
   public boolean enableSemiAutomatedDataIngestion;
   public LogLevel logLevel;
@@ -92,12 +92,12 @@ public class DeploymentParams {
     return vpcId != null && !vpcId.isEmpty() && vpcId.matches("^vpc-[a-z0-9]{17}$");
   }
 
-  public boolean validStorageID() {
-    return validBucketID(storage);
+  public boolean validConfigStorage() {
+    return validBucketID(configStorage);
   }
 
-  public boolean validIngestionOutputID() {
-    return validBucketID(ingestionOutput);
+  public boolean validDataStorage() {
+    return validBucketID(dataStorage);
   }
 
   // Amazon S3 Buck identifier format can be found in
@@ -115,7 +115,7 @@ public class DeploymentParams {
     return tag.matches("^([a-z0-9-][a-z0-9-]{1,18}[a-z0-9])$");
   }
 
-  public boolean validAccessKeyId() {
+  public boolean validAccessKeyID() {
     return awsAccessKeyId != null && !awsAccessKeyId.isEmpty();
   }
 
@@ -147,13 +147,13 @@ public class DeploymentParams {
               + tag
               + "\nMake sure the tag length is less than 20 characters, and using lowercase letters, numbers and dash only.");
     }
-    if (!validStorageID()) {
-      logAndThrow("Invalid terraform config storage bucket: " + storage);
+    if (!validConfigStorage()) {
+      logAndThrow("Invalid Configuration Storage: " + configStorage);
     }
-    if (!validIngestionOutputID()) {
-      logAndThrow("Invalid data ingestion bucket: " + ingestionOutput);
+    if (!validDataStorage()) {
+      logAndThrow("Invalid Data Storage: " + dataStorage);
     }
-    if (!validAccessKeyId()) {
+    if (!validAccessKeyID()) {
       logAndThrow("Invalid AWS Access Key ID");
     }
     if (!validSecretAccessKey()) {
@@ -164,18 +164,18 @@ public class DeploymentParams {
   public String toString() {
     StringBuilder sb =
         new StringBuilder()
-            .append("{region: ")
+            .append("{Region: ")
             .append(region)
-            .append(", account ID: ")
+            .append(", Account ID: ")
             .append(accountId)
-            .append(", publisher account ID: ")
+            .append(", Publisher Account ID: ")
             .append(pubAccountId)
             .append(", VPC ID: ")
             .append(vpcId)
             .append(", Configuration Storage: ")
-            .append(storage)
-            .append(", Ingestion Output Storage: ")
-            .append(ingestionOutput)
+            .append(configStorage)
+            .append(", Data Storage: ")
+            .append(dataStorage)
             .append(", Tag: ")
             .append(tag)
             .append(", Enable Semi-Automated Data Ingestion: ")
