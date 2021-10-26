@@ -88,70 +88,16 @@ void checkMetrics(
 
 void validateLiftMetrics(
     const std::vector<std::shared_ptr<AggMetrics>>& inputData) {
-  // ensure all metric maps have same metrics
-  std::set<std::string> metricsFound;
-
   for (const auto& groupedLiftMetrics : inputData) {
     checkIsMap(
         groupedLiftMetrics,
         "Expected grouped lift metrics to be stored in a map");
 
-    if (groupedLiftMetrics->getAsMap().size() != 3 ||
-        groupedLiftMetrics->getAsMap().find("cohortMetrics") ==
-            groupedLiftMetrics->getAsMap().end() ||
-        groupedLiftMetrics->getAsMap().find("metrics") ==
-            groupedLiftMetrics->getAsMap().end() ||
-        groupedLiftMetrics->getAsMap().find("publisherBreakdowns") ==
-            groupedLiftMetrics->getAsMap().end()) {
-      throw InvalidFormatException(
-          "Map should contain {metrics, cohortMetrics, publisherBreakdowns}");
+    if (groupedLiftMetrics->getAsMap().find("metrics") == groupedLiftMetrics->getAsMap().end()) {
+      throw InvalidFormatException("Map should contain 'metrics' at a minimum");
     }
-    checkIsList(
-        groupedLiftMetrics->getAtKey("cohortMetrics"),
-        "cohortMetrics should map to a list");
-    checkIsList(
-        groupedLiftMetrics->getAtKey("publisherBreakdowns"),
-        "publisherBreakdowns should map to a list");
     checkIsMap(
         groupedLiftMetrics->getAtKey("metrics"), "metrics should map to a map");
-
-    // check cohort metrics
-    auto cohortMetrics =
-        groupedLiftMetrics->getAtKey("cohortMetrics")->getAsList();
-    for (std::size_t i = 0; i < cohortMetrics.size(); ++i) {
-      checkIsMap(cohortMetrics.at(i), "Cohort {} should be a map");
-      auto metrics = cohortMetrics.at(i)->getAsMap();
-      if (i == 0) {
-        for (const auto& [metric, value] : metrics) {
-          // build the expected metrics
-          metricsFound.emplace(metric);
-        }
-      } else {
-        checkMetrics(metrics, metricsFound);
-      }
-    }
-
-    // check publisher breakdowns
-    auto publisherBreakdowns =
-        groupedLiftMetrics->getAtKey("publisherBreakdowns")->getAsList();
-    for (std::size_t i = 0; i < publisherBreakdowns.size(); ++i) {
-      checkIsMap(publisherBreakdowns.at(i), "Breakdown {} should be a map");
-      auto metrics = publisherBreakdowns.at(i)->getAsMap();
-      if (i == 0) {
-        for (const auto& [metric, value] : metrics) {
-          // build the expected metrics
-          metricsFound.emplace(metric);
-        }
-      } else {
-        checkMetrics(metrics, metricsFound);
-      }
-    }
-
-    // check metrics
-    auto metrics = groupedLiftMetrics->getAtKey("metrics")->getAsMap();
-    if (metricsFound.size() != 0) {
-      checkMetrics(metrics, metricsFound);
-    }
   }
 }
 } // namespace
