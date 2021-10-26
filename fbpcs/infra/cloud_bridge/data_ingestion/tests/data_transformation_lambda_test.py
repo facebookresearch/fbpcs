@@ -25,16 +25,14 @@ class TestDataIngestion(TestCase):
                 'pixelId': '4321'
         }
 
-        self.sample_encoded_data = base64.b64encode(json.dumps(self.sample_record_data).encode('utf-8'))
-
     def test_non_encoded_data_is_transformed(self):
-        event = self.sample_event(self.sample_encoded_data)
+        event = self.sample_event(self.sample_record_data)
         result = lambda_handler(event, self.sample_context)
         self.assertEqual(result['records'][0]['recordId'], event["records"][0]['recordId'])
         self.assertEqual(result['records'][0]['result'], 'Ok')
 
     def test_encoded_data_is_transformed(self):
-        event = self.sample_event(self.sample_encoded_data)
+        event = self.sample_event(self.sample_record_data)
         result = lambda_handler(event, self.sample_context)
         encoded_data = result['records'][0]['data']
         decoded_data = base64.b64decode(encoded_data)
@@ -50,11 +48,9 @@ class TestDataIngestion(TestCase):
         self.assertEqual(decoded_dict['device_id'], server_side_event['user_data']['madid'])
         self.assertEqual(decoded_dict['action_source'], server_side_event['action_source'])
 
-
     def test_server_side_event_error(self):
         malformed_dict = {"a" : "b"}
-        malformed_data = base64.b64encode(json.dumps(malformed_dict).encode('utf-8'))
-        event = self.sample_event(malformed_data)
+        event = self.sample_event(malformed_dict)
         result = lambda_handler(event, self.sample_context)
 
         # Assert the malformed row gets skipped!
@@ -68,13 +64,41 @@ class TestDataIngestion(TestCase):
             },
             'pixelId': '4321'
         }
-        encoded_null_dict = base64.b64encode(json.dumps(null_dict).encode('utf-8'))
-        event = self.sample_event(encoded_null_dict)
+        event = self.sample_event(null_dict)
         result = lambda_handler(event, self.sample_context)
 
         self.assertEqual(len(result['records']), 0)
 
-    def sample_event(self, sample_encoded_data):
+    def test_user_agent_parsed_fields(self):
+        record = self.sample_record_data
+        server_side_event = record['serverSideEvent']
+        server_side_event['custom_data']['custom_properties'] = {
+            'ignored': '1',
+            '_cloudbridge_browser_name': 'Chrome Desktop',
+            '_cloudbridge_device_os': 'Mac OS X',
+            '_cloudbridge_device_os_version': '10.13.6',
+        }
+        event = self.sample_event(record)
+        result = lambda_handler(event, self.sample_context)
+        encoded_data = result['records'][0]['data']
+        decoded_data = base64.b64decode(encoded_data)
+        decoded_dict = json.loads(decoded_data)
+
+        self.assertEqual(
+            server_side_event['custom_data']['custom_properties']['_cloudbridge_browser_name'],
+            decoded_dict['browser_name']
+        )
+        self.assertEqual(
+            server_side_event['custom_data']['custom_properties']['_cloudbridge_device_os'],
+            decoded_dict['device_os']
+        )
+        self.assertEqual(
+            server_side_event['custom_data']['custom_properties']['_cloudbridge_device_os_version'],
+            decoded_dict['device_os_version']
+        )
+
+    def sample_event(self, event):
+        sample_encoded_data = base64.b64encode(json.dumps(event).encode('utf-8'))
         return {
             "invocationId": "invocationIdExample",
             "deliveryStreamArn": "arn:aws:kinesis:EXAMPLE",

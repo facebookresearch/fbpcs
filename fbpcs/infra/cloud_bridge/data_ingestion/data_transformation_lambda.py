@@ -51,6 +51,10 @@ def lambda_handler(event, context):
         conversion_value = row_data.get("custom_data", dummy_dict).get("value")
         email = row_data.get("user_data", dummy_dict).get("em")
         device_id = row_data.get("user_data", dummy_dict).get("madid")
+        custom_properties = row_data.get("custom_data", dummy_dict).get("custom_properties", dummy_dict)
+        browser_name = custom_properties.get("_cloudbridge_browser_name")
+        device_os = custom_properties.get("_cloudbridge_device_os")
+        device_os_version = custom_properties.get("_cloudbridge_device_os_version")
 
         # make sure not all values are None
         if all(
@@ -70,6 +74,9 @@ def lambda_handler(event, context):
         data["email"] = email
         data["device_id"] = device_id
         data["action_source"] = action_source
+        data["browser_name"] = browser_name
+        data["device_os"] = device_os
+        data["device_os_version"] = device_os_version
         # firehose need data to be b64-encoded
         data = json.dumps(data) + "\n"
         data = data.encode("utf-8")
