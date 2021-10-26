@@ -321,10 +321,6 @@ deploy_aws_resources() {
     sed -i "s/task_definition: TODO_ONEDOCKER_TASK_DEFINITION/task_definition: $onedocker_task_definition/g" config.yml
     echo "Populated Onedocker - task_definition with value $onedocker_task_definition"
 
-    sed -i "/access_key_id/d" config.yml
-    sed -i "/access_key_data/d" config.yml
-    echo "Removed the credential lines"
-
     echo "########################Upload config.ymls to S3########################"
     cd /terraform_deployment
     aws s3api put-object --bucket "$s3_bucket_for_storage" --key "config.yml" --body ./config.yml
