@@ -6,8 +6,8 @@
 
 set -e
 # shellcheck disable=SC1091
-source ./util.sh
-
+# shellcheck disable=SC1090
+source "$(dirname "$(realpath "$0")")/util.sh"
 usage() {
     echo "Usage: deploy.sh <deploy|undeploy>
         [ -r, --region | AWS region, e.g. us-west-2 ]
