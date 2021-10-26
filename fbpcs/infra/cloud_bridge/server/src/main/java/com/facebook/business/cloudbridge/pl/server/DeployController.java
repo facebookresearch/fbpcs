@@ -19,6 +19,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,7 +40,19 @@ public class DeployController {
       produces = "application/json")
   public APIReturn deploymentCreate(@RequestBody DeploymentParams deployment) {
     logger.info("Received deployment request: " + deployment.toString());
+    return runDeployment(true, deployment);
+  }
 
+  @DeleteMapping(
+      path = "/v1/deployment",
+      consumes = "application/json",
+      produces = "application/json")
+  public APIReturn deploymentDelete(@RequestBody DeploymentParams deployment) {
+    logger.info("Received undeployment request: " + deployment.toString());
+    return runDeployment(false, deployment);
+  }
+
+  private APIReturn runDeployment(boolean shouldDeploy, DeploymentParams deployment) {
     try {
       deployment.validate();
     } catch (InvalidDeploymentArgumentException ex) {
@@ -57,12 +70,17 @@ public class DeployController {
 
       runner =
           new DeploymentRunner(
+              shouldDeploy,
               deployment,
               () -> {
                 singleProvisioningLock.release();
               });
       runner.start();
-      return new APIReturn(APIReturn.Status.STATUS_SUCCESS, "Deployment Started Successfully");
+      if (shouldDeploy) {
+        return new APIReturn(APIReturn.Status.STATUS_SUCCESS, "Deployment Started Successfully");
+      } else {
+        return new APIReturn(APIReturn.Status.STATUS_SUCCESS, "Undeployment Started Successfully");
+      }
     } catch (DeploymentException ex) {
       return new APIReturn(APIReturn.Status.STATUS_ERROR, ex.getMessage());
     } finally {
