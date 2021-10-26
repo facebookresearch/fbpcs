@@ -18,7 +18,7 @@ export DOCKER_INSTANCE_REPO="/instances"
 # Lift study configs
 export LIFT_PUBLIHSER_NAME="pl_publisher_github"
 export LIFT_PARTNER_NAME="pl_partner_github"
-export LIFT_COORDINATOR="python3.8 -m fbpcs.pl_coordinator.pl_coordinator"
+export LIFT_COORDINATOR="python3.8 -m fbpcs.private_computation_cli.private_computation_cli"
 export LIFT_NUM_MPC_CONTAIENRS=2
 export LIFT_NUM_PID_CONTAINERS=2
 export LIFT_CONCURRENCY=4

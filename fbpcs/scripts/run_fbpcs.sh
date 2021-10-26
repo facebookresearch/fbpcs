@@ -51,7 +51,7 @@ function parse_args() {
 
     case $1 in
         lift )
-            docker_cmd+=('fbpcs.pl_coordinator.pl_coordinator')
+            docker_cmd+=('fbpcs.private_computation_cli.private_computation_cli')
             ;;
         attribution )
             docker_cmd+=('fbpcs.pa_coordinator.pa_coordinator')
