@@ -9,6 +9,8 @@
 ## Shared
 export E2E_S3_BUCKET="fbpcs-github-e2e"
 export E2E_GITHUB_S3_URL="https://$E2E_S3_BUCKET.s3.us-west-2.amazonaws.com"
+export COORDINATOR="python3.8 -m fbpcs.private_computation_cli.private_computation_cli"
+
 # Matched with yaml file
 export CLOUD_CONFIG_FILE="fbpcs_e2e_aws.yml"
 export DOCKER_CLOUD_CONFIG_FILE="/$CLOUD_CONFIG_FILE"
@@ -18,7 +20,6 @@ export DOCKER_INSTANCE_REPO="/instances"
 # Lift study configs
 export LIFT_PUBLIHSER_NAME="pl_publisher_github"
 export LIFT_PARTNER_NAME="pl_partner_github"
-export LIFT_COORDINATOR="python3.8 -m fbpcs.private_computation_cli.private_computation_cli"
 export LIFT_NUM_MPC_CONTAIENRS=2
 export LIFT_NUM_PID_CONTAINERS=2
 export LIFT_CONCURRENCY=4
@@ -31,15 +32,14 @@ export LIFT_OUTPUT_PATH=s3://$E2E_S3_BUCKET/lift/outputs
 export LIFT_PUBLISHER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PUBLIHSER_NAME"_out_dir/shard_aggregation_stage/out.json
 export LIFT_PARTNER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PARTNER_NAME"_out_dir/shard_aggregation_stage/out.json
 
-export LIFT_RESUKT_PATH=s3://$E2E_S3_BUCKET/lift/results
-export LIFT_PUBLISHER_EXPECTED_RESULT=$LIFT_RESUKT_PATH/publisher_expected_result.json
-export LIFT_PARTNER_EXPECTED_RESULT=$LIFT_RESUKT_PATH/partner_expected_result.json
+export LIFT_RESULT_PATH=s3://$E2E_S3_BUCKET/lift/results
+export LIFT_PUBLISHER_EXPECTED_RESULT=$LIFT_RESULT_PATH/publisher_expected_result.json
+export LIFT_PARTNER_EXPECTED_RESULT=$LIFT_RESULT_PATH/partner_expected_result.json
 
 ## Attribution
 # Attribution study configs
 export ATTRIBUTION_PUBLIHSER_NAME="pa_publisher_github"
 export ATTRIBUTION_PARTNER_NAME="pa_partner_github"
-export ATTRIBUTION_COORDINATOR="python3.8 -m fbpcs.pa_coordinator.pa_coordinator"
 
 export ATTRIBUTION_NUM_FILES_PER_MPC_CONTAINER=1
 export ATTRIBUTION_CONCURRENCY=1
