@@ -71,20 +71,25 @@ public class DeploymentRunner extends Thread {
     return deploymentState;
   }
 
-  public DeploymentRunner(DeploymentParams deployment, Runnable deploymentFinishedCallback) {
+  public DeploymentRunner(
+      boolean shouldDeploy, DeploymentParams deployment, Runnable deploymentFinishedCallback) {
 
     this.deploymentState = DeploymentState.STATE_NOT_STARTED;
     this.deploymentFinishedCallback = deploymentFinishedCallback;
 
-    buildDeployCommand(deployment);
+    buildDeployCommand(shouldDeploy, deployment);
     buildEnvironmentVariables(deployment);
   }
 
-  private void buildDeployCommand(DeploymentParams deployment) {
+  private void buildDeployCommand(boolean shouldDeploy, DeploymentParams deployment) {
     deployCommand = new ArrayList<String>();
     deployCommand.add("/bin/sh");
     deployCommand.add("/terraform_deployment/deploy.sh");
-    deployCommand.add("deploy");
+    if (shouldDeploy) {
+      deployCommand.add("deploy");
+    } else {
+      deployCommand.add("undeploy");
+    }
     deployCommand.add("-r");
     deployCommand.add(deployment.region);
     deployCommand.add("-a");
