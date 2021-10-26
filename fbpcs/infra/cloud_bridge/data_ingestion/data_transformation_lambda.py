@@ -81,22 +81,35 @@ def lambda_handler(event, context):
             continue
 
         data = {}
+        user_data = {}
         data["data_source_id"] = data_source_id
         data["timestamp"] = timestamp
         data["currency_type"] = currency_type
         data["conversion_value"] = conversion_value
         data["event_type"] = event_type
-        data["email"] = email
-        data["device_id"] = device_id
-        data["phone"] = phone
-        data["client_ip_address"] = client_ip_address
-        data["client_user_agent"] = client_user_agent
-        data["click_id"] = click_id
-        data["login_id"] = login_id
         data["action_source"] = action_source
-        data["browser_name"] = browser_name
-        data["device_os"] = device_os
-        data["device_os_version"] = device_os_version
+        if email:
+            user_data["email"] = email
+        if device_id:
+            user_data["device_id"] = device_id
+        if phone:
+            user_data["phone"] = phone
+        if client_ip_address:
+            user_data["client_ip_address"] = client_ip_address
+        if client_user_agent:
+            user_data["client_user_agent"] = client_user_agent
+        if click_id:
+            user_data["click_id"] = click_id
+        if login_id:
+            user_data["login_id"] = login_id
+        if browser_name:
+            user_data["browser_name"] = browser_name
+        if device_os:
+            user_data["device_os"] = device_os
+        if device_os_version:
+            user_data["device_os_version"] = device_os_version
+
+        data['user_data'] = user_data
         # firehose need data to be b64-encoded
         data = json.dumps(data) + "\n"
         data = data.encode("utf-8")
