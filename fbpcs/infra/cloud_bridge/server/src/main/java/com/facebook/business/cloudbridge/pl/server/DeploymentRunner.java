@@ -93,12 +93,16 @@ public class DeploymentRunner extends Thread {
     deployCommand.add(deployment.pubAccountId);
     deployCommand.add("-v");
     deployCommand.add(deployment.vpcId);
-    deployCommand.add("-s");
-    deployCommand.add(deployment.configStorage);
-    deployCommand.add("-d");
-    deployCommand.add(deployment.dataStorage);
     deployCommand.add("-t");
     deployCommand.add(deployment.tag);
+    if (deployment.configStorage != null) {
+      deployCommand.add("-s");
+      deployCommand.add(deployment.configStorage);
+    }
+    if (deployment.dataStorage != null) {
+      deployCommand.add("-d");
+      deployCommand.add(deployment.dataStorage);
+    }
     if (deployment.enableSemiAutomatedDataIngestion) {
       deployCommand.add("-b");
     }
@@ -174,7 +178,9 @@ public class DeploymentRunner extends Thread {
       throw new DeploymentException("Deployment could not be started");
     } finally {
       deploymentState = DeploymentState.STATE_FINISHED;
-      if (provisioningProcess.isAlive()) provisioningProcess.destroy();
+      if (provisioningProcess != null && provisioningProcess.isAlive()) {
+        provisioningProcess.destroy();
+      }
       provisioningProcess = null;
       logger.info("  Deployment finished");
 
