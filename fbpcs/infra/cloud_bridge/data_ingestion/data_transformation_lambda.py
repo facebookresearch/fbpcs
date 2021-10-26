@@ -51,6 +51,11 @@ def lambda_handler(event, context):
         conversion_value = row_data.get("custom_data", dummy_dict).get("value")
         email = row_data.get("user_data", dummy_dict).get("em")
         device_id = row_data.get("user_data", dummy_dict).get("madid")
+        phone = row_data.get("user_data", dummy_dict).get("ph")
+        client_ip_address = row_data.get("user_data", dummy_dict).get("client_ip_address")
+        client_user_agent = row_data.get("user_data", dummy_dict).get("client_user_agent")
+        click_id = row_data.get("user_data", dummy_dict).get("fbc")
+        login_id = row_data.get("user_data", dummy_dict).get("fbp")
         custom_properties = row_data.get("custom_data", dummy_dict).get("custom_properties", dummy_dict)
         browser_name = custom_properties.get("_cloudbridge_browser_name")
         device_os = custom_properties.get("_cloudbridge_device_os")
@@ -59,7 +64,17 @@ def lambda_handler(event, context):
         # make sure not all values are None
         if all(
             value is None
-            for value in [timestamp, currency_type, conversion_value, event_type, email, device_id]
+            for value in [
+                timestamp,
+                currency_type,
+                conversion_value,
+                event_type,
+                email,
+                device_id,
+                phone,
+                click_id,
+                login_id,
+            ]
         ):
             msg = f"All essential columns are None/Null. Skip recordId: f{recordId}"
             print(msg)
@@ -73,6 +88,11 @@ def lambda_handler(event, context):
         data["event_type"] = event_type
         data["email"] = email
         data["device_id"] = device_id
+        data["phone"] = phone
+        data["client_ip_address"] = client_ip_address
+        data["client_user_agent"] = client_user_agent
+        data["click_id"] = click_id
+        data["login_id"] = login_id
         data["action_source"] = action_source
         data["browser_name"] = browser_name
         data["device_os"] = device_os
