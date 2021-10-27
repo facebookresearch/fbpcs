@@ -31,7 +31,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
 
-     - name: Pull coodinator image
+     - name: Pull coordinator image
        run: |
         docker pull ${{ env.COORDINATOR_IMAGE }}
 
@@ -53,7 +53,7 @@ jobs:
      - name: Check status
        timeout-minutes: 5
        run: |
-        ./attribution_check_status.sh ${{ env.CONTAINER_NAME }}
+        ./check_status.sh ${{ env.CONTAINER_NAME }} attribution
        working-directory: ./fbpcs/tests/github/
 
      - name: Attribution - Prepare Compute Input
@@ -64,18 +64,18 @@ jobs:
      - name: Check Status
        timeout-minutes: 5
        run: |
-        ./attribution_check_status.sh ${{ env.CONTAINER_NAME }}
+        ./check_status.sh ${{ env.CONTAINER_NAME }} attribution
        working-directory: ./fbpcs/tests/github/
 
      - name: Attribution - Compute Attribution
        run: |
-        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} compute_attribution
+        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} compute_metrics
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status
        timeout-minutes: 5
        run: |
-        ./attribution_check_status.sh ${{ env.CONTAINER_NAME }}
+        ./check_status.sh ${{ env.CONTAINER_NAME }} attribution
        working-directory: ./fbpcs/tests/github/
 
      - name: Attribution - Aggregate Shards
@@ -86,7 +86,7 @@ jobs:
      - name: Check Status
        timeout-minutes: 5
        run: |
-        ./attribution_check_status.sh ${{ env.CONTAINER_NAME }}
+        ./check_status.sh ${{ env.CONTAINER_NAME }} attribution
        working-directory: ./fbpcs/tests/github/
 
      - name: Attribution - Validate Result

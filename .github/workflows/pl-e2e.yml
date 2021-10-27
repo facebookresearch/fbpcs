@@ -30,8 +30,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-
-     - name: Pull coodinator image
+     - name: Pull coordinator image
        run: |
         docker pull ${{ env.COORDINATOR_IMAGE }}
 
@@ -50,34 +49,44 @@ jobs:
         ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} id_match
        working-directory: ./fbpcs/tests/github/
 
-     - name: Check status
+     - name: Check Status
        timeout-minutes: 5
        run: |
-        ./lift_check_status.sh ${{ env.CONTAINER_NAME }}
+        ./check_status.sh ${{ env.CONTAINER_NAME }} lift
        working-directory: ./fbpcs/tests/github/
 
-     - name: Lift - Compute
+     - name: Lift - Prepare Compute Input
        run: |
-        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} compute
+        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} prepare_compute_input
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status
        timeout-minutes: 5
        run: |
-        ./lift_check_status.sh ${{ env.CONTAINER_NAME }}
+        ./check_status.sh ${{ env.CONTAINER_NAME }} lift
        working-directory: ./fbpcs/tests/github/
 
-     - name: Lift - Aggregate
+     - name: Lift - Compute Metrics
        run: |
-        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} aggregate
+        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} compute_metrics
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status
        timeout-minutes: 5
        run: |
-        ./lift_check_status.sh ${{ env.CONTAINER_NAME }}
+        ./check_status.sh ${{ env.CONTAINER_NAME }} lift
        working-directory: ./fbpcs/tests/github/
 
+     - name: Lift - Aggregate Shards
+       run: |
+        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} aggregate_shards
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.CONTAINER_NAME }} lift
+       working-directory: ./fbpcs/tests/github/
 
      - name: Lift - Validate Results
        run: |
