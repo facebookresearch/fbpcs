@@ -152,6 +152,9 @@ template <int32_t MY_ROLE> std::string OutputMetrics<MY_ROLE>::toJson() const {
   std::transform(cohortMetrics_.begin(), cohortMetrics_.end(),
                  std::back_inserter(groupedLiftMetrics.cohortMetrics),
                  [](auto const &p) { return p.second.toLiftMetrics(); });
+  std::transform(publisherBreakdowns_.begin(), publisherBreakdowns_.end(),
+                 std::back_inserter(groupedLiftMetrics.publisherBreakdowns),
+                 [](auto const &p) { return p.second.toLiftMetrics(); });
   return groupedLiftMetrics.toJson();
 }
 

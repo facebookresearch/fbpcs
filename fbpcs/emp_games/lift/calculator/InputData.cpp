@@ -171,21 +171,21 @@ void InputData::addFromCSV(
     }
 
     if (column == "opportunity") {
+      sawOppFlag = true;
       if (sawTestFlag) {
         testPopulation_.push_back(parsed & storedTestFlag ? 1 : 0);
         controlPopulation_.push_back(
             (parsed & ((!storedTestFlag) ? 1 : 0)) ? 1 : 0);
       } else {
         storedOpportunityFlag = parsed;
-        sawOppFlag = true;
       }
     } else if (column == "test_flag") {
+      sawTestFlag = true;
       if (sawOppFlag) {
         testPopulation_.push_back(parsed & storedOpportunityFlag ? 1 : 0);
         controlPopulation_.push_back((!parsed) & storedOpportunityFlag ? 1 : 0);
       } else {
         storedTestFlag = parsed;
-        sawTestFlag = true;
       }
     } else if (column == "opportunity_timestamp") {
       // secret-share-lift can have negative input timestamps
