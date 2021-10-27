@@ -29,7 +29,7 @@ def lambda_handler(event, context):
 
         if debug:
             print(
-                f"Processing record for recordId: {recordId}, payload: {decoded_data}"
+                f"Processing record for recordId: {recordId}"
             )
 
         # if loaded as str, load again
