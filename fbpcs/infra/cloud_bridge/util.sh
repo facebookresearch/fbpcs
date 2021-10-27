@@ -147,17 +147,8 @@ input_validation () {
     echo "The S3 bucket for storing processed data is $s3_bucket_data_pipeline".
     validate_bucket_name "$s3_bucket_data_pipeline"
 
-    if "$undeploy"
+    if ! "$undeploy"
     then
-        echo "making sure $s3_bucket_data_pipeline has been created previously..."
-        if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
-        then
-            echo "Error: The bucket $s3_bucket_data_pipeline doesn't exist. Please verify your input (S3 bucket name)."
-            exit 1
-        else # bucket exists, we want the data-storage bucket to be new
-            echo "The bucket $s3_bucket_data_pipeline exists under Account $aws_account_id. Continue..."
-        fi
-    else # deploy
         echo "making sure $s3_bucket_data_pipeline is not an existing bucket..."
         if aws s3api head-bucket --bucket "$s3_bucket_data_pipeline" --expected-bucket-owner "$aws_account_id" 2>&1 | grep -q "404" # bucekt doesn't exist
         then
