@@ -98,6 +98,7 @@ public class DeployController {
       return new APIReturn(APIReturn.Status.STATUS_SUCCESS, NO_UPDATES_MESSAGE);
     }
 
+    String output = runner.getOutput();
     DeploymentRunner.DeploymentState state = runner.getDeploymentState();
 
     ObjectMapper mapper = new ObjectMapper();
@@ -106,7 +107,7 @@ public class DeployController {
     if (state == DeploymentRunner.DeploymentState.STATE_FINISHED)
       rootNode.put("exitValue", runner.getExitValue());
 
-    return new APIReturn(APIReturn.Status.STATUS_SUCCESS, runner.getOutput(), rootNode);
+    return new APIReturn(APIReturn.Status.STATUS_SUCCESS, output, rootNode);
   }
 
   @GetMapping(path = "/v1/deployment/logs")
