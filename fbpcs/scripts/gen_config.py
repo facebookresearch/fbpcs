@@ -98,7 +98,7 @@ def update_dict(
 def gen_config(args: Dict[str, Any]) -> None:
     config = yaml.load(args["<input_path>"])
     replacements = {}
-    if "--from" in args:
+    if "--from" in args and args["--from"] is not None:
         other_config = yaml.load(args["--from"])
         replacements = build_replacements_from_config(other_config)
     update_dict(config, args["--replace"], replacements, args["--accept_all"])
