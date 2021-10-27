@@ -72,6 +72,11 @@ class PrivateComputationInstance(InstanceBase):
                             used to infer the metrics_format_type argument of the shard aggregator game.
                             Not currently used by Lift.
         concurrency: number of threads to run per container at the MPC compute metrics stage
+        padding_size: the id spine combiner would pad each partner row to have this number of conversions.
+                        This is required by MPC compute metrics to support multiple conversions per id while
+                        at the same time maintaining privacy. It is currently only used when game_type=attribution
+                        because the lift id spine combiner uses a hard-coded value of 25.
+                        TODO T104391012: pass padding size to lift id spine combiner.
 
     Private attributes:
         _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
