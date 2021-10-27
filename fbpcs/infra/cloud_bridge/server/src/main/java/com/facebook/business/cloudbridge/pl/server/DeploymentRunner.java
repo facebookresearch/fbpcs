@@ -41,9 +41,14 @@ public class DeploymentRunner extends Thread {
     synchronized (processOutputMutex) {
       output = processOutput;
       processOutput = new String();
-    }
 
-    if (provisioningProcess == null) deploymentState = DeploymentState.STATE_NOT_STARTED;
+      if (provisioningProcess == null) {
+        deploymentState = DeploymentState.STATE_NOT_STARTED;
+      } else if (!provisioningProcess.isAlive()
+          && deploymentState != DeploymentState.STATE_FINISHED) {
+        finish();
+      }
+    }
 
     return output;
   }
@@ -148,6 +153,12 @@ public class DeploymentRunner extends Thread {
     }
   }
 
+  private void finish() {
+    deploymentState = DeploymentState.STATE_FINISHED;
+    provisioningProcess = null;
+    deploymentFinishedCallback.run();
+  }
+
   public void run() {
     deploymentState = DeploymentState.STATE_RUNNING;
 
@@ -165,7 +176,7 @@ public class DeploymentRunner extends Thread {
       BufferedReader stdout =
           new BufferedReader(new InputStreamReader(provisioningProcess.getInputStream()));
 
-      while (provisioningProcess.isAlive()) {
+      while (provisioningProcess != null && provisioningProcess.isAlive()) {
         logOutput(readOutput(stdout));
 
         try {
@@ -173,7 +184,9 @@ public class DeploymentRunner extends Thread {
         } catch (InterruptedException e) {
         }
       }
-      logOutput(readOutput(stdout));
+      if (provisioningProcess != null) {
+        logOutput(readOutput(stdout));
+      }
 
       exitValue = provisioningProcess.exitValue();
       logger.info("  Deployment process exited with value: " + exitValue);
@@ -182,14 +195,15 @@ public class DeploymentRunner extends Thread {
       logger.error("  Deployment could not be started. Message: " + e.getMessage());
       throw new DeploymentException("Deployment could not be started");
     } finally {
-      deploymentState = DeploymentState.STATE_FINISHED;
-      if (provisioningProcess != null && provisioningProcess.isAlive()) {
-        provisioningProcess.destroy();
+      synchronized (processOutputMutex) {
+        if (provisioningProcess != null && provisioningProcess.isAlive()) {
+          provisioningProcess.destroy();
+        }
+        if (processOutput.isEmpty()) {
+          finish();
+        }
       }
-      provisioningProcess = null;
       logger.info("  Deployment finished");
-
-      deploymentFinishedCallback.run();
     }
   }
 }
