@@ -7,7 +7,7 @@
 
 import logging
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List, Optional
+from typing import Type, Any, DefaultDict, Dict, List, Optional
 
 from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.repository.mpc_game_repository import MPCGameRepository
@@ -24,12 +24,21 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
+from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
+    PrivateComputationDecoupledStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationRole,
     PrivateComputationInstance,
+)
+from fbpcs.private_computation.entity.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -39,7 +48,8 @@ from fbpcs.private_computation.service.private_computation import (
 )
 from fbpcs.utils.config_yaml import reflect
 
-
+# Added an is_decoupled argument to create_instance. This argument will act as a switch
+# to let us know to run the new decoupled flow when true else legacy flow.
 def create_instance(
     config: Dict[str, Any],
     instance_id: str,
@@ -65,6 +75,14 @@ def create_instance(
         config["pid"],
         config.get("post_processing_handlers", {}),
     )
+
+    stage_flow_cls: Type[PrivateComputationBaseStageFlow] = PrivateComputationStageFlow
+
+    if game_type is PrivateComputationGameType.ATTRIBUTION:
+        stage_flow_cls = PrivateComputationDecoupledStageFlow
+    else:
+        stage_flow_cls = PrivateComputationStageFlow
+
     instance = pc_service.create_instance(
         instance_id=instance_id,
         role=role,
@@ -84,6 +102,7 @@ def create_instance(
         padding_size=padding_size,
         k_anonymity_threshold=k_anonymity_threshold,
         fail_fast=fail_fast,
+        stage_flow_cls=stage_flow_cls,
     )
 
     logger.info(instance)
