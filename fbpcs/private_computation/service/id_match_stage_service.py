@@ -6,7 +6,6 @@
 
 # pyre-strict
 
-from fbpcs.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
 from typing import Any, Dict, List, Optional
 
 from fbpcs.pid.entity.pid_instance import PIDInstance
@@ -14,6 +13,9 @@ from fbpcs.pid.entity.pid_instance import PIDInstanceStatus, PIDProtocol, PIDRol
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
@@ -86,17 +88,16 @@ class IdMatchStageService(PrivateComputationStageService):
             hmac_key=pc_instance.hmac_key,
         )
 
-        # Push PID instance to PrivateComputationInstance.instances and update PL Instance status
-        pid_instance.status = PIDInstanceStatus.STARTED
-        pc_instance.instances.append(pid_instance)
-
         # Run pid
-        await self._pid_svc.run_instance(
+        pid_instance = await self._pid_svc.run_instance(
             instance_id=pid_instance_id,
             pid_config=self._pid_config,
             fail_fast=pc_instance.fail_fast,
             server_ips=server_ips,
         )
+
+        # Push PID instance to PrivateComputationInstance.instances
+        pc_instance.instances.append(pid_instance)
 
         return pc_instance
 

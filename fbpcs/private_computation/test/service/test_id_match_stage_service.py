@@ -4,19 +4,20 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import AsyncMock, patch
+
+from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
+from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
 )
-from unittest.mock import AsyncMock, MagicMock, patch
-from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
-from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole
+from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
 
 
 class TestIdMatchStageService(IsolatedAsyncioTestCase):
@@ -47,8 +48,7 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
             status=PIDInstanceStatus.STARTED,
         )
 
-        pid_svc_mock.create_instance = MagicMock(return_value=pid_instance)
-        pid_svc_mock.run_instance = AsyncMock()
+        pid_svc_mock.run_instance = AsyncMock(return_value=pid_instance)
 
         stage_svc = IdMatchStageService(
             pid_svc_mock,
