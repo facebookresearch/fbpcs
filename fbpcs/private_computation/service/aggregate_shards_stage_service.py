@@ -89,6 +89,15 @@ class AggregateShardsStageService(PrivateComputationStageService):
         binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
         binary_config = self._onedocker_binary_config_map[binary_name]
 
+        # TODO T104195768 : remove the check on _stage_flow_cls_name and replace with a more stable check find the right flow.
+        # Check on _stage_flow_cls_name is an intermediate state, ETA for final state - 2nd November.
+        input_stage_path = (
+            pc_instance.decoupled_aggregation_stage_output_base_path
+            if pc_instance._stage_flow_cls_name
+            == "PrivateComputationDecoupledStageFlow"
+            else pc_instance.compute_stage_output_base_path
+        )
+
         if self._is_validating:
             # num_containers_real_data is the number of containers processing real data
             # synthetic data is processed by a dedicated extra container, and this container is always the last container,
@@ -106,7 +115,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             # Create and start MPC instance for real data shards and synthetic data shards
             game_args = [
                 {
-                    "input_base_path": pc_instance.compute_stage_output_base_path,
+                    "input_base_path": input_stage_path,
                     "num_shards": num_real_data_shards,
                     "metrics_format_type": metrics_format_type,
                     "output_path": pc_instance.shard_aggregate_stage_output_path,
@@ -115,7 +124,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
                 },
                 {
-                    "input_base_path": pc_instance.compute_stage_output_base_path,
+                    "input_base_path": input_stage_path,
                     "num_shards": num_synthetic_data_shards,
                     "metrics_format_type": metrics_format_type,
                     "output_path": pc_instance.shard_aggregate_stage_output_path
@@ -143,7 +152,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             # Create and start MPC instance
             game_args = [
                 {
-                    "input_base_path": pc_instance.compute_stage_output_base_path,
+                    "input_base_path": input_stage_path,
                     "metrics_format_type": metrics_format_type,
                     "num_shards": num_shards,
                     "output_path": pc_instance.shard_aggregate_stage_output_path,

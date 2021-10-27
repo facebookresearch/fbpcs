@@ -38,6 +38,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
     PrivateComputationLegacyStageFlow,
 )
+from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
+    PrivateComputationDecoupledStageFlow,
+)
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
@@ -61,16 +64,20 @@ from fbpcs.private_computation.service.utils import (
 # TODO T94666166: libfb won't work in OSS
 from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import PrivateComputationBaseStageFlow
 
 
-def _get_valid_stages_data() -> List[Tuple[PrivateComputationLegacyStageFlow]]:
+def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
     return [
         (PrivateComputationLegacyStageFlow.ID_MATCH,),
         (PrivateComputationLegacyStageFlow.COMPUTE,),
         (PrivateComputationLegacyStageFlow.AGGREGATE,),
         (PrivateComputationLegacyStageFlow.POST_PROCESSING_HANDLERS,),
+        (PrivateComputationDecoupledStageFlow.ID_MATCH,),
+        (PrivateComputationDecoupledStageFlow.DECOUPLED_ATTRIBUTION,),
+        (PrivateComputationDecoupledStageFlow.DECOUPLED_AGGREGATION,),
+        (PrivateComputationDecoupledStageFlow.AGGREGATE,),
     ]
-
 
 class TestPrivateComputationService(unittest.TestCase):
     def setUp(self):
@@ -357,6 +364,7 @@ class TestPrivateComputationService(unittest.TestCase):
             )
             self.assertEqual(pl_instance.status, stage.started_status)
 
+
     @data_provider(_get_valid_stages_data)
     def test_run_stage_status_already_started(
         self,
@@ -377,6 +385,7 @@ class TestPrivateComputationService(unittest.TestCase):
             pl_instance = self.private_computation_service.run_stage(
                 pl_instance.instance_id, stage, stage_svc
             )
+
 
     @data_provider(_get_valid_stages_data)
     def test_run_stage_out_of_order_with_dry_run(
@@ -401,6 +410,7 @@ class TestPrivateComputationService(unittest.TestCase):
         )
         self.assertEqual(pl_instance.status, stage.started_status)
 
+
     @data_provider(_get_valid_stages_data)
     def test_run_stage_out_of_order_without_dry_run(
         self,
@@ -423,6 +433,7 @@ class TestPrivateComputationService(unittest.TestCase):
             pl_instance = self.private_computation_service.run_stage(
                 pl_instance.instance_id, stage, stage_svc, dry_run=False
             )
+
 
     @data_provider(_get_valid_stages_data)
     def test_run_stage_partner_no_server_ips(
@@ -455,6 +466,7 @@ class TestPrivateComputationService(unittest.TestCase):
             )
             self.assertEqual(pl_instance.status, stage.started_status)
 
+
     @data_provider(_get_valid_stages_data)
     def test_run_stage_fails(
         self,
@@ -483,6 +495,7 @@ class TestPrivateComputationService(unittest.TestCase):
             )
 
         self.assertEqual(pl_instance.status, stage.failed_status)
+
 
     @to_sync
     @patch("fbpcp.service.mpc.MPCService")
