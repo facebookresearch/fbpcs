@@ -30,6 +30,8 @@ async def wait_for_containers_async(
         while status not in end_states:
             await asyncio.sleep(poll)
             container = onedocker_svc.get_containers([instance_id])[0]
+            if not container:
+                break
             status = container.status
             updated_containers[i] = container
         if status is not ContainerInstanceStatus.COMPLETED:

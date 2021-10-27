@@ -219,6 +219,7 @@ class CppLiftIdSpineCombinerService(LiftIdSpineCombinerService):
         # Busy wait until all containers are finished
         any_failed = False
         for shard, container in enumerate(containers):
+            container_id = container.instance_id
             # Busy wait until the container is finished
             status = ContainerInstanceStatus.UNKNOWN
             logger.info(f"Task[{shard}] started, waiting for completion")
@@ -226,11 +227,16 @@ class CppLiftIdSpineCombinerService(LiftIdSpineCombinerService):
                 ContainerInstanceStatus.FAILED,
                 ContainerInstanceStatus.COMPLETED,
             ]:
-                container = onedocker_svc.get_containers([container.instance_id])[0]
+                container = onedocker_svc.get_containers([container_id])[0]
+                if not container:
+                    break
                 status = container.status
                 # Sleep 5 seconds between calls to avoid an unintentional DDoS
                 logger.debug(f"Latest status: {status}")
                 await asyncio.sleep(5)
+
+            if not container:
+                continue
             logger.info(
                 f"container_id({container.instance_id}) finished with status: {status}"
             )
