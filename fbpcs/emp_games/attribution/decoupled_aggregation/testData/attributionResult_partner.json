@@ -1,0 +1,506 @@
+{
+    "last_click_1d": {
+      "default": {
+        "1": [
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          }
+        ],
+        "10": [
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          }
+        ],
+        "2": [
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          }
+        ],
+        "3": [
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          }
+        ],
+        "4": [
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          }
+        ],
+        "5": [
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          }
+        ],
+        "6": [
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          }
+        ],
+        "7": [
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          }
+        ],
+        "8": [
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          }
+        ],
+        "9": [
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": false
+          },
+          {
+            "is_attributed": true
+          },
+          {
+            "is_attributed": true
+          }
+        ]
+      }
+    }
+  }
