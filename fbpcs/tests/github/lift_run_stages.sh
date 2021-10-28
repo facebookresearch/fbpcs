@@ -39,7 +39,8 @@ case "$stage" in
             --num_mpc_containers="$LIFT_NUM_MPC_CONTAIENRS" \
             --concurrency="$LIFT_CONCURRENCY"
             ;;
-     prepare_compute_input )
+    # stages donot need IP exchange
+    prepare_compute_input )
         echo "Lift Publisher $stage starts"
         $docker_command run_next "$LIFT_PUBLIHSER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
@@ -47,12 +48,11 @@ case "$stage" in
         $docker_command run_next "$LIFT_PARTNER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
         ;;
-    id_match|compute_metrics|aggregate_shards )
+    # stages require IP exchange
+    run_next )
         echo "Lift Publisher $stage starts"
         $docker_command run_next "$LIFT_PUBLIHSER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
-        #Temporary solution: need to call get_status before get_sever_ips, otherwise get_server_ips returns none
-        $docker_command get_instance "$LIFT_PUBLIHSER_NAME" --config="$DOCKER_CLOUD_CONFIG_FILE"
         echo "Get Publisher Ips"
         # get_server_ips returns an extra carriage return character
         publisher_server_ips=$($docker_command get_server_ips "$LIFT_PUBLIHSER_NAME" \

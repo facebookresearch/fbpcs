@@ -45,6 +45,7 @@ case "$stage" in
             --attribution_rule="$ATTRIBUTION_RULE" \
             --aggregation_type="$ATTRIBUTION_TYPE"
             ;;
+    # Stages without passing IP addresses
     prepare_compute_input )
         echo "Attribution Publisher $stage starts"
         $docker_command run_next "$ATTRIBUTION_PUBLIHSER_NAME" \
@@ -53,12 +54,11 @@ case "$stage" in
         $docker_command run_next "$ATTRIBUTION_PARTNER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
         ;;
-    id_match|compute_metrics|aggregate_shards )
+     # Stages need to pass IP address
+    run_next )
         echo "Attribution Publisher $stage starts"
         $docker_command run_next "$ATTRIBUTION_PUBLIHSER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
-        #Temporary solution: need to call get_status before get_sever_ips, otherwise get_server_ips returns none
-        $docker_command get_instance "$ATTRIBUTION_PUBLIHSER_NAME" --config="$DOCKER_CLOUD_CONFIG_FILE"
         echo "Get Publisher Ips"
         publisher_server_ips=$($docker_command get_server_ips "$ATTRIBUTION_PUBLIHSER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE" | sed 's/\r//g')
