@@ -119,6 +119,7 @@ public class DeployController {
     try {
       ZipOutputStream zout = new ZipOutputStream(bo);
       compressIfExists("/tmp/server.log", "server.log", zout);
+      compressIfExists("/tmp/deploy.log", "deploy.log", zout);
       compressIfExists("/tmp/terraform.log", "terraform.log", zout);
       zout.close();
     } catch (IOException e) {
