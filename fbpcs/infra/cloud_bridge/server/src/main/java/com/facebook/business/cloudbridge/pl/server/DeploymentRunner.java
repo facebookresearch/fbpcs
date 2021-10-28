@@ -41,13 +41,10 @@ public class DeploymentRunner extends Thread {
     synchronized (processOutputMutex) {
       output = processOutput;
       processOutput = new String();
+    }
 
-      if (provisioningProcess == null) {
-        deploymentState = DeploymentState.STATE_NOT_STARTED;
-      } else if (!provisioningProcess.isAlive()
-          && deploymentState != DeploymentState.STATE_FINISHED) {
-        finish();
-      }
+    if (deploymentState == DeploymentState.STATE_FINISHED) {
+      halt();
     }
 
     return output;
@@ -56,7 +53,8 @@ public class DeploymentRunner extends Thread {
   enum DeploymentState {
     STATE_NOT_STARTED("not started"),
     STATE_RUNNING("running"),
-    STATE_FINISHED("finished");
+    STATE_FINISHED("finished"),
+    STATE_HALTED("halted");
 
     private String state;
 
@@ -153,14 +151,14 @@ public class DeploymentRunner extends Thread {
     }
   }
 
-  private void finish() {
-    deploymentState = DeploymentState.STATE_FINISHED;
-    provisioningProcess = null;
-    deploymentFinishedCallback.run();
+  private void halt() {
+    deploymentState = DeploymentState.STATE_HALTED;
+    logger.info("  Deployment finished");
   }
 
   public void run() {
     deploymentState = DeploymentState.STATE_RUNNING;
+    BufferedReader stdout = null;
 
     try {
       ProcessBuilder pb = new ProcessBuilder(deployCommand);
@@ -173,19 +171,15 @@ public class DeploymentRunner extends Thread {
       provisioningProcess = pb.start();
       logger.info("  Creating deployment process");
 
-      BufferedReader stdout =
-          new BufferedReader(new InputStreamReader(provisioningProcess.getInputStream()));
+      stdout = new BufferedReader(new InputStreamReader(provisioningProcess.getInputStream()));
 
-      while (provisioningProcess != null && provisioningProcess.isAlive()) {
+      while (provisioningProcess.isAlive()) {
         logOutput(readOutput(stdout));
 
         try {
           Thread.sleep(500);
         } catch (InterruptedException e) {
         }
-      }
-      if (provisioningProcess != null) {
-        logOutput(readOutput(stdout));
       }
 
       exitValue = provisioningProcess.exitValue();
@@ -195,15 +189,12 @@ public class DeploymentRunner extends Thread {
       logger.error("  Deployment could not be started. Message: " + e.getMessage());
       throw new DeploymentException("Deployment could not be started");
     } finally {
-      synchronized (processOutputMutex) {
-        if (provisioningProcess != null && provisioningProcess.isAlive()) {
-          provisioningProcess.destroy();
-        }
-        if (processOutput.isEmpty()) {
-          finish();
-        }
+      if (stdout != null) {
+        logOutput(readOutput(stdout));
       }
-      logger.info("  Deployment finished");
+
+      deploymentFinishedCallback.run();
+      deploymentState = DeploymentState.STATE_FINISHED;
     }
   }
 }

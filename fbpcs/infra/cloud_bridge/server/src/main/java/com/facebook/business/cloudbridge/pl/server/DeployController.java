@@ -90,19 +90,24 @@ public class DeployController {
   public APIReturn deploymentStatus() {
     logger.info("Received status request");
 
-    if (runner == null) {
-      logger.info("  No deployment created");
-      return new APIReturn(APIReturn.Status.STATUS_SUCCESS, "");
-    }
-
-    String output = runner.getOutput();
-    DeploymentRunner.DeploymentState state = runner.getDeploymentState();
+    DeploymentRunner.DeploymentState state;
+    String output;
 
     ObjectMapper mapper = new ObjectMapper();
     ObjectNode rootNode = mapper.createObjectNode();
-    rootNode.put("state", state.toString());
-    if (state == DeploymentRunner.DeploymentState.STATE_FINISHED)
-      rootNode.put("exitValue", runner.getExitValue());
+    if (runner == null) {
+      logger.debug("  No deployment created yet");
+      output = "";
+    } else {
+      state = runner.getDeploymentState();
+      output = runner.getOutput();
+
+      rootNode.put("state", state.toString());
+      if (state == DeploymentRunner.DeploymentState.STATE_HALTED) {
+        rootNode.put("exitValue", runner.getExitValue());
+        runner = null;
+      }
+    }
 
     return new APIReturn(APIReturn.Status.STATUS_SUCCESS, output, rootNode);
   }
