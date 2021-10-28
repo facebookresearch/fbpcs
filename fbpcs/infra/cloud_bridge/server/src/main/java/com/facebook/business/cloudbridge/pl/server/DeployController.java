@@ -27,8 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class DeployController {
-  private final String NO_UPDATES_MESSAGE = "No updates";
-
   private final Logger logger = LoggerFactory.getLogger(DeployController.class);
 
   private DeploymentRunner runner;
@@ -92,10 +90,9 @@ public class DeployController {
   public APIReturn deploymentStatus() {
     logger.info("Received status request");
 
-    if (runner == null
-        || runner.getDeploymentState() == DeploymentRunner.DeploymentState.STATE_NOT_STARTED) {
-      logger.info("  No deployment is running");
-      return new APIReturn(APIReturn.Status.STATUS_SUCCESS, NO_UPDATES_MESSAGE);
+    if (runner == null) {
+      logger.info("  No deployment created");
+      return new APIReturn(APIReturn.Status.STATUS_SUCCESS, "");
     }
 
     String output = runner.getOutput();
