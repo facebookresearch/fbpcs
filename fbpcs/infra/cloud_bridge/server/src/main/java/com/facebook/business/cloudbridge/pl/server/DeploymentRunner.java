@@ -125,7 +125,7 @@ public class DeploymentRunner extends Thread {
     if (deployment.logLevel != DeploymentParams.LogLevel.DISABLED) {
       if (deployment.logLevel == null) deployment.logLevel = DeploymentParams.LogLevel.DEBUG;
       environmentVariables.put("TF_LOG", deployment.logLevel.getLevel());
-      environmentVariables.put("TF_LOG_PATH", "/tmp/deploy.log");
+      environmentVariables.put("TF_LOG_PATH", "/tmp/terraform.log");
     }
   }
 
