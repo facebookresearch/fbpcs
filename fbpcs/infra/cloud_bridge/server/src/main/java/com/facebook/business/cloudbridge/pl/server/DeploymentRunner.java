@@ -9,7 +9,9 @@ package com.facebook.business.cloudbridge.pl.server;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ public class DeploymentRunner extends Thread {
 
   private Runnable deploymentFinishedCallback;
   private Process provisioningProcess;
+  private BufferedWriter deployLogFile;
 
   private int exitValue;
 
@@ -82,6 +85,12 @@ public class DeploymentRunner extends Thread {
 
     buildDeployCommand(shouldDeploy, deployment);
     buildEnvironmentVariables(deployment);
+
+    try {
+      deployLogFile = new BufferedWriter(new FileWriter("/tmp/deploy.log", true));
+    } catch (IOException e) {
+      logger.error("An exception happened preventing the logger to log to file: /tmp/deploy.log");
+    }
   }
 
   private void buildDeployCommand(boolean shouldDeploy, DeploymentParams deployment) {
@@ -149,10 +158,23 @@ public class DeploymentRunner extends Thread {
     synchronized (processOutputMutex) {
       processOutput += output;
     }
+    if (deployLogFile != null) {
+      try {
+        deployLogFile.write(output);
+        deployLogFile.flush();
+      } catch (IOException e) {
+        logger.error("Failed to log to Logger File");
+      }
+    }
   }
 
   private void halt() {
     deploymentState = DeploymentState.STATE_HALTED;
+    try {
+      deployLogFile.close();
+    } catch (IOException e) {
+      logger.error("Failed to close Logger File");
+    }
     logger.info("  Deployment finished");
   }
 
