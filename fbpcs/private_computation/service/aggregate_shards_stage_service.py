@@ -89,12 +89,15 @@ class AggregateShardsStageService(PrivateComputationStageService):
         binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
         binary_config = self._onedocker_binary_config_map[binary_name]
 
-        # TODO T104195768 : remove the check on _stage_flow_cls_name and replace with a more stable check find the right flow.
-        # Check on _stage_flow_cls_name is an intermediate state, ETA for final state - 2nd November.
+        # Check if the flow is Decoupled flow, meaning that this a PA decoupled flow.
+        # We now have DecoupledFlow as the default flow for PA when computation is performed using run_next.
+        # i.e. if PA computation is called using run_next method, we will always run Decoupled Flow
+        # and if the methods are called directly, we will always run the legacy flow.
+        # Using "PrivateComputationDecoupledStageFlow" instead of PrivateComputationDecoupledStageFlow.get_cls_name() to avoid
+        # circular import error.
         input_stage_path = (
             pc_instance.decoupled_aggregation_stage_output_base_path
-            if pc_instance._stage_flow_cls_name
-            == "PrivateComputationDecoupledStageFlow"
+            if pc_instance.get_flow_cls_name == "PrivateComputationDecoupledStageFlow"
             else pc_instance.compute_stage_output_base_path
         )
 

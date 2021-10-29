@@ -131,6 +131,10 @@ class PrivateComputationInstance(InstanceBase):
         return self.instance_id
 
     @property
+    def get_flow_cls_name(self) -> str:
+        return self._stage_flow_cls_name
+
+    @property
     def pid_stage_output_base_path(self) -> str:
         return self._get_stage_output_path("pid_stage", "csv")
 
