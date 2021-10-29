@@ -7,6 +7,7 @@
 # Usage: Github e2e configs
 
 ## Shared
+export E2E_CLUSTER_NAME="fbpcs-github-cicd"
 export E2E_S3_BUCKET="fbpcs-github-e2e"
 export E2E_GITHUB_S3_URL="https://$E2E_S3_BUCKET.s3.us-west-2.amazonaws.com"
 export COORDINATOR="python3.8 -m fbpcs.private_computation_cli.private_computation_cli"
