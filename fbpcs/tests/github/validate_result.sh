@@ -42,6 +42,7 @@ else
 fi
 # check if there is difference
 function check_results_match() {
+    diff <(jq -S . "$1") <(jq -S . "$2") || exit 1
     diff_output=$(diff <(jq -S . "$1") <(jq -S . "$2"))
     if [ -z "$diff_output" ];
     then
@@ -59,4 +60,5 @@ then
     echo "$game e2e tests succeed"
 else
     echo "$game e2e tests failed, results donot not match"
+    exit 1
 fi

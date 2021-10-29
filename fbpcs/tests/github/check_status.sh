@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# Usage: Check if all status are complete for lift|attribution stages: id_match, compute and aggregate_shards
+# Usage: Check if all status are COMPLETED for differennt stages(except create_instance stage)
 set -e
 
 container_name=$1
@@ -28,18 +28,20 @@ docker_command="docker exec $container_name $COORDINATOR"
 
 # check if all the status are COMPLETED, if yes, return true
 function check_status_complete() {
+    echo "Get status for $1 ..."
     $docker_command get_instance "$1" --config="$DOCKER_CLOUD_CONFIG_FILE" || exit 1
-    #filter out "status": "COMPLETED"
-    non_complete_status=$($docker_command get "$1" \
-        --config="$DOCKER_CLOUD_CONFIG_FILE" 2>&1 | \
-        grep -o -E "\"status\": \"[a-zA-Z]+\"" | \
-        awk -F: '$2 != " \"COMPLETED\""')
+    #filter out "status": "COMPLETED" or  "status": "COMPLETED": "XX_COMPLETED"
+    non_complete_status=$($docker_command get_instance "$1" \
+        --config="$DOCKER_CLOUD_CONFIG_FILE" 2>&1 \
+        | grep -o -E "\"status\": \"[a-zA-Z]+\"" \
+        | grep -v "\"status\": \"\S*COMPLETED\"" )
+
     if [ -z "$non_complete_status" ]
     then
         echo "$1 status is all complete"
         return 0
     else
-        echo "$1 has following status: $non_complete_status"
+        echo "$1 has following noncomplete status: $non_complete_status"
         return 1
     fi
 }
@@ -49,4 +51,4 @@ until check_status_complete "${!publisher_name}" && check_status_complete "${!pa
     sleep 60
 done
 
-echo "Stage completes successfully"
+echo "Stage completes successfully!"

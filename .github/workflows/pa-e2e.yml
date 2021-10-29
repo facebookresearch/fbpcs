@@ -47,7 +47,7 @@ jobs:
 
      - name: Attribution - Id Match
        run: |
-        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} id_match
+        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} run_next
        working-directory: ./fbpcs/tests/github/
 
      - name: Check status
@@ -67,9 +67,20 @@ jobs:
         ./check_status.sh ${{ env.CONTAINER_NAME }} attribution
        working-directory: ./fbpcs/tests/github/
 
-     - name: Attribution - Compute Attribution
+     - name: Attribution - Decoupled Attribution
        run: |
-        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} compute_metrics
+        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.CONTAINER_NAME }} attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Decoupled Aggregation
+       run: |
+        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} run_next
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status
@@ -80,7 +91,7 @@ jobs:
 
      - name: Attribution - Aggregate Shards
        run: |
-        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} aggregate_shards
+        ./attribution_run_stages.sh ${{ env.CONTAINER_NAME }} run_next
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status

@@ -46,7 +46,7 @@ jobs:
 
      - name: Lift - Id Match
        run: |
-        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} id_match
+        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} run_next
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status
@@ -68,7 +68,7 @@ jobs:
 
      - name: Lift - Compute Metrics
        run: |
-        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} compute_metrics
+        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} run_next
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status
@@ -79,7 +79,7 @@ jobs:
 
      - name: Lift - Aggregate Shards
        run: |
-        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} aggregate_shards
+        ./lift_run_stages.sh ${{ env.CONTAINER_NAME }} run_next
        working-directory: ./fbpcs/tests/github/
 
      - name: Check Status
