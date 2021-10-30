@@ -77,8 +77,11 @@ class TestDataIngestion(TestCase):
             'madid': 'bbbbbbbbbbbbbbbb2222222222222222',
             'ph': 'cccccccccccccccccccccccccccccccc33333333333333333333333333333333',
             'client_ip_address': '123.123.123.123',
-            'client_user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 ' +
-                '(KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+            'client_user_agent': ''.join([
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 12_5_5 like Mac OS X) ',
+                'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 ',
+                'Mobile/15E148 Safari/604.1',
+            ]),
             'fbc': 'fb.1.1554763741205.AbCdEfGhIjKlMnOpQrStUvWxYz1234567890',
             'fbp': 'fb.1.1558571054389.1098115397'
         }
@@ -115,6 +118,18 @@ class TestDataIngestion(TestCase):
         self.assertEqual(
             server_side_event['user_data']['fbp'],
             decoded_dict['user_data']['login_id']
+        )
+        self.assertEqual(
+            'Mobile Safari',
+            decoded_dict['user_data']['browser_name']
+        )
+        self.assertEqual(
+            'iOS',
+            decoded_dict['user_data']['device_os']
+        )
+        self.assertEqual(
+            '12.5.5',
+            decoded_dict['user_data']['device_os_version']
         )
 
     def test_empty_user_data(self):
