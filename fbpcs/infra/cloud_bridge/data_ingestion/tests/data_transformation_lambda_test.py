@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from unittest import TestCase
-from data_transformation_lambda import lambda_handler
+from data_transformation_lambda import lambda_handler, _parse_client_user_agent
 import base64
 import json
 
@@ -149,6 +149,27 @@ class TestDataIngestion(TestCase):
             event = self.sample_event(record)
             result = lambda_handler(event, self.sample_context)
             self.assertEqual(len(result['records']), 1)
+
+    def test_parse_user_agent(self):
+        client_user_agent1 = ''.join([
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) ',
+            'AppleWebKit/537.36 (KHTML, like ',
+            'Gecko) Chrome/94.0.4606.81 Safari/537.36',
+        ])
+        parsed1 = _parse_client_user_agent(client_user_agent1)
+        self.assertEqual(parsed1['browser_name'], 'Chrome Desktop')
+        self.assertEqual(parsed1['device_os'], 'Mac OS X')
+        self.assertEqual(parsed1['device_os_version'], '10.13.6')
+
+        client_user_agent2 = ''.join([
+            'Mozilla/5.0 (Linux; Android 7.1.1; CPH1725) ',
+            'AppleWebKit/537.36 (KHTML, like Gecko) ',
+            'Chrome/93.0.4577.82 Mobile Safari/537.36',
+        ])
+        parsed2 = _parse_client_user_agent(client_user_agent2)
+        self.assertEqual(parsed2['browser_name'], 'Chrome Mobile')
+        self.assertEqual(parsed2['device_os'], 'Android')
+        self.assertEqual(parsed2['device_os_version'], '7.1.1')
 
     def sample_event(self, event):
         sample_encoded_data = base64.b64encode(json.dumps(event).encode('utf-8'))
