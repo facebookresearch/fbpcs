@@ -15,9 +15,14 @@ env:
   LOCAL_IMAGE_NAME: fbpcs/onedocker
   RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
   PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
+  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator:latest
+  PL_CONTAINER_NAME: e2e_pl_container
+  PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
 
 jobs:
+
+  ### Check if there are new commits for past 24 hours, return Yes if there are, otherwise No
   new_commits_check:
     runs-on: self-hosted
     name: Check New Commmits
@@ -34,7 +39,7 @@ jobs:
         id: new_commits
         run: test -z $(git rev-list --after="${{ env.TIME_RANGE }}" ${{ github.sha }}) && echo "::set-output name=new_commits::no" || echo "::set-output name=new_commits::yes"
 
-
+  ### Build and publish rc/onedocker image
   build_image:
     needs: new_commits_check
     if : needs.new_commits_check.outputs.new_commits == 'yes' || github.event_name == 'workflow_dispatch'
@@ -55,20 +60,12 @@ jobs:
         run: |
           ./build-docker.sh onedocker -t rc -f
 
-      # tests will be added here once we have one script for all tests ready
-      #- name: Tests name
-      #  timeout-minutes: 3
-      #  working-directory: ./
-      #  run: |
-      #    ./XXX.sh
-
       - name: Log into registry ${{ env.REGISTRY }}
         uses: docker/login-action@v1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Tag docker image
         run: |
@@ -79,11 +76,206 @@ jobs:
         run: |
           docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
 
-  # Before E2E tests in place, we require manual approval to tag this image as "latest"
-  prod_push:
+  prepare_tests:
     needs: build_image
+    name: Prepare
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cleanup ECS running tasks and previous running results
+        run: |
+         ./cleanup.sh
+        working-directory: ./fbpcs/tests/github/
+
+  ### Private Lift E2E tests
+  pl_test:
+    name: Private Lift E2E Tests
+    needs: prepare_tests
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+     - uses: actions/checkout@v2
+
+     - name: Log into registry ${{ env.REGISTRY }}
+       uses: docker/login-action@v1
+       with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+     - name: Pull coordinator image
+       run: |
+        docker pull ${{ env.COORDINATOR_IMAGE }}
+
+     - name: Start container
+       run: |
+        ./start_container.sh ${{ env.PL_CONTAINER_NAME }} ${{ env.COORDINATOR_IMAGE }}
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Lift - Create Instance
+       run: |
+        ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} create_instance
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Lift - Id Match
+       run: |
+        ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Lift - Prepare Compute Input
+       run: |
+        ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} prepare_compute_input
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Lift - Compute Metrics
+       run: |
+        ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Lift - Aggregate Shards
+       run: |
+        ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Lift - Validate Results
+       run: |
+        ./validate_result.sh lift
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Cleanup
+       run: |
+        docker stop ${{ env.PL_CONTAINER_NAME }}
+        docker rm ${{ env.PL_CONTAINER_NAME }}
+
+  ### Private Attribution E2E tests
+  pa_test:
+    name: Private Attribution E2E Tests
+    needs: prepare_tests
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+     - uses: actions/checkout@v2
+
+     - name: Pull coordinator image
+       run: |
+        docker pull ${{ env.COORDINATOR_IMAGE }}
+
+     - name: Start container
+       run: |
+        ./start_container.sh ${{ env.PA_CONTAINER_NAME }} ${{ env.COORDINATOR_IMAGE }}
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Create Instance
+       run: |
+        ./attribution_run_stages.sh ${{ env.PA_CONTAINER_NAME }} create_instance
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Id Match
+       run: |
+        ./attribution_run_stages.sh ${{ env.PA_CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PA_CONTAINER_NAME }} attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Prepare Compute Input
+       run: |
+        ./attribution_run_stages.sh ${{ env.PA_CONTAINER_NAME }} prepare_compute_input
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PA_CONTAINER_NAME }} attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Decoupled Attribution
+       run: |
+        ./attribution_run_stages.sh ${{ env.PA_CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PA_CONTAINER_NAME }} attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Decoupled Aggregation
+       run: |
+        ./attribution_run_stages.sh ${{ env.PA_CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PA_CONTAINER_NAME }} attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Aggregate Shards
+       run: |
+        ./attribution_run_stages.sh ${{ env.PA_CONTAINER_NAME }} run_next
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PA_CONTAINER_NAME }} attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - Validate Result
+       run: |
+        ./validate_result.sh attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Cleanup
+       run: |
+        docker stop ${{ env.PA_CONTAINER_NAME }}
+        docker rm ${{ env.PA_CONTAINER_NAME }}
+
+  ### Push rc/onedocker to onedocker
+  prod_push:
+    needs: [pl_test, pa_test]
     runs-on: self-hosted
     name: Push to Prod
+    # temporary setting, will remove once E2E can run successfully
     environment: 'prod'
     permissions:
       contents: read
