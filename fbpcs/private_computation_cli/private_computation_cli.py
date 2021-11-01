@@ -22,9 +22,9 @@ Usage:
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
     pc-cli get_pid <instance_id> --config=<config_file> [options]
     pc-cli get_mpc <instance_id> --config=<config_file> [options]
-    pc-cli run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
-    pc-cli run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
+    pc-cli run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run --legacy] [options]
+    pc-cli run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run --legacy] [options]
+    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run --legacy] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
 
@@ -48,6 +48,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     AttributionRule,
     PrivateComputationRole,
     PrivateComputationGameType,
+)
+from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
+    PrivateComputationLegacyStageFlow,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
@@ -130,6 +133,7 @@ def main():
             "--hmac_key": schema.Or(None, str),
             "--tries_per_stage": schema.Or(None, schema.Use(int)),
             "--fail_fast": bool,
+            "--legacy": bool,
             "--dry_run": bool,
             "--log_path": schema.Or(None, schema.Use(Path)),
             "--log_cost_to_s3": schema.Or(None, schema.Use(bool)),
@@ -246,33 +250,52 @@ def main():
             logger=logger,
         )
     elif arguments["run_instance"]:
+        if arguments["--legacy"]:
+            stage_flow = PrivateComputationLegacyStageFlow
+        else:
+            # I will replace this in later diffs in stack
+            stage_flow = PrivateComputationLegacyStageFlow
+
         logger.info(f"Running instance: {instance_id}")
         run_instance(
             config=config,
             instance_id=instance_id,
             input_path=arguments["--input_path"],
             num_shards=["--num_shards"],
+            stage_flow=stage_flow,
             logger=logger,
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
         )
     elif arguments["run_instances"]:
+        if arguments["--legacy"]:
+            stage_flow = PrivateComputationLegacyStageFlow
+        else:
+            # I will replace this in later diffs in stack
+            stage_flow = PrivateComputationLegacyStageFlow
         run_instances(
             config=config,
             instance_ids=arguments["<instance_ids>"],
             input_paths=arguments["--input_paths"],
             num_shards_list=arguments["--num_shards_list"],
+            stage_flow=stage_flow,
             logger=logger,
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
         )
     elif arguments["run_study"]:
+        if arguments["--legacy"]:
+            stage_flow = PrivateComputationLegacyStageFlow
+        else:
+            # I will replace this in later diffs in stack
+            stage_flow = PrivateComputationLegacyStageFlow
         run_study(
             config=config,
             study_id=arguments["<study_id>"],
             objective_ids=arguments["--objective_ids"],
             input_paths=arguments["--input_paths"],
             logger=logger,
+            stage_flow=stage_flow,
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
         )
