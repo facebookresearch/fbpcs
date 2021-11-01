@@ -32,6 +32,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
     PrivateComputationLegacyStageFlow,
 )
+from fbpcs.private_computation.entity.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -59,13 +62,15 @@ class TestPlInstanceRunner(TestCase):
             publisher_status,
             partner_status,
             stage,
-            result,
+            publisher_ready_for_stage_expected,
+            partner_ready_for_stage_expected,
         ) in self._get_stage_ready_data():
             with self.subTest(
                 publisher_status=publisher_status,
                 partner_status=partner_status,
                 stage=stage,
-                result=result,
+                publisher_ready_for_stage_expected=publisher_ready_for_stage_expected,
+                partner_ready_for_stage_expected=partner_ready_for_stage_expected,
             ):
                 self.mock_graph_api_client.get_instance.return_value = (
                     self._get_graph_api_output(publisher_status)
@@ -73,10 +78,16 @@ class TestPlInstanceRunner(TestCase):
                 mock_get_instance.return_value = self._get_pc_instance(partner_status)
 
                 runner = self._get_runner(type(stage))
-                # this test is updated in the next diff to check publisher and partner
-                # with possibly differing "ready for" results
-                ready_for_stage = runner.publisher.ready_for_stage(stage)
-                self.assertEqual(ready_for_stage, result)
+                publisher_ready_for_stage_actual = runner.publisher.ready_for_stage(
+                    stage
+                )
+                partner_ready_for_stage_actual = runner.partner.ready_for_stage(stage)
+                self.assertEqual(
+                    publisher_ready_for_stage_expected, publisher_ready_for_stage_actual
+                )
+                self.assertEqual(
+                    partner_ready_for_stage_expected, partner_ready_for_stage_actual
+                )
 
     @patch(
         "fbpcs.pl_coordinator.pl_instance_runner.PrivateLiftCalcInstance.wait_valid_status"
@@ -150,6 +161,7 @@ class TestPlInstanceRunner(TestCase):
                     partner_should_invoke_expected, partner_should_invoke_actual
                 )
 
+    @patch("fbpcs.pl_coordinator.pl_instance_runner.run_stage")
     @patch("fbpcs.pl_coordinator.pl_instance_runner.aggregate_shards")
     @patch("fbpcs.pl_coordinator.pl_instance_runner.compute_metrics")
     @patch("fbpcs.pl_coordinator.pl_instance_runner.prepare_compute_input")
@@ -164,12 +176,13 @@ class TestPlInstanceRunner(TestCase):
     def test_run_stage(
         self,
         mock_get_instance,
-        wait_stage_complete,
-        wait_stage_start,
+        mock_wait_stage_complete,
+        mock_wait_stage_start,
         mock_id_match,
         mock_prepare_compute_input,
         mock_compute_metrics,
         mock_aggregate_shards,
+        mock_run_stage,
     ) -> None:
         for (
             publisher_status,
@@ -193,6 +206,8 @@ class TestPlInstanceRunner(TestCase):
                 mock_prepare_compute_input.call_count = 0
                 mock_compute_metrics.call_count = 0
                 mock_aggregate_shards.call_count = 0
+                mock_run_stage.call_count = 0
+                mock_wait_stage_start.call_count = 0
                 self.mock_graph_api_client.invoke_operation.call_count = 0
 
                 self.mock_graph_api_client.get_instance.return_value = (
@@ -202,6 +217,11 @@ class TestPlInstanceRunner(TestCase):
 
                 runner = self._get_runner(type(stage))
                 runner.run_stage(stage)
+
+                if stage.is_joint_stage:
+                    mock_wait_stage_start.assert_called()
+                else:
+                    mock_wait_stage_start.assert_not_called()
 
                 if stage is PrivateComputationLegacyStageFlow.ID_MATCH:
                     if publisher_should_invoke_expected:
@@ -242,6 +262,18 @@ class TestPlInstanceRunner(TestCase):
                         mock_aggregate_shards.assert_called()
                     else:
                         mock_aggregate_shards.assert_not_called()
+                else:
+                    if publisher_should_invoke_expected:
+                        self.mock_graph_api_client.invoke_operation.assert_called_with(
+                            self.instance_id, "NEXT"
+                        )
+                    else:
+                        self.mock_graph_api_client.invoke_operation.assert_not_called()
+
+                    if partner_should_invoke_expected:
+                        mock_run_stage.assert_called()
+                    else:
+                        mock_run_stage.assert_not_called()
 
     @patch("fbpcs.pl_coordinator.pl_instance_runner.sleep")
     @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
@@ -302,6 +334,45 @@ class TestPlInstanceRunner(TestCase):
                 else:
                     runner.wait_stage_complete(stage)
 
+    @patch("fbpcs.pl_coordinator.pl_instance_runner.sleep")
+    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    def test_wait_until_not_timeout(self, mock_get_instance, mock_sleep) -> None:
+        stage = PrivateComputationStageFlow.PREPARE
+        self.mock_graph_api_client.invoke_operation.call_count = 0
+        self.mock_graph_api_client.get_instance.side_effect = (
+            self._get_graph_api_output(status)
+            for status in (
+                "TIMEOUT",
+                "TIMEOUT",
+                "PROCESSING_REQUEST",
+                "PREPARE_DATA_STARTED",
+                "PREPARE_DATA_STARTED",
+            )
+        )
+
+        mock_get_instance.return_value = self._get_pc_instance(
+            stage.previous_stage.completed_status
+        )
+
+        runner = self._get_runner(PrivateComputationStageFlow)
+
+        self.mock_graph_api_client.invoke_operation.assert_called_with(
+            self.instance_id, "NEXT"
+        )
+
+        self.assertEqual(stage.started_status, runner.publisher.status)
+
+        # make sure that run next is only being called when the status is timeout
+        self.mock_graph_api_client.invoke_operation.call_count = 0
+        self.mock_graph_api_client.get_instance.side_effect = (
+            self._get_graph_api_output("PREPARE_DATA_COMPLETED") for _ in range(2)
+        )
+
+        runner = self._get_runner(PrivateComputationStageFlow)
+
+        self.mock_graph_api_client.invoke_operation.assert_not_called()
+        self.assertEqual(stage.completed_status, runner.publisher.status)
+
     def _get_runner(
         self, stage_flow: Type[PrivateComputationBaseStageFlow]
     ) -> PLInstanceRunner:
@@ -355,13 +426,16 @@ class TestPlInstanceRunner(TestCase):
             PrivateComputationInstanceStatus,
             PrivateComputationBaseStageFlow,
             bool,
+            bool,
         ]
     ]:
         """
         Tuple represents:
             * publisher status
             * partner status
-            * is the stage ready
+            * stage
+            * is the stage ready for publisher
+            * is the stage ready for partner
         """
         return [
             (
@@ -369,17 +443,20 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationInstanceStatus.CREATED,
                 PrivateComputationLegacyStageFlow.ID_MATCH,
                 True,
+                True,
             ),
             (
                 "ID_MATCH_STARTED",
                 PrivateComputationInstanceStatus.CREATED,
                 PrivateComputationLegacyStageFlow.ID_MATCH,
                 True,
+                True,
             ),
             (
                 "ID_MATCH_STARTED",
                 PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
                 PrivateComputationLegacyStageFlow.ID_MATCH,
+                True,
                 True,
             ),
             (
@@ -387,11 +464,13 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
                 PrivateComputationLegacyStageFlow.ID_MATCH,
                 True,
+                True,
             ),
             (
                 "ID_MATCH_STARTED",
                 PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
                 PrivateComputationLegacyStageFlow.ID_MATCH,
+                True,
                 True,
             ),
             (
@@ -399,23 +478,27 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
                 PrivateComputationLegacyStageFlow.ID_MATCH,
                 False,
+                False,
             ),
             (
                 "ID_MATCH_COMPLETED",
                 PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
                 PrivateComputationLegacyStageFlow.COMPUTE,
                 True,
+                True,
             ),
             (
                 "COMPUTATION_STARTED",
                 PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
                 PrivateComputationLegacyStageFlow.COMPUTE,
                 True,
+                True,
             ),
             (
                 "COMPUTATION_STARTED",
                 PrivateComputationInstanceStatus.COMPUTATION_STARTED,
                 PrivateComputationLegacyStageFlow.COMPUTE,
+                True,
                 True,
             ),
             (
@@ -423,11 +506,13 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationInstanceStatus.COMPUTATION_FAILED,
                 PrivateComputationLegacyStageFlow.COMPUTE,
                 True,
+                True,
             ),
             (
                 "COMPUTATION_STARTED",
                 PrivateComputationInstanceStatus.COMPUTATION_STARTED,
                 PrivateComputationLegacyStageFlow.COMPUTE,
+                True,
                 True,
             ),
             (
@@ -435,23 +520,27 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
                 PrivateComputationLegacyStageFlow.COMPUTE,
                 False,
+                False,
             ),
             (
                 "COMPUTATION_COMPLETED",
                 PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
                 PrivateComputationLegacyStageFlow.AGGREGATE,
                 True,
+                True,
             ),
             (
                 "AGGREGATION_STARTED",
                 PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
                 PrivateComputationLegacyStageFlow.AGGREGATE,
                 True,
+                True,
             ),
             (
                 "AGGREGATION_STARTED",
                 PrivateComputationInstanceStatus.AGGREGATION_STARTED,
                 PrivateComputationLegacyStageFlow.AGGREGATE,
+                True,
                 True,
             ),
             (
@@ -459,11 +548,13 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationInstanceStatus.AGGREGATION_FAILED,
                 PrivateComputationLegacyStageFlow.AGGREGATE,
                 True,
+                True,
             ),
             (
                 "AGGREGATION_STARTED",
                 PrivateComputationInstanceStatus.AGGREGATION_STARTED,
                 PrivateComputationLegacyStageFlow.AGGREGATE,
+                True,
                 True,
             ),
             (
@@ -471,6 +562,64 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
                 PrivateComputationLegacyStageFlow.AGGREGATE,
                 False,
+                False,
+            ),
+            ####################### NON JOINT STAGE TEST #################################3
+            (
+                "ID_MATCH_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.previous_stage.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                True,
+                True,
+            ),
+            (
+                "PREPARE_DATA_STARTED",
+                PrivateComputationStageFlow.PREPARE.previous_stage.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                True,
+                True,
+            ),
+            (
+                "PREPARE_DATA_STARTED",
+                PrivateComputationStageFlow.PREPARE.started_status,
+                PrivateComputationStageFlow.PREPARE,
+                True,
+                True,
+            ),
+            (
+                "PREPARE_DATA_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.started_status,
+                PrivateComputationStageFlow.PREPARE,
+                False,
+                True,
+            ),
+            (
+                "PREPARE_DATA_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.failed_status,
+                PrivateComputationStageFlow.PREPARE,
+                False,
+                True,
+            ),
+            (
+                "PREPARE_DATA_STARTED",
+                PrivateComputationStageFlow.PREPARE.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                True,
+                False,
+            ),
+            (
+                "PREPARE_DATA_FAILED",
+                PrivateComputationStageFlow.PREPARE.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                True,
+                False,
+            ),
+            (
+                "PREPARE_DATA_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.completed_status,
+                PrivateComputationStageFlow.COMPUTE,
+                True,
+                True,
             ),
         ]
 
@@ -585,6 +734,63 @@ class TestPlInstanceRunner(TestCase):
                 False,
                 False,
             ),
+            ####################### NON JOINT STAGE TEST #################################3
+            (
+                "ID_MATCH_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.previous_stage.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                True,
+                True,
+            ),
+            (
+                "PREPARE_DATA_STARTED",
+                PrivateComputationStageFlow.PREPARE.previous_stage.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                False,
+                True,
+            ),
+            (
+                "PREPARE_DATA_STARTED",
+                PrivateComputationStageFlow.PREPARE.started_status,
+                PrivateComputationStageFlow.PREPARE,
+                False,
+                False,
+            ),
+            (
+                "PREPARE_DATA_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.started_status,
+                PrivateComputationStageFlow.PREPARE,
+                False,
+                False,
+            ),
+            (
+                "PREPARE_DATA_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.failed_status,
+                PrivateComputationStageFlow.PREPARE,
+                False,
+                True,
+            ),
+            (
+                "PREPARE_DATA_STARTED",
+                PrivateComputationStageFlow.PREPARE.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                False,
+                False,
+            ),
+            (
+                "PREPARE_DATA_FAILED",
+                PrivateComputationStageFlow.PREPARE.completed_status,
+                PrivateComputationStageFlow.PREPARE,
+                True,
+                False,
+            ),
+            (
+                "PREPARE_DATA_COMPLETED",
+                PrivateComputationStageFlow.PREPARE.completed_status,
+                PrivateComputationStageFlow.COMPUTE,
+                True,
+                True,
+            ),
         ]
 
     def _get_wait_stage_start_data(
@@ -666,6 +872,42 @@ class TestPlInstanceRunner(TestCase):
                     "PROCESSING_REQUEST",
                     "AGGREGATION_FAILED",
                     "AGGREGATION_FAILED",
+                ],
+                False,
+            ),
+            (
+                PrivateComputationStageFlow.PREPARE,
+                [
+                    "ID_MATCH_COMPLETED",
+                    "ID_MATCH_COMPLETED",
+                    "PROCESSING_REQUEST",
+                    "PROCESSING_REQUEST",
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_STARTED",
+                ],
+                True,
+            ),
+            (
+                PrivateComputationStageFlow.PREPARE,
+                [
+                    "ID_MATCH_COMPLETED",
+                    "ID_MATCH_COMPLETED",
+                    "PROCESSING_REQUEST",
+                    "PROCESSING_REQUEST",
+                    "PREPARE_DATA_FAILED",
+                    "PREPARE_DATA_FAILED",
+                ],
+                False,
+            ),
+            (
+                PrivateComputationStageFlow.PREPARE,
+                [
+                    "ID_MATCH_COMPLETED",
+                    "ID_MATCH_COMPLETED",
+                    "PROCESSING_REQUEST",
+                    "PROCESSING_REQUEST",
+                    "TIMEOUT",
+                    "TIMEOUT",
                 ],
                 False,
             ),
@@ -796,6 +1038,62 @@ class TestPlInstanceRunner(TestCase):
                     PrivateComputationInstanceStatus.AGGREGATION_STARTED,
                     PrivateComputationInstanceStatus.AGGREGATION_FAILED,
                     PrivateComputationInstanceStatus.AGGREGATION_FAILED,
+                ],
+                False,
+            ),
+            (
+                PrivateComputationStageFlow.PREPARE,
+                [
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_COMPLETED",
+                    "PREPARE_DATA_COMPLETED",
+                ],
+                [
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_COMPLETED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_COMPLETED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_COMPLETED,
+                ],
+                True,
+            ),
+            (
+                PrivateComputationStageFlow.PREPARE,
+                [
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_FAILED",
+                    "PREPARE_DATA_FAILED",
+                ],
+                [
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_FAILED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_FAILED,
+                ],
+                False,
+            ),
+            (
+                PrivateComputationStageFlow.PREPARE,
+                [
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_STARTED",
+                    "PREPARE_DATA_STARTED",
+                    "TIMEOUT",
+                    "TIMEOUT",
+                ],
+                [
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_FAILED,
+                    PrivateComputationInstanceStatus.PREPARE_DATA_FAILED,
                 ],
                 False,
             ),
