@@ -83,6 +83,7 @@ def lambda_handler(event, context):
         client_user_agent = row_data.get("user_data", dummy_dict).get("client_user_agent")
         click_id = row_data.get("user_data", dummy_dict).get("fbc")
         login_id = row_data.get("user_data", dummy_dict).get("fbp")
+        parsed_user_agent_fields = _parse_client_user_agent(client_user_agent) if client_user_agent else {}
 
         # make sure not all values are None
         if all(
@@ -125,6 +126,12 @@ def lambda_handler(event, context):
             user_data["click_id"] = click_id
         if login_id:
             user_data["login_id"] = login_id
+        if BROWSER_NAME in parsed_user_agent_fields:
+            user_data[BROWSER_NAME] = parsed_user_agent_fields[BROWSER_NAME]
+        if DEVICE_OS in parsed_user_agent_fields:
+            user_data[DEVICE_OS] = parsed_user_agent_fields[DEVICE_OS]
+        if DEVICE_OS_VERSION in parsed_user_agent_fields:
+            user_data[DEVICE_OS_VERSION] = parsed_user_agent_fields[DEVICE_OS_VERSION]
 
         data['user_data'] = user_data
         # firehose need data to be b64-encoded
