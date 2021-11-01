@@ -587,12 +587,16 @@ class PrivateComputationService:
         aggregated_result_path: Optional[str] = None,
         dry_run: Optional[bool] = False,
     ) -> PrivateComputationInstance:
-        # if calling PC the legacy way, make sure that the legacy stage
-        # flow is being used
-        self._override_stage_flow(instance_id, PrivateComputationLegacyStageFlow)
+        instance = self.get_instance(instance_id)
+        # this gets the stage object associated with the post processing handler stage.
+        # It will be validated later in the run to make sure that the stage is actually ready
+        # to be run.
+        pph_stage = instance.stage_flow.get_stage_from_status(
+            PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED
+        )
         return await self.run_stage_async(
             instance_id,
-            PrivateComputationLegacyStageFlow.POST_PROCESSING_HANDLERS,
+            pph_stage,
             PostProcessingStageService(
                 self.storage_svc, self.post_processing_handlers, aggregated_result_path
             ),
