@@ -8,10 +8,37 @@ from __future__ import print_function
 import base64
 import json
 import os
+import re
 
 # initiate
 print("Loading lambda function...")
 
+BROWSER_NAME_REGEXES = [
+    [re.compile(r".*Chrome.*Mobile Safari/[0-9.]+$"), "Chrome Mobile"],
+    [re.compile(r".*Chrome.*Safari/[0-9.]+$"), "Chrome Desktop"],
+    [re.compile(r".*Mobile.*Safari/[0-9.]+$"), "Mobile Safari"],
+    [re.compile(r".*FBIOS;.*"), "Facebook for iOS"],
+    [re.compile(r".*(CPU OS|iPhone OS|CPU iPhone).*Instagram.*"), "Instagram IAB for iOS"],
+    [re.compile(r".*Instagram.*Android.*"), "Instagram IAB for Android"],
+    [re.compile(r".*FB4A.*"), "Facebook for Android"],
+]
+
+DEVICE_OS_REGEXES = [
+    [re.compile(r".*(CPU OS|iPhone OS|CPU iPhone).*"), "iOS"],
+    [re.compile(r".*Android.*"), "Android"],
+    [re.compile(r".*Windows NT.*"), "Windows NT"],
+    [re.compile(r".*Mac OS X.*"), "Mac OS X"],
+]
+
+OS_VERSION_REGEXES = [
+    re.compile(r".*(CPU OS|iPhone OS|CPU iPhone) +(\d+)[_\.](\d+)(?:[_\.](\d+))?.*"),
+    re.compile(r".*(Intel Mac OS X) +(\d+)[_\.](\d+)(?:[_\.](\d+))?.*"),
+    re.compile(r".*(Android) +(\d+)[_\.](\d+)(?:[_\.](\d+))?.*"),
+]
+
+BROWSER_NAME = "browser_name"
+DEVICE_OS = "device_os"
+DEVICE_OS_VERSION = "device_os_version"
 
 def lambda_handler(event, context):
     output = []
@@ -108,3 +135,22 @@ def lambda_handler(event, context):
 
     print("finished data transformation.")
     return {"records": output}
+
+def _parse_client_user_agent(client_user_agent):
+    parsed_fields = {}
+
+    for (regex, browserName) in BROWSER_NAME_REGEXES:
+        if regex.match(client_user_agent):
+            parsed_fields[BROWSER_NAME] = browserName
+            break
+    for (regex, deviceOs) in DEVICE_OS_REGEXES:
+        if regex.match(client_user_agent):
+            parsed_fields[DEVICE_OS] = deviceOs
+            break
+    for regex in OS_VERSION_REGEXES:
+        matches = regex.match(client_user_agent)
+        if matches:
+            parsed_fields[DEVICE_OS_VERSION] = '.'.join(matches.groups()[1:])
+            break
+
+    return parsed_fields
