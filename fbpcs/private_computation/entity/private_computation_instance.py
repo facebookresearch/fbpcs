@@ -9,7 +9,7 @@
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Type
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
@@ -186,6 +186,12 @@ class PrivateComputationInstance(InstanceBase):
         )
 
     @property
+    def stage_flow(self) -> Type[PrivateComputationBaseStageFlow]:
+        return PrivateComputationBaseStageFlow.cls_name_to_cls(
+            self._stage_flow_cls_name
+        )
+
+    @property
     def current_stage(self) -> PrivateComputationBaseStageFlow:
         return PrivateComputationBaseStageFlow.cls_name_to_cls(
             self._stage_flow_cls_name
@@ -198,6 +204,4 @@ class PrivateComputationInstance(InstanceBase):
         * If the instance has a failed status, return the current stage in the flow
         * If the instance has a completed status, return the next stage in the flow (which could be None)
         """
-        return PrivateComputationBaseStageFlow.cls_name_to_cls(
-            self._stage_flow_cls_name
-        ).get_next_runnable_stage_from_status(self.status)
+        return self.stage_flow.get_next_runnable_stage_from_status(self.status)
