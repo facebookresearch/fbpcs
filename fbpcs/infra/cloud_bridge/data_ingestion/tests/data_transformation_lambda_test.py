@@ -69,34 +69,6 @@ class TestDataIngestion(TestCase):
 
         self.assertEqual(len(result['records']), 0)
 
-    def test_user_agent_parsed_fields(self):
-        record = self.sample_record_data
-        server_side_event = record['serverSideEvent']
-        server_side_event['custom_data']['custom_properties'] = {
-            'ignored': '1',
-            '_cloudbridge_browser_name': 'Chrome Desktop',
-            '_cloudbridge_device_os': 'Mac OS X',
-            '_cloudbridge_device_os_version': '10.13.6',
-        }
-        event = self.sample_event(record)
-        result = lambda_handler(event, self.sample_context)
-        encoded_data = result['records'][0]['data']
-        decoded_data = base64.b64decode(encoded_data)
-        decoded_dict = json.loads(decoded_data)
-
-        self.assertEqual(
-            server_side_event['custom_data']['custom_properties']['_cloudbridge_browser_name'],
-            decoded_dict['user_data']['browser_name']
-        )
-        self.assertEqual(
-            server_side_event['custom_data']['custom_properties']['_cloudbridge_device_os'],
-            decoded_dict['user_data']['device_os']
-        )
-        self.assertEqual(
-            server_side_event['custom_data']['custom_properties']['_cloudbridge_device_os_version'],
-            decoded_dict['user_data']['device_os_version']
-        )
-
     def test_user_data_fields(self):
         record = self.sample_record_data
         server_side_event = record['serverSideEvent']
