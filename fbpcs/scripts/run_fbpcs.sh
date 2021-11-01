@@ -24,8 +24,8 @@ DEPENDENCIES=( docker aws )
 
 function usage ()
 {
-    echo "Usage :  $0 <lift|attribution> <rest of command>"
-    echo "e.g. $0 lift create_instance 123 --config='path/to/config.yml' --role=partner"
+    echo "Usage :  $0 <command with arguments>"
+    echo "e.g. $0 get_instance 123 --config='path/to/config.yml'"
 }
 
 function main () {
@@ -47,22 +47,30 @@ function parse_args() {
         exit 1
     fi
 
-    docker_cmd=( python3.8 -m )
+    docker_cmd=( python3.8 -m fbpcs.private_computation_cli.private_computation_cli )
+
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
 
     case $1 in
         lift )
-            docker_cmd+=('fbpcs.private_computation_cli.private_computation_cli')
+            echo -e "${RED}********************************************************"
+            echo -e "Because you specified game name \"$1\", it looks like you're running a deprecated version of this command."
+            echo -e "Please remove \"$1\" from the command and try again."
+            echo -e "********************************************************${NC}"
+            exit 1
             ;;
         attribution )
-            docker_cmd+=('fbpcs.pa_coordinator.pa_coordinator')
-            ;;
-        * )
-            >&2 echo "$1 is not a valid game."
-            usage
+            echo -e "${RED}********************************************************"
+            echo -e "Because you specified game name \"$1\", it looks like you're running a deprecated version of this command."
+            echo -e "Please modify your commands according to the instruction below and try again:"
+            echo -e "1. Remove \"attribution\" right after \"run_fbpcs\""
+            echo -e "2. Add a new argument \"--game_type=attribution\" to the \"run_fbpcs.sh create_instance ...\" command"
+            echo -e "3. Replace \"compute_attribution\" with \"compute_metrics\""
+            echo -e "********************************************************${NC}"
             exit 1
             ;;
     esac
-    shift
 
     for arg in "$@"
     do

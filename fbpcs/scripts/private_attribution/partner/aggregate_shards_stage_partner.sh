@@ -21,7 +21,7 @@ partner_instance="123_partner"
 if [ ! -f ./"${partner_instance}" ]; then
   echo "Create a partner instance..."
 
-  python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
+  python3.8 -m fbpcs.private_computation_cli.private_computation_cli \
     create_instance ${partner_instance} \
     --config="${config}" \
     --role=partner
@@ -31,7 +31,7 @@ fi
 
 echo "Start aggregate shards stage..."
 
-python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
+python3.8 -m fbpcs.private_computation_cli.private_computation_cli \
   aggregate_shards ${partner_instance} \
   --config="${config}" \
   --num_containers_previously_used=${num_mpc_containers_previously_used} \
