@@ -224,16 +224,15 @@ class PrivateComputationService:
         if not next_stage:
             self.logger.warning("There are no eligble stages to be ran at this time.")
             return pc_instance
-        stage_svc = next_stage.get_stage_service(self.stage_service_args)
         return await self.run_stage_async(
-            instance_id, next_stage, stage_svc, server_ips=server_ips
+            instance_id, next_stage, server_ips=server_ips
         )
 
     def run_stage(
         self,
         instance_id: str,
         stage: PrivateComputationBaseStageFlow,
-        stage_svc: PrivateComputationStageService,
+        stage_svc: Optional[PrivateComputationStageService] = None,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> PrivateComputationInstance:
@@ -287,7 +286,7 @@ class PrivateComputationService:
         self,
         instance_id: str,
         stage: PrivateComputationBaseStageFlow,
-        stage_svc: PrivateComputationStageService,
+        stage_svc: Optional[PrivateComputationStageService] = None,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> PrivateComputationInstance:
@@ -306,6 +305,7 @@ class PrivateComputationService:
         )
         self.logger.info(repr(stage))
         try:
+            stage_svc = stage_svc or stage.get_stage_service(self.stage_service_args)
             pc_instance = await stage_svc.run_async(pc_instance, server_ips)
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage}\n{e}")
