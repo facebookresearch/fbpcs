@@ -7,20 +7,25 @@
 
 import json
 import logging
-from enum import Enum
 from multiprocessing import Process
 from time import sleep, time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type
 
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     GraphAPIGenericException,
     PLGraphAPIClient,
     GRAPHAPI_INSTANCE_STATUSES,
 )
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
+)
+from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
+    PrivateComputationLegacyStageFlow,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
@@ -42,52 +47,11 @@ class LoggerAdapter(logging.LoggerAdapter):
         return "[%s] %s" % (self.prefix, msg), kwargs
 
 
-class PrivateLiftStage(Enum):
-    ID_MATCH = "ID_MATCH"
-    COMPUTE = "COMPUTE"
-    AGGREGATE = "AGGREGATE"
-
-
-PRIVATE_LIFT_STAGES = [
-    PrivateLiftStage.ID_MATCH,
-    PrivateLiftStage.COMPUTE,
-    PrivateLiftStage.AGGREGATE,
-]
-STAGE_OUTPUT_SUFFIX = {
-    PrivateLiftStage.ID_MATCH: "_pid_out.csv",
-    PrivateLiftStage.COMPUTE: "_mpc_computed.csv",
-    PrivateLiftStage.AGGREGATE: "_mpc_aggregated.json",
-}
-READY_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.CREATED,
-    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-}
-STARTED_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-}
-FAILED_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-}
-COMPLETED_STATUS = {
-    PrivateLiftStage.ID_MATCH: PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-    PrivateLiftStage.COMPUTE: PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-    PrivateLiftStage.AGGREGATE: PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
-}
 INVALID_STATUS_LIST = [
     PrivateComputationInstanceStatus.UNKNOWN,
     PrivateComputationInstanceStatus.PROCESSING_REQUEST,
 ]
 
-STAGE_TIMEOUT = {
-    PrivateLiftStage.ID_MATCH: 3600,
-    PrivateLiftStage.COMPUTE: 3600,
-    PrivateLiftStage.AGGREGATE: 1800,
-}
 POLL_INTERVAL = 60
 WAIT_VALID_STATUS_TIMEOUT = 600
 WAIT_VALID_STAGE_TIMEOUT = 300
@@ -113,6 +77,7 @@ def run_instance(
     instance_id: str,
     input_path: str,
     num_shards: int,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
     logger: logging.Logger,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
@@ -130,6 +95,7 @@ def run_instance(
         client,
         num_tries,
         dry_run,
+        stage_flow,
     )
     logger.info(f"Running private lift for instance {instance_id}")
     instance_runner.run()
@@ -140,6 +106,7 @@ def run_instances(
     instance_ids: List[str],
     input_paths: List[str],
     num_shards_list: List[str],
+    stage_flow: Type[PrivateComputationBaseStageFlow],
     logger: logging.Logger,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
@@ -165,6 +132,7 @@ def run_instances(
                     "instance_id": instance_id,
                     "input_path": input_path,
                     "num_shards": num_shards,
+                    "stage_flow": stage_flow,
                     "logger": LoggerAdapter(logger=logger, prefix=instance_id),
                     "num_tries": num_tries,
                     "dry_run": dry_run,
@@ -256,30 +224,31 @@ class PrivateLiftCalcInstance:
             f"Poll {self.role} status timed out after {timeout}s expecting status: {status}."
         )
 
-    def ready_for_stage(self, stage: PrivateLiftStage) -> bool:
+    def ready_for_stage(self, stage: PrivateComputationBaseStageFlow) -> bool:
         # This function checks whether the instance is ready for the publisher-partner
         # <stage> (PLInstanceCalculation.run_stage(<stage>)). Suppose user first
         # invokes publisher <stage> through GraphAPI, now publisher status is
         # '<STAGE>_STARTED`. Then, user runs pl-coordinator 'run_instance' command,
         # we would want to still allow <stage> to run.
         self.update_instance()
+        previous_stage = stage.previous_stage
         return self.status in [
-            READY_STATUS[stage],
-            STARTED_STATUS[stage],
-            FAILED_STATUS[stage],
+            previous_stage.completed_status if previous_stage else None,
+            stage.started_status,
+            stage.failed_status,
         ]
 
-    def should_invoke_operation(self, stage: PrivateLiftStage) -> bool:
+    def should_invoke_operation(self, stage: PrivateComputationBaseStageFlow) -> bool:
         # Once the the publisher-partner <stage> is called, this function
         # determines if <stage> operation should be invoked at publisher/partner end. If
         # the status is already <STAGE>_STARTED, then there's no need to invoke it
         # a second time.
-        return self.ready_for_stage(stage) and self.status is not STARTED_STATUS[stage]
+        return self.ready_for_stage(stage) and self.status is not stage.started_status
 
-    def wait_stage_start(self, stage: PrivateLiftStage) -> None:
+    def wait_stage_start(self, stage: PrivateComputationBaseStageFlow) -> None:
         self.wait_instance_status(
-            STARTED_STATUS[stage],
-            FAILED_STATUS[stage],
+            stage.started_status,
+            stage.failed_status,
             OPERATION_REQUEST_TIMEOUT,
         )
 
@@ -314,9 +283,9 @@ class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
         )
         return self.status is status and self.server_ips is not None
 
-    def run_stage(self, stage: PrivateLiftStage) -> None:
+    def run_stage(self, stage: PrivateComputationBaseStageFlow) -> None:
         if self.should_invoke_operation(stage):
-            self.client.invoke_operation(self.instance_id, stage.value)
+            self.client.invoke_operation(self.instance_id, stage.name)
 
 
 class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
@@ -364,10 +333,12 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
     def get_output_dir_from_input_path(self, input_path: str) -> str:
         return input_path[: input_path.rfind("/")]
 
-    def run_stage(self, server_ips: List[str], stage: PrivateLiftStage) -> None:
+    def run_stage(
+        self, server_ips: List[str], stage: PrivateComputationBaseStageFlow
+    ) -> None:
         if self.should_invoke_operation(stage):
             try:
-                if stage is PrivateLiftStage.ID_MATCH:
+                if stage is PrivateComputationLegacyStageFlow.ID_MATCH:
                     id_match(
                         config=self.config,
                         instance_id=self.instance_id,
@@ -375,7 +346,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         logger=self.logger,
                         dry_run=None,
                     )
-                elif stage is PrivateLiftStage.COMPUTE:
+                elif stage is PrivateComputationLegacyStageFlow.COMPUTE:
                     prepare_compute_input(
                         config=self.config,
                         instance_id=self.instance_id,
@@ -389,7 +360,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         server_ips=server_ips,
                         dry_run=None,
                     )
-                else:
+                elif stage is PrivateComputationLegacyStageFlow.AGGREGATE:
                     aggregate_shards(
                         config=self.config,
                         instance_id=self.instance_id,
@@ -397,8 +368,10 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         server_ips=server_ips,
                         dry_run=None,
                     )
+                else:
+                    raise NotImplementedError(f"{stage.name} not implemented yet")
             except Exception as error:
-                self.logger.exception(f"Error running partner {stage.value} {error}")
+                self.logger.exception(f"Error running partner {stage.name} {error}")
 
 
 class PLInstanceRunner:
@@ -416,6 +389,7 @@ class PLInstanceRunner:
         client: PLGraphAPIClient,
         num_tries: int,
         dry_run: Optional[bool],
+        stage_flow: Type[PrivateComputationBaseStageFlow],
     ) -> None:
         self.logger = logger
         self.instance_id = instance_id
@@ -429,19 +403,21 @@ class PLInstanceRunner:
         )
         self.num_tries = num_tries
         self.dry_run = dry_run
+        self.stage_flow = stage_flow
 
-    def ready_for_stage(self, stage: PrivateLiftStage):
+    def ready_for_stage(self, stage: PrivateComputationBaseStageFlow):
         return self.publisher.ready_for_stage(stage) and self.partner.ready_for_stage(
             stage
         )
 
-    def get_valid_stage(self) -> Optional[PrivateLiftStage]:
-        for stage in PRIVATE_LIFT_STAGES:
-            if self.ready_for_stage(stage):
-                return stage
+    def get_valid_stage(self) -> Optional[PrivateComputationBaseStageFlow]:
+        if not self.is_finished():
+            for stage in list(self.stage_flow):
+                if self.ready_for_stage(stage):
+                    return stage
         return None
 
-    def wait_valid_stage(self, timeout: int) -> PrivateLiftStage:
+    def wait_valid_stage(self, timeout: int) -> PrivateComputationBaseStageFlow:
         self.logger.info("Polling instances expecting valid stage.")
         if timeout <= 0:
             raise ValueError(f"Timeout must be > 0, not {timeout}")
@@ -461,7 +437,7 @@ class PLInstanceRunner:
         )
 
     def is_finished(self):
-        finished_status = COMPLETED_STATUS[PRIVATE_LIFT_STAGES[-1]]
+        finished_status = GRAPHAPI_INSTANCE_STATUSES["RESULT_READY"]
         return (
             self.publisher.status is finished_status
             and self.partner.status is finished_status
@@ -492,10 +468,10 @@ class PLInstanceRunner:
                 )
                 sleep(RETRY_INTERVAL)
 
-    def run_stage(self, stage: PrivateLiftStage) -> None:
-        self.logger.info(f"Running publisher-partner {stage.value}")
+    def run_stage(self, stage: PrivateComputationBaseStageFlow) -> None:
+        self.logger.info(f"Running publisher-partner {stage.name}")
         # call publisher <STAGE>
-        self.logger.info(f"Invoking publisher {stage.value}.")
+        self.logger.info(f"Invoking publisher {stage.name}.")
         self.publisher.run_stage(stage)
         # keep polling graphapi until publisher status is <STAGE>_STARTED and server_ips are available
         self.publisher.wait_stage_start(stage)
@@ -503,16 +479,16 @@ class PLInstanceRunner:
         if server_ips is None:
             raise ValueError("in run_stage, server_ips is None")
         # call partner <STAGE>
-        self.logger.info(f"Starting partner {stage.value}:")
+        self.logger.info(f"Starting partner {stage.name}:")
         self.partner.run_stage(server_ips, stage)
         # wait for stage to complete
         self.wait_stage_complete(stage)
 
-    def wait_stage_complete(self, stage: PrivateLiftStage) -> None:
-        start_status = STARTED_STATUS[stage]
-        complete_status = COMPLETED_STATUS[stage]
-        fail_status = FAILED_STATUS[stage]
-        timeout = STAGE_TIMEOUT[stage]
+    def wait_stage_complete(self, stage: PrivateComputationBaseStageFlow) -> None:
+        start_status = stage.started_status
+        complete_status = stage.completed_status
+        fail_status = stage.failed_status
+        timeout = stage.timeout
 
         start_time = time()
         cancel_time = 0
@@ -526,7 +502,7 @@ class PLInstanceRunner:
                 self.publisher.status is complete_status
                 and self.partner.status is complete_status
             ):
-                self.logger.info(f"Stage {stage.value} is complete.")
+                self.logger.info(f"Stage {stage.name} is complete.")
                 return
             if (
                 self.publisher.status is fail_status
@@ -540,19 +516,19 @@ class PLInstanceRunner:
                     # wait 5 minutes for partner to become fail status on its own
                     # if not, only perform 'cancel_stage' one time
                     if cancel_time == CANCEL_STAGE_TIMEOUT:
-                        self.logger.error(f"Canceling partner stage {stage.value}.")
+                        self.logger.error(f"Canceling partner stage {stage.name}.")
                         self.partner.cancel_current_stage()
                     else:
                         self.logger.info(
-                            f"Waiting to cancel partner stage {stage.value}."
+                            f"Waiting to cancel partner stage {stage.name}."
                         )
                     # only cancel once
                     cancel_time += POLL_INTERVAL
                 else:
                     raise PLInstanceCalculationException(
-                        f"Stage {stage.value} failed. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
+                        f"Stage {stage.name} failed. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
                     )
             sleep(POLL_INTERVAL)
         raise PLInstanceCalculationException(
-            f"Stage {stage.value} timed out after {timeout}s. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
+            f"Stage {stage.name} timed out after {timeout}s. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
         )

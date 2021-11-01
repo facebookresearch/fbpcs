@@ -25,6 +25,10 @@ GRAPHAPI_INSTANCE_STATUSES = {
     "RESULT_READY": PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
     "AGGREGATION_FAILED": PrivateComputationInstanceStatus.AGGREGATION_FAILED,
     "PROCESSING_REQUEST": PrivateComputationInstanceStatus.PROCESSING_REQUEST,
+    "PREPARE_DATA_STARTED": PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
+    "PREPARE_DATA_COMPLETED": PrivateComputationInstanceStatus.PREPARE_DATA_COMPLETED,
+    "PREPARE_DATA_FAILED": PrivateComputationInstanceStatus.PREPARE_DATA_FAILED,
+    "TIMEOUT": PrivateComputationInstanceStatus.TIMEOUT,
 }
 
 
