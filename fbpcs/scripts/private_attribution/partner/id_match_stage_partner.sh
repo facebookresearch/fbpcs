@@ -29,7 +29,7 @@ rm ${partner_instance} ${partner_instance}_id_match 2> /dev/null
 
 echo "Create a partner instance..."
 
-python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
+python3.8 -m fbpcs.private_computation_cli.private_computation_cli \
   create_instance ${partner_instance} \
   --config="${config}" \
   --role=partner
@@ -38,7 +38,7 @@ python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
 
 echo "Start id match stage..."
 
-python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
+python3.8 -m fbpcs.private_computation_cli.private_computation_cli \
   id_match ${partner_instance} \
   --config="${config}" \
   --num_shards=${num_pid_containers} \
@@ -58,7 +58,7 @@ data_processing_data_path="${id_match_output_path}_advertiser_sharded"
 data_processing_spine_path="${id_match_output_path}_advertiser_pid_matched"
 data_processing_output_path="${s3_path_prefix}/prepare_data_stage/partner_output.csv"
 
-python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
+python3.8 -m fbpcs.private_computation_cli.private_computation_cli \
   prepare_compute_input ${partner_instance} \
   --config="${config}" \
   --num_pid_containers=${num_pid_containers}  \

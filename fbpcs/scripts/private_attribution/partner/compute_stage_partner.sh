@@ -21,7 +21,7 @@ partner_instance="123_partner"
 if [ ! -f ./${partner_instance}  ]; then
   echo "Create a partner instance..."
 
-  python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
+  python3.8 -m fbpcs.private_computation_cli.private_computation_cli \
     create_instance ${partner_instance}  \
     --config="${config}" \
     --role=partner
@@ -31,8 +31,8 @@ fi
 
 echo "Start compute attribution stage..."
 
-python3.8 -m fbpcs.pa_coordinator.pa_coordinator \
-  compute_attribution ${partner_instance} \
+python3.8 -m fbpcs.private_computation_cli.private_computation_cli \
+  compute_metrics ${partner_instance} \
   --config="${config}" \
   --num_containers=${num_mpc_containers} \
   --num_files_per_mpc_container=${num_files_per_mpc_container} \
