@@ -114,6 +114,7 @@ class PostProcessingStageService(PrivateComputationStageService):
         # we can set the status to completed.
         if post_processing_instance.status != PostProcessingInstanceStatus.FAILED:
             post_processing_instance.status = PostProcessingInstanceStatus.COMPLETED
+            pc_instance.status = pc_instance.current_stage.completed_status
         return pc_instance
 
 
