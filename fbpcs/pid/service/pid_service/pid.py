@@ -19,6 +19,7 @@ from fbpcs.pid.entity.pid_instance import (
     PIDProtocol,
     PIDRole,
 )
+from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_dispatcher import PIDDispatcher
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
@@ -78,6 +79,59 @@ class PIDService:
         self.instance_repository.create(instance)
         return instance
 
+    async def run_stage_or_next(
+        self,
+        instance_id: str,
+        pid_config: Dict[str, Any],
+        fail_fast: bool = False,
+        server_ips: Optional[List[str]] = None,
+        pid_union_stage: Optional[UnionPIDStage] = None,
+        wait_for_containers: bool = True,
+    ) -> PIDInstance:
+        """This function is similar to run_instance but instead of calling dispatcher.run_all,
+        it will try to call dispatcher.run_next(), or if the pid_union_stage is given, it will
+        try to call dispatcher.run_stage()
+        """
+        self.logger.info(
+            f"Running PID instance: {instance_id} with PID stage: {pid_union_stage}"
+        )
+
+        # Get pid instance from repository
+        instance = self.instance_repository.read(instance_id)
+
+        # Create the dispatcher and build stages.
+        dispatcher = self.__get_dispatcher_and_build_stages(
+            instance, pid_config, fail_fast, server_ips
+        )
+
+        if pid_union_stage is None:
+            # If pid_union_stage is not given, call run_next by default.
+            await dispatcher.run_next()
+        else:
+            # Convert the UnionPIDStage into PIDStage
+            pid_stage = dispatcher.get_pid_stage(pid_union_stage)
+
+            # An error should be raised when pid_union_stage is given
+            # but cannot find pid_stage
+            if pid_stage is None:
+                raise ValueError(
+                    f"Can't find corresponding PID stage for {pid_union_stage}"
+                )
+
+            # if the stage is joint stage, partner must provide server_ips
+            if (
+                pid_stage.is_joint_stage
+                and instance.pid_role is PIDRole.PARTNER
+                and not server_ips
+            ):
+                raise ValueError("Missing server_ips")
+
+            # Finally, call run_stage if the PID stage can be found
+            # and all above checks are passed
+            await dispatcher.run_stage(pid_stage, wait_for_containers)
+
+        return self.update_instance(instance_id)
+
     async def run_instance(
         self,
         instance_id: str,
@@ -94,27 +148,8 @@ class PIDService:
             raise ValueError("Missing server_ips")
 
         # Call the dispatcher to run all stages
-        dispatcher = PIDDispatcher(
-            instance_id=instance_id,
-            instance_repository=self.instance_repository,
-        )
-        dispatcher.build_stages(
-            input_path=instance.input_path,
-            output_path=instance.output_path,
-            num_shards=instance.num_shards,
-            is_validating=instance.is_validating,
-            synthetic_shard_path=instance.synthetic_shard_path,
-            pid_config=pid_config,
-            protocol=instance.protocol,
-            role=instance.pid_role,
-            onedocker_svc=self.onedocker_svc,
-            storage_svc=self.storage_svc,
-            onedocker_binary_config_map=self.onedocker_binary_config_map,
-            fail_fast=fail_fast,
-            server_ips=server_ips,
-            data_path=instance.data_path,
-            spine_path=instance.spine_path,
-            hmac_key=instance.hmac_key,
+        dispatcher = self.__get_dispatcher_and_build_stages(
+            instance, pid_config, fail_fast, server_ips
         )
         await dispatcher.run_all()
 
@@ -155,3 +190,34 @@ class PIDService:
             instance.status = PIDInstanceStatus.COMPLETED
         self.instance_repository.update(instance)
         return instance
+
+    def __get_dispatcher_and_build_stages(
+        self,
+        instance: PIDInstance,
+        pid_config: Dict[str, Any],
+        fail_fast: bool = False,
+        server_ips: Optional[List[str]] = None,
+    ) -> PIDDispatcher:
+        dispatcher = PIDDispatcher(
+            instance_id=instance.instance_id,
+            instance_repository=self.instance_repository,
+        )
+        dispatcher.build_stages(
+            input_path=instance.input_path,
+            output_path=instance.output_path,
+            num_shards=instance.num_shards,
+            is_validating=instance.is_validating,
+            synthetic_shard_path=instance.synthetic_shard_path,
+            pid_config=pid_config,
+            protocol=instance.protocol,
+            role=instance.pid_role,
+            onedocker_svc=self.onedocker_svc,
+            storage_svc=self.storage_svc,
+            onedocker_binary_config_map=self.onedocker_binary_config_map,
+            fail_fast=fail_fast,
+            server_ips=server_ips,
+            data_path=instance.data_path,
+            spine_path=instance.spine_path,
+            hmac_key=instance.hmac_key,
+        )
+        return dispatcher

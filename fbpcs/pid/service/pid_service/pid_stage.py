@@ -29,6 +29,7 @@ class PIDStage(abc.ABC):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config: OneDockerBinaryConfig,
+        is_joint_stage: bool = False
     ) -> None:
         self.stage_type = stage
         self.storage_svc = storage_svc
@@ -36,6 +37,7 @@ class PIDStage(abc.ABC):
         self.onedocker_binary_config = onedocker_binary_config
         self.instance_repository = instance_repository
         self.logger: logging.Logger = logging.getLogger(__name__)
+        self.is_joint_stage = is_joint_stage
 
     @abc.abstractmethod
     async def run(

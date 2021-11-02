@@ -37,6 +37,7 @@ class PIDDispatcher(Dispatcher):
         self.dag = nx.DiGraph()  # build DAG of stages
         self.stage_inputs = {}  # keeps a track of the input to run each stage with
         self.logger: logging.Logger = logging.getLogger(__name__)
+        self.enum_to_stage_map: Dict[UnionPIDStage, PIDStage] = {}
 
     def build_stages(
         self,
@@ -65,7 +66,7 @@ class PIDDispatcher(Dispatcher):
             config_dict = pid_config
 
         # maintain a map of enums to actual pid execution stages
-        enum_to_stage_map = {}
+        self.enum_to_stage_map = {}
         for node in flow_map.flow:
             stage = PIDStageMapper.get_stage(
                 stage=node,
@@ -76,7 +77,7 @@ class PIDDispatcher(Dispatcher):
                 onedocker_binary_config_map=onedocker_binary_config_map,
                 server_ips=server_ips,
             )
-            enum_to_stage_map[node] = stage
+            self.enum_to_stage_map[node] = stage
             self.dag.add_node(stage)
 
             output_path_instance = output_path
@@ -112,7 +113,7 @@ class PIDDispatcher(Dispatcher):
             connections = flow_map.flow[node]
             for connection in connections:
                 self.dag.add_edge(
-                    enum_to_stage_map[node], enum_to_stage_map[connection]
+                    self.enum_to_stage_map[node], self.enum_to_stage_map[connection]
                 )
 
         instance = self.instance_repository.read(self.instance_id)
@@ -122,7 +123,7 @@ class PIDDispatcher(Dispatcher):
         if not instance.stages_status:
             instance.stages_status = {
                 stage.stage_type: PIDStageStatus.UNKNOWN
-                for stage in enum_to_stage_map.values()
+                for stage in self.enum_to_stage_map.values()
             }
             self.instance_repository.update(instance)
 
@@ -136,10 +137,7 @@ class PIDDispatcher(Dispatcher):
         if stage not in self._find_eligible_stages():
             raise PIDStageFailureError(f"{stage} is not yet eligible to be run.")
         instance = self.instance_repository.read(self.instance_id)
-        if (
-            instance.stages_status.get(stage.stage_type, None)
-            is PIDStageStatus.STARTED
-        ):
+        if instance.stages_status.get(stage.stage_type, None) is PIDStageStatus.STARTED:
             raise PIDStageFailureError(f"{stage} already has status STARTED")
 
         self._update_instance_status(PIDInstanceStatus.STARTED, stage)
@@ -207,6 +205,21 @@ class PIDDispatcher(Dispatcher):
             *[stage.run(self.stage_inputs[stage]) for stage in stages]
         )
 
+    def get_pid_stage(
+        self,
+        pid_union_stage: Optional[UnionPIDStage],
+    ) -> Optional[PIDStage]:
+        """This function translate the UnionPIDStage into PIDStage by using
+        the enum_to_stage_map dictionary.
+
+        If the pid_union_stage arg is None, or we cannot find the corresponding PIDStage,
+        this function will return None.
+        """
+        if pid_union_stage is not None:
+            return self.enum_to_stage_map.get(pid_union_stage, None)
+        else:
+            return None
+
     def _cleanup_complete_stages(
         self, finished_stages: Optional[List[PIDStage]] = None
     ) -> None:
@@ -229,7 +242,9 @@ class PIDDispatcher(Dispatcher):
                     self.stage_inputs[next_stage].add_to_inputs(output_path)
             self.dag.remove_node(stage)
 
-    def _update_instance_status(self, new_status: PIDInstanceStatus, current_stage: PIDStage) -> PIDInstance:
+    def _update_instance_status(
+        self, new_status: PIDInstanceStatus, current_stage: PIDStage
+    ) -> PIDInstance:
         instance = self.instance_repository.read(self.instance_id)
         if instance.status is not new_status:
             instance.status = new_status

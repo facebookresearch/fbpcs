@@ -47,6 +47,7 @@ class PIDProtocolRunStage(PIDStage):
             storage_svc=storage_svc,
             onedocker_svc=onedocker_svc,
             onedocker_binary_config=onedocker_binary_config,
+            is_joint_stage=True
         )
 
         self.cloud_credential_service = self._build_cloud_credential_service(

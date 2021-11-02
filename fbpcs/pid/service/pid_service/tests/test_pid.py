@@ -204,6 +204,10 @@ class TestPIDService(unittest.TestCase):
         ) as mock_build_stages, patch.object(PIDDispatcher, "run_all") as mock_run_all:
             # add the line below to avoid "TypeError: __init__() should return None, not 'MagicMock'""
             mock_init.return_value = None
+            sample_pid_instance = self._get_sample_pid_instance()
+            self.pid_service.instance_repository.read = MagicMock(
+                return_value=sample_pid_instance
+            )
             await self.pid_service.run_instance(
                 instance_id=TEST_INSTANCE_ID,
                 pid_config=TEST_PID_CONFIG,
