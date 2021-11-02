@@ -13,14 +13,14 @@ from fbpcs.utils.buffered_s3_file_handler import BufferedS3Reader, BufferedS3Wri
 
 
 class TestBufferedS3Reader(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.s3_path = pathlib.Path("https://bucket.s3.Region.amazonaws.com/object")
         self.storage_service = Mock()
 
-    def test_context_manager(self):
+    def test_context_manager(self) -> None:
         pass
 
-    def test_seek(self):
+    def test_seek(self) -> None:
         reader = BufferedS3Reader(self.s3_path, self.storage_service)
         reader.data = "x" * 100
         self.assertEqual(0, reader.cursor)
@@ -32,7 +32,7 @@ class TestBufferedS3Reader(unittest.TestCase):
         reader.seek(150)
         self.assertEqual(100, reader.cursor)
 
-    def test_read(self):
+    def test_read(self) -> None:
         reader = BufferedS3Reader(self.s3_path, self.storage_service)
         reader.data = "x" * 100
 
@@ -55,7 +55,7 @@ class TestBufferedS3Reader(unittest.TestCase):
         res = reader.read()
         self.assertEqual("x" * 50, res)
 
-    def test_copy_to_local(self):
+    def test_copy_to_local(self) -> None:
         reader = BufferedS3Reader(self.s3_path, self.storage_service)
         reader.data = "x" * 100
         temp_path = reader.copy_to_local()
@@ -68,23 +68,23 @@ class TestBufferedS3Reader(unittest.TestCase):
 
 
 class TestBufferedS3Writer(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.s3_path = pathlib.Path("https://bucket.s3.Region.amazonaws.com/object")
         self.storage_service = Mock()
 
-    def test_context_manager(self):
+    def test_context_manager(self) -> None:
         with BufferedS3Writer(self.s3_path, self.storage_service) as writer:
             writer.write("abc")
         self.storage_service.write.assert_called_once_with(str(self.s3_path), "abc")
 
-    def test_del(self):
+    def test_del(self) -> None:
         writer = BufferedS3Writer(self.s3_path, self.storage_service)
         writer.write("abc")
         # __del__ should be invoked by removing the only reference to writer
         writer = None
         self.storage_service.write.assert_called_once_with(str(self.s3_path), "abc")
 
-    def test_write(self):
+    def test_write(self) -> None:
         writer = BufferedS3Writer(self.s3_path, self.storage_service)
         writer.write("abc")
         self.assertEqual("abc", writer.buffer)
