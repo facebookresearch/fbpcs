@@ -363,3 +363,42 @@ TEST(BinaryAssignmentOpTest, Plus) {
   EXPECT_EQ(expected1, c);
   EXPECT_EQ(expected2, c2);
 }
+
+TEST(BinaryAssignmentOpTest, Minus) {
+  Column<int64_t> c{9, 8, 7};
+  Column<int64_t> c2{5, 4, 3};
+  int64_t s = 2;
+
+  c -= c2;
+  c2 -= s;
+  Column<int64_t> expected1{4, 4, 4};
+  Column<int64_t> expected2{3, 2, 1};
+  EXPECT_EQ(expected1, c);
+  EXPECT_EQ(expected2, c2);
+}
+
+TEST(BinaryAssignmentOpTest, Multiply) {
+  Column<int64_t> c{9, 8, 7};
+  Column<int64_t> c2{5, 4, 3};
+  int64_t s = 2;
+
+  c *= c2;
+  c2 *= s;
+  Column<int64_t> expected1{45, 32, 21};
+  Column<int64_t> expected2{10, 8, 6};
+  EXPECT_EQ(expected1, c);
+  EXPECT_EQ(expected2, c2);
+}
+
+TEST(BinaryAssignmentOpTest, Divide) {
+  Column<int64_t> c{300, 200, 100};
+  Column<int64_t> c2{100, 50, 10};
+  int64_t s = 2;
+
+  c /= c2;
+  c2 /= s;
+  Column<int64_t> expected1{3, 4, 10};
+  Column<int64_t> expected2{50, 25, 5};
+  EXPECT_EQ(expected1, c);
+  EXPECT_EQ(expected2, c2);
+}
