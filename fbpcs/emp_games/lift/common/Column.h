@@ -112,6 +112,15 @@ public:
     return res;
   }
 
+  template <typename T2> Column<T2> toColumn() const {
+    Column<T2> res;
+    res.reserve(size());
+    for (std::size_t i = 0; i < size(); ++i) {
+      res.push_back(T2(at(i)));
+    }
+    return res;
+  }
+
   /* Comparison operators */
   friend bool operator==(const Column<T> &a, const Column<T> &b) {
     return a.v_ == b.v_;
