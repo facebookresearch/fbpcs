@@ -24,4 +24,43 @@ auto operator+(const Column<T> &a, T2 &b) -> Column<decltype(a.at(0) + b)> {
       b, [](const T &aValue, const T2 &bValue) { return aValue + bValue; });
 }
 
+template <typename T, typename T2>
+auto operator-(const Column<T> &a, const Column<T2> &b)
+    -> Column<decltype(a.at(0) - b.at(0))> {
+  return a.mapWith(
+      b, [](const T &aValue, const T2 &bValue) { return aValue - bValue; });
+}
+
+template <typename T, typename T2>
+auto operator-(const Column<T> &a, T2 &b) -> Column<decltype(a.at(0) - b)> {
+  return a.mapWithScalar(
+      b, [](const T &aValue, const T2 &bValue) { return aValue - bValue; });
+}
+
+template <typename T, typename T2>
+auto operator*(const Column<T> &a, const Column<T2> &b)
+    -> Column<decltype(a.at(0) * b.at(0))> {
+  return a.mapWith(
+      b, [](const T &aValue, const T2 &bValue) { return aValue * bValue; });
+}
+
+template <typename T, typename T2>
+auto operator*(const Column<T> &a, T2 &b) -> Column<decltype(a.at(0) * b)> {
+  return a.mapWithScalar(
+      b, [](const T &aValue, const T2 &bValue) { return aValue * bValue; });
+}
+
+template <typename T, typename T2>
+auto operator/(const Column<T> &a, const Column<T2> &b)
+    -> Column<decltype(a.at(0) / b.at(0))> {
+  return a.mapWith(
+      b, [](const T &aValue, const T2 &bValue) { return aValue / bValue; });
+}
+
+template <typename T, typename T2>
+auto operator/(const Column<T> &a, T2 &b) -> Column<decltype(a.at(0) / b)> {
+  return a.mapWithScalar(
+      b, [](const T &aValue, const T2 &bValue) { return aValue / bValue; });
+}
+
 } // namespace df
