@@ -136,16 +136,6 @@ class OutputMetrics {
       const std::vector<std::vector<emp::Bit>>& validPurchaseArrays,
       const std::vector<emp::Bit>& reachedArray);
 
-  // Test/Control clicks: testClicks/controlClicks
-  void calculateClicks(
-      const OutputMetrics::GroupType& groupType,
-      const std::vector<emp::Bit>& populationBits);
-
-  // Test/Control spend: testSpend/controlSpend
-  void calculateSpend(
-      const OutputMetrics::GroupType& groupType,
-      const std::vector<emp::Bit>& populationBits);
-
   // Test/control match count: testPopulation/Control population &
   void calculateMatchCount(
       const OutputMetrics::GroupType& groupType,
