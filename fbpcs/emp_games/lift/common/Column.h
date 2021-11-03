@@ -125,6 +125,27 @@ public:
     }
   }
 
+  template <typename T2, typename F>
+  void mapWithInPlace(const Column<T2> &other, F f) {
+    if (size() != other.size()) {
+      std::stringstream ss;
+      ss << "This Column has size() = " << size()
+         << ", but other Column has size() = " << other.size();
+      throw std::invalid_argument{ss.str()};
+    }
+
+    for (std::size_t i = 0; i < size(); ++i) {
+      at(i) = f(at(i), other.at(i));
+    }
+  }
+
+  template <typename T2, typename F>
+  void mapWithScalarInPlace(const T2 &other, F f) {
+    for (std::size_t i = 0; i < size(); ++i) {
+      at(i) = f(at(i), other);
+    }
+  }
+
   template <typename F>
   T reduce(F f, std::optional<T> acc = std::nullopt) const {
     std::size_t idx = 0;
