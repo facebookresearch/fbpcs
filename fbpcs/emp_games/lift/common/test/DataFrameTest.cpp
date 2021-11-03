@@ -46,3 +46,20 @@ TEST(DataFrameTest, CheckType) {
   EXPECT_NO_THROW(DataFrame::checkType(string, string2));
   EXPECT_THROW(DataFrame::checkType(string, int64), BadTypeException);
 }
+
+TEST(DataFrameTest, DropColumn) {
+  DataFrame df;
+  std::vector<int64_t> vI{1, 2, 3};
+  std::vector<std::string> vS{"a", "b", "c"};
+
+  df.get<int64_t>("intCol") = vI;
+  Column cI(vI);
+  df.get<std::string>("stringCol") = vS;
+  Column cS(vS);
+
+  EXPECT_EQ(df.at<int64_t>("intCol"), cI);
+  EXPECT_EQ(df.at<std::string>("stringCol"), cS);
+
+  df.drop<int64_t>("intCol");
+  EXPECT_THROW(df.at<int64_t>("intCol"), std::out_of_range);
+}
