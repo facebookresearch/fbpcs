@@ -166,3 +166,5 @@ private:
 };
 
 } // namespace df
+
+#include "fbpcs/emp_games/lift/common/Column-impl.h"
