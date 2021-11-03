@@ -13,6 +13,15 @@
 #include <sstream>
 #include <vector>
 
+namespace {
+// Taken from https://stackoverflow.com/a/28796458/15625637
+template <typename Test, template <typename...> class Ref>
+struct is_specialization : std::false_type {};
+
+template <template <typename...> class Ref, typename... Args>
+struct is_specialization<Ref<Args...>, Ref> : std::true_type {};
+} // anonymous namespace
+
 namespace df {
 
 template <typename T> class Column {
@@ -180,6 +189,15 @@ public:
 
   friend bool operator!=(const Column<T> &a, const Column<T> &b) {
     return a.v_ != b.v_;
+  }
+
+  /* Binary assignment operators */
+  template <typename T2> void operator+=(T2 &other) {
+    if constexpr (is_specialization<T2, Column>::value) {
+      mapWithInPlace(other, [](const T &a, const T &b) { return a + b; });
+    } else {
+      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a + b; });
+    }
   }
 
 private:
