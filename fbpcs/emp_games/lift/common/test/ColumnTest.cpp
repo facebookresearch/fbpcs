@@ -15,6 +15,7 @@ using namespace df;
 
 class Foo {
 public:
+  explicit Foo(int64_t a) : a_{a}, b_{0} {}
   Foo(int64_t a, int64_t b) : a_{a}, b_{b} {}
 
   friend bool operator==(const Foo &f1, const Foo &f2) {
@@ -26,7 +27,7 @@ private:
   int64_t b_;
 };
 
-TEST(Constructor, Default) {
+TEST(ColumnTest, Default) {
   Column<int64_t> c;
   c.push_back(1);
   c.push_back(2);
@@ -38,7 +39,7 @@ TEST(Constructor, Default) {
   EXPECT_EQ(c.at(2), 3);
 }
 
-TEST(Constructor, DefaultFilled) {
+TEST(ColumnTest, DefaultFilled) {
   Column<int64_t> c(4, 5);
 
   ASSERT_EQ(c.size(), 4);
@@ -48,7 +49,7 @@ TEST(Constructor, DefaultFilled) {
   EXPECT_EQ(c.at(3), 5);
 }
 
-TEST(Constructor, FromIterator) {
+TEST(ColumnTest, FromIterator) {
   std::vector<int64_t> vec{4, 5, 6};
   Column<int64_t> c(vec.begin(), vec.end());
 
@@ -58,7 +59,7 @@ TEST(Constructor, FromIterator) {
   EXPECT_EQ(c.at(2), 6);
 }
 
-TEST(Constructor, CopyVector) {
+TEST(ColumnTest, CopyVector) {
   std::vector<int64_t> vec{7, 8, 9};
   Column<int64_t> c(vec);
 
@@ -68,7 +69,7 @@ TEST(Constructor, CopyVector) {
   EXPECT_EQ(c.at(2), 9);
 }
 
-TEST(Constructor, FromVectorRValueReference) {
+TEST(ColumnTest, FromVectorRValueReference) {
   std::vector<int64_t> vec{1, 3, 5};
   Column<int64_t> c(std::move(vec));
 
@@ -78,7 +79,7 @@ TEST(Constructor, FromVectorRValueReference) {
   EXPECT_EQ(c.at(2), 5);
 }
 
-TEST(Constructor, FromInitializerList) {
+TEST(ColumnTest, FromInitializerList) {
   Column<int64_t> c{2, 4, 6};
   ASSERT_EQ(c.size(), 3);
   EXPECT_EQ(c.at(0), 2);
@@ -86,7 +87,7 @@ TEST(Constructor, FromInitializerList) {
   EXPECT_EQ(c.at(2), 6);
 }
 
-TEST(Constructor, FromColumnReference) {
+TEST(ColumnTest, FromColumnReference) {
   Column<int64_t> from{9, 8, 7};
   Column<int64_t> c(from);
 
@@ -96,7 +97,7 @@ TEST(Constructor, FromColumnReference) {
   EXPECT_EQ(c.at(2), 7);
 }
 
-TEST(Constructor, FromColumnRValueReference) {
+TEST(ColumnTest, FromColumnRValueReference) {
   Column<int64_t> from{6, 5, 4};
   Column<int64_t> c(std::move(from));
 
@@ -107,7 +108,7 @@ TEST(Constructor, FromColumnRValueReference) {
 }
 
 // Copy assignment constructor given std::vector
-TEST(CopyAssignmentConstructor, FromVectorReference) {
+TEST(ColumnTest, CopyFromVectorReference) {
   std::vector<int64_t> from{3, 2, 1};
   Column<int64_t> c = from;
 
@@ -117,7 +118,7 @@ TEST(CopyAssignmentConstructor, FromVectorReference) {
   EXPECT_EQ(c.at(2), 1);
 }
 // Copy constructor given std::vector&&
-TEST(CopyAssignmentConstructor, FromVectorRValueReference) {
+TEST(ColumnTest, CopyFromVectorRValueReference) {
   std::vector<int64_t> from{3, 5, 7};
   Column<int64_t> c = std::move(from);
 
@@ -127,7 +128,7 @@ TEST(CopyAssignmentConstructor, FromVectorRValueReference) {
   EXPECT_EQ(c.at(2), 7);
 }
 // Copy constructor given Column
-TEST(CopyAssignmentConstructor, FromColumnReference) {
+TEST(ColumnTest, CopyFromColumnReference) {
   Column<int64_t> from{4, 6, 8};
   Column<int64_t> c = from;
 
@@ -137,7 +138,7 @@ TEST(CopyAssignmentConstructor, FromColumnReference) {
   EXPECT_EQ(c.at(2), 8);
 }
 // Copy constructor given Column&&
-TEST(CopyAssignmentConstructor, FromColumnRValueReference) {
+TEST(ColumnTest, CopyFromColumnRValueReference) {
   std::vector<int64_t> from{5, 7, 9};
   Column<int64_t> c = std::move(from);
   Column<int64_t> c2 = std::move(c);
@@ -148,7 +149,7 @@ TEST(CopyAssignmentConstructor, FromColumnRValueReference) {
   EXPECT_EQ(c2.at(2), 9);
 }
 // Copy constructor given std::initializer_list
-TEST(CopyAssignmentConstructor, FromInitializerList) {
+TEST(ColumnTest, CopyFromInitializerList) {
   Column<int64_t> c = {2, 4, 6, 8, 10};
 
   ASSERT_EQ(c.size(), 5);
@@ -159,7 +160,7 @@ TEST(CopyAssignmentConstructor, FromInitializerList) {
   EXPECT_EQ(c.at(4), 10);
 }
 
-TEST(ColumnFunctionality, At) {
+TEST(ColumnTest, At) {
   Column<int64_t> c{1, 2, 3, 4, 5};
   EXPECT_EQ(c.at(0), 1);
   EXPECT_EQ(c.at(1), 2);
@@ -169,7 +170,7 @@ TEST(ColumnFunctionality, At) {
   EXPECT_THROW(c.at(5), std::out_of_range);
 }
 
-TEST(ColumnFunctionality, Empty) {
+TEST(ColumnTest, Empty) {
   Column<int64_t> c;
   EXPECT_TRUE(c.empty());
 
@@ -179,7 +180,7 @@ TEST(ColumnFunctionality, Empty) {
   EXPECT_FALSE(c.empty());
 }
 
-TEST(ColumnFunctionality, Size) {
+TEST(ColumnTest, Size) {
   Column<int64_t> c;
   EXPECT_EQ(c.size(), 0);
 
@@ -189,7 +190,7 @@ TEST(ColumnFunctionality, Size) {
   EXPECT_EQ(c.size(), 3);
 }
 
-TEST(ColumnFunctionality, EmplaceBack) {
+TEST(ColumnTest, EmplaceBack) {
   Column<Foo> c;
   Foo f(123, 456);
   c.emplace_back(123, 456);
@@ -198,7 +199,7 @@ TEST(ColumnFunctionality, EmplaceBack) {
   EXPECT_EQ(c.at(0), f);
 }
 
-TEST(ColumnFunctionality, ComparisonOperators) {
+TEST(ColumnTest, ComparisonOperators) {
   Column<int64_t> c1{1, 2, 3};
   Column<int64_t> c2{1, 2, 3};
   Column<int64_t> c3{4, 5, 6};
@@ -208,7 +209,7 @@ TEST(ColumnFunctionality, ComparisonOperators) {
   EXPECT_NE(c1, c3);
 }
 
-TEST(FunctionalTest, Apply) {
+TEST(ColumnTest, Apply) {
   Column<int64_t> c1{1, 2, 3};
   Column<int64_t> c2{1, 4, 9};
 
@@ -221,7 +222,7 @@ TEST(FunctionalTest, Apply) {
   EXPECT_EQ(vec, vecExpected);
 }
 
-TEST(FunctionalTest, Map) {
+TEST(ColumnTest, Map) {
   Column<int64_t> c1{1, 2, 3};
   auto c2 = c1.map([](int64_t v) { return v + 1; });
   Column<int64_t> expected{2, 3, 4};
@@ -235,7 +236,7 @@ TEST(FunctionalTest, Map) {
   EXPECT_EQ(c1, expected2);
 }
 
-TEST(FunctionalTest, Reduce) {
+TEST(ColumnTest, Reduce) {
   Column<int64_t> c{10, 20, 30};
   // Basic test
   auto sum = c.reduce([](int64_t acc, int64_t v) { return acc + v; });
@@ -253,4 +254,12 @@ TEST(FunctionalTest, Reduce) {
   // Empty column, no accumulator
   EXPECT_THROW(c2.reduce([](int64_t acc, int64_t v) { return acc + v; }),
                std::out_of_range);
+}
+
+TEST(ColumnTest, ToColumn) {
+  Column<int64_t> c{10, 20, 30};
+  Column<Foo> expected{Foo{10, 0}, Foo{20, 0}, Foo{30, 0}};
+
+  auto actual = c.toColumn<Foo>();
+  EXPECT_EQ(expected, actual);
 }
