@@ -17,8 +17,6 @@ namespace private_lift {
  * Simple struct representing the metrics in a Lift computation
  */
 struct LiftMetrics {
-  int64_t testPopulation;
-  int64_t controlPopulation;
   int64_t testConversions;
   int64_t controlConversions;
   int64_t testConverters;
@@ -31,16 +29,6 @@ struct LiftMetrics {
   int64_t controlNumConvSquared;
   int64_t testMatchCount;
   int64_t controlMatchCount;
-  int64_t testImpressions;
-  int64_t controlImpressions;
-  int64_t testClicks;
-  int64_t controlClicks;
-  int64_t testSpend;
-  int64_t controlSpend;
-  int64_t testReach;
-  int64_t controlReach;
-  int64_t testClickers;
-  int64_t controlClickers;
   int64_t reachedConversions;
   int64_t reachedValue;
   std::vector<int64_t> testConvHistogram;

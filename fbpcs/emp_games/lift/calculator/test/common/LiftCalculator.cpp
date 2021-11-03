@@ -71,8 +71,6 @@ OutputMetricsData LiftCalculator::compute(
   std::string linePartner;
 
   // Initialize field values from OutputMetricsData
-  out.testPopulation = 0;
-  out.controlPopulation = 0;
   out.testEvents = 0;
   out.controlEvents = 0;
   out.testConverters = 0;
@@ -85,16 +83,6 @@ OutputMetricsData LiftCalculator::compute(
   out.controlNumConvSquared = 0;
   out.testMatchCount = 0;
   out.controlMatchCount = 0;
-  out.testImpressions = 0;
-  out.controlImpressions = 0;
-  out.testClicks = 0;
-  out.controlClicks = 0;
-  out.testSpend = 0;
-  out.controlSpend = 0;
-  out.testReach = 0;
-  out.controlReach = 0;
-  out.testClickers = 0;
-  out.controlClickers = 0;
   out.reachedConversions = 0;
   out.reachedValue = 0;
 
@@ -195,7 +183,6 @@ OutputMetricsData LiftCalculator::compute(
       bool converted = false;
       bool countedMatchAlready = false;
       if (testFlag) {
-        ++out.testPopulation;
 
         for (auto i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
@@ -227,14 +214,8 @@ OutputMetricsData LiftCalculator::compute(
         }
         out.testValueSquared += value_subsum * value_subsum;
         out.testNumConvSquared += convCount * convCount;
-        out.testImpressions += numImpressions;
-        out.testClicks += numClicks;
-        out.testSpend += totalSpend;
-        out.testReach += (numImpressions > 0 ? 1 : 0);
-        out.testClickers += (numClicks > 0 ? 1 : 0);
         ++out.testConvHistogram[convCount];
       } else {
-        ++out.controlPopulation;
         for (auto i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
               !countedMatchAlready) {
@@ -259,11 +240,6 @@ OutputMetricsData LiftCalculator::compute(
         out.controlValue += value_subsum;
         out.controlValueSquared += value_subsum * value_subsum;
         out.controlNumConvSquared += convCount * convCount;
-        out.controlImpressions += numImpressions;
-        out.controlClicks += numClicks;
-        out.controlSpend += totalSpend;
-        out.controlReach += (numImpressions > 0 ? 1 : 0);
-        out.controlClickers += (numClicks > 0 ? 1 : 0);
         ++out.controlConvHistogram[convCount];
       }
     }
