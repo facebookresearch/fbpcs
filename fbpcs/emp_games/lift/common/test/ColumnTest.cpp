@@ -207,3 +207,50 @@ TEST(ColumnFunctionality, ComparisonOperators) {
   EXPECT_EQ(c2, c1);
   EXPECT_NE(c1, c3);
 }
+
+TEST(FunctionalTest, Apply) {
+  Column<int64_t> c1{1, 2, 3};
+  Column<int64_t> c2{1, 4, 9};
+
+  c1.apply([](int64_t &v) { v *= v; });
+  EXPECT_EQ(c1, c2);
+
+  std::vector<int64_t> vec;
+  std::vector<int64_t> vecExpected{1, 4, 9};
+  c2.apply([&vec](int64_t v) { vec.push_back(v); });
+  EXPECT_EQ(vec, vecExpected);
+}
+
+TEST(FunctionalTest, Map) {
+  Column<int64_t> c1{1, 2, 3};
+  auto c2 = c1.map([](int64_t v) { return v + 1; });
+  Column<int64_t> expected{2, 3, 4};
+
+  EXPECT_EQ(c2, expected);
+
+  // Also showing off that you can pass a function that takes a const-ref
+  c1.mapInPlace([](const int64_t &v) { return v * 2; });
+  Column<int64_t> expected2{2, 4, 6};
+
+  EXPECT_EQ(c1, expected2);
+}
+
+TEST(FunctionalTest, Reduce) {
+  Column<int64_t> c{10, 20, 30};
+  // Basic test
+  auto sum = c.reduce([](int64_t acc, int64_t v) { return acc + v; });
+  EXPECT_EQ(sum, 60);
+
+  // Use non-default accumulator
+  auto product = c.reduce([](int64_t acc, int64_t v) { return acc * v; }, 1);
+  EXPECT_EQ(product, 6000);
+
+  // Empty column, simple accumulator
+  Column<int64_t> c2;
+  auto x = c2.reduce([](int64_t acc, int64_t v) { return acc + v; }, 123);
+  EXPECT_EQ(x, 123);
+
+  // Empty column, no accumulator
+  EXPECT_THROW(c2.reduce([](int64_t acc, int64_t v) { return acc + v; }),
+               std::out_of_range);
+}
