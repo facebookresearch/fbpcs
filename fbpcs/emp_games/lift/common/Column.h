@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <initializer_list>
 #include <optional>
+#include <sstream>
 #include <vector>
 
 namespace df {
@@ -84,6 +85,36 @@ public:
     res.reserve(size());
     for (std::size_t i = 0; i < size(); ++i) {
       res.push_back(f(at(i)));
+    }
+    return res;
+  }
+
+  template <typename T2, typename F>
+  auto mapWith(const Column<T2> &other, F f) const
+      -> Column<decltype(f(at(0), other.at(0)))> {
+    Column<decltype(f(at(0), other.at(0)))> res;
+    if (size() != other.size()) {
+      std::stringstream ss;
+      ss << "This Column has size() = " << size()
+         << ", but other Column has size() = " << other.size();
+      throw std::invalid_argument{ss.str()};
+    }
+
+    res.reserve(size());
+    for (std::size_t i = 0; i < size(); ++i) {
+      res.push_back(f(at(i), other.at(i)));
+    }
+    return res;
+  }
+
+  template <typename T2, typename F>
+  auto mapWithScalar(const T2 &other, F f) const
+      -> Column<decltype(f(at(0), other))> {
+    Column<decltype(f(at(0), other))> res;
+
+    res.reserve(size());
+    for (std::size_t i = 0; i < size(); ++i) {
+      res.push_back(f(at(i), other));
     }
     return res;
   }
