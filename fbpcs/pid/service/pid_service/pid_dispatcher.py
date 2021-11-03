@@ -108,6 +108,12 @@ class PIDDispatcher(Dispatcher):
                 hmac_key,
             )
 
+            if (
+                stage.stage_type is UnionPIDStage.ADV_SHARD
+                or stage.stage_type is UnionPIDStage.PUBLISHER_SHARD
+            ):
+                self.stage_inputs[stage].add_to_inputs(input_path)
+
         # go over the flow map and create the connections among the interdependent stages
         for node in flow_map.flow:
             connections = flow_map.flow[node]
@@ -127,9 +133,8 @@ class PIDDispatcher(Dispatcher):
             }
             self.instance_repository.update(instance)
 
-        # find out the beginning stages and add their input paths
-        for stage_node in self._find_eligible_stages():
-            self.stage_inputs[stage_node].add_to_inputs(input_path)
+        # remove completed stages from the dag
+        self._cleanup_complete_stages()
 
     async def run_stage(
         self, stage: PIDStage, wait_for_containers: bool = True
@@ -232,8 +237,7 @@ class PIDDispatcher(Dispatcher):
             finished_stages = [
                 node
                 for node in self.dag.nodes
-                if self.dag.in_degree(node) == 0
-                and instance.stages_status.get(node.stage_type, None)
+                if instance.stages_status.get(node.stage_type, None)
                 is PIDStageStatus.COMPLETED
             ]
         for stage in finished_stages:
