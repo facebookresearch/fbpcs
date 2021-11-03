@@ -350,3 +350,16 @@ TEST(BinaryOpTest, Divide) {
   EXPECT_EQ(expectedC, actualC);
   EXPECT_EQ(expectedS, actualS);
 }
+
+TEST(BinaryAssignmentOpTest, Plus) {
+  Column<int64_t> c{9, 8, 7};
+  Column<int64_t> c2{5, 4, 3};
+  int64_t s = 2;
+
+  c += c2;
+  c2 += s;
+  Column<int64_t> expected1{14, 12, 10};
+  Column<int64_t> expected2{7, 6, 5};
+  EXPECT_EQ(expected1, c);
+  EXPECT_EQ(expected2, c2);
+}
