@@ -10,6 +10,7 @@ import json
 import logging
 import time
 from typing import Any, Dict, List, Optional
+from typing import Type
 
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     PLGraphAPIClient,
@@ -19,9 +20,9 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import (
 from fbpcs.pl_coordinator.pl_instance_runner import (
     run_instances,
     MAX_NUM_INSTANCES,
-    COMPLETED_STATUS,
-    READY_STATUS,
-    PRIVATE_LIFT_STAGES,
+)
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
@@ -57,6 +58,7 @@ def run_study(
     objective_ids: List[str],
     input_paths: List[str],
     logger: logging.Logger,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,  # if set to true, it will only run one stage
 ) -> None:
@@ -168,6 +170,7 @@ def run_study(
             instance_ids,
             chunk_input_paths,
             chunk_num_shards,
+            stage_flow,
             logger,
             num_tries,
             dry_run,
@@ -288,9 +291,9 @@ def _create_new_instances(
                 ] = _create_instance_retry(
                     client, study_id, cell_id, objective_id, logger
                 )
-                cell_obj_instances[cell_id][objective_id][STATUS] = READY_STATUS[
-                    PRIVATE_LIFT_STAGES[0]
-                ].value
+                cell_obj_instances[cell_id][objective_id][
+                    STATUS
+                ] = PrivateComputationInstanceStatus.CREATED.value
 
 
 def _create_instance_retry(
@@ -335,7 +338,8 @@ def _instance_to_input_path(
             if (
                 "instance_id" in data
                 and STATUS in data
-                and data[STATUS] is not COMPLETED_STATUS[PRIVATE_LIFT_STAGES[-1]].value
+                and data[STATUS]
+                is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED.value
             ):
                 instance_input_path[data["instance_id"]] = {
                     "cell_id": cell_id,
