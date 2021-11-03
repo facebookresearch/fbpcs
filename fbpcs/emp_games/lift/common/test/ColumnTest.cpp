@@ -234,6 +234,11 @@ TEST(ColumnTest, Map) {
   Column<int64_t> expected2{2, 4, 6};
 
   EXPECT_EQ(c1, expected2);
+
+  Column<int64_t> c3{111, 222, 333};
+  Column<Foo> foosExpected{Foo{111, 111}, Foo{222, 222}, Foo{333, 333}};
+  auto foosActual = c3.map([](int64_t v) { return Foo{v, v}; });
+  EXPECT_EQ(foosExpected, foosActual);
 }
 
 TEST(ColumnTest, Reduce) {
