@@ -77,3 +77,34 @@ target_link_libraries(
   shard_aggregator
   empgamecommon)
 install(TARGETS shard_aggregator DESTINATION bin)
+
+# decoupled_attribution
+file(GLOB decoupled_attribution_src
+  "fbpcs/emp_games/attribution/decoupled_attribution/**.c"
+  "fbpcs/emp_games/attribution/decoupled_attribution/**.cpp"
+  "fbpcs/emp_games/attribution/decoupled_attribution/**.h"
+  "fbpcs/emp_games/attribution/decoupled_attribution/**.hpp")
+list(FILTER decoupled_attribution_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  decoupled_attribution_calculator
+  ${decoupled_attribution_src})
+target_link_libraries(
+  decoupled_attribution_calculator
+  empgamecommon)
+install(TARGETS decoupled_attribution_calculator DESTINATION bin)
+
+# decoupled_aggregation
+file(GLOB decoupled_aggregation_src
+  "fbpcs/emp_games/attribution/decoupled_aggregation/**.c"
+  "fbpcs/emp_games/attribution/decoupled_aggregation/**.cpp"
+  "fbpcs/emp_games/attribution/decoupled_aggregation/**.h"
+  "fbpcs/emp_games/attribution/decoupled_aggregation/metadata/**.h"
+  "fbpcs/emp_games/attribution/decoupled_aggregation/**.hpp")
+list(FILTER decoupled_aggregation_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  decoupled_aggregation_calculator
+  ${decoupled_aggregation_src})
+target_link_libraries(
+  decoupled_aggregation_calculator
+  empgamecommon)
+install(TARGETS decoupled_aggregation_calculator DESTINATION bin)

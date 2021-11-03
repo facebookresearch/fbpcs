@@ -54,10 +54,12 @@ COPY --from=private_id /opt/private-id/bin/private-id-server /usr/local/bin/priv
 
 # Link all the binaries into /root/onedocker/package
 WORKDIR /usr/local/bin
-RUN for b in $(ls attribution* lift* pid* shard* private-id*); do ln -s $(pwd)/$b /root/onedocker/package/$b; done
+RUN for b in $(ls attribution* lift* pid* shard* private-id* decoupled*); do ln -s $(pwd)/$b /root/onedocker/package/$b; done
 
 # Link binaries name to match with onedocker binaries name
 RUN ln -s attribution_calculator /root/onedocker/package/compute
+RUN ln -s decoupled_attribution_calculator /root/onedocker/package/decoupled_attribution
+RUN ln -s decoupled_aggregation_calculator /root/onedocker/package/decoupled_aggregation
 RUN ln -s lift_calculator /root/onedocker/package/lift
 RUN ln -s shard_aggregator /root/onedocker/package/shard-aggregator
 
