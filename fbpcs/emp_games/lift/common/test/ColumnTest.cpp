@@ -300,3 +300,45 @@ TEST(BinaryOpTest, Plus) {
   EXPECT_EQ(expectedC, actualC);
   EXPECT_EQ(expectedS, actualS);
 }
+
+TEST(BinaryOpTest, Minus) {
+  Column<int64_t> c{1, 2, 3};
+  Column<int64_t> c2{4, 5, 6};
+  int64_t s = 10;
+
+  Column<int64_t> expectedC{-3, -3, -3};
+  Column<int64_t> expectedS{-9, -8, -7};
+  auto actualC = c - c2;
+  auto actualS = c - s;
+
+  EXPECT_EQ(expectedC, actualC);
+  EXPECT_EQ(expectedS, actualS);
+}
+
+TEST(BinaryOpTest, Multiply) {
+  Column<int64_t> c{1, 2, 3};
+  Column<int64_t> c2{4, 5, 6};
+  int64_t s = 10;
+
+  Column<int64_t> expectedC{4, 10, 18};
+  Column<int64_t> expectedS{10, 20, 30};
+  auto actualC = c * c2;
+  auto actualS = c * s;
+
+  EXPECT_EQ(expectedC, actualC);
+  EXPECT_EQ(expectedS, actualS);
+}
+
+TEST(BinaryOpTest, Divide) {
+  Column<int64_t> c{100, 200, 300};
+  Column<int64_t> c2{10, 20, 30};
+  int64_t s = 100;
+
+  Column<int64_t> expectedC{10, 10, 10};
+  Column<int64_t> expectedS{1, 2, 3};
+  auto actualC = c / c2;
+  auto actualS = c / s;
+
+  EXPECT_EQ(expectedC, actualC);
+  EXPECT_EQ(expectedS, actualS);
+}
