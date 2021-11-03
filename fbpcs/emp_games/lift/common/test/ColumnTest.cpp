@@ -241,6 +241,24 @@ TEST(ColumnTest, Map) {
   EXPECT_EQ(foosExpected, foosActual);
 }
 
+TEST(FunctionalTest, MapWith) {
+  Column<int64_t> c1{1, 2, 3};
+  Column<int64_t> c2{4, 5, 6};
+
+  Column<int64_t> expected{4, 10, 18};
+  auto actual = c1.mapWith(c2, [](int64_t a, int64_t b) { return a * b; });
+  EXPECT_EQ(expected, actual);
+}
+
+TEST(FunctionalTest, MapWithScalar) {
+  Column<int64_t> c1{1, 2, 3};
+  int64_t s = 10;
+
+  Column<int64_t> expected{10, 20, 30};
+  auto actual = c1.mapWithScalar(s, [](int64_t a, int64_t b) { return a * b; });
+  EXPECT_EQ(expected, actual);
+}
+
 TEST(ColumnTest, Reduce) {
   Column<int64_t> c{10, 20, 30};
   // Basic test
