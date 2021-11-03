@@ -98,6 +98,18 @@ public:
         const_cast<const DataFrame &>(*this).at<T>(key));
   }
 
+  template <typename T> void drop(const std::string &key) {
+    auto idx = std::type_index(typeid(T));
+    auto &ptr = maps_.at(idx);
+
+    // First erase from column map
+    dynamic_cast<MapT<T> &>(*ptr).erase(key);
+
+    // Then erase from types_
+    auto typeIt = types_.find(key);
+    types_.erase(typeIt);
+  }
+
 private:
   std::unordered_map<std::string, TypeInfo> types_;
   std::unordered_map<std::type_index, std::unique_ptr<BaseMap>> maps_;
