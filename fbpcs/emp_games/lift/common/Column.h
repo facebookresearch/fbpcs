@@ -200,6 +200,30 @@ public:
     }
   }
 
+  template <typename T2> void operator-=(T2 &other) {
+    if constexpr (is_specialization<T2, Column>::value) {
+      mapWithInPlace(other, [](const T &a, const T &b) { return a - b; });
+    } else {
+      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a - b; });
+    }
+  }
+
+  template <typename T2> void operator*=(T2 &other) {
+    if constexpr (is_specialization<T2, Column>::value) {
+      mapWithInPlace(other, [](const T &a, const T &b) { return a * b; });
+    } else {
+      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a * b; });
+    }
+  }
+
+  template <typename T2> void operator/=(T2 &other) {
+    if constexpr (is_specialization<T2, Column>::value) {
+      mapWithInPlace(other, [](const T &a, const T &b) { return a / b; });
+    } else {
+      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a / b; });
+    }
+  }
+
 private:
   std::vector<T> v_;
 };
