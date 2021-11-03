@@ -79,8 +79,8 @@ public:
     }
   }
 
-  template <typename F> Column<T> map(F f) const {
-    Column<T> res;
+  template <typename F> auto map(F f) const -> Column<decltype(f(at(0)))> {
+    Column<decltype(f(at(0)))> res;
     res.reserve(size());
     for (std::size_t i = 0; i < size(); ++i) {
       res.push_back(f(at(i)));
