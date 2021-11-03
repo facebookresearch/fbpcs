@@ -20,8 +20,6 @@ namespace private_lift {
  * Simple struct representing the metrics in a Lift computation
  */
 struct OutputMetricsData {
-  int64_t testPopulation = 0;
-  int64_t controlPopulation = 0;
   int64_t testEvents = 0;
   int64_t controlEvents = 0;
   int64_t testConverters = 0;
@@ -34,16 +32,6 @@ struct OutputMetricsData {
   int64_t controlNumConvSquared = 0;
   int64_t testMatchCount = 0;
   int64_t controlMatchCount = 0;
-  int64_t testImpressions = 0;
-  int64_t controlImpressions = 0;
-  int64_t testClicks = 0;
-  int64_t controlClicks = 0;
-  int64_t testSpend = 0;
-  int64_t controlSpend = 0;
-  int64_t testReach = 0;
-  int64_t controlReach = 0;
-  int64_t testClickers = 0;
-  int64_t controlClickers = 0;
   int64_t reachedConversions = 0;
   int64_t reachedValue = 0;
   std::vector<int64_t> testConvHistogram;
@@ -71,20 +59,8 @@ struct OutputMetricsData {
     os << "Control Value Squared: " << out.controlValueSquared << "\n";
     os << "Test NumConv Squared: " << out.testNumConvSquared << "\n";
     os << "Control NumConv Squared: " << out.controlNumConvSquared << "\n";
-    os << "Test Population: " << out.testPopulation << "\n";
-    os << "Control Population: " << out.controlPopulation << "\n";
     os << "Test Match Count: " << out.testMatchCount << "\n";
     os << "Control Match Count: " << out.controlMatchCount << "\n";
-    os << "Test Impressions: " << out.testImpressions << "\n";
-    os << "Control Impressions: " << out.controlImpressions << "\n";
-    os << "Test Clicks: " << out.testClicks << "\n";
-    os << "Control Clicks: " << out.controlClicks << "\n";
-    os << "Test Spend: " << out.testSpend << "\n";
-    os << "Control Spend: " << out.controlSpend << "\n";
-    os << "Test Reach: " << out.testReach << "\n";
-    os << "Control Reach: " << out.controlReach << "\n";
-    os << "Test Clickers: " << out.testClickers << "\n";
-    os << "Control Clickers: " << out.controlClickers << "\n";
     os << "Reached Conversions: " << out.reachedConversions << "\n";
     os << "Reached Value: " << out.reachedValue << "\n";
     os << "Test Conversion histogram: " << folly::join(',', out.testConvHistogram) << "\n";
@@ -99,8 +75,6 @@ struct OutputMetricsData {
   // aggregator
   LiftMetrics toLiftMetrics() const {
     LiftMetrics metrics{};
-    metrics.testPopulation = testPopulation;
-    metrics.controlPopulation = controlPopulation;
     metrics.testConversions = testEvents;
     metrics.controlConversions = controlEvents;
     metrics.testConverters = testConverters;
@@ -113,16 +87,6 @@ struct OutputMetricsData {
     metrics.controlNumConvSquared = controlNumConvSquared;
     metrics.testMatchCount = testMatchCount;
     metrics.controlMatchCount = controlMatchCount;
-    metrics.testImpressions = testImpressions;
-    metrics.controlImpressions = controlImpressions;
-    metrics.testClicks = testClicks;
-    metrics.controlClicks = controlClicks;
-    metrics.testSpend = testSpend;
-    metrics.controlSpend = controlSpend;
-    metrics.testReach = testReach;
-    metrics.controlReach = controlReach;
-    metrics.testClickers = testClickers;
-    metrics.controlClickers = controlClickers;
     metrics.reachedConversions = reachedConversions;
     metrics.reachedValue = reachedValue;
     metrics.testConvHistogram = testConvHistogram;

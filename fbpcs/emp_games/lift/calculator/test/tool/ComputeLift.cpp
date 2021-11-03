@@ -65,10 +65,6 @@ int main(int argc, char** argv) {
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset);
 
   // Output results
-  XLOG(INFO) << std::setw(20) << "test_population: " << std::setw(12)
-             << out.testPopulation;
-  XLOG(INFO) << std::setw(20) << "control_population: " << std::setw(12)
-             << out.controlPopulation;
   XLOG(INFO) << std::setw(20) << "test_event: " << std::setw(12)
              << out.testEvents;
   XLOG(INFO) << std::setw(20) << "control_event: " << std::setw(12)

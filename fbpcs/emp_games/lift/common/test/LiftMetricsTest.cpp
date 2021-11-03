@@ -17,7 +17,7 @@ class LiftMetricsTest : public ::testing::Test {
   LiftMetrics fakeLiftMetrics() {
     auto r = []() { return folly::Random::rand32(); };
     return LiftMetrics{r(), r(), r(), r(), r(), r(), r(), r(), r(), r(), r(),
-                       r(), r(), r(), r(), r(), r(), r(), r(), r(), r(), r()};
+                       r(), r(), r()};
   }
 
  protected:

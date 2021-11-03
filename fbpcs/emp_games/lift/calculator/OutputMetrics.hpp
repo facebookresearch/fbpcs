@@ -102,8 +102,6 @@ void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream &outfile) {
     outfile << metrics_.testNumConvSquared << ",";
     outfile << metrics_.controlNumConvSquared << ",";
   }
-  outfile << metrics_.testPopulation << ",";
-  outfile << metrics_.controlPopulation << "\n";
   outfile << metrics_.testMatchCount << ",";
   outfile << metrics_.controlMatchCount << "\n";
 
@@ -141,8 +139,6 @@ void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream &outfile) {
       outfile << subOut.testNumConvSquared << ",";
       outfile << subOut.controlNumConvSquared << ",";
     }
-    outfile << subOut.testPopulation << ",";
-    outfile << subOut.controlPopulation << "\n";
   }
 }
 
@@ -280,8 +276,6 @@ void OutputMetrics<MY_ROLE>::calculateStatistics(
   if (groupType == GroupType::TEST) {
     reachedArray = calculateImpressions(groupType, bits);
     calculateReachedConversions(groupType, validPurchaseArrays, reachedArray);
-    calculateClicks(groupType, bits);
-    calculateSpend(groupType, bits);
   }
 
   // If this is (value-based) conversion lift, calculate value metrics now
@@ -304,33 +298,17 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculatePopulation(
   // however that we still need to share emp::Bit for the population to compute
   // the cohort data since the publisher doesn't know group membership
   auto theSum = std::accumulate(populationVec.begin(), populationVec.end(), 0);
-  emp::Integer sumInt{private_measurement::INT_SIZE, theSum, PUBLISHER};
-  if (groupType == GroupType::TEST) {
-    metrics_.testPopulation = reveal<int64_t>(sumInt);
-  } else {
-    metrics_.controlPopulation = reveal<int64_t>(sumInt);
-  }
 
   // And compute for breakdowns + cohorts
   // TODO: These could be abstracted into a common function
   for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
         populationBits, publisherBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      publisherBreakdowns_[i].testPopulation = sum(groupBits);
-    } else {
-      publisherBreakdowns_[i].controlPopulation = sum(groupBits);
-    }
   }
 
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
         populationBits, partnerBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      cohortMetrics_[i].testPopulation = sum(groupBits);
-    } else {
-      cohortMetrics_[i].controlPopulation = sum(groupBits);
-    }
   }
   return populationBits;
 }
@@ -613,14 +591,6 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
                                   isUser & (numImpressions > zero));
           });
 
-  if (groupType == GroupType::TEST) {
-    metrics_.testImpressions = sum(impressionsArray);
-    metrics_.testReach = sum(reachArray);
-  } else {
-    metrics_.controlImpressions = sum(impressionsArray);
-    metrics_.controlReach = sum(reachArray);
-  }
-
   // And compute for breakdowns + cohorts
   // TODO: These could be abstracted into a common function
   for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
@@ -628,13 +598,6 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
         impressionsArray, publisherBitmasks_.at(i));
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
         reachArray, publisherBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      publisherBreakdowns_[i].testImpressions = sum(groupInts);
-      publisherBreakdowns_[i].testReach = sum(groupBits);
-    } else {
-      publisherBreakdowns_[i].controlImpressions = sum(groupInts);
-      publisherBreakdowns_[i].controlReach = sum(groupBits);
-    }
   }
 
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
@@ -642,125 +605,9 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
         impressionsArray, partnerBitmasks_.at(i));
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
         reachArray, partnerBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      cohortMetrics_[i].testImpressions = sum(groupInts);
-      cohortMetrics_[i].testReach = sum(groupBits);
-    } else {
-      cohortMetrics_[i].controlImpressions = sum(groupInts);
-      cohortMetrics_[i].controlReach = sum(groupBits);
-    }
   }
 
   return reachArray;
-}
-
-template <int32_t MY_ROLE>
-void OutputMetrics<MY_ROLE>::calculateClicks(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<emp::Bit> &populationBits) {
-  XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
-             << " clicks & clickers";
-
-  const std::vector<emp::Integer> numClicks =
-      privatelyShareIntsFromPublisher<MY_ROLE>(inputData_.getNumClicks(), n_,
-                                               FULL_BITS);
-
-  auto [clicksArray, clickersArray] =
-      private_measurement::secret_sharing::zip_and_map<emp::Bit, emp::Integer,
-                                                       emp::Integer, emp::Bit>(
-          populationBits, numClicks,
-          [](emp::Bit isUser,
-             emp::Integer numClicks) -> std::pair<emp::Integer, emp::Bit> {
-            const emp::Integer zero =
-                emp::Integer{private_measurement::INT_SIZE, 0, emp::PUBLIC};
-            return std::make_pair(emp::If(isUser, numClicks, zero),
-                                  isUser & (numClicks > zero));
-          });
-
-  if (groupType == GroupType::TEST) {
-    metrics_.testClicks = sum(clicksArray);
-    metrics_.testClickers = sum(clickersArray);
-  } else {
-    metrics_.controlClicks = sum(clicksArray);
-    metrics_.controlClickers = sum(clickersArray);
-  }
-
-  // And compute for breakdowns + cohorts
-  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
-    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        clicksArray, publisherBitmasks_.at(i));
-    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        clickersArray, publisherBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      publisherBreakdowns_[i].testClicks = sum(groupInts);
-      publisherBreakdowns_[i].testClickers = sum(groupBits);
-    } else {
-      publisherBreakdowns_[i].controlClicks = sum(groupInts);
-      publisherBreakdowns_[i].controlClickers = sum(groupBits);
-    }
-  }
-
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        clicksArray, partnerBitmasks_.at(i));
-    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        clickersArray, partnerBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      cohortMetrics_[i].testClicks = sum(groupInts);
-      cohortMetrics_[i].testClickers = sum(groupBits);
-    } else {
-      cohortMetrics_[i].controlClicks = sum(groupInts);
-      cohortMetrics_[i].controlClickers = sum(groupBits);
-    }
-  }
-}
-
-template <int32_t MY_ROLE>
-void OutputMetrics<MY_ROLE>::calculateSpend(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<emp::Bit> &populationBits) {
-  XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " spend";
-
-  const std::vector<emp::Integer> totalSpend =
-      privatelyShareIntsFromPublisher<MY_ROLE>(inputData_.getTotalSpend(), n_,
-                                               FULL_BITS);
-
-  std::vector<emp::Integer> spendArray =
-      private_measurement::functional::zip_apply(
-          [](emp::Bit isUser, emp::Integer totalSpend) -> emp::Integer {
-            const emp::Integer zero =
-                emp::Integer{private_measurement::INT_SIZE, 0, emp::PUBLIC};
-            return emp::If(isUser, totalSpend, zero);
-          },
-          populationBits.begin(), populationBits.end(), totalSpend.begin());
-
-  if (groupType == GroupType::TEST) {
-    metrics_.testSpend = sum(spendArray);
-  } else {
-    metrics_.controlSpend = sum(spendArray);
-  }
-
-  // And compute for breakdowns + cohorts
-  // TODO: These could be abstracted into a common function
-  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
-    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        spendArray, publisherBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      publisherBreakdowns_[i].testSpend = sum(groupInts);
-    } else {
-      publisherBreakdowns_[i].controlSpend = sum(groupInts);
-    }
-  }
-
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        spendArray, partnerBitmasks_.at(i));
-    if (groupType == GroupType::TEST) {
-      cohortMetrics_[i].testSpend = sum(groupInts);
-    } else {
-      cohortMetrics_[i].controlSpend = sum(groupInts);
-    }
-  }
 }
 
 template <int32_t MY_ROLE>

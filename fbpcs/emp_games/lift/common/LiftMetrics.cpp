@@ -18,9 +18,7 @@
 
 namespace private_lift {
 bool LiftMetrics::operator==(const LiftMetrics& other) const noexcept {
-  return testPopulation == other.testPopulation &&
-      controlPopulation == other.controlPopulation &&
-      testConversions == other.testConversions &&
+  return testConversions == other.testConversions &&
       controlConversions == other.controlConversions &&
       testConverters == other.testConverters &&
       controlConverters == other.controlConverters &&
@@ -31,13 +29,6 @@ bool LiftMetrics::operator==(const LiftMetrics& other) const noexcept {
       controlNumConvSquared == other.controlNumConvSquared &&
       testMatchCount == other.testMatchCount &&
       controlMatchCount == other.controlMatchCount &&
-      testImpressions == other.testImpressions &&
-      controlImpressions == other.controlImpressions &&
-      testClicks == other.testClicks && controlClicks == other.controlClicks &&
-      testSpend == other.testSpend && controlSpend == other.controlSpend &&
-      testReach == other.testReach && controlReach == other.controlReach &&
-      testClickers == other.testClickers &&
-      controlClickers == other.controlClickers &&
       reachedConversions == other.reachedConversions &&
       reachedValue == other.reachedValue &&
       testConvHistogram == other.testConvHistogram &&
@@ -69,8 +60,6 @@ LiftMetrics LiftMetrics::operator+(const LiftMetrics& other) const noexcept {
   }
 
   return LiftMetrics{
-      testPopulation + other.testPopulation,
-      controlPopulation + other.controlPopulation,
       testConversions + other.testConversions,
       controlConversions + other.controlConversions,
       testConverters + other.testConverters,
@@ -83,16 +72,6 @@ LiftMetrics LiftMetrics::operator+(const LiftMetrics& other) const noexcept {
       controlNumConvSquared + other.controlNumConvSquared,
       testMatchCount + other.testMatchCount,
       controlMatchCount + other.controlMatchCount,
-      testImpressions + other.testImpressions,
-      controlImpressions + other.controlImpressions,
-      testClicks + other.testClicks,
-      controlClicks + other.controlClicks,
-      testSpend + other.testSpend,
-      controlSpend + other.controlSpend,
-      testReach + other.testReach,
-      controlReach + other.controlReach,
-      testClickers + other.testClickers,
-      controlClickers + other.controlClickers,
       reachedConversions + other.reachedConversions,
       reachedValue + other.reachedValue,
       addedTestConvHistogram,
@@ -125,8 +104,6 @@ LiftMetrics LiftMetrics::operator^(const LiftMetrics& other) const noexcept {
   }
 
   return LiftMetrics{
-      testPopulation ^ other.testPopulation,
-      controlPopulation ^ other.controlPopulation,
       testConversions ^ other.testConversions,
       controlConversions ^ other.controlConversions,
       testConverters ^ other.testConverters,
@@ -139,16 +116,6 @@ LiftMetrics LiftMetrics::operator^(const LiftMetrics& other) const noexcept {
       controlNumConvSquared ^ other.controlNumConvSquared,
       testMatchCount ^ other.testMatchCount,
       controlMatchCount ^ other.controlMatchCount,
-      testImpressions ^ other.testImpressions,
-      controlImpressions ^ other.controlImpressions,
-      testClicks ^ other.testClicks,
-      controlClicks ^ other.controlClicks,
-      testSpend ^ other.testSpend,
-      controlSpend ^ other.controlSpend,
-      testReach ^ other.testReach,
-      controlReach ^ other.controlReach,
-      testClickers ^ other.testClickers,
-      controlClickers ^ other.controlClickers,
       reachedConversions ^ other.reachedConversions,
       reachedValue ^ other.reachedValue,
       xoredTestConvHistogram,
@@ -176,8 +143,6 @@ folly::dynamic LiftMetrics::toDynamic() const {
       folly::dynamic(controlConvHistogram.begin(), controlConvHistogram.end());
 
   return folly::dynamic::object(
-      "testPopulation", testPopulation)(
-      "controlPopulation", controlPopulation)(
       "testConversions", testConversions)(
       "controlConversions", controlConversions)(
       "testConverters", testConverters)(
@@ -190,16 +155,6 @@ folly::dynamic LiftMetrics::toDynamic() const {
       "controlNumConvSquared", controlNumConvSquared)(
       "testMatchCount", testMatchCount)(
       "controlMatchCount", controlMatchCount)(
-      "testImpressions", testImpressions)(
-      "controlImpressions", controlImpressions)(
-      "testClicks", testClicks)(
-      "controlClicks", controlClicks)(
-      "testSpend", testSpend)(
-      "controlSpend", controlSpend)(
-      "testReach", testReach)(
-      "controlReach", controlReach)(
-      "testClickers", testClickers)(
-      "controlClickers", controlClickers)(
       "reachedConversions", reachedConversions)(
       "reachedValue", reachedValue)(
       "testConvHistogram", testConvHistogramDynamic)(
@@ -211,8 +166,6 @@ LiftMetrics LiftMetrics::fromDynamic(const folly::dynamic& obj) {
   std::vector<int64_t> testConvHistogram;
   std::vector<int64_t> controlConvHistogram;
 
-  metrics.testPopulation = obj["testPopulation"].asInt();
-  metrics.controlPopulation = obj["controlPopulation"].asInt();
   metrics.testConversions = obj["testConversions"].asInt();
   metrics.controlConversions = obj["controlConversions"].asInt();
   metrics.testConverters = obj["testConverters"].asInt();
@@ -225,16 +178,6 @@ LiftMetrics LiftMetrics::fromDynamic(const folly::dynamic& obj) {
   metrics.controlNumConvSquared = obj["controlNumConvSquared"].asInt();
   metrics.testMatchCount = obj["testMatchCount"].asInt();
   metrics.controlMatchCount = obj["controlMatchCount"].asInt();
-  metrics.testImpressions = obj["testImpressions"].asInt();
-  metrics.controlImpressions = obj["controlImpressions"].asInt();
-  metrics.testClicks = obj["testClicks"].asInt();
-  metrics.controlClicks = obj["controlClicks"].asInt();
-  metrics.testSpend = obj["testSpend"].asInt();
-  metrics.controlSpend = obj["controlSpend"].asInt();
-  metrics.testReach = obj["testReach"].asInt();
-  metrics.controlReach = obj["controlReach"].asInt();
-  metrics.testClickers = obj["testClickers"].asInt();
-  metrics.controlClickers = obj["controlClickers"].asInt();
   metrics.reachedConversions = obj["reachedConversions"].asInt();
   metrics.reachedValue = obj["reachedValue"].asInt();
 
