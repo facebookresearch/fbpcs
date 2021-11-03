@@ -286,3 +286,17 @@ TEST(ColumnTest, ToColumn) {
   auto actual = c.toColumn<Foo>();
   EXPECT_EQ(expected, actual);
 }
+
+TEST(BinaryOpTest, Plus) {
+  Column<int64_t> c{1, 2, 3};
+  Column<int64_t> c2{4, 5, 6};
+  int64_t s = 10;
+
+  Column<int64_t> expectedC{5, 7, 9};
+  Column<int64_t> expectedS{11, 12, 13};
+  auto actualC = c + c2;
+  auto actualS = c + s;
+
+  EXPECT_EQ(expectedC, actualC);
+  EXPECT_EQ(expectedS, actualS);
+}
