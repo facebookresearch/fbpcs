@@ -166,6 +166,20 @@ undeploy_aws_resources() {
             -var "region=$region" \
             -var "tag_postfix=$tag_postfix" \
             -var "aws_account_id=$aws_account_id"
+
+        cd /terraform_deployment/terraform_scripts/data_validation
+        terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/data_validation$tag_postfix.tfstate"
+
+        terraform destroy \
+        -auto-approve \
+        -var "aws_region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "upload_and_validation_s3_bucket=$s3_bucket_data_pipeline" \
+        -var "events_data_upload_s3_key=data_validation_upload"
     fi
 
     echo "Finished destroy all AWS resources, except for S3 buckets (can not be deleted if it's not empty)"
@@ -302,6 +316,24 @@ deploy_aws_resources() {
             -var "app_data_input_bucket_id=$app_data_input_bucket_id" \
             -var "app_data_input_bucket_arn=$app_data_input_bucket_arn"
         echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
+
+        echo "######################## Configure Data Validation Pipeline ########################"
+        cd /terraform_deployment/terraform_scripts/data_validation
+        echo "######################## Initializing terraform working directory started ########################"
+        terraform init -reconfigure \
+            -backend-config "bucket=$s3_bucket_for_storage" \
+            -backend-config "region=$region" \
+            -backend-config "key=tfstate/data_validation$tag_postfix.tfstate"
+        echo "######################## Initializing terraform working directory completed ########################"
+        echo "######################## Deploy Data Validation Terraform scripts started ########################"
+        terraform apply \
+            -auto-approve \
+            -var "aws_region=$region" \
+            -var "tag_postfix=$tag_postfix" \
+            -var "aws_account_id=$aws_account_id" \
+            -var "upload_and_validation_s3_bucket=$s3_bucket_data_pipeline" \
+            -var "events_data_upload_s3_key=data_validation_upload"
+        echo "######################## Deploy Data Validation Terraform scripts completed ########################"
     fi
 
     echo "########################Finished AWS Infrastructure Deployment########################"
@@ -352,7 +384,6 @@ else
     # s3_bucket_data_pipeline is set, but add tags to it
     s3_bucket_data_pipeline="$s3_bucket_data_pipeline$tag_postfix"
 fi
-
 
 if "$undeploy"
 then

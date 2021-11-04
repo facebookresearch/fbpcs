@@ -24,7 +24,7 @@ resource "aws_s3_bucket_object" "lambda_trigger_object" {
 }
 
 resource "aws_iam_role" "lambda_iam" {
-  name = "lambda-iam${var.tag_postfix}"
+  name = "lambda-iam-data-validation${var.tag_postfix}"
 
   assume_role_policy = <<EOF
 {
