@@ -35,6 +35,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     get_instance,
     id_match,
     prepare_compute_input,
+    run_stage,
 )
 
 
@@ -50,6 +51,7 @@ class LoggerAdapter(logging.LoggerAdapter):
 INVALID_STATUS_LIST = [
     PrivateComputationInstanceStatus.UNKNOWN,
     PrivateComputationInstanceStatus.PROCESSING_REQUEST,
+    PrivateComputationInstanceStatus.TIMEOUT,
 ]
 
 POLL_INTERVAL = 60
@@ -215,9 +217,15 @@ class PrivateLiftCalcInstance:
             if self.status_ready(status):
                 self.logger.info(f"{self.role} instance has expected status: {status}.")
                 return
-            if status is not fail_status and self.status is fail_status:
+            if status not in [
+                fail_status,
+                PrivateComputationInstanceStatus.TIMEOUT,
+            ] and self.status in [
+                fail_status,
+                PrivateComputationInstanceStatus.TIMEOUT,
+            ]:
                 raise PLInstanceCalculationException(
-                    f"{self.role} failed expecting status {status}. Status: {fail_status}."
+                    f"{self.role} failed with status {self.status}. Expecting status {status}."
                 )
             sleep(POLL_INTERVAL)
         raise PLInstanceCalculationException(
@@ -238,6 +246,15 @@ class PrivateLiftCalcInstance:
             stage.failed_status,
         ]
 
+    def get_valid_stage(
+        self, stage_flow: Type[PrivateComputationBaseStageFlow]
+    ) -> Optional[PrivateComputationBaseStageFlow]:
+        if not self.is_finished():
+            for stage in list(stage_flow):
+                if self.ready_for_stage(stage):
+                    return stage
+        return None
+
     def should_invoke_operation(self, stage: PrivateComputationBaseStageFlow) -> bool:
         # Once the the publisher-partner <stage> is called, this function
         # determines if <stage> operation should be invoked at publisher/partner end. If
@@ -251,6 +268,10 @@ class PrivateLiftCalcInstance:
             stage.failed_status,
             OPERATION_REQUEST_TIMEOUT,
         )
+
+    def is_finished(self):
+        finished_status = GRAPHAPI_INSTANCE_STATUSES["RESULT_READY"]
+        return self.status is finished_status
 
 
 class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
@@ -277,6 +298,15 @@ class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
             )
         self.server_ips = response.get("server_ips")
 
+    def wait_valid_status(
+        self,
+        timeout: int,
+    ) -> None:
+        self.update_instance()
+        if self.status is PrivateComputationInstanceStatus.TIMEOUT:
+            self.client.invoke_operation(self.instance_id, "NEXT")
+        super().wait_valid_status(timeout)
+
     def status_ready(self, status: PrivateComputationInstanceStatus) -> bool:
         self.logger.info(
             f"{self.role} instance status: {self.status}, server ips: {self.server_ips}."
@@ -285,7 +315,12 @@ class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
 
     def run_stage(self, stage: PrivateComputationBaseStageFlow) -> None:
         if self.should_invoke_operation(stage):
-            self.client.invoke_operation(self.instance_id, stage.name)
+            operation = (
+                stage.name
+                if isinstance(stage, PrivateComputationLegacyStageFlow)
+                else "NEXT"
+            )
+            self.client.invoke_operation(self.instance_id, operation)
 
 
 class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
@@ -334,7 +369,9 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         return input_path[: input_path.rfind("/")]
 
     def run_stage(
-        self, server_ips: List[str], stage: PrivateComputationBaseStageFlow
+        self,
+        stage: PrivateComputationBaseStageFlow,
+        server_ips: Optional[List[str]] = None,
     ) -> None:
         if self.should_invoke_operation(stage):
             try:
@@ -369,7 +406,13 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                         dry_run=None,
                     )
                 else:
-                    raise NotImplementedError(f"{stage.name} not implemented yet")
+                    run_stage(
+                        config=self.config,
+                        instance_id=self.instance_id,
+                        stage=stage,
+                        logger=self.logger,
+                        server_ips=server_ips,
+                    )
             except Exception as error:
                 self.logger.exception(f"Error running partner {stage.name} {error}")
 
@@ -405,16 +448,28 @@ class PLInstanceRunner:
         self.dry_run = dry_run
         self.stage_flow = stage_flow
 
-    def ready_for_stage(self, stage: PrivateComputationBaseStageFlow):
-        return self.publisher.ready_for_stage(stage) and self.partner.ready_for_stage(
-            stage
-        )
-
     def get_valid_stage(self) -> Optional[PrivateComputationBaseStageFlow]:
         if not self.is_finished():
-            for stage in list(self.stage_flow):
-                if self.ready_for_stage(stage):
-                    return stage
+            publisher_stage = self.publisher.get_valid_stage(self.stage_flow)
+            partner_stage = self.partner.get_valid_stage(self.stage_flow)
+
+            # expected for all joint stages
+            if publisher_stage is partner_stage:
+                return publisher_stage
+
+            elif publisher_stage is None:
+                return partner_stage
+            elif partner_stage is None:
+                return publisher_stage
+
+            elif publisher_stage is partner_stage.previous_stage:
+                if not publisher_stage.is_joint_stage:
+                    # Example: publisher is PREPARE_DATA_FAILED, partner is PREPARE_DATA_COMPLETED
+                    return publisher_stage
+            elif partner_stage is publisher_stage.previous_stage:
+                if not partner_stage.is_joint_stage:
+                    # Example: publisher is PREPARE_DATA_COMPLETED, partner is PREPARE_DATA_FAILED
+                    return partner_stage
         return None
 
     def wait_valid_stage(self, timeout: int) -> PrivateComputationBaseStageFlow:
@@ -436,12 +491,8 @@ class PLInstanceRunner:
             f"Waiting for valid stage timed out after {timeout}s."
         )
 
-    def is_finished(self):
-        finished_status = GRAPHAPI_INSTANCE_STATUSES["RESULT_READY"]
-        return (
-            self.publisher.status is finished_status
-            and self.partner.status is finished_status
-        )
+    def is_finished(self) -> bool:
+        return self.publisher.is_finished() and self.partner.is_finished()
 
     def run(self) -> None:
         tries = 0
@@ -453,6 +504,8 @@ class PLInstanceRunner:
                         f"Private Lift run completed for instance {self.instance_id}. View results at {self.partner.output_dir}"
                     )
                     return
+                # in case the publisher has a status of TIMEOUT
+                self.publisher.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
                 valid_stage = self.wait_valid_stage(WAIT_VALID_STAGE_TIMEOUT)
                 if valid_stage is not None:
                     self.run_stage(valid_stage)
@@ -473,15 +526,17 @@ class PLInstanceRunner:
         # call publisher <STAGE>
         self.logger.info(f"Invoking publisher {stage.name}.")
         self.publisher.run_stage(stage)
-        # keep polling graphapi until publisher status is <STAGE>_STARTED and server_ips are available
-        self.publisher.wait_stage_start(stage)
-        server_ips = self.publisher.server_ips
-        if server_ips is None:
-            raise ValueError("in run_stage, server_ips is None")
-        # call partner <STAGE>
+        server_ips = None
+        # if it's a joint stage, it means partner must wait for publisher to provide server ips.
+        # if it is not a joint stage, publisher and partner can run in parallel
+        if stage.is_joint_stage:
+            # keep polling graphapi until publisher status is <STAGE>_STARTED and server_ips are available
+            self.publisher.wait_stage_start(stage)
+            server_ips = self.publisher.server_ips
+            if server_ips is None:
+                raise ValueError(f"{stage.name} requires server ips but got none.")
         self.logger.info(f"Starting partner {stage.name}:")
-        self.partner.run_stage(server_ips, stage)
-        # wait for stage to complete
+        self.partner.run_stage(stage, server_ips)
         self.wait_stage_complete(stage)
 
     def wait_stage_complete(self, stage: PrivateComputationBaseStageFlow) -> None:
@@ -505,11 +560,13 @@ class PLInstanceRunner:
                 self.logger.info(f"Stage {stage.name} is complete.")
                 return
             if (
-                self.publisher.status is fail_status
+                self.publisher.status
+                in [fail_status, PrivateComputationInstanceStatus.TIMEOUT]
                 or self.partner.status is fail_status
             ):
                 if (
-                    self.publisher.status is fail_status
+                    self.publisher.status
+                    in [fail_status, PrivateComputationInstanceStatus.TIMEOUT]
                     and self.partner.status is start_status
                     and cancel_time <= CANCEL_STAGE_TIMEOUT
                 ):
