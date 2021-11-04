@@ -46,6 +46,7 @@ ADD aws_terraform_template /terraform_deployment/terraform_scripts
 ADD data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
 ADD semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
 ADD config.yml /terraform_deployment
+ADD data_validation /terraform_deployment/terraform_scripts/data_validation
 
 # #########################################
 # Spring Boot
