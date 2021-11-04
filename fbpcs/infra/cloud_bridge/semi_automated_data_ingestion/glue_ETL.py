@@ -87,6 +87,7 @@ expected_column_list = [
     "currency_type",
     "conversion_value",
     "event_type",
+    "action_source",
 ]
 for column_name in expected_column_list:
     if column_name not in listColumns:
@@ -96,7 +97,6 @@ for column_name in expected_column_list:
 # create columns
 augmented_df = (
     data_frame.withColumn("unixtime", data_frame["timestamp"].cast(IntegerType()))
-    .withColumn("action_source", lit("app"))
     .withColumn("date_col", to_date(from_unixtime(col("unixtime"))))
     .withColumn("year", year(col("date_col")))
     .withColumn("month", month(col("date_col")))
