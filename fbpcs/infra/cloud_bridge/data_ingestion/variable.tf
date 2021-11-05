@@ -27,3 +27,8 @@ variable "aws_account_id" {
   description = "your aws account id, that's used to read encrypted S3 files"
   default     = ""
 }
+
+variable "data_upload_key_path" {
+  description = "your aws account id, that's used to read encrypted S3 files"
+  default     = "semi-automated-data-ingestion"
+}

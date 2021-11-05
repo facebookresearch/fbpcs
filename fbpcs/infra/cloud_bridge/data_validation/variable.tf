@@ -28,6 +28,11 @@ variable "validation_results_s3_key" {
   default     = ""
 }
 
+variable "semi_automated_key_path" {
+  description = "the bucket path where semi-automated data is uploaded"
+  default     = ""
+}
+
 variable "validation_debug_mode" {
   description = "extra logging for debugging/dev purpose"
   default     = 0

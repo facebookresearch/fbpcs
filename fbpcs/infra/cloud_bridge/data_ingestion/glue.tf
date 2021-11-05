@@ -93,7 +93,7 @@ resource "aws_glue_crawler" "mpc_events_crawler" {
 
   s3_target {
     path       = "s3://${var.data_processing_output_bucket}"
-    exclusions = ["processing-failed**", "semi-automated-data-ingestion/**"]
+    exclusions = ["processing-failed**", "${var.data_upload_key_path}/**"]
   }
 
   schedule = "cron(0 * * * ? *)"
