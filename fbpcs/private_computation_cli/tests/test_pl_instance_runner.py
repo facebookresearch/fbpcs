@@ -73,7 +73,9 @@ class TestPlInstanceRunner(TestCase):
                 mock_get_instance.return_value = self._get_pc_instance(partner_status)
 
                 runner = self._get_runner(type(stage))
-                ready_for_stage = runner.ready_for_stage(stage)
+                # this test is updated in the next diff to check publisher and partner
+                # with possibly differing "ready for" results
+                ready_for_stage = runner.publisher.ready_for_stage(stage)
                 self.assertEqual(ready_for_stage, result)
 
     @patch(

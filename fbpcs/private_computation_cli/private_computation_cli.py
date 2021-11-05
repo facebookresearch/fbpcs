@@ -52,6 +52,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
     PrivateComputationLegacyStageFlow,
 )
+from fbpcs.private_computation.entity.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
+)
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
     cancel_current_stage,
@@ -253,8 +256,7 @@ def main():
         if arguments["--legacy"]:
             stage_flow = PrivateComputationLegacyStageFlow
         else:
-            # I will replace this in later diffs in stack
-            stage_flow = PrivateComputationLegacyStageFlow
+            stage_flow = PrivateComputationStageFlow
 
         logger.info(f"Running instance: {instance_id}")
         run_instance(
@@ -271,8 +273,7 @@ def main():
         if arguments["--legacy"]:
             stage_flow = PrivateComputationLegacyStageFlow
         else:
-            # I will replace this in later diffs in stack
-            stage_flow = PrivateComputationLegacyStageFlow
+            stage_flow = PrivateComputationStageFlow
         run_instances(
             config=config,
             instance_ids=arguments["<instance_ids>"],
@@ -287,8 +288,7 @@ def main():
         if arguments["--legacy"]:
             stage_flow = PrivateComputationLegacyStageFlow
         else:
-            # I will replace this in later diffs in stack
-            stage_flow = PrivateComputationLegacyStageFlow
+            stage_flow = PrivateComputationStageFlow
         run_study(
             config=config,
             study_id=arguments["<study_id>"],
