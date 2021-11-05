@@ -5,26 +5,10 @@
 
 import csv
 from botocore.response import StreamingBody
-from typing import Dict, List, Optional, Set
+from expected_fields import ALL_REQUIRED_FIELDS, ONE_OR_MORE_REQUIRED_FIELDS, FORMAT_VALIDATION_FOR_FIELD
+from typing import Dict, List, Optional
 import re
 
-ALL_REQUIRED_FIELDS: Set[str] = {
-    'action_source',
-    'conversion_value',
-    'currency_type',
-    'event_type',
-    'timestamp',
-}
-ONE_OR_MORE_REQUIRED_FIELDS: Set[str] = {'email','device_id'}
-FORMAT_VALIDATION_FOR_FIELD: Dict[str, re.Pattern] = {
-    'email': re.compile(r"^[a-f0-9]{64}$"),
-    'device_id': re.compile(r"^([a-f0-9]{32}|[a-f0-9-]{36})$"),
-    'timestamp': re.compile(r"^[0-9]+$"),
-    'currency_type': re.compile(r"^[a-z]+$"),
-    'conversion_value': re.compile(r"^[0-9]+$"),
-    'action_source': re.compile(r"^(email|website|phone_call|chat|physical_store|system_generated|other)$"),
-    'event_type': re.compile(r"^.+$"),
-}
 HEADER_ROW_OFFSET = 1
 MAX_ERROR_LINES = 100
 
@@ -37,6 +21,9 @@ class ValidationState:
         self.lines_missing_required_field = {}
         self.lines_missing_all_required_fields = []
         self.lines_incorrect_field_format = {}
+        self.all_required_fields = set()
+        self.one_or_more_required_fields = set()
+        self.format_validation_for_field = {}
 
 def header_check_fields_missing(header_fields: List[str]) -> List[str]:
     fields_missing = ALL_REQUIRED_FIELDS.difference(set(header_fields))
@@ -65,20 +52,20 @@ def validate_line(line: Dict[str, str], validation_state: ValidationState) -> No
     missing_all_required_fields = True
     pattern_validation_failed = False
     current_line = validation_state.total_rows + HEADER_ROW_OFFSET
-    for field in ALL_REQUIRED_FIELDS:
+    for field in validation_state.all_required_fields:
         if field not in line or value_empty(line[field]):
             missing_required_field = True
             append_line_number_to_field(field, validation_state.lines_missing_required_field, current_line)
         else:
-            field_is_valid = field_value_is_valid(line[field], FORMAT_VALIDATION_FOR_FIELD[field])
+            field_is_valid = field_value_is_valid(line[field], validation_state.format_validation_for_field[field])
             if not field_is_valid:
                 pattern_validation_failed = True
                 append_line_number_to_field(field, validation_state.lines_incorrect_field_format, current_line)
 
-    for field in ONE_OR_MORE_REQUIRED_FIELDS:
+    for field in validation_state.one_or_more_required_fields:
         if field in line and not value_empty(line[field]):
             missing_all_required_fields = False
-            field_is_valid = field_value_is_valid(line[field], FORMAT_VALIDATION_FOR_FIELD[field])
+            field_is_valid = field_value_is_valid(line[field], validation_state.format_validation_for_field[field])
             if not field_is_valid:
                 pattern_validation_failed = True
                 append_line_number_to_field(field, validation_state.lines_incorrect_field_format, current_line)
@@ -106,7 +93,7 @@ def lines_missing_report(validation_state: ValidationState) -> List[str]:
         report.append(f"Line numbers missing '{field}'{max_lines}: {error_lines}\n")
     if validation_state.lines_missing_all_required_fields:
         max_lines = '' if len(validation_state.lines_missing_all_required_fields) <= MAX_ERROR_LINES else max_error_lines_message
-        sorted_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
+        sorted_fields = ','.join(sorted(validation_state.one_or_more_required_fields))
         error_lines = ','.join(map(str, validation_state.lines_missing_all_required_fields[:MAX_ERROR_LINES]))
         report.append(
             f"Line numbers that are missing 1 or more of these required fields '{sorted_fields}'{max_lines}: {error_lines}"
@@ -173,5 +160,8 @@ def generate_from_body(body: StreamingBody) -> str:
                 )
                 break
             valid_header_row = line_string
+            validation_state.all_required_fields = ALL_REQUIRED_FIELDS
+            validation_state.one_or_more_required_fields = ONE_OR_MORE_REQUIRED_FIELDS
+            validation_state.format_validation_for_field = FORMAT_VALIDATION_FOR_FIELD
 
     return generate_report(validation_state)
