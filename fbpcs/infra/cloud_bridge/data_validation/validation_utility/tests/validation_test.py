@@ -3,11 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from expected_fields import UNFILTERED_ONE_OR_MORE_REQUIRED_FIELDS
 import re
 from typing import List
 from unittest import TestCase
 from unittest.mock import Mock
-from validation import generate_from_body, ONE_OR_MORE_REQUIRED_FIELDS, ALL_REQUIRED_FIELDS
+from validation import generate_from_body
 
 class TestValidation(TestCase):
 
@@ -15,10 +16,7 @@ class TestValidation(TestCase):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper(['bad,header,row','1,2,3'])
         result = generate_from_body(body)
-        expected_all_fields = ','.join(sorted(ALL_REQUIRED_FIELDS))
-        expected_one_or_more_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
-        self.assertRegex(result, f'Header row not valid, missing `{expected_all_fields}` required fields')
-        self.assertRegex(result, f'Header row not valid, at least one of `{expected_one_or_more_fields}` is required')
+        self.assertRegex(result, 'The header row is not valid, fields are missing or incorrect')
         self.assertRegex(result, 'Validation processing stopped.')
 
     def test_validate_returns_number_of_rows(self):
@@ -31,6 +29,28 @@ class TestValidation(TestCase):
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 2')
         self.assertRegex(result, 'Valid rows: 2')
+
+    def test_validate_private_attribution_data(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'id_,conversion_timestamp,conversion_value,conversion_metadata',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,2000,0',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 1')
+        self.assertRegex(result, 'Valid rows: 1')
+
+    def test_validate_private_lift_data(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'id_,event_timestamp,value',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,2000',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,2000',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,2000',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 3')
+        self.assertRegex(result, 'Valid rows: 3')
 
     def test_validate_returns_validation_counts(self):
         body = Mock('body')
@@ -105,7 +125,7 @@ class TestValidation(TestCase):
             '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
         ])
         result = generate_from_body(body)
-        expected_required_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
+        expected_required_fields = ','.join(sorted(UNFILTERED_ONE_OR_MORE_REQUIRED_FIELDS))
         self.assertRegex(result, 'Total rows: 5')
         self.assertRegex(result, 'Rows with errors: 3')
         self.assertRegex(result, 'Valid rows: 2')
@@ -130,7 +150,7 @@ class TestValidation(TestCase):
         result = generate_from_body(body)
         expected_lines_missing_timestamp = ','.join(map(str, range(3, 103)))
         expected_lines_missing_event_type = ','.join(map(str, range(103, 203)))
-        expected_fields_all_missing = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
+        expected_fields_all_missing = ','.join(sorted(UNFILTERED_ONE_OR_MORE_REQUIRED_FIELDS))
         expected_warning = r'\(First 100 lines shown\)'
         expected_lines_all_missing = ','.join(map(str, range(204,304)))
         self.assertRegex(result, 'Total rows: 402')

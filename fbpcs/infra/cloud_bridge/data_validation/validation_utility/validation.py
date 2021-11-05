@@ -5,8 +5,16 @@
 
 import csv
 from botocore.response import StreamingBody
-from expected_fields import ALL_REQUIRED_FIELDS, ONE_OR_MORE_REQUIRED_FIELDS, FORMAT_VALIDATION_FOR_FIELD
-from typing import Dict, List, Optional
+from expected_fields import (
+    UNFILTERED_ALL_REQUIRED_FIELDS,
+    UNFILTERED_ONE_OR_MORE_REQUIRED_FIELDS,
+    UNFILTERED_FORMAT_VALIDATION_FOR_FIELD,
+    PA_ALL_REQUIRED_FIELDS,
+    PA_FORMAT_VALIDATION_FOR_FIELD,
+    PL_ALL_REQUIRED_FIELDS,
+    PL_FORMAT_VALIDATION_FOR_FIELD,
+)
+from typing import Dict, List, Optional, Set
 import re
 
 HEADER_ROW_OFFSET = 1
@@ -25,13 +33,16 @@ class ValidationState:
         self.one_or_more_required_fields = set()
         self.format_validation_for_field = {}
 
-def header_check_fields_missing(header_fields: List[str]) -> List[str]:
-    fields_missing = ALL_REQUIRED_FIELDS.difference(set(header_fields))
-    return sorted(fields_missing)
+def any_required_header_fields_missing(header_fields: List[str], all_required_fields: Set[str]) -> bool:
+    fields_missing = all_required_fields.difference(set(header_fields))
+    return len(fields_missing) > 0
 
-def header_contains_identity_fields(header_fields: List[str]) -> bool:
-    intersection = ONE_OR_MORE_REQUIRED_FIELDS.intersection(set(header_fields))
-    return len(intersection) > 0
+def is_header_missing_all_identity_fields(
+    header_fields: List[str],
+    one_or_more_required_fields: Set[str]
+) -> bool:
+    intersection = one_or_more_required_fields.intersection(set(header_fields))
+    return len(intersection) == 0
 
 def field_value_is_valid(value: str, regex: re.Pattern) -> bool:
     return value.strip() == value and regex.match(value) is not None
@@ -49,7 +60,7 @@ def append_line_number_to_field(
 
 def validate_line(line: Dict[str, str], validation_state: ValidationState) -> None:
     missing_required_field = False
-    missing_all_required_fields = True
+    missing_all_required_fields = len(validation_state.one_or_more_required_fields) > 0
     pattern_validation_failed = False
     current_line = validation_state.total_rows + HEADER_ROW_OFFSET
     for field in validation_state.all_required_fields:
@@ -110,26 +121,32 @@ def lines_incorrect_format_report(validation_state: ValidationState) -> List[str
     return report
 
 def is_header_row_valid(line_string: str, validation_state: ValidationState) -> bool:
-    header_row_valid = True
-    raw_field_names = csv.DictReader([line_string]).fieldnames
+    field_names = csv.DictReader([line_string]).fieldnames or []
     header_fields = []
-    if raw_field_names:
-        for s in raw_field_names:
-            header_fields.append(s)
-    missing_fields = header_check_fields_missing(header_fields)
-    if len(missing_fields) > 0:
-        missing_fields_str = ','.join(missing_fields)
-        validation_state.header_validation_messages.append(
-            f'Header row not valid, missing `{missing_fields_str}` required fields.'
-        )
-        header_row_valid = False
-    if not header_contains_identity_fields(header_fields):
-        required_header_fields = ','.join(sorted(ONE_OR_MORE_REQUIRED_FIELDS))
-        validation_state.header_validation_messages.append(
-            f'Header row not valid, at least one of `{required_header_fields}` is required.'
-        )
-        header_row_valid = False
-    return header_row_valid
+    header_fields.extend(field_names)
+    # First check if it is one of filtered formats
+    missing_required_pa_fields = any_required_header_fields_missing(header_fields, PA_ALL_REQUIRED_FIELDS)
+    if not missing_required_pa_fields:
+        validation_state.format_validation_for_field = PA_FORMAT_VALIDATION_FOR_FIELD
+        validation_state.all_required_fields = PA_ALL_REQUIRED_FIELDS
+        return True
+
+    missing_required_pl_fields = any_required_header_fields_missing(header_fields, PL_ALL_REQUIRED_FIELDS)
+    if not missing_required_pl_fields:
+        validation_state.format_validation_for_field = PL_FORMAT_VALIDATION_FOR_FIELD
+        validation_state.all_required_fields = PL_ALL_REQUIRED_FIELDS
+        return True
+
+    # Otherwise check if it is in the unfiltered events format
+    missing_any_unfiltered_required_fields = any_required_header_fields_missing(header_fields, UNFILTERED_ALL_REQUIRED_FIELDS)
+    missing_all_identity_fields = is_header_missing_all_identity_fields(header_fields, UNFILTERED_ONE_OR_MORE_REQUIRED_FIELDS)
+    if missing_any_unfiltered_required_fields or missing_all_identity_fields:
+        return False
+
+    validation_state.all_required_fields = UNFILTERED_ALL_REQUIRED_FIELDS
+    validation_state.one_or_more_required_fields = UNFILTERED_ONE_OR_MORE_REQUIRED_FIELDS
+    validation_state.format_validation_for_field = UNFILTERED_FORMAT_VALIDATION_FOR_FIELD
+    return True
 
 def generate_report(validation_state: ValidationState) -> str:
     report = ['Validation Summary:']
@@ -155,13 +172,11 @@ def generate_from_body(body: StreamingBody) -> str:
         else:
             header_row_valid = is_header_row_valid(line_string, validation_state)
             if not header_row_valid:
-                validation_state.header_validation_messages.append(
-                    'Validation processing stopped.'
-                )
+                validation_state.header_validation_messages.extend([
+                    'The header row is not valid, fields are missing or incorrect',
+                    'Validation processing stopped.',
+                ])
                 break
             valid_header_row = line_string
-            validation_state.all_required_fields = ALL_REQUIRED_FIELDS
-            validation_state.one_or_more_required_fields = ONE_OR_MORE_REQUIRED_FIELDS
-            validation_state.format_validation_for_field = FORMAT_VALIDATION_FOR_FIELD
 
     return generate_report(validation_state)
