@@ -9,12 +9,20 @@ import logging
 from typing import List, Dict
 
 import requests
-from fbpcs.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstanceStatus,
+)
 
 URL = "https://graph.facebook.com/v11.0"
 GRAPHAPI_INSTANCE_STATUSES = {
     "CREATED": PrivateComputationInstanceStatus.CREATED,
     "INSTANCE_FAILURE": PrivateComputationInstanceStatus.UNKNOWN,
+    "PID_SHARD_STARTED": PrivateComputationInstanceStatus.PID_SHARD_STARTED,
+    "PID_SHARD_COMPLETED": PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
+    "PID_SHARD_FAILED": PrivateComputationInstanceStatus.PID_SHARD_FAILED,
+    "PID_PREPARE_STARTED": PrivateComputationInstanceStatus.PID_PREPARE_STARTED,
+    "PID_PREPARE_COMPLETED": PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
+    "PID_PREPARE_FAILED": PrivateComputationInstanceStatus.PID_PREPARE_FAILED,
     "ID_MATCH_STARTED": PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
     "ID_MATCH_COMPLETED": PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
     "ID_MATCH_FAILED": PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
