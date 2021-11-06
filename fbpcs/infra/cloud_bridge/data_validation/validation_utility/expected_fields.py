@@ -6,6 +6,10 @@
 from typing import Dict, Set
 import re
 
+INTEGER_REGEX = re.compile(r"^[0-9]+$")
+TIMESTAMP_REGEX = re.compile(r"^[0-9]{10}$")
+BASE64_REGEX = re.compile(r"^[A-Za-z0-9+/]+={0,2}$")
+
 UNFILTERED_ALL_REQUIRED_FIELDS: Set[str] = {
     'action_source',
     'conversion_value',
@@ -17,9 +21,9 @@ UNFILTERED_ONE_OR_MORE_REQUIRED_FIELDS: Set[str] = {'email','device_id'}
 UNFILTERED_FORMAT_VALIDATION_FOR_FIELD: Dict[str, re.Pattern] = {
     'email': re.compile(r"^[a-f0-9]{64}$"),
     'device_id': re.compile(r"^([a-f0-9]{32}|[a-f0-9-]{36})$"),
-    'timestamp': re.compile(r"^[0-9]+$"),
+    'timestamp': TIMESTAMP_REGEX,
     'currency_type': re.compile(r"^[a-z]+$"),
-    'conversion_value': re.compile(r"^[0-9]+$"),
+    'conversion_value': INTEGER_REGEX,
     'action_source': re.compile(r"^(email|website|phone_call|chat|physical_store|system_generated|other)$"),
     'event_type': re.compile(r"^.+$"),
 }
@@ -32,10 +36,10 @@ PA_ALL_REQUIRED_FIELDS: Set[str] = {
 }
 
 PA_FORMAT_VALIDATION_FOR_FIELD: Dict[str, re.Pattern] = {
-    'id_': re.compile(r"^.+$"),
-    'conversion_timestamp': re.compile(r"^.+$"),
-    'conversion_value': re.compile(r"^.+$"),
-    'conversion_metadata': re.compile(r"^.+$"),
+    'id_': BASE64_REGEX,
+    'conversion_timestamp': TIMESTAMP_REGEX,
+    'conversion_value': INTEGER_REGEX,
+    'conversion_metadata': INTEGER_REGEX,
 }
 
 PL_ALL_REQUIRED_FIELDS: Set[str] = {
@@ -45,7 +49,7 @@ PL_ALL_REQUIRED_FIELDS: Set[str] = {
 }
 
 PL_FORMAT_VALIDATION_FOR_FIELD: Dict[str, re.Pattern] = {
-    'id_': re.compile(r"^.+$"),
-    'event_timestamp': re.compile(r"^.+$"),
-    'value': re.compile(r"^.+$"),
+    'id_': BASE64_REGEX,
+    'event_timestamp': TIMESTAMP_REGEX,
+    'value': INTEGER_REGEX,
 }

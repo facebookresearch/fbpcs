@@ -16,7 +16,8 @@ class TestValidation(TestCase):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper(['bad,header,row','1,2,3'])
         result = generate_from_body(body)
-        self.assertRegex(result, 'The header row is not valid, fields are missing or incorrect')
+        self.assertRegex(result, 'ERROR - The header row is not valid.')
+        self.assertRegex(result, '1 or more of the required fields is missing.')
         self.assertRegex(result, 'Validation processing stopped.')
 
     def test_validate_returns_number_of_rows(self):
@@ -51,6 +52,63 @@ class TestValidation(TestCase):
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 3')
         self.assertRegex(result, 'Valid rows: 3')
+
+    def test_validate_private_attribution_data_with_errors(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'id_,conversion_timestamp,conversion_value,conversion_metadata',
+            'abcd/1234+WXYZ=,january,2000,0',
+            'abcd/1234+WXYZ=,1631204619,fifty,0',
+            '$@&**#$^$^,1631204619,2000,0',
+            'abcd/1234+WXYZ===,1631204619,2000,0',
+            'abcd/1234+WXYZ=,july-01-2021,2000,0',
+            'abcd/1234+WXYZ,1631204619,2000,0',
+            'abcd/1234+WXYZ=,1631204619,2000,test',
+            'abcd/1234+WXYZ=,1631204619,123.99,0',
+            ',1631204619,2000,0',
+            'abcd/1234+WXYZ=,,2000,0',
+            'abcd/1234+WXYZ=,1631204619,,0',
+            'abcd/1234+WXYZ=,1631204619,2000,',
+            'abcd/1234+WXYZ=,16312046190,2000,0',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 13')
+        self.assertRegex(result, 'Rows with errors: 12')
+        self.assertRegex(result, 'Valid rows: 1')
+        self.assertRegex(result, "Line numbers with incorrect 'id_' format: 4,5")
+        self.assertRegex(result, "Line numbers with incorrect 'conversion_timestamp' format: 2,6,14")
+        self.assertRegex(result, "Line numbers with incorrect 'conversion_value' format: 3,9")
+        self.assertRegex(result, "Line numbers with incorrect 'conversion_metadata' format: 8")
+        self.assertRegex(result, "Line numbers missing 'id_': 10")
+        self.assertRegex(result, "Line numbers missing 'conversion_timestamp': 11")
+        self.assertRegex(result, "Line numbers missing 'conversion_value': 12")
+        self.assertRegex(result, "Line numbers missing 'conversion_metadata': 13")
+
+    def test_validate_private_lift_data_with_errors(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'id_,event_timestamp,value',
+            'abcd/1234+WXYZ=,1631204619,',
+            'abcd/1234+WXYZ=,,2000',
+            ',1631204619,2000',
+            'abcd/1234+WXYZ=,1631204619,two',
+            'abcd/1234+WXYZ=,test,2000',
+            'abcd   WXYZ=,1631204619,2000',
+            '.@/?-`!,1631204619,2000',
+            'abcd/1234+WXYZ==,1631204619,2000',
+            'abcd/1234+WXYZ=,1631204619,2000',
+            'abcd/1234+WXYZ=,16312046190,2000',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 10')
+        self.assertRegex(result, 'Rows with errors: 8')
+        self.assertRegex(result, 'Valid rows: 2')
+        self.assertRegex(result, "Line numbers with incorrect 'id_' format: 7,8")
+        self.assertRegex(result, "Line numbers with incorrect 'event_timestamp' format: 6,11")
+        self.assertRegex(result, "Line numbers with incorrect 'value' format: 5")
+        self.assertRegex(result, "Line numbers missing 'id_': 4")
+        self.assertRegex(result, "Line numbers missing 'event_timestamp': 3")
+        self.assertRegex(result, "Line numbers missing 'value': 2")
 
     def test_validate_returns_validation_counts(self):
         body = Mock('body')
@@ -189,7 +247,7 @@ class TestValidation(TestCase):
         body.iter_lines = self.mock_lines_helper([
             'timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour',
             '1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
-            'september-2021,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
+            '16312046210,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
             '1631204621,12usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
             '1631204621,usd,ten,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
             '1631204621,usd,5,  Purchase   ,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16',
