@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast] [options]
+    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast --stage_flow=<stage_flow>] [options]
     pc-cli id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
     pc-cli compute_metrics <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
@@ -43,6 +43,9 @@ from docopt import docopt
 from fbpcp.util import yaml
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -140,6 +143,12 @@ def main():
             "--dry_run": bool,
             "--log_path": schema.Or(None, schema.Use(Path)),
             "--log_cost_to_s3": schema.Or(None, schema.Use(bool)),
+            "--stage_flow": schema.Or(
+                None,
+                schema.Use(
+                    lambda arg: PrivateComputationBaseStageFlow.cls_name_to_cls(arg)
+                ),
+            ),
             "--verbose": bool,
             "--help": bool,
         }
@@ -176,6 +185,7 @@ def main():
             padding_size=arguments["--padding_size"],
             k_anonymity_threshold=arguments["--k_anonymity_threshold"],
             fail_fast=arguments["--fail_fast"],
+            stage_flow_cls=arguments["--stage_flow"]
         )
     elif arguments["id_match"]:
         logger.info(f"Run id match on instance: {instance_id}")

@@ -68,6 +68,7 @@ def create_instance(
     padding_size: Optional[int] = None,
     k_anonymity_threshold: Optional[int] = None,
     fail_fast: bool = False,
+    stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
         config["private_computation"],
@@ -76,12 +77,11 @@ def create_instance(
         config.get("post_processing_handlers", {}),
     )
 
-    stage_flow_cls: Type[PrivateComputationBaseStageFlow] = PrivateComputationStageFlow
-
-    if game_type is PrivateComputationGameType.ATTRIBUTION:
-        stage_flow_cls = PrivateComputationDecoupledStageFlow
-    else:
-        stage_flow_cls = PrivateComputationStageFlow
+    if not stage_flow_cls:
+        if game_type is PrivateComputationGameType.ATTRIBUTION:
+            stage_flow_cls = PrivateComputationDecoupledStageFlow
+        else:
+            stage_flow_cls = PrivateComputationStageFlow
 
     instance = pc_service.create_instance(
         instance_id=instance_id,
