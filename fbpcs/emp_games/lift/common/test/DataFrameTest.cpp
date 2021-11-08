@@ -6,6 +6,7 @@
  */
 
 #include <stdexcept>
+#include <unordered_set>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -62,4 +63,30 @@ TEST(DataFrameTest, DropColumn) {
 
   df.drop<int64_t>("intCol");
   EXPECT_THROW(df.at<int64_t>("intCol"), std::out_of_range);
+}
+
+TEST(DataFrameTest, Keys) {
+  DataFrame df;
+  df.get<std::string>("bool1") = {"true", "false"};
+  df.get<std::string>("bool2") = {"1", "0"};
+  df.get<std::string>("int1") = {"123", "111"};
+  df.get<std::string>("int2") = {"456", "222"};
+  df.get<std::string>("intVec") = {"[7,8,9]", "[333]"};
+
+  std::unordered_set<std::string> allKeys{"bool1", "bool2", "int1", "int2",
+                                          "intVec"};
+  EXPECT_EQ(allKeys, df.keys());
+  EXPECT_EQ(allKeys, df.keysOf<std::string>());
+
+  DataFrame df2;
+  df2.get<bool>("bool1") = {true, false};
+  df2.get<bool>("bool2") = {true, false};
+  df2.get<int64_t>("int1") = {123, 111};
+  df2.get<int64_t>("int2") = {456, 222};
+  df2.get<std::vector<int64_t>>("intVec") = {{7, 8, 9}, {333}};
+
+  EXPECT_EQ(allKeys, df2.keys());
+
+  std::unordered_set<std::string> boolKeys{"bool1", "bool2"};
+  EXPECT_EQ(boolKeys, df2.keysOf<bool>());
 }
