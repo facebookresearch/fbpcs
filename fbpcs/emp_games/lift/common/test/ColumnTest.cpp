@@ -402,3 +402,15 @@ TEST(BinaryAssignmentOpTest, Divide) {
   EXPECT_EQ(expected1, c);
   EXPECT_EQ(expected2, c2);
 }
+
+TEST(IteratorTest, IteratorFunctionality) {
+  Column<int64_t> c{300, 200, 100};
+  auto iter = c.begin();
+  EXPECT_EQ(*iter, 300);
+  ++iter;
+  EXPECT_EQ(*iter, 200);
+  ++iter;
+  EXPECT_EQ(*iter, 100);
+  ++iter;
+  EXPECT_EQ(iter, c.end());
+}
