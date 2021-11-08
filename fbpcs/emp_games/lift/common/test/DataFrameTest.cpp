@@ -65,6 +65,23 @@ TEST(DataFrameTest, DropColumn) {
   EXPECT_THROW(df.at<int64_t>("intCol"), std::out_of_range);
 }
 
+TEST(DataFrameDetail, Parse) {
+  EXPECT_EQ(123, detail::parse<int64_t>("123"));
+  EXPECT_THROW(detail::parse<int64_t>("abc"), ParseException);
+}
+
+TEST(DataFrameDetail, ParseVector) {
+  std::vector<int64_t> expected{1, 2, 3};
+  EXPECT_EQ(expected, detail::parseVector<int64_t>("[1,2,3]"));
+  EXPECT_THROW(detail::parseVector<int64_t>("abc"), ParseException);
+  // Missing trailing ']'
+  EXPECT_THROW(detail::parseVector<int64_t>("[1,2,3"), ParseException);
+  // Missing both brackets
+  EXPECT_THROW(detail::parseVector<int64_t>("1,2,3"), ParseException);
+  // Not a vector
+  EXPECT_THROW(detail::parseVector<int64_t>("1"), ParseException);
+}
+
 TEST(DataFrameTest, Keys) {
   DataFrame df;
   df.get<std::string>("bool1") = {"true", "false"};
@@ -89,4 +106,64 @@ TEST(DataFrameTest, Keys) {
 
   std::unordered_set<std::string> boolKeys{"bool1", "bool2"};
   EXPECT_EQ(boolKeys, df2.keysOf<bool>());
+}
+
+TEST(DataFrameTest, LoadFromRowsBasic) {
+  TypeMap t{
+      .boolColumns = {},
+      .intColumns = {},
+      .intVecColumns = {},
+  };
+
+  std::vector<std::string> header = {"bool1", "bool2", "int1", "int2",
+                                     "intVec"};
+  std::vector<std::vector<std::string>> rows = {
+      {"true", "1", "123", "456", "[7,8,9]"},
+      {"false", "0", "111", "222", "[333]"},
+  };
+
+  DataFrame expected;
+  expected.get<std::string>("bool1") = {"true", "false"};
+  expected.get<std::string>("bool2") = {"1", "0"};
+  expected.get<std::string>("int1") = {"123", "111"};
+  expected.get<std::string>("int2") = {"456", "222"};
+  expected.get<std::string>("intVec") = {"[7,8,9]", "[333]"};
+
+  auto actual = DataFrame::loadFromRows(t, header, rows);
+  EXPECT_EQ(expected.at<std::string>("bool1"), actual.at<std::string>("bool1"));
+  EXPECT_EQ(expected.at<std::string>("bool2"), actual.at<std::string>("bool2"));
+  EXPECT_EQ(expected.at<std::string>("int1"), actual.at<std::string>("int1"));
+  EXPECT_EQ(expected.at<std::string>("int2"), actual.at<std::string>("int2"));
+  EXPECT_EQ(expected.at<std::string>("intVec"),
+            actual.at<std::string>("intVec"));
+}
+
+TEST(DataFrameTest, LoadFromRowsAdvanced) {
+  TypeMap t{
+      .boolColumns = {"bool1", "bool2"},
+      .intColumns = {"int1", "int2"},
+      .intVecColumns = {"intVec"},
+  };
+
+  std::vector<std::string> header = {"bool1", "bool2", "int1", "int2",
+                                     "intVec"};
+  std::vector<std::vector<std::string>> rows = {
+      {"true", "1", "123", "456", "[7,8,9]"},
+      {"false", "0", "111", "222", "[333]"},
+  };
+
+  DataFrame expected;
+  expected.get<bool>("bool1") = {true, false};
+  expected.get<bool>("bool2") = {true, false};
+  expected.get<int64_t>("int1") = {123, 111};
+  expected.get<int64_t>("int2") = {456, 222};
+  expected.get<std::vector<int64_t>>("intVec") = {{7, 8, 9}, {333}};
+
+  auto actual = DataFrame::loadFromRows(t, header, rows);
+  EXPECT_EQ(expected.at<bool>("bool1"), actual.at<bool>("bool1"));
+  EXPECT_EQ(expected.at<bool>("bool2"), actual.at<bool>("bool2"));
+  EXPECT_EQ(expected.at<int64_t>("int1"), actual.at<int64_t>("int1"));
+  EXPECT_EQ(expected.at<int64_t>("int2"), actual.at<int64_t>("int2"));
+  EXPECT_EQ(expected.at<std::vector<int64_t>>("intVec"),
+            actual.at<std::vector<int64_t>>("intVec"));
 }
