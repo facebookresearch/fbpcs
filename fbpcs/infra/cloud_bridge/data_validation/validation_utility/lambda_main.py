@@ -11,7 +11,7 @@ import validation
 from datetime import datetime
 
 DEBUG_MODE = str(os.environ.get('VALIDATION_DEBUG_MODE')) == '1'
-DEFAULT_VALIDATION_RESULTS_S3_KEY = 'uploaded_events_validation_results'
+DEFAULT_VALIDATION_RESULTS_S3_KEY = 'events-validation-results'
 
 def debug_log(msg: str) -> None:
     if DEBUG_MODE:
@@ -53,15 +53,10 @@ def lambda_handler(event, context):
     if not output_bucket:
         raise Exception(f'Exception: missing output_bucket: `{output_bucket}`')
 
-    output_key = os.environ.get('VALIDATION_RESULTS_S3_KEY')
-    upload_key = os.environ.get('EVENTS_DATA_UPLOAD_S3_KEY')
-    if not output_key and upload_key:
-        output_key = f'{upload_key}/{DEFAULT_VALIDATION_RESULTS_S3_KEY}'
-    elif not output_key:
-        output_key = DEFAULT_VALIDATION_RESULTS_S3_KEY
+    output_key_override = os.environ.get('VALIDATION_RESULTS_S3_KEY')
 
     debug_log(
-        f'output bucket: {output_bucket}\noutput key: {output_key}'
+        f'output bucket: {output_bucket}\noutput key override: {output_key_override}'
     )
 
     try:
@@ -73,7 +68,19 @@ def lambda_handler(event, context):
             )
             validation_results = validate_and_generate_report(input_bucket, input_key)
 
-            input_filename = input_key.split('/')[-1]
+            path_split = input_key.split('/')
+            input_filename = path_split[-1]
+            input_key_path = '/'.join(path_split[:-1])
+
+            if output_key_override:
+                output_key = f'{input_key_path}/{output_key_override}'
+            else:
+                output_key = f'{input_key_path}/{DEFAULT_VALIDATION_RESULTS_S3_KEY}'
+
+            debug_log(
+                f'output key: {output_key}'
+            )
+
             validation_result_file_path = '_'.join([
                 input_filename,
                 'validation-results',
