@@ -91,7 +91,10 @@ resource "aws_iam_role_policy" "s3_policy_lambda_upload_bucket_key" {
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": "s3:*",
+      "Action": [
+          "s3:*",
+          "s3-object-lambda:*"
+      ],
       "Resource": [
           "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}",
           "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}/*"
@@ -100,6 +103,11 @@ resource "aws_iam_role_policy" "s3_policy_lambda_upload_bucket_key" {
   ]
 }
 EOF
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_data_validation_cloudwatch" {
+  role       = aws_iam_role.lambda_iam.id
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_iam_role_policy" "s3_policy_lambda_validation_bucket_key" {
@@ -112,10 +120,33 @@ resource "aws_iam_role_policy" "s3_policy_lambda_validation_bucket_key" {
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": "s3:*",
+      "Action": [
+          "s3:*",
+          "s3-object-lambda:*"
+      ],
       "Resource": [
           "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.validation_results_s3_key}",
           "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.validation_results_s3_key}/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "kms_policy_data_validation_lambda" {
+  name   = "lambda-kms-policy-data-validation${var.tag_postfix}"
+  role   = aws_iam_role.lambda_iam.id
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "kms:*",
+      "Resource": [
+        "arn:aws:kms:*:${var.aws_account_id}:key/*",
+        "arn:aws:kms:*:${var.aws_account_id}:alias/*"
       ]
     }
   ]
