@@ -173,7 +173,8 @@ def generate_from_body(body: StreamingBody) -> str:
             header_row_valid = is_header_row_valid(line_string, validation_state)
             if not header_row_valid:
                 validation_state.header_validation_messages.extend([
-                    'The header row is not valid, fields are missing or incorrect',
+                    'ERROR - The header row is not valid.',
+                    '1 or more of the required fields is missing.',
                     'Validation processing stopped.',
                 ])
                 break
