@@ -8,10 +8,12 @@
 #pragma once
 
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <typeindex>
 #include <typeinfo>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -23,6 +25,18 @@
  * https://stackoverflow.com/a/32651111/15625637
  */
 namespace df {
+class ParseException : public std::exception {
+public:
+  explicit ParseException(const std::string &s, const std::string &typeName) {
+    msg_ = "Failed to parse '" + s + "' as type '" + typeName + "'";
+  }
+
+  const char *what() const noexcept override { return msg_.c_str(); }
+
+private:
+  std::string msg_;
+};
+
 class BaseMap {
 public:
   virtual ~BaseMap() {}
@@ -45,9 +59,21 @@ private:
   std::string msg_;
 };
 
+struct TypeMap {
+  std::vector<std::string> boolColumns;
+  std::vector<std::string> intColumns;
+  std::vector<std::string> intVecColumns;
+};
+
 class DataFrame {
 public:
   using TypeInfo = std::pair<std::type_index, std::string>;
+
+  static DataFrame readCsv(const TypeMap &typeMap, const std::string &filePath);
+
+  static DataFrame
+  loadFromRows(const TypeMap &typeMap, const std::vector<std::string> &header,
+               const std::vector<std::vector<std::string>> &rows);
 
   static void checkType(const TypeInfo &expected, const TypeInfo &actual) {
     if (expected.first != actual.first) {
@@ -135,4 +161,47 @@ private:
   std::unordered_map<std::type_index, std::unique_ptr<BaseMap>> maps_;
 };
 
+namespace detail {
+template <typename T> T parse(const std::string &value) {
+  std::istringstream iss{value};
+  T res;
+  iss >> res;
+  if (iss.fail()) {
+    // For bools, check if the string was given as `true/false`
+    if constexpr (std::is_same<T, bool>::value) {
+      iss.clear();
+      iss >> std::boolalpha >> res;
+      if (iss.good()) {
+        // Secondary parsing succeeded
+        return res;
+      }
+    }
+    auto typeName = typeid(T).name();
+    throw ParseException{value, typeName};
+  }
+
+  return res;
+}
+
+template <typename T> std::vector<T> parseVector(const std::string &value) {
+  if (value.at(0) != '[' || value.at(value.size() - 1) != ']') {
+    auto typeName = std::string{"std::vector<"} + typeid(T).name() + ">";
+    throw ParseException{value, typeName};
+  }
+
+  std::vector<T> res;
+
+  // get substr between [ and ]
+  std::stringstream ss{value.substr(1, value.size() - 2)};
+  while(ss.good()) {
+    std::string part;
+    std::getline(ss, part, ',');
+	if (!part.empty()){
+	  res.push_back(parse<T>(part));
+	}
+  }
+
+  return res;
+}
+} // namespace detail
 } // namespace df
