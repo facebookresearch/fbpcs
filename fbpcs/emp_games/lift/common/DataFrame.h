@@ -13,6 +13,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include "fbpcs/emp_games/lift/common/Column.h"
@@ -52,6 +53,25 @@ public:
     if (expected.first != actual.first) {
       throw BadTypeException{expected.second, actual.second};
     }
+  }
+
+  std::unordered_set<std::string> keys() const {
+    std::unordered_set<std::string> res;
+    for (const auto &[typ, _] : types_) {
+      res.insert(typ);
+    }
+    return res;
+  }
+
+  template <typename T> std::unordered_set<std::string> keysOf() const {
+    std::unordered_set<std::string> res;
+    auto target = std::type_index(typeid(T));
+    for (const auto &[typ, info] : types_) {
+      if (info.first == target) {
+        res.insert(typ);
+      }
+    }
+    return res;
   }
 
   template <typename T> const Column<T> &get(const std::string &key) const {
