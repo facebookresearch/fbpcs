@@ -67,6 +67,7 @@ int main(int argc, char** argv) {
     if (outputType == fbpcf::io::FileType::S3) {
       private_lift::s3_utils::uploadToS3(tmpFilepath, outputPath);
     } else if (outputType == fbpcf::io::FileType::Local) {
+      std::filesystem::create_directories(outputPath.parent_path());
       std::filesystem::copy(
           tmpFilepath,
           outputPath,
