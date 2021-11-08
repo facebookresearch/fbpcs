@@ -1,6 +1,6 @@
 resource "aws_s3_bucket_object" "upload_glue_ETL" {
   bucket = var.app_data_input_bucket_id
-  key    = "semi-automated-data-ingestion/glue_ETL.py"
+  key    = "${var.data_upload_key_path}/glue_ETL.py"
   source = "glue_ETL.py"
   etag   = filemd5("glue_ETL.py")
 }
@@ -82,7 +82,7 @@ resource "aws_glue_job" "glue_job" {
   role_arn = aws_iam_role.glue_ETL_role.arn
 
   command {
-    script_location = "s3://${var.app_data_input_bucket_id}/semi-automated-data-ingestion/glue_ETL.py"
+    script_location = "s3://${var.app_data_input_bucket_id}/${var.data_upload_key_path}/glue_ETL.py"
   }
   execution_property {
     max_concurrent_runs = 10

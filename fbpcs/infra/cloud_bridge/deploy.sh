@@ -145,7 +145,10 @@ undeploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "tag_postfix=$tag_postfix" \
-        -var "aws_account_id=$aws_account_id"
+        -var "aws_account_id=$aws_account_id" \
+        -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
+        -var "data_processing_lambda_s3_key=lambda.zip" \
+        -var "data_upload_key_path=$data_upload_key_path"
     echo "########################Deletion completed########################"
 
     if "$build_semi_automated_data_pipeline"
@@ -165,21 +168,23 @@ undeploy_aws_resources() {
             -auto-approve \
             -var "region=$region" \
             -var "tag_postfix=$tag_postfix" \
-            -var "aws_account_id=$aws_account_id"
+            -var "aws_account_id=$aws_account_id" \
+            -var "data_upload_key_path=$data_upload_key_path"
 
         cd /terraform_deployment/terraform_scripts/data_validation
         terraform init -reconfigure \
-        -backend-config "bucket=$s3_bucket_for_storage" \
-        -backend-config "region=$region" \
-        -backend-config "key=tfstate/data_validation$tag_postfix.tfstate"
+            -backend-config "bucket=$s3_bucket_for_storage" \
+            -backend-config "region=$region" \
+            -backend-config "key=tfstate/data_validation$tag_postfix.tfstate"
 
         terraform destroy \
-        -auto-approve \
-        -var "aws_region=$region" \
-        -var "tag_postfix=$tag_postfix" \
-        -var "aws_account_id=$aws_account_id" \
-        -var "upload_and_validation_s3_bucket=$s3_bucket_data_pipeline" \
-        -var "events_data_upload_s3_key=data_validation_upload"
+            -auto-approve \
+            -var "aws_region=$region" \
+            -var "tag_postfix=$tag_postfix" \
+            -var "aws_account_id=$aws_account_id" \
+            -var "upload_and_validation_s3_bucket=$s3_bucket_data_pipeline" \
+            -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
+            -var "semi_automated_key_path=$data_upload_key_path"
     fi
 
     echo "Finished destroy all AWS resources, except for S3 buckets (can not be deleted if it's not empty)"
@@ -283,7 +288,8 @@ deploy_aws_resources() {
         -var "aws_account_id=$aws_account_id" \
         -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
-        -var "data_processing_lambda_s3_key=lambda.zip"
+        -var "data_processing_lambda_s3_key=lambda.zip" \
+        -var "data_upload_key_path=$data_upload_key_path"
     echo "######################## Deploy Data Ingestion Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
     app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
@@ -314,7 +320,8 @@ deploy_aws_resources() {
             -var "lambda_trigger_s3_key=lambda_trigger.zip" \
             -var "app_data_input_bucket=$s3_bucket_data_pipeline" \
             -var "app_data_input_bucket_id=$app_data_input_bucket_id" \
-            -var "app_data_input_bucket_arn=$app_data_input_bucket_arn"
+            -var "app_data_input_bucket_arn=$app_data_input_bucket_arn" \
+            -var "data_upload_key_path=$data_upload_key_path"
         echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
 
         echo "######################## Configure Data Validation Pipeline ########################"
@@ -332,7 +339,8 @@ deploy_aws_resources() {
             -var "tag_postfix=$tag_postfix" \
             -var "aws_account_id=$aws_account_id" \
             -var "upload_and_validation_s3_bucket=$s3_bucket_data_pipeline" \
-            -var "events_data_upload_s3_key=data_validation_upload"
+            -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
+            -var "semi_automated_key_path=$data_upload_key_path"
         echo "######################## Deploy Data Validation Terraform scripts completed ########################"
     fi
 
@@ -384,6 +392,9 @@ else
     # s3_bucket_data_pipeline is set, but add tags to it
     s3_bucket_data_pipeline="$s3_bucket_data_pipeline$tag_postfix"
 fi
+
+data_upload_key_path="semi-automated-data-ingestion"
+events_data_upload_s3_key="events-data-validation"
 
 if "$undeploy"
 then

@@ -62,8 +62,16 @@ resource "aws_lambda_function" "upload_lambda_trigger" {
   }
 }
 
-resource "aws_lambda_permission" "allow_upload_bucket" {
-  statement_id  = "AllowExecutionFromS3Bucket"
+resource "aws_lambda_permission" "allow_manual_upload_path" {
+  statement_id  = "AllowExecutionFromS3BucketManual"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.upload_lambda_trigger.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = "arn:aws:s3:::${var.upload_and_validation_s3_bucket}"
+}
+
+resource "aws_lambda_permission" "allow_semi_automated_path" {
+  statement_id  = "AllowExecutionFromS3BucketSemiAutomated"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.upload_lambda_trigger.arn
   principal     = "s3.amazonaws.com"
@@ -79,7 +87,17 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
     filter_suffix       = ".csv"
   }
 
-  depends_on = [aws_lambda_permission.allow_upload_bucket]
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.upload_lambda_trigger.arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "${var.semi_automated_key_path}/"
+    filter_suffix       = ".csv"
+  }
+
+  depends_on = [
+    aws_lambda_permission.allow_manual_upload_path,
+    aws_lambda_permission.allow_semi_automated_path
+  ]
 }
 
 resource "aws_iam_role_policy" "s3_policy_lambda_upload_bucket_key" {
@@ -97,7 +115,9 @@ resource "aws_iam_role_policy" "s3_policy_lambda_upload_bucket_key" {
       ],
       "Resource": [
           "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}",
-          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}/*"
+          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.events_data_upload_s3_key}/*",
+          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.semi_automated_key_path}",
+          "arn:aws:s3:::${var.upload_and_validation_s3_bucket}/${var.semi_automated_key_path}/*"
       ]
     }
   ]

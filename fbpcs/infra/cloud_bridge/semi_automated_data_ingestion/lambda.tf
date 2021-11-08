@@ -5,13 +5,13 @@ resource "aws_kms_key" "s3_kms_key" {
 data "archive_file" "zip_lambda" {
   type        = "zip"
   source_file = "lambda_trigger.py"
-  output_path = "semi-automated-data-ingestion/${var.lambda_trigger_s3_key}"
+  output_path = "${var.data_upload_key_path}/${var.lambda_trigger_s3_key}"
 }
 
 resource "aws_s3_bucket_object" "upload_lambda_trigger" {
   bucket = var.app_data_input_bucket_id
-  key    = "semi-automated-data-ingestion/${var.lambda_trigger_s3_key}"
-  source = "semi-automated-data-ingestion/${var.lambda_trigger_s3_key}"
+  key    = "${var.data_upload_key_path}/${var.lambda_trigger_s3_key}"
+  source = "${var.data_upload_key_path}/${var.lambda_trigger_s3_key}"
   etag   = filemd5("lambda_trigger.py")
 
 }
@@ -38,7 +38,7 @@ EOF
 
 resource "aws_lambda_function" "lambda_trigger" {
   s3_bucket     = var.app_data_input_bucket_id
-  s3_key        = "semi-automated-data-ingestion/${var.lambda_trigger_s3_key}"
+  s3_key        = "${var.data_upload_key_path}/${var.lambda_trigger_s3_key}"
   function_name = "manual-upload-trigger${var.tag_postfix}"
   role          = aws_iam_role.lambda_iam.arn
   handler       = "lambda_trigger.lambda_handler"
