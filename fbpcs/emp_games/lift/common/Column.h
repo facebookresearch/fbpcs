@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <initializer_list>
+#include <iterator>
 #include <optional>
 #include <sstream>
 #include <vector>
@@ -71,7 +72,37 @@ public:
     return *this;
   }
 
-  /* Member functions */
+  /**
+   * Get a const_iterator to the beginning of this Column's data by deferring to
+   * the underlying vector's implementation.
+   *
+   * @returns a const_iterator to the beginning of this Column's data
+   */
+  typename std::vector<T>::const_iterator begin() const { return v_.begin(); }
+
+  /**
+   * Get an iterator to the beginning of this Column's data by deferring to the
+   * underlying vector's implementation.
+   *
+   * @returns an iterator to the beginning of this Column's data
+   */
+  typename std::vector<T>::iterator begin() { return v_.begin(); }
+
+  /**
+   * Get a const_iterator to the end of this Column's data by deffering to the
+   * underlying vector's implementation.
+   *
+   * @returns a const_iterator to the end of this Column's data
+   */
+  typename std::vector<T>::const_iterator end() const { return v_.end(); }
+
+  /**
+   * Get an iterator to the end of this Column's data by deferring to the
+   * underlying vector's implementation.
+   *
+   * @returns an iterator to the end of this Column's data
+   */
+  typename std::vector<T>::iterator end() { return v_.end(); }
 
   /**
    * Retrieve a value at a specific index in the column.
@@ -89,7 +120,8 @@ public:
   /**
    * Reserve capacity in the Column.
    *
-   * @param capacity the amount of capacity to reserve in the underlying std::vector
+   * @param capacity the amount of capacity to reserve in the underlying
+   * std::vector
    */
   void reserve(std::size_t capacity) { v_.reserve(capacity); }
 
@@ -109,10 +141,16 @@ public:
 
   /**
    * Add a new value to this Column.
+   *
    * @param value The value to add to this Column
    */
   void push_back(const T &value) { v_.push_back(value); }
 
+  /**
+   * Add a new (rvalue reference) value to this Column.
+   *
+   * @param value The value to add to this Column
+   */
   void push_back(T &&value) { v_.push_back(value); }
 
   /**
