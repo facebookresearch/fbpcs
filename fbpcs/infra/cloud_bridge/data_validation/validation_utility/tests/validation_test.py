@@ -16,7 +16,8 @@ class TestValidation(TestCase):
         body = Mock('body')
         body.iter_lines = self.mock_lines_helper(['bad,header,row','1,2,3'])
         result = generate_from_body(body)
-        self.assertRegex(result, 'The header row is not valid, fields are missing or incorrect')
+        self.assertRegex(result, 'ERROR - The header row is not valid.')
+        self.assertRegex(result, '1 or more of the required fields is missing.')
         self.assertRegex(result, 'Validation processing stopped.')
 
     def test_validate_returns_number_of_rows(self):
@@ -51,6 +52,61 @@ class TestValidation(TestCase):
         result = generate_from_body(body)
         self.assertRegex(result, 'Total rows: 3')
         self.assertRegex(result, 'Valid rows: 3')
+
+    def test_validate_private_attribution_data_with_errors(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'id_,conversion_timestamp,conversion_value,conversion_metadata',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,january,2000,0',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,fifty,0',
+            '$@&**#$^$^,1631204619,2000,0',
+            'C37R4===,1631204619,2000,0',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,july-01-2021,2000,0',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4,1631204619,2000,0',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,2000,test',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,123.99,0',
+            ',1631204619,2000,0',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,,2000,0',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,,0',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,2000,',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 12')
+        self.assertRegex(result, 'Rows with errors: 11')
+        self.assertRegex(result, 'Valid rows: 1')
+        self.assertRegex(result, "Line numbers with incorrect 'id_' format: 4,5")
+        self.assertRegex(result, "Line numbers with incorrect 'conversion_timestamp' format: 2,6")
+        self.assertRegex(result, "Line numbers with incorrect 'conversion_value' format: 3,9")
+        self.assertRegex(result, "Line numbers with incorrect 'conversion_metadata' format: 8")
+        self.assertRegex(result, "Line numbers missing 'id_': 10")
+        self.assertRegex(result, "Line numbers missing 'conversion_timestamp': 11")
+        self.assertRegex(result, "Line numbers missing 'conversion_value': 12")
+        self.assertRegex(result, "Line numbers missing 'conversion_metadata': 13")
+
+    def test_validate_private_lift_data_with_errors(self):
+        body = Mock('body')
+        body.iter_lines = self.mock_lines_helper([
+            'id_,event_timestamp,value',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,,2000',
+            ',1631204619,2000',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,two',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,test,2000',
+            'C37   4=,1631204619,2000',
+            '.,/?-`!,1631204619,2000',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4==,1631204619,2000',
+            'C37L9PJL0Y1p+p9J4zlJUSHeaaOCySRscz/hpQx/9R4=,1631204619,2000',
+        ])
+        result = generate_from_body(body)
+        self.assertRegex(result, 'Total rows: 9')
+        self.assertRegex(result, 'Rows with errors: 7')
+        self.assertRegex(result, 'Valid rows: 2')
+        self.assertRegex(result, "Line numbers with incorrect 'id_' format: 7,8")
+        self.assertRegex(result, "Line numbers with incorrect 'event_timestamp' format: 6")
+        self.assertRegex(result, "Line numbers with incorrect 'value' format: 5")
+        self.assertRegex(result, "Line numbers missing 'id_': 4")
+        self.assertRegex(result, "Line numbers missing 'event_timestamp': 3")
+        self.assertRegex(result, "Line numbers missing 'value': 2")
 
     def test_validate_returns_validation_counts(self):
         body = Mock('body')
