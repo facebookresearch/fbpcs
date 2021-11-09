@@ -144,7 +144,6 @@ class PrivateComputationService:
         ] = PrivateComputationStageFlow,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
-
         instance = PrivateComputationInstance(
             instance_id=instance_id,
             role=role,
