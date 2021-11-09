@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from fbpcs.pid.entity.pid_instance import UnionPIDStage
 from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
     PrivateComputationStageFlowData,
@@ -20,7 +21,7 @@ from fbpcs.private_computation.service.compute_metrics_stage_service import (
 from fbpcs.private_computation.service.dummy_stage_service import (
     DummyStageService,
 )
-from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
+from fbpcs.private_computation.service.pid_stage_service import PIDStageService
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
 )
@@ -45,7 +46,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED ID_MATCH PREPARE COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED PID_SHARD PID_PREPARE ID_MATCH PREPARE COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -53,6 +54,18 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.CREATION_STARTED,
         PrivateComputationInstanceStatus.CREATED,
         PrivateComputationInstanceStatus.CREATION_FAILED,
+        False,
+    )
+    PID_SHARD = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PID_SHARD_STARTED,
+        PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
+        PrivateComputationInstanceStatus.PID_SHARD_FAILED,
+        False,
+    )
+    PID_PREPARE = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PID_PREPARE_STARTED,
+        PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
+        PrivateComputationInstanceStatus.PID_PREPARE_FAILED,
         False,
     )
     ID_MATCH = PrivateComputationStageFlowData(
@@ -103,10 +116,26 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         """
         if self is self.CREATED:
             return DummyStageService()
-        elif self is self.ID_MATCH:
-            return IdMatchStageService(
+        elif self is self.PID_SHARD:
+            return PIDStageService(
                 args.pid_svc,
                 args.pid_config,
+                UnionPIDStage.PUBLISHER_SHARD,
+                UnionPIDStage.ADV_SHARD,
+            )
+        elif self is self.PID_PREPARE:
+            return PIDStageService(
+                args.pid_svc,
+                args.pid_config,
+                UnionPIDStage.PUBLISHER_PREPARE,
+                UnionPIDStage.ADV_PREPARE,
+            )
+        elif self is self.ID_MATCH:
+            return PIDStageService(
+                args.pid_svc,
+                args.pid_config,
+                UnionPIDStage.PUBLISHER_RUN_PID,
+                UnionPIDStage.ADV_RUN_PID,
             )
         elif self is self.PREPARE:
             return PrepareDataStageService(
