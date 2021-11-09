@@ -25,6 +25,7 @@ Options:
     -f --from_header=<hdr>        Comma-separated list of header columns, used instead of input file if input file is not supplied
 """
 
+import enum
 import hashlib
 import os
 import pathlib
@@ -33,7 +34,35 @@ from typing import Any, Dict, List, Union
 
 import docopt
 import schema
-from fbpcs.pcf.structs import InputColumn
+
+
+class InputColumn(enum.Enum):
+    id_ = 1
+    opportunity = 2
+    test_flag = 3
+    opportunity_timestamp = 4
+    event_timestamp = 5
+    value = 6
+    value_squared = 7
+    row_count = 8
+    purchase_flag = 9
+    features = 10
+    opportunity_timestamps = 11
+    event_timestamps = 12
+    values = 13
+
+    @classmethod
+    def from_str(cls, s: str) -> "InputColumn":
+        if s.startswith("feature_"):
+            return cls.features
+        return {e.name: e for e in InputColumn}[s]
+
+    def __str__(self) -> str:
+        return self.name
+
+    @staticmethod
+    def is_feature_str(cls, s: str) -> bool:
+        return s.startswith("feature_")
 
 
 def _get_md5_hash_of_int(i: int) -> str:

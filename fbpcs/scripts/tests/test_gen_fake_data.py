@@ -8,7 +8,6 @@ import pathlib
 import unittest
 from unittest.mock import call, mock_open, patch
 
-from fbpcs.pcf.structs import InputColumn
 from fbpcs.scripts import gen_fake_data
 
 
@@ -40,14 +39,14 @@ class TestGenFakeData(unittest.TestCase):
 
     def test_faked_data(self):
         header = [
-            InputColumn.id_,
-            InputColumn.row_count,
-            InputColumn.opportunity,
-            InputColumn.test_flag,
-            InputColumn.opportunity_timestamp,
-            InputColumn.event_timestamp,
-            InputColumn.value,
-            InputColumn.purchase_flag,
+            gen_fake_data.InputColumn.id_,
+            gen_fake_data.InputColumn.row_count,
+            gen_fake_data.InputColumn.opportunity,
+            gen_fake_data.InputColumn.test_flag,
+            gen_fake_data.InputColumn.opportunity_timestamp,
+            gen_fake_data.InputColumn.event_timestamp,
+            gen_fake_data.InputColumn.value,
+            gen_fake_data.InputColumn.purchase_flag,
         ]
 
         row_num = 123
@@ -75,8 +74,10 @@ class TestGenFakeData(unittest.TestCase):
         # Basic tests
         # id_ and row_count columns should be equal to row_num
         self.assertEqual(len(header), len(res))
-        self.assertEqual(row_num, res[header.index(InputColumn.id_)])
-        self.assertEqual(row_num, res[header.index(InputColumn.row_count)])
+        self.assertEqual(row_num, res[header.index(gen_fake_data.InputColumn.id_)])
+        self.assertEqual(
+            row_num, res[header.index(gen_fake_data.InputColumn.row_count)]
+        )
 
         o_rate = 1.0
         t_rate = 0.0
@@ -92,9 +93,11 @@ class TestGenFakeData(unittest.TestCase):
             num_conversions=num_convs,
         )
         # opportunity flag should be set and test flag should be unset
-        self.assertEqual(1, res[header.index(InputColumn.opportunity)])
-        self.assertEqual(0, res[header.index(InputColumn.test_flag)])
-        self.assertEqual(min_ts, res[header.index(InputColumn.opportunity_timestamp)])
+        self.assertEqual(1, res[header.index(gen_fake_data.InputColumn.opportunity)])
+        self.assertEqual(0, res[header.index(gen_fake_data.InputColumn.test_flag)])
+        self.assertEqual(
+            min_ts, res[header.index(gen_fake_data.InputColumn.opportunity_timestamp)]
+        )
 
         t_rate = 1.0
         res = gen_fake_data._faked_data(
@@ -109,9 +112,11 @@ class TestGenFakeData(unittest.TestCase):
             num_conversions=num_convs,
         )
         # opportunity flag should be set and test flag should also be set
-        self.assertEqual(1, res[header.index(InputColumn.opportunity)])
-        self.assertEqual(1, res[header.index(InputColumn.test_flag)])
-        self.assertEqual(min_ts, res[header.index(InputColumn.opportunity_timestamp)])
+        self.assertEqual(1, res[header.index(gen_fake_data.InputColumn.opportunity)])
+        self.assertEqual(1, res[header.index(gen_fake_data.InputColumn.test_flag)])
+        self.assertEqual(
+            min_ts, res[header.index(gen_fake_data.InputColumn.opportunity_timestamp)]
+        )
 
         o_rate = 0.0
         res = gen_fake_data._faked_data(
@@ -126,9 +131,11 @@ class TestGenFakeData(unittest.TestCase):
             num_conversions=num_convs,
         )
         # even though t_rate = 1.0, if opp is unset, test_flag is unset
-        self.assertEqual(0, res[header.index(InputColumn.opportunity)])
-        self.assertEqual(0, res[header.index(InputColumn.test_flag)])
-        self.assertEqual(0, res[header.index(InputColumn.opportunity_timestamp)])
+        self.assertEqual(0, res[header.index(gen_fake_data.InputColumn.opportunity)])
+        self.assertEqual(0, res[header.index(gen_fake_data.InputColumn.test_flag)])
+        self.assertEqual(
+            0, res[header.index(gen_fake_data.InputColumn.opportunity_timestamp)]
+        )
 
         p_rate = 1.0
         # Expect a purchase
@@ -143,9 +150,11 @@ class TestGenFakeData(unittest.TestCase):
             max_ts=max_ts,
             num_conversions=num_convs,
         )
-        self.assertEqual(1, res[header.index(InputColumn.purchase_flag)])
-        self.assertEqual(min_ts, res[header.index(InputColumn.event_timestamp)])
-        self.assertLess(0, res[header.index(InputColumn.value)])
+        self.assertEqual(1, res[header.index(gen_fake_data.InputColumn.purchase_flag)])
+        self.assertEqual(
+            min_ts, res[header.index(gen_fake_data.InputColumn.event_timestamp)]
+        )
+        self.assertLess(0, res[header.index(gen_fake_data.InputColumn.value)])
 
         p_rate = 0.0
         # Expect no purchase
@@ -160,12 +169,14 @@ class TestGenFakeData(unittest.TestCase):
             max_ts=max_ts,
             num_conversions=num_convs,
         )
-        self.assertEqual(0, res[header.index(InputColumn.opportunity)])
-        self.assertEqual(0, res[header.index(InputColumn.event_timestamp)])
-        self.assertEqual(0, res[header.index(InputColumn.value)])
+        self.assertEqual(0, res[header.index(gen_fake_data.InputColumn.opportunity)])
+        self.assertEqual(
+            0, res[header.index(gen_fake_data.InputColumn.event_timestamp)]
+        )
+        self.assertEqual(0, res[header.index(gen_fake_data.InputColumn.value)])
 
         # Test with md5 IDs
-        header = [InputColumn.id_]
+        header = [gen_fake_data.InputColumn.id_]
         res = gen_fake_data._faked_data(
             row_num=row_num,
             header=header,
@@ -180,7 +191,7 @@ class TestGenFakeData(unittest.TestCase):
         )
         self.assertEqual(
             gen_fake_data._get_md5_hash_of_int(row_num),
-            res[header.index(InputColumn.id_)],
+            res[header.index(gen_fake_data.InputColumn.id_)],
         )
 
         # Test to ensure we're not outputting all columns
@@ -196,14 +207,14 @@ class TestGenFakeData(unittest.TestCase):
             num_conversions=num_convs,
         )
         self.assertEqual(len(header), len(res))
-        self.assertEqual(row_num, res[header.index(InputColumn.id_)])
+        self.assertEqual(row_num, res[header.index(gen_fake_data.InputColumn.id_)])
 
         # Test with capping to 2 conversions per user
         num_convs = 2
         header = [
-            InputColumn.id_,
-            InputColumn.event_timestamps,
-            InputColumn.values,
+            gen_fake_data.InputColumn.id_,
+            gen_fake_data.InputColumn.event_timestamps,
+            gen_fake_data.InputColumn.values,
         ]
         res = gen_fake_data._faked_data(
             row_num=row_num,
@@ -217,13 +228,16 @@ class TestGenFakeData(unittest.TestCase):
             num_conversions=num_convs,
         )
         self.assertEqual(
-            num_convs, len(res[header.index(InputColumn.event_timestamps)])
+            num_convs,
+            len(res[header.index(gen_fake_data.InputColumn.event_timestamps)]),
         )
-        self.assertEqual(num_convs, len(res[header.index(InputColumn.values)]))
+        self.assertEqual(
+            num_convs, len(res[header.index(gen_fake_data.InputColumn.values)])
+        )
 
     def test_generate_line(self):
         # Basic test
-        header = [InputColumn.id_]
+        header = [gen_fake_data.InputColumn.id_]
         line = "123"
         res = gen_fake_data._generate_line(
             row_num=100,
@@ -241,7 +255,7 @@ class TestGenFakeData(unittest.TestCase):
         self.assertEqual("123", res[0])
 
         # Try with no input line at all
-        header = [InputColumn.id_]
+        header = [gen_fake_data.InputColumn.id_]
         line = ""
         res = gen_fake_data._generate_line(
             row_num=100,
@@ -259,7 +273,11 @@ class TestGenFakeData(unittest.TestCase):
         self.assertEqual("100", res[0])
 
         # Line with multiple overrides
-        header = [InputColumn.id_, InputColumn.opportunity, InputColumn.test_flag]
+        header = [
+            gen_fake_data.InputColumn.id_,
+            gen_fake_data.InputColumn.opportunity,
+            gen_fake_data.InputColumn.test_flag,
+        ]
         line = "222,1"
         res = gen_fake_data._generate_line(
             row_num=999,
@@ -274,12 +292,15 @@ class TestGenFakeData(unittest.TestCase):
             num_conversions=4,
         )
         self.assertEqual(len(header), len(res))
-        self.assertEqual("222", res[header.index(InputColumn.id_)])
-        self.assertEqual("1", res[header.index(InputColumn.opportunity)])
-        self.assertEqual("1", res[header.index(InputColumn.test_flag)])
+        self.assertEqual("222", res[header.index(gen_fake_data.InputColumn.id_)])
+        self.assertEqual("1", res[header.index(gen_fake_data.InputColumn.opportunity)])
+        self.assertEqual("1", res[header.index(gen_fake_data.InputColumn.test_flag)])
 
         # Check that min_ts/max_ts is limiting the valid values
-        header = [InputColumn.id_, InputColumn.opportunity_timestamp]
+        header = [
+            gen_fake_data.InputColumn.id_,
+            gen_fake_data.InputColumn.opportunity_timestamp,
+        ]
         line = "123"
         res = gen_fake_data._generate_line(
             row_num=100,

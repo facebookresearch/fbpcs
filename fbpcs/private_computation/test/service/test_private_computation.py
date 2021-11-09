@@ -21,7 +21,6 @@ from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
-from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import (
     PIDInstance,
     PIDInstanceStatus,
@@ -79,7 +78,7 @@ def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
         (PrivateComputationDecoupledStageFlow.AGGREGATE,),
     ]
 
-class TestPrivateComputationService(unittest.TestCase):
+class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         container_svc_patcher = patch("fbpcp.service.container_aws.AWSContainerService")
         storage_svc_patcher = patch("fbpcp.service.storage_s3.S3StorageService")
@@ -497,7 +496,6 @@ class TestPrivateComputationService(unittest.TestCase):
         self.assertEqual(pl_instance.status, stage.failed_status)
 
 
-    @to_sync
     @patch("fbpcp.service.mpc.MPCService")
     async def test_create_and_start_mpc_instance(self, mock_mpc_svc):
         mock_mpc_svc.create_instance = MagicMock()
