@@ -74,6 +74,48 @@ const std::vector<O> privatelyShareArrayFrom(
   return out;
 }
 
+
+template <
+    int MY_ROLE,
+    int SOURCE_ROLE,
+    typename T,
+    typename O,
+    typename... BatcherArgs>
+const std::vector<O> privatelyShareArrayFromNoPadding(
+    const std::vector<T>& in,
+    int64_t numVals,
+    BatcherArgs... batcherArgs) {
+  const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
+  XLOGF(
+      DBG,
+      "Privately {} array[{}] = {}",
+      receiveStr,
+      numVals,
+      privateVecToString<MY_ROLE, SOURCE_ROLE, T>(
+          in, numVals));
+  emp::Batcher batcher;
+
+  for (auto i = 0; i < numVals; ++i) {
+    if constexpr (MY_ROLE == SOURCE_ROLE) {
+      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., in.at(i));
+    } else {
+      T nullCopy;
+      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., nullCopy);
+    }
+  }
+
+  batcher.make_semi_honest(SOURCE_ROLE);
+
+  std::vector<O> out;
+  out.reserve(numVals);
+  for (auto i = 0; i < numVals; ++i) {
+    out.push_back(batcher.next<O>());
+  }
+
+  return out;
+}
+
+
 // Some potential optimizations:
 // 1) Rather than just padding to maxArraySize, use DP.
 //    e.g Tell the other party to iterate max(C, rand(1, C)) for each
@@ -160,6 +202,71 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
           std::placeholders::_1,
           std::placeholders::_2,
           paddingValue));
+
+  return out;
+}
+
+
+template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
+const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(
+    const std::vector<std::vector<T>>& in,
+    int64_t numVals,
+    int64_t maxArraySize) {
+  const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
+  XLOGF(
+      DBG,
+      "Privately {} array[{}][max({})]",
+      receiveStr,
+      numVals,
+      maxArraySize);
+
+  std::vector<int64_t> vecLengths;
+  std::vector<std::vector<T>> vecArrays;
+  if (MY_ROLE == SOURCE_ROLE) {
+    XLOG(DBG, "preparing arrays");
+
+    vecLengths.reserve(numVals);
+    vecArrays.reserve(numVals * maxArraySize);
+
+    for (auto i = 0; i < numVals; i++) {
+      auto vec = in.at(i);
+      auto arrayLength = vec.size();
+
+      if (arrayLength > maxArraySize) {
+        throw std::runtime_error(fmt::format(
+            "Input array {} of length {} is greater than allowed size {}",
+            i,
+            arrayLength,
+            maxArraySize));
+      }
+
+      vecArrays.push_back(vec);
+      vecLengths.push_back(arrayLength);
+    }
+  } else {
+    // Still allocate the outer arrays
+    for (auto i = 0; i < numVals; i++) {
+      vecArrays.push_back(std::vector<T>());
+    }
+  }
+
+  // Send over the lengths
+  XLOGF(DBG, "{} array lengths", receiveStr);
+  const auto empLengths = privatelyShareIntsFrom<MY_ROLE, SOURCE_ROLE>(
+      vecLengths, numVals, INT_SIZE);
+  const auto revealedLengths = map<emp::Integer, int64_t>(
+      empLengths,
+      [](auto empLength) { return empLength.template reveal<int64_t>(); });
+
+  // Send over the arrays
+  XLOGF(DBG, "{} arrays", receiveStr);
+  const auto out = zip_and_map<std::vector<T>, int64_t, std::vector<O>>(
+      vecArrays,
+      revealedLengths,
+      std::bind(
+          privatelyShareArrayFromNoPadding<MY_ROLE, SOURCE_ROLE, T, O>,
+          std::placeholders::_1,
+          std::placeholders::_2));
 
   return out;
 }
