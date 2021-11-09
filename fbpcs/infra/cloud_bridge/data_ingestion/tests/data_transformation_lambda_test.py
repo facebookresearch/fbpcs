@@ -186,6 +186,18 @@ class TestDataIngestion(TestCase):
         self.assertEqual(parsed2['device_os'], 'Android')
         self.assertEqual(parsed2['device_os_version'], '7.1.1')
 
+    def test_parse_user_agent_no_minor_version(self):
+        client_user_agent = ''.join([
+            'Mozilla/5.0 (Linux; Android 11.0; CPH1725) ',
+            'AppleWebKit/537.36 (KHTML, like Gecko) ',
+            'Chrome/93.0.4577.82 Mobile Safari/537.36',
+        ])
+        parsed = _parse_client_user_agent(client_user_agent)
+
+        self.assertEqual(parsed['browser_name'], 'Chrome Mobile')
+        self.assertEqual(parsed['device_os'], 'Android')
+        self.assertEqual(parsed['device_os_version'], '11.0')
+
     def sample_event(self, event):
         sample_encoded_data = base64.b64encode(json.dumps(event).encode('utf-8'))
         return {

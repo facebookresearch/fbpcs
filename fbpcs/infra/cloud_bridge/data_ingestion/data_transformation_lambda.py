@@ -157,7 +157,9 @@ def _parse_client_user_agent(client_user_agent):
     for regex in OS_VERSION_REGEXES:
         matches = regex.match(client_user_agent)
         if matches:
-            parsed_fields[DEVICE_OS_VERSION] = '.'.join(matches.groups()[1:])
-            break
+            groups = list(filter(lambda item: type(item) == str, matches.groups()))
+            if (len(groups) > 1):
+                parsed_fields[DEVICE_OS_VERSION] = '.'.join(groups[1:])
+                break
 
     return parsed_fields
