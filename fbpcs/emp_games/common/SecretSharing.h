@@ -97,6 +97,15 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
     T paddingValue);
 
 /*
+ * Same purpose as privatelyShareArraysFrom but w/o padding
+ */
+template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
+const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(
+    const std::vector<std::vector<T>>& in,
+    int64_t numVals,
+    int64_t maxArraySize);
+
+/*
  * Share an array of pre-padded int arrays from SOURCE_ROLE to the opposite
  * party.
  *
@@ -183,6 +192,19 @@ const std::vector<std::vector<O>> privatelyShareArraysFromAlice(
 }
 
 /*
+ * This has same purpose as privatelyShareArraysFromAlice
+ * but it does not add any padding.
+ */
+template <int MY_ROLE, typename T, typename O>
+const std::vector<std::vector<O>> privatelyShareArraysFromAliceNoPadding(
+    const std::vector<std::vector<T>>& in,
+    int64_t numVals,
+    int64_t maxArraySize) {
+  return privatelyShareArraysFromNoPadding<MY_ROLE, emp::ALICE, T, O>(
+      in, numVals, maxArraySize);
+}
+
+/*
  * Share an array of arrays from BOB to ALICE
  *
  * The inner arrays will be padded to prevent the other party from
@@ -201,6 +223,22 @@ const std::vector<std::vector<O>> privatelyShareArraysFromBob(
   return privatelyShareArraysFrom<MY_ROLE, emp::BOB, T, O>(
       in, numVals, maxArraySize, paddingValue);
 }
+
+/*
+ * This has same purpose as privatelyShareArraysFromBob
+ * but it does not add any padding.
+ */
+template <int MY_ROLE, typename T, typename O>
+const std::vector<std::vector<O>> privatelyShareArraysFromBobNoPadding(
+    const std::vector<std::vector<T>>& in,
+    int64_t numVals,
+    int64_t maxArraySize) {
+  return privatelyShareArraysFromNoPadding<MY_ROLE, emp::BOB, T, O>(
+      in, numVals, maxArraySize);
+}
+
+
+/*
 
 /*
  * Share an array of pre-padded int arrays from BOB to ALICE
