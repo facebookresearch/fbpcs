@@ -40,7 +40,7 @@ case "$stage" in
             --concurrency="$LIFT_CONCURRENCY"
             ;;
     # stages donot need IP exchange
-    prepare_compute_input )
+    prepare_compute_input | pid_shard | pid_prepare )
         echo "Lift Publisher $stage starts"
         $docker_command run_next "$LIFT_PUBLIHSER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
