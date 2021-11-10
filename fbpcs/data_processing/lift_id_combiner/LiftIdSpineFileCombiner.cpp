@@ -191,6 +191,9 @@ void LiftIdSpineFileCombiner::combineFile() {
     if (outputType == fbpcf::io::FileType::S3) {
       private_lift::s3_utils::uploadToS3(tmpFilepath, outputPath_);
     } else if (outputType == fbpcf::io::FileType::Local) {
+      if (outputPath_.has_parent_path()) {
+        std::filesystem::create_directories(outputPath_.parent_path());
+      }
       std::filesystem::copy(
           tmpFilepath,
           outputPath_,
