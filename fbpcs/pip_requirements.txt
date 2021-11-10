@@ -10,4 +10,4 @@ tqdm ~= 4.55
 networkx ~= 2.5
 requests ~= 2.25
 psutil ~= 5.8
-fbpcp ~= 0.1.6
+fbpcp ~= 0.2.1
