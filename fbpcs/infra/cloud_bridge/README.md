@@ -1,4 +1,4 @@
-This README guide will show you how to run `deploy.sh`.
+This README guide will show you how to run `deploy.sh`, for the partner-side deployment.
 
 # Prerequisites
 (Assume `make` is pre-installed)
@@ -52,7 +52,7 @@ docker image ls
 docker images cloudbridge-private_lift-server
 ```
 6. given the right docker image tag/id, do `docker run`
-  * run the following command
+  * run the following command to open the docker image in an interactive shell
 ```
 docker run -it --entrypoint=/bin/sh <image-name:image-tag>  (without the '<' and '>')
 example:  docker run -it --entrypoint=/bin/sh cloudbridge-private_lift-server:0.0.1
@@ -82,8 +82,8 @@ example: "/bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 6276726762
 
  * For standard `undeploy` and without any semi-automated data ingestion, run the following command
 ```
-/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
-example: "/bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
+/bin/sh deploy.sh undeploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+example: "/bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
 
 ```
 
@@ -97,7 +97,7 @@ example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 59251384279
 
  * For undeploy with semi-automated data ingestion and without using any bucket names, run the following command
 ```
-/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+/bin/sh deploy.sh undeploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
 
 example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b
 
@@ -113,12 +113,13 @@ example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 59251384279
 
  * For undeploy with semi-automated data ingestion and without using any bucket names, run the following command
 ```
-/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+/bin/sh deploy.sh undeploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
 
 example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name-optional -d data-storage-bucket-name-optional
 ```
 
 
 # Notes
-parameter tag (`-t`) cannot be too long. AWS function/variable name must have length less than or equal to 64.
-parameter s , d, b are optional
+ * parameter tag (`-t`) cannot be too long. AWS function/variable name must have length less than or equal to 64.
+ * parameters p, v are the required cloud_account_id and vpc_id values from the existing PCE publisher-side deployment.
+ * parameter s, d, b are optional.
