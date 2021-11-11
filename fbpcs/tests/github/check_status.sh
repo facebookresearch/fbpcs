@@ -33,15 +33,16 @@ function check_status_complete() {
     #filter out "status": "COMPLETED" or  "status": "COMPLETED": "XX_COMPLETED"
     non_complete_status=$($docker_command get_instance "$1" \
         --config="$DOCKER_CLOUD_CONFIG_FILE" 2>&1 \
-        | grep -o -E "\"status\": \"[a-zA-Z]+\"" \
-        | grep -v "\"status\": \"\S*COMPLETED\"" )
+        | grep -Eo '\{.{1,}\}' \
+        | jq ''.'status' \
+        | grep -v "\"\S*COMPLETED\"" )
 
     if [ -z "$non_complete_status" ]
     then
-        echo "$1 status is all complete"
+        echo "$1 status is complete"
         return 0
     else
-        echo "$1 has following noncomplete status: $non_complete_status"
+        echo "$1 has noncomplete status: $non_complete_status"
         return 1
     fi
 }
