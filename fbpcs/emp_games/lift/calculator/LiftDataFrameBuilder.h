@@ -53,7 +53,8 @@ public:
    * Precompute the total valid value squared at index [i] for each user by
    * applying the math trick of summing all value from `[i, size())` given the
    * property that if conversion[i] is valid, all subsequent conversions must
-   * also be valid.
+   * also be valid. For example: if values are [10, 20, 30] then precomputing
+   * values squared would yield [(10+20+30)^2, (20+30)^2, 30^2].
    *
    * @param df the df::DataFrame to be modified in place
    */
