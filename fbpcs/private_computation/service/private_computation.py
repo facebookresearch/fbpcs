@@ -54,8 +54,9 @@ from fbpcs.private_computation.service.constants import (
     DEFAULT_CONCURRENCY,
     DEFAULT_HMAC_KEY,
     DEFAULT_K_ANONYMITY_THRESHOLD,
-    DEFAULT_PADDING_SIZE,
     DEFAULT_PID_PROTOCOL,
+    LIFT_DEFAULT_PADDING_SIZE,
+    ATTRIBUTION_DEFAULT_PADDING_SIZE,
 )
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
@@ -167,7 +168,10 @@ class PrivateComputationService:
             is_test=is_test,
             hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             padding_size=unwrap_or_default(
-                optional=padding_size, default=DEFAULT_PADDING_SIZE
+                optional=padding_size,
+                default=LIFT_DEFAULT_PADDING_SIZE
+                if game_type is PrivateComputationGameType.LIFT
+                else ATTRIBUTION_DEFAULT_PADDING_SIZE,
             ),
             concurrency=concurrency or DEFAULT_CONCURRENCY,
             k_anonymity_threshold=unwrap_or_default(
