@@ -186,8 +186,8 @@ class InputData {
   std::vector<std::string> featureHeader_;
   std::unordered_map<int64_t, std::vector<std::string>> groupIdToFeatures_;
   std::map<std::vector<std::string>, int64_t> featuresToGroupId_;
-  int64_t totalValue_;
-  int64_t totalValueSquared_;
+  int64_t totalValue_ = 0;
+  int64_t totalValueSquared_ = 0;
   int64_t numGroups_ = 0;
   int32_t numConversionsPerUser_;
 
