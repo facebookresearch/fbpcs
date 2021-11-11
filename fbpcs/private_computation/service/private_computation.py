@@ -74,6 +74,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.private_computation.service.utils import (
     ready_for_partial_container_retry,
+    deprecated,
 )
 from fbpcs.utils.optional import unwrap_or_default
 
@@ -322,6 +323,7 @@ class PrivateComputationService:
         return pc_instance
 
     # PID stage
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     def id_match(
         self,
         instance_id: str,
@@ -356,6 +358,7 @@ class PrivateComputationService:
             self.instance_repository.update(instance)
 
     # TODD T101783992: delete this function and call run_stage directly
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     async def id_match_async(
         self,
         instance_id: str,
@@ -382,6 +385,7 @@ class PrivateComputationService:
             dry_run or False,
         )
 
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     def prepare_data(
         self,
         instance_id: str,
@@ -399,6 +403,7 @@ class PrivateComputationService:
         )
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     async def prepare_data_async(
         self,
         instance_id: str,
@@ -445,6 +450,7 @@ class PrivateComputationService:
             await stage_svc.run_async(private_computation_instance)
 
     # MPC step 1
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     def compute_metrics(
         self,
         instance_id: str,
@@ -467,6 +473,7 @@ class PrivateComputationService:
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of compute_metrics() so that it can be called by Thrift
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     async def compute_metrics_async(
         self,
         instance_id: str,
@@ -495,6 +502,7 @@ class PrivateComputationService:
         )
 
     # MPC step 2
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     def aggregate_shards(
         self,
         instance_id: str,
@@ -517,6 +525,7 @@ class PrivateComputationService:
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of aggregate_shards() so that it can be called by Thrift
+    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
     async def aggregate_shards_async(
         self,
         instance_id: str,
