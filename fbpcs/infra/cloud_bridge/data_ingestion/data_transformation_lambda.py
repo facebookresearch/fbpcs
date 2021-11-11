@@ -18,7 +18,10 @@ BROWSER_NAME_REGEXES = [
     [re.compile(r".*Chrome.*Safari/[0-9.]+$"), "Chrome Desktop"],
     [re.compile(r".*Mobile.*Safari/[0-9.]+$"), "Mobile Safari"],
     [re.compile(r".*FBIOS;.*"), "Facebook for iOS"],
-    [re.compile(r".*(CPU OS|iPhone OS|CPU iPhone).*Instagram.*"), "Instagram IAB for iOS"],
+    [
+        re.compile(r".*(CPU OS|iPhone OS|CPU iPhone).*Instagram.*"),
+        "Instagram IAB for iOS",
+    ],
     [re.compile(r".*Instagram.*Android.*"), "Instagram IAB for Android"],
     [re.compile(r".*FB4A.*"), "Facebook for Android"],
 ]
@@ -40,6 +43,7 @@ BROWSER_NAME = "browser_name"
 DEVICE_OS = "device_os"
 DEVICE_OS_VERSION = "device_os_version"
 
+
 def lambda_handler(event, context):
     output = []
     ##### NOTE: this script assume the schema is correct, no missing items
@@ -55,9 +59,7 @@ def lambda_handler(event, context):
         debug = "DEBUG" in dic.keys() and dic["DEBUG"] == "true"
 
         if debug:
-            print(
-                f"Processing record for recordId: {recordId}"
-            )
+            print(f"Processing record for recordId: {recordId}")
 
         # if loaded as str, load again
         if type(decoded_data) is str:
@@ -79,11 +81,17 @@ def lambda_handler(event, context):
         email = row_data.get("user_data", dummy_dict).get("em")
         device_id = row_data.get("user_data", dummy_dict).get("madid")
         phone = row_data.get("user_data", dummy_dict).get("ph")
-        client_ip_address = row_data.get("user_data", dummy_dict).get("client_ip_address")
-        client_user_agent = row_data.get("user_data", dummy_dict).get("client_user_agent")
+        client_ip_address = row_data.get("user_data", dummy_dict).get(
+            "client_ip_address"
+        )
+        client_user_agent = row_data.get("user_data", dummy_dict).get(
+            "client_user_agent"
+        )
         click_id = row_data.get("user_data", dummy_dict).get("fbc")
         login_id = row_data.get("user_data", dummy_dict).get("fbp")
-        parsed_user_agent_fields = _parse_client_user_agent(client_user_agent) if client_user_agent else {}
+        parsed_user_agent_fields = (
+            _parse_client_user_agent(client_user_agent) if client_user_agent else {}
+        )
 
         # make sure not all values are None
         if all(
@@ -133,7 +141,7 @@ def lambda_handler(event, context):
         if DEVICE_OS_VERSION in parsed_user_agent_fields:
             user_data[DEVICE_OS_VERSION] = parsed_user_agent_fields[DEVICE_OS_VERSION]
 
-        data['user_data'] = user_data
+        data["user_data"] = user_data
         # firehose need data to be b64-encoded
         data = json.dumps(data) + "\n"
         data = data.encode("utf-8")
@@ -142,6 +150,7 @@ def lambda_handler(event, context):
 
     print("finished data transformation.")
     return {"records": output}
+
 
 def _parse_client_user_agent(client_user_agent):
     parsed_fields = {}
@@ -158,8 +167,8 @@ def _parse_client_user_agent(client_user_agent):
         matches = regex.match(client_user_agent)
         if matches:
             groups = list(filter(lambda item: type(item) == str, matches.groups()))
-            if (len(groups) > 1):
-                parsed_fields[DEVICE_OS_VERSION] = '.'.join(groups[1:])
+            if len(groups) > 1:
+                parsed_fields[DEVICE_OS_VERSION] = ".".join(groups[1:])
                 break
 
     return parsed_fields
