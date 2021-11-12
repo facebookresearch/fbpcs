@@ -206,6 +206,15 @@ public:
   }
 
   /**
+   * Check if a given key is defined in this DataFrame already
+   *
+   * @returns true if `key` is stored in this DataFrame
+   */
+  bool containsKey(const std::string &key) const {
+    return types_.find(key) != types_.end();
+  }
+
+  /**
    * Get a `Column<T>` at the given key within this DataFrame. A `dynamic_cast`
    * is necessary since we're dynamically altering types at runtime depending
    * on the values being read or set. While there is a small computational cost
