@@ -89,6 +89,15 @@ class LiftInputData {
   }
 
   /**
+   * Get this LiftInputData's number of rows in the dataset.
+   *
+   * @returns the number of rows in this LiftInputData
+   */
+  int64_t size() const {
+    return size_;
+  }
+
+  /**
    * Get a column of bits representing a bitmask over a given groupId.
    *
    * @param groupId the groupId for which to retrieve a bitmask column
@@ -118,11 +127,23 @@ class LiftInputData {
    */
   std::vector<df::Column<bool>> calculateBitmasks() const;
 
+  /**
+   * Calculate the number of rows in this LiftInputData by taking the size of
+   * the opportunity_timestamp or event_timestamps column (since one must be
+   * defined to represent a valid party to the computation).
+   *
+   * @returns the size of the dataset from the `df::DataFrame`
+   * @throws std::out_of_range if neither of the party-defining columns
+   *     (opportunity_timestamp or event_timestamps) are defined in the dataset
+   */
+  std::size_t calculateSize() const;
+
  private:
   fbpcf::Party party_;
   std::string groupKey_;
   df::DataFrame df_;
   int64_t groupCount_;
   std::vector<df::Column<bool>> bitmasks_;
+  std::size_t size_;
 };
 } // namespace private_lift
