@@ -14,40 +14,27 @@
 #include <emp-sh2pc/emp-sh2pc.h>
 #include <gtest/gtest.h>
 
-#include "folly/Random.h"
-
 #include <fbpcf/mpc/EmpGame.h>
 #include <fbpcf/mpc/EmpTestUtil.h>
-#include "../../../common/Csv.h"
-#include "../../common/GroupedLiftMetrics.h"
-#include "../CalculatorGame.h"
-#include "../CalculatorGameConfig.h"
-#include "../InputData.h"
-#include "../OutputMetrics.h"
-#include "common/GenFakeData.h"
-#include "common/LiftCalculator.h"
+#include <folly/Random.h>
+
+#include "fbpcs/emp_games/common/Csv.h"
+#include "fbpcs/emp_games/lift/calculator/CalculatorGame.h"
+#include "fbpcs/emp_games/lift/calculator/CalculatorGameConfig.h"
+#include "fbpcs/emp_games/lift/calculator/LiftInputData.h"
+#include "fbpcs/emp_games/lift/calculator/OutputMetrics.h"
+#include "fbpcs/emp_games/lift/calculator/test/common/GenFakeData.h"
+#include "fbpcs/emp_games/lift/calculator/test/common/LiftCalculator.h"
+#include "fbpcs/emp_games/lift/common/GroupedLiftMetrics.h"
 
 namespace private_lift {
 class CalculatorGameTest : public ::testing::Test {
  public:
   CalculatorGameConfig getInputData(
-      const std::filesystem::path& inputPath,
-      bool isConversionLift) {
-    int32_t numConversionsPerUser = isConversionLift ? 4 : 1;
-    int64_t epoch = 1546300800;
-
-    auto liftGranularityType = isConversionLift
-        ? InputData::LiftGranularityType::Conversion
-        : InputData::LiftGranularityType::Converter;
-
-    InputData inputData{
-        inputPath,
-        InputData::LiftMPCType::Standard,
-        liftGranularityType,
-        epoch,
-        numConversionsPerUser};
+      fbpcf::Party party, const std::filesystem::path& inputPath) {
+    LiftInputData inputData{party, inputPath};
     CalculatorGameConfig config = {
-        inputData, isConversionLift, numConversionsPerUser};
+      std::move(inputData), true, 25};
     return config;
   }
 
@@ -74,7 +61,7 @@ class CalculatorGameTest : public ::testing::Test {
     // compute results with CalculatorGame
     auto res = fbpcf::mpc::
         test<CalculatorGame<fbpcf::QueueIO>, CalculatorGameConfig, std::string>(
-            aliceConfig, bobConfig);
+            std::move(aliceConfig), std::move(bobConfig));
     GroupedLiftMetrics resFirst = GroupedLiftMetrics::fromJson(res.first);
     GroupedLiftMetrics resSecond = GroupedLiftMetrics::fromJson(res.second);
 
@@ -115,13 +102,13 @@ TEST_F(CalculatorGameTest, TestRandomInputConversionLift) {
       .setIncrementalityRate(0.0)
       .setEpoch(1546300800);
   testDataGenerator.genFakePublisherInputFile(aliceInputFilename_, params);
-  params.setNumConversions(4).setOmitValuesColumn(false);
+  params.setNumConversions(25).setOmitValuesColumn(false);
   testDataGenerator.genFakePartnerInputFile(bobInputFilename_, params);
 
   CalculatorGameConfig configRandomConversionAlice =
-      CalculatorGameTest::getInputData(aliceInputFilename_, true);
+      CalculatorGameTest::getInputData(fbpcf::Party::Alice, aliceInputFilename_);
   CalculatorGameConfig configRandomConversionBob =
-      CalculatorGameTest::getInputData(bobInputFilename_, true);
+      CalculatorGameTest::getInputData(fbpcf::Party::Bob, bobInputFilename_);
 
   runTest(
       std::move(configRandomConversionAlice),
@@ -139,13 +126,13 @@ TEST_F(CalculatorGameTest, TestRandomInputConversionLiftValueless) {
       .setIncrementalityRate(0.0)
       .setEpoch(1546300800);
   testDataGenerator.genFakePublisherInputFile(aliceInputFilename_, params);
-  params.setNumConversions(4).setOmitValuesColumn(true);
+  params.setNumConversions(25).setOmitValuesColumn(true);
   testDataGenerator.genFakePartnerInputFile(bobInputFilename_, params);
 
   CalculatorGameConfig configRandomConversionAlice =
-      CalculatorGameTest::getInputData(aliceInputFilename_, true);
+      CalculatorGameTest::getInputData(fbpcf::Party::Alice, aliceInputFilename_);
   CalculatorGameConfig configRandomConversionBob =
-      CalculatorGameTest::getInputData(bobInputFilename_, true);
+      CalculatorGameTest::getInputData(fbpcf::Party::Bob, bobInputFilename_);
 
   runTest(
       std::move(configRandomConversionAlice),

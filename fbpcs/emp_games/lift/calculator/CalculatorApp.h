@@ -15,9 +15,10 @@
 
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
-#include "CalculatorGame.h"
-#include "InputData.h"
-#include "OutputMetrics.h"
+
+#include "fbpcs/emp_games/lift/calculator/CalculatorGame.h"
+#include "fbpcs/emp_games/lift/calculator/LiftInputData.h"
+#include "fbpcs/emp_games/lift/calculator/OutputMetrics.h"
 
 // so that these FLAGS set in main.cpp are visible here
 DECLARE_bool(is_conversion_lift);

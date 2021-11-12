@@ -13,9 +13,8 @@
 #include <gflags/gflags.h>
 
 #include <fbpcf/mpc/EmpGame.h>
-#include "CalculatorGameConfig.h"
-#include "InputData.h"
-#include "OutputMetrics.h"
+#include "fbpcs/emp_games/lift/calculator/CalculatorGameConfig.h"
+#include "fbpcs/emp_games/lift/calculator/OutputMetrics.h"
 
 namespace private_lift {
 template <class IOChannel>
