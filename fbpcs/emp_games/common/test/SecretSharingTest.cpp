@@ -5,11 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <vector>
+
 #include <gtest/gtest.h>
 
 #include <fbpcf/mpc/EmpTestUtil.h>
 
-#include "../SecretSharing.h"
+#include "fbpcs/emp_games/common/SecretSharing.h"
 
 namespace private_measurement {
 
@@ -26,6 +28,46 @@ std::vector<std::vector<TOut>> revealVectorOfVectors(
     std::vector<std::vector<TIn>>& in) {
   return map<std::vector<TIn>, std::vector<TOut>>(
       in, [](auto empVec) { return revealVector<TIn, TOut>(empVec); });
+}
+
+TEST(SecretSharingTest, TestPrivatelyShareBool) {
+  fbpcf::mpc::wrapTestWithParty<std::function<void(fbpcf::Party party)>>(
+      [](fbpcf::Party party) {
+        bool expected = true;
+        emp::Bit b = privatelyShare(fbpcf::Party::Alice, expected);
+        auto actual = b.reveal<bool>();
+        EXPECT_EQ(expected, actual);
+      });
+}
+
+TEST(SecretSharingTest, TestPrivatelyShareInt) {
+  fbpcf::mpc::wrapTestWithParty<std::function<void(fbpcf::Party party)>>(
+      [](fbpcf::Party party) {
+        int64_t expected = 12345;
+        emp::Integer i = privatelyShare(fbpcf::Party::Alice, expected);
+        auto actual = i.reveal<int64_t>();
+        EXPECT_EQ(expected, actual);
+      });
+}
+
+TEST(SecretSharingTest, TestPrivatelyShareBoolVector) {
+  fbpcf::mpc::wrapTestWithParty<std::function<void(fbpcf::Party party)>>(
+      [](fbpcf::Party party) {
+        std::vector<bool> expected{true, false, false, true};
+        std::vector<emp::Bit> bVec = privatelyShare(fbpcf::Party::Alice, expected, expected.size());
+        auto actual = revealVector<emp::Bit, bool>(bVec);
+        EXPECT_EQ(expected, actual);
+      });
+}
+
+TEST(SecretSharingTest, TestPrivatelyShareIntVector) {
+  fbpcf::mpc::wrapTestWithParty<std::function<void(fbpcf::Party party)>>(
+      [](fbpcf::Party party) {
+        std::vector<int64_t> expected{12, 34, 56, 78};
+        std::vector<emp::Integer> iVec  = privatelyShare(fbpcf::Party::Alice, expected, expected.size());
+        auto actual = revealVector<emp::Integer, int64_t>(iVec);
+        EXPECT_EQ(expected, actual);
+      });
 }
 
 TEST(SecretSharingTest, TestPrivatelyShareIntsFromAlice) {
