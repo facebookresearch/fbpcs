@@ -38,6 +38,7 @@ LiftInputData::LiftInputData(
   df_ = builder.buildNew();
   groupCount_ = calculateGroupCount();
   bitmasks_ = calculateBitmasks();
+  size_ = calculateSize();
 }
 
 int64_t LiftInputData::calculateGroupCount() const {
@@ -70,5 +71,15 @@ std::vector<df::Column<bool>> LiftInputData::calculateBitmasks()
     res.push_back(std::move(groupColumn));
   }
   return res;
+}
+
+template <typename BitType>
+std::size_t LiftInputData<BitType>::calculateSize() const {
+  if (df_.containsKey("opportunity_timestamp")) {
+    return df_.at<int64_t>("opportunity_timestamp").size();
+  } else {
+    // This must be the partner
+    return df_.at<std::vector<int64_t>>("event_timestamps").size();
+  }
 }
 } // namespace private_lift
