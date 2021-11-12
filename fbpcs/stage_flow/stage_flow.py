@@ -11,6 +11,8 @@ from functools import cached_property
 from typing import Any, Dict, Tuple
 from typing import Optional, Generic, Type, TypeVar
 
+from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
+
 # C  -> Class
 C = TypeVar("C", bound="StageFlow")
 Status = TypeVar("Status")
@@ -52,6 +54,17 @@ class StageFlowMeta(EnumMeta):
     def __repr__(self) -> str:
         """Used to pretty print stage flows, e.g. stage1 -> stage2 -> stage3"""
         return self._stage_flow_pretty
+
+    def __getitem__(self: Type[C], item: str) -> C:
+        try:
+            return super().__getitem__(item)
+        except KeyError:
+            pass
+
+        try:
+            return super().__getitem__(item.upper())
+        except KeyError:
+            raise StageFlowStageNotFoundError(f"{item} is not a stage in {self.__name__}. Valid stages: {self!r}") from None
 
 
 class StageFlow(Enum, metaclass=StageFlowMeta):
@@ -177,6 +190,21 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
     @classmethod
     def get_first_stage(cls: Type[C]) -> C:
         return list(cls)[0]
+
+    @classmethod
+    def get_stage_from_str(cls: Type[C], stage_name: str) -> C:
+        """Convert a stage name string to a stage object
+
+        Args:
+            stage_name: the name of the stage
+
+        Returns:
+            return: StageFlow member corresponding to the stage name
+
+        Raises:
+            StageFlowStageNotFoundError: the stage specified does not exist
+        """
+        return cls[stage_name]
 
     @classmethod
     def get_last_stage(cls: Type[C]) -> C:

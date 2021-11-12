@@ -6,6 +6,7 @@
 
 from unittest import TestCase
 
+from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
 from fbpcs.stage_flow.test.dummy_stage_flow import (
     DummyStageFlow,
     DummyStageFlowStatus,
@@ -112,3 +113,21 @@ class TestStageFlow(TestCase):
                 self.assertIs(
                     stage, DummyStageFlow.get_next_runnable_stage_from_status(status)
                 )
+
+    def test_get_stage_from_name(self):
+        # setup
+        expected_stage = DummyStageFlow.get_first_stage()
+
+        # test that lower case works
+        actual_stage = DummyStageFlow.get_stage_from_str(expected_stage.name.lower())
+        self.assertEqual(expected_stage, actual_stage)
+
+        # test that uppercase works
+        actual_stage = DummyStageFlow.get_stage_from_str(expected_stage.name.upper())
+        self.assertEqual(expected_stage, actual_stage)
+
+        # test that non existent stages raise error
+        with self.assertRaises(StageFlowStageNotFoundError):
+            DummyStageFlow.get_stage_from_str(
+                "do not name your stage this or you will be fired"
+            )
