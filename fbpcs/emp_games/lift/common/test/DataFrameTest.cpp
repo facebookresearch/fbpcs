@@ -108,6 +108,20 @@ TEST(DataFrameTest, Keys) {
   EXPECT_EQ(boolKeys, df2.keysOf<bool>());
 }
 
+TEST(DataFrameTest, ContainsKey) {
+  DataFrame df;
+  df.get<bool>("bool1") = {true, false};
+  df.get<bool>("bool2") = {true, false};
+  df.get<int64_t>("int1") = {123, 111};
+  df.get<int64_t>("int2") = {456, 222};
+  df.get<std::vector<int64_t>>("intVec") = {{7, 8, 9}, {333}};
+
+  EXPECT_TRUE(df.containsKey("bool1"));
+  EXPECT_TRUE(df.containsKey("int1"));
+  EXPECT_TRUE(df.containsKey("intVec"));
+  EXPECT_FALSE(df.containsKey("int9"));
+}
+
 TEST(DataFrameTest, LoadFromRowsBasic) {
   TypeMap t{
       .boolColumns = {},
