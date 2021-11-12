@@ -19,23 +19,21 @@
 #include "fbpcs/emp_games/lift/common/Column.h"
 #include "fbpcs/emp_games/lift/common/DataFrame.h"
 
-namespace {
-// TODO: Move this back to being a configurable variable
-inline constexpr int64_t kConversionCap = 25;
-}
-
 namespace private_lift {
 LiftInputData::LiftInputData(
     fbpcf::Party party,
-    const std::string& filePath)
+    const std::string& filePath,
+    int64_t conversionCap)
     : LiftInputData{
-          LiftDataFrameBuilder{filePath, kConversionCap},
-          party} {}
+          LiftDataFrameBuilder{filePath, conversionCap},
+          party, conversionCap} {}
 
 LiftInputData::LiftInputData(
     const LiftDataFrameBuilder& builder,
-    fbpcf::Party party)
-    : party_{party}, groupKey_{getGroupKeyForParty(party)} {
+    fbpcf::Party party,
+    int64_t conversionCap)
+    : party_{party}, groupKey_{getGroupKeyForParty(party)},
+      conversionCap_{conversionCap} {
   df_ = builder.buildNew();
   groupCount_ = calculateGroupCount();
   bitmasks_ = calculateBitmasks();

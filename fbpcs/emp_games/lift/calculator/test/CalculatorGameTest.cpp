@@ -32,9 +32,10 @@ class CalculatorGameTest : public ::testing::Test {
  public:
   CalculatorGameConfig getInputData(
       fbpcf::Party party, const std::filesystem::path& inputPath) {
-    LiftInputData inputData{party, inputPath};
+    int32_t numConversionsPerUser = 25;
+    LiftInputData inputData{party, inputPath, numConversionsPerUser};
     CalculatorGameConfig config = {
-      std::move(inputData), true, 25};
+      std::move(inputData), true, numConversionsPerUser};
     return config;
   }
 

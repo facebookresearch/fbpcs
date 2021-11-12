@@ -19,6 +19,8 @@
 
 using namespace private_lift;
 
+static constexpr int32_t kNumConversionsPerUser = 3;
+
 class MockLiftDataFrameBuilderForAlice : public LiftDataFrameBuilder {
  public:
   MockLiftDataFrameBuilderForAlice() : LiftDataFrameBuilder{"", 3} {}
@@ -81,19 +83,19 @@ class MockLiftDataFrameBuilderForBob : public LiftDataFrameBuilder {
 
 TEST(LiftInputDataTest, CalculateGroupCount) {
   MockLiftDataFrameBuilderForAlice mockAlice;
-  LiftInputData alice{mockAlice, fbpcf::Party::Alice};
+  LiftInputData alice{mockAlice, fbpcf::Party::Alice, kNumConversionsPerUser};
 
   EXPECT_EQ(mockAlice.expectedGroupCount, alice.getGroupCount());
 
   MockLiftDataFrameBuilderForBob mockBob;
-  LiftInputData bob{mockBob, fbpcf::Party::Bob};
+  LiftInputData bob{mockBob, fbpcf::Party::Bob, kNumConversionsPerUser};
 
   EXPECT_EQ(mockBob.expectedGroupCount, bob.getGroupCount());
 }
 
 TEST(LiftInputDataTest, CalculateBitmasks) {
   MockLiftDataFrameBuilderForAlice mockAlice;
-  LiftInputData alice{mockAlice, fbpcf::Party::Alice};
+  LiftInputData alice{mockAlice, fbpcf::Party::Alice, kNumConversionsPerUser};
 
   for (std::size_t i = 0; i < mockAlice.expectedBitmasks.size(); ++i) {
     auto& expected = mockAlice.expectedBitmasks.at(i);
@@ -102,7 +104,7 @@ TEST(LiftInputDataTest, CalculateBitmasks) {
   }
 
   MockLiftDataFrameBuilderForBob mockBob;
-  LiftInputData bob{mockBob, fbpcf::Party::Bob};
+  LiftInputData bob{mockBob, fbpcf::Party::Bob, kNumConversionsPerUser};
 
   for (std::size_t i = 0; i < mockBob.expectedBitmasks.size(); ++i) {
     auto& expected = mockBob.expectedBitmasks.at(i);
@@ -113,12 +115,12 @@ TEST(LiftInputDataTest, CalculateBitmasks) {
 
 TEST(LiftInputData, CalculateSize) {
   MockLiftDataFrameBuilderForAlice mockAlice;
-  LiftInputData alice{mockAlice, fbpcf::Party::Alice};
+  LiftInputData alice{mockAlice, fbpcf::Party::Alice, kNumConversionsPerUser};
 
   EXPECT_EQ(mockAlice.expectedSize, alice.size());
 
   MockLiftDataFrameBuilderForBob mockBob;
-  LiftInputData bob{mockBob, fbpcf::Party::Bob};
+  LiftInputData bob{mockBob, fbpcf::Party::Bob, kNumConversionsPerUser};
 
   EXPECT_EQ(mockBob.expectedSize, bob.size());
 }

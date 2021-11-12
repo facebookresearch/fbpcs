@@ -31,8 +31,9 @@ class LiftInputData {
    *
    * @param party the party for which to prepare data
    * @param filePath the path to the CSV with this party's data
+   * @param conversionCap number of conversions to support per user
    */
-  LiftInputData(fbpcf::Party party, const std::string& filePath);
+  LiftInputData(fbpcf::Party party, const std::string& filePath, int64_t conversionCap);
 
   /**
    * Construct a LiftInputData object for a party with a custom builder. This
@@ -42,8 +43,9 @@ class LiftInputData {
    *
    * @param builder an object which can prepare a Lift DataFrame
    * @param party the party for which to prepare data
+   * @param conversionCap number of conversions to support per user
    */
-  LiftInputData(const LiftDataFrameBuilder& builder, fbpcf::Party party);
+  LiftInputData(const LiftDataFrameBuilder& builder, fbpcf::Party party, int64_t conversionCap);
 
   /**
    * Get the prepared `df::DataFrame`.
@@ -138,9 +140,17 @@ class LiftInputData {
    */
   std::size_t calculateSize() const;
 
+  /**
+   * Retrieve the conversion cap set for this LiftInputData.
+   *
+   * @returns the configured per-user conversion cap for this LiftInputData
+   */
+  int64_t getConversionCap() const { return conversionCap_; }
+
  private:
   fbpcf::Party party_;
   std::string groupKey_;
+  int64_t conversionCap_;
   df::DataFrame df_;
   int64_t groupCount_;
   std::vector<df::Column<bool>> bitmasks_;

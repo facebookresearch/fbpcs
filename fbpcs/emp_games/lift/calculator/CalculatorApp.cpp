@@ -52,7 +52,7 @@ CalculatorGameConfig CalculatorApp::getInputData() {
       FLAGS_is_conversion_lift ? FLAGS_num_conversions_per_user : 1;
 
   XLOG(INFO) << "Parsing input";
-  LiftInputData inputData{party_, inputPath_};
+  LiftInputData inputData{party_, inputPath_, numConversionsPerUser};
   CalculatorGameConfig config = {
     std::move(inputData), FLAGS_is_conversion_lift, numConversionsPerUser};
   return config;

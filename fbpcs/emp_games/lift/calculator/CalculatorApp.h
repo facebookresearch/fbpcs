@@ -17,7 +17,6 @@
 #include <fbpcf/mpc/EmpGame.h>
 
 #include "fbpcs/emp_games/lift/calculator/CalculatorGame.h"
-#include "fbpcs/emp_games/lift/calculator/LiftInputData.h"
 #include "fbpcs/emp_games/lift/calculator/OutputMetrics.h"
 
 // so that these FLAGS set in main.cpp are visible here
