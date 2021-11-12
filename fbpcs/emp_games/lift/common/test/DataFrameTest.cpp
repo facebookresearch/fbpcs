@@ -108,6 +108,20 @@ TEST(DataFrameTest, Keys) {
   EXPECT_EQ(boolKeys, df2.keysOf<bool>());
 }
 
+TEST(DataFrameTest, ContainsKey) {
+  DataFrame df;
+  df.get<bool>("bool1") = {true, false};
+  df.get<bool>("bool2") = {true, false};
+  df.get<int64_t>("int1") = {123, 111};
+  df.get<int64_t>("int2") = {456, 222};
+  df.get<std::vector<int64_t>>("intVec") = {{7, 8, 9}, {333}};
+
+  EXPECT_TRUE(df.containsKey("bool1"));
+  EXPECT_TRUE(df.containsKey("int1"));
+  EXPECT_TRUE(df.containsKey("intVec"));
+  EXPECT_FALSE(df.containsKey("int9"));
+}
+
 TEST(DataFrameTest, LoadFromRowsBasic) {
   TypeMap t{
       .boolColumns = {},
@@ -166,4 +180,43 @@ TEST(DataFrameTest, LoadFromRowsAdvanced) {
   EXPECT_EQ(expected.at<int64_t>("int2"), actual.at<int64_t>("int2"));
   EXPECT_EQ(expected.at<std::vector<int64_t>>("intVec"),
             actual.at<std::vector<int64_t>>("intVec"));
+}
+
+#include <iostream>
+TEST(DataFrameTest, RowAt) {
+  struct RowView {
+    bool b;
+    const int64_t* i;
+    const std::vector<int64_t>* iVec;
+
+    static RowView fromDataFrame(const DataFrame &df, std::size_t idx) {
+      RowView row;
+      // Bools are ugly -- std::vector<bool> is not an actual STL container, so
+      // we have to use a special workaround to make it copyable. The real fix
+      // here is to use `std::deque` as the backing container for bool Columns.
+      row.b = df.get<bool>("boolCol").data().at(idx);
+      row.i = &df.get<int64_t>("intCol").at(idx);
+      row.iVec = &df.get<std::vector<int64_t>>("intVecCol").at(idx);
+      return row;
+    }
+  };
+
+  DataFrame df;
+  df.get<bool>("boolCol") = {true, false};
+  df.get<int64_t>("intCol") = {123, 456};
+  df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
+
+  //auto view = df.rowAt<RowView>(0);
+  auto view = RowView::fromDataFrame(df, 0);
+  EXPECT_EQ(view.b, true);
+  EXPECT_EQ(*view.i, 123);
+  std::vector<int64_t> expectedIVec{7, 8, 9};
+  EXPECT_EQ(*view.iVec, expectedIVec);
+
+  //auto view2 = df.rowAt<RowView>(1);
+  auto view2 = RowView::fromDataFrame(df, 1);
+  EXPECT_EQ(view2.b, false);
+  EXPECT_EQ(*view2.i, 456);
+  std::vector<int64_t> expectedIVec2{333};
+  EXPECT_EQ(*view2.iVec, expectedIVec2);
 }
