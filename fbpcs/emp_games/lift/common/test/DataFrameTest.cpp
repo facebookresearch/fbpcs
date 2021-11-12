@@ -13,8 +13,24 @@
 
 #include "fbpcs/emp_games/lift/common/Column.h"
 #include "fbpcs/emp_games/lift/common/DataFrame.h"
+#include "fbpcs/emp_games/lift/common/DataFrameRowIteratorAdapter.h"
 
 using namespace df;
+
+struct TestRowView {
+  bool b;
+  const int64_t *i;
+  const std::vector<int64_t> *iVec;
+
+  static TestRowView fromDataFrame(const DataFrame &df, std::size_t idx) {
+    TestRowView row;
+
+    row.b = df.get<bool>("boolCol").at(idx);
+    row.i = &df.get<int64_t>("intCol").at(idx);
+    row.iVec = &df.get<std::vector<int64_t>>("intVecCol").at(idx);
+    return row;
+  }
+};
 
 TEST(DataFrameTest, CreateBasicDataFrame) {
   DataFrame df;
@@ -108,6 +124,20 @@ TEST(DataFrameTest, Keys) {
   EXPECT_EQ(boolKeys, df2.keysOf<bool>());
 }
 
+TEST(DataFrameTest, ContainsKey) {
+  DataFrame df;
+  df.get<bool>("bool1") = {true, false};
+  df.get<bool>("bool2") = {true, false};
+  df.get<int64_t>("int1") = {123, 111};
+  df.get<int64_t>("int2") = {456, 222};
+  df.get<std::vector<int64_t>>("intVec") = {{7, 8, 9}, {333}};
+
+  EXPECT_TRUE(df.containsKey("bool1"));
+  EXPECT_TRUE(df.containsKey("int1"));
+  EXPECT_TRUE(df.containsKey("intVec"));
+  EXPECT_FALSE(df.containsKey("int9"));
+}
+
 TEST(DataFrameTest, LoadFromRowsBasic) {
   TypeMap t{
       .boolColumns = {},
@@ -166,4 +196,86 @@ TEST(DataFrameTest, LoadFromRowsAdvanced) {
   EXPECT_EQ(expected.at<int64_t>("int2"), actual.at<int64_t>("int2"));
   EXPECT_EQ(expected.at<std::vector<int64_t>>("intVec"),
             actual.at<std::vector<int64_t>>("intVec"));
+}
+
+#include <iostream>
+TEST(DataFrameTest, RowAt) {
+  DataFrame df;
+  df.get<bool>("boolCol") = {true, false};
+  df.get<int64_t>("intCol") = {123, 456};
+  df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
+
+  auto view = df.rowAt<TestRowView>(0);
+  EXPECT_EQ(view.b, true);
+  EXPECT_EQ(*view.i, 123);
+  std::vector<int64_t> expectedIVec{7, 8, 9};
+  EXPECT_EQ(*view.iVec, expectedIVec);
+
+  auto view2 = df.rowAt<TestRowView>(1);
+  EXPECT_EQ(view2.b, false);
+  EXPECT_EQ(*view2.i, 456);
+  std::vector<int64_t> expectedIVec2{333};
+  EXPECT_EQ(*view2.iVec, expectedIVec2);
+}
+
+TEST(RowIteratorTest, RowIteratorBasic) {
+  DataFrame df;
+  df.get<bool>("boolCol") = {true, false};
+  df.get<int64_t>("intCol") = {123, 456};
+  df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
+
+  auto iter = DataFrame::RowIterator<TestRowView>(df);
+  ASSERT_TRUE(iter.isValid());
+  EXPECT_EQ((*iter).b, true);
+  EXPECT_EQ(*(*iter).i, 123);
+  std::vector<int64_t> expectedIVec{7, 8, 9};
+  EXPECT_EQ(*(*iter).iVec, expectedIVec);
+
+  ++iter;
+  ASSERT_TRUE(iter.isValid());
+  EXPECT_EQ((*iter).b, false);
+  EXPECT_EQ(*(*iter).i, 456);
+  std::vector<int64_t> expectedIVec2{333};
+  EXPECT_EQ(*(*iter).iVec, expectedIVec2);
+
+  ++iter;
+  EXPECT_FALSE(iter.isValid());
+}
+
+TEST(RowIteratorTest, RowIteratorBeginEnd) {
+  DataFrame df;
+  df.get<bool>("boolCol") = {true, false};
+  df.get<int64_t>("intCol") = {123, 456};
+  df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
+
+  auto it = df.begin<TestRowView>();
+  auto end = df.end();
+  EXPECT_NE(it, end);
+  while (it != end) {
+    // Other tests actually check values
+    // This test is just about checking against the end iterator sentinel
+    ++it;
+  }
+  EXPECT_EQ(it, end);
+}
+
+TEST(RowIteratorTest, RowIteratorAdapter) {
+  DataFrame df;
+  df.get<bool>("boolCol") = {true, false};
+  df.get<int64_t>("intCol") = {123, 456};
+  df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
+
+  std::vector<bool> expectedBools{true, false};
+  std::vector<int64_t> expectedInts{123, 456};
+  std::vector<std::vector<int64_t>> expectedIntVecs{{7, 8, 9}, {333}};
+  std::size_t i = 0;
+  for (auto row : DataFrameRowIteratorAdapter<TestRowView>{df}) {
+    EXPECT_EQ(expectedBools.at(i), row.b);
+    EXPECT_EQ(expectedInts.at(i), *row.i);
+    EXPECT_EQ(expectedIntVecs.at(i), *row.iVec);
+
+    // The whole point of a for-each is that we don't need to keep track of
+    // indexing, but this is how we keep track of the next expected value
+    ++i;
+  }
 }
