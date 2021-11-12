@@ -326,6 +326,20 @@ public:
     types_.erase(typeIt);
   }
 
+  /**
+   * Get a row view into this DataFrame at the given index.
+   *
+   * @tparam RowType a type implementing `fromDataFrame(DataFrame, std::size_t)`
+   *     which represents a view into a specific row of a DataFrame
+   *
+   * @param idx the index of the row the new RowType should point to
+   * @returns a RowType view of this DataFrame at the given index
+   */
+  template <typename RowType>
+  RowType rowAt(std::size_t idx) {
+    return RowType::fromDataFrame(*this, idx);
+  }
+
 private:
   std::unordered_map<std::string, TypeInfo> types_;
   std::unordered_map<std::type_index, std::unique_ptr<BaseMap>> maps_;
