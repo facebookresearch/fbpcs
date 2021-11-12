@@ -89,16 +89,13 @@ class LiftInputData {
   }
 
   /**
-   * Get a column of bits representing a bitmask over a given groupId. These
-   * were precomputed upon creation of this LiftInputData since construction
-   * of new `emp::Bit` columns can be expensive.
+   * Get a column of bits representing a bitmask over a given groupId.
    *
    * @param groupId the groupId for which to retrieve a bitmask column
-   * @returns a `df::Column` of `emp::Bit` describing whether row[i] is valid
-   *     for this group
+   * @returns a `df::Column` describing whether row[i] is valid for this group
    * @throws std::out_of_range if groupId > groupCount
    */
-  const df::Column<emp::Bit> &getBitmaskFor(int64_t groupId) const {
+  const df::Column<bool>& getBitmaskFor(int64_t groupId) const {
     return bitmasks_.at(groupId);
   }
 
@@ -116,16 +113,16 @@ class LiftInputData {
    * run in the LiftInputData constructor to cache the result for later. For
    * more details, see `LiftInputData::getBitmaskFor`.
    *
-   * @returns a vector of Columns of `emp::Bit` representing whether row[i] is
-   *     valid for the group stored in vector index[j]
+   * @returns a vector of `Column<bool>` representing whether row[i] is valid
+   *     for the group stored in vector index[j]
    */
-  std::vector<df::Column<emp::Bit>> calculateBitmasks() const;
+  std::vector<df::Column<bool>> calculateBitmasks() const;
 
  private:
   fbpcf::Party party_;
   std::string groupKey_;
   df::DataFrame df_;
   int64_t groupCount_;
-  std::vector<df::Column<emp::Bit>> bitmasks_;
+  std::vector<df::Column<bool>> bitmasks_;
 };
 } // namespace private_lift
