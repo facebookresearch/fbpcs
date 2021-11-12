@@ -31,8 +31,9 @@ class LiftInputData {
    *
    * @param party the party for which to prepare data
    * @param filePath the path to the CSV with this party's data
+   * @param conversionCap number of conversions to support per user
    */
-  LiftInputData(fbpcf::Party party, const std::string& filePath);
+  LiftInputData(fbpcf::Party party, const std::string& filePath, int64_t conversionCap);
 
   /**
    * Construct a LiftInputData object for a party with a custom builder. This
@@ -42,8 +43,9 @@ class LiftInputData {
    *
    * @param builder an object which can prepare a Lift DataFrame
    * @param party the party for which to prepare data
+   * @param conversionCap number of conversions to support per user
    */
-  LiftInputData(const LiftDataFrameBuilder& builder, fbpcf::Party party);
+  LiftInputData(const LiftDataFrameBuilder& builder, fbpcf::Party party, int64_t conversionCap);
 
   /**
    * Get the prepared `df::DataFrame`.
@@ -89,16 +91,22 @@ class LiftInputData {
   }
 
   /**
-   * Get a column of bits representing a bitmask over a given groupId. These
-   * were precomputed upon creation of this LiftInputData since construction
-   * of new `emp::Bit` columns can be expensive.
+   * Get this LiftInputData's number of rows in the dataset.
+   *
+   * @returns the number of rows in this LiftInputData
+   */
+  int64_t size() const {
+    return size_;
+  }
+
+  /**
+   * Get a column of bits representing a bitmask over a given groupId.
    *
    * @param groupId the groupId for which to retrieve a bitmask column
-   * @returns a `df::Column` of `emp::Bit` describing whether row[i] is valid
-   *     for this group
+   * @returns a `df::Column` describing whether row[i] is valid for this group
    * @throws std::out_of_range if groupId > groupCount
    */
-  const df::Column<emp::Bit> &getBitmaskFor(int64_t groupId) const {
+  const df::Column<bool>& getBitmaskFor(int64_t groupId) const {
     return bitmasks_.at(groupId);
   }
 
@@ -116,16 +124,36 @@ class LiftInputData {
    * run in the LiftInputData constructor to cache the result for later. For
    * more details, see `LiftInputData::getBitmaskFor`.
    *
-   * @returns a vector of Columns of `emp::Bit` representing whether row[i] is
-   *     valid for the group stored in vector index[j]
+   * @returns a vector of `Column<bool>` representing whether row[i] is valid
+   *     for the group stored in vector index[j]
    */
-  std::vector<df::Column<emp::Bit>> calculateBitmasks() const;
+  std::vector<df::Column<bool>> calculateBitmasks() const;
+
+  /**
+   * Calculate the number of rows in this LiftInputData by taking the size of
+   * the opportunity_timestamp or event_timestamps column (since one must be
+   * defined to represent a valid party to the computation).
+   *
+   * @returns the size of the dataset from the `df::DataFrame`
+   * @throws std::out_of_range if neither of the party-defining columns
+   *     (opportunity_timestamp or event_timestamps) are defined in the dataset
+   */
+  std::size_t calculateSize() const;
+
+  /**
+   * Retrieve the conversion cap set for this LiftInputData.
+   *
+   * @returns the configured per-user conversion cap for this LiftInputData
+   */
+  int64_t getConversionCap() const { return conversionCap_; }
 
  private:
   fbpcf::Party party_;
   std::string groupKey_;
+  int64_t conversionCap_;
   df::DataFrame df_;
   int64_t groupCount_;
-  std::vector<df::Column<emp::Bit>> bitmasks_;
+  std::vector<df::Column<bool>> bitmasks_;
+  std::size_t size_;
 };
 } // namespace private_lift

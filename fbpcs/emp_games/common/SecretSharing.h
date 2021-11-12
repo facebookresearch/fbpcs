@@ -5,8 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#ifndef SECRET_SHARING_H
-#define SECRET_SHARING_H
+#pragma once
 
 #include <functional>
 #include <optional>
@@ -15,9 +14,61 @@
 
 #include <emp-sh2pc/emp-sh2pc.h>
 
-#include "PrivateData.h"
+#include <fbpcf/mpc/EmpGame.h>
+
+#include "fbpcs/emp_games/common/PrivateData.h"
 
 namespace private_measurement::secret_sharing {
+/**
+ * Privately share a single bool of data between two parties.
+ *
+ * @param dataSrc the party supplying the bool
+ * @param data the value of the bool (this argument is ignored if the party
+ *     calling this function is not acting as `dataSrc`)
+ * @returns a secure emp::Bit representing `data`
+ */
+emp::Bit privatelyShare(fbpcf::Party dataSrc, bool data);
+
+/**
+ * Privately share a single int of data between two parties.
+ *
+ * @param dataSrc the party supplying the int
+ * @param data the value of the int (this argument is ignored if the party
+ *     calling this function is not acting as `dataSrc`)
+ * @returns a secure emp::Integer representing `data`
+ */
+emp::Integer privatelyShare(fbpcf::Party dataSrc, int64_t data);
+
+/**
+ * Privately share an iterable container of bools of data between two parties.
+ *
+ * @tparam Container an iterable container type (like std::vector)
+ * @param dataSrc the party supplying the Container<bool>
+ * @param data the Container of bool data to send (this argument is ignored if
+ *     the party calling this function is not acting as `dataSrc` but an empty
+ *     container must still be provided for this function to work)
+ * @param n the number of bools to share
+ * @returns a Container of secure emp::Bit representing `data`
+ */
+template <template <typename...> typename Container>
+Container<emp::Bit> privatelyShare(fbpcf::Party dataSrc,
+                                   const Container<bool> &data, std::size_t n);
+
+/**
+ * Privately share an iterable container of ints of data between two parties.
+ *
+ * @tparam Container an iterable container type (like std::vector)
+ * @param dataSrc the party supplying the Container<int64_t>
+ * @param data the Container of int data to send (this argument is ignored if
+ *     the party calling this function is not acting as `dataSrc` but an empty
+ *     column must still be provided for this function to work)
+ * @param n the number of int64_t values to share
+ * @returns a Container of secure emp::Integer representing `data`
+ */
+template <template <typename...> typename Container>
+Container<emp::Integer> privatelyShare(fbpcf::Party dataSrc,
+                                       const Container<int64_t> &data,
+                                       std::size_t n);
 
 /*
  * Share one emp::Integer bidirectionally between both parties
@@ -329,8 +380,4 @@ const std::vector<T> multiplyBitmask(
 
 } // namespace private_measurement::secret_sharing
 
-#ifndef SECRET_SHARING_HPP
-#include "SecretSharing.hpp"
-#endif // SECRET_SHARING_HPP
-
-#endif // SECRET_SHARING_H
+#include "fbpcs/emp_games/common/SecretSharing-impl.h"

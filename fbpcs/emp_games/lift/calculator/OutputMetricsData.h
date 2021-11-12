@@ -12,7 +12,7 @@
 
 #include <folly/String.h>
 
-#include "../common/GroupedLiftMetrics.h"
+#include "fbpcs/emp_games/lift/common/GroupedLiftMetrics.h"
 
 namespace private_lift {
 
