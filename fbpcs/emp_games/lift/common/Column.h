@@ -12,6 +12,7 @@
 #include <iterator>
 #include <optional>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -35,39 +36,40 @@ namespace df {
  *
  * @tparam T the type of data stored in this Column
  */
-template <typename T> class Column {
-public:
+template <typename T>
+class Column {
+ public:
   /* Basic constructors */
   Column() {}
-  Column(const Column<T> &other) = default;
-  Column(Column<T> &&other) = default;
-  Column<T> &operator=(Column<T> &other) = default;
-  Column<T> &operator=(Column<T> &&other) = default;
+  Column(const Column<T>& other) = default;
+  Column(Column<T>&& other) = default;
+  Column<T>& operator=(Column<T>& other) = default;
+  Column<T>& operator=(Column<T>&& other) = default;
 
-  explicit Column(std::size_t count, const T &value = T()) : v_(count, value) {}
+  explicit Column(std::size_t count, const T& value = T()) : v_(count, value) {}
 
   template <class InputIt>
   Column(InputIt first, InputIt last) : v_(first, last) {}
 
   /* implicit */ Column(std::initializer_list<T> init) : v_(init) {}
 
-  Column<T> &operator=(std::initializer_list<T> init) {
+  Column<T>& operator=(std::initializer_list<T> init) {
     v_ = init;
     return *this;
   }
 
   /* Constructors from vector<T> */
 
-  /* implicit */ Column(std::vector<T> &other) : v_(other) {}
+  /* implicit */ Column(std::vector<T>& other) : v_(other) {}
 
-  /* implicit */ Column(std::vector<T> &&other) : v_(other) {}
+  /* implicit */ Column(std::vector<T>&& other) : v_(other) {}
 
-  Column &operator=(std::vector<T> &other) {
+  Column& operator=(std::vector<T>& other) {
     v_ = other;
     return *this;
   }
 
-  Column<T> &operator=(std::vector<T> &&other) {
+  Column<T>& operator=(std::vector<T>&& other) {
     v_ = other;
     return *this;
   }
@@ -78,7 +80,9 @@ public:
    *
    * @returns a const_iterator to the beginning of this Column's data
    */
-  typename std::vector<T>::const_iterator begin() const { return v_.begin(); }
+  typename std::vector<T>::const_iterator begin() const {
+    return v_.begin();
+  }
 
   /**
    * Get an iterator to the beginning of this Column's data by deferring to the
@@ -86,7 +90,9 @@ public:
    *
    * @returns an iterator to the beginning of this Column's data
    */
-  typename std::vector<T>::iterator begin() { return v_.begin(); }
+  typename std::vector<T>::iterator begin() {
+    return v_.begin();
+  }
 
   /**
    * Get a const_iterator to the end of this Column's data by deffering to the
@@ -94,7 +100,9 @@ public:
    *
    * @returns a const_iterator to the end of this Column's data
    */
-  typename std::vector<T>::const_iterator end() const { return v_.end(); }
+  typename std::vector<T>::const_iterator end() const {
+    return v_.end();
+  }
 
   /**
    * Get an iterator to the end of this Column's data by deferring to the
@@ -102,19 +110,30 @@ public:
    *
    * @returns an iterator to the end of this Column's data
    */
-  typename std::vector<T>::iterator end() { return v_.end(); }
+  typename std::vector<T>::iterator end() {
+    return v_.end();
+  }
 
   /**
-   * Retrieve a value at a specific index in the column.
+   * Retrieve a value at a specific index in the column. Because of the horrible
+   * inconvenience that `std::vector<bool>` is not a real STL container and
+   * references to elements are not defined, we defer to whatever insanity is
+   * defined by the underlying `std::vector`. That's what all of the decltype
+   * nonsense is in this method's signature. If you're confused, just think in
+   * terms of "what would I expect `std::vector<T>::at` to return?"
    *
    * @param pos the index into this Column
    * @returns the value at index `pos`
    * @throws `std::out_of_range` if `pos` is larger than `this->size()`
    */
-  const T &at(std::size_t pos) const { return v_.at(pos); }
+  auto at(std::size_t pos) const
+      -> decltype(std::declval<const std::vector<T>>().at(pos)) {
+    return v_.at(pos);
+  }
 
-  T &at(std::size_t pos) {
-    return const_cast<T &>(const_cast<const Column &>(*this).at(pos));
+  auto at(std::size_t pos) -> decltype(std::declval<std::vector<T>>().at(pos)) {
+    return const_cast<decltype(std::declval<std::vector<T>>().at(pos))>(
+        const_cast<const Column&>(*this).at(pos));
   }
 
   /**
@@ -123,35 +142,45 @@ public:
    * @param capacity the amount of capacity to reserve in the underlying
    * std::vector
    */
-  void reserve(std::size_t capacity) { v_.reserve(capacity); }
+  void reserve(std::size_t capacity) {
+    v_.reserve(capacity);
+  }
 
   /**
    * Checks whether this Column is empty.
    *
    * @returns true if this Column has no values
    */
-  bool empty() const { return v_.empty(); }
+  bool empty() const {
+    return v_.empty();
+  }
 
   /**
    * Get the number of items stored in this Column.
    *
    * @returns the number of elements in this Column
    */
-  std::size_t size() const { return v_.size(); }
+  std::size_t size() const {
+    return v_.size();
+  }
 
   /**
    * Add a new value to this Column.
    *
    * @param value The value to add to this Column
    */
-  void push_back(const T &value) { v_.push_back(value); }
+  void push_back(const T& value) {
+    v_.push_back(value);
+  }
 
   /**
    * Add a new (rvalue reference) value to this Column.
    *
    * @param value The value to add to this Column
    */
-  void push_back(T &&value) { v_.push_back(value); }
+  void push_back(T&& value) {
+    v_.push_back(value);
+  }
 
   /**
    * Constructs an element in-place at the back of this Column.
@@ -160,7 +189,8 @@ public:
    * @param args arguments to pass to the T constructor
    * @returns a reference to the newly constructed element
    */
-  template <class... Args> T &emplace_back(Args &&...args) {
+  template <class... Args>
+  T& emplace_back(Args&&... args) {
     return v_.emplace_back(args...);
   }
 
@@ -171,7 +201,8 @@ public:
    *    element from this Column
    * @param f the function to call on each element of this Column
    */
-  template <typename F> void apply(F f) const {
+  template <typename F>
+  void apply(F f) const {
     for (std::size_t i = 0; i < size(); ++i) {
       f(at(i));
     }
@@ -185,7 +216,8 @@ public:
    *    element from this Column
    * @param f the function to call on each element of this Column
    */
-  template <typename F> void apply(F f) {
+  template <typename F>
+  void apply(F f) {
     for (std::size_t i = 0; i < size(); ++i) {
       f(at(i));
     }
@@ -200,7 +232,8 @@ public:
    * @returns a new Column where each element is the result of calling f on the
    *     the respective element from this Column
    */
-  template <typename F> auto map(F f) const -> Column<decltype(f(at(0)))> {
+  template <typename F>
+  auto map(F f) const -> Column<decltype(f(at(0)))> {
     Column<decltype(f(at(0)))> res;
     res.reserve(size());
     for (std::size_t i = 0; i < size(); ++i) {
@@ -222,7 +255,7 @@ public:
    *     the respective element from this Column
    */
   template <typename T2, typename F>
-  auto mapWith(const Column<T2> &other, F f) const
+  auto mapWith(const Column<T2>& other, F f) const
       -> Column<decltype(f(at(0), other.at(0)))> {
     Column<decltype(f(at(0), other.at(0)))> res;
     if (size() != other.size()) {
@@ -252,7 +285,7 @@ public:
    *     the respective element from this Column
    */
   template <typename T2, typename F>
-  auto mapWithScalar(const T2 &other, F f) const
+  auto mapWithScalar(const T2& other, F f) const
       -> Column<decltype(f(at(0), other))> {
     Column<decltype(f(at(0), other))> res;
 
@@ -270,7 +303,8 @@ public:
    *     element from this Column
    * @param f the function to call on each element of this column
    */
-  template <typename F> void mapInPlace(F f) {
+  template <typename F>
+  void mapInPlace(F f) {
     for (std::size_t i = 0; i < size(); ++i) {
       at(i) = f(at(i));
     }
@@ -287,7 +321,7 @@ public:
    * @param f the function to call on each element of this column
    */
   template <typename T2, typename F>
-  void mapWithInPlace(const Column<T2> &other, F f) {
+  void mapWithInPlace(const Column<T2>& other, F f) {
     if (size() != other.size()) {
       std::stringstream ss;
       ss << "This Column has size() = " << size()
@@ -311,7 +345,7 @@ public:
    * @param f the function to call on each element of this column
    */
   template <typename T2, typename F>
-  void mapWithScalarInPlace(const T2 &other, F f) {
+  void mapWithScalarInPlace(const T2& other, F f) {
     for (std::size_t i = 0; i < size(); ++i) {
       at(i) = f(at(i), other);
     }
@@ -354,7 +388,8 @@ public:
    * @tparam T2 the value type of the other Column
    * @returns a new column mapped to the type T2
    */
-  template <typename T2> Column<T2> toColumn() const {
+  template <typename T2>
+  Column<T2> toColumn() const {
     Column<T2> res;
     res.reserve(size());
     for (std::size_t i = 0; i < size(); ++i) {
@@ -368,7 +403,7 @@ public:
    *
    * @returns the vector backing this Column data structure
    */
-  const std::vector<T> &data() const {
+  const std::vector<T>& data() const {
     return v_;
   }
 
@@ -378,53 +413,58 @@ public:
    *
    * @returns the vector backing this Column data structure
    */
-  std::vector<T> &data() {
-    return const_cast<std::vector<T> &>(const_cast<const Column<T> &>(*this).data());
+  std::vector<T>& data() {
+    return const_cast<std::vector<T>&>(
+        const_cast<const Column<T>&>(*this).data());
   }
 
   /* Comparison operators */
-  friend bool operator==(const Column<T> &a, const Column<T> &b) {
+  friend bool operator==(const Column<T>& a, const Column<T>& b) {
     return a.v_ == b.v_;
   }
 
-  friend bool operator!=(const Column<T> &a, const Column<T> &b) {
+  friend bool operator!=(const Column<T>& a, const Column<T>& b) {
     return a.v_ != b.v_;
   }
 
   /* Binary assignment operators */
-  template <typename T2> void operator+=(T2 &other) {
+  template <typename T2>
+  void operator+=(T2& other) {
     if constexpr (is_specialization<T2, Column>::value) {
-      mapWithInPlace(other, [](const T &a, const T &b) { return a + b; });
+      mapWithInPlace(other, [](const T& a, const T& b) { return a + b; });
     } else {
-      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a + b; });
+      mapWithScalarInPlace(other, [](const T& a, const T& b) { return a + b; });
     }
   }
 
-  template <typename T2> void operator-=(T2 &other) {
+  template <typename T2>
+  void operator-=(T2& other) {
     if constexpr (is_specialization<T2, Column>::value) {
-      mapWithInPlace(other, [](const T &a, const T &b) { return a - b; });
+      mapWithInPlace(other, [](const T& a, const T& b) { return a - b; });
     } else {
-      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a - b; });
+      mapWithScalarInPlace(other, [](const T& a, const T& b) { return a - b; });
     }
   }
 
-  template <typename T2> void operator*=(T2 &other) {
+  template <typename T2>
+  void operator*=(T2& other) {
     if constexpr (is_specialization<T2, Column>::value) {
-      mapWithInPlace(other, [](const T &a, const T &b) { return a * b; });
+      mapWithInPlace(other, [](const T& a, const T& b) { return a * b; });
     } else {
-      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a * b; });
+      mapWithScalarInPlace(other, [](const T& a, const T& b) { return a * b; });
     }
   }
 
-  template <typename T2> void operator/=(T2 &other) {
+  template <typename T2>
+  void operator/=(T2& other) {
     if constexpr (is_specialization<T2, Column>::value) {
-      mapWithInPlace(other, [](const T &a, const T &b) { return a / b; });
+      mapWithInPlace(other, [](const T& a, const T& b) { return a / b; });
     } else {
-      mapWithScalarInPlace(other, [](const T &a, const T &b) { return a / b; });
+      mapWithScalarInPlace(other, [](const T& a, const T& b) { return a / b; });
     }
   }
 
-private:
+ private:
   std::vector<T> v_;
 };
 
