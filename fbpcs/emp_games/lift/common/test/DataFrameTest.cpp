@@ -191,10 +191,7 @@ TEST(DataFrameTest, RowAt) {
 
     static RowView fromDataFrame(const DataFrame &df, std::size_t idx) {
       RowView row;
-      // Bools are ugly -- std::vector<bool> is not an actual STL container, so
-      // we have to use a special workaround to make it copyable. The real fix
-      // here is to use `std::deque` as the backing container for bool Columns.
-      row.b = df.get<bool>("boolCol").data().at(idx);
+      row.b = df.get<bool>("boolCol").at(idx);
       row.i = &df.get<int64_t>("intCol").at(idx);
       row.iVec = &df.get<std::vector<int64_t>>("intVecCol").at(idx);
       return row;
