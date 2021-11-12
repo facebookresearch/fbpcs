@@ -20,6 +20,7 @@
 #include "fbpcs/emp_games/lift/common/DataFrame.h"
 
 namespace {
+// TODO: Move this back to being a configurable variable
 inline constexpr int64_t kConversionCap = 25;
 }
 
@@ -73,8 +74,7 @@ std::vector<df::Column<bool>> LiftInputData::calculateBitmasks()
   return res;
 }
 
-template <typename BitType>
-std::size_t LiftInputData<BitType>::calculateSize() const {
+std::size_t LiftInputData::calculateSize() const {
   if (df_.containsKey("opportunity_timestamp")) {
     return df_.at<int64_t>("opportunity_timestamp").size();
   } else {
