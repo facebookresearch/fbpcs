@@ -7,6 +7,8 @@
 # pyre-strict
 
 
+import functools
+import warnings
 from typing import Any, Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
@@ -197,3 +199,33 @@ def get_updated_pc_status_mpc_game(
             status = current_stage.failed_status
 
     return status
+
+
+# decorators are a serious pain to add typing for, so I'm not going to bother...
+# pyre-ignore return typing
+def deprecated(reason: str):
+    """
+    Logs a warning that a function is deprecated
+    """
+
+    # pyre-ignore return typing
+    def wrap(func):
+        warning_color = '\033[93m' # orange/yellow ascii escape sequence
+        end = '\033[0m' # end ascii escape sequence
+        explanation: str = f"{warning_color}{func.__name__} is deprecated! explanation: {reason}{end}"
+
+        @functools.wraps(func)
+        # pyre-ignore typing on args, kwargs, and return
+        def wrapped(*args, **kwargs):
+            warnings.simplefilter("always", DeprecationWarning)
+            warnings.warn(
+                explanation,
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+            warnings.simplefilter("default", DeprecationWarning)
+            return func(*args, **kwargs)
+
+        return wrapped
+
+    return wrap
