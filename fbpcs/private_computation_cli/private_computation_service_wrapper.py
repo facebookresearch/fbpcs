@@ -46,6 +46,9 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
+from fbpcs.private_computation.service.utils import (
+    deprecated,
+)
 from fbpcs.utils.config_yaml import reflect
 
 # Added an is_decoupled argument to create_instance. This argument will act as a switch
@@ -68,7 +71,7 @@ def create_instance(
     padding_size: Optional[int] = None,
     k_anonymity_threshold: Optional[int] = None,
     fail_fast: bool = False,
-    stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None
+    stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
         config["private_computation"],
@@ -109,6 +112,9 @@ def create_instance(
     return instance
 
 
+@deprecated(
+    "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+)
 def id_match(
     config: Dict[str, Any],
     instance_id: str,
@@ -140,6 +146,9 @@ def id_match(
     logger.info(instance)
 
 
+@deprecated(
+    "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+)
 def prepare_compute_input(
     config: Dict[str, Any],
     instance_id: str,
@@ -173,6 +182,9 @@ def prepare_compute_input(
     logging.info("Finished preparing data")
 
 
+@deprecated(
+    "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+)
 def compute_metrics(
     config: Dict[str, Any],
     instance_id: str,
@@ -204,6 +216,9 @@ def compute_metrics(
     logger.info(instance)
 
 
+@deprecated(
+    "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+)
 def aggregate_shards(
     config: Dict[str, Any],
     instance_id: str,
@@ -316,6 +331,7 @@ def run_next(
 
     logger.info(instance)
 
+
 def run_stage(
     config: Dict[str, Any],
     instance_id: str,
@@ -336,7 +352,9 @@ def run_stage(
     # so we need to explicitly call update_instance() here to get the current status.
     pc_service.update_instance(instance_id)
 
-    instance = pc_service.run_stage(instance_id=instance_id, stage=stage, server_ips=server_ips)
+    instance = pc_service.run_stage(
+        instance_id=instance_id, stage=stage, server_ips=server_ips
+    )
 
     logger.info(instance)
 
