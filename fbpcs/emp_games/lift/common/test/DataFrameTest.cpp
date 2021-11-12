@@ -16,6 +16,21 @@
 
 using namespace df;
 
+struct TestRowView {
+  bool b;
+  const int64_t* i;
+  const std::vector<int64_t>* iVec;
+
+  static TestRowView fromDataFrame(const DataFrame& df, std::size_t idx) {
+    TestRowView row;
+
+    row.b = df.get<bool>("boolCol").at(idx);
+    row.i = &df.get<int64_t>("intCol").at(idx);
+    row.iVec = &df.get<std::vector<int64_t>>("intVecCol").at(idx);
+    return row;
+  }
+};
+
 TEST(DataFrameTest, CreateBasicDataFrame) {
   DataFrame df;
   Column<int64_t> c1{1, 2, 3};
@@ -90,8 +105,8 @@ TEST(DataFrameTest, Keys) {
   df.get<std::string>("int2") = {"456", "222"};
   df.get<std::string>("intVec") = {"[7,8,9]", "[333]"};
 
-  std::unordered_set<std::string> allKeys{"bool1", "bool2", "int1", "int2",
-                                          "intVec"};
+  std::unordered_set<std::string> allKeys{
+      "bool1", "bool2", "int1", "int2", "intVec"};
   EXPECT_EQ(allKeys, df.keys());
   EXPECT_EQ(allKeys, df.keysOf<std::string>());
 
@@ -129,8 +144,8 @@ TEST(DataFrameTest, LoadFromRowsBasic) {
       .intVecColumns = {},
   };
 
-  std::vector<std::string> header = {"bool1", "bool2", "int1", "int2",
-                                     "intVec"};
+  std::vector<std::string> header = {
+      "bool1", "bool2", "int1", "int2", "intVec"};
   std::vector<std::vector<std::string>> rows = {
       {"true", "1", "123", "456", "[7,8,9]"},
       {"false", "0", "111", "222", "[333]"},
@@ -148,8 +163,8 @@ TEST(DataFrameTest, LoadFromRowsBasic) {
   EXPECT_EQ(expected.at<std::string>("bool2"), actual.at<std::string>("bool2"));
   EXPECT_EQ(expected.at<std::string>("int1"), actual.at<std::string>("int1"));
   EXPECT_EQ(expected.at<std::string>("int2"), actual.at<std::string>("int2"));
-  EXPECT_EQ(expected.at<std::string>("intVec"),
-            actual.at<std::string>("intVec"));
+  EXPECT_EQ(
+      expected.at<std::string>("intVec"), actual.at<std::string>("intVec"));
 }
 
 TEST(DataFrameTest, LoadFromRowsAdvanced) {
@@ -159,8 +174,8 @@ TEST(DataFrameTest, LoadFromRowsAdvanced) {
       .intVecColumns = {"intVec"},
   };
 
-  std::vector<std::string> header = {"bool1", "bool2", "int1", "int2",
-                                     "intVec"};
+  std::vector<std::string> header = {
+      "bool1", "bool2", "int1", "int2", "intVec"};
   std::vector<std::vector<std::string>> rows = {
       {"true", "1", "123", "456", "[7,8,9]"},
       {"false", "0", "111", "222", "[333]"},
@@ -178,42 +193,51 @@ TEST(DataFrameTest, LoadFromRowsAdvanced) {
   EXPECT_EQ(expected.at<bool>("bool2"), actual.at<bool>("bool2"));
   EXPECT_EQ(expected.at<int64_t>("int1"), actual.at<int64_t>("int1"));
   EXPECT_EQ(expected.at<int64_t>("int2"), actual.at<int64_t>("int2"));
-  EXPECT_EQ(expected.at<std::vector<int64_t>>("intVec"),
-            actual.at<std::vector<int64_t>>("intVec"));
+  EXPECT_EQ(
+      expected.at<std::vector<int64_t>>("intVec"),
+      actual.at<std::vector<int64_t>>("intVec"));
 }
 
 #include <iostream>
 TEST(DataFrameTest, RowAt) {
-  struct RowView {
-    bool b;
-    const int64_t* i;
-    const std::vector<int64_t>* iVec;
-
-    static RowView fromDataFrame(const DataFrame &df, std::size_t idx) {
-      RowView row;
-      row.b = df.get<bool>("boolCol").at(idx);
-      row.i = &df.get<int64_t>("intCol").at(idx);
-      row.iVec = &df.get<std::vector<int64_t>>("intVecCol").at(idx);
-      return row;
-    }
-  };
-
   DataFrame df;
   df.get<bool>("boolCol") = {true, false};
   df.get<int64_t>("intCol") = {123, 456};
   df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
 
-  //auto view = df.rowAt<RowView>(0);
-  auto view = RowView::fromDataFrame(df, 0);
+  auto view = df.rowAt<TestRowView>(0);
   EXPECT_EQ(view.b, true);
   EXPECT_EQ(*view.i, 123);
   std::vector<int64_t> expectedIVec{7, 8, 9};
   EXPECT_EQ(*view.iVec, expectedIVec);
 
-  //auto view2 = df.rowAt<RowView>(1);
-  auto view2 = RowView::fromDataFrame(df, 1);
+  auto view2 = df.rowAt<TestRowView>(1);
   EXPECT_EQ(view2.b, false);
   EXPECT_EQ(*view2.i, 456);
   std::vector<int64_t> expectedIVec2{333};
   EXPECT_EQ(*view2.iVec, expectedIVec2);
+}
+
+TEST(RowIteratorTest, RowIteratorBasic) {
+  DataFrame df;
+  df.get<bool>("boolCol") = {true, false};
+  df.get<int64_t>("intCol") = {123, 456};
+  df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
+
+  auto iter = DataFrame::RowIterator<TestRowView>(df);
+  ASSERT_TRUE(iter.isValid());
+  EXPECT_EQ((*iter).b, true);
+  EXPECT_EQ(*(*iter).i, 123);
+  std::vector<int64_t> expectedIVec{7, 8, 9};
+  EXPECT_EQ(*(*iter).iVec, expectedIVec);
+
+  ++iter;
+  ASSERT_TRUE(iter.isValid());
+  EXPECT_EQ((*iter).b, false);
+  EXPECT_EQ(*(*iter).i, 456);
+  std::vector<int64_t> expectedIVec2{333};
+  EXPECT_EQ(*(*iter).iVec, expectedIVec2);
+
+  ++iter;
+  EXPECT_FALSE(iter.isValid());
 }
