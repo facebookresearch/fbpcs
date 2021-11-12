@@ -171,6 +171,20 @@ public:
    *    element from this Column
    * @param f the function to call on each element of this Column
    */
+  template <typename F> void apply(F f) const {
+    for (std::size_t i = 0; i < size(); ++i) {
+      f(at(i));
+    }
+  }
+
+  /**
+   * Non-const version of `Column::apply`. Apply a function on each element of
+   * this Column.
+   *
+   * @tparam F an unspecified function type which can be called with each
+   *    element from this Column
+   * @param f the function to call on each element of this Column
+   */
   template <typename F> void apply(F f) {
     for (std::size_t i = 0; i < size(); ++i) {
       f(at(i));
@@ -347,6 +361,25 @@ public:
       res.push_back(T2(at(i)));
     }
     return res;
+  }
+
+  /**
+   * Get a reference to the underlying vector of this Column.
+   *
+   * @returns the vector backing this Column data structure
+   */
+  const std::vector<T> &data() const {
+    return v_;
+  }
+
+  /**
+   * Non-const version of `Column::data`. Get a reference to the underlying
+   * vector of this Column.
+   *
+   * @returns the vector backing this Column data structure
+   */
+  std::vector<T> &data() {
+    return const_cast<std::vector<T> &>(const_cast<const Column<T> &>(*this).data());
   }
 
   /* Comparison operators */
