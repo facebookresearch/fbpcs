@@ -13,6 +13,7 @@
 
 #include "fbpcs/emp_games/lift/common/Column.h"
 #include "fbpcs/emp_games/lift/common/DataFrame.h"
+#include "fbpcs/emp_games/lift/common/DataFrameRowIteratorAdapter.h"
 
 using namespace df;
 
@@ -256,4 +257,25 @@ TEST(RowIteratorTest, RowIteratorBeginEnd) {
     ++it;
   }
   EXPECT_EQ(it, end);
+}
+
+TEST(RowIteratorTest, RowIteratorAdapter) {
+  DataFrame df;
+  df.get<bool>("boolCol") = {true, false};
+  df.get<int64_t>("intCol") = {123, 456};
+  df.get<std::vector<int64_t>>("intVecCol") = {{7, 8, 9}, {333}};
+
+  std::vector<bool> expectedBools{true, false};
+  std::vector<int64_t> expectedInts{123, 456};
+  std::vector<std::vector<int64_t>> expectedIntVecs{{7, 8, 9}, {333}};
+  std::size_t i = 0;
+  for (auto row : DataFrameRowIteratorAdapter<TestRowView>{df}) {
+    EXPECT_EQ(expectedBools.at(i), row.b);
+    EXPECT_EQ(expectedInts.at(i), *row.i);
+    EXPECT_EQ(expectedIntVecs.at(i), *row.iVec);
+
+    // The whole point of a for-each is that we don't need to keep track of
+    // indexing, but this is how we keep track of the next expected value
+    ++i;
+  }
 }
