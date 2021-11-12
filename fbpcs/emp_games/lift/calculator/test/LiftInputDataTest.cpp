@@ -30,21 +30,23 @@ class MockLiftDataFrameBuilderForAlice : public LiftDataFrameBuilder {
 
     // Try to align these in a nice human-readable way to look like an
     // actual dataframe
-    res.get<int64_t>("test_population") =     {    1,     0,     0};
-    res.get<int64_t>("control_population") =  {    0,     0,     1};
-    res.get<int64_t>("breakdown_id") =        {    1,     0,     0};
-    res.get<int64_t>("num_impressions") =     {    5,     0,     0};
-    res.get<int64_t>("num_clicks") =          {    2,     0,     0};
-    res.get<int64_t>("total_spend") =         {  100,     0,     0};
+    res.get<int64_t>("opportunity_timestamp") = {  111,     0,   222,   333};
+    res.get<int64_t>("test_population") =       {    1,     0,     0,     1};
+    res.get<int64_t>("control_population") =    {    0,     0,     1,     0};
+    res.get<int64_t>("breakdown_id") =          {    1,     0,     0,     1};
+    res.get<int64_t>("num_impressions") =       {    5,     0,     0,     1};
+    res.get<int64_t>("num_clicks") =            {    2,     0,     0,     0};
+    res.get<int64_t>("total_spend") =           {  100,     0,     0,   200};
 
     // clang-format on
 
     return res;
   }
   int64_t expectedGroupCount = 2;
+  std::size_t expectedSize = 4;
   std::vector<df::Column<bool>> expectedBitmasks = {
-      {false, true, true},
-      {true, false, false}};
+      {false, true, true, false},
+      {true, false, false, true}};
 };
 
 class MockLiftDataFrameBuilderForBob : public LiftDataFrameBuilder {
@@ -70,6 +72,7 @@ class MockLiftDataFrameBuilderForBob : public LiftDataFrameBuilder {
   }
 
   int64_t expectedGroupCount = 3;
+  std::size_t expectedSize = 3;
   std::vector<df::Column<bool>> expectedBitmasks = {
       {true, false, false},
       {false, true, false},
@@ -106,4 +109,16 @@ TEST(LiftInputDataTest, CalculateBitmasks) {
     auto& actual = bob.getBitmaskFor(i);
     EXPECT_EQ(expected, actual);
   }
+}
+
+TEST(LiftInputData, CalculateSize) {
+  MockLiftDataFrameBuilderForAlice mockAlice;
+  LiftInputData alice{mockAlice, fbpcf::Party::Alice};
+
+  EXPECT_EQ(mockAlice.expectedSize, alice.size());
+
+  MockLiftDataFrameBuilderForBob mockBob;
+  LiftInputData bob{mockBob, fbpcf::Party::Bob};
+
+  EXPECT_EQ(mockBob.expectedSize, bob.size());
 }
