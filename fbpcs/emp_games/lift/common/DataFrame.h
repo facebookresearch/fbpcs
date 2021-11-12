@@ -260,6 +260,50 @@ class DataFrame {
   };
 
   /**
+   * A special struct representing a sentinel value to check if a RowIterator
+   * has finished iterating. Since DataFrames are allowed to be "jagged", there
+   * does not exist a way to implement `size()` in a way that would make all
+   * use cases valid, therefore, we define iterator validity by whether or not
+   * RowType knows how to understand `df[pos]` as mentioned in the documentation
+   * for the RowIterator constructor.
+   */
+  struct RowIteratorEndSentinel {
+    /**
+     * Comparison for a RowIterator and this sentinel value. We have reached the
+     * end of iteration once the RowIterator is no longer in a valid state.
+     *
+     * @tparam RowType the type of each row this RowIterator is iterating over
+     *
+     * @param row the RowIterator to check
+     * @returns true if the RowIterator has reached the end of iteration
+     */
+    template <typename RowType>
+    friend bool operator==(
+        const RowIterator<RowType>& row,
+        const RowIteratorEndSentinel& /* unused */) {
+      return !row.isValid();
+    }
+
+    /**
+     * Check if a RowIterator is *not* at the end (this sentinel value). Simply
+     * defers to inverting the return value of `operator==`.
+     *
+     * @tparam RowType the type of each row this RowIterator is iterating over
+     *
+     * @param row the RowIterator to check
+     * @param sentinel a sentinel value - unused except to allow us to call
+     *     operator== to perform the actual check
+     * @returns false if the RowIterator has reached the end of iteration
+     */
+    template <typename RowType>
+    friend bool operator!=(
+        const RowIterator<RowType>& row,
+        const RowIteratorEndSentinel& sentinel) {
+      return !(row == sentinel);
+    }
+  };
+
+  /**
    * Read a CSV into a new DataFrame. Takes a typeMap to parse strings to typed
    * values during reading. Columns encountered in the CSV which are not listed
    * in the typeMap, will be parsed as `std::string`. The caller may choose
@@ -484,6 +528,15 @@ class DataFrame {
   template <typename RowType>
   RowType rowAt(std::size_t idx) {
     return RowType::fromDataFrame(*this, idx);
+  }
+
+  template <typename RowType>
+  RowIterator<RowType> begin() {
+    return RowIterator<RowType>{*this};
+  }
+
+  RowIteratorEndSentinel end() {
+    return RowIteratorEndSentinel{};
   }
 
  private:
