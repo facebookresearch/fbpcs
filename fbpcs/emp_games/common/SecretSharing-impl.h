@@ -5,8 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#ifndef SECRET_SHARING_HPP
-#define SECRET_SHARING_HPP
+#pragma once
+
+#include "fbpcs/emp_games/common/SecretSharing.h"
 
 #include <algorithm>
 #include <functional>
@@ -14,12 +15,39 @@
 #include <optional>
 #include <stdexcept>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
-#include "SecretSharing.h"
-#include "folly/logging/xlog.h"
+#include <emp-sh2pc/emp-sh2pc.h>
+
+#include <fbpcf/mpc/EmpGame.h>
+#include <folly/logging/xlog.h>
 
 namespace private_measurement::secret_sharing {
+template <template <typename...> typename Container>
+Container<emp::Bit> privatelyShare(fbpcf::Party dataSrc,
+                                   const Container<bool> &data, std::size_t n) {
+  Container<emp::Bit> res;
+  for (std::size_t i = 0; i < n; ++i) {
+    bool value = n > data.size() ? false : data.at(i);
+    // Unfortunately this ugly static_cast is necessary for the EMP library
+    res.emplace_back(value, static_cast<int>(dataSrc));
+  }
+  return res;
+}
+
+template <template <typename...> typename Container>
+Container<emp::Integer> privatelyShare(fbpcf::Party dataSrc,
+                                       const Container<int64_t> &data,
+                                       std::size_t n) {
+  Container<emp::Integer> res;
+  for (std::size_t i = 0; i < n; ++i) {
+    int64_t value = n > data.size() ? 0 : data.at(i);
+    // Unfortunately this ugly static_cast is necessary for the EMP library
+    res.emplace_back(INT_SIZE, value, static_cast<int>(dataSrc));
+  }
+  return res;
+}
 
 template <int MY_ROLE>
 PrivateInt<MY_ROLE> privatelyShareInt(int64_t in) {
@@ -497,5 +525,3 @@ inline const std::vector<std::vector<emp::Bit>> multiplyBitmask(
 }
 
 } // namespace private_measurement::secret_sharing
-
-#endif // SECRET_SHARING_HPP
