@@ -12,7 +12,8 @@
 namespace private_lift::lift_columns {
 // Publisher columns
 extern const std::string kOpportunityTimestamp;
-extern const std::string kPopulation;
+extern const std::string kTestPopulation;
+extern const std::string kControlPopulation;
 extern const std::string kNumImpressions;
 extern const std::string kReached;
 extern const std::string kNumClicks;
