@@ -206,6 +206,15 @@ public:
   }
 
   /**
+   * Check if a given key is defined in this DataFrame already
+   *
+   * @returns true if `key` is stored in this DataFrame
+   */
+  bool containsKey(const std::string &key) const {
+    return types_.find(key) != types_.end();
+  }
+
+  /**
    * Get a `Column<T>` at the given key within this DataFrame. A `dynamic_cast`
    * is necessary since we're dynamically altering types at runtime depending
    * on the values being read or set. While there is a small computational cost
@@ -315,6 +324,20 @@ public:
     // Then erase from types_
     auto typeIt = types_.find(key);
     types_.erase(typeIt);
+  }
+
+  /**
+   * Get a row view into this DataFrame at the given index.
+   *
+   * @tparam RowType a type implementing `fromDataFrame(DataFrame, std::size_t)`
+   *     which represents a view into a specific row of a DataFrame
+   *
+   * @param idx the index of the row the new RowType should point to
+   * @returns a RowType view of this DataFrame at the given index
+   */
+  template <typename RowType>
+  RowType rowAt(std::size_t idx) {
+    return RowType::fromDataFrame(*this, idx);
   }
 
 private:
