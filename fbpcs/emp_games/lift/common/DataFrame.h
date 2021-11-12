@@ -7,13 +7,15 @@
 
 #pragma once
 
+#include <cstddef>
+#include <iterator>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <typeindex>
 #include <typeinfo>
-#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -32,7 +34,7 @@ namespace df {
  * a stream failure.
  */
 class ParseException : public std::exception {
-public:
+ public:
   /**
    * Construct a new ParseException that represents a failure to parse `s` as
    * the specified type.
@@ -40,13 +42,15 @@ public:
    * @param s the string being parsed
    * @param typeName a human-readable name for the type s was being parsed as
    */
-  explicit ParseException(const std::string &s, const std::string &typeName) {
+  explicit ParseException(const std::string& s, const std::string& typeName) {
     msg_ = "Failed to parse '" + s + "' as type '" + typeName + "'";
   }
 
-  const char *what() const noexcept override { return msg_.c_str(); }
+  const char* what() const noexcept override {
+    return msg_.c_str();
+  }
 
-private:
+ private:
   std::string msg_;
 };
 
@@ -55,7 +59,7 @@ private:
  * development of our dynamically typed DataFrame.
  */
 class BaseMap {
-public:
+ public:
   virtual ~BaseMap() {}
 };
 
@@ -77,7 +81,7 @@ class MapT : public BaseMap,
  * when calling `df.get<int>("stringCol")` since int != string.
  */
 class BadTypeException : public std::exception {
-public:
+ public:
   /**
    * Construct a BadTypeException.
    *
@@ -88,9 +92,11 @@ public:
     msg_ = "Expected type '" + expected + "', but got type '" + actual + "'";
   }
 
-  const char *what() const noexcept override { return msg_.c_str(); }
+  const char* what() const noexcept override {
+    return msg_.c_str();
+  }
 
-private:
+ private:
   std::string msg_;
 };
 
@@ -117,8 +123,141 @@ struct TypeMap {
  * feature may be added later.
  */
 class DataFrame {
-public:
+ public:
   using TypeInfo = std::pair<std::type_index, std::string>;
+
+  /**
+   * DataFrame iterator which is contextual depending on the specific RowType
+   * being iterated. The major pro of this setup is that one can iterate over
+   * a DataFrame with a DataFrame::RowIterator<MyUseCase> and work with a typed
+   * struct instead of raw pointers and more mental overhead.
+   *
+   * @tparam RowType the type of each row this RowIterator is iterating over
+   */
+  template <typename RowType>
+  class RowIterator {
+   public:
+    // Tags required for custom-defined iterators
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = RowType;
+    using pointer = value_type*;
+    using reference = const value_type&;
+
+    /**
+     * Construct a new RowIterator referencing the the DataFrame at `pos`. This
+     * is like referencing df[pos] and getting a typed object which is able to
+     * refer to its individual fields.
+     *
+     * @param df the DataFrame being iterated over
+     * @param pos the row index within the DataFrame
+     */
+    RowIterator(DataFrame& df, std::size_t pos) : df_{df}, pos_{pos} {
+      tryLoadRow();
+    }
+
+    /**
+     * Construct a new RowIterator referencing the start of the DataFrame. This
+     * is like referencing df[pos] and getting a typed object which is able to
+     * refer to its individual fields.
+     *
+     * @param df the DataFrame being iterated over
+     */
+    explicit RowIterator(DataFrame& df) : RowIterator{df, 0} {}
+
+    /**
+     * Try to load the row at this iterator's position. If the attempt to load
+     * this row throws `std::out_of_range`, it will be caught and this iterator
+     * will be set as invalid.
+     */
+    void tryLoadRow() {
+      try {
+        row_ = df_.rowAt<RowType>(pos_);
+        valid_ = true;
+      } catch (const std::out_of_range& /* unused */) {
+        // If we got std::out_of_range, somewhere a necessary column is missing
+        // and we just set this RowIterator as invalid.
+        valid_ = false;
+      }
+    }
+
+    /**
+     * Check whether this RowIterator is valid.
+     *
+     * @returns true if this RowIterator is holding a valid RowType
+     */
+    bool isValid() const {
+      return valid_;
+    }
+
+    /**
+     * Dereference this iterator to view the underlying RowType.
+     *
+     * @returns a reference to the RowType at the current iterator position
+     */
+    reference operator*() const {
+      return row_;
+    }
+
+    /**
+     * Look inside this iterator to get a pointer to the underlying RowType.
+     *
+     * @returns a pointer to the RowType at the current iterator position
+     */
+    pointer operator->() {
+      return &row_;
+    }
+
+    /**
+     * Prefix increment. Advanced this iterator forward by one.
+     *
+     * @returns a reference to this iterator after advancing its position by one
+     */
+    RowIterator<RowType>& operator++() {
+      ++pos_;
+      tryLoadRow();
+      return *this;
+    }
+
+    /**
+     * Postfix increment. Advanced this iterator forward by one but return a
+     * reference to the iterator before it was incremented.
+     *
+     * @returns a reference to a copy of this iterator before it was incremented
+     */
+    RowIterator<RowType>& operator++(int /* unused */) {
+      RowIterator<RowType> tmp = *this;
+      ++(*this);
+      return tmp;
+    }
+
+    /**
+     * Compare two RowIterators.
+     *
+     * @returns true if the two RowIterators are equivalent
+     */
+    friend bool operator==(
+        const RowIterator<RowType>& a,
+        const RowIterator<RowType>& b) {
+      return &a.df_ == &b.df_ && a.pos_ == b.pos_;
+    }
+
+    /**
+     * Compare two RowIterators for inequality.
+     *
+     * @returns true if the two RowIterators are *not* equivalent
+     */
+    friend bool operator!=(
+        const RowIterator<RowType>& a,
+        const RowIterator<RowType>& b) {
+      return !(a == b);
+    }
+
+   private:
+    DataFrame& df_;
+    std::size_t pos_;
+    RowType row_;
+    bool valid_;
+  };
 
   /**
    * Read a CSV into a new DataFrame. Takes a typeMap to parse strings to typed
@@ -135,7 +274,7 @@ public:
    *     cannot parse to that type
    * @note for columns not in `typeMap`, `std::string` will be assumed
    */
-  static DataFrame readCsv(const TypeMap &typeMap, const std::string &filePath);
+  static DataFrame readCsv(const TypeMap& typeMap, const std::string& filePath);
 
   /**
    * Read a CSV into a new DataFrame. Takes a typeMap to parse strings to typed
@@ -154,9 +293,10 @@ public:
    *     cannot parse to that type
    * @note for columns not in `typeMap`, `std::string` will be assumed
    */
-  static DataFrame
-  loadFromRows(const TypeMap &typeMap, const std::vector<std::string> &header,
-               const std::vector<std::vector<std::string>> &rows);
+  static DataFrame loadFromRows(
+      const TypeMap& typeMap,
+      const std::vector<std::string>& header,
+      const std::vector<std::vector<std::string>>& rows);
 
   /**
    * Check that two types are equivalent. This is used to avoid a potentially
@@ -166,7 +306,7 @@ public:
    * @param actual the actual type supplied
    * @throws `BadTypeException` if `expected` is not equal to `actual`
    */
-  static void checkType(const TypeInfo &expected, const TypeInfo &actual) {
+  static void checkType(const TypeInfo& expected, const TypeInfo& actual) {
     if (expected.first != actual.first) {
       throw BadTypeException{expected.second, actual.second};
     }
@@ -179,7 +319,7 @@ public:
    */
   std::unordered_set<std::string> keys() const {
     std::unordered_set<std::string> res;
-    for (const auto &[typ, _] : types_) {
+    for (const auto& [typ, _] : types_) {
       res.insert(typ);
     }
     return res;
@@ -194,15 +334,25 @@ public:
    * @tparam T a filter for which keys to ask for
    * @returns the set of keys stored in this DataFrame that have type T
    */
-  template <typename T> std::unordered_set<std::string> keysOf() const {
+  template <typename T>
+  std::unordered_set<std::string> keysOf() const {
     std::unordered_set<std::string> res;
     auto target = std::type_index(typeid(T));
-    for (const auto &[typ, info] : types_) {
+    for (const auto& [typ, info] : types_) {
       if (info.first == target) {
         res.insert(typ);
       }
     }
     return res;
+  }
+
+  /**
+   * Check if a given key is defined in this DataFrame already
+   *
+   * @returns true if `key` is stored in this DataFrame
+   */
+  bool containsKey(const std::string& key) const {
+    return types_.find(key) != types_.end();
   }
 
   /**
@@ -219,7 +369,8 @@ public:
    *     stored as a type other than `T`
    * @throws `std::out_of_range` if `key` does not exist within this DataFrame
    */
-  template <typename T> const Column<T> &get(const std::string &key) const {
+  template <typename T>
+  const Column<T>& get(const std::string& key) const {
     auto idx = std::type_index(typeid(T));
     // If this column is defined, ensure the type is correct
     if (types_.find(key) != types_.end()) {
@@ -227,8 +378,8 @@ public:
       checkType(types_.at(key), std::make_pair(idx, typeName));
     }
 
-    auto &ptr = maps_.at(idx);
-    return dynamic_cast<MapT<T> &>(*ptr)[key];
+    auto& ptr = maps_.at(idx);
+    return dynamic_cast<MapT<T>&>(*ptr)[key];
   }
 
   /**
@@ -243,7 +394,8 @@ public:
    * @throws `BadTypeException` if the key is already in the DataFrame but
    *     stored as a type other than `T`
    */
-  template <typename T> Column<T> &get(const std::string &key) {
+  template <typename T>
+  Column<T>& get(const std::string& key) {
     auto idx = std::type_index(typeid(T));
     auto typeName = typeid(T).name();
 
@@ -257,8 +409,8 @@ public:
       types_.emplace(key, std::make_pair(idx, typeName));
     }
 
-    return const_cast<Column<T> &>(
-        const_cast<const DataFrame &>(*this).get<T>(key));
+    return const_cast<Column<T>&>(
+        const_cast<const DataFrame&>(*this).get<T>(key));
   }
 
   /**
@@ -271,7 +423,8 @@ public:
    *     stored as a type other than `T`
    * @throws `std::out_of_range` if `key` does not exist within this DataFrame
    */
-  template <typename T> const Column<T> &at(const std::string &key) const {
+  template <typename T>
+  const Column<T>& at(const std::string& key) const {
     auto idx = std::type_index(typeid(T));
     auto typeName = typeid(T).name();
     // Ensure the type is correct
@@ -291,9 +444,10 @@ public:
    *     stored as a type other than `T`
    * @throws `std::out_of_range` if `key` does not exist within this DataFrame
    */
-  template <typename T> Column<T> &at(const std::string &key) {
-    return const_cast<Column<T> &>(
-        const_cast<const DataFrame &>(*this).at<T>(key));
+  template <typename T>
+  Column<T>& at(const std::string& key) {
+    return const_cast<Column<T>&>(
+        const_cast<const DataFrame&>(*this).at<T>(key));
   }
 
   /**
@@ -305,19 +459,34 @@ public:
    *
    * @param key the key to remove from this DataFrame
    */
-  template <typename T> void drop(const std::string &key) {
+  template <typename T>
+  void drop(const std::string& key) {
     auto idx = std::type_index(typeid(T));
-    auto &ptr = maps_.at(idx);
+    auto& ptr = maps_.at(idx);
 
     // First erase from column map
-    dynamic_cast<MapT<T> &>(*ptr).erase(key);
+    dynamic_cast<MapT<T>&>(*ptr).erase(key);
 
     // Then erase from types_
     auto typeIt = types_.find(key);
     types_.erase(typeIt);
   }
 
-private:
+  /**
+   * Get a row view into this DataFrame at the given index.
+   *
+   * @tparam RowType a type implementing `fromDataFrame(DataFrame, std::size_t)`
+   *     which represents a view into a specific row of a DataFrame
+   *
+   * @param idx the index of the row the new RowType should point to
+   * @returns a RowType view of this DataFrame at the given index
+   */
+  template <typename RowType>
+  RowType rowAt(std::size_t idx) {
+    return RowType::fromDataFrame(*this, idx);
+  }
+
+ private:
   std::unordered_map<std::string, TypeInfo> types_;
   std::unordered_map<std::type_index, std::unique_ptr<BaseMap>> maps_;
 };
@@ -331,7 +500,8 @@ namespace detail {
  * @returns `value` parsed as a `T`
  * @throws `ParseException` if the value cannot be parsed into a `T`
  */
-template <typename T> T parse(const std::string &value) {
+template <typename T>
+T parse(const std::string& value) {
   std::istringstream iss{value};
   T res;
   iss >> res;
@@ -362,7 +532,8 @@ template <typename T> T parse(const std::string &value) {
  * @throws `ParseException` if the value cannot be parsed into a `T`
  * @note requires that `value` begin with `[` and end with `]`
  */
-template <typename T> std::vector<T> parseVector(const std::string &value) {
+template <typename T>
+std::vector<T> parseVector(const std::string& value) {
   if (value.at(0) != '[' || value.at(value.size() - 1) != ']') {
     auto typeName = std::string{"std::vector<"} + typeid(T).name() + ">";
     throw ParseException{value, typeName};
@@ -372,12 +543,12 @@ template <typename T> std::vector<T> parseVector(const std::string &value) {
 
   // get substr between [ and ]
   std::stringstream ss{value.substr(1, value.size() - 2)};
-  while(ss.good()) {
+  while (ss.good()) {
     std::string part;
     std::getline(ss, part, ',');
-	if (!part.empty()){
-	  res.push_back(parse<T>(part));
-	}
+    if (!part.empty()) {
+      res.push_back(parse<T>(part));
+    }
   }
 
   return res;
