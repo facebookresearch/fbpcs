@@ -414,3 +414,14 @@ TEST(IteratorTest, IteratorFunctionality) {
   ++iter;
   EXPECT_EQ(iter, c.end());
 }
+
+TEST(ColumnTest, Data) {
+  Column<int64_t> iCol{300, 200, 100};
+  Column<bool> bCol{true, true, false};
+
+  std::vector<int64_t> iExpected{300, 200, 100};
+  std::vector<bool> bExpected{true, true, false};
+
+  EXPECT_EQ(iCol.data(), iExpected);
+  EXPECT_EQ(bCol.data(), bExpected);
+}
