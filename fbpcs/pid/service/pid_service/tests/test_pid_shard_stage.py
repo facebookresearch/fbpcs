@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcs.data_processing.sharding.sharding import ShardType
@@ -66,7 +66,10 @@ class TestPIDShardStage(unittest.TestCase):
     ):
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
-        mock_onedocker_svc.start_containers_async = AsyncMock(return_value=[container])
+
+        mock_onedocker_svc.start_containers = MagicMock(return_value=[container])
+        mock_onedocker_svc.wait_for_pending_containers = AsyncMock(return_value=[container])
+
         container.status = (
             ContainerInstanceStatus.COMPLETED
             if wait_for_containers
@@ -114,7 +117,7 @@ class TestPIDShardStage(unittest.TestCase):
                 status,
             )
 
-            mock_onedocker_svc.start_containers_async.assert_called_once()
+            mock_onedocker_svc.start_containers.assert_called_once()
             if wait_for_containers:
                 mock_wait_for_containers_async.assert_called_once()
             else:

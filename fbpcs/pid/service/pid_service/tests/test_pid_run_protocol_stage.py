@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
@@ -92,9 +92,8 @@ class TestPIDProtocolRunStage(unittest.TestCase):
     ):
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
-        mock_onedocker_service.start_containers_async = AsyncMock(
-            return_value=[container]
-        )
+        mock_onedocker_service.start_containers = MagicMock(return_value=[container])
+        mock_onedocker_service.wait_for_pending_containers = AsyncMock(return_value=[container])
         container.status = (
             ContainerInstanceStatus.COMPLETED
             if wait_for_containers
@@ -146,11 +145,11 @@ class TestPIDProtocolRunStage(unittest.TestCase):
                 mock_wait_for_containers_async.assert_called_once()
             else:
                 mock_wait_for_containers_async.assert_not_called()
-            mock_onedocker_service.start_containers_async.assert_called_once()
+            mock_onedocker_service.start_containers.assert_called_once()
             (
                 _,
                 called_kwargs,
-            ) = mock_onedocker_service.start_containers_async.call_args_list[0]
+            ) = mock_onedocker_service.start_containers.call_args_list[0]
             self.assertEqual(num_shards, len(called_kwargs["cmd_args_list"]))
 
             # Check `put_payload` was called with the correct parameters
@@ -189,9 +188,8 @@ class TestPIDProtocolRunStage(unittest.TestCase):
     ):
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
-        mock_onedocker_service.start_containers_async = AsyncMock(
-            return_value=[container]
-        )
+        mock_onedocker_service.start_containers = MagicMock(return_value=[container])
+        mock_onedocker_service.wait_for_pending_containers = AsyncMock(return_value=[container])
         container.status = ContainerInstanceStatus.COMPLETED if wait_for_containers else ContainerInstanceStatus.STARTED
         mock_wait_for_containers_async.return_value = [container]
 
@@ -241,11 +239,11 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             else:
                 mock_wait_for_containers_async.assert_not_called()
 
-            mock_onedocker_service.start_containers_async.assert_called_once()
+            mock_onedocker_service.start_containers.assert_called_once()
             (
                 _,
                 called_kwargs,
-            ) = mock_onedocker_service.start_containers_async.call_args_list[0]
+            ) = mock_onedocker_service.start_containers.call_args_list[0]
 
             # if wait for containers is False, there are 4 updates.
             # if wait_for_containers is True, then there is another update

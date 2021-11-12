@@ -199,14 +199,14 @@ class CppShardingService(ShardingService):
         # TODO: The OneDockerService API for async instance creation only
         # applies to a list of cmds, so we have to immediately dereference
         # to take the first element
-        container = (
-            await onedocker_svc.start_containers_async(
+        pending_containers = onedocker_svc.start_containers(
                 package_name=exe,
                 version=binary_version,
                 cmd_args_list=[cmd_args],
                 timeout=timeout,
             )
-        )[0]
+
+        container = (await onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers]))[0]
 
         logger.info("Task started")
         if wait_for_containers:

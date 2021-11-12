@@ -110,12 +110,14 @@ class CppAttributionIdSpineCombinerService:
             )
             cmd_args_list.append(cmd_args)
 
-        containers = await onedocker_svc.start_containers_async(
+        pending_containers = onedocker_svc.start_containers(
             package_name=OneDockerBinaryNames.ATTRIBUTION_ID_SPINE_COMBINER.value,
             version=binary_version,
             cmd_args_list=cmd_args_list,
             timeout=timeout,
         )
+
+        containers = await onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
 
         # Busy wait until all containers are finished
         any_failed = False

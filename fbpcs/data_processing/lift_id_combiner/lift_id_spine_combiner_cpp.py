@@ -209,12 +209,14 @@ class CppLiftIdSpineCombinerService(LiftIdSpineCombinerService):
             )
             cmds.append(cmd)
 
-        containers = await onedocker_svc.start_containers_async(
+        pending_containers = onedocker_svc.start_containers(
             package_name=OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value,
             version=binary_version,
             cmd_args_list=cmds,
             timeout=timeout,
         )
+
+        containers = await onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
 
         # Busy wait until all containers are finished
         any_failed = False

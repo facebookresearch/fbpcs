@@ -104,7 +104,7 @@ class PIDProtocolRunStage(PIDStage):
             # Run publisher commands in container
             self.logger.info("Publisher spinning up containers")
             try:
-                containers = await self.onedocker_svc.start_containers_async(
+                pending_containers = self.onedocker_svc.start_containers(
                     package_name=OneDockerBinaryNames.PID_SERVER.value,
                     version=self.onedocker_binary_config.binary_version,
                     cmd_args_list=self._gen_command_args_list(
@@ -115,6 +115,8 @@ class PIDProtocolRunStage(PIDStage):
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
                 )
+
+                containers = await self.onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
             except Exception as e:
                 status = PIDStageStatus.FAILED
                 await self.update_instance_status(
@@ -160,7 +162,7 @@ class PIDProtocolRunStage(PIDStage):
             # Run partner commands in container
             self.logger.info("Partner spinning up containers")
             try:
-                containers = await self.onedocker_svc.start_containers_async(
+                pending_containers = self.onedocker_svc.start_containers(
                     package_name=OneDockerBinaryNames.PID_CLIENT.value,
                     version=self.onedocker_binary_config.binary_version,
                     cmd_args_list=self._gen_command_args_list(
@@ -172,6 +174,8 @@ class PIDProtocolRunStage(PIDStage):
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
                 )
+
+                containers = await self.onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
             except Exception as e:
                 status = PIDStageStatus.FAILED
                 await self.update_instance_status(

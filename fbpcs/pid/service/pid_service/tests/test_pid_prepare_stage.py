@@ -108,7 +108,10 @@ class TestPIDPrepareStage(unittest.TestCase):
         container = ContainerInstance(
             instance_id="123", ip_address=ip, status=ContainerInstanceStatus.STARTED
         )
-        mock_onedocker_svc.start_containers_async = AsyncMock(return_value=[container])
+
+        mock_onedocker_svc.start_containers = MagicMock(return_value=[container])
+        mock_onedocker_svc.wait_for_pending_containers = AsyncMock(return_value=[container])
+
         container.status = (
             ContainerInstanceStatus.COMPLETED
             if wait_for_containers
@@ -161,7 +164,7 @@ class TestPIDPrepareStage(unittest.TestCase):
                 status,
             )
 
-            self.assertEqual(mock_onedocker_svc.start_containers_async.call_count, 2)
+            self.assertEqual(mock_onedocker_svc.start_containers.call_count, 2)
             if wait_for_containers:
                 self.assertEqual(mock_wait_for_containers_async.call_count, 2)
             else:
