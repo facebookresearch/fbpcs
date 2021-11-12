@@ -113,12 +113,12 @@ TEST(LiftInputDataTest, CalculateBitmasks) {
 
 TEST(LiftInputData, CalculateSize) {
   MockLiftDataFrameBuilderForAlice mockAlice;
-  LiftInputData<bool> alice{mockAlice, fbpcf::Party::Alice};
+  LiftInputData alice{mockAlice, fbpcf::Party::Alice};
 
   EXPECT_EQ(mockAlice.expectedSize, alice.size());
 
   MockLiftDataFrameBuilderForBob mockBob;
-  LiftInputData<bool> bob{mockBob, fbpcf::Party::Bob};
+  LiftInputData bob{mockBob, fbpcf::Party::Bob};
 
   EXPECT_EQ(mockBob.expectedSize, bob.size());
 }
