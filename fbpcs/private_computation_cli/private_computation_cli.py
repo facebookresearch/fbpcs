@@ -18,6 +18,7 @@ Usage:
     pc-cli validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pc-cli run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
     pc-cli run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
+    pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
     pc-cli get_pid <instance_id> --config=<config_file> [options]
@@ -71,6 +72,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     prepare_compute_input,
     print_instance,
     run_next,
+    run_stage,
     run_post_processing_handlers,
     validate,
 )
@@ -88,6 +90,7 @@ def main():
             "validate": bool,
             "run_post_processing_handlers": bool,
             "run_next": bool,
+            "run_stage": bool,
             "get_instance": bool,
             "get_server_ips": bool,
             "get_pid": bool,
@@ -149,6 +152,7 @@ def main():
                     lambda arg: PrivateComputationBaseStageFlow.cls_name_to_cls(arg)
                 ),
             ),
+            "--stage": schema.Or(None, str),
             "--verbose": bool,
             "--help": bool,
         }
@@ -185,7 +189,7 @@ def main():
             padding_size=arguments["--padding_size"],
             k_anonymity_threshold=arguments["--k_anonymity_threshold"],
             fail_fast=arguments["--fail_fast"],
-            stage_flow_cls=arguments["--stage_flow"]
+            stage_flow_cls=arguments["--stage_flow"],
         )
     elif arguments["id_match"]:
         logger.info(f"Run id match on instance: {instance_id}")
@@ -231,6 +235,19 @@ def main():
             instance_id=instance_id,
             logger=logger,
             server_ips=arguments["--server_ips"],
+        )
+    elif arguments["run_stage"]:
+        stage_name = arguments["--stage"]
+        logger.info(f"run_stage: {instance_id=}, {stage_name=}")
+        instance = get_instance(config, instance_id, logger)
+        stage = instance.stage_flow.get_stage_from_str(stage_name)
+        run_stage(
+            config=config,
+            instance_id=instance_id,
+            stage=stage,
+            logger=logger,
+            server_ips=arguments["--server_ips"],
+            dry_run=arguments["--dry_run"],
         )
     elif arguments["get_instance"]:
         logger.info(f"Get instance: {instance_id}")

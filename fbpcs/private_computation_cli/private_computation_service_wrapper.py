@@ -338,6 +338,7 @@ def run_stage(
     stage: PrivateComputationBaseStageFlow,
     logger: logging.Logger,
     server_ips: Optional[List[str]] = None,
+    dry_run: bool = False,
 ) -> None:
 
     pc_service = _build_private_computation_service(
@@ -353,7 +354,7 @@ def run_stage(
     pc_service.update_instance(instance_id)
 
     instance = pc_service.run_stage(
-        instance_id=instance_id, stage=stage, server_ips=server_ips
+        instance_id=instance_id, stage=stage, server_ips=server_ips, dry_run=dry_run
     )
 
     logger.info(instance)
