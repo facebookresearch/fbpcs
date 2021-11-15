@@ -97,7 +97,11 @@ class AggregateShardsStageService(PrivateComputationStageService):
         # circular import error.
         input_stage_path = (
             pc_instance.decoupled_aggregation_stage_output_base_path
-            if pc_instance.get_flow_cls_name == "PrivateComputationDecoupledStageFlow"
+            if pc_instance.get_flow_cls_name
+            in [
+                "PrivateComputationDecoupledStageFlow",
+                "PrivateComputationDecoupledLocalTestStageFlow",
+            ]
             else pc_instance.compute_stage_output_base_path
         )
 
