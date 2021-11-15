@@ -14,19 +14,22 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.service.aggregate_shards_stage_service import (
     AggregateShardsStageService,
 )
-from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
-    AttributionStageService,
-)
 from fbpcs.private_computation.service.decoupled_aggregation_stage_service import (
     AggregationStageService,
 )
-from fbpcs.private_computation.service.prepare_data_stage_service import (
-    PrepareDataStageService,
+from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
+    AttributionStageService,
 )
 from fbpcs.private_computation.service.dummy_stage_service import (
     DummyStageService,
 )
 from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
+from fbpcs.private_computation.service.post_processing_stage_service import (
+    PostProcessingStageService,
+)
+from fbpcs.private_computation.service.prepare_data_stage_service import (
+    PrepareDataStageService,
+)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
@@ -48,7 +51,9 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED ID_MATCH PREPARE DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE"
+    _order_ = (
+        "CREATED ID_MATCH PREPARE DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
+    )
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -88,7 +93,12 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         True,
     )
-
+    POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
+        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
+        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
+        False,
+    )
 
     def get_stage_service(
         self, args: PrivateComputationStageServiceArgs
@@ -132,6 +142,10 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
             return AggregateShardsStageService(
                 args.onedocker_binary_config_map,
                 args.mpc_svc,
+            )
+        elif self is self.POST_PROCESSING_HANDLERS:
+            return PostProcessingStageService(
+                args.storage_svc, args.post_processing_handlers
             )
         else:
             raise NotImplementedError(f"No stage service configured for {self}")
