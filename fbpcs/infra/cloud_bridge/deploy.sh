@@ -148,7 +148,9 @@ undeploy_aws_resources() {
         -var "aws_account_id=$aws_account_id" \
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip" \
-        -var "data_upload_key_path=$data_upload_key_path"
+        -var "data_upload_key_path=$data_upload_key_path" \
+        -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
+        -var "query_results_key_path=$query_results_key_path"
     echo "########################Deletion completed########################"
 
     if "$build_semi_automated_data_pipeline"
@@ -289,7 +291,9 @@ deploy_aws_resources() {
         -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip" \
-        -var "data_upload_key_path=$data_upload_key_path"
+        -var "data_upload_key_path=$data_upload_key_path" \
+        -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
+        -var "query_results_key_path=$query_results_key_path"
     echo "######################## Deploy Data Ingestion Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
     app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
@@ -395,6 +399,7 @@ fi
 
 data_upload_key_path="semi-automated-data-ingestion"
 events_data_upload_s3_key="events-data-validation"
+query_results_key_path="query-results"
 
 if "$undeploy"
 then

@@ -18,7 +18,7 @@ data "archive_file" "lambda_source_package" {
 
 resource "aws_s3_bucket_object" "lambda_trigger_object" {
   bucket = var.upload_and_validation_s3_bucket
-  key    = "data-validation-lambda-package${var.tag_postfix}.zip"
+  key    = "${var.events_data_upload_s3_key}/data-validation-lambda-package${var.tag_postfix}.zip"
   source = data.archive_file.lambda_source_package.output_path
   etag   = filemd5("validation_lambda${var.tag_postfix}.zip")
 }
@@ -45,7 +45,7 @@ EOF
 
 resource "aws_lambda_function" "upload_lambda_trigger" {
   s3_bucket     = var.upload_and_validation_s3_bucket
-  s3_key        = "data-validation-lambda-package${var.tag_postfix}.zip"
+  s3_key        = "${var.events_data_upload_s3_key}/data-validation-lambda-package${var.tag_postfix}.zip"
   function_name = "data-validation-lambda-trigger${var.tag_postfix}"
   role          = aws_iam_role.lambda_iam.arn
   handler       = "lambda_main.lambda_handler"
