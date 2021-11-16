@@ -59,6 +59,13 @@ from fbpcs.private_computation.entity.private_computation_legacy_stage_flow impo
 from fbpcs.private_computation.entity.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
+# TODO: T105929150 clean up these imports once buck imports is fixed
+from fbpcs.private_computation.entity.private_computation_decoupled_local_test_stage_flow import (
+    PrivateComputationDecoupledLocalTestStageFlow,
+)
+from fbpcs.private_computation.entity.private_computation_local_test_stage_flow import (
+    PrivateComputationLocalTestStageFlow,
+)
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
     cancel_current_stage,
