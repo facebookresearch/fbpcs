@@ -93,4 +93,41 @@ TEST(HashBasedSharderTest, TestShardNoHmacKey) {
   data_processing::test_utils::expectFileRowsEqual(outputPaths.at(1),
                                                    expected1);
 }
+
+TEST(HashBasedSharderTest, TestShardWithHmacKey) {
+  std::vector<std::string> rows{
+      "id_,a,b,c", "abcd,1,2,3", "abcd,4,5,6", "defg,7,8,9", "hijk,0,0,0",
+  };
+  std::string hmacKey = "abcd1234";
+
+  std::string inputPath = "/tmp/HashBasedSharderTestShardInput" +
+                          std::to_string(folly::Random::secureRand64());
+  data_processing::test_utils::writeVecToFile(rows, inputPath);
+  // TODO: Would be great to mock out inputstream/outputstream stuff
+  auto randStart = folly::Random::secureRand64();
+  std::vector<std::string> outputPaths{
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
+  };
+  HashBasedSharder sharder{inputPath, outputPaths, 123, hmacKey};
+  sharder.shard();
+
+  // HMAC was applied offline, which is how we got these expected lines
+  // HMAC_SHA256(CAST(id AS VARBINARY), FROM_BASE64(hmacKey)) in Presto is a
+  // good way to generate more of these given our I/O specification.
+  std::vector<std::string> expected0{
+      "id_,a,b,c",
+      "bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // defg line
+      "ZGCVov/c63+N2Swslf6pY6pWsNzS1IkXKVi+lmAD6yU=,0,0,0", // hijk line
+  };
+  std::vector<std::string> expected1{
+      "id_,a,b,c",
+      "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,1,2,3", // first abcd line
+      "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,4,5,6", // second abcd line
+  };
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(0),
+                                                   expected0);
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(1),
+                                                   expected1);
+}
 } // namespace data_processing::sharder
