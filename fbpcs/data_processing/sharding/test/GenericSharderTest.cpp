@@ -6,6 +6,7 @@
  */
 
 #include <string>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -24,5 +25,13 @@ TEST(GenericSharderTest, TestStripQuotes) {
   EXPECT_EQ(quoted, "hello world");
   detail::stripQuotes(quotedMiddle);
   EXPECT_EQ(quotedMiddle, "hello world");
+}
+
+TEST(GenericSharderTest, TestGenOutputPaths) {
+  std::string basePath = "/tmp";
+  std::size_t start = 0;
+  std::size_t end = 4;
+  std::vector<std::string> expected{"/tmp_0", "/tmp_1", "/tmp_2", "/tmp_3"};
+  EXPECT_EQ(GenericSharder::genOutputPaths(basePath, start, end), expected);
 }
 } // namespace data_processing::sharder
