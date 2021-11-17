@@ -19,7 +19,7 @@ export DOCKER_INSTANCE_REPO="/instances"
 
 ## Lift
 # Lift study configs
-export LIFT_PUBLIHSER_NAME="pl_publisher_github"
+export LIFT_PUBLISHER_NAME="pl_publisher_github"
 export LIFT_PARTNER_NAME="pl_partner_github"
 export LIFT_NUM_MPC_CONTAIENRS=2
 export LIFT_NUM_PID_CONTAINERS=2
@@ -30,7 +30,7 @@ export LIFT_OUTPUT_DIR=$E2E_GITHUB_S3_URL/lift/outputs
 
 # Lift result comparision
 export LIFT_OUTPUT_PATH=s3://$E2E_S3_BUCKET/lift/outputs
-export LIFT_PUBLISHER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PUBLIHSER_NAME"_out_dir/shard_aggregation_stage/out.json
+export LIFT_PUBLISHER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PUBLISHER_NAME"_out_dir/shard_aggregation_stage/out.json
 export LIFT_PARTNER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PARTNER_NAME"_out_dir/shard_aggregation_stage/out.json
 
 export LIFT_RESULT_PATH=s3://$E2E_S3_BUCKET/lift/results
@@ -39,7 +39,7 @@ export LIFT_PARTNER_EXPECTED_RESULT=$LIFT_RESULT_PATH/partner_expected_result.js
 
 ## Attribution
 # Attribution study configs
-export ATTRIBUTION_PUBLIHSER_NAME="pa_publisher_github"
+export ATTRIBUTION_PUBLISHER_NAME="pa_publisher_github"
 export ATTRIBUTION_PARTNER_NAME="pa_partner_github"
 
 export ATTRIBUTION_NUM_FILES_PER_MPC_CONTAINER=1
@@ -56,7 +56,7 @@ export ATTRIBUTION_OUTPUT_DIR=$E2E_GITHUB_S3_URL/attribution/outputs
 
 # Attribution result comparision
 export ATTRIBUTION_OUTPUT_PATH=s3://$E2E_S3_BUCKET/attribution/outputs
-export ATTRIBUTION_PUBLISHER_AGGREGATION_OUTPUT=$ATTRIBUTION_OUTPUT_PATH/"$ATTRIBUTION_PUBLIHSER_NAME"_out_dir/shard_aggregation_stage/out.json
+export ATTRIBUTION_PUBLISHER_AGGREGATION_OUTPUT=$ATTRIBUTION_OUTPUT_PATH/"$ATTRIBUTION_PUBLISHER_NAME"_out_dir/shard_aggregation_stage/out.json
 export ATTRIBUTION_PARTNER_AGGREGATION_OUTPUT=$ATTRIBUTION_OUTPUT_PATH/"$ATTRIBUTION_PARTNER_NAME"_out_dir/shard_aggregation_stage/out.json
 
 export ATTRIBUTION_RESULT_PATH=s3://$E2E_S3_BUCKET/attribution/results

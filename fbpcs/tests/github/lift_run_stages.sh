@@ -19,7 +19,7 @@ docker_command="docker exec $container_name $COORDINATOR"
 case "$stage" in
     create_instance )
         echo "Create Lift Publisher instance"
-        $docker_command create_instance "$LIFT_PUBLIHSER_NAME" \
+        $docker_command create_instance "$LIFT_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE" \
             --role=publisher \
             --game_type=lift \
@@ -42,7 +42,7 @@ case "$stage" in
     # stages donot need IP exchange
     prepare_compute_input | pid_shard | pid_prepare )
         echo "Lift Publisher $stage starts"
-        $docker_command run_next "$LIFT_PUBLIHSER_NAME" \
+        $docker_command run_next "$LIFT_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
         echo "Lift Partner $stage starts"
         $docker_command run_next "$LIFT_PARTNER_NAME" \
@@ -51,11 +51,11 @@ case "$stage" in
     # stages require IP exchange
     run_next )
         echo "Lift Publisher $stage starts"
-        $docker_command run_next "$LIFT_PUBLIHSER_NAME" \
+        $docker_command run_next "$LIFT_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
         echo "Get Publisher Ips"
         # get_server_ips returns an extra carriage return character
-        publisher_server_ips=$($docker_command get_server_ips "$LIFT_PUBLIHSER_NAME" \
+        publisher_server_ips=$($docker_command get_server_ips "$LIFT_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE" | sed 's/\r//g')
         echo "Server IPs are ${publisher_server_ips}"
         echo "Lift Partner $stage starts"
