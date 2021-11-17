@@ -10,6 +10,7 @@ from typing import Optional
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
+from fbpcp.util.arg_builder import build_cmd_args
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 
@@ -19,31 +20,6 @@ DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 10800
 
 
 class CppAttributionIdSpineCombinerService:
-    def _get_combine_cmd_args_for_container(
-        self,
-        spine_path: str,
-        data_path: str,
-        output_path: str,
-        run_name: str,
-        tmp_directory: str,
-        padding_size: int,
-        sort_strategy: str,
-    ) -> str:
-        # TODO: Probably put exe in an env variable?
-        # Try to align with existing paths
-        cmd_args = " ".join(
-            [
-                f"--spine_path={spine_path}",
-                f"--data_path={data_path}",
-                f"--output_path={output_path}",
-                f"--run_name={run_name}",
-                f"--tmp_directory={tmp_directory}",
-                f"--padding_size={padding_size}",
-                f"--sort_strategy={sort_strategy}",
-            ]
-        )
-        return cmd_args
-
     def combine_on_container(
         self,
         spine_path: str,
@@ -99,14 +75,14 @@ class CppAttributionIdSpineCombinerService:
             next_spine_path = PIDStage.get_sharded_filepath(spine_path, shard)
             next_data_path = PIDStage.get_sharded_filepath(data_path, shard)
             next_output_path = PIDStage.get_sharded_filepath(output_path, shard)
-            cmd_args = self._get_combine_cmd_args_for_container(
-                next_spine_path,
-                next_data_path,
-                next_output_path,
-                run_name,
-                tmp_directory,
-                padding_size,
-                sort_strategy,
+            cmd_args = build_cmd_args(
+                spine_path=next_spine_path,
+                data_path=next_data_path,
+                output_path=next_output_path,
+                tmp_directory=tmp_directory,
+                padding_size=padding_size,
+                run_name=run_name,
+                sort_strategy=sort_strategy,
             )
             cmd_args_list.append(cmd_args)
 
@@ -117,7 +93,9 @@ class CppAttributionIdSpineCombinerService:
             timeout=timeout,
         )
 
-        containers = await onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
+        containers = await onedocker_svc.wait_for_pending_containers(
+            [container.instance_id for container in pending_containers]
+        )
 
         # Busy wait until all containers are finished
         any_failed = False
