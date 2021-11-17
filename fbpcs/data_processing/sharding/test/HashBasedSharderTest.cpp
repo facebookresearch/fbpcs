@@ -21,3 +21,15 @@ TEST(HashBasedSharderTest, TestToBytes) {
       static_cast<unsigned char>('c'), static_cast<unsigned char>('d')};
   EXPECT_EQ(detail::toBytes(key), expected);
 }
+
+TEST(HashBasedSharderTest, TestBytesToIntSimple) {
+  // First a very simple test (but still important for endianness correctness!)
+  std::vector<unsigned char> bytes{0, 0, 0, 1};
+  EXPECT_EQ(1, detail::bytesToInt(bytes));
+
+  // Assuming network byte order, big-endian 0x1 | 0x0 | 0x0 | 0x0
+  // is equivalent to integer 16777216 (2^24). In binary, we recognize this
+  // number as 0b 0000 0001 0000 0000 0000 0000 0000 0000
+  std::vector<unsigned char> bytes2{1, 0, 0, 0};
+  EXPECT_EQ(1 << 24, detail::bytesToInt(bytes2));
+}
