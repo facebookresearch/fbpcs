@@ -16,6 +16,7 @@
 #include <vector>
 #include "../hash_slinging_salter/HashSlingingSalter.hpp"
 
+#include <arpa/inet.h>
 #include <gflags/gflags.h>
 
 #include "folly/Random.h"
@@ -49,24 +50,60 @@ DEFINE_string(
     "/tmp/",
     "Directory where temporary files should be saved before final write");
 DEFINE_int32(log_every_n, 1000000, "How frequently to log updates");
-DEFINE_int32(hashing_prime, 37, "Prime number to assist in consistent hashing");
 DEFINE_string(
     hmac_base64_key,
     "",
     "key to be used in optional hash salting step");
 
-/* Utility to hash a string to an unsigned machine size integer.
- * Unsigned is important so overflow is properly defined.
- * Adapted from
- * https://stackoverflow.com/questions/8567238/hash-function-in-c-for-string-to-int
+namespace detail {
+/**
+ * Convert a string of characters into its component bytes
+ *
+ * @param key the string to be converted into a vector of bytes
+ * @returns a vector of bytes by casting each character to `uint8_t`
  */
-std::size_t hashString(const std::string& s, uint64_t hashing_prime) {
-  std::size_t res = 0;
-  for (auto i = 0; i < s.length(); ++i) {
-    res = hashing_prime * res + s[i];
-  }
+std::vector<uint8_t> toBytes(const std::string &key) {
+  std::vector<uint8_t> res(key.begin(), key.end());
   return res;
 }
+
+/**
+ * Read a vector of bytes and convert it into an int32_t in a way that will be
+ * consistent no matter the endianness of the client machine. We assume the data
+ * in the string is interpreted in "network byte order" and call `ntohl` to
+ * transform it into a system-independent int32_t value.
+ *
+ * @param bytes a vector of bytes to convert into an integer
+ * @returns a system-independent integer representation of the bytes' value
+ * @notes only the first four elements of `bytes` are used since that's how
+ *     many will fit into an `int32_t` in practice.
+ */
+int32_t bytesToInt(const std::vector<uint8_t>& bytes) {
+  int32_t res = 0;
+
+  auto bytesInSizeT = sizeof(res) / sizeof(uint8_t);
+  auto end = bytes.begin() + std::min(bytesInSizeT, bytes.size());
+  std::copy(bytes.begin(), end, reinterpret_cast<uint8_t*>(&res));
+
+  // Because we could be in a bizarre scenario where the publisher machine's
+  // endianness differs from the partner machine's endianness, we rearrange the
+  // bytes now to ensure a consistent representation. We assume the previously
+  // copied bytes are in "network byte order" and convert them to a host long.
+  return ntohl(res);
+}
+
+/**
+ * Get the correct shard associated with a string.
+ *
+ * @param id the id to be sharded
+ * @param numShards the total number of shards being created
+ * @returns the shard index this identifier belongs to
+ */
+std::size_t getShardFor(const std::string& id, std::size_t numShards) {
+  auto toInt = bytesToInt(toBytes(id));
+  return toInt % numShards;
+}
+} // namespace detail
 
 void stripQuotes(std::string& s) {
   s.erase(std::remove(s.begin(), s.end(), '"'), s.end());
@@ -77,7 +114,6 @@ void shardFile(
     const std::filesystem::path& tmpDirectory,
     const std::vector<std::string>& outputFilepaths,
     int32_t logEveryN,
-    int32_t hashingPrime,
     const std::string& hmacBase64Key) {
   auto numShards = outputFilepaths.size();
   auto inStreamPtr = fbpcf::io::getInputStream(inputFilename);
@@ -120,7 +156,10 @@ void shardFile(
       stripQuotes(line);
       auto commaPos = line.find_first_of(",");
       auto id = line.substr(0, commaPos);
-      auto shard = hashString(id, hashingPrime) % numShards;
+      // Assumption: the string is *already* an HMAC hashed value
+      // If hmacBase64Key is empty, the hashing already happened upstream.
+      // This means we can reinterpret the id as a base64-encoded string.
+      auto shard = detail::getShardFor(id, numShards);
       *tmpFiles.at(shard) << line << "\n";
       ++line_idx;
       if (line_idx % logEveryN == 0) {
@@ -136,7 +175,7 @@ void shardFile(
       auto base64SaltedId =
           private_lift::hash_slinging_salter::base64SaltedHashFromBase64Key(
               id, hmacBase64Key);
-      auto shard = hashString(base64SaltedId, hashingPrime) % numShards;
+      auto shard = detail::getShardFor(base64SaltedId, numShards);
       *tmpFiles.at(shard) << base64SaltedId << line.substr(commaPos) << "\n";
       ++line_idx;
       if (line_idx % logEveryN == 0) {
@@ -214,7 +253,6 @@ int main(int argc, char** argv) {
       tmpDirectory,
       outputFilepaths,
       FLAGS_log_every_n,
-      FLAGS_hashing_prime,
       FLAGS_hmac_base64_key);
 
   return 0;
