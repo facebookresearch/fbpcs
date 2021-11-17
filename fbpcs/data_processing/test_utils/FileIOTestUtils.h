@@ -27,5 +27,6 @@ void writeVecToFile(const std::vector<std::string> &rows,
  * @param rows the vector of rows to compare against the file
  * @notes internally calls EXPECT_EQ from gtest
  */
-void expectFileRowsEqual(const std::string &filePath, std::vector<std::string>& rows);
+void expectFileRowsEqual(const std::string &filePath,
+                         std::vector<std::string> &rows);
 } // namespace data_processing::test_utils
