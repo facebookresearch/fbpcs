@@ -33,3 +33,17 @@ TEST(HashBasedSharderTest, TestBytesToIntSimple) {
   std::vector<unsigned char> bytes2{1, 0, 0, 0};
   EXPECT_EQ(1 << 24, detail::bytesToInt(bytes2));
 }
+
+TEST(HashBasedSharderTest, TestBytesToIntAdvanced) {
+  // Don't throw std::out_of_range if bytes is empty
+  std::vector<unsigned char> bytes{};
+  EXPECT_EQ(0, detail::bytesToInt(bytes));
+
+  // If bytes are missing, we still copy the bytes array from the "start" so
+  // this is equivalent to the test in TestBytesToIntSimple. In other words,
+  // this is like copying [0b 0000 0001 0000 0000 [implicit 0000 0000 0000 0000]
+  // Hopefully this is clear -- the lower two bytes were never "overridden" so
+  // they still contain zero.
+  std::vector<unsigned char> bytes2{1, 0};
+  EXPECT_EQ(1 << 24, detail::bytesToInt(bytes2));
+}
