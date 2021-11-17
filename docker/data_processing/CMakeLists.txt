@@ -32,23 +32,36 @@ target_link_libraries(
   Folly::folly
   re2)
 
-# sharder
+# sharder dependent files
+file(GLOB sharding_src
+  "fbpcs/data_processing/sharding/**.c"
+  "fbpcs/data_processing/sharding/**.cpp"
+  "fbpcs/data_processing/sharding/**.h"
+  "fbpcs/data_processing/sharding/**.hpp"
+  "fbpcs/data_processing/hash_slinging_salter/**.c"
+  "fbpcs/data_processing/hash_slinging_salter/**.cpp"
+  "fbpcs/data_processing/hash_slinging_salter/**.h"
+  "fbpcs/data_processing/hash_slinging_salter/**.hpp")
+list(FILTER sharding_src EXCLUDE REGEX ".*Test.*")
+# Exclude the two files with a `main` function
+list(FILTER sharding_src EXCLUDE REGEX "^.*/shard\.cpp$")
+list(FILTER sharding_src EXCLUDE REGEX "^.*/shard_pid\.cpp$")
+
+# sharder executables
 add_executable(
   sharder
-  "fbpcs/data_processing/sharding/shard.cpp")
+  "fbpcs/data_processing/sharding/shard.cpp"
+  ${sharding_src})
 target_link_libraries(
   sharder
   dpcommon)
 install(TARGETS sharder DESTINATION bin)
 
 # sharder hashed for pid
-file(GLOB hash_slinging_salter_src
-  "fbpcs/data_processing/hash_slinging_salter/HashSlingingSalter.cpp"
-  "fbpcs/data_processing/hash_slinging_salter/base64.cpp")
 add_executable(
   sharder_hashed_for_pid
   "fbpcs/data_processing/sharding/shard_pid.cpp"
-  ${hash_slinging_salter_src})
+  ${sharding_src})
 target_link_libraries(
   sharder_hashed_for_pid
   dpcommon)
