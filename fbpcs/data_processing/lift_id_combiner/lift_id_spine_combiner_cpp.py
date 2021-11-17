@@ -17,6 +17,7 @@ from typing import List, Optional
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
+from fbpcp.util.arg_builder import build_cmd_args
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 
@@ -135,26 +136,6 @@ class CppLiftIdSpineCombinerService:
                     f"{proc.name} exited with non-zero code {proc.exitcode}"
                 )
 
-    def _get_combine_cmd_for_container(
-        self,
-        spine_path: str,
-        data_path: str,
-        output_path: str,
-        tmp_directory: str,
-    ) -> str:
-        # TODO: Probably put exe in an env variable?
-        # Try to align with existing paths
-        exe = "lift_id_combiner"
-        cmd_args = " ".join(
-            [
-                f"--spine_path={spine_path}",
-                f"--data_path={data_path}",
-                f"--output_path={output_path}",
-                f"--tmp_directory={tmp_directory}",
-            ]
-        )
-        return f"{exe} {cmd_args}"
-
     def combine_on_container(
         self,
         spine_path: str,
@@ -201,8 +182,11 @@ class CppLiftIdSpineCombinerService:
             next_spine_path = PIDStage.get_sharded_filepath(spine_path, shard)
             next_data_path = PIDStage.get_sharded_filepath(data_path, shard)
             next_output_path = PIDStage.get_sharded_filepath(output_path, shard)
-            cmd = self._get_combine_cmd_for_container(
-                next_spine_path, next_data_path, next_output_path, tmp_directory
+            cmd = build_cmd_args(
+                spine_path=next_spine_path,
+                data_path=next_data_path,
+                output_path=next_output_path,
+                tmp_directory=tmp_directory,
             )
             cmds.append(cmd)
 
@@ -213,7 +197,9 @@ class CppLiftIdSpineCombinerService:
             timeout=timeout,
         )
 
-        containers = await onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
+        containers = await onedocker_svc.wait_for_pending_containers(
+            [container.instance_id for container in pending_containers]
+        )
 
         # Busy wait until all containers are finished
         any_failed = False
