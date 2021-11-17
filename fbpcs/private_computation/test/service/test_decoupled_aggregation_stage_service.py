@@ -11,15 +11,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
+    PrivateComputationInstanceStatus,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
     AggregationType,
-)
-from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
-    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import (
@@ -74,7 +74,9 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
             "output_base_path": private_computation_instance.decoupled_aggregation_stage_output_base_path,
             "num_files": private_computation_instance.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
-            "run_name": "",
+            "run_name": private_computation_instance.instance_id
+            if self.stage_svc._log_cost_to_s3
+            else "",
             "max_num_touchpoints": private_computation_instance.padding_size,
             "max_num_conversions": private_computation_instance.padding_size,
             "attribution_rules": private_computation_instance.attribution_rule.value,
@@ -93,7 +95,9 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
             },
         ]
 
-        actual_value = self.stage_svc._get_compute_metrics_game_args(private_computation_instance)
+        actual_value = self.stage_svc._get_compute_metrics_game_args(
+            private_computation_instance
+        )
         self.assertEqual(
             test_game_args,
             actual_value,

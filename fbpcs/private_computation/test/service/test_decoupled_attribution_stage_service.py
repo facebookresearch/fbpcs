@@ -12,7 +12,8 @@ from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AttributionRule, PrivateComputationGameType,
+    AttributionRule,
+    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
 )
@@ -71,7 +72,10 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             "output_base_path": private_computation_instance.decoupled_attribution_stage_output_base_path,
             "num_files": private_computation_instance.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
-            "run_name": "",
+            "run_name": private_computation_instance.instance_id
+            + "_decoupled_attribution"
+            if self.stage_svc._log_cost_to_s3
+            else "",
             "max_num_touchpoints": private_computation_instance.padding_size,
             "max_num_conversions": private_computation_instance.padding_size,
             "attribution_rules": AttributionRule.LAST_CLICK_1D.value,

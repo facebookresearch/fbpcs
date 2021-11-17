@@ -46,7 +46,8 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
     async def test_aggregate_shards(self):
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=private_computation_instance.instance_id + "_aggregate_metrics0",
+            instance_id=private_computation_instance.instance_id
+            + "_aggregate_metrics0",
             game_name=GameNames.LIFT.value,
             mpc_party=MPCParty.CLIENT,
             num_workers=private_computation_instance.num_mpc_containers,
@@ -63,10 +64,13 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             {
                 "input_base_path": private_computation_instance.compute_stage_output_base_path,
                 "metrics_format_type": "lift",
-                "num_shards": private_computation_instance.num_mpc_containers * NUM_NEW_SHARDS_PER_FILE,
+                "num_shards": private_computation_instance.num_mpc_containers
+                * NUM_NEW_SHARDS_PER_FILE,
                 "output_path": private_computation_instance.shard_aggregate_stage_output_path,
                 "threshold": private_computation_instance.k_anonymity_threshold,
-                "run_name": "",
+                "run_name": private_computation_instance.instance_id
+                if self.stage_svc._log_cost_to_s3
+                else "",
             }
         ]
 
