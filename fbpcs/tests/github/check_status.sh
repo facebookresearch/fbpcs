@@ -13,7 +13,7 @@ game=$2
 if [ "$game" == 'lift' ]||[ "$game" == 'attribution' ]
 then
     upper_game=${game^^}
-    publisher_name=${upper_game}_PUBLIHSER_NAME
+    publisher_name=${upper_game}_PUBLISHER_NAME
     partner_name=${upper_game}_PARTNER_NAME
 else
     echo "Invalid Game"

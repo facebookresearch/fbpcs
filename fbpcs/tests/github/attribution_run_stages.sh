@@ -19,7 +19,7 @@ docker_command="docker exec $container_name $COORDINATOR"
 case "$stage" in
     create_instance )
         echo "Create Attribution Publisher instance"
-        $docker_command create_instance "$ATTRIBUTION_PUBLIHSER_NAME" \
+        $docker_command create_instance "$ATTRIBUTION_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE" \
             --input_path="$ATTRIBUTION_PUBLISHER_INPUT_FILE" \
             --output_dir="$ATTRIBUTION_OUTPUT_DIR" \
@@ -48,7 +48,7 @@ case "$stage" in
     # Stages without passing IP addresses
     prepare_compute_input )
         echo "Attribution Publisher $stage starts"
-        $docker_command run_next "$ATTRIBUTION_PUBLIHSER_NAME" \
+        $docker_command run_next "$ATTRIBUTION_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
         echo "Attribution Partner $stage starts"
         $docker_command run_next "$ATTRIBUTION_PARTNER_NAME" \
@@ -57,10 +57,10 @@ case "$stage" in
      # Stages need to pass IP address
     run_next )
         echo "Attribution Publisher $stage starts"
-        $docker_command run_next "$ATTRIBUTION_PUBLIHSER_NAME" \
+        $docker_command run_next "$ATTRIBUTION_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
         echo "Get Publisher Ips"
-        publisher_server_ips=$($docker_command get_server_ips "$ATTRIBUTION_PUBLIHSER_NAME" \
+        publisher_server_ips=$($docker_command get_server_ips "$ATTRIBUTION_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE" | sed 's/\r//g')
         echo "Server IPs are ${publisher_server_ips}"
         echo "Attribution Partner $stage starts"
