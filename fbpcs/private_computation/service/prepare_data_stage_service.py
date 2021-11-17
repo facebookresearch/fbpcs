@@ -35,6 +35,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -59,8 +60,8 @@ class PrepareDataStageService(PrivateComputationStageService):
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         is_validating: bool = False,
-        log_cost_to_s3: bool = False,
-        update_status_to_complete: bool = False
+        log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
+        update_status_to_complete: bool = False,
     ) -> None:
         self._onedocker_svc = onedocker_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
@@ -86,7 +87,6 @@ class PrepareDataStageService(PrivateComputationStageService):
             An updated version of pc_instance
         """
 
-
         output_path = pc_instance.data_processing_output_path
         combine_output_path = output_path + "_combine"
 
@@ -104,9 +104,7 @@ class PrepareDataStageService(PrivateComputationStageService):
         #     note we need each file to be sharded into the same # of files
         #     because we want to keep the data of each existing file to run
         #     on the same container
-        await self._run_sharder_service(
-            pc_instance, combine_output_path
-        )
+        await self._run_sharder_service(pc_instance, combine_output_path)
         # currently, prepare data blocks and runs until completion or failure (exception is thrown)
         # this if statement will let the legacy way of calling prepare data NOT update the status,
         # whereas the new way of calling prepare data can update the status.
