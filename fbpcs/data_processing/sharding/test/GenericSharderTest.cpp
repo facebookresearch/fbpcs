@@ -14,6 +14,14 @@
 
 namespace data_processing::sharder {
 
+/**
+ * A class to make GenericSharder concrete for testing purposes.
+ */
+class GenericSharderTest final : public GenericSharder {
+  using GenericSharder::GenericSharder;
+  void shard() const final { /* empty */ }
+};
+
 TEST(GenericSharderTest, TestStripQuotes) {
   std::string noQuotes{"hello world"};
   std::string quoted{"\"hello world\""};
@@ -33,5 +41,12 @@ TEST(GenericSharderTest, TestGenOutputPaths) {
   std::size_t end = 4;
   std::vector<std::string> expected{"/tmp_0", "/tmp_1", "/tmp_2", "/tmp_3"};
   EXPECT_EQ(GenericSharder::genOutputPaths(basePath, start, end), expected);
+}
+
+TEST(GenericSharderTest, TestGetInputPath) {
+  std::vector<std::string> outputPaths{"/tmp_0", "/tmp_1", "/tmp_2", "/tmp_3"};
+  int32_t logEveryN = 123;
+  GenericSharderTest actual{"/tmp", outputPaths, logEveryN};
+  EXPECT_EQ(actual.getInputPath(), "/tmp");
 }
 } // namespace data_processing::sharder
