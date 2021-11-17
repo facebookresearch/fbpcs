@@ -14,7 +14,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "../hash_slinging_salter/HashSlingingSalter.hpp"
 
 #include <arpa/inet.h>
 #include <gflags/gflags.h>
@@ -22,14 +21,13 @@
 #include "folly/Random.h"
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
-// TODO: Rewrite for open source?
-#include "fbpcf/aws/AwsSdk.h"
-#include "fbpcf/io/FileManagerUtil.h"
+#include <fbpcf/aws/AwsSdk.h>
+#include <fbpcf/io/FileManagerUtil.h>
 
-// TODO: Rewrite for open source?
-#include "../common/FilepathHelpers.h"
-#include "../common/Logging.h"
-#include "../common/S3CopyFromLocalUtil.h"
+#include "fbpcs/data_processing/common/FilepathHelpers.h"
+#include "fbpcs/data_processing/common/Logging.h"
+#include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
+#include "fbpcs/data_processing/hash_slinging_salter/HashSlingingSalter.hpp"
 
 DEFINE_string(input_filename, "", "Name of the input file");
 DEFINE_string(
