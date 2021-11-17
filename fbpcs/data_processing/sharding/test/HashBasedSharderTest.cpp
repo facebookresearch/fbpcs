@@ -12,7 +12,7 @@
 
 #include "fbpcs/data_processing/sharding/HashBasedSharder.h"
 
-using namespace data_processing::sharder;
+namespace data_processing::sharder {
 
 TEST(HashBasedSharderTest, TestToBytes) {
   std::string key = "abcd";
@@ -47,3 +47,14 @@ TEST(HashBasedSharderTest, TestBytesToIntAdvanced) {
   std::vector<unsigned char> bytes2{1, 0};
   EXPECT_EQ(1 << 24, detail::bytesToInt(bytes2));
 }
+
+TEST(HashBasedSharderTest, TestGetShardFor) {
+  // Assuming toBytes and bytesToInt have been tested elsewhere, this is a
+  // straightforward modulo operation.
+  std::string key = "abcd";
+  auto integerValue = detail::bytesToInt(detail::toBytes(key));
+  EXPECT_EQ(detail::getShardFor(key, 123), integerValue % 123);
+  // Anything % 1 should be zero
+  EXPECT_EQ(detail::getShardFor(key, 1), 0);
+}
+} // namespace data_processing::sharder
