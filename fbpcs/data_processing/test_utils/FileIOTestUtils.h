@@ -19,4 +19,13 @@ namespace data_processing::test_utils {
  */
 void writeVecToFile(const std::vector<std::string> &rows,
                     const std::string &filePath);
+
+/**
+ * Check that the data at the given filepath matches the vector of rows.
+ *
+ * @param filePath the filepath to read contents against `rows`
+ * @param rows the vector of rows to compare against the file
+ * @notes internally calls EXPECT_EQ from gtest
+ */
+void expectFileRowsEqual(const std::string &filePath, std::vector<std::string>& rows);
 } // namespace data_processing::test_utils
