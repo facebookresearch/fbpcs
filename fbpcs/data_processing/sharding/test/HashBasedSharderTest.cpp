@@ -10,7 +10,10 @@
 
 #include <gtest/gtest.h>
 
+#include <folly/Random.h>
+
 #include "fbpcs/data_processing/sharding/HashBasedSharder.h"
+#include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
 
 namespace data_processing::sharder {
 
@@ -56,5 +59,38 @@ TEST(HashBasedSharderTest, TestGetShardFor) {
   EXPECT_EQ(detail::getShardFor(key, 123), integerValue % 123);
   // Anything % 1 should be zero
   EXPECT_EQ(detail::getShardFor(key, 1), 0);
+}
+
+TEST(HashBasedSharderTest, TestShardNoHmacKey) {
+  std::vector<std::string> rows{
+      "id_,a,b,c", "abcd,1,2,3", "abcd,4,5,6", "defg,7,8,9", "hijk,0,0,0",
+  };
+
+  std::string inputPath = "/tmp/HashBasedSharderTestShardInput" +
+                          std::to_string(folly::Random::secureRand64());
+  data_processing::test_utils::writeVecToFile(rows, inputPath);
+  // TODO: Would be great to mock out inputstream/outputstream stuff
+  auto randStart = folly::Random::secureRand64();
+  std::vector<std::string> outputPaths{
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
+  };
+  HashBasedSharder sharder{inputPath, outputPaths, 123, ""};
+  sharder.shard();
+
+  std::vector<std::string> expected0{
+      "id_,a,b,c",
+      "abcd,1,2,3",
+      "abcd,4,5,6",
+  };
+  std::vector<std::string> expected1{
+      "id_,a,b,c",
+      "defg,7,8,9",
+      "hijk,0,0,0",
+  };
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(0),
+                                                   expected0);
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(1),
+                                                   expected1);
 }
 } // namespace data_processing::sharder
