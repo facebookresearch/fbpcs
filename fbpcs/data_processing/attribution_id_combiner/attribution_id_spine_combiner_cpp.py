@@ -20,36 +20,6 @@ DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 10800
 
 
 class CppAttributionIdSpineCombinerService:
-    def combine_on_container(
-        self,
-        spine_path: str,
-        data_path: str,
-        output_path: str,
-        num_shards: int,
-        run_name: str,
-        onedocker_svc: OneDockerService,
-        tmp_directory: str,
-        padding_size: int,
-        binary_version: str,
-        sort_strategy: str = "sort",
-        container_timeout: Optional[int] = None,
-    ) -> None:
-        asyncio.run(
-            self.combine_on_container_async(
-                spine_path,
-                data_path,
-                output_path,
-                num_shards,
-                run_name,
-                onedocker_svc,
-                tmp_directory,
-                padding_size,
-                binary_version,
-                sort_strategy,
-                container_timeout,
-            )
-        )
-
     async def combine_on_container_async(
         self,
         spine_path: str,
