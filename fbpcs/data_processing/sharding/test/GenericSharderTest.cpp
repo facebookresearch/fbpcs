@@ -49,4 +49,11 @@ TEST(GenericSharderTest, TestGetInputPath) {
   GenericSharderTest actual{"/tmp", outputPaths, logEveryN};
   EXPECT_EQ(actual.getInputPath(), "/tmp");
 }
+
+TEST(GenericSharderTest, TestGetLogRate) {
+  std::vector<std::string> outputPaths{"/tmp_0", "/tmp_1", "/tmp_2", "/tmp_3"};
+  int32_t logEveryN = 123;
+  GenericSharderTest actual{"/tmp", outputPaths, logEveryN};
+  EXPECT_EQ(actual.getLogRate(), 123);
+}
 } // namespace data_processing::sharder
