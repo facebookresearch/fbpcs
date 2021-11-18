@@ -48,7 +48,7 @@ class AttributionDefault : public AttributionOutput {
     CHECK_EQ(uids.size(), touchpoints.size())
         << "uid array and touchpoint array must be equal size";
 
-    for (auto i = 0; i < uids.size(); i++) {
+    for (std::vector<int64_t>::size_type i = 0; i < uids.size(); i++) {
       idToMetrics_.emplace(uids[i], PrivateAttDefaultMap{});
     }
   }

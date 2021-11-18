@@ -33,7 +33,7 @@ inline std::vector<std::string> getIOInputFilenames(
   try {
     // if multiple of attribution output files is greater than 1.
     if (use_postfix) {
-      for (auto i = 0; i < numFiles; i++) {
+      for (int32_t i = 0; i < numFiles; i++) {
         std::string inputFilePath =
             folly::sformat("{}_{}", inputBasePath, (fileStartIndex + i));
         inputFilePaths.push_back(inputFilePath);
@@ -65,7 +65,7 @@ inline void startPrivateAggregationApp(
       aggregationApps;
   CHECK_EQ(inputSecretShareFilePaths.size(), inputClearTextFilePaths.size())
       << "number of attribution results and metadata files not matching.";
-  for (auto i = 0; i < inputSecretShareFilePaths.size(); i++) {
+  for (std::vector<std::string>::size_type i = 0; i < inputSecretShareFilePaths.size(); i++) {
     aggregationApps.push_back(
         std::make_unique<aggregation::private_aggregation::
                              AggregationApp<PARTY, OUTPUT_VISIBILITY>>(

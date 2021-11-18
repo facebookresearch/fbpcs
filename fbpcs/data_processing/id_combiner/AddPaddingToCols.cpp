@@ -47,7 +47,7 @@ void addPaddingToCols(
   outFile << vectorToString(header) << "\n";
 
   std::vector<int> colsIndexesToPad;
-  for (auto i = 0; i < cols.size(); i++) {
+  for (std::vector<std::string>::size_type i = 0; i < cols.size(); i++) {
     colsIndexesToPad.push_back(headerIndex(header, cols.at(i)));
   }
 

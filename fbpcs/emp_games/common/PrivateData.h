@@ -44,7 +44,7 @@ std::string vecToString(
   std::stringstream out;
 
   out << "[";
-  for (auto j = 0; j < in.size(); j++) {
+  for (std::size_t j = 0; j < in.size(); j++) {
     const auto& val = in[j];
     if (nullValue.has_value() && val == nullValue.value()) {
       out << "✗";
