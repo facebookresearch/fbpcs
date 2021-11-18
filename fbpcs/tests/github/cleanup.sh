@@ -19,8 +19,6 @@ do
     echo "Task:${task} is stopped"
 done
 
-# Remove aggregation outputs from previous run
-aws s3 rm "$LIFT_PUBLISHER_AGGREGATION_OUTPUT"
-aws s3 rm "$LIFT_PARTNER_AGGREGATION_OUTPUT"
-aws s3 rm "$ATTRIBUTION_PUBLISHER_AGGREGATION_OUTPUT"
-aws s3 rm "$ATTRIBUTION_PARTNER_AGGREGATION_OUTPUT"
+# Remove all the outputs from previous run
+aws s3 rm --recursive "$LIFT_OUTPUT_PATH"
+aws s3 rm --recursive "$ATTRIBUTION_OUTPUT_PATH"
