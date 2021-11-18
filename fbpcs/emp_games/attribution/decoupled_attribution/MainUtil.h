@@ -74,7 +74,7 @@ inline void startAttributionAppsForShardedFiles(
           std::make_unique<aggregation::private_attribution::
                               AttributionApp<PARTY, OUTPUT_VISIBILITY>>(
               serverIp,
-              port + i % concurrency,
+              port + i,
               attributionRules,
               inputFilenames.at(i),
               outputFilenames.at(i)));

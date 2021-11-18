@@ -70,7 +70,7 @@ inline void startPrivateAggregationApp(
         std::make_unique<aggregation::private_aggregation::
                              AggregationApp<PARTY, OUTPUT_VISIBILITY>>(
             serverIp,
-            port + i%concurrency,
+            port + i,
             aggregationFormat,
             inputSecretShareFilePaths.at(i),
             inputClearTextFilePaths.at(i),
