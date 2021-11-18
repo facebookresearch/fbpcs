@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
     calculatorApps.push_back(std::make_unique<CalculatorApp>(
         party,
         FLAGS_server_ip,
-        FLAGS_port + i % concurrency,
+        FLAGS_port + i,
         inputFilepaths[i],
         outputFilepaths[i],
         FLAGS_use_xor_encryption));
