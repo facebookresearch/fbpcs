@@ -14,9 +14,7 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
-from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
-    CppLiftIdSpineCombinerService,
-)
+from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
@@ -27,6 +25,12 @@ from fbpcs.pid.entity.pid_instance import (
     PIDRole,
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
+from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
+    PrivateComputationDecoupledStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -36,9 +40,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
     PrivateComputationLegacyStageFlow,
-)
-from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
-    PrivateComputationDecoupledStageFlow,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.errors import (
@@ -63,7 +64,6 @@ from fbpcs.private_computation.service.utils import (
 # TODO T94666166: libfb won't work in OSS
 from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
-from fbpcs.private_computation.entity.private_computation_base_stage_flow import PrivateComputationBaseStageFlow
 
 
 def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
@@ -77,6 +77,7 @@ def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
         (PrivateComputationDecoupledStageFlow.DECOUPLED_AGGREGATION,),
         (PrivateComputationDecoupledStageFlow.AGGREGATE,),
     ]
+
 
 class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
@@ -363,7 +364,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(pl_instance.status, stage.started_status)
 
-
     @data_provider(_get_valid_stages_data)
     def test_run_stage_status_already_started(
         self,
@@ -384,7 +384,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             pl_instance = self.private_computation_service.run_stage(
                 pl_instance.instance_id, stage, stage_svc
             )
-
 
     @data_provider(_get_valid_stages_data)
     def test_run_stage_out_of_order_with_dry_run(
@@ -409,7 +408,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(pl_instance.status, stage.started_status)
 
-
     @data_provider(_get_valid_stages_data)
     def test_run_stage_out_of_order_without_dry_run(
         self,
@@ -432,7 +430,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             pl_instance = self.private_computation_service.run_stage(
                 pl_instance.instance_id, stage, stage_svc, dry_run=False
             )
-
 
     @data_provider(_get_valid_stages_data)
     def test_run_stage_partner_no_server_ips(
@@ -465,7 +462,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(pl_instance.status, stage.started_status)
 
-
     @data_provider(_get_valid_stages_data)
     def test_run_stage_fails(
         self,
@@ -494,7 +490,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             )
 
         self.assertEqual(pl_instance.status, stage.failed_status)
-
 
     @patch("fbpcp.service.mpc.MPCService")
     async def test_create_and_start_mpc_instance(self, mock_mpc_svc):
@@ -616,7 +611,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch.object(
-            CppLiftIdSpineCombinerService,
+            IdSpineCombinerService,
             "combine_on_container_async",
         ) as mock_combine, patch.object(
             CppShardingService,
@@ -627,9 +622,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 instance_id=self.test_private_computation_id,
                 dry_run=True,
             )
-            binary_config = self.onedocker_binary_config_map[
-                OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
-            ]
+            binary_name = OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
+            binary_config = self.onedocker_binary_config_map[binary_name]
             mock_combine.assert_called_once_with(
                 spine_path=private_computation_instance.pid_stage_output_spine_path,
                 data_path=private_computation_instance.pid_stage_output_data_path,
@@ -639,6 +633,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 onedocker_svc=self.onedocker_service,
                 binary_version=binary_config.binary_version,
                 tmp_directory=binary_config.tmp_directory,
+                binary_name=binary_name,
             )
             mock_shard.assert_called()
 
@@ -652,7 +647,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch.object(
-            CppLiftIdSpineCombinerService,
+            IdSpineCombinerService,
             "combine_on_container_async",
         ) as mock_combine, patch.object(
             CppShardingService,

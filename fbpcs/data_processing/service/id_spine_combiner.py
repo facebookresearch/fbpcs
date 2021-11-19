@@ -12,6 +12,7 @@ from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.arg_builder import build_cmd_args
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
+from fbpcs.private_computation.service.constants import DEFAULT_SORT_STRATEGY
 
 
 # 10800 s = 3 hrs
@@ -29,7 +30,7 @@ class IdSpineCombinerService:
         tmp_directory: str,
         binary_version: str,
         binary_name: str,
-        sort_strategy: str = "sort",
+        sort_strategy: str = DEFAULT_SORT_STRATEGY,
         container_timeout: Optional[int] = None,
         # TODO T106159008: padding_size and run_name are only temporarily optional
         # because Lift does not use them. It should and will be required to use them.
