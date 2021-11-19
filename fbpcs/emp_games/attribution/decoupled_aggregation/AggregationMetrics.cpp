@@ -40,7 +40,7 @@ static const std::vector<TouchpointMetadata> parseTouchpointMetadata(
   std::vector<int64_t> timestamps;
   std::vector<int64_t> isClicks;
   std::vector<int64_t> campaignMetadata;
-  for (auto i = 0; i < header.size(); ++i) {
+  for (std::vector<std::string>::size_type i = 0; i < header.size(); ++i) {
     auto column = header[i];
     auto value = parts[i];
     if (column == "ad_ids") {
@@ -62,8 +62,8 @@ static const std::vector<TouchpointMetadata> parseTouchpointMetadata(
       << "Ad ids and campaign_metadata arrays are not the same length.";
 
   std::vector<int64_t> unique_ids;
-  for (int64_t i = 0; i < timestamps.size(); i++) {
-    unique_ids.push_back(i);
+  for (std::vector<int64_t>::size_type i = 0; i < timestamps.size(); i++) {
+    unique_ids.push_back(static_cast<int64_t>(i));
   }
 
   const std::unordered_set<int64_t> idSet{unique_ids.begin(), unique_ids.end()};
@@ -72,7 +72,7 @@ static const std::vector<TouchpointMetadata> parseTouchpointMetadata(
       << "This implementation currently only supports unique touchpoint ids per user.";
 
   std::vector<TouchpointMetadata> tpms;
-  for (auto i = 0; i < adIds.size(); i++) {
+  for (std::vector<int64_t>::size_type i = 0; i < adIds.size(); i++) {
     tpms.push_back(TouchpointMetadata{
         /* adId */ adIds.at(i),
         /* ts */ timestamps.at(i),
@@ -97,7 +97,7 @@ static const std::vector<ConversionMetadata> parseConversions(
   std::vector<int32_t> convValues;
   std::vector<int32_t> convMetadata;
 
-  for (auto i = 0; i < header.size(); ++i) {
+  for (std::vector<std::string>::size_type i = 0; i < header.size(); ++i) {
     auto column = header[i];
     auto value = parts[i];
 
@@ -116,7 +116,7 @@ static const std::vector<ConversionMetadata> parseConversions(
       << "Conversion timetamps and  arrays are not the same length.";
 
   std::vector<ConversionMetadata> convs;
-  for (auto i = 0; i < convTimestamps.size(); i++) {
+  for (std::vector<int64_t>::size_type i = 0; i < convTimestamps.size(); i++) {
     convs.push_back(ConversionMetadata{
         /* ts */ convTimestamps.at(i),
         /* value */ convValues.at(i),

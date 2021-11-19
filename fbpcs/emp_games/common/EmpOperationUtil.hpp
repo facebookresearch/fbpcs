@@ -13,7 +13,7 @@ inline const std::vector<emp::Bit> intsToBits(
     const std::vector<emp::Integer>& in) {
   std::vector<emp::Bit> bits;
   bits.reserve(in.size());
-  for (auto i = 0; i < in.size(); ++i) {
+  for (std::vector<emp::Integer>::size_type i = 0; i < in.size(); ++i) {
     // We only take the first (zero-th) bit. It's up to the caller to ensure
     // that the input vector of Integers actually represents Bits.
     bits.push_back(in[i][0]);
@@ -30,7 +30,7 @@ inline const std::vector<emp::Integer> bitsToInts(
 
   std::vector<emp::Integer> ints;
   ints.reserve(in.size());
-  for (auto i = 0; i < in.size(); ++i) {
+  for (std::vector<emp::Bit>::size_type i = 0; i < in.size(); ++i) {
     ints.emplace_back(emp::If(in[i], one, zero));
   }
   return ints;
@@ -43,7 +43,7 @@ inline const emp::Integer getMin(emp::Integer value1, emp::Integer value2) {
 
 inline const emp::Integer getMin(const std::vector<emp::Integer>& values) {
   emp::Integer minValue(INT_SIZE, __INT_MAX__, emp::PUBLIC);
-  for (auto i = 0; i < values.size(); i++) {
+  for (std::vector<emp::Integer>::size_type i = 0; i < values.size(); i++) {
     minValue = getMin(minValue, values.at(i));
   }
   return minValue;

@@ -134,7 +134,7 @@ const std::vector<AggregationFormat> shareAggregationFormats(
 
   std::vector<int64_t> aggregationIds;
   if constexpr (MY_ROLE == PUBLISHER) {
-    for (auto i = 0; i < aggregationFormats.size(); i++) {
+    for (std::vector<AggregationFormat>::size_type i = 0; i < aggregationFormats.size(); i++) {
       aggregationIds.push_back(aggregationFormats[i].id);
     }
     XLOGF(
@@ -269,7 +269,7 @@ AggregationOutputMetrics computeAggregations(
   const auto& touchpointSecretShares = inputData.getTouchpointSecretShares();
   const auto& conversionSecretShares = inputData.getConversionSecretShares();
 
-  for (int i = 0; i < attributionRules.size(); i++) {
+  for (std::vector<std::string>::size_type i = 0; i < attributionRules.size(); i++) {
     // share secret shares computed for each attribution Rule
     XLOG(INFO, "Sharing touchpoint attribution results...");
     std::vector<std::vector<AttributionResult>> tpAttributionResultsPerRule;

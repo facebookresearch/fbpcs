@@ -88,11 +88,7 @@ class MeasurementAggregator : public Aggregator {
     std::vector<std::vector<
         MeasurementAggregation::PrivateMeasurementAggregationResult>>
         touchpointConversionResults;
-    for (int i = 0; i < privateCvmArrays.size(); i++) {
-      const auto& privateTpAttributionArray = privateTpAttributionArrays.at(i);
-      const auto& privateCvmAttributionArray =
-          privateCvmAttributionsArrays.at(i);
-
+    for (std::size_t i = 0; i < privateCvmArrays.size(); i++) {
       // Retrieve the touchpoint-conversion metadata pairs based on attribution
       // results. One assumption here is that one conversion will only be
       // attributed to one touchpoint.

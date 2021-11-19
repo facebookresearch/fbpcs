@@ -67,7 +67,7 @@ const std::vector<AttributionRule> shareAttributionRules(
 
   std::vector<int64_t> attributionIds;
   if constexpr (MY_ROLE == PUBLISHER) {
-    for (auto i = 0; i < rules.size(); i++) {
+    for (std::vector<AttributionRule>::size_type i = 0; i < rules.size(); i++) {
       attributionIds.push_back(rules[i].id);
     }
     XLOGF(
@@ -103,7 +103,7 @@ const std::vector<AggregationFormat> shareAggregationFormats(
 
   std::vector<int64_t> aggregationIds;
   if constexpr (MY_ROLE == PUBLISHER) {
-    for (auto i = 0; i < aggregationFormats.size(); i++) {
+    for (std::vector<AggregationFormat>::size_type i = 0; i < aggregationFormats.size(); i++) {
       aggregationIds.push_back(aggregationFormats[i].id);
     }
     XLOGF(
@@ -262,7 +262,7 @@ AttributionOutputMetrics computeAttributions(
         aggregationFormats,
         AggregationContext{adIds, inputData.getIds(), tpArrays},
         outputVisibility};
-    for (auto i = 0; i < numIds; i++) {
+    for (std::vector<int64_t>::size_type i = 0; i < numIds; i++) {
       auto id = ids[i];
       auto tps = tpArrays[i];
       auto convs = convArrays[i];

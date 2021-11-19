@@ -55,7 +55,7 @@ static const std::vector<Touchpoint> parseTouchpoints(
     const std::vector<std::string>& parts) {
   std::vector<int64_t> timestamps;
   std::vector<int64_t> isClicks;
-  for (auto i = 0; i < header.size(); ++i) {
+  for (std::vector<std::string>::size_type i = 0; i < header.size(); ++i) {
     auto column = header[i];
     auto value = parts[i];
     if (column == "timestamps") {
@@ -75,8 +75,8 @@ static const std::vector<Touchpoint> parseTouchpoints(
   // (ad_id, ts) tuple, or some kind of id that is synchronized
   // with the caller. Id is unique per row only.
   std::vector<int64_t> unique_ids;
-  for (int64_t i = 0; i < timestamps.size(); i++) {
-    unique_ids.push_back(i);
+  for (std::vector<int64_t>::size_type i = 0; i < timestamps.size(); i++) {
+    unique_ids.push_back(static_cast<int64_t>(i));
   }
 
   const std::unordered_set<int64_t> idSet{unique_ids.begin(), unique_ids.end()};
@@ -85,7 +85,7 @@ static const std::vector<Touchpoint> parseTouchpoints(
       << "This implementation currently only supports unique touchpoint ids per user.";
 
   std::vector<Touchpoint> tps;
-  for (auto i = 0; i < timestamps.size(); i++) {
+  for (std::vector<int64_t>::size_type i = 0; i < timestamps.size(); i++) {
     tps.push_back(Touchpoint{
         /* id */ unique_ids.at(i),
         /* isClick */ isClicks.at(i) == 1,
@@ -104,7 +104,7 @@ static const std::vector<Conversion> parseConversions(
     const std::vector<std::string>& parts) {
   std::vector<int64_t> convTimestamps;
 
-  for (auto i = 0; i < header.size(); ++i) {
+  for (std::vector<std::string>::size_type i = 0; i < header.size(); ++i) {
     auto column = header[i];
     auto value = parts[i];
 
@@ -117,7 +117,7 @@ static const std::vector<Conversion> parseConversions(
       << "Number of conversions exceeds the maximum allowed value.";
 
   std::vector<Conversion> convs;
-  for (auto i = 0; i < convTimestamps.size(); i++) {
+  for (std::vector<int64_t>::size_type i = 0; i < convTimestamps.size(); i++) {
     convs.push_back(Conversion{/* ts */ convTimestamps.at(i)});
   }
   // Sorting conversions based on timestamp.

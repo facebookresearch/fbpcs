@@ -136,7 +136,7 @@ class DeliveryAggregator : public Aggregator {
     CHECK_EQ(uids.size(), touchpoints.size())
         << "uid array and touchpoint array must be equal size";
 
-    for (auto i = 0; i < uids.size(); i++) {
+    for (std::vector<int64_t>::size_type i = 0; i < uids.size(); i++) {
       auto uid = uids[i];
       auto& tps = touchpoints[i];
 
@@ -249,7 +249,7 @@ class AttributionAggregator : public Aggregator {
     CHECK_EQ(uids.size(), touchpoints.size())
         << "uid array and touchpoint array must be equal size";
 
-    for (auto i = 0; i < uids.size(); i++) {
+    for (std::vector<int64_t>::size_type i = 0; i < uids.size(); i++) {
       auto uid = uids[i];
       auto& tps = touchpoints[i];
 
@@ -352,7 +352,7 @@ class PcmAggregator : public Aggregator {
     CHECK_EQ(uids.size(), touchpoints.size())
         << "uid array and touchpoint array must be equal size";
 
-    for (auto i = 0; i < uids.size(); i++) {
+    for (std::vector<int64_t>::size_type i = 0; i < uids.size(); i++) {
       auto uid = uids[i];
       auto& tps = touchpoints[i];
 

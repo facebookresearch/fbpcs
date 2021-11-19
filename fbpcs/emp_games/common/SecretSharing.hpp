@@ -348,7 +348,7 @@ const std::vector<O> map(
   // Apply the map function
   std::vector<O> out;
   out.reserve(vec.size());
-  for (int i = 0; i < vec.size(); ++i) {
+  for (std::size_t i = 0; i < vec.size(); ++i) {
     out.push_back(map_fn(vec[i]));
   }
   return out;
@@ -363,7 +363,7 @@ const std::vector<O> zip_and_map(
 
   // Apply the map function
   std::vector<O> out;
-  for (int i = 0; i < vec1.size(); ++i) {
+  for (std::size_t i = 0; i < vec1.size(); ++i) {
     out.push_back(map_fn(vec1[i], vec2[i]));
   }
 
@@ -437,7 +437,7 @@ inline const std::vector<emp::Integer> multiplyBitmask(
 
   const emp::Integer zero{INT_SIZE, 0, emp::PUBLIC};
 
-  for (auto i = 0; i < vec.size(); ++i) {
+  for (std::vector<emp::Integer>::size_type i = 0; i < vec.size(); ++i) {
     // emp::If(condition, true_case, false_case)
     out.push_back(emp::If(bitmask.at(i), vec.at(i), zero));
   }
@@ -453,7 +453,7 @@ inline const std::vector<emp::Bit> multiplyBitmask(
 
   std::vector<emp::Bit> out;
   out.reserve(vec.size());
-  for (auto i = 0; i < vec.size(); ++i) {
+  for (std::vector<emp::Bit>::size_type i = 0; i < vec.size(); ++i) {
     out.push_back(vec.at(i) & bitmask.at(i));
   }
   return out;
@@ -468,10 +468,10 @@ inline const std::vector<std::vector<emp::Integer>> multiplyBitmask(
 
   std::vector<std::vector<emp::Integer>> out;
   out.reserve(vec.size());
-  for (auto i = 0; i < vec.size(); ++i) {
+  for (std::vector<std::vector<emp::Integer>>::size_type i = 0; i < vec.size(); ++i) {
     out.emplace_back();
     const emp::Integer zero{INT_SIZE, 0, emp::PUBLIC};
-    for (auto j = 0; j < vec.at(i).size(); ++j) {
+    for (std::vector<emp::Integer>::size_type j = 0; j < vec.at(i).size(); ++j) {
       out.back().push_back(zero.select(bitmask.at(i), vec.at(i).at(j)));
     }
   }
@@ -487,9 +487,9 @@ inline const std::vector<std::vector<emp::Bit>> multiplyBitmask(
 
   std::vector<std::vector<emp::Bit>> out;
   out.reserve(vec.size());
-  for (auto i = 0; i < vec.size(); ++i) {
+  for (std::vector<std::vector<emp::Bit>>::size_type i = 0; i < vec.size(); ++i) {
     out.emplace_back();
-    for (auto j = 0; j < vec.at(i).size(); ++j) {
+    for (std::vector<emp::Bit>::size_type j = 0; j < vec.at(i).size(); ++j) {
       out.back().push_back(vec.at(i).at(j) & bitmask.at(i));
     }
   }

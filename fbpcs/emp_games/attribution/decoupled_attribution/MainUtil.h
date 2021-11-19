@@ -37,7 +37,7 @@ getIOFilenames(
   try{
     // if multiple files used (sharding)
     if (use_postfix){
-      for (auto i = 0; i < numFiles; i++) {
+      for (int32_t i = 0; i < numFiles; i++) {
         std::string inputPathName = folly::sformat(
             "{}_{}", inputBasePath, (fileStartIndex + i));
         std::string outputPathName = folly::sformat(
@@ -69,7 +69,7 @@ inline void startAttributionAppsForShardedFiles(
     std::vector<std::unique_ptr<aggregation::private_attribution::
                                   AttributionApp<PARTY, OUTPUT_VISIBILITY>>>
       attributionApps;
-    for (auto i = 0; i < inputFilenames.size(); i++) {
+    for (std::vector<std::string>::size_type i = 0; i < inputFilenames.size(); i++) {
       attributionApps.push_back(
           std::make_unique<aggregation::private_attribution::
                               AttributionApp<PARTY, OUTPUT_VISIBILITY>>(

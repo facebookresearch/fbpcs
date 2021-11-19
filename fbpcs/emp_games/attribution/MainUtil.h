@@ -34,7 +34,7 @@ inline void startAttributionAppsForShardedFiles(
   std::vector<std::unique_ptr<measurement::private_attribution::
                                   AttributionApp<PARTY, OUTPUT_VISIBILITY>>>
       attributionApps;
-  for (auto i = 0; i < inputFilenames.size(); i++) {
+  for (std::vector<std::string>::size_type i = 0; i < inputFilenames.size(); i++) {
     attributionApps.push_back(
         std::make_unique<measurement::private_attribution::
                             AttributionApp<PARTY, OUTPUT_VISIBILITY>>(
@@ -64,7 +64,7 @@ getIOFilenames(
   std::vector<std::string> outputFilenames;
 
   try{
-    for (auto i = 0; i < numFiles; i++) {
+    for (int32_t i = 0; i < numFiles; i++) {
       std::string inputPathName = folly::sformat(
           "{}_{}", inputBasePath, (fileStartIndex + i));
       std::string outputPathName = folly::sformat(
