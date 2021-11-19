@@ -47,7 +47,7 @@ template <
     typename... BatcherArgs>
 const std::vector<O> privatelyShareArrayFrom(
     const std::vector<T>& in,
-    int64_t numVals,
+    size_t numVals,
     T nullValue,
     BatcherArgs... batcherArgs);
 
@@ -58,7 +58,7 @@ const std::vector<O> privatelyShareArrayFrom(
 template <int MY_ROLE, int SOURCE_ROLE>
 const std::vector<emp::Integer> privatelyShareIntsFrom(
     const std::vector<int64_t>& in,
-    int64_t numVals,
+    size_t numVals,
     int32_t bitLen = INT_SIZE) {
   return privatelyShareArrayFrom<MY_ROLE, SOURCE_ROLE, int64_t, emp::Integer>(
       in, numVals, 0, bitLen);
@@ -71,7 +71,7 @@ const std::vector<emp::Integer> privatelyShareIntsFrom(
 template <int MY_ROLE, int SOURCE_ROLE>
 const std::vector<emp::Bit> privatelyShareBitsFrom(
     const std::vector<int64_t>& in,
-    int64_t numVals) {
+    size_t numVals) {
   return privatelyShareArrayFrom<MY_ROLE, SOURCE_ROLE, int64_t, emp::Bit>(
       in, numVals, 0);
 }
@@ -92,8 +92,8 @@ const std::vector<emp::Bit> privatelyShareBitsFrom(
 template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFrom(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize,
+    size_t numVals,
+    size_t maxArraySize,
     T paddingValue);
 
 /*
@@ -102,8 +102,8 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
 template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize);
+    size_t numVals,
+    size_t maxArraySize);
 
 /*
  * Share an array of pre-padded int arrays from SOURCE_ROLE to the opposite
@@ -121,8 +121,8 @@ template <int MY_ROLE, int SOURCE_ROLE>
 const std::vector<std::vector<emp::Integer>>
 privatelyShareIntArraysNoPaddingFrom(
     const std::vector<std::vector<int64_t>>& in,
-    int64_t numVals,
-    int64_t arraySize,
+    size_t numVals,
+    size_t arraySize,
     int32_t bitLen);
 
 /*
@@ -132,7 +132,7 @@ privatelyShareIntArraysNoPaddingFrom(
 template <int MY_ROLE>
 const std::vector<emp::Integer> privatelyShareIntsFromAlice(
     const std::vector<int64_t>& in,
-    int64_t numVals,
+    size_t numVals,
     int32_t bitLen = INT_SIZE) {
   return privatelyShareIntsFrom<MY_ROLE, emp::ALICE>(in, numVals, bitLen);
 }
@@ -144,7 +144,7 @@ const std::vector<emp::Integer> privatelyShareIntsFromAlice(
 template <int MY_ROLE>
 const std::vector<emp::Integer> privatelyShareIntsFromBob(
     const std::vector<int64_t>& in,
-    int64_t numVals,
+    size_t numVals,
     int32_t bitLen = INT_SIZE) {
   return privatelyShareIntsFrom<MY_ROLE, emp::BOB>(in, numVals, bitLen);
 }
@@ -156,7 +156,7 @@ const std::vector<emp::Integer> privatelyShareIntsFromBob(
 template <int MY_ROLE>
 const std::vector<emp::Bit> privatelyShareBitsFromAlice(
     const std::vector<int64_t>& in,
-    int64_t numVals) {
+    size_t numVals) {
   return privatelyShareBitsFrom<MY_ROLE, emp::ALICE>(in, numVals);
 }
 
@@ -167,7 +167,7 @@ const std::vector<emp::Bit> privatelyShareBitsFromAlice(
 template <int MY_ROLE>
 const std::vector<emp::Bit> privatelyShareBitsFromBob(
     const std::vector<int64_t>& in,
-    int64_t numVals) {
+    size_t numVals) {
   return privatelyShareBitsFrom<MY_ROLE, emp::BOB>(in, numVals);
 }
 
@@ -184,8 +184,8 @@ const std::vector<emp::Bit> privatelyShareBitsFromBob(
 template <int MY_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFromAlice(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize,
+    size_t numVals,
+    size_t maxArraySize,
     T paddingValue) {
   return privatelyShareArraysFrom<MY_ROLE, emp::ALICE, T, O>(
       in, numVals, maxArraySize, paddingValue);
@@ -198,8 +198,8 @@ const std::vector<std::vector<O>> privatelyShareArraysFromAlice(
 template <int MY_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFromAliceNoPadding(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize) {
+    size_t numVals,
+    size_t maxArraySize) {
   return privatelyShareArraysFromNoPadding<MY_ROLE, emp::ALICE, T, O>(
       in, numVals, maxArraySize);
 }
@@ -217,8 +217,8 @@ const std::vector<std::vector<O>> privatelyShareArraysFromAliceNoPadding(
 template <int MY_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFromBob(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize,
+    size_t numVals,
+    size_t maxArraySize,
     T paddingValue) {
   return privatelyShareArraysFrom<MY_ROLE, emp::BOB, T, O>(
       in, numVals, maxArraySize, paddingValue);
@@ -231,8 +231,8 @@ const std::vector<std::vector<O>> privatelyShareArraysFromBob(
 template <int MY_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFromBobNoPadding(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize) {
+    size_t numVals,
+    size_t maxArraySize) {
   return privatelyShareArraysFromNoPadding<MY_ROLE, emp::BOB, T, O>(
       in, numVals, maxArraySize);
 }
@@ -251,8 +251,8 @@ template <int MY_ROLE>
 const std::vector<std::vector<emp::Integer>>
 privatelyShareIntArraysNoPaddingFromBob(
     const std::vector<std::vector<int64_t>>& in,
-    int64_t numVals,
-    int64_t arraySize,
+    size_t numVals,
+    size_t arraySize,
     int32_t bitLen) {
   return privatelyShareIntArraysNoPaddingFrom<MY_ROLE, emp::BOB>(
       in, numVals, arraySize, bitLen);
