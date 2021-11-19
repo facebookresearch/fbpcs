@@ -293,23 +293,6 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculatePopulation(
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " population";
   const std::vector<emp::Bit> populationBits =
       privatelyShareBitsFromPublisher<MY_ROLE>(populationVec, n_);
-  // Since testSum/controlSum is only dependent on publisher data, we compute on
-  // the publisher side then just share the value over to the partner. Note
-  // however that we still need to share emp::Bit for the population to compute
-  // the cohort data since the publisher doesn't know group membership
-  auto theSum = std::accumulate(populationVec.begin(), populationVec.end(), 0);
-
-  // And compute for breakdowns + cohorts
-  // TODO: These could be abstracted into a common function
-  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
-    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        populationBits, publisherBitmasks_.at(i));
-  }
-
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        populationBits, partnerBitmasks_.at(i));
-  }
   return populationBits;
 }
 
