@@ -57,19 +57,19 @@ void addPaddingToCols(
 
     // for each row, go through the columns that we want to pad
     // and add the missing padding at the beginning of the vector
-    for (size_t i = 0; i < colsIndexesToPad.size(); i++) {
-      auto c_i = colsIndexesToPad.at(i);
+    for (std::size_t i = 0; i < colsIndexesToPad.size(); i++) {
+      std::size_t c_i = colsIndexesToPad.at(i);
       boost::erase_all(curr_cols.at(c_i), "[");
       boost::erase_all(curr_cols.at(c_i), "]");
       std::vector<std::string> curr_vec =
           split(kCommaSplitRegex, curr_cols.at(c_i));
 
-      if (curr_vec.size() > padSizePerCol.at(i) && enforceMax) {
+      if (curr_vec.size() > static_cast<std::size_t>(padSizePerCol.at(i)) && enforceMax) {
         auto truncate_size = curr_vec.size() - padSizePerCol.at(i);
         curr_vec.erase(curr_vec.end() - truncate_size, curr_vec.end());
       }
 
-      if (curr_vec.size() < padSizePerCol.at(i)) {
+      if (curr_vec.size() < static_cast<std::size_t>(padSizePerCol.at(i))) {
         std::vector<std::string> padding(
             padSizePerCol.at(i) - curr_vec.size(), "0");
         curr_vec.insert(curr_vec.begin(), padding.begin(), padding.end());
