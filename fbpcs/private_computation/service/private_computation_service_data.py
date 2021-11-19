@@ -9,12 +9,10 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
-from fbpcs.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
-    CppAttributionIdSpineCombinerService,
-)
 from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )
+from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -25,9 +23,7 @@ from fbpcs.private_computation.repository.private_computation_game import (
 
 
 # TODO T100288161: create super class to extend from to avoid using Union
-UnionedStageServices = Union[
-    CppAttributionIdSpineCombinerService, CppLiftIdSpineCombinerService
-]
+UnionedStageServices = Union[IdSpineCombinerService, CppLiftIdSpineCombinerService]
 
 """ This is to get a mapping from onedocker_package_name to game name
 {
@@ -80,7 +76,7 @@ class PrivateComputationServiceData:
     ATTRIBUTION_COMBINER_STAGE_DATA: StageData = StageData(
         binary_name=OneDockerBinaryNames.ATTRIBUTION_ID_SPINE_COMBINER.value,
         game_name=None,
-        service=CppAttributionIdSpineCombinerService(),
+        service=IdSpineCombinerService(),
     )
 
     ATTRIBUTION_COMPUTE_STAGE_DATA: StageData = StageData(
@@ -90,7 +86,6 @@ class PrivateComputationServiceData:
         ],
         service=None,
     )
-
 
     DECOUPLED_ATTRIBUTION_STAGE_DATA: StageData = StageData(
         binary_name=OneDockerBinaryNames.DECOUPLED_ATTRIBUTION.value,
