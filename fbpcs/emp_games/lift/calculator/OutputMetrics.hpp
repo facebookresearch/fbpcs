@@ -66,7 +66,7 @@ template <int32_t MY_ROLE> std::string OutputMetrics<MY_ROLE>::playGame() {
       if (inputData_.getGroupIdToFeatures().size() > 0) {
         auto features = inputData_.getGroupIdToFeatures().at(i);
         std::stringstream headerSs;
-        for (auto j = 0; j < features.size(); ++j) {
+        for (size_t j = 0; j < features.size(); ++j) {
           auto featureHeader = inputData_.getFeatureHeader().at(j);
           headerSs << featureHeader << "=" << features.at(j);
           if (j + 1 < features.size()) {
