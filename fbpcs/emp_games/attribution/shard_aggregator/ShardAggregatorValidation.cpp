@@ -31,14 +31,6 @@ void checkIsMap(
   }
 }
 
-void checkIsList(
-    const std::shared_ptr<AggMetrics>& metrics,
-    const std::string& msg) {
-  if (metrics->getTag() != AggMetricsTag::List) {
-    throw InvalidFormatException(msg);
-  }
-}
-
 void validateAdObjectFormatMetrics(
     const std::vector<std::shared_ptr<AggMetrics>>& inputData) {
   for (const auto& ruleToMetrics : inputData) {
@@ -67,21 +59,6 @@ void validateAdObjectFormatMetrics(
 
         checkIsMap(aggregationData, "Aggregation data should be a map");
       }
-    }
-  }
-}
-
-void checkMetrics(
-    const private_measurement::AggMetrics::MetricsMap& actualMetrics,
-    const std::set<std::string>& metricsFound) {
-  if (actualMetrics.size() != metricsFound.size()) {
-    throw InvalidFormatException(
-        "All maps should contain the same lift metrics");
-  }
-  for (const auto& [metric, value] : actualMetrics) {
-    if (metricsFound.find(metric) == metricsFound.end()) {
-      throw InvalidFormatException(folly::sformat(
-          "Map contains [{}] metric not found in previous map", metric));
     }
   }
 }
