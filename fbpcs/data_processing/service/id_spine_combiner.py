@@ -13,13 +13,16 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.arg_builder import build_cmd_args
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.private_computation.service.constants import DEFAULT_SORT_STRATEGY
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
+)
 
 
 # 10800 s = 3 hrs
 DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 10800
 
 
-class IdSpineCombinerService:
+class IdSpineCombinerService(RunBinaryBaseService):
     async def combine_on_container_async(
         self,
         spine_path: str,

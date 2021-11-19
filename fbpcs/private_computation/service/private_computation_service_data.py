@@ -17,6 +17,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.repository.private_computation_game import (
     PRIVATE_COMPUTATION_GAME_CONFIG,
 )
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
+)
 
 
 """ This is to get a mapping from onedocker_package_name to game name
@@ -35,7 +38,7 @@ BINARY_NAME_TO_GAME_NAME: Dict[str, str] = {
 class StageData:
     binary_name: str
     game_name: Optional[str] = None
-    service: Optional[IdSpineCombinerService] = None
+    service: Optional[RunBinaryBaseService] = None
 
 
 @dataclass
