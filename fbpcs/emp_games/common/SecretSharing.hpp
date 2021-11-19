@@ -37,7 +37,7 @@ template <
     typename... BatcherArgs>
 const std::vector<O> privatelyShareArrayFrom(
     const std::vector<T>& in,
-    int64_t numVals,
+    size_t numVals,
     T nullValue,
     BatcherArgs... batcherArgs) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
@@ -54,7 +54,7 @@ const std::vector<O> privatelyShareArrayFrom(
   // transfer happens in one direction. This is so the underlying
   // library knows how much space to allocate. It's not exactly clear
   // from the API that this is a requirement.
-  for (auto i = 0; i < numVals; ++i) {
+  for (size_t i = 0; i < numVals; ++i) {
     if constexpr (MY_ROLE == SOURCE_ROLE) {
       batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., in.at(i));
     } else {
@@ -67,7 +67,7 @@ const std::vector<O> privatelyShareArrayFrom(
 
   std::vector<O> out;
   out.reserve(numVals);
-  for (auto i = 0; i < numVals; ++i) {
+  for (size_t i = 0; i < numVals; ++i) {
     out.push_back(batcher.next<O>());
   }
 
@@ -83,7 +83,7 @@ template <
     typename... BatcherArgs>
 const std::vector<O> privatelyShareArrayFromNoPadding(
     const std::vector<T>& in,
-    int64_t numVals,
+    size_t numVals,
     BatcherArgs... batcherArgs) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
   XLOGF(
@@ -95,7 +95,7 @@ const std::vector<O> privatelyShareArrayFromNoPadding(
           in, numVals));
   emp::Batcher batcher;
 
-  for (auto i = 0; i < numVals; ++i) {
+  for (size_t i = 0; i < numVals; ++i) {
     if constexpr (MY_ROLE == SOURCE_ROLE) {
       batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., in.at(i));
     } else {
@@ -108,7 +108,7 @@ const std::vector<O> privatelyShareArrayFromNoPadding(
 
   std::vector<O> out;
   out.reserve(numVals);
-  for (auto i = 0; i < numVals; ++i) {
+  for (size_t i = 0; i < numVals; ++i) {
     out.push_back(batcher.next<O>());
   }
 
@@ -129,8 +129,8 @@ const std::vector<O> privatelyShareArrayFromNoPadding(
 template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFrom(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize,
+    size_t numVals,
+    size_t maxArraySize,
     T paddingValue) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
   XLOGF(
@@ -154,7 +154,7 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
     paddedLengths.reserve(numVals);
     paddedArrays.reserve(numVals * maxArraySize);
 
-    for (auto i = 0; i < numVals; i++) {
+    for (size_t i = 0; i < numVals; i++) {
       auto vec = in.at(i);
       auto arrayLength = vec.size();
       auto paddedLength = maxArraySize;
@@ -169,7 +169,7 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
 
       // Perform the padding
       std::vector<T> paddedVec(vec.begin(), vec.end());
-      for (auto i = 0; i < paddedLength - arrayLength; i++) {
+      for (size_t i = 0; i < paddedLength - arrayLength; i++) {
         const T paddingCopy = paddingValue;
         paddedVec.push_back(paddingCopy);
       }
@@ -179,7 +179,7 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
     }
   } else {
     // Still allocate the outer arrays
-    for (auto i = 0; i < numVals; i++) {
+    for (size_t i = 0; i < numVals; i++) {
       paddedArrays.push_back(std::vector<T>());
     }
   }
@@ -210,8 +210,8 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
 template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(
     const std::vector<std::vector<T>>& in,
-    int64_t numVals,
-    int64_t maxArraySize) {
+    size_t numVals,
+    size_t maxArraySize) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
   XLOGF(
       DBG,
@@ -228,7 +228,7 @@ const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(
     vecLengths.reserve(numVals);
     vecArrays.reserve(numVals * maxArraySize);
 
-    for (auto i = 0; i < numVals; i++) {
+    for (size_t i = 0; i < numVals; i++) {
       auto vec = in.at(i);
       auto arrayLength = vec.size();
 
@@ -245,7 +245,7 @@ const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(
     }
   } else {
     // Still allocate the outer arrays
-    for (auto i = 0; i < numVals; i++) {
+    for (size_t i = 0; i < numVals; i++) {
       vecArrays.push_back(std::vector<T>());
     }
   }
@@ -275,8 +275,8 @@ template <int MY_ROLE, int SOURCE_ROLE>
 const std::vector<std::vector<emp::Integer>>
 privatelyShareIntArraysNoPaddingFrom(
     const std::vector<std::vector<int64_t>>& in,
-    int64_t numVals,
-    int64_t arraySize,
+    size_t numVals,
+    size_t arraySize,
     int bitLen) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
   XLOGF(
@@ -287,7 +287,7 @@ privatelyShareIntArraysNoPaddingFrom(
 
   arraysFlattened.reserve(numVals * arraySize);
 
-  for (auto i = 0; i < numVals; i++) {
+  for (size_t i = 0; i < numVals; i++) {
     if constexpr (MY_ROLE == SOURCE_ROLE) {
       auto vec = in.at(i);
 
@@ -317,7 +317,7 @@ privatelyShareIntArraysNoPaddingFrom(
   std::vector<std::vector<emp::Integer>> out;
   out.reserve(numVals * arraySize);
   auto it = arrayReceived.begin();
-  for (auto i = 0; i < numVals; ++i) {
+  for (size_t i = 0; i < numVals; ++i) {
     std::vector<emp::Integer> array;
     array.insert(array.end(), it, it + arraySize);
     out.push_back(array);
@@ -468,10 +468,10 @@ inline const std::vector<std::vector<emp::Integer>> multiplyBitmask(
 
   std::vector<std::vector<emp::Integer>> out;
   out.reserve(vec.size());
-  for (std::vector<std::vector<emp::Integer>>::size_type i = 0; i < vec.size(); ++i) {
+  for (size_t i = 0; i < vec.size(); ++i) {
     out.emplace_back();
     const emp::Integer zero{INT_SIZE, 0, emp::PUBLIC};
-    for (std::vector<emp::Integer>::size_type j = 0; j < vec.at(i).size(); ++j) {
+    for (size_t j = 0; j < vec.at(i).size(); ++j) {
       out.back().push_back(zero.select(bitmask.at(i), vec.at(i).at(j)));
     }
   }
@@ -487,9 +487,9 @@ inline const std::vector<std::vector<emp::Bit>> multiplyBitmask(
 
   std::vector<std::vector<emp::Bit>> out;
   out.reserve(vec.size());
-  for (std::vector<std::vector<emp::Bit>>::size_type i = 0; i < vec.size(); ++i) {
+  for (size_t i = 0; i < vec.size(); ++i) {
     out.emplace_back();
-    for (std::vector<emp::Bit>::size_type j = 0; j < vec.at(i).size(); ++j) {
+    for (size_t j = 0; j < vec.at(i).size(); ++j) {
       out.back().push_back(vec.at(i).at(j) & bitmask.at(i));
     }
   }
