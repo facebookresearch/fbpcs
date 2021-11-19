@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
       return 1;
     }
 
-    for (auto i = 0; i < inputFilenames.size(); ++i) {
+    for (std::size_t i = 0; i < inputFilenames.size(); ++i) {
       inputFilepaths.push_back(inputDirectory / inputFilenames[i]);
       outputFilepaths.push_back(outputDirectory / outputFilenames[i]);
     }
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
   // construct calculatorApps according to  FLAGS_num_shards and
   // FLAGS_concurrency
   std::vector<std::unique_ptr<CalculatorApp>> calculatorApps;
-  for (auto i = 0; i < inputFilepaths.size(); i++) {
+  for (std::size_t i = 0; i < inputFilepaths.size(); i++) {
     calculatorApps.push_back(std::make_unique<CalculatorApp>(
         party,
         FLAGS_server_ip,
