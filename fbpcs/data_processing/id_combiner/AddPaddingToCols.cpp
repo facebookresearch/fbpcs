@@ -57,7 +57,7 @@ void addPaddingToCols(
 
     // for each row, go through the columns that we want to pad
     // and add the missing padding at the beginning of the vector
-    for (auto i = 0; i < colsIndexesToPad.size(); i++) {
+    for (size_t i = 0; i < colsIndexesToPad.size(); i++) {
       auto c_i = colsIndexesToPad.at(i);
       boost::erase_all(curr_cols.at(c_i), "[");
       boost::erase_all(curr_cols.at(c_i), "]");

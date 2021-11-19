@@ -71,7 +71,7 @@ void HashBasedSharder::shard() const {
   // runs at the same time point to the same input file
   auto randomId = std::to_string(folly::Random::secureRand64());
 
-  for (auto i = 0; i < numShards; ++i) {
+  for (std::size_t i = 0; i < numShards; ++i) {
     std::stringstream tmpName;
     tmpName << randomId << "_" << stem << "_" << i << extension;
 
@@ -130,7 +130,7 @@ void HashBasedSharder::shard() const {
              << private_lift::logging::formatNumber(lineIdx) << " lines.";
 
   XLOG(INFO) << "Now copying files to final output path...";
-  for (auto i = 0; i < numShards; ++i) {
+  for (std::size_t i = 0; i < numShards; ++i) {
     auto outputDst = getOutputPaths().at(i);
     auto tmpFileSrc = tmpFilenames.at(i);
 
