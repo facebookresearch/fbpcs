@@ -82,9 +82,9 @@ void groupBy(
   for (const auto& keyVal : idToRows) { // key value pairs of id to list of rows
     std::vector<std::vector<std::string>> newRow;
     std::vector<std::vector<std::string>> rows = keyVal.second;
-    for (auto i = 0; i < rows.size(); i++) {
+    for (std::size_t i = 0; i < rows.size(); i++) {
       auto curr_row = rows.at(i);
-      for (auto j = 0; j < curr_row.size(); j++) {
+      for (std::size_t j = 0; j < curr_row.size(); j++) {
         if (newRow.size() > j) {
           newRow.at(j).push_back(curr_row.at(j));
         } else {
@@ -101,7 +101,7 @@ void groupBy(
   // output a single value rather than a list of values
   for (const auto& id : traversedOrder) {
     auto currRow = newIdToRows.at(id);
-    for (auto i = 0; i < currRow.size(); i++) {
+    for (std::size_t i = 0; i < currRow.size(); i++) {
       if (std::find(
               columnsToAggregate.begin(),
               columnsToAggregate.end(),

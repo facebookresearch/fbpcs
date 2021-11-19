@@ -31,7 +31,8 @@ class LiftIdSpineMultiConversionInput {
   // Keep adding at the end of values and event timestamp
   void update(uint64_t eventTimestamp, uint64_t value) {
     // Already have required number of elements
-    if (eventTimestampsToValues_.size() == FLAGS_multi_conversion_limit) {
+    if (eventTimestampsToValues_.size() ==
+        static_cast<std::size_t>(FLAGS_multi_conversion_limit)) {
       return;
     }
 
@@ -42,7 +43,8 @@ class LiftIdSpineMultiConversionInput {
   std::string toString(ConversionInputType ctype) {
     std::ostringstream output;
 
-    while (eventTimestampsToValues_.size() < FLAGS_multi_conversion_limit) {
+    while (eventTimestampsToValues_.size() <
+           static_cast<std::size_t>(FLAGS_multi_conversion_limit)) {
       // Pad with 0 as needed
       eventTimestampsToValues_.emplace(0, 0);
     }

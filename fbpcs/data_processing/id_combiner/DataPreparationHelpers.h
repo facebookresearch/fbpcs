@@ -80,7 +80,7 @@ template <typename T>
 const std::string vectorToString(const std::vector<T>& vec) {
   std::stringstream buf;
   bool first = true;
-  for (int i = 0; i < vec.size(); ++i) {
+  for (std::size_t i = 0; i < vec.size(); ++i) {
     if (!first) {
       buf << ",";
     }

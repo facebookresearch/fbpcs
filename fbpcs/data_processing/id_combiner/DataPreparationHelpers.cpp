@@ -37,9 +37,9 @@ void headerColumnsToPlural(
   getline(dataFile, line);
   std::vector<std::string> header = split(kCommaSplitRegex, line);
   std::vector<std::string> newHeader;
-  for (auto i = 0; i < header.size(); i++) {
+  for (std::size_t i = 0; i < header.size(); i++) {
     auto useOriginalColumn = true;
-    for (auto j = 0; j < columnsToConvert.size(); j++) {
+    for (std::size_t j = 0; j < columnsToConvert.size(); j++) {
       if (header.at(i) == columnsToConvert.at(j)) {
         useOriginalColumn = false;
         newHeader.push_back(header.at(i) + "s");
@@ -109,7 +109,7 @@ std::string vectorToStringWithReplacement(
     std::string swapValue) {
   std::stringstream buf;
   bool first = true;
-  for (int i = 0; i < vec.size(); ++i) {
+  for (std::size_t i = 0; i < vec.size(); ++i) {
     if (i == swapIndex) {
       if (!first) {
         buf << "," << swapValue;

@@ -16,7 +16,7 @@ namespace private_lift::base64 {
 std::string encode(const std::string& input) {
   auto cStrInput = input.c_str();
   auto len = input.length();
-  const auto numExpectedEncodedBytes = 4 * ((len + 2) / 3);
+  std::size_t numExpectedEncodedBytes = 4 * ((len + 2) / 3);
   auto output = reinterpret_cast<char*>(calloc(
       numExpectedEncodedBytes + 1,
       1)); //+1 for the terminating null that EVP_EncodeBlock adds on
@@ -37,7 +37,7 @@ std::string encode(const std::string& input) {
 std::string decode(const std::string& input) {
   auto cStrInput = input.c_str();
   auto len = input.length();
-  const auto numExpectedDecodedBytes = 3 * len / 4;
+  std::size_t numExpectedDecodedBytes = 3 * len / 4;
   auto output = reinterpret_cast<unsigned char*>(
       calloc(numExpectedDecodedBytes + 1, 1));
   const auto numDecodedBytes = EVP_DecodeBlock(
