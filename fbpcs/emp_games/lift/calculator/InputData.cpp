@@ -55,7 +55,7 @@ void InputData::setTimestamps(
   auto timestamps = private_measurement::csv::splitByComma(innerString, false);
 
   // Take up to numConversionsPerUser_ elements and ignore the rest
-  for (auto i = 0; i < timestamps.size() && i < numConversionsPerUser_; ++i) {
+  for (std::size_t i = 0; i < timestamps.size() && i < numConversionsPerUser_; ++i) {
     std::istringstream iss{timestamps[i]};
     int64_t parsed = 0;
     iss >> parsed;
@@ -81,7 +81,7 @@ void InputData::setValuesFields(std::string& str) {
   auto innerString = str.substr(1, str.size() - 1);
   auto values = private_measurement::csv::splitByComma(innerString, false);
   // Take up to numConversionsPerUser_ elements and ignore the rest
-  for (auto i = 0; i < values.size() && i < numConversionsPerUser_; ++i) {
+  for (std::size_t i = 0; i < values.size() && i < numConversionsPerUser_; ++i) {
     int64_t parsed = 0;
     std::istringstream iss{values[i]};
     iss >> parsed;
@@ -153,7 +153,7 @@ void InputData::addFromCSV(
   int64_t storedOpportunityFlag = 0;
   int64_t storedTestFlag = 0;
 
-  for (auto i = 0; i < header.size(); ++i) {
+  for (std::size_t i = 0; i < header.size(); ++i) {
     auto column = header[i];
     auto value = parts[i];
     int64_t parsed = 0;
@@ -283,7 +283,7 @@ void InputData::addFromCSV(
 
 std::vector<int64_t> InputData::bitmaskFor(int64_t groupId) const {
   std::vector<int64_t> res(numRows_);
-  for (auto i = 0; i < res.size(); ++i) {
+  for (std::size_t i = 0; i < res.size(); ++i) {
     res[i] = groupIds_.at(i) == groupId ? 1 : 0;
   }
   return res;
