@@ -109,7 +109,7 @@ void GenFakeData::genFakePublisherInputFile(
   publisherFile
       << "id_,opportunity,test_flag,opportunity_timestamp,num_impressions,num_clicks,total_spend\n";
 
-  for (auto i = 0; i < params.numRows_; i++) {
+  for (std::size_t i = 0; i < params.numRows_; i++) {
     // generate one row of fake data
     LiftInputColumns oneLine = genOneFakeLine(
         std::to_string(i),
@@ -144,7 +144,7 @@ void GenFakeData::genFakePartnerInputFile(
     partnerFile << "id_,event_timestamps\n";
   }
 
-  for (auto i = 0; i < params.numRows_; i++) {
+  for (std::size_t i = 0; i < params.numRows_; i++) {
     // generate one row of fake data
     LiftInputColumns oneLine = genOneFakeLine(
         std::to_string(i),

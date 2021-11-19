@@ -40,7 +40,7 @@ std::vector<uint64_t> LiftCalculator::parseArray(std::string array) const {
   auto innerString = array.substr(1, array.size() - 1);
   std::vector<uint64_t> out;
   auto values = private_measurement::csv::splitByComma(innerString, false);
-  for (auto i = 0; i < values.size(); ++i) {
+  for (std::size_t i = 0; i < values.size(); ++i) {
     int64_t parsed = 0;
     std::istringstream iss{values[i]};
     iss >> parsed;
@@ -184,7 +184,7 @@ OutputMetricsData LiftCalculator::compute(
       bool countedMatchAlready = false;
       if (testFlag) {
 
-        for (auto i = 0; i < eventTimestamps.size(); ++i) {
+        for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
               !countedMatchAlready) {
             ++out.testMatchCount;
@@ -216,7 +216,7 @@ OutputMetricsData LiftCalculator::compute(
         out.testNumConvSquared += convCount * convCount;
         ++out.testConvHistogram[convCount];
       } else {
-        for (auto i = 0; i < eventTimestamps.size(); ++i) {
+        for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
               !countedMatchAlready) {
             ++out.controlMatchCount;
