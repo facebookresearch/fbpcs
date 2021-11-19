@@ -15,12 +15,10 @@ from typing import List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
-from fbpcs.data_processing.attribution_id_combiner.attribution_id_spine_combiner_cpp import (
-    CppAttributionIdSpineCombinerService,
-)
 from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
     CppLiftIdSpineCombinerService,
 )
+from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.data_processing.sharding.sharding import ShardType
 from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -166,9 +164,10 @@ class PrepareDataStageService(PrivateComputationStageService):
             )
         elif pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
             combiner_service = checked_cast(
-                CppAttributionIdSpineCombinerService,
+                IdSpineCombinerService,
                 stage_data.service,
             )
+            common_combiner_args["binary_name"] = binary_name
             common_combiner_args["run_name"] = (
                 pl_instance.instance_id if log_cost_to_s3 else ""
             )
