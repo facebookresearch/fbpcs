@@ -7,11 +7,8 @@
 # pyre-strict
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
-from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
-    CppLiftIdSpineCombinerService,
-)
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -21,9 +18,6 @@ from fbpcs.private_computation.repository.private_computation_game import (
     PRIVATE_COMPUTATION_GAME_CONFIG,
 )
 
-
-# TODO T100288161: create super class to extend from to avoid using Union
-UnionedStageServices = Union[IdSpineCombinerService, CppLiftIdSpineCombinerService]
 
 """ This is to get a mapping from onedocker_package_name to game name
 {
@@ -41,7 +35,7 @@ BINARY_NAME_TO_GAME_NAME: Dict[str, str] = {
 class StageData:
     binary_name: str
     game_name: Optional[str] = None
-    service: Optional[UnionedStageServices] = None
+    service: Optional[IdSpineCombinerService] = None
 
 
 @dataclass
@@ -64,7 +58,7 @@ class PrivateComputationServiceData:
     LIFT_COMBINER_STAGE_DATA: StageData = StageData(
         binary_name=OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value,
         game_name=None,
-        service=CppLiftIdSpineCombinerService(),
+        service=IdSpineCombinerService(),
     )
 
     LIFT_COMPUTE_STAGE_DATA: StageData = StageData(

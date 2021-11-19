@@ -15,9 +15,6 @@ from typing import List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
-from fbpcs.data_processing.lift_id_combiner.lift_id_spine_combiner_cpp import (
-    CppLiftIdSpineCombinerService,
-)
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.data_processing.sharding.sharding import ShardType
 from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
@@ -150,34 +147,26 @@ class PrepareDataStageService(PrivateComputationStageService):
             "onedocker_svc": self._onedocker_svc,
             "binary_version": binary_config.binary_version,
             "tmp_directory": binary_config.tmp_directory,
+            "binary_name": binary_name,
         }
 
-        # TODO T100977304: the if-else will be removed after the two combiners are consolidated
-        if pl_instance.game_type is PrivateComputationGameType.LIFT:
-            combiner_service = checked_cast(
-                CppLiftIdSpineCombinerService,
-                stage_data.service,
-            )
-            await combiner_service.combine_on_container_async(
-                # pyre-ignore [6] Incompatible parameter type
-                **common_combiner_args
-            )
-        elif pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
-            combiner_service = checked_cast(
-                IdSpineCombinerService,
-                stage_data.service,
-            )
-            common_combiner_args["binary_name"] = binary_name
+        # Add on attribution specific args
+        if pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
             common_combiner_args["run_name"] = (
                 pl_instance.instance_id if log_cost_to_s3 else ""
             )
             common_combiner_args["padding_size"] = checked_cast(
                 int, pl_instance.padding_size
             )
-            await combiner_service.combine_on_container_async(
-                # pyre-ignore [6] Incompatible parameter type
-                **common_combiner_args
-            )
+
+        combiner_service = checked_cast(
+            IdSpineCombinerService,
+            stage_data.service,
+        )
+        await combiner_service.combine_on_container_async(
+            # pyre-ignore [6] Incompatible parameter type
+            **common_combiner_args
+        )
 
     async def _run_sharder_service(
         self, pl_instance: PrivateComputationInstance, combine_output_path: str
