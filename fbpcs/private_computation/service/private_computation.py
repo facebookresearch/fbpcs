@@ -226,8 +226,10 @@ class PrivateComputationService:
         pc_instance = self.get_instance(instance_id)
         next_stage = pc_instance.get_next_runnable_stage()
         if not next_stage:
-            self.logger.warning("There are no eligble stages to be ran at this time.")
-            return pc_instance
+            # TODO(T106517341): Raise a custom exception instead of something generic
+            raise RuntimeError(
+                f"Instance {instance_id} has no eligible stages to run at this time (status: {pc_instance.status})"
+            )
         return await self.run_stage_async(
             instance_id, next_stage, server_ips=server_ips
         )
@@ -323,7 +325,9 @@ class PrivateComputationService:
         return pc_instance
 
     # PID stage
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     def id_match(
         self,
         instance_id: str,
@@ -358,7 +362,9 @@ class PrivateComputationService:
             self.instance_repository.update(instance)
 
     # TODD T101783992: delete this function and call run_stage directly
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     async def id_match_async(
         self,
         instance_id: str,
@@ -385,7 +391,9 @@ class PrivateComputationService:
             dry_run or False,
         )
 
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     def prepare_data(
         self,
         instance_id: str,
@@ -403,7 +411,9 @@ class PrivateComputationService:
         )
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     async def prepare_data_async(
         self,
         instance_id: str,
@@ -450,7 +460,9 @@ class PrivateComputationService:
             await stage_svc.run_async(private_computation_instance)
 
     # MPC step 1
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     def compute_metrics(
         self,
         instance_id: str,
@@ -473,7 +485,9 @@ class PrivateComputationService:
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of compute_metrics() so that it can be called by Thrift
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     async def compute_metrics_async(
         self,
         instance_id: str,
@@ -502,7 +516,9 @@ class PrivateComputationService:
         )
 
     # MPC step 2
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     def aggregate_shards(
         self,
         instance_id: str,
@@ -525,7 +541,9 @@ class PrivateComputationService:
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of aggregate_shards() so that it can be called by Thrift
-    @deprecated("DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted.")
+    @deprecated(
+        "DO NOT USE! This is replaced by the generic run_next + run_stage functions and will soon be deleted."
+    )
     async def aggregate_shards_async(
         self,
         instance_id: str,
