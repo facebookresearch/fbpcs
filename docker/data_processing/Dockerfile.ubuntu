@@ -13,6 +13,7 @@ WORKDIR /root/build/data_processing
 # cmake files
 COPY docker/data_processing/CMakeLists.txt .
 # data processing build and install
+COPY fbpcs/emp_games/attribution/CostEstimation.h ./fbpcs/emp_games/attribution/CostEstimation.h
 COPY fbpcs/data_processing/attribution_id_combiner/ ./fbpcs/data_processing/attribution_id_combiner
 COPY fbpcs/data_processing/common/ ./fbpcs/data_processing/common
 COPY fbpcs/data_processing/hash_slinging_salter/ ./fbpcs/data_processing/hash_slinging_salter

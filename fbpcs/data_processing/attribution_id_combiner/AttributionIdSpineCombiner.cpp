@@ -7,25 +7,24 @@
 
 #include <filesystem>
 #include <fstream>
+#include <string>
 
+#include <gflags/gflags.h>
+
+#include <fbpcf/aws/AwsSdk.h>
+#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/IInputStream.h>
 #include <folly/Format.h>
 #include <folly/Random.h>
 #include <folly/init/Init.h>
 #include <folly/logging/xlog.h>
-#include <gflags/gflags.h>
-#include <string>
 
-#include "../common/FilepathHelpers.h"
-#include "../common/S3CopyFromLocalUtil.h"
-#include "AttributionIdSpineCombinerOptions.h"
-#include "AttributionIdSpineCombinerUtil.h"
-#include "AttributionIdSpineFileCombiner.h"
-#include "fbpcf/aws/AwsSdk.h"
-#include "fbpcf/io/FileManagerUtil.h"
-#include "fbpcf/io/IInputStream.h"
-
-// TODO Task: T93622832
-#include "../common/CostEstimation.h"
+#include "fbpcs/data_processing/common/FilepathHelpers.h"
+#include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
+#include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerOptions.h"
+#include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerUtil.h"
+#include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineFileCombiner.h"
+#include "fbpcs/emp_games/attribution/CostEstimation.h"
 
 int main(int argc, char** argv) {
   measurement::private_attribution::CostEstimation cost{"data_processing"};

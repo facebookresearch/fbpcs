@@ -7,19 +7,20 @@
 
 #pragma once
 
+#include <chrono>
 #include <cmath>
 #include <ctime>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <chrono>
-#include <fstream>
+
+#include <fbpcf/io/FileManagerUtil.h>
 #include <folly/dynamic.h>
 #include <folly/json.h>
 #include "folly/logging/xlog.h"
-#include <fbpcf/io/FileManagerUtil.h>
 
 
 namespace measurement::private_attribution {
