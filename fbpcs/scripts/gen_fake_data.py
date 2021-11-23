@@ -255,7 +255,7 @@ def _make_input_csv(args: Dict[str, Any]) -> None:
                     i += 1
 
 
-def main():
+def main() -> None:
     args_schema = schema.Schema(
         {
             schema.Optional("<input_path>"): schema.Or(

@@ -21,11 +21,13 @@ from fbpcs.private_computation.entity.private_computation_base_stage_flow import
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
-    PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
     PrivateComputationLegacyStageFlow,
+)
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     aggregate_shards,
@@ -48,7 +50,7 @@ class LoggerAdapter(logging.LoggerAdapter):
         return "[%s] %s" % (self.prefix, msg), kwargs
 
 
-INVALID_STATUS_LIST = [
+INVALID_STATUS_LIST: List[PrivateComputationInstanceStatus] = [
     PrivateComputationInstanceStatus.UNKNOWN,
     PrivateComputationInstanceStatus.PROCESSING_REQUEST,
     PrivateComputationInstanceStatus.TIMEOUT,
@@ -58,7 +60,7 @@ POLL_INTERVAL = 60
 WAIT_VALID_STATUS_TIMEOUT = 600
 WAIT_VALID_STAGE_TIMEOUT = 300
 OPERATION_REQUEST_TIMEOUT = 1200
-CANCEL_STAGE_TIMEOUT = POLL_INTERVAL * 5
+CANCEL_STAGE_TIMEOUT: int = POLL_INTERVAL * 5
 
 MIN_TRIES = 1
 MAX_TRIES = 2

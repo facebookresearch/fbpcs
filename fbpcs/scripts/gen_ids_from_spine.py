@@ -35,7 +35,7 @@ def gen_ids_from_spine(args: Dict[str, Any]) -> None:
                 print(f"Processed {lines_processed} lines")
 
 
-def main():
+def main() -> None:
     args_schema = schema.Schema(
         {
             "<spine_path>": schema.Use(pathlib.Path, os.path.exists),
