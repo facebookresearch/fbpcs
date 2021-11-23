@@ -7,6 +7,11 @@
 
 #pragma once
 
+#include <fstream>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
 
 namespace data_processing::sharder {
@@ -31,15 +36,6 @@ std::vector<uint8_t> toBytes(const std::string& key);
  *     many will fit into an `int32_t` in practice.
  */
 int32_t bytesToInt(const std::vector<uint8_t>& bytes);
-
-/**
- * Get the correct shard associated with a string.
- *
- * @param id the id to be sharded
- * @param numShards the total number of shards being created
- * @returns the shard index this identifier belongs to
- */
-std::size_t getShardFor(const std::string& id, std::size_t numShards);
 } // namespace detail
 
 class HashBasedSharder final : public GenericSharder {
@@ -89,10 +85,22 @@ class HashBasedSharder final : public GenericSharder {
         hmacKey_{std::move(hmacKey)} {}
 
   /**
-   * Shard an input file by hashing each identifier into an int32_t first using
-   * a hashing method that works on both big- and little-endian machines.
+   * Get the correct shard associated with a string.
+   *
+   * @param id the id to be sharded
+   * @param numShards the total number of shards being created
+   * @returns the shard index this identifier belongs to
    */
-  void shard() const final;
+  std::size_t getShardFor(const std::string& id, std::size_t numShards) final;
+
+  /**
+   * Shard an input line by hashing each identifier into an int32_t first using
+   * a hashing method that works on both big- and little-endian machines.
+   *
+   * @param line the line to be sharded
+   * @param outFiles the list of output files to be sharded into
+   */
+  void shardLine(std::string line, const std::vector<std::unique_ptr<std::ofstream>>& outFiles) final;
 
  private:
   std::string hmacKey_;
