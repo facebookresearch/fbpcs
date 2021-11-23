@@ -86,7 +86,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
 
-def main():
+def main() -> None:
     s = schema.Schema(
         {
             "create_instance": bool,
@@ -297,7 +297,7 @@ def main():
             config=config,
             instance_id=instance_id,
             input_path=arguments["--input_path"],
-            num_shards=["--num_shards"],
+            num_shards=arguments["--num_shards"],
             stage_flow=stage_flow,
             logger=logger,
             num_tries=arguments["--tries_per_stage"],

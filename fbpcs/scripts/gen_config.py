@@ -108,7 +108,7 @@ def gen_config(args: Dict[str, Any]) -> None:
     yaml.dump(config, output_path)
 
 
-def main():
+def main() -> None:
     args_schema = schema.Schema(
         {
             "<input_path>": schema.Use(pathlib.Path, os.path.exists),

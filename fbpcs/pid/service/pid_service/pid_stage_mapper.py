@@ -19,7 +19,7 @@ from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 
 
-STAGE_TO_FILE_FORMAT_MAP = {
+STAGE_TO_FILE_FORMAT_MAP: Dict[UnionPIDStage, str] = {
     UnionPIDStage.PUBLISHER_SHARD: "_publisher_sharded",
     UnionPIDStage.PUBLISHER_PREPARE: "_publisher_prepared",
     UnionPIDStage.PUBLISHER_RUN_PID: "_publisher_pid_matched",

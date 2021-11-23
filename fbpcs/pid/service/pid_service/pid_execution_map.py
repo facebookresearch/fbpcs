@@ -10,6 +10,7 @@ from fbpcs.pid.service.pid_service.pid_flow_structs import (
     PIDExecutionFlowLookupKey,
     PIDFlow,
 )
+from typing import Dict
 
 
 UnionPIDPublisherFlow = PIDFlow(
@@ -40,7 +41,7 @@ UnionPIDAdvertiserFlow = PIDFlow(
 
 
 # For now the only options supported are the union pid with publisher and partner roles
-PIDDispatcherFlowMap = {
+PIDDispatcherFlowMap: Dict[PIDExecutionFlowLookupKey, PIDFlow] = {
     PIDExecutionFlowLookupKey(
         PIDRole.PUBLISHER, PIDProtocol.UNION_PID
     ): UnionPIDPublisherFlow,
