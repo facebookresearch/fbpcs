@@ -58,7 +58,7 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
         await stage_svc.run_async(pc_instance)
         self.assertIsInstance(pc_instance.instances[0], PIDInstance)
 
-    def test_map_private_computation_role_to_pid_role(self):
+    def test_map_private_computation_role_to_pid_role(self) -> None:
         self.assertEqual(
             PIDRole.PUBLISHER,
             IdMatchStageService._map_private_computation_role_to_pid_role(
