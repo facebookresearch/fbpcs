@@ -5,12 +5,16 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
 
+#include <folly/Random.h>
+
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
+#include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
 
 namespace data_processing::sharder {
 
@@ -18,8 +22,19 @@ namespace data_processing::sharder {
  * A class to make GenericSharder concrete for testing purposes.
  */
 class GenericSharderTest final : public GenericSharder {
+ public:
   using GenericSharder::GenericSharder;
-  void shard() const final { /* empty */ }
+  std::size_t getShardFor(const std::string &/* unused */, std::size_t /* unused */) final {
+    return shardFor_;
+  }
+
+  void shardLine(std::string line,
+            const std::vector<std::unique_ptr<std::ofstream>> &/* unused */) final {
+    linesCalledWith_.push_back(line);
+  }
+
+  std::size_t shardFor_ = 123;
+  std::vector<std::string> linesCalledWith_;
 };
 
 TEST(GenericSharderTest, TestStripQuotes) {
@@ -69,5 +84,36 @@ TEST(GenericSharderTest, TestGetOutputPaths) {
   std::size_t end = 4;
   GenericSharderTest actual2{"/tmp", basePath, start, end, logEveryN};
   EXPECT_EQ(actual2.getOutputPaths(), outputPaths);
+}
+
+TEST(GenericSharderTest, TestGetShardFor) {
+  std::vector<std::string> outputPaths{"/tmp_0", "/tmp_1", "/tmp_2", "/tmp_3"};
+  int32_t logEveryN = 123;
+  GenericSharderTest actual{"/tmp", outputPaths, logEveryN};
+  auto actualShard = actual.getShardFor("line", 999);
+  EXPECT_EQ(actualShard, actual.shardFor_);
+}
+
+TEST(GenericSharderTest, TestShardLine) {
+  // This test is just ensuring that internally, shardLine is being called for
+  // each line of input except the header.
+  auto randStart = folly::Random::secureRand64();
+  std::string inputPath = "/tmp/GenericSharderTestShardLineInput" + std::to_string(randStart);
+  std::vector<std::string> outputPaths{
+      "/tmp/GenericSharderTestShardLineOutput" + std::to_string(randStart),
+      "/tmp/GenericSharderTestShardLineOutput" + std::to_string(randStart + 1),
+  };
+  int32_t logEveryN = 123;
+  GenericSharderTest actual{inputPath, outputPaths, logEveryN};
+  std::vector<std::string> rows{
+      "id_,a,b,c", "abcd,1,2,3", "abcd,4,5,6", "defg,7,8,9", "hijk,0,0,0",
+  };
+  data_processing::test_utils::writeVecToFile(rows, inputPath);
+  actual.shard();
+  // Should have been called on everything except the header
+  std::vector<std::string> expected{
+      "abcd,1,2,3", "abcd,4,5,6", "defg,7,8,9", "hijk,0,0,0",
+  };
+  EXPECT_EQ(actual.linesCalledWith_, expected);
 }
 } // namespace data_processing::sharder
