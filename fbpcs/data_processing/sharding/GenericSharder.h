@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -17,14 +18,14 @@ namespace detail {
  *
  * @param s the string from which to remove quote characters
  */
-void stripQuotes(std::string &s);
+void stripQuotes(std::string& s);
 } // namespace detail
 
 /**
  * A class which can shard data from one file into many sub-files.
  */
 class GenericSharder {
-public:
+ public:
   /**
    * Create a new GenericSharder from the given input path and output paths.
    * Caller is responsible for generating output paths.
@@ -33,9 +34,12 @@ public:
    * @param outputPaths a list of paths to the output sharded files
    * @param logEveryN how often to log progress updates
    */
-  GenericSharder(std::string inputPath, std::vector<std::string> outputPaths,
-                 int32_t logEveryN)
-      : inputPath_{std::move(inputPath)}, outputPaths_{std::move(outputPaths)},
+  GenericSharder(
+      std::string inputPath,
+      std::vector<std::string> outputPaths,
+      int32_t logEveryN)
+      : inputPath_{std::move(inputPath)},
+        outputPaths_{std::move(outputPaths)},
         logEveryN_{logEveryN} {}
 
   /**
@@ -49,12 +53,16 @@ public:
    * @param logEveryN how often to log progress updates
    * @see GenericSharder::genOutputPaths
    */
-  GenericSharder(std::string inputPath, std::string outputBasePath,
-                 std::size_t startIndex, std::size_t endIndex,
-                 int32_t logEveryN)
-      : GenericSharder{std::move(inputPath),
-                       genOutputPaths(outputBasePath, startIndex, endIndex),
-                       logEveryN} {}
+  GenericSharder(
+      std::string inputPath,
+      std::string outputBasePath,
+      std::size_t startIndex,
+      std::size_t endIndex,
+      int32_t logEveryN)
+      : GenericSharder{
+            std::move(inputPath),
+            genOutputPaths(outputBasePath, startIndex, endIndex),
+            logEveryN} {}
 
   /**
    * Virtual destructor because C++.
@@ -72,23 +80,26 @@ public:
    * @returns a vector of strings representing generated output paths where the
    *     output will be written
    */
-  static std::vector<std::string>
-  genOutputPaths(const std::string &outputBasePath, std::size_t startIndex,
-                 std::size_t endIndex);
+  static std::vector<std::string> genOutputPaths(
+      const std::string& outputBasePath,
+      std::size_t startIndex,
+      std::size_t endIndex);
 
   /**
    * Get a reference to this sharder's input path.
    *
    * @returns a reference to this sharder's input path
    */
-  const std::string &getInputPath() const { return inputPath_; }
+  const std::string& getInputPath() const {
+    return inputPath_;
+  }
 
   /**
    * Get a reference to this sharder's output paths
    *
    * @returns a reference to this sharder's output paths
    */
-  const std::vector<std::string> &getOutputPaths() const {
+  const std::vector<std::string>& getOutputPaths() const {
     return outputPaths_;
   }
 
@@ -97,14 +108,40 @@ public:
    *
    * @returns how often this sharder should log progress updates
    */
-  int32_t getLogRate() const { return logEveryN_; }
+  int32_t getLogRate() const {
+    return logEveryN_;
+  }
 
   /**
    * Run the sharder.
    */
-  virtual void shard() const = 0;
+  void shard();
 
-private:
+  /**
+   * Determine which shard a line should go to given an id. This is how derived
+   * classes will override sharding behavior in certain contexts.
+   *
+   * @param id the identifier representing the line to be sharded
+   * @param numShards the number of shards to be considered
+   * @returns the shard this id should be sent to
+   */
+  virtual std::size_t getShardFor(
+      const std::string& id,
+      std::size_t numShards) = 0;
+
+  /**
+   * Shard an individual input line. Internally calls `getShardFor` to detect
+   * the correct shard. If the input line needs modified for some reason, the
+   * derived class must override this method.
+
+   * @param line the line to be sharded
+   * @param outFiles the list of output files to be sharded into
+   */
+  virtual void shardLine(
+      std::string line,
+      const std::vector<std::unique_ptr<std::ofstream>>& outFiles);
+
+ private:
   std::string inputPath_;
   std::vector<std::string> outputPaths_;
   int32_t logEveryN_;

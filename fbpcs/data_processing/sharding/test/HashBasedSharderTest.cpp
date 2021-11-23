@@ -16,7 +16,6 @@
 #include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
 
 namespace data_processing::sharder {
-
 TEST(HashBasedSharderTest, TestToBytes) {
   std::string key = "abcd";
   std::vector<unsigned char> expected{
@@ -54,11 +53,71 @@ TEST(HashBasedSharderTest, TestBytesToIntAdvanced) {
 TEST(HashBasedSharderTest, TestGetShardFor) {
   // Assuming toBytes and bytesToInt have been tested elsewhere, this is a
   // straightforward modulo operation.
+  HashBasedSharder sharder{"unused", {/* unused */}, 123, ""};
   std::string key = "abcd";
   auto integerValue = detail::bytesToInt(detail::toBytes(key));
-  EXPECT_EQ(detail::getShardFor(key, 123), integerValue % 123);
+  EXPECT_EQ(sharder.getShardFor(key, 123), integerValue % 123);
   // Anything % 1 should be zero
-  EXPECT_EQ(detail::getShardFor(key, 1), 0);
+  EXPECT_EQ(sharder.getShardFor(key, 1), 0);
+}
+
+TEST(HashBasedSharderTest, TestShardLineNoHmacKey) {
+  std::string line = "abcd,1,2,3";
+  std::vector<std::unique_ptr<std::ofstream>> streams;
+  auto randStart = folly::Random::secureRand64();
+  std::vector<std::string> outputPaths{
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
+  };
+  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(0)));
+  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(1)));
+
+
+  HashBasedSharder sharder{"unused", outputPaths, 123, ""};
+  sharder.shardLine(line, streams);
+
+  // We can just reset the underlying unique_ptr to flush the writes to disk
+  streams.at(0).reset();
+  streams.at(1).reset();
+
+  // We didn't write headers, so we expect to *just* have the written line
+  std::vector<std::string> expected0{"abcd,1,2,3"};
+  std::vector<std::string> expected1{};
+
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(0),
+                                                   expected0);
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(1),
+                                                   expected1);
+}
+
+TEST(HashBasedSharderTest, TestShardLineWithHmacKey) {
+  std::string line = "abcd,1,2,3";
+  std::vector<std::unique_ptr<std::ofstream>> streams;
+  auto randStart = folly::Random::secureRand64();
+  std::vector<std::string> outputPaths{
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
+  };
+  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(0)));
+  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(1)));
+
+
+  std::string hmacKey = "abcd1234";
+  HashBasedSharder sharder{"unused", outputPaths, 123, hmacKey};
+  sharder.shardLine(line, streams);
+
+  // We can just reset the underlying unique_ptr to flush the writes to disk
+  streams.at(0).reset();
+  streams.at(1).reset();
+
+  // We didn't write headers, so we expect to *just* have the written line
+  std::vector<std::string> expected0{};
+  std::vector<std::string> expected1{"9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,1,2,3"};
+
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(0),
+                                                   expected0);
+  data_processing::test_utils::expectFileRowsEqual(outputPaths.at(1),
+                                                   expected1);
 }
 
 TEST(HashBasedSharderTest, TestShardNoHmacKey) {
