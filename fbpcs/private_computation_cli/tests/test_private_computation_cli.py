@@ -140,8 +140,17 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         aggregate_mock.assert_called_once()
 
-    def test_validate(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
+    def test_validate(self, validate_mock):
+        argv=[
+            "validate",
+            "instance123",
+            f"--config={self.temp_filename}",
+            "--aggregated_result_path=/tmp/aggpath",
+            "--expected_result_path=/tmp/exppath",
+        ]
+        pc_cli.main(argv)
+        validate_mock.assert_called_once()
 
     def test_run_post_processing_handlers(self):
         pass
