@@ -38,6 +38,7 @@ Options:
 import logging
 import os
 from pathlib import Path, PurePath
+from typing import List, Optional
 
 import schema
 from docopt import docopt
@@ -86,7 +87,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
 
-def main() -> None:
+def main(argv: Optional[List[str]] = None) -> None:
     s = schema.Schema(
         {
             "create_instance": bool,
@@ -165,7 +166,7 @@ def main() -> None:
         }
     )
 
-    arguments = s.validate(docopt(__doc__))
+    arguments = s.validate(docopt(__doc__, argv))
     config = ConfigYamlDict.from_dict(yaml.load(Path(arguments["--config"])))
 
     log_path = arguments["--log_path"]
