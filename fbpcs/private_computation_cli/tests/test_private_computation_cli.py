@@ -246,8 +246,15 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         get_pid_mock.assert_called_once()
 
-    def test_get_mpc(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.get_mpc")
+    def test_get_mpc(self, get_mpc_mock):
+        argv=[
+            "get_mpc",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        get_mpc_mock.assert_called_once()
 
     def test_run_instance(self):
         pass
