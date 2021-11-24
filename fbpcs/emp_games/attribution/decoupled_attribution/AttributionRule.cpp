@@ -12,6 +12,7 @@ namespace aggregation::private_attribution {
 const AttributionRule LAST_CLICK_1D{
     /* id */ 1,
     /* name */ "last_click_1d",
+    /* window_in_sec */ 86400,
     /* isAttributable */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {
@@ -29,6 +30,7 @@ const AttributionRule LAST_CLICK_1D{
 const AttributionRule LAST_CLICK_28D{
     /* id */ 2,
     /* name */ "last_click_28d",
+    /* window_in_sec */ 2419200,
     /* isAttributable */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {
@@ -48,6 +50,7 @@ const AttributionRule LAST_CLICK_28D{
 const AttributionRule LAST_TOUCH_CT1D_IMP1D{
     /* id */ 3,
     /* name */ "last_touch_1d",
+    /* window_in_sec */ 86400,
     /* isAttributable: if click within 1d, if touch within 1d */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {
@@ -74,6 +77,7 @@ const AttributionRule LAST_TOUCH_CT1D_IMP1D{
 const AttributionRule LAST_TOUCH_CT28D_IMP1D{
     /* id */ 4,
     /* name */ "last_touch_28d",
+    /* window_in_sec */ 2419200,
     /* isAttributable: if click within 28d, if touch within 1d */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {

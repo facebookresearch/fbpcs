@@ -22,6 +22,7 @@
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionMetrics.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionOptions.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
+#include "fbpcs/emp_games/attribution/decoupled_attribution/Debug.h"
 
 namespace aggregation::private_attribution {
 
@@ -172,8 +173,13 @@ AttributionOutputMetrics computeAttributions(
 
     // Currently we have one attribution output format
     std::vector<AttributionFormat> attributionFormats;
-    attributionFormats.push_back(
+    IF_OMNISCIENT_MODE {
+        attributionFormats.push_back(
+        getAttributionFormatFromNameOrThrow("debug"));
+    } else{
+        attributionFormats.push_back(
         getAttributionFormatFromNameOrThrow("default"));
+    }
 
     // Compute all attributions for all rule/format combinations.
     PrivateAttributionMetrics attributionMetrics{

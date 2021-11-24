@@ -36,6 +36,32 @@ struct PrivateAttribution {
         tp{_tp} {}
 };
 
+
+struct OutputMetricWithError {
+  bool is_attributed;
+  int64_t tp_ts;
+  int64_t conv_ts;
+  int64_t error_code;
+
+  folly::dynamic toDynamic() const {
+    return folly::dynamic::object
+        ("is_attributed", is_attributed)
+        ("tp_ts", tp_ts)
+        ("conv_ts", conv_ts)
+        ("error_code", error_code);
+  }
+
+  static OutputMetricWithError fromDynamic(const folly::dynamic& obj) {
+    OutputMetricWithError out = OutputMetricWithError{};
+    out.is_attributed = obj["is_attributed"].asBool();
+    out.tp_ts = obj["tp_ts"].asInt();
+    out.conv_ts = obj["conv_ts"].asInt();
+    out.error_code = obj["error_code"].asInt();
+    return out;
+  }
+};
+
+
 struct OutputMetricDefault {
   bool is_attributed;
 
@@ -61,6 +87,25 @@ struct PrivateOutputMetricDefault {
 
     return OutputMetricDefault{
           is_attributed.reveal<bool>(party)};
+  }
+};
+
+
+struct PrivateOutputMetricWithError {
+  emp::Bit is_attributed{false, emp::PUBLIC};
+  emp::Integer tp_ts;
+  emp::Integer conv_ts;
+  emp::Integer error_code;
+
+  OutputMetricWithError reveal(fbpcf::Visibility outputVisibility) const {
+    int party =
+        outputVisibility == fbpcf::Visibility::Xor ? emp::XOR : emp::PUBLIC;
+
+    return OutputMetricWithError{
+          is_attributed.reveal<bool>(party),
+          tp_ts.reveal<int64_t>(party),
+          conv_ts.reveal<int64_t>(party),
+          error_code.reveal<int64_t>(party)};
   }
 };
 
