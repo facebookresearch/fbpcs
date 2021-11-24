@@ -191,8 +191,30 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         run_next_mock.assert_called_once()
 
-    def test_run_stage(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.get_instance")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.run_stage")
+    def test_run_stage(self, run_stage_mock, get_instance_mock):
+        argv=[
+            "run_stage",
+            "instance123",
+            "--stage=hamlet",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        run_stage_mock.assert_called_once()
+        get_instance_mock.assert_called_once()
+        run_stage_mock.reset_mock()
+        get_instance_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--server_ips=192.168.1.1,192.168.1.2",
+                "--dry_run",
+            ]
+        )
+        pc_cli.main(argv)
+        run_stage_mock.assert_called_once()
+        get_instance_mock.assert_called_once()
 
     def test_get_instance(self):
         pass
