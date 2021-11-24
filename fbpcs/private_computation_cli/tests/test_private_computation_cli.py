@@ -119,8 +119,26 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         compute_mock.assert_called_once()
 
-    def test_aggregate_shards(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.aggregate_shards")
+    def test_aggregate_shards(self, aggregate_mock):
+        argv=[
+            "aggregate_shards",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        aggregate_mock.assert_called_once()
+        aggregate_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--server_ips=192.168.1.1,192.168.1.2",
+                "--dry_run",
+                "--log_cost_to_s3",
+            ]
+        )
+        pc_cli.main(argv)
+        aggregate_mock.assert_called_once()
 
     def test_validate(self):
         pass
