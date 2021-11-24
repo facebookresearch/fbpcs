@@ -78,8 +78,25 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         id_match_mock.assert_called_once()
 
-    def test_prepare_compute_input(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.prepare_compute_input")
+    def test_prepare_compute_input(self, prepare_mock):
+        argv=[
+            "prepare_compute_input",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        prepare_mock.assert_called_once()
+        prepare_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--dry_run",
+                "--log_cost_to_s3",
+            ]
+        )
+        pc_cli.main(argv)
+        prepare_mock.assert_called_once()
 
     def test_compute_metrics(self):
         pass
