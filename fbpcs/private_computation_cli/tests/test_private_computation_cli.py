@@ -325,8 +325,15 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         run_study_mock.assert_called_once()
 
-    def test_cancel_current_stage(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.cancel_current_stage")
+    def test_cancel_current_stage(self, cancel_stage_mock):
+        argv=[
+            "cancel_current_stage",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        cancel_stage_mock.assert_called_once()
 
     def test_print_instance(self):
         pass
