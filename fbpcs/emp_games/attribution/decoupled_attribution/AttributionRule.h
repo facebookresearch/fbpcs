@@ -25,6 +25,9 @@ struct AttributionRule {
   // pass in a list of names, and the output json will be keyed by names
   const std::string name;
 
+  // time window for attribution, in seconds
+  const int64_t window_in_sec;
+
   // Should return true if the given touchpoint is eligible to be attributed
   // to the given conversion
   const std::function<
