@@ -58,8 +58,25 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         create_mock.assert_called_once()
 
-    def test_id_match(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.id_match")
+    def test_id_match(self, id_match_mock):
+        argv=[
+            "id_match",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        id_match_mock.assert_called_once()
+        id_match_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--server_ips=192.168.1.1,192.168.1.2",
+                "--dry_run",
+            ]
+        )
+        pc_cli.main(argv)
+        id_match_mock.assert_called_once()
 
     def test_prepare_compute_input(self):
         pass
