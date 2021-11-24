@@ -172,8 +172,24 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         run_pph_mock.assert_called_once()
 
-    def test_run_next(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.run_next")
+    def test_run_next(self, run_next_mock):
+        argv=[
+            "run_next",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        run_next_mock.assert_called_once()
+        run_next_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--server_ips=192.168.1.1,192.168.1.2",
+            ]
+        )
+        pc_cli.main(argv)
+        run_next_mock.assert_called_once()
 
     def test_run_stage(self):
         pass
