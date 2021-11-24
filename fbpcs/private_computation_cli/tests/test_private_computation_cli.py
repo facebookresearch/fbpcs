@@ -98,8 +98,26 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         prepare_mock.assert_called_once()
 
-    def test_compute_metrics(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.compute_metrics")
+    def test_compute_metrics(self, compute_mock):
+        argv=[
+            "compute_metrics",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        compute_mock.assert_called_once()
+        compute_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--server_ips=192.168.1.1,192.168.1.2",
+                "--dry_run",
+                "--log_cost_to_s3",
+            ]
+        )
+        pc_cli.main(argv)
+        compute_mock.assert_called_once()
 
     def test_aggregate_shards(self):
         pass
