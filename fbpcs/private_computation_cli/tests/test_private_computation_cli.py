@@ -279,8 +279,28 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         run_instance_mock.assert_called_once()
 
-    def test_run_instances(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.run_instances")
+    def test_run_instances(self, run_instances_mock):
+        argv=[
+            "run_instances",
+            "instance123,instance456",
+            f"--config={self.temp_filename}",
+            "--input_paths=/tmp/in1,/tmp/in2",
+            "--num_shards_list=456,789",
+        ]
+        pc_cli.main(argv)
+        run_instances_mock.assert_called_once()
+        run_instances_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--tries_per_stage=789",
+                "--dry_run",
+                "--legacy",
+            ]
+        )
+        pc_cli.main(argv)
+        run_instances_mock.assert_called_once()
 
     def test_run_study(self):
         pass
