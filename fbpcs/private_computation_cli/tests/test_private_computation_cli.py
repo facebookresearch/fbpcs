@@ -152,8 +152,25 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         validate_mock.assert_called_once()
 
-    def test_run_post_processing_handlers(self):
-        pass
+    @patch("fbpcs.private_computation_cli.private_computation_cli.run_post_processing_handlers")
+    def test_run_post_processing_handlers(self, run_pph_mock):
+        argv=[
+            "run_post_processing_handlers",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        run_pph_mock.assert_called_once()
+        run_pph_mock.reset_mock()
+
+        argv.extend(
+            [
+                "--aggregated_result_path=/tmp/aggpath",
+                "--dry_run",
+            ]
+        )
+        pc_cli.main(argv)
+        run_pph_mock.assert_called_once()
 
     def test_run_next(self):
         pass
