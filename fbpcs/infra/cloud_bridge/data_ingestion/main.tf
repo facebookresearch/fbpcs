@@ -90,15 +90,47 @@ resource "aws_iam_role" "firehose_role" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "attach_lambda_access" {
-  role       = aws_iam_role.firehose_role.id
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
+resource "aws_iam_role_policy" "attach_lambda_access" {
+  name   = "lambda-policy${var.tag_postfix}"
+  role   = aws_iam_role.firehose_role.id
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "lambda:*"
+      ],
+      "Resource": [
+        "arn:aws:lambda:${var.region}:${var.aws_account_id}:function:${aws_lambda_function.lambda_processor.function_name}:*"
+      ]
+    }
+  ]
+}
+EOF
 }
 
-
-resource "aws_iam_role_policy_attachment" "attach_s3_access" {
-  role       = aws_iam_role.firehose_role.id
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+resource "aws_iam_role_policy" "attach_s3_access" {
+  name   = "s3-policy${var.tag_postfix}"
+  role   = aws_iam_role.firehose_role.id
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:*"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${var.data_processing_output_bucket}",
+        "arn:aws:s3:::${var.data_processing_output_bucket}/*"
+      ]
+    }
+  ]
+}
+EOF
 }
 
 resource "aws_iam_role_policy" "kms_policy_firehose" {

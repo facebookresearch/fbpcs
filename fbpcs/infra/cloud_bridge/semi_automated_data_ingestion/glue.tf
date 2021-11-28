@@ -29,11 +29,6 @@ resource "aws_iam_role_policy_attachment" "glue_service" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-resource "aws_iam_role_policy_attachment" "attach_s3_access" {
-  role       = aws_iam_role.glue_ETL_role.id
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}
-
 resource "aws_iam_role_policy" "s3_policy" {
   name   = "s3-policy${var.tag_postfix}"
   role   = aws_iam_role.glue_ETL_role.id
