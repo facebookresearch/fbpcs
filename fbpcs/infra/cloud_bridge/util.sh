@@ -39,6 +39,7 @@ validate_or_create_s3_bucket() {
         echo "The bucket $bucket_name doesn't exist. Creating..."
         aws s3api create-bucket --bucket "$bucket_name" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
         aws s3api put-bucket-versioning --bucket "$bucket_name" --versioning-configuration Status=Enabled
+        aws s3api put-bucket-encryption --bucket "$bucket_name" --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "aws:kms"},"BucketKeyEnabled": true}]}'
         echo "The bucket $bucket_name is created."
 
     elif [ "$error" -eq "400" ]
