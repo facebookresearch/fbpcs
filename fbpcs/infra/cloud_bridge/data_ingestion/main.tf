@@ -70,6 +70,29 @@ resource "aws_s3_bucket" "bucket" {
 
 }
 
+resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.bucket.id
+
+  policy = <<EOF
+{
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": "s3:*",
+      "Principal": "*",
+      "Resource": [
+        "${aws_s3_bucket.bucket.arn}",
+        "${aws_s3_bucket.bucket.arn}/*"
+      ],
+      "Condition": {
+        "Bool": { "aws:SecureTransport": false }
+      }
+    }
+  ]
+}
+EOF
+}
+
 resource "aws_iam_role" "firehose_role" {
   name = "cb-data-ingestion-firehose-role${var.tag_postfix}"
 
