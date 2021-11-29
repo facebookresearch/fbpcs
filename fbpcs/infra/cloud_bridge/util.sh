@@ -40,6 +40,7 @@ validate_or_create_s3_bucket() {
         aws s3api create-bucket --bucket "$bucket_name" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
         aws s3api put-bucket-versioning --bucket "$bucket_name" --versioning-configuration Status=Enabled
         aws s3api put-bucket-encryption --bucket "$bucket_name" --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "aws:kms"},"BucketKeyEnabled": true}]}'
+        aws s3api put-bucket-policy --bucket "$bucket_name" --policy "{\"Statement\": [{\"Effect\": \"Deny\",\"Action\": \"s3:*\",\"Principal\": \"*\",\"Resource\": [\"arn:aws:s3:::${bucket_name}\",\"arn:aws:s3:::${bucket_name}/*\"],\"Condition\": {\"Bool\": {\"aws:SecureTransport\": false }}}]}"
         echo "The bucket $bucket_name is created."
 
     elif [ "$error" -eq "400" ]
