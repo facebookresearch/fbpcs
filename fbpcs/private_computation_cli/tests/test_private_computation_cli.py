@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from fbpcs.private_computation_cli import private_computation_cli as pc_cli
 
+
 class TestPrivateComputationCli(TestCase):
     def setUp(self):
         # We don't actually use the config, but we need to write a file so that
@@ -28,7 +29,7 @@ class TestPrivateComputationCli(TestCase):
         # Normally such *ultra-specific* test cases against a CLI would be an
         # antipattern, but since this is our public interface, we want to be
         # very careful before making that interface change.
-        argv=[
+        argv = [
             "create_instance",
             "instance123",
             f"--config={self.temp_filename}",
@@ -45,104 +46,22 @@ class TestPrivateComputationCli(TestCase):
         argv.extend(
             [
                 "--attribution_rule=last_click_1d",
-                 "--aggregation_type=measurement",
-                 "--concurrency=333",
-                 "--num_files_per_mpc_container=444",
-                 "--padding_size=555",
-                 "--k_anonymity_threshold=666",
-                 "--hmac_key=bigmac",
-                 "--fail_fast",
-                 "--stage_flow=PrivateComputationLocalTestStageFlow",
+                "--aggregation_type=measurement",
+                "--concurrency=333",
+                "--num_files_per_mpc_container=444",
+                "--padding_size=555",
+                "--k_anonymity_threshold=666",
+                "--hmac_key=bigmac",
+                "--fail_fast",
+                "--stage_flow=PrivateComputationLocalTestStageFlow",
             ]
         )
         pc_cli.main(argv)
         create_mock.assert_called_once()
 
-    @patch("fbpcs.private_computation_cli.private_computation_cli.id_match")
-    def test_id_match(self, id_match_mock):
-        argv=[
-            "id_match",
-            "instance123",
-            f"--config={self.temp_filename}",
-        ]
-        pc_cli.main(argv)
-        id_match_mock.assert_called_once()
-        id_match_mock.reset_mock()
-
-        argv.extend(
-            [
-                "--server_ips=192.168.1.1,192.168.1.2",
-                "--dry_run",
-            ]
-        )
-        pc_cli.main(argv)
-        id_match_mock.assert_called_once()
-
-    @patch("fbpcs.private_computation_cli.private_computation_cli.prepare_compute_input")
-    def test_prepare_compute_input(self, prepare_mock):
-        argv=[
-            "prepare_compute_input",
-            "instance123",
-            f"--config={self.temp_filename}",
-        ]
-        pc_cli.main(argv)
-        prepare_mock.assert_called_once()
-        prepare_mock.reset_mock()
-
-        argv.extend(
-            [
-                "--dry_run",
-                "--log_cost_to_s3",
-            ]
-        )
-        pc_cli.main(argv)
-        prepare_mock.assert_called_once()
-
-    @patch("fbpcs.private_computation_cli.private_computation_cli.compute_metrics")
-    def test_compute_metrics(self, compute_mock):
-        argv=[
-            "compute_metrics",
-            "instance123",
-            f"--config={self.temp_filename}",
-        ]
-        pc_cli.main(argv)
-        compute_mock.assert_called_once()
-        compute_mock.reset_mock()
-
-        argv.extend(
-            [
-                "--server_ips=192.168.1.1,192.168.1.2",
-                "--dry_run",
-                "--log_cost_to_s3",
-            ]
-        )
-        pc_cli.main(argv)
-        compute_mock.assert_called_once()
-
-    @patch("fbpcs.private_computation_cli.private_computation_cli.aggregate_shards")
-    def test_aggregate_shards(self, aggregate_mock):
-        argv=[
-            "aggregate_shards",
-            "instance123",
-            f"--config={self.temp_filename}",
-        ]
-        pc_cli.main(argv)
-        aggregate_mock.assert_called_once()
-        aggregate_mock.reset_mock()
-
-        argv.extend(
-            [
-                "--server_ips=192.168.1.1,192.168.1.2",
-                "--dry_run",
-                "--log_cost_to_s3",
-            ]
-        )
-        pc_cli.main(argv)
-        aggregate_mock.assert_called_once()
-
     @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
     def test_validate(self, validate_mock):
-        argv=[
+        argv = [
             "validate",
             "instance123",
             f"--config={self.temp_filename}",
@@ -152,9 +71,11 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         validate_mock.assert_called_once()
 
-    @patch("fbpcs.private_computation_cli.private_computation_cli.run_post_processing_handlers")
+    @patch(
+        "fbpcs.private_computation_cli.private_computation_cli.run_post_processing_handlers"
+    )
     def test_run_post_processing_handlers(self, run_pph_mock):
-        argv=[
+        argv = [
             "run_post_processing_handlers",
             "instance123",
             f"--config={self.temp_filename}",
@@ -174,7 +95,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_next")
     def test_run_next(self, run_next_mock):
-        argv=[
+        argv = [
             "run_next",
             "instance123",
             f"--config={self.temp_filename}",
@@ -194,7 +115,7 @@ class TestPrivateComputationCli(TestCase):
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_instance")
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_stage")
     def test_run_stage(self, run_stage_mock, get_instance_mock):
-        argv=[
+        argv = [
             "run_stage",
             "instance123",
             "--stage=hamlet",
@@ -218,7 +139,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_instance")
     def test_get_instance(self, get_instance_mock):
-        argv=[
+        argv = [
             "get_instance",
             "instance123",
             f"--config={self.temp_filename}",
@@ -228,7 +149,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_server_ips")
     def test_get_server_ips(self, get_ips_mock):
-        argv=[
+        argv = [
             "get_server_ips",
             "instance123",
             f"--config={self.temp_filename}",
@@ -238,7 +159,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_pid")
     def test_get_pid(self, get_pid_mock):
-        argv=[
+        argv = [
             "get_pid",
             "instance123",
             f"--config={self.temp_filename}",
@@ -248,7 +169,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_mpc")
     def test_get_mpc(self, get_mpc_mock):
-        argv=[
+        argv = [
             "get_mpc",
             "instance123",
             f"--config={self.temp_filename}",
@@ -258,7 +179,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_instance")
     def test_run_instance(self, run_instance_mock):
-        argv=[
+        argv = [
             "run_instance",
             "instance123",
             f"--config={self.temp_filename}",
@@ -281,7 +202,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_instances")
     def test_run_instances(self, run_instances_mock):
-        argv=[
+        argv = [
             "run_instances",
             "instance123,instance456",
             f"--config={self.temp_filename}",
@@ -304,7 +225,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_study")
     def test_run_study(self, run_study_mock):
-        argv=[
+        argv = [
             "run_study",
             "12345",
             f"--config={self.temp_filename}",
@@ -327,7 +248,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.cancel_current_stage")
     def test_cancel_current_stage(self, cancel_stage_mock):
-        argv=[
+        argv = [
             "cancel_current_stage",
             "instance123",
             f"--config={self.temp_filename}",
@@ -337,7 +258,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.print_instance")
     def test_print_instance(self, print_instance_mock):
-        argv=[
+        argv = [
             "print_instance",
             "instance123",
             f"--config={self.temp_filename}",
