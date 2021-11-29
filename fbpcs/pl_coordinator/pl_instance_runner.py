@@ -23,20 +23,13 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
-    PrivateComputationLegacyStageFlow,
-)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    aggregate_shards,
     cancel_current_stage,
-    compute_metrics,
     create_instance,
     get_instance,
-    id_match,
-    prepare_compute_input,
     run_stage,
 )
 
@@ -317,12 +310,7 @@ class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
 
     def run_stage(self, stage: PrivateComputationBaseStageFlow) -> None:
         if self.should_invoke_operation(stage):
-            operation = (
-                stage.name
-                if isinstance(stage, PrivateComputationLegacyStageFlow)
-                else "NEXT"
-            )
-            self.client.invoke_operation(self.instance_id, operation)
+            self.client.invoke_operation(self.instance_id, "NEXT")
 
 
 class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
@@ -377,44 +365,13 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
     ) -> None:
         if self.should_invoke_operation(stage):
             try:
-                if stage is PrivateComputationLegacyStageFlow.ID_MATCH:
-                    id_match(
-                        config=self.config,
-                        instance_id=self.instance_id,
-                        server_ips=server_ips,
-                        logger=self.logger,
-                        dry_run=None,
-                    )
-                elif stage is PrivateComputationLegacyStageFlow.COMPUTE:
-                    prepare_compute_input(
-                        config=self.config,
-                        instance_id=self.instance_id,
-                        logger=self.logger,
-                        dry_run=None,
-                    )
-                    compute_metrics(
-                        config=self.config,
-                        instance_id=self.instance_id,
-                        logger=self.logger,
-                        server_ips=server_ips,
-                        dry_run=None,
-                    )
-                elif stage is PrivateComputationLegacyStageFlow.AGGREGATE:
-                    aggregate_shards(
-                        config=self.config,
-                        instance_id=self.instance_id,
-                        logger=self.logger,
-                        server_ips=server_ips,
-                        dry_run=None,
-                    )
-                else:
-                    run_stage(
-                        config=self.config,
-                        instance_id=self.instance_id,
-                        stage=stage,
-                        logger=self.logger,
-                        server_ips=server_ips,
-                    )
+                run_stage(
+                    config=self.config,
+                    instance_id=self.instance_id,
+                    stage=stage,
+                    logger=self.logger,
+                    server_ips=server_ips,
+                )
             except Exception as error:
                 self.logger.exception(f"Error running partner {stage.name} {error}")
 
