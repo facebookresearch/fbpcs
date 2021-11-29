@@ -162,10 +162,6 @@ class TestPlInstanceRunner(TestCase):
                 )
 
     @patch("fbpcs.pl_coordinator.pl_instance_runner.run_stage")
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.aggregate_shards")
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.compute_metrics")
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.prepare_compute_input")
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.id_match")
     @patch(
         "fbpcs.pl_coordinator.pl_instance_runner.PrivateLiftCalcInstance.wait_stage_start"
     )
@@ -178,10 +174,6 @@ class TestPlInstanceRunner(TestCase):
         mock_get_instance,
         mock_wait_stage_complete,
         mock_wait_stage_start,
-        mock_id_match,
-        mock_prepare_compute_input,
-        mock_compute_metrics,
-        mock_aggregate_shards,
         mock_run_stage,
     ) -> None:
         for (
@@ -202,10 +194,6 @@ class TestPlInstanceRunner(TestCase):
                 if stage is None:
                     continue
 
-                mock_id_match.call_count = 0
-                mock_prepare_compute_input.call_count = 0
-                mock_compute_metrics.call_count = 0
-                mock_aggregate_shards.call_count = 0
                 mock_run_stage.call_count = 0
                 mock_wait_stage_start.call_count = 0
                 self.mock_graph_api_client.invoke_operation.call_count = 0
@@ -223,46 +211,6 @@ class TestPlInstanceRunner(TestCase):
                 else:
                     mock_wait_stage_start.assert_not_called()
 
-                if stage is PrivateComputationLegacyStageFlow.ID_MATCH:
-                    if publisher_should_invoke_expected:
-                        self.mock_graph_api_client.invoke_operation.assert_called_with(
-                            self.instance_id, "ID_MATCH"
-                        )
-                    else:
-                        self.mock_graph_api_client.invoke_operation.assert_not_called()
-
-                    if partner_should_invoke_expected:
-                        mock_id_match.assert_called()
-                    else:
-                        mock_id_match.assert_not_called()
-
-                elif stage is PrivateComputationLegacyStageFlow.COMPUTE:
-                    if publisher_should_invoke_expected:
-                        self.mock_graph_api_client.invoke_operation.assert_called_with(
-                            self.instance_id, "COMPUTE"
-                        )
-                    else:
-                        self.mock_graph_api_client.invoke_operation.assert_not_called()
-
-                    if partner_should_invoke_expected:
-                        mock_prepare_compute_input.assert_called()
-                        mock_compute_metrics.assert_called()
-                    else:
-                        mock_prepare_compute_input.assert_not_called()
-                        mock_compute_metrics.assert_not_called()
-                elif stage is PrivateComputationLegacyStageFlow.AGGREGATE:
-                    if publisher_should_invoke_expected:
-                        self.mock_graph_api_client.invoke_operation.assert_called_with(
-                            self.instance_id, "AGGREGATE"
-                        )
-                    else:
-                        self.mock_graph_api_client.invoke_operation.assert_not_called()
-
-                    if partner_should_invoke_expected:
-                        mock_aggregate_shards.assert_called()
-                    else:
-                        mock_aggregate_shards.assert_not_called()
-                else:
                     if publisher_should_invoke_expected:
                         self.mock_graph_api_client.invoke_operation.assert_called_with(
                             self.instance_id, "NEXT"
