@@ -39,5 +39,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     zlib1g
 
 COPY --from=dev /root/build/emp_game/bin/. /usr/local/bin/.
+RUN useradd -ms /bin/bash pcs
+USER pcs
 WORKDIR /usr/local/bin
 CMD ["/bin/sh"]

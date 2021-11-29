@@ -28,7 +28,7 @@ private_computation:
           binary_version: latest
     OneDockerServiceConfig:
       constructor:
-        task_definition: fbpcs-github-cicd:3#fbpcs-github-cicd
+        task_definition: fbpcs-github-cicd:4#fbpcs-github-cicd
 pid:
   dependency:
     ShardingService:
