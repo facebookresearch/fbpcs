@@ -38,15 +38,15 @@ RUN terraform --version
 # Copy deploy.sh, Terraform scripts, and config.yml template
 ##########################################
 RUN mkdir /terraform_deployment
-ADD deploy.sh /terraform_deployment
+COPY deploy.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
-ADD util.sh /terraform_deployment
+COPY util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/util.sh
-ADD aws_terraform_template /terraform_deployment/terraform_scripts
-ADD data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
-ADD semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
-ADD config.yml /terraform_deployment
-ADD data_validation /terraform_deployment/terraform_scripts/data_validation
+COPY aws_terraform_template /terraform_deployment/terraform_scripts
+COPY data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
+COPY semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
+COPY config.yml /terraform_deployment
+COPY data_validation /terraform_deployment/terraform_scripts/data_validation
 
 # #########################################
 # Spring Boot

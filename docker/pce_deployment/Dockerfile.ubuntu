@@ -40,9 +40,9 @@ ENV TERRAFORM_VERSION 0.14.9
 
 # Download Terraform
 WORKDIR /usr/local/bin
-ADD https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform.zip
-RUN unzip terraform.zip && \
-    rm terraform.zip
+RUN curl -SL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip --output terraform.zip && \
+  unzip terraform.zip && \
+  rm terraform.zip
 
 # Check that it's installed
 RUN terraform --version
@@ -51,13 +51,13 @@ RUN terraform --version
 # Copy deploy.sh and Terraform scripts
 ##########################################
 RUN mkdir /terraform_deployment
-ADD fbpcs/infra/publisher/deploy.sh /terraform_deployment
-ADD fbpcs/infra/publisher/deploy-shared.sh /terraform_deployment
-ADD fbpcs/infra/publisher/util.sh /terraform_deployment
+COPY fbpcs/infra/publisher/deploy.sh /terraform_deployment
+COPY fbpcs/infra/publisher/deploy-shared.sh /terraform_deployment
+COPY fbpcs/infra/publisher/util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
 RUN chmod +x /terraform_deployment/deploy-shared.sh
 RUN chmod +x /terraform_deployment/util.sh
-ADD fbpcs/infra/pce/aws_terraform_template /terraform_deployment/terraform_scripts
+COPY fbpcs/infra/pce/aws_terraform_template /terraform_deployment/terraform_scripts
 CMD ["/bin/bash"]
 WORKDIR /terraform_deployment
 
