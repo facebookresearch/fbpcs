@@ -25,11 +25,14 @@ RUN pip install \
 ##########################################
 ENV TERRAFORM_VERSION 0.14.9
 
-# Download Terraform
-RUN cd /usr/local/bin && \
-    curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o terraform.zip && \
-    unzip terraform.zip && \
-    rm terraform.zip
+# Download Terraform, verify checksum, and unzip
+WORKDIR /usr/local/bin
+RUN curl -SL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip --output terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+  curl -SL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_SHA256SUMS --output terraform_${TERRAFORM_VERSION}_SHA256SUMS && \
+  grep terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform_${TERRAFORM_VERSION}_SHA256SUMS | sha256sum -c - && \
+  unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+  rm terraform_${TERRAFORM_VERSION}_SHA256SUMS && \
+  rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 # Check that it's installed
 RUN terraform --version
