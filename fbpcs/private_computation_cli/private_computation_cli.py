@@ -11,10 +11,6 @@ CLI for running a Private Lift study
 
 Usage:
     pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast --stage_flow=<stage_flow>] [options]
-    pc-cli id_match <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
-    pc-cli prepare_compute_input <instance_id> --config=<config_file> [--dry_run --log_cost_to_s3] [options]
-    pc-cli compute_metrics <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
-    pc-cli aggregate_shards <instance_id> --config=<config_file> [--server_ips=<server_ips> --dry_run --log_cost_to_s3] [options]
     pc-cli validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
     pc-cli run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
     pc-cli run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
@@ -48,6 +44,11 @@ from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+
+# TODO: T105929150 clean up these imports once buck imports is fixed
+from fbpcs.private_computation.entity.private_computation_decoupled_local_test_stage_flow import (
+    PrivateComputationDecoupledLocalTestStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -57,27 +58,19 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
     PrivateComputationLegacyStageFlow,
 )
-from fbpcs.private_computation.entity.private_computation_stage_flow import (
-    PrivateComputationStageFlow,
-)
-# TODO: T105929150 clean up these imports once buck imports is fixed
-from fbpcs.private_computation.entity.private_computation_decoupled_local_test_stage_flow import (
-    PrivateComputationDecoupledLocalTestStageFlow,
-)
 from fbpcs.private_computation.entity.private_computation_local_test_stage_flow import (
     PrivateComputationLocalTestStageFlow,
 )
+from fbpcs.private_computation.entity.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
+)
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    aggregate_shards,
     cancel_current_stage,
-    compute_metrics,
     create_instance,
     get_instance,
     get_mpc,
     get_pid,
     get_server_ips,
-    id_match,
-    prepare_compute_input,
     print_instance,
     run_next,
     run_stage,
@@ -91,10 +84,6 @@ def main(argv: Optional[List[str]] = None) -> None:
     s = schema.Schema(
         {
             "create_instance": bool,
-            "id_match": bool,
-            "prepare_compute_input": bool,
-            "compute_metrics": bool,
-            "aggregate_shards": bool,
             "validate": bool,
             "run_post_processing_handlers": bool,
             "run_next": bool,
@@ -153,7 +142,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--legacy": bool,
             "--dry_run": bool,
             "--log_path": schema.Or(None, schema.Use(Path)),
-            "--log_cost_to_s3": schema.Or(None, schema.Use(bool)),
             "--stage_flow": schema.Or(
                 None,
                 schema.Use(
@@ -199,34 +187,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             fail_fast=arguments["--fail_fast"],
             stage_flow_cls=arguments["--stage_flow"],
         )
-    elif arguments["id_match"]:
-        logger.info(f"Run id match on instance: {instance_id}")
-        id_match(
-            config=config,
-            instance_id=instance_id,
-            logger=logger,
-            server_ips=arguments["--server_ips"],
-            dry_run=arguments["--dry_run"],
-        )
-    elif arguments["prepare_compute_input"]:
-        logger.info(f"Prepare compute input for instance: {instance_id}")
-        prepare_compute_input(
-            config=config,
-            instance_id=instance_id,
-            logger=logger,
-            dry_run=arguments["--dry_run"],
-            log_cost_to_s3=arguments["--log_cost_to_s3"],
-        )
-    elif arguments["compute_metrics"]:
-        logger.info(f"Compute instance: {instance_id}")
-        compute_metrics(
-            config=config,
-            instance_id=instance_id,
-            logger=logger,
-            server_ips=arguments["--server_ips"],
-            dry_run=arguments["--dry_run"],
-            log_cost_to_s3=arguments["--log_cost_to_s3"],
-        )
     elif arguments["run_post_processing_handlers"]:
         logger.info(f"post processing handlers instance: {instance_id}")
         run_post_processing_handlers(
@@ -268,16 +228,6 @@ def main(argv: Optional[List[str]] = None) -> None:
     elif arguments["get_mpc"]:
         logger.info(f"Get MPC instance: {instance_id}")
         get_mpc(config, instance_id, logger)
-    elif arguments["aggregate_shards"]:
-        logger.info(f"Aggregate instance: {instance_id}")
-        aggregate_shards(
-            config=config,
-            instance_id=instance_id,
-            logger=logger,
-            server_ips=arguments["--server_ips"],
-            dry_run=arguments["--dry_run"],
-            log_cost_to_s3=arguments["--log_cost_to_s3"],
-        )
     elif arguments["validate"]:
         logger.info(f"Vallidate instance: {instance_id}")
         validate(
