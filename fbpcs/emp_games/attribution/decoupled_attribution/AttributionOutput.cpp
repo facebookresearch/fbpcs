@@ -79,7 +79,7 @@ class AttributionDefault : public AttributionOutput {
           revealedMetric.emplace_back(metric.reveal(fbpcf::Visibility::Public));
         }
         else {
-          revealedMetric.emplace_back(metric.reveal(fbpcf::Visibility::Xor));
+          revealedMetric.emplace_back(metric.reveal(outputVisibility_));
         }
       }
       out.idToMetrics.emplace(uid, revealedMetric);
