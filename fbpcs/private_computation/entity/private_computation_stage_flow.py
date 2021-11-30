@@ -103,7 +103,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         self, args: PrivateComputationStageServiceArgs
     ) -> PrivateComputationStageService:
         """
-        Maps PrivateComputationLegacyStageFlow instances to StageService instances
+        Maps PrivateComputationStageFlow instances to StageService instances
 
         Arguments:
             args: Common arguments initialized in PrivateComputationService that are consumed by stage services

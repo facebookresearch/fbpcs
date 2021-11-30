@@ -21,6 +21,8 @@ from fbpcs.pid.entity.pid_instance import (
     PIDInstance,
     PIDInstanceStatus,
     PIDRole,
+    PIDStageStatus,
+    UnionPIDStage,
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
@@ -202,6 +204,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         updated_pid_instance = pid_instance
         updated_pid_instance.status = PIDInstanceStatus.COMPLETED
+        updated_pid_instance.current_stage = UnionPIDStage.PUBLISHER_RUN_PID
+        updated_pid_instance.stages_status = {
+            UnionPIDStage.PUBLISHER_RUN_PID: PIDStageStatus.COMPLETED
+        }
+
         self.private_computation_service.pid_svc.update_instance = MagicMock(
             return_value=updated_pid_instance
         )
@@ -588,12 +595,17 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             input_path="input",
             output_path="output",
             stages_containers={},
-            stages_status={},
+            stages_status={UnionPIDStage.PUBLISHER_RUN_PID: PIDStageStatus.COMPLETED},
+            current_stage=UnionPIDStage.PUBLISHER_RUN_PID,
             status=PIDInstanceStatus.COMPLETED,
         )
         pc_instance = self.create_sample_instance(
             PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
             instances=[pid_instance],
+        )
+
+        self.private_computation_service.pid_svc.update_instance = MagicMock(
+            return_value=pid_instance
         )
         self.assertEqual(
             PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
