@@ -14,8 +14,6 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
-from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
@@ -601,68 +599,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             self.private_computation_service._update_instance(pc_instance).status,
         )
-
-    def test_prepare_data(self):
-        private_computation_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.CREATED,
-        )
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=private_computation_instance
-        )
-
-        with patch.object(
-            IdSpineCombinerService,
-            "combine_on_container_async",
-        ) as mock_combine, patch.object(
-            CppShardingService,
-            "shard_on_container_async",
-        ) as mock_shard:
-            # call prepare_data
-            self.private_computation_service.prepare_data(
-                instance_id=self.test_private_computation_id,
-                dry_run=True,
-            )
-            binary_name = OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
-            binary_config = self.onedocker_binary_config_map[binary_name]
-            mock_combine.assert_called_once_with(
-                spine_path=private_computation_instance.pid_stage_output_spine_path,
-                data_path=private_computation_instance.pid_stage_output_data_path,
-                output_path=private_computation_instance.data_processing_output_path
-                + "_combine",
-                num_shards=self.test_num_containers,
-                onedocker_svc=self.onedocker_service,
-                binary_version=binary_config.binary_version,
-                tmp_directory=binary_config.tmp_directory,
-                binary_name=binary_name,
-            )
-            mock_shard.assert_called()
-
-    def test_prepare_data_tasks_skipped(self):
-        private_computation_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-        )
-        private_computation_instance.partial_container_retry_enabled = True
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=private_computation_instance
-        )
-
-        with patch.object(
-            IdSpineCombinerService,
-            "combine_on_container_async",
-        ) as mock_combine, patch.object(
-            CppShardingService,
-            "shard_on_container_async",
-        ) as mock_shard:
-            # call prepare_data
-            self.private_computation_service.prepare_data(
-                instance_id=self.test_private_computation_id,
-            )
-            # expect combining and sharding skipped because this private_computation_instance has
-            #   status PrivateComputationInstanceStatus.COMPUTATION_FAILED, so this run
-            #   is to recover from a previous compute metrics failure, meaning data
-            #   preparation should have been done
-            mock_combine.assert_not_called()
-            mock_shard.assert_not_called()
 
     def test_validate_metrics_results_doesnt_match(self):
         self.private_computation_service.storage_svc.read = MagicMock()
