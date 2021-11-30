@@ -29,9 +29,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
-    PrivateComputationLegacyStageFlow,
-)
 from fbpcs.private_computation.entity.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
@@ -112,7 +109,7 @@ class TestPlInstanceRunner(TestCase):
                 mock_get_instance.return_value = self._get_pc_instance(partner_status)
 
                 runner = self._get_runner(
-                    PrivateComputationLegacyStageFlow if not stage else type(stage)
+                    PrivateComputationStageFlow if not stage else type(stage)
                 )
                 runner.publisher.status = GRAPHAPI_INSTANCE_STATUSES[publisher_status]
                 runner.partner.status = partner_status
@@ -389,126 +386,126 @@ class TestPlInstanceRunner(TestCase):
             (
                 "CREATED",
                 PrivateComputationInstanceStatus.CREATED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.CREATED.next_stage,
                 True,
                 True,
             ),
             (
                 "ID_MATCH_STARTED",
-                PrivateComputationInstanceStatus.CREATED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH.previous_stage.completed_status,
+                PrivateComputationStageFlow.ID_MATCH,
                 True,
                 True,
             ),
             (
                 "ID_MATCH_STARTED",
                 PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 True,
                 True,
             ),
             (
                 "ID_MATCH_STARTED",
                 PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 True,
                 True,
             ),
             (
                 "ID_MATCH_STARTED",
                 PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 True,
                 True,
             ),
             (
                 "ID_MATCH_COMPLETED",
                 PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 False,
                 False,
             ),
             (
                 "ID_MATCH_COMPLETED",
                 PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.ID_MATCH.next_stage,
                 True,
                 True,
             ),
             (
                 "COMPUTATION_STARTED",
-                PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE.previous_stage.completed_status,
+                PrivateComputationStageFlow.COMPUTE,
                 True,
                 True,
             ),
             (
                 "COMPUTATION_STARTED",
                 PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 True,
                 True,
             ),
             (
                 "COMPUTATION_STARTED",
                 PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 True,
                 True,
             ),
             (
                 "COMPUTATION_STARTED",
                 PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 True,
                 True,
             ),
             (
                 "COMPUTATION_COMPLETED",
                 PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 False,
                 False,
             ),
             (
                 "COMPUTATION_COMPLETED",
                 PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
                 True,
                 True,
             ),
             (
                 "AGGREGATION_STARTED",
-                PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE.previous_stage.completed_status,
+                PrivateComputationStageFlow.AGGREGATE,
                 True,
                 True,
             ),
             (
                 "AGGREGATION_STARTED",
                 PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 True,
                 True,
             ),
             (
                 "AGGREGATION_STARTED",
                 PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 True,
                 True,
             ),
             (
                 "AGGREGATION_STARTED",
                 PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 True,
                 True,
             ),
             (
                 "RESULT_READY",
                 PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 False,
                 False,
             ),
@@ -594,84 +591,84 @@ class TestPlInstanceRunner(TestCase):
             (
                 "CREATED",
                 PrivateComputationInstanceStatus.CREATED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.CREATED.next_stage,
                 True,
                 True,
             ),
             (
                 "ID_MATCH_STARTED",
-                PrivateComputationInstanceStatus.CREATED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH.previous_stage.completed_status,
+                PrivateComputationStageFlow.ID_MATCH,
                 False,
                 True,
             ),
             (
                 "ID_MATCH_STARTED",
                 PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 False,
                 False,
             ),
             (
                 "ID_MATCH_FAILED",
                 PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 True,
                 True,
             ),
             (
                 "ID_MATCH_COMPLETED",
                 PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.ID_MATCH.next_stage,
                 True,
                 True,
             ),
             (
                 "COMPUTATION_STARTED",
-                PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE.previous_stage.completed_status,
+                PrivateComputationStageFlow.COMPUTE,
                 False,
                 True,
             ),
             (
                 "COMPUTATION_STARTED",
                 PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 False,
                 False,
             ),
             (
                 "COMPUTATION_FAILED",
                 PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 True,
                 True,
             ),
             (
                 "COMPUTATION_COMPLETED",
                 PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
                 True,
                 True,
             ),
             (
                 "AGGREGATION_STARTED",
-                PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE.previous_stage.completed_status,
+                PrivateComputationStageFlow.AGGREGATE,
                 False,
                 True,
             ),
             (
                 "AGGREGATION_STARTED",
                 PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 False,
                 False,
             ),
             (
                 "AGGREGATION_FAILED",
                 PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 True,
                 True,
             ),
@@ -752,7 +749,7 @@ class TestPlInstanceRunner(TestCase):
         """
         return [
             (
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 [
                     "CREATED",
                     "CREATED",
@@ -764,7 +761,7 @@ class TestPlInstanceRunner(TestCase):
                 True,
             ),
             (
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 [
                     "CREATED",
                     "CREATED",
@@ -776,7 +773,7 @@ class TestPlInstanceRunner(TestCase):
                 False,
             ),
             (
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 [
                     "ID_MATCH_COMPLETED",
                     "ID_MATCH_COMPLETED",
@@ -788,7 +785,7 @@ class TestPlInstanceRunner(TestCase):
                 True,
             ),
             (
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 [
                     "ID_MATCH_COMPLETED",
                     "ID_MATCH_COMPLETED",
@@ -800,7 +797,7 @@ class TestPlInstanceRunner(TestCase):
                 False,
             ),
             (
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 [
                     "COMPUTATION_COMPLETED",
                     "COMPUTATION_COMPLETED",
@@ -812,7 +809,7 @@ class TestPlInstanceRunner(TestCase):
                 True,
             ),
             (
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 [
                     "COMPUTATION_COMPLETED",
                     "COMPUTATION_COMPLETED",
@@ -880,7 +877,7 @@ class TestPlInstanceRunner(TestCase):
         """
         return [
             (
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 [
                     "ID_MATCH_STARTED",
                     "ID_MATCH_STARTED",
@@ -898,7 +895,7 @@ class TestPlInstanceRunner(TestCase):
                 True,
             ),
             (
-                PrivateComputationLegacyStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
                 [
                     "ID_MATCH_STARTED",
                     "ID_MATCH_STARTED",
@@ -917,7 +914,7 @@ class TestPlInstanceRunner(TestCase):
                 False,
             ),
             (
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 [
                     "COMPUTATION_STARTED",
                     "COMPUTATION_STARTED",
@@ -935,7 +932,7 @@ class TestPlInstanceRunner(TestCase):
                 True,
             ),
             (
-                PrivateComputationLegacyStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
                 [
                     "COMPUTATION_STARTED",
                     "COMPUTATION_STARTED",
@@ -953,7 +950,7 @@ class TestPlInstanceRunner(TestCase):
                 False,
             ),
             (
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 [
                     "AGGREGATION_STARTED",
                     "AGGREGATION_STARTED",
@@ -971,7 +968,7 @@ class TestPlInstanceRunner(TestCase):
                 True,
             ),
             (
-                PrivateComputationLegacyStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
                 [
                     "AGGREGATION_STARTED",
                     "AGGREGATION_STARTED",
