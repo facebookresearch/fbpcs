@@ -36,6 +36,19 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
 
 # Create the pcs user
 RUN useradd -ms /bin/bash pcs
+
+# Copy emp_games and data_processing executables
+COPY --from=emp_games /usr/local/bin/. /usr/local/bin/.
+COPY --from=data_processing /usr/local/bin/. /usr/local/bin/.
+
+# Copy private_id executables: private-id-client and private-id-server
+COPY --from=private_id /opt/private-id/bin/private-id-client /usr/local/bin/private-id-client
+COPY --from=private_id /opt/private-id/bin/private-id-server /usr/local/bin/private-id-server
+
+# OneDocker likes to change permissions as 'pcs' in /usr/local/bin, set these to be owned by 'pcs' to prevent an error
+RUN chown pcs:pcs /usr/local/bin/*
+
+# Switch to pcs user
 USER pcs
 
 # installing fbpcp (onedocker)
@@ -46,14 +59,6 @@ RUN mkdir -p /home/pcs/src/
 WORKDIR /home/pcs/src
 RUN wget https://raw.githubusercontent.com/facebookresearch/fbpcp/main/onedocker/pip_requirements.txt && \
     python3.8 -m pip install --user -r pip_requirements.txt
-
-# Copy emp_games and data_processing executables
-COPY --from=emp_games /usr/local/bin/. /usr/local/bin/.
-COPY --from=data_processing /usr/local/bin/. /usr/local/bin/.
-
-# Copy private_id executables: private-id-client and private-id-server
-COPY --from=private_id /opt/private-id/bin/private-id-client /usr/local/bin/private-id-client
-COPY --from=private_id /opt/private-id/bin/private-id-server /usr/local/bin/private-id-server
 
 # Link all the binaries into /home/pcs/onedocker/package
 RUN mkdir -p /home/pcs/onedocker/package
