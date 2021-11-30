@@ -36,8 +36,8 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     UnionedPCInstance,
 )
-from fbpcs.private_computation.entity.private_computation_legacy_stage_flow import (
-    PrivateComputationLegacyStageFlow,
+from fbpcs.private_computation.entity.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.errors import (
@@ -66,10 +66,10 @@ from libfb.py.testutil import data_provider
 
 def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
     return [
-        (PrivateComputationLegacyStageFlow.ID_MATCH,),
-        (PrivateComputationLegacyStageFlow.COMPUTE,),
-        (PrivateComputationLegacyStageFlow.AGGREGATE,),
-        (PrivateComputationLegacyStageFlow.POST_PROCESSING_HANDLERS,),
+        (PrivateComputationStageFlow.ID_MATCH,),
+        (PrivateComputationStageFlow.COMPUTE,),
+        (PrivateComputationStageFlow.AGGREGATE,),
+        (PrivateComputationStageFlow.POST_PROCESSING_HANDLERS,),
         (PrivateComputationDecoupledStageFlow.ID_MATCH,),
         (PrivateComputationDecoupledStageFlow.DECOUPLED_ATTRIBUTION,),
         (PrivateComputationDecoupledStageFlow.DECOUPLED_AGGREGATION,),
@@ -303,8 +303,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )()
 
     def test_get_next_runnable_stage_completed_status(self) -> None:
-        flow = PrivateComputationLegacyStageFlow
-        status = PrivateComputationInstanceStatus.CREATED
+        flow = PrivateComputationStageFlow
+        status = flow.ID_MATCH.previous_stage.completed_status
 
         instance = self.create_sample_instance(status)
         instance._stage_flow_cls_name = flow.get_cls_name()
@@ -312,8 +312,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(flow.ID_MATCH, instance.get_next_runnable_stage())
 
     def test_get_next_runnable_stage_failed_status(self) -> None:
-        flow = PrivateComputationLegacyStageFlow
-        status = PrivateComputationInstanceStatus.ID_MATCHING_FAILED
+        flow = PrivateComputationStageFlow
+        status = flow.ID_MATCH.failed_status
 
         instance = self.create_sample_instance(status)
         instance._stage_flow_cls_name = flow.get_cls_name()
@@ -321,8 +321,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(flow.ID_MATCH, instance.get_next_runnable_stage())
 
     def test_get_next_runnable_stage_started_status(self) -> None:
-        flow = PrivateComputationLegacyStageFlow
-        status = PrivateComputationInstanceStatus.ID_MATCHING_STARTED
+        flow = PrivateComputationStageFlow
+        status = flow.ID_MATCH.started_status
 
         instance = self.create_sample_instance(status)
         instance._stage_flow_cls_name = flow.get_cls_name()
@@ -330,8 +330,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(None, instance.get_next_runnable_stage())
 
     def test_get_next_runnable_stage_nothing_left(self) -> None:
-        flow = PrivateComputationLegacyStageFlow
-        status = PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED
+        flow = PrivateComputationStageFlow
+        status = flow.get_last_stage().completed_status
 
         instance = self.create_sample_instance(status)
         instance._stage_flow_cls_name = flow.get_cls_name()
@@ -341,7 +341,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @data_provider(_get_valid_stages_data)
     def test_run_stage_correct_stage_order(
         self,
-        stage: PrivateComputationLegacyStageFlow,
+        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that run_stage runs stage_svc when the stage_svc is the next stage in the sequence
@@ -365,7 +365,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @data_provider(_get_valid_stages_data)
     def test_run_stage_status_already_started(
         self,
-        stage: PrivateComputationLegacyStageFlow,
+        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that run_stage does not run stage_svc when the instance status is already started
@@ -386,7 +386,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @data_provider(_get_valid_stages_data)
     def test_run_stage_out_of_order_with_dry_run(
         self,
-        stage: PrivateComputationLegacyStageFlow,
+        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that run_stage runs stage_svc out of order when dry run is passed
@@ -409,7 +409,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @data_provider(_get_valid_stages_data)
     def test_run_stage_out_of_order_without_dry_run(
         self,
-        stage: PrivateComputationLegacyStageFlow,
+        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that run_stage does not run stage_svc out of order when dry run is not passed
@@ -432,7 +432,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @data_provider(_get_valid_stages_data)
     def test_run_stage_partner_no_server_ips(
         self,
-        stage: PrivateComputationLegacyStageFlow,
+        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         if it's a joint stage (partner requires server ips) but partner doesn't provide server ips, value error is thrown.
@@ -463,7 +463,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @data_provider(_get_valid_stages_data)
     def test_run_stage_fails(
         self,
-        stage: PrivateComputationLegacyStageFlow,
+        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that statuses are set properly when a run fails
