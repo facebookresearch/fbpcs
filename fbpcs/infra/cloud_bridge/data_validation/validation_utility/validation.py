@@ -20,6 +20,7 @@ from expected_fields import (
 
 HEADER_ROW_OFFSET = 1
 MAX_ERROR_LINES = 100
+VALID_LINE_ENDING = re.compile(r".*(\S|\S\n)$")
 
 
 class ValidationState:
@@ -27,7 +28,7 @@ class ValidationState:
         self.total_rows = 0
         self.valid_rows = 0
         self.error_rows = 0
-        self.header_validation_messages = []
+        self.validation_messages = []
         self.lines_missing_required_field = {}
         self.lines_missing_all_required_fields = []
         self.lines_incorrect_field_format = {}
@@ -197,12 +198,16 @@ def is_header_row_valid(line_string: str, validation_state: ValidationState) -> 
     return True
 
 
+def is_line_ending_valid(line_string: str) -> bool:
+    return VALID_LINE_ENDING.match(line_string) is not None
+
+
 def generate_report(validation_state: ValidationState) -> str:
     report = ["Validation Summary:"]
     report.append(f"Total rows: {validation_state.total_rows}")
     report.append(f"Valid rows: {validation_state.valid_rows}")
     report.append(f"Rows with errors: {validation_state.error_rows}")
-    report.extend(validation_state.header_validation_messages)
+    report.extend(validation_state.validation_messages)
     report.extend(lines_missing_report(validation_state))
     report.extend(lines_incorrect_format_report(validation_state))
     return "\n".join(report) + "\n"
@@ -212,8 +217,25 @@ def generate_from_body(body: StreamingBody) -> str:
     validation_state = ValidationState()
     valid_header_row = None
 
-    for line in body.iter_lines():
+    for line in body.iter_lines(keepends=True):
         line_string = line.decode("utf-8")
+        valid_line_ending = is_line_ending_valid(line_string)
+        if not valid_line_ending:
+            skip_row_processing_offset = 1 if valid_header_row else 0
+            line_number = (
+                validation_state.total_rows +
+                HEADER_ROW_OFFSET +
+                skip_row_processing_offset
+            )
+            validation_state.validation_messages.extend(
+                [
+                    "ERROR - The CSV file is not valid.",
+                    "Lines must end with a newline character: \\n",
+                    f"The error was detected on line number: {line_number}",
+                    "Validation processing stopped.",
+                ]
+            )
+            break
         if valid_header_row:
             reader = csv.DictReader([valid_header_row, line_string])
             for parsed_line in reader:
@@ -222,7 +244,7 @@ def generate_from_body(body: StreamingBody) -> str:
         else:
             header_row_valid = is_header_row_valid(line_string, validation_state)
             if not header_row_valid:
-                validation_state.header_validation_messages.extend(
+                validation_state.validation_messages.extend(
                     [
                         "ERROR - The header row is not valid.",
                         "1 or more of the required fields is missing.",
