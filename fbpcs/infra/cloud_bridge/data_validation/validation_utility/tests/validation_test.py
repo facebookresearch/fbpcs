@@ -25,9 +25,9 @@ class TestValidation(TestCase):
         body = Mock("body")
         body.iter_lines = self.mock_lines_helper(
             [
-                "timestamp,currency_type,conversion_value,event_type,email,action_source,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id,browser_name,device_os,device_os_version,data_source_id",
-                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456,Chrome,Mac OS X,10.13.6,123456",
-                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,abcd:1001::,Mozilla,fb.1.1558571054389.1098115397,123456,Mozella,Mac OS X,10.13.6,123456",
+                "timestamp,currency_type,conversion_value,event_type,email,action_source,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id,browser_name,device_os,device_os_version,data_source_id\n",
+                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456,Chrome,Mac OS X,10.13.6,123456\n",
+                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,abcd:1001::,Mozilla,fb.1.1558571054389.1098115397,123456,Mozella,Mac OS X,10.13.6,123456\n",
             ]
         )
         result = generate_from_body(body)
@@ -38,7 +38,7 @@ class TestValidation(TestCase):
         body = Mock("body")
         body.iter_lines = self.mock_lines_helper(
             [
-                "id_,conversion_timestamp,conversion_value,conversion_metadata",
+                "id_,conversion_timestamp,conversion_value,conversion_metadata\n",
                 "abcd/1234+WXYZ=,1631204619,2000,0",
             ]
         )
@@ -50,10 +50,10 @@ class TestValidation(TestCase):
         body = Mock("body")
         body.iter_lines = self.mock_lines_helper(
             [
-                "id_,event_timestamp,value",
-                "abcd/1234+WXYZ=,1631204619,2000",
-                "abcd/1234+WXYZ=,1631204619,2000",
-                "abcd/1234+WXYZ=,1631204619,2000",
+                "id_,event_timestamp,value\n",
+                "abcd/1234+WXYZ=,1631204619,2000\n",
+                "abcd/1234+WXYZ=,1631204619,2000\n",
+                "abcd/1234+WXYZ=,1631204619,2000\n",
             ]
         )
         result = generate_from_body(body)
@@ -133,12 +133,12 @@ class TestValidation(TestCase):
         body = Mock("body")
         body.iter_lines = self.mock_lines_helper(
             [
-                "timestamp,currency_type,conversion_value,event_type,email,action_source,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id",
-                ",,,,,,,,,,,,,",
-                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456",
-                ",,,,,,,,,,,,,",
-                ",,,,,,,,,,,,,",
-                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456",
+                "timestamp,currency_type,conversion_value,event_type,email,action_source,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id\n",
+                ",,,,,,,,,,,,,\n",
+                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456\n",
+                ",,,,,,,,,,,,,\n",
+                ",,,,,,,,,,,,,\n",
+                "1631204619,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456\n",
             ]
         )
         result = generate_from_body(body)
@@ -150,12 +150,12 @@ class TestValidation(TestCase):
         body = Mock("body")
         body.iter_lines = self.mock_lines_helper(
             [
-                "timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id,browser_name,device_os,device_os_version,data_source_id",
-                ",usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc",
-                "1631204619,,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc",
-                "1631204619,usd,,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc",
-                "1631204619,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc",
-                "1631204619,usd,5,Purchase,,website,,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc",
+                "timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id,browser_name,device_os,device_os_version,data_source_id\n",
+                ",usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc\n",
+                "1631204619,,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc\n",
+                "1631204619,usd,,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc\n",
+                "1631204619,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc\n",
+                "1631204619,usd,5,Purchase,,website,,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc\n",
                 "1631204619,usd,5,,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,19191234567,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,bat.man.123,Chrome,Mac OS X,10.13.6,aaaaabbbbccccc",
             ]
         )
@@ -329,6 +329,53 @@ class TestValidation(TestCase):
             result, "Line numbers with incorrect 'client_ip_address' format: 3,9"
         )
         self.assertRegex(result, "Line numbers with incorrect 'login_id' format: 4,9")
+
+    def test_validate_the_line_ending_cannot_be_in_dos_format(self):
+        body = Mock("body")
+        body.iter_lines = self.mock_lines_helper(
+            [
+                "timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id\r\n",
+                "1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456\r\n",
+            ]
+        )
+        result = generate_from_body(body)
+
+        self.assertRegex(result, "ERROR - The CSV file is not valid.")
+        self.assertRegex(result, r"Lines must end with a newline character: \\n")
+        self.assertRegex(result, "The error was detected on line number: 1")
+        self.assertRegex(result, "Validation processing stopped.")
+
+    def test_validate_the_line_ending_cannot_contain_a_space(self):
+        body = Mock("body")
+        body.iter_lines = self.mock_lines_helper(
+            [
+                "timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id\n",
+                "1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456 \n",
+            ]
+        )
+        result = generate_from_body(body)
+
+        self.assertRegex(result, "ERROR - The CSV file is not valid.")
+        self.assertRegex(result, r"Lines must end with a newline character: \\n")
+        self.assertRegex(result, "The error was detected on line number: 2")
+        self.assertRegex(result, "Validation processing stopped.")
+
+    def test_validate_the_line_ending_cannot_be_a_carriage_return(self):
+        body = Mock("body")
+        body.iter_lines = self.mock_lines_helper(
+            [
+                "timestamp,currency_type,conversion_value,event_type,email,action_source,device_id,year,month,day,hour,phone,client_ip_address,client_user_agent,click_id,login_id\n",
+                "1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456\n",
+                "1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456\r",
+                "1631204621,usd,5,Purchase,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,website,bbbbbbbbbbbbbbbb2222222222222222,2021,09,09,16,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111,10.0.0.1,Mozilla,fb.1.1558571054389.1098115397,123456",
+            ]
+        )
+        result = generate_from_body(body)
+
+        self.assertRegex(result, "ERROR - The CSV file is not valid.")
+        self.assertRegex(result, r"Lines must end with a newline character: \\n")
+        self.assertRegex(result, "The error was detected on line number: 3")
+        self.assertRegex(result, "Validation processing stopped.")
 
     def mock_lines_helper(self, lines: List[str]) -> Mock:
         encoded_lines = list(map(lambda line: line.encode("utf-8"), lines))
