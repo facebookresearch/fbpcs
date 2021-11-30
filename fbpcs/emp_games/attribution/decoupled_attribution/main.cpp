@@ -52,36 +52,56 @@ int main(int argc, char* argv[]) {
 
       XLOG(INFO)
           << "Starting attribution as Publisher, will wait for Partner...";
-
-      aggregation::private_attribution::startAttributionAppsForShardedFiles<
-          aggregation::private_attribution::PUBLISHER,
-          fbpcf::Visibility::Xor>(
-          inputFilenames,
-          outputFilenames,
-          concurrency,
-          FLAGS_server_ip,
-          FLAGS_port,
-          FLAGS_attribution_rules);
+      if (FLAGS_use_xor_encryption) {
+        aggregation::private_attribution::startAttributionAppsForShardedFiles<
+            aggregation::private_attribution::PUBLISHER,
+            fbpcf::Visibility::Xor>(
+            inputFilenames,
+            outputFilenames,
+            concurrency,
+            FLAGS_server_ip,
+            FLAGS_port,
+            FLAGS_attribution_rules);
+      } else {
+        aggregation::private_attribution::startAttributionAppsForShardedFiles<
+            aggregation::private_attribution::PUBLISHER,
+            fbpcf::Visibility::Public>(
+            inputFilenames,
+            outputFilenames,
+            concurrency,
+            FLAGS_server_ip,
+            FLAGS_port,
+            FLAGS_attribution_rules);
+      }
 
     } else if (FLAGS_party == static_cast<int>(fbpcf::Party::Bob)) {
       XLOG(INFO)
           << "Starting attribution as Partner, will wait for Publisher...";
-
-      aggregation::private_attribution::startAttributionAppsForShardedFiles<
-          aggregation::private_attribution::PARTNER,
-          fbpcf::Visibility::Xor>(
-          inputFilenames,
-          outputFilenames,
-          concurrency,
-          FLAGS_server_ip,
-          FLAGS_port,
-          FLAGS_attribution_rules);
+      if (FLAGS_use_xor_encryption) {
+        aggregation::private_attribution::startAttributionAppsForShardedFiles<
+            aggregation::private_attribution::PARTNER,
+            fbpcf::Visibility::Xor>(
+            inputFilenames,
+            outputFilenames,
+            concurrency,
+            FLAGS_server_ip,
+            FLAGS_port,
+            FLAGS_attribution_rules);
+      } else {
+        aggregation::private_attribution::startAttributionAppsForShardedFiles<
+            aggregation::private_attribution::PARTNER,
+            fbpcf::Visibility::Public>(
+            inputFilenames,
+            outputFilenames,
+            concurrency,
+            FLAGS_server_ip,
+            FLAGS_port,
+            FLAGS_attribution_rules);
+      }
 
     } else {
       XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
     }
-
-
   } catch (const std::exception& e) {
     XLOG(ERR) << "Error: Exception caught in Attribution run.\n \t error msg: "
               << e.what() << "\n \t input directory: " << FLAGS_input_base_path;
