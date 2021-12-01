@@ -24,6 +24,9 @@ from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
+    PrivateComputationDecoupledStageFlow,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -137,11 +140,10 @@ class PrivateComputationService:
         padding_size: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
         fail_fast: bool = False,
-        stage_flow_cls: Type[
-            PrivateComputationBaseStageFlow
-        ] = PrivateComputationStageFlow,
+        stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
+
         instance = PrivateComputationInstance(
             instance_id=instance_id,
             role=role,
@@ -175,7 +177,12 @@ class PrivateComputationService:
                 optional=k_anonymity_threshold, default=DEFAULT_K_ANONYMITY_THRESHOLD
             ),
             fail_fast=fail_fast,
-            _stage_flow_cls_name=stage_flow_cls.get_cls_name(),
+            _stage_flow_cls_name=unwrap_or_default(
+                optional=stage_flow_cls,
+                default=PrivateComputationDecoupledStageFlow
+                if game_type is PrivateComputationGameType.ATTRIBUTION
+                else PrivateComputationStageFlow,
+            ).get_cls_name(),
         )
 
         self.instance_repository.create(instance)
