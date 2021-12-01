@@ -21,7 +21,7 @@ from libfb.py.asyncio.unittest import AsyncMock
 from libfb.py.testutil import data_provider
 
 
-CONFIG = {"s3_coordination_file": "ip_config"}
+CONFIG = {}
 
 
 class TestPIDShardStage(unittest.TestCase):
