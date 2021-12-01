@@ -48,8 +48,7 @@ from fbpcs.private_computation.service.private_computation import (
 )
 from fbpcs.utils.config_yaml import reflect
 
-# Added an is_decoupled argument to create_instance. This argument will act as a switch
-# to let us know to run the new decoupled flow when true else legacy flow.
+
 def create_instance(
     config: Dict[str, Any],
     instance_id: str,
@@ -76,12 +75,6 @@ def create_instance(
         config["pid"],
         config.get("post_processing_handlers", {}),
     )
-
-    if not stage_flow_cls:
-        if game_type is PrivateComputationGameType.ATTRIBUTION:
-            stage_flow_cls = PrivateComputationDecoupledStageFlow
-        else:
-            stage_flow_cls = PrivateComputationStageFlow
 
     instance = pc_service.create_instance(
         instance_id=instance_id,
