@@ -65,6 +65,7 @@ class PLGraphAPIClient:
         self._check_err(r, "getting fb instance")
         return r
 
+    # TODO rename to create_pl_instance since we now have a create_pa_instance function
     def create_instance(
         self, study_id: str, breakdown_key: Dict[str, str]
     ) -> requests.Response:
@@ -73,6 +74,20 @@ class PLGraphAPIClient:
         r = requests.post(f"{URL}/{study_id}/instances", params=params)
         self._check_err(r, "creating fb instance")
         return r
+
+    def create_pa_instance(
+        self, dataset_id: str, attribution_rule: str, start_date: str, end_date: str, num_containers: str, result_type: str
+    ) -> requests.Response:
+        params = self.params.copy()
+        params["attribution_rule"] = attribution_rule
+        params["start_date"] = start_date
+        params["end_date"] = end_date
+        params["num_containers"] = num_containers
+        params["result_type"] = result_type
+        r = requests.post(f"{URL}/{dataset_id}/instance", params=params)
+        self._check_err(r, "creating fb pa instance")
+        return r
+
 
     def invoke_operation(self, instance_id: str, operation: str) -> None:
         params = self.params.copy()
@@ -88,6 +103,13 @@ class PLGraphAPIClient:
         params["fields"] = ",".join(fields)
         r = requests.get(f"{URL}/{study_id}", params=params)
         self._check_err(r, "getting study data")
+        return r
+
+    def get_attribution_dataset_info(self, dataset_id: str, fields: List[str]) -> requests.Response:
+        params = self.params.copy()
+        params["fields"] = ",".join(fields)
+        r = requests.get(f"{URL}/{dataset_id}", params=params)
+        self._check_err(r, "getting dataset information")
         return r
 
     def _check_err(self, r: requests.Response, msg: str) -> None:
