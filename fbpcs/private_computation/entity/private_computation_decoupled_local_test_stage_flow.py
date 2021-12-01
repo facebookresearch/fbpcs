@@ -40,7 +40,7 @@ class PrivateComputationDecoupledLocalTestStageFlow(PrivateComputationBaseStageF
     NOTE:
     1. This is enum contains the flow - ID MATCH -> PREPARE -> ATTRIBUTION -> AGGREGATION -> SHARD AGGREGATION.
     2. The order in which the enum members appear is the order in which the stages are intended
-    to be ran. The _order_ variable is used to ensure member order is consistent (class attribute, removed during class creation).
+    to run. The _order_ variable is used to ensure member order is consistent (class attribute, removed during class creation).
     An exception is raised at runtime if _order_ is inconsistent with the actual member order.
     3. This flow currently should only be used for PA.
     """

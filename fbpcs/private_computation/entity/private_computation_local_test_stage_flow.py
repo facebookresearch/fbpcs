@@ -38,7 +38,7 @@ class PrivateComputationLocalTestStageFlow(PrivateComputationBaseStageFlow):
     It also provides methods to get information about the next or previous stage.
 
     NOTE: The order in which the enum members appear is the order in which the stages are intended
-    to be ran. The _order_ variable is used to ensure member order is consistent (class attribute, removed during class creation).
+    to run. The _order_ variable is used to ensure member order is consistent (class attribute, removed during class creation).
     An exception is raised at runtime if _order_ is inconsistent with the actual member order.
     """
 
