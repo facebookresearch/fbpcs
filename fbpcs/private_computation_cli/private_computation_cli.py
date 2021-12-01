@@ -24,6 +24,8 @@ Usage:
     pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
+    pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
+
 
 Options:
     -h --help                Show this help
@@ -61,6 +63,7 @@ from fbpcs.private_computation.entity.private_computation_local_test_stage_flow 
 from fbpcs.private_computation.entity.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
+from fbpcs.private_computation.pc_attribution_runner import get_attribution_dataset_info
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     cancel_current_stage,
     create_instance,
@@ -94,6 +97,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "run_study": bool,
             "cancel_current_stage": bool,
             "print_instance": bool,
+            "get_attribution_dataset_info": bool,
             "<instance_id>": schema.Or(None, str),
             "<instance_ids>": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "<study_id>": schema.Or(None, str),
@@ -115,6 +119,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                 ),
             ),
             "--objective_ids": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
+            "--dataset_id": schema.Or(None, str),
             "--input_path": schema.Or(None, str),
             "--input_paths": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--output_dir": schema.Or(None, str),
@@ -282,6 +287,12 @@ def main(argv: Optional[List[str]] = None) -> None:
             config=config,
             instance_id=instance_id,
             logger=logger,
+        )
+    elif arguments["get_attribution_dataset_info"]:
+        print(
+            get_attribution_dataset_info(
+                config=config, dataset_id=arguments["--dataset_id"], logger=logger
+            )
         )
 
 
