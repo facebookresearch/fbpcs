@@ -51,9 +51,9 @@ class TestPlInstanceRunner(TestCase):
         self.instance_id = "123"
 
     @patch(
-        "fbpcs.pl_coordinator.pl_instance_runner.PrivateLiftCalcInstance.wait_valid_status"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_valid_status"
     )
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_ready_for_stage(self, mock_get_instance, mock_wait_valid_status) -> None:
         for (
             publisher_status,
@@ -87,9 +87,9 @@ class TestPlInstanceRunner(TestCase):
                 )
 
     @patch(
-        "fbpcs.pl_coordinator.pl_instance_runner.PrivateLiftCalcInstance.wait_valid_status"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_valid_status"
     )
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_get_valid_stage(self, mock_get_instance, mock_wait_valid_status) -> None:
         for (
             publisher_status,
@@ -117,9 +117,9 @@ class TestPlInstanceRunner(TestCase):
                 self.assertEqual(valid_stage, stage)
 
     @patch(
-        "fbpcs.pl_coordinator.pl_instance_runner.PrivateLiftCalcInstance.wait_valid_status"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_valid_status"
     )
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_should_invoke(self, mock_get_instance, mock_wait_valid_status) -> None:
         for (
             publisher_status,
@@ -158,14 +158,14 @@ class TestPlInstanceRunner(TestCase):
                     partner_should_invoke_expected, partner_should_invoke_actual
                 )
 
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.run_stage")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.run_stage")
     @patch(
-        "fbpcs.pl_coordinator.pl_instance_runner.PrivateLiftCalcInstance.wait_stage_start"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_stage_start"
     )
     @patch(
         "fbpcs.pl_coordinator.pl_instance_runner.PLInstanceRunner.wait_stage_complete"
     )
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_run_stage(
         self,
         mock_get_instance,
@@ -220,8 +220,8 @@ class TestPlInstanceRunner(TestCase):
                     else:
                         mock_run_stage.assert_not_called()
 
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.sleep")
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    @patch("fbpcs.pl_coordinator.pc_calc_instance.sleep")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_wait_stage_start(self, mock_get_instance, mock_sleep) -> None:
         for (
             stage,
@@ -247,9 +247,9 @@ class TestPlInstanceRunner(TestCase):
                 else:
                     runner.publisher.wait_stage_start(stage)
 
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.cancel_current_stage")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.cancel_current_stage")
     @patch("fbpcs.pl_coordinator.pl_instance_runner.sleep")
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_wait_stage_completed(
         self, mock_get_instance, mock_sleep, mock_cancel_current_stage
     ) -> None:
@@ -279,8 +279,8 @@ class TestPlInstanceRunner(TestCase):
                 else:
                     runner.wait_stage_complete(stage)
 
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.sleep")
-    @patch("fbpcs.pl_coordinator.pl_instance_runner.get_instance")
+    @patch("fbpcs.pl_coordinator.pc_calc_instance.sleep")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_wait_until_not_timeout(self, mock_get_instance, mock_sleep) -> None:
         stage = PrivateComputationStageFlow.PREPARE
         self.mock_graph_api_client.invoke_operation.call_count = 0

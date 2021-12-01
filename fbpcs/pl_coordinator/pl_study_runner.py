@@ -12,6 +12,9 @@ import time
 from typing import Any, Dict, List, Optional
 from typing import Type
 
+from fbpcs.pl_coordinator.constants import (
+    MAX_NUM_INSTANCES,
+)
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     PLGraphAPIClient,
     GraphAPIGenericException,
@@ -19,7 +22,6 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import (
 )
 from fbpcs.pl_coordinator.pl_instance_runner import (
     run_instances,
-    MAX_NUM_INSTANCES,
 )
 from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
