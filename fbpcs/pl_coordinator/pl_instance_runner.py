@@ -5,32 +5,33 @@
 # LICENSE file in the root directory of this source tree.
 
 
-import json
 import logging
 from multiprocessing import Process
 from time import sleep, time
 from typing import Any, Dict, List, Optional, Type
 
-from fbpcs.pl_coordinator.pl_graphapi_utils import (
-    GraphAPIGenericException,
-    PLGraphAPIClient,
-    GRAPHAPI_INSTANCE_STATUSES,
+from fbpcs.pl_coordinator.constants import (
+    MIN_TRIES,
+    MAX_TRIES,
+    MIN_NUM_INSTANCES,
+    MAX_NUM_INSTANCES,
+    PROCESS_WAIT,
+    INSTANCE_SLA,
+    POLL_INTERVAL,
+    WAIT_VALID_STAGE_TIMEOUT,
+    WAIT_VALID_STATUS_TIMEOUT,
+    RETRY_INTERVAL,
+    CANCEL_STAGE_TIMEOUT,
 )
+from fbpcs.pl_coordinator.exceptions import PLInstanceCalculationException
+from fbpcs.pl_coordinator.pc_partner_instance import PrivateLiftPartnerInstance
+from fbpcs.pl_coordinator.pc_publisher_instance import PrivateLiftPublisherInstance
+from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
 from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
-    PrivateComputationRole,
-)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
-)
-from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    cancel_current_stage,
-    create_instance,
-    get_instance,
-    run_stage,
 )
 
 
@@ -41,32 +42,6 @@ class LoggerAdapter(logging.LoggerAdapter):
 
     def process(self, msg, kwargs):
         return "[%s] %s" % (self.prefix, msg), kwargs
-
-
-INVALID_STATUS_LIST: List[PrivateComputationInstanceStatus] = [
-    PrivateComputationInstanceStatus.UNKNOWN,
-    PrivateComputationInstanceStatus.PROCESSING_REQUEST,
-    PrivateComputationInstanceStatus.TIMEOUT,
-]
-
-POLL_INTERVAL = 60
-WAIT_VALID_STATUS_TIMEOUT = 600
-WAIT_VALID_STAGE_TIMEOUT = 300
-OPERATION_REQUEST_TIMEOUT = 1200
-CANCEL_STAGE_TIMEOUT: int = POLL_INTERVAL * 5
-
-MIN_TRIES = 1
-MAX_TRIES = 2
-RETRY_INTERVAL = 60
-
-MIN_NUM_INSTANCES = 1
-MAX_NUM_INSTANCES = 5
-PROCESS_WAIT = 1  # interval between starting processes.
-INSTANCE_SLA = 14400  # 2 hr instance sla, 2 tries per stage, total 4 hrs.
-
-
-class PLInstanceCalculationException(RuntimeError):
-    pass
 
 
 def run_instance(
@@ -145,235 +120,6 @@ def run_instances(
         sleep(PROCESS_WAIT)
     for process in processes:
         process.join(INSTANCE_SLA)
-
-
-class PrivateLiftCalcInstance:
-    """
-    Representation of a publisher or partner instance being calculated.
-    """
-
-    def __init__(
-        self, instance_id: str, logger: logging.Logger, role: PrivateComputationRole
-    ) -> None:
-        self.instance_id: str = instance_id
-        self.logger: logging.Logger = logger
-        self.role: PrivateComputationRole = role
-        self.status: PrivateComputationInstanceStatus = (
-            PrivateComputationInstanceStatus.UNKNOWN
-        )
-
-    def update_instance(self) -> None:
-        raise NotImplementedError(
-            "This is a parent method to be overrided and should not be called."
-        )
-
-    def status_ready(self, status: PrivateComputationInstanceStatus) -> bool:
-        self.logger.info(f"{self.role} instance status: {self.status}.")
-        return self.status is status
-
-    def wait_valid_status(
-        self,
-        timeout: int,
-    ) -> None:
-        self.update_instance()
-        if self.status in INVALID_STATUS_LIST:
-            self.logger.info(
-                f"{self.role} instance status {self.status} invalid for calculation."
-            )
-            self.logger.info(f"Poll {self.role} instance expecting valid status.")
-            if timeout <= 0:
-                raise ValueError(f"Timeout must be > 0, not {timeout}")
-            start_time = time()
-            while time() < start_time + timeout:
-                self.update_instance()
-                self.logger.info(f"{self.role} instance status: {self.status}.")
-                if self.status not in INVALID_STATUS_LIST:
-                    self.logger.info(
-                        f"{self.role} instance has valid status: {self.status}."
-                    )
-                    return
-                sleep(POLL_INTERVAL)
-            raise PLInstanceCalculationException(
-                f"Poll {self.role} status timed out after {timeout}s expecting valid status."
-            )
-
-    def wait_instance_status(
-        self,
-        status: PrivateComputationInstanceStatus,
-        fail_status: PrivateComputationInstanceStatus,
-        timeout: int,
-    ) -> None:
-        self.logger.info(f"Poll {self.role} instance expecting status: {status}.")
-        if timeout <= 0:
-            raise ValueError(f"Timeout must be > 0, not {timeout}")
-        start_time = time()
-        while time() < start_time + timeout:
-            self.update_instance()
-            if self.status_ready(status):
-                self.logger.info(f"{self.role} instance has expected status: {status}.")
-                return
-            if status not in [
-                fail_status,
-                PrivateComputationInstanceStatus.TIMEOUT,
-            ] and self.status in [
-                fail_status,
-                PrivateComputationInstanceStatus.TIMEOUT,
-            ]:
-                raise PLInstanceCalculationException(
-                    f"{self.role} failed with status {self.status}. Expecting status {status}."
-                )
-            sleep(POLL_INTERVAL)
-        raise PLInstanceCalculationException(
-            f"Poll {self.role} status timed out after {timeout}s expecting status: {status}."
-        )
-
-    def ready_for_stage(self, stage: PrivateComputationBaseStageFlow) -> bool:
-        # This function checks whether the instance is ready for the publisher-partner
-        # <stage> (PLInstanceCalculation.run_stage(<stage>)). Suppose user first
-        # invokes publisher <stage> through GraphAPI, now publisher status is
-        # '<STAGE>_STARTED`. Then, user runs pl-coordinator 'run_instance' command,
-        # we would want to still allow <stage> to run.
-        self.update_instance()
-        previous_stage = stage.previous_stage
-        return self.status in [
-            previous_stage.completed_status if previous_stage else None,
-            stage.started_status,
-            stage.failed_status,
-        ]
-
-    def get_valid_stage(
-        self, stage_flow: Type[PrivateComputationBaseStageFlow]
-    ) -> Optional[PrivateComputationBaseStageFlow]:
-        if not self.is_finished():
-            for stage in list(stage_flow):
-                if self.ready_for_stage(stage):
-                    return stage
-        return None
-
-    def should_invoke_operation(self, stage: PrivateComputationBaseStageFlow) -> bool:
-        # Once the the publisher-partner <stage> is called, this function
-        # determines if <stage> operation should be invoked at publisher/partner end. If
-        # the status is already <STAGE>_STARTED, then there's no need to invoke it
-        # a second time.
-        return self.ready_for_stage(stage) and self.status is not stage.started_status
-
-    def wait_stage_start(self, stage: PrivateComputationBaseStageFlow) -> None:
-        self.wait_instance_status(
-            stage.started_status,
-            stage.failed_status,
-            OPERATION_REQUEST_TIMEOUT,
-        )
-
-    def is_finished(self):
-        finished_status = GRAPHAPI_INSTANCE_STATUSES["RESULT_READY"]
-        return self.status is finished_status
-
-
-class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
-    """
-    Representation of a publisher instance.
-    """
-
-    def __init__(
-        self, instance_id: str, logger: logging.Logger, client: PLGraphAPIClient
-    ) -> None:
-        super().__init__(instance_id, logger, PrivateComputationRole.PUBLISHER)
-        self.client: PLGraphAPIClient = client
-        self.server_ips: Optional[List[str]] = None
-        self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
-
-    def update_instance(self) -> None:
-        response = json.loads(self.client.get_instance(self.instance_id).text)
-        status = response.get("status")
-        try:
-            self.status = GRAPHAPI_INSTANCE_STATUSES[status]
-        except KeyError:
-            raise GraphAPIGenericException(
-                f"Error getting Publisher instance status: Unexpected value {status}."
-            )
-        self.server_ips = response.get("server_ips")
-
-    def wait_valid_status(
-        self,
-        timeout: int,
-    ) -> None:
-        self.update_instance()
-        if self.status is PrivateComputationInstanceStatus.TIMEOUT:
-            self.client.invoke_operation(self.instance_id, "NEXT")
-        super().wait_valid_status(timeout)
-
-    def status_ready(self, status: PrivateComputationInstanceStatus) -> bool:
-        self.logger.info(
-            f"{self.role} instance status: {self.status}, server ips: {self.server_ips}."
-        )
-        return self.status is status and self.server_ips is not None
-
-    def run_stage(self, stage: PrivateComputationBaseStageFlow) -> None:
-        if self.should_invoke_operation(stage):
-            self.client.invoke_operation(self.instance_id, "NEXT")
-
-
-class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
-    """
-    Representation of a partner instance.
-    """
-
-    def __init__(
-        self,
-        instance_id: str,
-        config: Dict[str, Any],
-        input_path: str,
-        num_shards: int,
-        logger: logging.Logger,
-    ) -> None:
-        super().__init__(instance_id, logger, PrivateComputationRole.PARTNER)
-        self.config: Dict[str, Any] = config
-        self.input_path: str = input_path
-        self.output_dir: str = self.get_output_dir_from_input_path(input_path)
-        try:
-            self.status = get_instance(
-                self.config, self.instance_id, self.logger
-            ).status
-        except RuntimeError:
-            self.logger.info(f"Creating new partner instance {self.instance_id}")
-            self.status = create_instance(
-                config=self.config,
-                instance_id=self.instance_id,
-                role=PrivateComputationRole.PARTNER,
-                game_type=PrivateComputationGameType.LIFT,
-                logger=self.logger,
-                input_path=self.input_path,
-                output_dir=self.output_dir,
-                num_pid_containers=num_shards,
-                num_mpc_containers=num_shards,
-            ).status
-        self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
-
-    def update_instance(self) -> None:
-        self.status = get_instance(self.config, self.instance_id, self.logger).status
-
-    def cancel_current_stage(self) -> None:
-        cancel_current_stage(self.config, self.instance_id, self.logger)
-
-    def get_output_dir_from_input_path(self, input_path: str) -> str:
-        return input_path[: input_path.rfind("/")]
-
-    def run_stage(
-        self,
-        stage: PrivateComputationBaseStageFlow,
-        server_ips: Optional[List[str]] = None,
-    ) -> None:
-        if self.should_invoke_operation(stage):
-            try:
-                run_stage(
-                    config=self.config,
-                    instance_id=self.instance_id,
-                    stage=stage,
-                    logger=self.logger,
-                    server_ips=server_ips,
-                )
-            except Exception as error:
-                self.logger.exception(f"Error running partner {stage.name} {error}")
 
 
 class PLInstanceRunner:
