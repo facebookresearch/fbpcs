@@ -20,7 +20,7 @@ from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
 
-CONFIG = {"s3_coordination_file": "ip_config"}
+CONFIG = {}
 
 
 class TestPIDPrepareStage(unittest.TestCase):
