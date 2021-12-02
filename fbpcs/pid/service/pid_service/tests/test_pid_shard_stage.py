@@ -21,16 +21,12 @@ from libfb.py.asyncio.unittest import AsyncMock
 from libfb.py.testutil import data_provider
 
 
-CONFIG = {}
-
-
 class TestPIDShardStage(unittest.TestCase):
     @to_sync
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
     async def test_ready(self, mock_instance_repo):
         stage = PIDShardStage(
             stage=UnionPIDStage.PUBLISHER_SHARD,
-            config=CONFIG,
             instance_repository=mock_instance_repo,
             storage_svc="STORAGE",
             onedocker_svc="ONEDOCKER",
@@ -84,7 +80,6 @@ class TestPIDShardStage(unittest.TestCase):
         )
         stage = PIDShardStage(
             stage=UnionPIDStage.PUBLISHER_SHARD,
-            config=CONFIG,
             instance_repository=mock_instance_repo,
             storage_svc=mock_storage_svc,
             onedocker_svc=mock_onedocker_svc,
@@ -103,7 +98,6 @@ class TestPIDShardStage(unittest.TestCase):
             mock_fe.return_value = True
             stage = PIDShardStage(
                 stage=UnionPIDStage.PUBLISHER_SHARD,
-                config=CONFIG,
                 instance_repository=mock_instance_repo,
                 storage_svc=mock_storage_svc,
                 onedocker_svc=mock_onedocker_svc,
@@ -144,7 +138,6 @@ class TestPIDShardStage(unittest.TestCase):
                 stage_input.input_paths = ["in1", "in2"]
                 stage = PIDShardStage(
                     stage=UnionPIDStage.PUBLISHER_SHARD,
-                    config=CONFIG,
                     instance_repository=mock_instance_repo,
                     storage_svc=mock_storage_svc,
                     onedocker_svc=mock_onedocker_svc,
@@ -203,7 +196,6 @@ class TestPIDShardStage(unittest.TestCase):
             mock_sharder.return_value = container
             stage = PIDShardStage(
                 stage=UnionPIDStage.PUBLISHER_SHARD,
-                config=CONFIG,
                 instance_repository=mock_instance_repo,
                 storage_svc=mock_storage_svc,
                 onedocker_svc=mock_onedocker_svc,

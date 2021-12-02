@@ -415,7 +415,6 @@ def _build_private_computation_service(
         ),
         onedocker_service,
         onedocker_binary_config_map,
-        pid_config,
         _get_post_processing_handlers(pph_config),
     )
 

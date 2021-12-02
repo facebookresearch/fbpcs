@@ -82,7 +82,6 @@ class PIDService:
     async def run_stage_or_next(
         self,
         instance_id: str,
-        pid_config: Dict[str, Any],
         fail_fast: bool = False,
         server_ips: Optional[List[str]] = None,
         pid_union_stage: Optional[UnionPIDStage] = None,
@@ -102,7 +101,7 @@ class PIDService:
 
         # Create the dispatcher and build stages.
         dispatcher = self.__get_dispatcher_and_build_stages(
-            instance, pid_config, fail_fast, server_ips
+            instance, fail_fast, server_ips
         )
 
         if pid_union_stage is None:
@@ -138,7 +137,6 @@ class PIDService:
     async def run_instance(
         self,
         instance_id: str,
-        pid_config: Dict[str, Any],
         fail_fast: bool = False,
         server_ips: Optional[List[str]] = None,
     ) -> PIDInstance:
@@ -152,7 +150,7 @@ class PIDService:
 
         # Call the dispatcher to run all stages
         dispatcher = self.__get_dispatcher_and_build_stages(
-            instance, pid_config, fail_fast, server_ips
+            instance, fail_fast, server_ips
         )
         await dispatcher.run_all()
 
@@ -197,7 +195,6 @@ class PIDService:
     def __get_dispatcher_and_build_stages(
         self,
         instance: PIDInstance,
-        pid_config: Dict[str, Any],
         fail_fast: bool = False,
         server_ips: Optional[List[str]] = None,
     ) -> PIDDispatcher:
@@ -211,7 +208,6 @@ class PIDService:
             num_shards=instance.num_shards,
             is_validating=instance.is_validating,
             synthetic_shard_path=instance.synthetic_shard_path,
-            pid_config=pid_config,
             protocol=instance.protocol,
             role=instance.pid_role,
             onedocker_svc=self.onedocker_svc,
