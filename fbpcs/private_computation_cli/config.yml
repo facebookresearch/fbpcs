@@ -48,11 +48,6 @@ pid:
       class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
       constructor:
         base_dir: /fbpcs_instances
-  CloudCredentialService:
-    class: fbpcs.pid.service.credential_service.simple_cloud_credential_service.SimpleCloudCredentialService
-    constructor:
-      access_key_id: TODO
-      access_key_data: TODO
 mpc:
   dependency:
     MPCGameService:

@@ -39,12 +39,6 @@ pid:
         base_dir: /instances
   skip_aggregation_step: true
   task_definition:
-  CloudCredentialService:
-      class: fbpcs.pid.service.credential_service.session_profile_cloud_credential_service.SessionProfileCloudCredentialService
-      constructor:
-        arn: arn:aws:iam::592513842793:role/fbpcs-github-ec2-runner
-        session_name: fbpcs-github-ec2-runner
-        profile: default
 mpc:
   dependency:
     MPCGameService:
