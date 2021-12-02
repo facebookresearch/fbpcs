@@ -13,7 +13,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
 
-URL = "https://graph.facebook.com/v11.0"
+URL = "https://graph.facebook.com/v12.0"
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     "CREATED": PrivateComputationInstanceStatus.CREATED,
     "INSTANCE_FAILURE": PrivateComputationInstanceStatus.UNKNOWN,
