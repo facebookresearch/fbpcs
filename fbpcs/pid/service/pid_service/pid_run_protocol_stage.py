@@ -17,9 +17,6 @@ from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
-from fbpcs.pid.service.credential_service.cloud_credential_service import (
-    CloudCredentialService,
-)
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 
