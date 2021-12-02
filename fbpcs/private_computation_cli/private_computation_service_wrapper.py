@@ -133,30 +133,6 @@ def _get_post_processing_handlers(
     }
 
 
-def run_post_processing_handlers(
-    config: Dict[str, Any],
-    instance_id: str,
-    logger: logging.Logger,
-    aggregated_result_path: Optional[str] = None,
-    dry_run: Optional[bool] = False,
-) -> None:
-
-    pc_service = _build_private_computation_service(
-        config["private_computation"],
-        config["mpc"],
-        config["pid"],
-        config.get("post_processing_handlers", {}),
-    )
-
-    instance = pc_service.run_post_processing_handlers(
-        instance_id=instance_id,
-        aggregated_result_path=aggregated_result_path,
-        dry_run=dry_run,
-    )
-
-    logger.info(instance)
-
-
 def run_next(
     config: Dict[str, Any],
     instance_id: str,
