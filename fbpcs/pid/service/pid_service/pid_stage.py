@@ -8,6 +8,7 @@ import abc
 import logging
 import os
 from typing import Any, Dict, List
+from typing import Optional
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
@@ -29,7 +30,7 @@ class PIDStage(abc.ABC):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config: OneDockerBinaryConfig,
-        is_joint_stage: bool = False
+        is_joint_stage: bool = False,
     ) -> None:
         self.stage_type = stage
         self.storage_svc = storage_svc
@@ -41,7 +42,10 @@ class PIDStage(abc.ABC):
 
     @abc.abstractmethod
     async def run(
-        self, stage_input: PIDStageInput, wait_for_containers: bool = True
+        self,
+        stage_input: PIDStageInput,
+        wait_for_containers: bool = True,
+        container_timeout: Optional[int] = None,
     ) -> PIDStageStatus:
         """
         Invoke the stage to actually execute. Derived classes must implement

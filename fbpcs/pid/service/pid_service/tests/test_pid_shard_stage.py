@@ -68,7 +68,9 @@ class TestPIDShardStage(unittest.TestCase):
         container = ContainerInstance(instance_id="123", ip_address=ip)
 
         mock_onedocker_svc.start_containers = MagicMock(return_value=[container])
-        mock_onedocker_svc.wait_for_pending_containers = AsyncMock(return_value=[container])
+        mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
+            return_value=[container]
+        )
 
         container.status = (
             ContainerInstanceStatus.COMPLETED
@@ -240,4 +242,5 @@ class TestPIDShardStage(unittest.TestCase):
                 tmp_directory=test_onedocker_binary_config.tmp_directory,
                 hmac_key=test_hmac_key,
                 wait_for_containers=wait_for_containers,
+                container_timeout=None,
             )

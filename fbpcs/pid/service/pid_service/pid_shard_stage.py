@@ -15,7 +15,10 @@ from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 
 class PIDShardStage(PIDStage):
     async def run(
-        self, stage_input: PIDStageInput, wait_for_containers: bool = True
+        self,
+        stage_input: PIDStageInput,
+        wait_for_containers: bool = True,
+        container_timeout: Optional[int] = None,
     ) -> PIDStageStatus:
         self.logger.info(f"[{self}] Called run")
         instance_id = stage_input.instance_id
@@ -46,6 +49,7 @@ class PIDShardStage(PIDStage):
             num_shards,
             stage_input.hmac_key,
             wait_for_containers,
+            container_timeout,
         )
 
         # if validating, copy synthetic shard and update instance.num_shards
@@ -76,6 +80,7 @@ class PIDShardStage(PIDStage):
         num_shards: int,
         hmac_key: Optional[str] = None,
         wait_for_containers: bool = True,
+        container_timeout: Optional[int] = None,
     ) -> PIDStageStatus:
         self.logger.info(f"[{self}] Starting CppShardingService")
         sharder = CppShardingService()
@@ -92,6 +97,7 @@ class PIDShardStage(PIDStage):
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
                 hmac_key=hmac_key,
                 wait_for_containers=wait_for_containers,
+                container_timeout=container_timeout,
             )
         except Exception as e:
             self.logger.exception(f"CppShardingService failed: {e}")

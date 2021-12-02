@@ -110,7 +110,9 @@ class TestPIDPrepareStage(unittest.TestCase):
         )
 
         mock_onedocker_svc.start_containers = MagicMock(return_value=[container])
-        mock_onedocker_svc.wait_for_pending_containers = AsyncMock(return_value=[container])
+        mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
+            return_value=[container]
+        )
 
         container.status = (
             ContainerInstanceStatus.COMPLETED
@@ -183,7 +185,7 @@ class TestPIDPrepareStage(unittest.TestCase):
                 stage_input, wait_for_containers=wait_for_containers
             )
             mock_prepare.assert_called_with(
-                instance_id, "in", "out", 2, fail_fast, wait_for_containers
+                instance_id, "in", "out", 2, fail_fast, wait_for_containers, None
             )
 
         # Input not ready
