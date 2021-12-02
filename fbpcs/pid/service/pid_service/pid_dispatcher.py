@@ -194,7 +194,7 @@ class PIDDispatcher(Dispatcher):
         run_ready_stages = []
         for node in self.dag.nodes:
             # nodes with no dependencies left and who have not already been
-            # started are eligible to be ran
+            # started are eligible to run
             if (
                 self.dag.in_degree(node) == 0
                 and instance.stages_status.get(node.stage_type, None)
