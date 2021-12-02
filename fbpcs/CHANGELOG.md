@@ -13,3 +13,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Finish PIDService container timeout implementation (D32600348)
 
 ### Removed
+  - Removed run_post_processing_handlers PC-CLI endpoint (D32772037)
