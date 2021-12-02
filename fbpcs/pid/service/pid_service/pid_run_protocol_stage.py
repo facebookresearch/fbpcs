@@ -266,13 +266,7 @@ class PIDProtocolRunStage(PIDStage):
             )
 
     def _gen_env_vars(self) -> Dict[str, str]:
-        # The Rust AWS-SDK currently only supports credentials via ENV variables
-        # so we must set them here (as opposed to the "intrinsic" credentials
-        # you can normally use just by virtue of running on ECS)
-        # This also means that the binary for PID is currently tightly coupled
-        # to running in AWS and would not support other container services.
         env_vars = {
             "RUST_LOG": "info",
-            **self.cloud_credential_service.get_creds(),
         }
         return env_vars
