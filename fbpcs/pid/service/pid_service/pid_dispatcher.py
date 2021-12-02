@@ -137,7 +137,10 @@ class PIDDispatcher(Dispatcher):
         self._cleanup_complete_stages()
 
     async def run_stage(
-        self, stage: PIDStage, wait_for_containers: bool = True
+        self,
+        stage: PIDStage,
+        wait_for_containers: bool = True,
+        container_timeout: Optional[int] = None,
     ) -> PIDStageStatus:
         if stage not in self._find_eligible_stages():
             raise PIDStageFailureError(f"{stage} is not yet eligible to be run.")
@@ -148,7 +151,9 @@ class PIDDispatcher(Dispatcher):
         self._update_instance_status(PIDInstanceStatus.STARTED, stage)
 
         res = await stage.run(
-            self.stage_inputs[stage], wait_for_containers=wait_for_containers
+            self.stage_inputs[stage],
+            wait_for_containers=wait_for_containers,
+            container_timeout=container_timeout,
         )
         self.logger.info(f"{stage}: {res}")
         if res is PIDStageStatus.FAILED:

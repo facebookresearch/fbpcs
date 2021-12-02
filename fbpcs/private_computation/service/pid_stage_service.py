@@ -44,6 +44,7 @@ class PIDStageService(PrivateComputationStageService):
         _protocol: An enum consumed by PIDService to determine which protocol to use, e.g. UNION_PID.
         _is_validating: if a test shard is injected to do run time correctness validation
         _synthetic_shard_path: path to the test shard to be injected if _is_validating
+        _container_timeout: optional duration in seconds before cloud containers timeout
     """
 
     def __init__(
@@ -55,6 +56,7 @@ class PIDStageService(PrivateComputationStageService):
         protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         is_validating: bool = False,
         synthetic_shard_path: Optional[str] = None,
+        container_timeout: Optional[int] = None,
     ) -> None:
         self._pid_svc = pid_svc
         self._pid_config = pid_config
@@ -63,6 +65,7 @@ class PIDStageService(PrivateComputationStageService):
         self._protocol = protocol
         self._is_validating = is_validating
         self._synthetic_shard_path = synthetic_shard_path
+        self._container_timeout = container_timeout
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of run_async() so that it can be called by Thrift
@@ -130,6 +133,7 @@ class PIDStageService(PrivateComputationStageService):
             if pc_instance.role is PrivateComputationRole.PUBLISHER
             else self._partner_stage,
             wait_for_containers=False,
+            container_timeout=self._container_timeout,
         )
 
         if not pc_instance.instances or not isinstance(

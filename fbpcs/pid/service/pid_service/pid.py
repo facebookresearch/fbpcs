@@ -87,6 +87,7 @@ class PIDService:
         server_ips: Optional[List[str]] = None,
         pid_union_stage: Optional[UnionPIDStage] = None,
         wait_for_containers: bool = True,
+        container_timeout: Optional[int] = None,
     ) -> PIDInstance:
         """This function is similar to run_instance but instead of calling dispatcher.run_all,
         it will try to call dispatcher.run_next(), or if the pid_union_stage is given, it will
@@ -128,7 +129,9 @@ class PIDService:
 
             # Finally, call run_stage if the PID stage can be found
             # and all above checks are passed
-            await dispatcher.run_stage(pid_stage, wait_for_containers)
+            await dispatcher.run_stage(
+                pid_stage, wait_for_containers, container_timeout
+            )
 
         return self.update_instance(instance_id)
 
