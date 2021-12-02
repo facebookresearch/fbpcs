@@ -25,7 +25,6 @@ class PIDStage(abc.ABC):
     def __init__(
         self,
         stage: UnionPIDStage,
-        config: Dict[str, Any],
         instance_repository: PIDInstanceRepository,
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
@@ -95,18 +94,6 @@ class PIDStage(abc.ABC):
         that there's some special function to use to shard a filepath.
         """
         return f"{path}_{shard}"
-
-    @staticmethod
-    def build_service(config: Dict[str, Any], **kwargs) -> Any:
-        """
-        Build a service by getting the class through reflection and calling
-        its constructor. Note the return type of Any. The caller is responsible
-        for checking that the returned object is of the expected type.
-        """
-        cls = reflect.get_class(config["class"])
-        if "constructor" in config:
-            return cls(**config["constructor"], **kwargs)
-        return cls()
 
     def files_exist(self, paths: List[str]) -> bool:
         """

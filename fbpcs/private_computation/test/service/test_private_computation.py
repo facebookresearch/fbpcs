@@ -147,7 +147,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             pid_svc=self.pid_service,
             onedocker_svc=self.onedocker_service,
             onedocker_binary_config_map=self.onedocker_binary_config_map,
-            pid_config={},
         )
 
         self.test_private_computation_id = "test_private_computation_id"

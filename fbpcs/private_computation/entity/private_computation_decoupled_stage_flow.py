@@ -120,7 +120,6 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         elif self is self.ID_MATCH:
             return IdMatchStageService(
                 args.pid_svc,
-                args.pid_config,
             )
         elif self is self.PREPARE:
             return PrepareDataStageService(
