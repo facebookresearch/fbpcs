@@ -12,7 +12,6 @@ CLI for running a Private Lift study
 Usage:
     pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast --stage_flow=<stage_flow>] [options]
     pc-cli validate <instance_id> --config=<config_file> --aggregated_result_path=<aggregated_result_path> --expected_result_path=<expected_result_path> [options]
-    pc-cli run_post_processing_handlers <instance_id> --config=<config_file> [--aggregated_result_path=<aggregated_result_path> --dry_run] [options]
     pc-cli run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
@@ -74,7 +73,6 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     print_instance,
     run_next,
     run_stage,
-    run_post_processing_handlers,
     validate,
 )
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
@@ -85,7 +83,6 @@ def main(argv: Optional[List[str]] = None) -> None:
         {
             "create_instance": bool,
             "validate": bool,
-            "run_post_processing_handlers": bool,
             "run_next": bool,
             "run_stage": bool,
             "get_instance": bool,
@@ -187,15 +184,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             k_anonymity_threshold=arguments["--k_anonymity_threshold"],
             fail_fast=arguments["--fail_fast"],
             stage_flow_cls=arguments["--stage_flow"],
-        )
-    elif arguments["run_post_processing_handlers"]:
-        logger.info(f"post processing handlers instance: {instance_id}")
-        run_post_processing_handlers(
-            config=config,
-            instance_id=instance_id,
-            logger=logger,
-            aggregated_result_path=arguments["--aggregated_result_path"],
-            dry_run=arguments["--dry_run"],
         )
     elif arguments["run_next"]:
         logger.info(f"run_next instance: {instance_id}")
