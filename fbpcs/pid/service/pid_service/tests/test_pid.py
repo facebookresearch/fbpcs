@@ -26,7 +26,6 @@ from fbpcs.pid.entity.pid_stages import UnionPIDStage
 TEST_INSTANCE_ID = "123"
 TEST_PROTOCOL = PIDProtocol.UNION_PID
 TEST_PID_ROLE = PIDRole.PUBLISHER
-TEST_PID_CONFIG = {"pid": "config"}
 TEST_NUM_SHARDS = 4
 TEST_INPUT_PATH = "in"
 TEST_OUTPUT_PATH = "out"
@@ -210,7 +209,6 @@ class TestPIDService(unittest.TestCase):
             )
             await self.pid_service.run_instance(
                 instance_id=TEST_INSTANCE_ID,
-                pid_config=TEST_PID_CONFIG,
             )
             mock_init.assert_called_once()
             init_call_params = mock_init.call_args[1]

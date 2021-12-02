@@ -20,8 +20,6 @@ from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
 
-CONFIG = {}
-
 
 class TestPIDPrepareStage(unittest.TestCase):
     @data_provider(
@@ -62,7 +60,6 @@ class TestPIDPrepareStage(unittest.TestCase):
             mock_prepare_on_container_async.return_value = container
             stage = PIDPrepareStage(
                 stage=UnionPIDStage.PUBLISHER_PREPARE,
-                config=CONFIG,
                 instance_repository=mock_instance_repo,
                 storage_svc="STORAGE",
                 onedocker_svc="ONEDOCKER",
@@ -123,7 +120,6 @@ class TestPIDPrepareStage(unittest.TestCase):
 
         stage = PIDPrepareStage(
             stage=UnionPIDStage.PUBLISHER_PREPARE,
-            config=CONFIG,
             instance_repository=mock_instance_repo,
             storage_svc=mock_storage_svc,
             onedocker_svc=mock_onedocker_svc,
@@ -146,7 +142,6 @@ class TestPIDPrepareStage(unittest.TestCase):
             mock_fe.return_value = True
             stage = PIDPrepareStage(
                 stage=UnionPIDStage.PUBLISHER_PREPARE,
-                config=CONFIG,
                 instance_repository=mock_instance_repo,
                 storage_svc=mock_storage_svc,
                 onedocker_svc=mock_onedocker_svc,
@@ -203,7 +198,6 @@ class TestPIDPrepareStage(unittest.TestCase):
                 stage_input.input_paths = ["in1", "in2"]
                 stage = PIDPrepareStage(
                     stage=UnionPIDStage.PUBLISHER_PREPARE,
-                    config=CONFIG,
                     instance_repository=mock_instance_repo,
                     storage_svc=mock_storage_svc,
                     onedocker_svc=mock_onedocker_svc,

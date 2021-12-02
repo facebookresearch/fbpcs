@@ -31,7 +31,6 @@ class PrivateComputationStageServiceArgs:
     """
 
     pid_svc: PIDService
-    pid_config: Dict[str, Any]
     onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig]
     mpc_svc: MPCService
     storage_svc: StorageService

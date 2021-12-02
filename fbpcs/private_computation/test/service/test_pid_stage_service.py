@@ -35,7 +35,6 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
 
         stage_svc = PIDStageService(
             pid_svc_mock,
-            pid_config={},
             publisher_stage=UnionPIDStage.PUBLISHER_SHARD,
             partner_stage=UnionPIDStage.ADV_SHARD,
             protocol=PIDProtocol.UNION_PID,
@@ -69,7 +68,6 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
 
         stage_svc = PIDStageService(
             pid_svc_mock,
-            pid_config={},
             publisher_stage=UnionPIDStage.PUBLISHER_PREPARE,
             partner_stage=UnionPIDStage.ADV_PREPARE,
             protocol=PIDProtocol.UNION_PID,
@@ -108,7 +106,6 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
 
         stage_svc = PIDStageService(
             pid_svc_mock,
-            pid_config={},
             publisher_stage=UnionPIDStage.PUBLISHER_RUN_PID,
             partner_stage=UnionPIDStage.ADV_RUN_PID,
             protocol=PIDProtocol.UNION_PID,

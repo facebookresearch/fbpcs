@@ -44,7 +44,6 @@ class PIDDispatcher(Dispatcher):
         input_path: str,
         output_path: str,
         num_shards: int,
-        pid_config: Union[Dict[str, Any], str],
         protocol: PIDProtocol,
         role: PIDRole,
         onedocker_svc: OneDockerService,
@@ -59,18 +58,12 @@ class PIDDispatcher(Dispatcher):
         hmac_key: Optional[str] = None,
     ) -> None:
         flow_map = pid_execution_map.get_execution_flow(role, protocol)
-        # read config into a dict if it was given as a path
-        if isinstance(pid_config, str):
-            config_dict = yaml.load(pathlib.Path(pid_config))
-        else:
-            config_dict = pid_config
 
         # maintain a map of enums to actual pid execution stages
         self.enum_to_stage_map = {}
         for node in flow_map.flow:
             stage = PIDStageMapper.get_stage(
                 stage=node,
-                config=config_dict,
                 instance_repository=self.instance_repository,
                 storage_svc=storage_svc,
                 onedocker_svc=onedocker_svc,

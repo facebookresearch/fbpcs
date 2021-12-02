@@ -33,7 +33,6 @@ class PIDStageMapper:
     @staticmethod
     def get_stage(
         stage: UnionPIDStage,
-        config: Dict[str, Any],
         instance_repository: PIDInstanceRepository,
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
@@ -43,7 +42,6 @@ class PIDStageMapper:
         if stage is UnionPIDStage.PUBLISHER_SHARD:
             return PIDShardStage(
                 stage,
-                config,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
@@ -52,7 +50,6 @@ class PIDStageMapper:
         elif stage is UnionPIDStage.PUBLISHER_PREPARE:
             return PIDPrepareStage(
                 stage,
-                config,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
@@ -61,7 +58,6 @@ class PIDStageMapper:
         elif stage is UnionPIDStage.PUBLISHER_RUN_PID:
             return PIDProtocolRunStage(
                 stage,
-                config,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
@@ -71,7 +67,6 @@ class PIDStageMapper:
         elif stage is UnionPIDStage.ADV_SHARD:
             return PIDShardStage(
                 stage,
-                config,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
@@ -80,7 +75,6 @@ class PIDStageMapper:
         elif stage is UnionPIDStage.ADV_PREPARE:
             return PIDPrepareStage(
                 stage,
-                config,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
@@ -89,7 +83,6 @@ class PIDStageMapper:
         elif stage is UnionPIDStage.ADV_RUN_PID:
             return PIDProtocolRunStage(
                 stage,
-                config,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,

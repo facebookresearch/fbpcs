@@ -119,21 +119,18 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         elif self is self.PID_SHARD:
             return PIDStageService(
                 args.pid_svc,
-                args.pid_config,
                 UnionPIDStage.PUBLISHER_SHARD,
                 UnionPIDStage.ADV_SHARD,
             )
         elif self is self.PID_PREPARE:
             return PIDStageService(
                 args.pid_svc,
-                args.pid_config,
                 UnionPIDStage.PUBLISHER_PREPARE,
                 UnionPIDStage.ADV_PREPARE,
             )
         elif self is self.ID_MATCH:
             return PIDStageService(
                 args.pid_svc,
-                args.pid_config,
                 UnionPIDStage.PUBLISHER_RUN_PID,
                 UnionPIDStage.ADV_RUN_PID,
             )
