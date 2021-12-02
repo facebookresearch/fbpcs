@@ -17,7 +17,6 @@ class Dispatcher(abc.ABC):
         input_path: str,
         output_path: str,
         num_shards: int,
-        pid_config: Union[Dict[str, Any], str],
         protocol: PIDProtocol,
         role: PIDRole,
         data_path: Optional[str] = None,

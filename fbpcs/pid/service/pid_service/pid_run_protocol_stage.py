@@ -33,7 +33,6 @@ class PIDProtocolRunStage(PIDStage):
     def __init__(
         self,
         stage: UnionPIDStage,
-        config: Dict[str, Any],
         instance_repository: PIDInstanceRepository,
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
@@ -42,32 +41,15 @@ class PIDProtocolRunStage(PIDStage):
     ) -> None:
         super().__init__(
             stage=stage,
-            config=config,
             instance_repository=instance_repository,
             storage_svc=storage_svc,
             onedocker_svc=onedocker_svc,
             onedocker_binary_config=onedocker_binary_config,
-            is_joint_stage=True
+            is_joint_stage=True,
         )
 
-        self.cloud_credential_service = self._build_cloud_credential_service(
-            config["CloudCredentialService"]
-        )
         self.server_ips = server_ips
         self.logger: logging.Logger = logging.getLogger(__name__)
-
-    @staticmethod
-    def _build_cloud_credential_service(
-        config: Dict[str, Any]
-    ) -> CloudCredentialService:
-        cls = reflect.get_class(config["class"])
-        res = cls(**config.get("constructor", {}))
-        if not isinstance(res, CloudCredentialService):
-            typename = str(type(res))
-            raise ValueError(
-                f"Class created via reflection should be of type CloudCredentialService but is of type {typename}"
-            )
-        return res
 
     async def run(
         self,
@@ -116,7 +98,9 @@ class PIDProtocolRunStage(PIDStage):
                     timeout=timeout,
                 )
 
-                containers = await self.onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
+                containers = await self.onedocker_svc.wait_for_pending_containers(
+                    [container.instance_id for container in pending_containers]
+                )
             except Exception as e:
                 status = PIDStageStatus.FAILED
                 await self.update_instance_status(
@@ -175,7 +159,9 @@ class PIDProtocolRunStage(PIDStage):
                     timeout=timeout,
                 )
 
-                containers = await self.onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers])
+                containers = await self.onedocker_svc.wait_for_pending_containers(
+                    [container.instance_id for container in pending_containers]
+                )
             except Exception as e:
                 status = PIDStageStatus.FAILED
                 await self.update_instance_status(

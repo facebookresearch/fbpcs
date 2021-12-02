@@ -38,7 +38,6 @@ class PIDStageService(PrivateComputationStageService):
 
     Private attributes:
         _pid_svc: Creates PID instances and runs PID SHARD, PID PREPARE, and PID RUN
-        _pid_config: Consumed by PIDService to determine cloud credentials
         _publisher_stage: The pid stage that should be ran by the publisher
         _partner_stage: The pid stage that should be ran by the partner
         _protocol: An enum consumed by PIDService to determine which protocol to use, e.g. UNION_PID.
@@ -50,7 +49,6 @@ class PIDStageService(PrivateComputationStageService):
     def __init__(
         self,
         pid_svc: PIDService,
-        pid_config: Dict[str, Any],
         publisher_stage: UnionPIDStage,
         partner_stage: UnionPIDStage,
         protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
@@ -59,7 +57,6 @@ class PIDStageService(PrivateComputationStageService):
         container_timeout: Optional[int] = None,
     ) -> None:
         self._pid_svc = pid_svc
-        self._pid_config = pid_config
         self._publisher_stage = publisher_stage
         self._partner_stage = partner_stage
         self._protocol = protocol
@@ -126,7 +123,6 @@ class PIDStageService(PrivateComputationStageService):
         # Run pid
         pid_instance = await self._pid_svc.run_stage_or_next(
             instance_id=pid_instance.instance_id,
-            pid_config=self._pid_config,
             fail_fast=pc_instance.fail_fast,
             server_ips=server_ips,
             pid_union_stage=self._publisher_stage

@@ -19,27 +19,6 @@ from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
 
-CONFIG = {
-    "dependency": {
-        "CoordinationService": {
-            "class": "fbpcs.pid.service.coordination.file_coordination.FileCoordinationService",
-            "constructor": {
-                "coordination_objects": {
-                    "pid_ip_addrs": {
-                        "value": "ip_config.txt",
-                    },
-                },
-            },
-        },
-    },
-    "CloudCredentialService": {
-        "class": "fbpcs.pid.service.credential_service.simple_cloud_credential_service.SimpleCloudCredentialService",
-        "constructor": {
-            "access_key_id": "key_id",
-            "access_key_data": "key_data",
-        },
-    },
-}
 
 
 class TestPIDProtocolRunStage(unittest.TestCase):
@@ -60,7 +39,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         )
         adv_run_stage = PIDProtocolRunStage(
             stage=UnionPIDStage.ADV_RUN_PID,
-            config=CONFIG,
             instance_repository=mock_instance_repo,
             storage_svc="STORAGE",
             onedocker_svc="ONEDOCKER",
@@ -115,7 +93,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             # Run publisher
             publisher_run_stage = PIDProtocolRunStage(
                 stage=UnionPIDStage.PUBLISHER_RUN_PID,
-                config=CONFIG,
                 instance_repository=mock_instance_repo,
                 storage_svc=mock_storage_service,
                 onedocker_svc=mock_onedocker_service,
@@ -211,7 +188,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             # Run advertiser
             adv_run_stage = PIDProtocolRunStage(
                 stage=UnionPIDStage.ADV_RUN_PID,
-                config=CONFIG,
                 instance_repository=mock_instance_repo,
                 storage_svc=mock_storage_service,
                 onedocker_svc=mock_onedocker_service,

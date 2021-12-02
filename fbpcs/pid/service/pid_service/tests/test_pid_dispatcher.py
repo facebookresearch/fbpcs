@@ -27,22 +27,6 @@ from fbpcs.pid.service.pid_service.pid_execution_map import PIDFlow
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 
 
-CONFIG_TEXT = """
-dependency:
-    CoordinationService:
-        class: fbpcs.pid.service.coordination.file_coordination.FileCoordinationService
-        constructor:
-            coordination_objects:
-                pid_ip_addrs:
-                    value: ip_config.txt
-CloudCredentialService:
-    class: fbpcs.pid.service.credential_service.simple_cloud_credential_service.SimpleCloudCredentialService
-    constructor:
-        access_key_id: key_id
-        access_key_data: key_data
-"""
-
-
 class TestPIDDispatcher(unittest.TestCase):
     def setUp(self):
         self.onedocker_binary_config = OneDockerBinaryConfig(
@@ -59,19 +43,17 @@ class TestPIDDispatcher(unittest.TestCase):
             instance_id="456", instance_repository=mock_instance_repo
         )
         with self.assertRaises(PIDFlowUnsupportedError):
-            with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-                dispatcher.build_stages(
-                    input_path="abc.text",
-                    output_path="def.txt",
-                    num_shards=50,
-                    pid_config="config.yml",
-                    protocol=PIDProtocol.PS3I_M_TO_M,
-                    role=PIDRole.PUBLISHER,
-                    storage_svc="STORAGE",
-                    onedocker_svc="ONEDOCKER",
-                    onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                    fail_fast=True,
-                )
+            dispatcher.build_stages(
+                input_path="abc.text",
+                output_path="def.txt",
+                num_shards=50,
+                protocol=PIDProtocol.PS3I_M_TO_M,
+                role=PIDRole.PUBLISHER,
+                storage_svc="STORAGE",
+                onedocker_svc="ONEDOCKER",
+                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+                fail_fast=True,
+            )
 
     @patch(
         "fbpcs.pid.service.coordination.file_coordination.FileCoordinationService",
@@ -92,19 +74,17 @@ class TestPIDDispatcher(unittest.TestCase):
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path="abc.text",
-                output_path="def.txt",
-                num_shards=50,
-                pid_config="config.yml",
-                protocol=PIDProtocol.UNION_PID,
-                role=PIDRole.PUBLISHER,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=True,
-            )
+        dispatcher.build_stages(
+            input_path="abc.text",
+            output_path="def.txt",
+            num_shards=50,
+            protocol=PIDProtocol.UNION_PID,
+            role=PIDRole.PUBLISHER,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            fail_fast=True,
+        )
         constructed_map = {}
         for stage in dispatcher.dag.nodes:
             constructed_map[stage.stage_type] = [
@@ -145,21 +125,19 @@ class TestPIDDispatcher(unittest.TestCase):
         )
         # provide optional parameters (data_path and spine_path)
         # expect no impact overall
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path="abc.text",
-                output_path="def.txt",
-                num_shards=50,
-                pid_config="config.yml",
-                protocol=PIDProtocol.UNION_PID,
-                role=PIDRole.PUBLISHER,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                data_path="data.txt",
-                spine_path="spine.txt",
-                fail_fast=True,
-            )
+        dispatcher.build_stages(
+            input_path="abc.text",
+            output_path="def.txt",
+            num_shards=50,
+            protocol=PIDProtocol.UNION_PID,
+            role=PIDRole.PUBLISHER,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            data_path="data.txt",
+            spine_path="spine.txt",
+            fail_fast=True,
+        )
         constructed_map = {}
         for stage in dispatcher.dag.nodes:
             constructed_map[stage.stage_type] = [
@@ -198,19 +176,17 @@ class TestPIDDispatcher(unittest.TestCase):
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path="abc.text",
-                output_path="def.txt",
-                num_shards=50,
-                pid_config="config.yml",
-                protocol=PIDProtocol.UNION_PID,
-                role=PIDRole.PARTNER,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=True,
-            )
+        dispatcher.build_stages(
+            input_path="abc.text",
+            output_path="def.txt",
+            num_shards=50,
+            protocol=PIDProtocol.UNION_PID,
+            role=PIDRole.PARTNER,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            fail_fast=True,
+        )
         constructed_map = {}
         for stage in dispatcher.dag.nodes:
             constructed_map[stage.stage_type] = [
@@ -260,7 +236,6 @@ class TestPIDDispatcher(unittest.TestCase):
         is_validating = False
         input_path = "abc.text"
         output_path = "def.txt"
-        pid_config = "config.yml"
 
         dispatcher = PIDDispatcher(
             instance_id=instance_id, instance_repository=mock_instance_repo
@@ -279,19 +254,17 @@ class TestPIDDispatcher(unittest.TestCase):
             return_value=sample_pid_instance
         )
 
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path=input_path,
-                output_path=output_path,
-                num_shards=num_shards,
-                pid_config=pid_config,
-                protocol=protocol,
-                role=pid_role,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=True,
-            )
+        dispatcher.build_stages(
+            input_path=input_path,
+            output_path=output_path,
+            num_shards=num_shards,
+            protocol=protocol,
+            role=pid_role,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            fail_fast=True,
+        )
 
         # pre-run DAG should have 3 nodes
         self.assertEqual(len(dispatcher.dag.nodes), 3)
@@ -331,25 +304,22 @@ class TestPIDDispatcher(unittest.TestCase):
         num_shards = 50
         input_path = "abc.text"
         output_path = "def.txt"
-        pid_config = "config.yml"
 
         dispatcher = PIDDispatcher(
             instance_id=instance_id, instance_repository=mock_instance_repo
         )
 
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path=input_path,
-                output_path=output_path,
-                num_shards=num_shards,
-                pid_config=pid_config,
-                protocol=protocol,
-                role=pid_role,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=True,
-            )
+        dispatcher.build_stages(
+            input_path=input_path,
+            output_path=output_path,
+            num_shards=num_shards,
+            protocol=protocol,
+            role=pid_role,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            fail_fast=True,
+        )
 
         # pre-run DAG should have 3 nodes
         self.assertEqual(len(dispatcher.dag.nodes), 3)
@@ -409,7 +379,6 @@ class TestPIDDispatcher(unittest.TestCase):
         is_validating = False
         input_path = "abc.text"
         output_path = "def.txt"
-        pid_config = "config.yml"
 
         dispatcher = PIDDispatcher(
             instance_id=instance_id, instance_repository=mock_instance_repo
@@ -436,19 +405,17 @@ class TestPIDDispatcher(unittest.TestCase):
             return_value=sample_pid_instance
         )
 
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path=input_path,
-                output_path=output_path,
-                num_shards=num_shards,
-                pid_config=pid_config,
-                protocol=protocol,
-                role=pid_role,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=True,
-            )
+        dispatcher.build_stages(
+            input_path=input_path,
+            output_path=output_path,
+            num_shards=num_shards,
+            protocol=protocol,
+            role=pid_role,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            fail_fast=True,
+        )
 
         # pre-run DAG should have 2 nodes, since PID Shard is already finished
         self.assertEqual(len(dispatcher.dag.nodes), 2)
@@ -491,19 +458,17 @@ class TestPIDDispatcher(unittest.TestCase):
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path="abc.text",
-                output_path="def.txt",
-                num_shards=50,
-                pid_config="config.yml",
-                protocol=PIDProtocol.UNION_PID,
-                role=PIDRole.PARTNER,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=False,
-            )
+        dispatcher.build_stages(
+            input_path="abc.text",
+            output_path="def.txt",
+            num_shards=50,
+            protocol=PIDProtocol.UNION_PID,
+            role=PIDRole.PARTNER,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            fail_fast=False,
+        )
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
 
@@ -574,21 +539,19 @@ class TestPIDDispatcher(unittest.TestCase):
         # The stage contains two additional parameters: data_path and spine_path
         # data_path is the output of the shard stage
         # spine_path is the output of the protocol run stage
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path="abc.text",
-                output_path="def.txt",
-                num_shards=50,
-                pid_config="config.yml",
-                protocol=PIDProtocol.UNION_PID,
-                role=PIDRole.PARTNER,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                data_path="data.txt",
-                spine_path="spine.txt",
-                fail_fast=False,
-            )
+        dispatcher.build_stages(
+            input_path="abc.text",
+            output_path="def.txt",
+            num_shards=50,
+            protocol=PIDProtocol.UNION_PID,
+            role=PIDRole.PARTNER,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            data_path="data.txt",
+            spine_path="spine.txt",
+            fail_fast=False,
+        )
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
 
@@ -675,19 +638,17 @@ class TestPIDDispatcher(unittest.TestCase):
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
-        with patch("builtins.open", mock_open(read_data=CONFIG_TEXT)):
-            dispatcher.build_stages(
-                input_path="abc.text",
-                output_path="def.txt",
-                num_shards=50,
-                pid_config="config.yml",
-                protocol=PIDProtocol.UNION_PID,
-                role=PIDRole.PARTNER,
-                storage_svc=mock_s3_storage_service,
-                onedocker_svc=mock_onedocker_service,
-                onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=False,
-            )
+        dispatcher.build_stages(
+            input_path="abc.text",
+            output_path="def.txt",
+            num_shards=50,
+            protocol=PIDProtocol.UNION_PID,
+            role=PIDRole.PARTNER,
+            storage_svc=mock_s3_storage_service,
+            onedocker_svc=mock_onedocker_service,
+            onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
+            fail_fast=False,
+        )
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
 

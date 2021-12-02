@@ -90,7 +90,6 @@ class PrivateComputationService:
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-        pid_config: Dict[str, Any],
         post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
     ) -> None:
         """Constructor of PrivateComputationService
@@ -102,13 +101,11 @@ class PrivateComputationService:
         self.pid_svc = pid_svc
         self.onedocker_svc = onedocker_svc
         self.onedocker_binary_config_map = onedocker_binary_config_map
-        self.pid_config = pid_config
         self.post_processing_handlers: Dict[str, PostProcessingHandler] = (
             post_processing_handlers or {}
         )
         self.stage_service_args = PrivateComputationStageServiceArgs(
             self.pid_svc,
-            self.pid_config,
             self.onedocker_binary_config_map,
             self.mpc_svc,
             self.storage_svc,
