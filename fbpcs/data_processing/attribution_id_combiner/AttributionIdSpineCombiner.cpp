@@ -24,10 +24,10 @@
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerOptions.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerUtil.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineFileCombiner.h"
-#include "fbpcs/emp_games/attribution/CostEstimation.h"
+#include <fbpcs/performance_tools/CostEstimation.h>
 
 int main(int argc, char** argv) {
-  measurement::private_attribution::CostEstimation cost{"data_processing"};
+  fbpcs::performance_tools::CostEstimation cost{"data_processing"};
   cost.start();
 
   folly::init(&argc, &argv);

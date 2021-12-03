@@ -15,14 +15,14 @@
 
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/mpc/MpcAppExecutor.h>
-#include "fbpcs/emp_games/attribution/CostEstimation.h"
+#include <fbpcs/performance_tools/CostEstimation.h>
 
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationOptions.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/MainUtil.h"
 
 int main(int argc, char* argv[]) {
-  measurement::private_attribution::CostEstimation cost =
-      measurement::private_attribution::CostEstimation(
+  fbpcs::performance_tools::CostEstimation cost =
+      fbpcs::performance_tools::CostEstimation(
           "computation_experimental");
   cost.start();
 

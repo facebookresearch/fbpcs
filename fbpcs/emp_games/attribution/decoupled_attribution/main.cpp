@@ -13,7 +13,7 @@
 #include "folly/Format.h"
 #include <fbpcf/mpc/EmpGame.h>
 
-#include "fbpcs/emp_games/attribution/CostEstimation.h"
+#include <fbpcs/performance_tools/CostEstimation.h>
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/mpc/MpcAppExecutor.h>
 #include "fbpcs/emp_games/attribution/decoupled_attribution/MainUtil.h"
@@ -23,8 +23,8 @@
 
 int main(int argc, char* argv[]) {
 
-  measurement::private_attribution::CostEstimation cost =
-            measurement::private_attribution::CostEstimation("computation_experimental");
+  fbpcs::performance_tools::CostEstimation cost =
+            fbpcs::performance_tools::CostEstimation("computation_experimental");
   cost.start();
 
   folly::init(&argc, &argv);

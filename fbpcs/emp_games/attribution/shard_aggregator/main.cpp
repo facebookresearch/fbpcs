@@ -15,7 +15,7 @@
 
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/exception/ExceptionBase.h>
-#include "../CostEstimation.h"
+#include <fbpcs/performance_tools/CostEstimation.h>
 #include "MainUtil.h"
 #include "ShardAggregatorApp.h"
 
@@ -41,7 +41,7 @@ DEFINE_string(
 DEFINE_string(run_name, "", "User given name used to write cost info in S3");
 
 int main(int argc, char* argv[]) {
-  measurement::private_attribution::CostEstimation cost{"shard_aggregator"};
+  fbpcs::performance_tools::CostEstimation cost{"shard_aggregator"};
   cost.start();
 
   folly::init(&argc, &argv);

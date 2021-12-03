@@ -14,15 +14,15 @@
 
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/mpc/MpcAppExecutor.h>
+#include <fbpcs/performance_tools/CostEstimation.h>
 #include "AttributionApp.h"
 #include "fbpcs/emp_games/attribution/AttributionOptions.h"
 #include "MainUtil.h"
-#include "CostEstimation.h"
 
 int main(int argc, char* argv[]) {
 
-  measurement::private_attribution::CostEstimation cost =
-            measurement::private_attribution::CostEstimation("attribution");
+  fbpcs::performance_tools::CostEstimation cost =
+            fbpcs::performance_tools::CostEstimation("attribution");
   cost.start();
 
   XLOG(INFO) << "Start of main, printing network stats: "
