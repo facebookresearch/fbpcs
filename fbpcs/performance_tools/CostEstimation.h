@@ -23,7 +23,7 @@
 #include "folly/logging/xlog.h"
 
 
-namespace measurement::private_attribution {
+namespace fbpcs::performance_tools {
 
 // Constants used for fargate container cost computation
 const int64_t MEMORY_SIZE = 30;
@@ -195,4 +195,4 @@ class CostEstimation {
   std::chrono::time_point<std::chrono::system_clock> end_time_;
 };
 
-} // namespace measurement::private_attribution
+} // namespace fbpcs::performance_tools

@@ -14,6 +14,7 @@ WORKDIR /root/build/emp_game
 COPY docker/emp_games/CMakeLists.txt .
 COPY docker/emp_games/common.cmake .
 # attribution, lift and shard aggregator build and install
+COPY fbpcs/performance_tools/ ./fbpcs/performance_tools
 COPY fbpcs/emp_games/attribution/ ./fbpcs/emp_games/attribution
 COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
