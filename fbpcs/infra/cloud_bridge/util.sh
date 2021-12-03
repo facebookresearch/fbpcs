@@ -37,7 +37,14 @@ validate_or_create_s3_bucket() {
     elif [ "$error" -eq "404" ]
     then
         echo "The bucket $bucket_name doesn't exist. Creating..."
-        aws s3api create-bucket --bucket "$bucket_name" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
+        # Creating S3 bucket in regions other than "us-east-1" needs the LocationConstraint field.
+        # Ref: https://github.com/boto/boto3/issues/125
+        if [ "$region" = "us-east-1" ]
+        then
+            aws s3api create-bucket --bucket "$bucket_name" --region "$region" || exit 1
+        else
+            aws s3api create-bucket --bucket "$bucket_name" --region "$region" --create-bucket-configuration LocationConstraint="$region" || exit 1
+        fi
         aws s3api put-bucket-versioning --bucket "$bucket_name" --versioning-configuration Status=Enabled
         aws s3api put-bucket-encryption --bucket "$bucket_name" --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "aws:kms"},"BucketKeyEnabled": true}]}'
         aws s3api put-bucket-policy --bucket "$bucket_name" --policy "{\"Statement\": [{\"Effect\": \"Deny\",\"Action\": \"s3:*\",\"Principal\": \"*\",\"Resource\": [\"arn:aws:s3:::${bucket_name}\",\"arn:aws:s3:::${bucket_name}/*\"],\"Condition\": {\"Bool\": {\"aws:SecureTransport\": false }}}]}"
