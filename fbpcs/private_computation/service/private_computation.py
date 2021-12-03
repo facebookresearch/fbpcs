@@ -349,44 +349,6 @@ class PrivateComputationService:
                 f"Aggregated results for instance {instance_id} on synthetic data is NOT as expected."
             )
 
-    def run_post_processing_handlers(
-        self,
-        instance_id: str,
-        aggregated_result_path: Optional[str] = None,
-        dry_run: Optional[bool] = False,
-    ) -> PrivateComputationInstance:
-        return asyncio.run(
-            self.run_post_processing_handlers_async(
-                instance_id,
-                aggregated_result_path,
-                dry_run,
-            )
-        )
-
-    # Make an async version of run_post_processing_handlers so that
-    # it can be called by Thrift
-    async def run_post_processing_handlers_async(
-        self,
-        instance_id: str,
-        aggregated_result_path: Optional[str] = None,
-        dry_run: Optional[bool] = False,
-    ) -> PrivateComputationInstance:
-        instance = self.get_instance(instance_id)
-        # this gets the stage object associated with the post processing handler stage.
-        # It will be validated later in the run to make sure that the stage is actually ready
-        # to be run.
-        pph_stage = instance.stage_flow.get_stage_from_status(
-            PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED
-        )
-        return await self.run_stage_async(
-            instance_id,
-            pph_stage,
-            PostProcessingStageService(
-                self.storage_svc, self.post_processing_handlers, aggregated_result_path
-            ),
-            dry_run=dry_run or False,
-        )
-
     def cancel_current_stage(
         self,
         instance_id: str,
