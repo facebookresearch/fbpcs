@@ -48,7 +48,7 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
 
         with patch.object(
             IdSpineCombinerService,
-            "combine_on_container_async",
+            "start_and_wait_for_containers",
         ) as mock_combine, patch.object(
             CppShardingService,
             "shard_on_container_async",
@@ -58,17 +58,21 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
 
             binary_name = OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
             binary_config = self.onedocker_binary_config_map[binary_name]
-            mock_combine.assert_called_once_with(
+            args = IdSpineCombinerService.build_args(
                 spine_path=private_computation_instance.pid_stage_output_spine_path,
                 data_path=private_computation_instance.pid_stage_output_data_path,
                 output_path=private_computation_instance.data_processing_output_path
                 + "_combine",
                 num_shards=self.test_num_containers,
+                tmp_directory=binary_config.tmp_directory,
+            )
+            IdSpineCombinerService.start_and_wait_for_containers(
+                cmd_args_list=args,
                 onedocker_svc=self.onedocker_service,
                 binary_version=binary_config.binary_version,
-                tmp_directory=binary_config.tmp_directory,
                 binary_name=binary_name,
             )
+            mock_combine.assert_called()
             mock_shard.assert_called()
 
     def create_sample_instance(self) -> PrivateComputationInstance:

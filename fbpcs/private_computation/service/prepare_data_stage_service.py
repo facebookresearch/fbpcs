@@ -137,35 +137,32 @@ class PrepareDataStageService(PrivateComputationStageService):
         binary_name = stage_data.binary_name
         binary_config = self._onedocker_binary_config_map[binary_name]
 
-        common_combiner_args = {
-            "spine_path": pl_instance.pid_stage_output_spine_path,
-            "data_path": pl_instance.pid_stage_output_data_path,
-            "output_path": combine_output_path,
-            "num_shards": pl_instance.num_pid_containers + 1
-            if pl_instance.is_validating
-            else pl_instance.num_pid_containers,
-            "onedocker_svc": self._onedocker_svc,
-            "binary_version": binary_config.binary_version,
-            "tmp_directory": binary_config.tmp_directory,
-            "binary_name": binary_name,
-        }
-
-        # Add on attribution specific args
+        # TODO: T106159008 Add on attribution specific args
         if pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
-            common_combiner_args["run_name"] = (
-                pl_instance.instance_id if log_cost_to_s3 else ""
-            )
-            common_combiner_args["padding_size"] = checked_cast(
-                int, pl_instance.padding_size
-            )
+            run_name = pl_instance.instance_id if log_cost_to_s3 else ""
+            padding_size = checked_cast(int, pl_instance.padding_size)
+        else:
+            run_name = None
+            padding_size = None
 
         combiner_service = checked_cast(
             IdSpineCombinerService,
             stage_data.service,
         )
-        await combiner_service.combine_on_container_async(
-            # pyre-ignore [6] Incompatible parameter type
-            **common_combiner_args
+
+        args = combiner_service.build_args(
+            spine_path=pl_instance.pid_stage_output_spine_path,
+            data_path=pl_instance.pid_stage_output_data_path,
+            output_path=combine_output_path,
+            num_shards=pl_instance.num_pid_containers + 1
+            if pl_instance.is_validating
+            else pl_instance.num_pid_containers,
+            tmp_directory=binary_config.tmp_directory,
+            run_name=run_name,
+            padding_size=padding_size,
+        )
+        await combiner_service.start_and_wait_for_containers(
+            args, self._onedocker_svc, binary_config.binary_version, binary_name
         )
 
     async def _run_sharder_service(
