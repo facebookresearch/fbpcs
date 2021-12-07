@@ -3,27 +3,275 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
+import logging
 import os
+
+import boto3
+from botocore.exceptions import ClientError
+from botocore.exceptions import NoCredentialsError
 
 
 class AwsDeploymentHelper:
-    def __init__(self, access_key: str, secret_key: str, account_id: str):
+
+    # policy_arn is fixed string. So defining it as a macro.
+    POLICY_ARN = "arn:aws:iam::{}:policy/{}"
+
+    def __init__(
+        self,
+        access_key: str = None,
+        secret_key: str = None,
+        account_id: str = None,
+        region: str = None,
+        log_path: str = "/tmp/pce_iam_user.log",
+        log_level: logging = logging.INFO,
+    ):
         self.access_key = access_key or os.environ.get("ACCESS_KEY")
         self.secret_key = secret_key or os.environ.get("SECRET_KEY")
         self.account_id = account_id or os.environ.get("ACCOUNT_ID")
+        self.region = region or os.environ.get("AWS_REGION")
+        self.log_path = log_path
+        self.log_level = log_level
 
-        if not all([self.access_key, self.secret_key]):
-            print("both access and secret keys are needed to perform further actions.")
-            exit(0)
+        self.log = None
+        self.iam = None
 
-    def add_iam_user(self, user_name: str = None):
-        if not user_name:
-            print("user name is required to add the user")
+        # setup logging
+        logging.basicConfig(
+            filename=self.log_path,
+            level=self.log_level,
+            format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
+        )
+        self.log = logging.getLogger(__name__)
 
-        print(f"user_name inside create = {user_name}")
+        # create clients for iam and sts
+        if self.access_key and self.secret_key:
+            sts = boto3.client(
+                "sts",
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key,
+            )
+            self.iam = boto3.client(
+                "iam",
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key,
+            )
+        else:
+            sts = boto3.client("sts")
+            self.iam = boto3.client("iam")
 
-    def delete_iam_user(self, user_name: str = None):
-        if not user_name:
-            print("user name is required to add the user")
+        # verify if the account details are correct
+        try:
+            sts.get_caller_identity()
+        except NoCredentialsError as error:
+            self.log.error(
+                f"""Error occured in validating access and secret keys of the aws account.
+                Please verify if the correct access and secret key of root user are provided.
+                Access and secret key can be passed using:
+                1. cli.py options "--access_key" and "--secret_keys"
+                2. Placing keys in ~/.aws/config
+                3. Placing keys in ~/.aws/credentials
+                4. As environment variables
 
-        print(f"user_name inside destroy = {user_name}")
+                Please refer to: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html
+
+                Following is the error:
+                {error}
+                """
+            )
+
+        # get account id if not provided in cli
+        if self.account_id is None:
+            self.account_id = boto3.client("sts").get_caller_identity().get("Account")
+
+        self.iam = boto3.client("iam")
+
+    def create_user(self, user_name: str):
+        try:
+            self.iam.create_user(UserName=user_name)
+            self.log.info(f"Created user with user name {user_name}")
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") == "EntityAlreadyExists":
+                self.log.error(
+                    f"User {user_name} already exists.\n \
+                    Please delete existing user or create user with different username"
+                )
+            else:
+                self.log.error(
+                    f"Unexpected error occured in creation of user {user_name}"
+                )
+
+    def delete_user(self, user_name: str):
+        try:
+            self.iam.delete_user(UserName=user_name)
+            self.log.info(f"Deleted user with user name {user_name}")
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") == "NoSuchEntity":
+                self.log.error(
+                    f"Failed to delete user.\n \
+                    user with username {user_name} doesn't exist."
+                )
+            else:
+                self.log.error(
+                    f"Unexpected error occured in deletion of user {user_name}"
+                )
+
+    def create_policy(self, policy_name: str, user_name: str):
+
+        # directly reading the json file from iam_policies folder
+        # TODO: pass the policy to be added from cli.py when we need more granular control
+
+        policy_json_data = self.read_json_file(
+            file_name="iam_policies/athena_policy.json"
+        )
+
+        try:
+            self.iam.create_policy(
+                PolicyName=policy_name, PolicyDocument=json.dumps(policy_json_data)
+            )
+            self.log.info(f"Created policy with policy name {policy_name}")
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") == "EntityAlreadyExists":
+                self.log.error(
+                    "Policy already exits. Attaching exising policy to the user"
+                )
+            else:
+                self.log.error(
+                    f"Unexpected error occurred in policy creation for user {user_name}: {error}"
+                )
+
+    def delete_policy(self, policy_name: str):
+        policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
+        try:
+            self.iam.delete_policy(PolicyArn=policy_arn)
+            self.log.info(f"Deleted policy with policy name {policy_name}")
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") == "NoSuchEntityException":
+                self.log.error(f"Policy {policy_arn} doesn't exist")
+            else:
+                self.log.error(f"Unexpected error occurred in deleting policy: {error}")
+
+    def attach_user_policy(self, policy_name: str, user_name: str):
+        policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
+        try:
+            self.iam.attach_user_policy(UserName=user_name, PolicyArn=policy_arn)
+            self.log.info(
+                f"Attached policy with policy name {policy_name} to the user {user_name}"
+            )
+        except ClientError as error:
+            self.log.error(
+                f"Failed to attach the policy {policy_arn} for user {user_name}: {error}"
+            )
+
+    def detach_user_policy(self, policy_name: str, user_name: str):
+        policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
+        try:
+            self.iam.detach_user_policy(UserName=user_name, PolicyArn=policy_arn)
+            self.log.info(
+                f"Detached policy with policy name {policy_name} from the user {user_name}"
+            )
+        except ClientError as error:
+            self.log.error(
+                f"Failed to detach policy {policy_arn} from user {user_name}: {error}"
+            )
+
+    def list_policies(self):
+        iam = boto3.client("iam")
+        paginator = iam.get_paginator("list_policies")
+        for response in paginator.paginate(Scope="Local"):
+            for policy in response["Policies"]:
+                self.log.info(
+                    f"Policy Name: {policy['PolicyName']} ARN: {policy['Arn']}"
+                )
+
+    def create_access_key(self, policy_name: str, user_name: str):
+        try:
+            response = self.iam.create_access_key(UserName=user_name)
+            self.log.info(f"Creating access and secret key for the user {user_name}")
+            access_key = response["AccessKey"]["AccessKeyId"]
+            secret_key = response["AccessKey"]["SecretAccessKey"]
+            print(
+                """Printing access and secret keys. Please copy the text pasted as it won't be listed again"""
+            )
+            print(f"Access Key = {access_key}")
+            print(f"Secret Key = {secret_key}")
+            print(f"User = {user_name}")
+            print(f"Policy = {policy_name}")
+        except ClientError as error:
+            self.log.error(
+                f"Error in generating access and secret for user {user_name}: {error}"
+            )
+
+    def delete_access_key(self, user_name: str, access_key: str):
+        try:
+            self.iam.delete_access_key(UserName=user_name, AccessKeyId=access_key)
+            self.log.info(f"Deleting access and secret key for the user {user_name}")
+        except ClientError as error:
+            self.log.error(f"Error in deleting access for user {user_name}: {error}")
+
+    def list_access_keys(self, user_name: str):
+        access_key_list = []
+        try:
+            response = self.iam.list_access_keys(UserName=user_name)
+            for access_key in response["AccessKeyMetadata"]:
+                access_key_list.append(access_key["AccessKeyId"])
+        except ClientError as error:
+            self.log.error(
+                f"Error occured when listing access keys for the user {user_name}: {error}"
+            )
+        return access_key_list
+
+    def read_json_file(self, file_name: str, read_mode: str = "r"):
+        file_path = os.path.join(os.path.dirname(__file__), file_name)
+        with open(file_path, read_mode) as file_obj:
+            json_data = json.load(file_obj)
+        return json_data
+
+    def create_user_workflow(self, user_name: str):
+        policy_name = f"{user_name}_policy"
+
+        self.log.info(
+            f"""Cli to create user is triggered. Following actions will be performed
+        1. User {user_name} will be created
+        2. Policy {policy_name} will be created and attached to {user_name}
+        3. Access and security keys for {user_name} will be created
+        """
+        )
+
+        self.create_user(user_name=user_name)
+
+        # create policy
+        self.create_policy(policy_name=policy_name, user_name=user_name)
+
+        # attach policy to the user
+        self.attach_user_policy(policy_name=policy_name, user_name=user_name)
+
+        # generate access and secret keys
+        self.create_access_key(policy_name=policy_name, user_name=user_name)
+        self.log.info("Creation operation completed.")
+
+    def delete_user_workflow(self, user_name: str):
+        policy_name = f"{user_name}_policy"
+
+        self.log.info(
+            f"""Cli to create user is triggered. Following actions will be performed
+        1. User {user_name} will be deleted
+        2. Policy {policy_name} will be deleted and detached from {user_name}
+        3. All access and security keys of {user_name} will be deleted
+        """
+        )
+
+        # detach policy from the user
+        self.detach_user_policy(policy_name=policy_name, user_name=user_name)
+
+        # delete policy from the aws account
+        self.delete_policy(policy_name=policy_name)
+
+        # delete all the access keys for the user
+        access_key_list = self.list_access_keys(user_name=user_name)
+        for access_key in access_key_list:
+            self.delete_access_key(user_name=user_name, access_key=access_key)
+
+        # delete user
+        self.delete_user(user_name=user_name)
+        self.log.info("Deletion operation completed.")
