@@ -54,8 +54,6 @@ def main():
         aws_obj = AwsDeploymentHelperTool(cli_args)
         action_to_perform = getattr(aws_obj, cli_args.action)
         action_to_perform()
-    else:
-        print("false")
 
 
 def aws_parser_arguments(aws_parser: argparse) -> argparse:

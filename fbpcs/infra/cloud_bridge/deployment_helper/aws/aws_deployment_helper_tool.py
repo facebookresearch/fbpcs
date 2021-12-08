@@ -20,12 +20,12 @@ class AwsDeploymentHelperTool:
 
     def create(self):
         if self.cli_args.add_iam_user:
-            self.aws_deployment_helper_obj.add_iam_user(
+            self.aws_deployment_helper_obj.create_user_workflow(
                 user_name=self.cli_args.user_name
             )
 
     def destroy(self):
         if self.cli_args.delete_iam_user:
-            self.aws_deployment_helper_obj.delete_iam_user(
+            self.aws_deployment_helper_obj.delete_user_workflow(
                 user_name=self.cli_args.user_name
             )
