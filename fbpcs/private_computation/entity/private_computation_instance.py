@@ -9,7 +9,12 @@
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union, Optional, Type
+from typing import List, Union, Optional, Type, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+        PrivateComputationBaseStageFlow,
+    )
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
@@ -23,9 +28,6 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
-from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
-    PrivateComputationBaseStageFlow,
-)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -192,18 +194,21 @@ class PrivateComputationInstance(InstanceBase):
         )
 
     @property
-    def stage_flow(self) -> Type[PrivateComputationBaseStageFlow]:
+    def stage_flow(self):
+        # type: () -> Type[PrivateComputationBaseStageFlow]
+        from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+            PrivateComputationBaseStageFlow,
+        )
+
         return PrivateComputationBaseStageFlow.cls_name_to_cls(
             self._stage_flow_cls_name
         )
 
     @property
-    def current_stage(self) -> PrivateComputationBaseStageFlow:
-        return PrivateComputationBaseStageFlow.cls_name_to_cls(
-            self._stage_flow_cls_name
-        ).get_stage_from_status(self.status)
+    def current_stage(self) -> "PrivateComputationBaseStageFlow":
+        return self.stage_flow.get_stage_from_status(self.status)
 
-    def get_next_runnable_stage(self) -> Optional[PrivateComputationBaseStageFlow]:
+    def get_next_runnable_stage(self) -> Optional["PrivateComputationBaseStageFlow"]:
         """Returns the next runnable stage in the instance's stage flow
 
         * If the instance has a start status, return None

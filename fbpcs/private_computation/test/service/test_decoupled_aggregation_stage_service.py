@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
