@@ -12,11 +12,9 @@
 
 #include "../Timestamp.h"
 #include "../Touchpoint.h"
-#include "EmpBatcherTestUtil.h"
-
 
 namespace measurement::private_attribution {
-TEST(TouchpointTest, TestBatcherSerialization) {
+TEST(TouchpointTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     Touchpoint tp{
         123 /*id*/,
@@ -26,8 +24,7 @@ TEST(TouchpointTest, TestBatcherSerialization) {
         10 /*campaignMetadata*/
     };
 
-    PrivateTouchpoint privateTp =
-        writeAndReadFromBatcher<PrivateTouchpoint>(tp);
+    PrivateTouchpoint privateTp{tp, emp::ALICE};
 
     std::stringstream out;
     out << tp;

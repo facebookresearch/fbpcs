@@ -52,32 +52,23 @@ struct MeasurementTouchpointMedata {
 struct PrivateMeasurementTouchpointMetadata {
   emp::Integer adId;
 
+  explicit PrivateMeasurementTouchpointMetadata(
+      MeasurementTouchpointMedata tpm,
+      int party)
+      : PrivateMeasurementTouchpointMetadata(
+            emp::Integer(INT_SIZE, tpm.adId, party)) {}
+
   explicit PrivateMeasurementTouchpointMetadata()
       : adId{INT_SIZE, -1, emp::PUBLIC} {}
 
   explicit PrivateMeasurementTouchpointMetadata(const emp::Integer& _adId)
       : adId{_adId} {}
 
-  // emp::batcher based construction support
-  explicit PrivateMeasurementTouchpointMetadata(int len, const emp::block* b)
-      : adId{INT_SIZE, b} {}
-
   PrivateMeasurementTouchpointMetadata select(
       const emp::Bit& useRhs,
       const PrivateMeasurementTouchpointMetadata& rhs) const {
     return PrivateMeasurementTouchpointMetadata{
         /* adId */ adId.select(useRhs, rhs.adId)};
-  }
-
-  // emp::batcher serialization support
-  template <typename... Args>
-  static size_t bool_size(Args...) {
-    return emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
-  }
-
-  // emp::batcher serialization support
-  static void bool_data(bool* data, const MeasurementTouchpointMedata& tpm) {
-    emp::Integer::bool_data(data, INT_SIZE, tpm.adId);
   }
 
   // string conversion support

@@ -96,8 +96,6 @@ class Timestamp : public emp::Swappable<Timestamp>,
             },
         } {}
 
-  Timestamp(int32_t, const emp::block* b) : Timestamp{b} {}
-
   explicit Timestamp(
       const emp::block* b,
       int64_t minValue = kDefaultMinValue,
@@ -124,28 +122,6 @@ class Timestamp : public emp::Swappable<Timestamp>,
   O reveal(int party = emp::PUBLIC) const;
 
   Timestamp operator-(const Timestamp& rhs) const;
-
-  // Batcher
-  template <typename... Args>
-  static size_t bool_size(
-      int64_t = 0,
-      int64_t minValue = kDefaultMinValue,
-      int64_t maxValue = kDefaultMaxValue,
-      Precision p = kDefaultPrecision) {
-    return emp::Integer::bool_size(bitsNeeded(minValue, maxValue, p));
-  }
-
-  static void bool_data(
-      bool* data,
-      int64_t ts,
-      int64_t minValue = kDefaultMinValue,
-      int64_t maxValue = kDefaultMaxValue,
-      Precision p = kDefaultPrecision) {
-    emp::Integer::bool_data(
-        data,
-        bitsNeeded(minValue, maxValue, p),
-        scale(minValue, maxValue, p, ts));
-  }
 
  private:
   int64_t minValue_;

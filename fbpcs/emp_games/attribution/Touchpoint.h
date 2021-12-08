@@ -48,7 +48,14 @@ struct PrivateTouchpoint {
   emp::Integer id;
   emp::Integer campaignMetadata;
 
-#define EMP_BIT_SIZE (static_cast<int>(emp::Bit::bool_size()))
+  explicit PrivateTouchpoint(Touchpoint tp, int party)
+      : PrivateTouchpoint(
+            emp::Bit{tp.isValid(), party},
+            emp::Bit{tp.isClick, party},
+            emp::Integer{INT_SIZE, tp.adId, party},
+            Timestamp{tp.ts, party},
+            emp::Integer{INT_SIZE, tp.id, party},
+            emp::Integer{INT_SIZE, tp.campaignMetadata, party}) {}
 
   explicit PrivateTouchpoint(
       const emp::Bit& _isValid,
@@ -71,23 +78,6 @@ struct PrivateTouchpoint {
         ts{-1},
         id{INT_SIZE, INVALID_TP_ID, emp::PUBLIC},
         campaignMetadata{INT_SIZE, -1, emp::PUBLIC} {}
-
-  // emp::batcher based construction support
-  explicit PrivateTouchpoint(int len, const emp::block* b)
-      // constructor for emp::Bit function happens to be a const emp::block&,
-      // rather than emp::block* like other emp primitives. Making an explicit
-      // static+cast is required for the compiler to select the right
-      // constructor (otherwise the empty constructor is used).
-      : isValid{static_cast<const emp::block&>(*b)},
-        isClick{static_cast<const emp::block&>(*(b + EMP_BIT_SIZE))},
-        // TODO there has to be a better way to do this addition, rather than
-        // being forced to do it all inline?
-        adId{INT_SIZE, b + 2 * EMP_BIT_SIZE},
-        ts{b + 2 * EMP_BIT_SIZE + INT_SIZE},
-        id{INT_SIZE, b + 2 * EMP_BIT_SIZE + INT_SIZE + ts.length()},
-        campaignMetadata{
-            INT_SIZE,
-            b + 2 * EMP_BIT_SIZE + ts.length() + 2 * INT_SIZE} {}
 
   PrivateTouchpoint select(const emp::Bit& useRhs, const PrivateTouchpoint& rhs)
       const {
@@ -118,36 +108,6 @@ struct PrivateTouchpoint {
     out << "}";
 
     return out.str();
-  }
-
-  // emp::batcher serialization support
-  template <typename... Args>
-  static size_t bool_size(Args...) {
-    return 2 * emp::Bit::bool_size() + Timestamp::bool_size() +
-        3 * emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
-  }
-
-  // emp::batcher serialization support
-  static void bool_data(bool* data, const Touchpoint& tp) {
-    auto offset = 0;
-
-    emp::Bit::bool_data(data, tp.isValid());
-    offset += emp::Bit::bool_size();
-
-    emp::Bit::bool_data(data + offset, tp.isClick);
-    offset += emp::Bit::bool_size();
-
-    emp::Integer::bool_data(data + offset, INT_SIZE, tp.adId);
-    offset += emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
-
-    Timestamp::bool_data(data + offset, tp.ts);
-    offset += Timestamp::bool_size();
-
-    emp::Integer::bool_data(data + offset, INT_SIZE, tp.id);
-    offset += emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
-
-    emp::Integer::bool_data(data + offset, INT_SIZE, tp.campaignMetadata);
-    offset += emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
   }
 };
 

@@ -11,18 +11,16 @@
 #include <fbpcf/mpc/EmpTestUtil.h>
 
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/TouchPointMetadata.h"
-#include "fbpcs/emp_games/attribution/decoupled_aggregation/test/EmpBatcherTestUtil.h"
 
 namespace aggregation::private_aggregation {
 
-TEST(MeasurementTouchpointMedataTest, TestBatcherSerialization) {
+TEST(MeasurementTouchpointMedataTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     MeasurementTouchpointMedata tp{
         456 /*adId*/
     };
 
-    PrivateMeasurementTouchpointMetadata privateTp =
-        writeAndReadFromBatcher<PrivateMeasurementTouchpointMetadata>(tp);
+    PrivateMeasurementTouchpointMetadata privateTp{tp, emp::ALICE};
 
     std::stringstream out;
     out << tp;

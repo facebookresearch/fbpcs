@@ -36,17 +36,16 @@ struct PrivateConversion {
   emp::Integer conv_value;
   emp::Integer conv_metadata;
 
+  explicit PrivateConversion(Conversion conv, int party)
+      : ts{conv.ts, party},
+        conv_value{INT_SIZE, conv.conv_value, party},
+        conv_metadata{INT_SIZE, conv.conv_metadata, party} {}
+
   PrivateConversion(
       const Timestamp& _ts,
       const emp::Integer& _conv_value,
       const emp::Integer& _conv_metadata)
       : ts{_ts}, conv_value{_conv_value}, conv_metadata{_conv_metadata} {}
-
-  // emp::batcher based construction support
-  PrivateConversion(int len, const emp::block* b)
-      : ts{b},
-        conv_value{INT_SIZE, b + ts.length()},
-        conv_metadata{INT_SIZE, b + ts.length() + INT_SIZE} {}
 
   // string conversion support
   template <typename T = std::string>
@@ -61,23 +60,6 @@ struct PrivateConversion {
     out << "}";
 
     return out.str();
-  }
-
-  // emp::batcher serialization support
-  template <typename... Args>
-  static size_t bool_size(Args...) {
-    return Timestamp::bool_size() +
-        2 * emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
-  }
-
-  // emp::batcher serialization support
-  static void bool_data(bool* data, const Conversion& conv) {
-    auto offset = 0;
-    Timestamp::bool_data(data, conv.ts);
-    offset += Timestamp::bool_size();
-    emp::Integer::bool_data(data + offset, INT_SIZE, conv.conv_value);
-    offset += emp::Integer::bool_size(INT_SIZE, 0 /* dummy value */);
-    emp::Integer::bool_data(data + offset, INT_SIZE, conv.conv_metadata);
   }
 };
 

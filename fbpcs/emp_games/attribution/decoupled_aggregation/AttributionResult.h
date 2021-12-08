@@ -37,25 +37,11 @@ struct AttributionResult {
 struct PrivateAttributionResult {
   emp::Bit isAttributed;
 
-#define EMP_BIT_SIZE (static_cast<int>(emp::Bit::bool_size()))
+  explicit PrivateAttributionResult(AttributionResult res, int party)
+      : PrivateAttributionResult(emp::Bit{res.isAttributed, party}) {}
 
   explicit PrivateAttributionResult(const emp::Bit& _isAttributed)
       : isAttributed{_isAttributed} {}
-
-  // emp::batcher based construction support
-  explicit PrivateAttributionResult(int len, const emp::block* b)
-      : isAttributed{static_cast<const emp::block&>(*b)} {}
-
-  // emp::batcher serialization support
-  template <typename... Args>
-  static size_t bool_size(Args...) {
-    return emp::Bit::bool_size();
-  }
-
-  // emp::batcher serialization support
-  static void bool_data(bool* data, const AttributionResult& ar) {
-    emp::Bit::bool_data(data, ar.isAttributed);
-  }
 
   // string conversion support
   template <typename T = std::string>
