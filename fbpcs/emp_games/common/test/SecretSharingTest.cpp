@@ -118,6 +118,7 @@ TEST(SecretSharingTest, TestMultiplyBitmask) {
   fbpcf::mpc::wrapTestWithParty<std::function<void(fbpcf::Party party)>>(
       [](fbpcf::Party party) {
         auto bitLen = 64;
+        // Test 1: vector of ints
         std::vector<int64_t> expected{123, 0, 789};
         std::vector<emp::Integer> input{emp::Integer{bitLen, 123},
                                         emp::Integer{bitLen, 456},
@@ -129,6 +130,18 @@ TEST(SecretSharingTest, TestMultiplyBitmask) {
         auto revealed = revealVector<emp::Integer, int64_t>(actual);
 
         EXPECT_EQ(expected, revealed);
+
+        // Test 2: vector of bits
+        std::vector<bool> expected2{false, true, false};
+        std::vector<emp::Bit> input2{emp::Bit{true}, emp::Bit{true},
+                                      emp::Bit{true}};
+        std::vector<emp::Bit> bitmask2{emp::Bit{false}, emp::Bit{true},
+                                      emp::Bit{false}};
+
+        auto actual2 = multiplyBitmask(input2, bitmask2);
+        auto revealed2 = revealVector<emp::Bit, bool>(actual2);
+
+        EXPECT_EQ(expected2, revealed2);
       });
 }
 
