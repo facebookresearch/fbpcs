@@ -189,8 +189,11 @@ undeploy_aws_resources() {
             -var "semi_automated_key_path=$data_upload_key_path"
     fi
 
-    echo "Finished destroy all AWS resources, except for S3 buckets (can not be deleted if it's not empty)"
-
+    echo "Finished destroying all AWS resources, except for:"
+    echo "  # S3 storage bucket ${s3_bucket_for_storage} because it is not empty"
+    echo "The following resources may have been deleted:"
+    echo "  # S3 data bucket ${s3_bucket_for_storage} (it will be deleted only if it is empty)"
+    echo "  # iam policy ${policy_name} (it will be deleted only if it is not attached to any users)"
 }
 
 
@@ -225,6 +228,7 @@ deploy_aws_resources() {
     onedocker_task_definition_family=$(terraform output onedocker_task_definition_family | tr -d '"')
     onedocker_task_definition_revision=$(terraform output onedocker_task_definition_revision | tr -d '"')
     onedocker_task_definition_container_definiton_name=$(terraform output onedocker_task_definition_container_definitons | jq 'fromjson | .[].name' | tr -d '"')
+    ecs_task_execution_role_name=$(terraform output ecs_task_execution_role_name | tr -d '"')
 
     cd /terraform_deployment/terraform_scripts/common/pce
     echo "########################Initializing terraform working directory########################"
@@ -298,6 +302,8 @@ deploy_aws_resources() {
     # store the outputs from data ingestion pipeline output into variables
     app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
     app_data_input_bucket_arn=$(terraform output data_processing_output_bucket_arn | tr -d '"')
+    firehose_stream_name=$(terraform output firehose_stream_name | tr -d '"')
+    data_ingestion_kms_key=$(terraform output data_ingestion_kms_key | tr -d '"')
 
     if "$build_semi_automated_data_pipeline"
     then
@@ -368,7 +374,22 @@ deploy_aws_resources() {
     echo "########################Upload config.ymls to S3########################"
     cd /terraform_deployment
     aws s3api put-object --bucket "$s3_bucket_for_storage" --key "config.yml" --body ./config.yml
+    echo "########################Finished upload config.ymls to S3########################"
 
+    echo "######################## Deploy resources policy ########################"
+    cd /terraform_deployment
+    python3 cli.py create aws \
+        --add_iam_policy \
+        --policy_name "$policy_name" \
+        --region "$region" \
+        --firehose_stream_name "$firehose_stream_name" \
+        --data_bucket_name "$s3_bucket_data_pipeline" \
+        --config_bucket_name "$s3_bucket_for_storage" \
+        --database_name "$database_name" \
+        --data_ingestion_kms_key "$data_ingestion_kms_key" \
+        --cluster_name "$aws_ecs_cluster_name" \
+        --ecs_task_execution_role_name "$ecs_task_execution_role_name"
+    echo "######################## Finished deploy resources policy ########################"
 }
 
 
@@ -387,6 +408,7 @@ else
     # s3_bucket_for_storage is set, but add tags to it
     s3_bucket_for_storage="$s3_bucket_for_storage$tag_postfix"
 fi
+database_name=${s3_bucket_for_storage//-/_}
 
 if [ -z ${s3_bucket_data_pipeline+x} ]
 then
@@ -397,6 +419,7 @@ else
     s3_bucket_data_pipeline="$s3_bucket_data_pipeline$tag_postfix"
 fi
 
+policy_name="fb-pc-policy${tag_postfix}"
 data_upload_key_path="semi-automated-data-ingestion"
 events_data_upload_s3_key="events-data-validation"
 query_results_key_path="query-results"
