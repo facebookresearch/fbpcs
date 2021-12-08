@@ -34,12 +34,12 @@ template <
     int SOURCE_ROLE,
     typename T,
     typename O,
-    typename... BatcherArgs>
+    typename... OArgs>
 const std::vector<O> privatelyShareArrayFrom(
     const std::vector<T>& in,
     size_t numVals,
     T nullValue,
-    BatcherArgs... batcherArgs) {
+    OArgs... oArgs) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
   XLOGF(
       DBG,
@@ -48,7 +48,9 @@ const std::vector<O> privatelyShareArrayFrom(
       numVals,
       privateVecToString<MY_ROLE, SOURCE_ROLE, T>(
           in, numVals, std::make_optional(nullValue)));
-  emp::Batcher batcher;
+
+  std::vector<O> out;
+  out.reserve(numVals);
 
   // Note that we must add an integer to both sides even though the data
   // transfer happens in one direction. This is so the underlying
@@ -56,19 +58,11 @@ const std::vector<O> privatelyShareArrayFrom(
   // from the API that this is a requirement.
   for (size_t i = 0; i < numVals; ++i) {
     if constexpr (MY_ROLE == SOURCE_ROLE) {
-      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., in.at(i));
+      out.push_back(O(std::forward<OArgs>(oArgs)..., in.at(i), SOURCE_ROLE));
     } else {
       T nullCopy = nullValue;
-      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., nullCopy);
+      out.push_back(O(std::forward<OArgs>(oArgs)..., nullCopy, SOURCE_ROLE));
     }
-  }
-
-  batcher.make_semi_honest(SOURCE_ROLE);
-
-  std::vector<O> out;
-  out.reserve(numVals);
-  for (size_t i = 0; i < numVals; ++i) {
-    out.push_back(batcher.next<O>());
   }
 
   return out;
@@ -80,11 +74,11 @@ template <
     int SOURCE_ROLE,
     typename T,
     typename O,
-    typename... BatcherArgs>
+    typename... OArgs>
 const std::vector<O> privatelyShareArrayFromNoPadding(
     const std::vector<T>& in,
     size_t numVals,
-    BatcherArgs... batcherArgs) {
+    OArgs... oArgs) {
   const auto receiveStr = MY_ROLE == SOURCE_ROLE ? "sending" : "receiving";
   XLOGF(
       DBG,
@@ -93,23 +87,17 @@ const std::vector<O> privatelyShareArrayFromNoPadding(
       numVals,
       privateVecToString<MY_ROLE, SOURCE_ROLE, T>(
           in, numVals));
-  emp::Batcher batcher;
-
-  for (size_t i = 0; i < numVals; ++i) {
-    if constexpr (MY_ROLE == SOURCE_ROLE) {
-      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., in.at(i));
-    } else {
-      T nullCopy;
-      batcher.add<O>(std::forward<BatcherArgs>(batcherArgs)..., nullCopy);
-    }
-  }
-
-  batcher.make_semi_honest(SOURCE_ROLE);
 
   std::vector<O> out;
   out.reserve(numVals);
+
   for (size_t i = 0; i < numVals; ++i) {
-    out.push_back(batcher.next<O>());
+    if constexpr (MY_ROLE == SOURCE_ROLE) {
+      out.push_back(O(std::forward<OArgs>(oArgs)..., in.at(i), SOURCE_ROLE));
+    } else {
+      T nullCopy;
+      out.push_back(O(std::forward<OArgs>(oArgs)..., nullCopy, SOURCE_ROLE));
+    }
   }
 
   return out;

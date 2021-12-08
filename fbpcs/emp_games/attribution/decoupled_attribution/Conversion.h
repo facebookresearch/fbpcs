@@ -34,10 +34,9 @@ struct Conversion {
 struct PrivateConversion {
   Timestamp ts;
 
-  explicit PrivateConversion( const Timestamp& _ts) : ts{_ts} {}
+  explicit PrivateConversion(Conversion conv, int party) : ts{conv.ts, party} {}
 
-  // emp::batcher based construction support
-  explicit PrivateConversion(int len, const emp::block* b) : ts{b} {}
+  explicit PrivateConversion(const Timestamp& _ts) : ts{_ts} {}
 
   // string conversion support
   template <typename T = std::string>
@@ -48,19 +47,6 @@ struct PrivateConversion {
     out << "}";
 
     return out.str();
-  }
-
-  // emp::batcher serialization support
-  template <typename... Args>
-  static size_t bool_size(Args...) {
-    return Timestamp::bool_size();
-  }
-
-  // emp::batcher serialization support
-  static void bool_data(bool* data, const Conversion& conv) {
-    auto offset = 0;
-    Timestamp::bool_data(data, conv.ts);
-    offset += Timestamp::bool_size();
   }
 };
 

@@ -12,10 +12,9 @@
 
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Touchpoint.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/test/EmpBatcherTestUtil.h"
 
 namespace aggregation::private_attribution {
-TEST(TouchpointTest, TestBatcherSerialization) {
+TEST(TouchpointTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     Touchpoint tp{
         456 /*adId*/,
@@ -23,8 +22,7 @@ TEST(TouchpointTest, TestBatcherSerialization) {
         789 /*ts*/,
     };
 
-    PrivateTouchpoint privateTp =
-        writeAndReadFromBatcher<PrivateTouchpoint>(tp);
+    PrivateTouchpoint privateTp{tp, emp::ALICE};
 
     std::stringstream out;
     out << tp;

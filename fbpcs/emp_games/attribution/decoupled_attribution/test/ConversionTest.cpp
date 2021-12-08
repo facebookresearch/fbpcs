@@ -12,17 +12,15 @@
 
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Conversion.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/test/EmpBatcherTestUtil.h"
 
 namespace aggregation::private_attribution {
-TEST(ConversionTest, TestBatcherSerialization) {
+TEST(ConversionTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     Conversion conv{
         12345 /*ts*/
     };
 
-    PrivateConversion privateConv =
-        writeAndReadFromBatcher<PrivateConversion>(conv);
+    PrivateConversion privateConv{conv, emp::ALICE};
 
     std::stringstream out;
     out << conv;

@@ -29,10 +29,7 @@ PrivateInt<MY_ROLE> privatelyShareInt(int64_t in);
  * Share an array of type T from SOURCE_ROLE to the opposite party,
  * return an array of type O.
  *
- * O must be emp::batcher compatible. That means O must implement
- *  1) O::bool_size(T val)
- *  2) O::bool_data(bool* data, T val)
- *  3) O(int32_t len, const emp::block* b)
+ * O must implement a constructor of the form: O(T, int party)
  *
  * T must also be ostream and == compatible to support debug logging.
  *
@@ -44,12 +41,12 @@ template <
     int SOURCE_ROLE,
     typename T,
     typename O,
-    typename... BatcherArgs>
+    typename... OArgs>
 const std::vector<O> privatelyShareArrayFrom(
     const std::vector<T>& in,
     size_t numVals,
     T nullValue,
-    BatcherArgs... batcherArgs);
+    OArgs... oArgs);
 
 /*
  * Share emp::Integers from SOURCE_ROLE to the opposite party

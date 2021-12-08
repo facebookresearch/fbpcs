@@ -11,18 +11,16 @@
 #include <fbpcf/mpc/EmpTestUtil.h>
 
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/ConversionMetadata.h"
-#include "fbpcs/emp_games/attribution/decoupled_aggregation/test/EmpBatcherTestUtil.h"
 
 namespace aggregation::private_aggregation {
 
-TEST(MeasurementConversiontMedataTest, TestBatcherSerialization) {
+TEST(MeasurementConversiontMedataTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     MeasurementConversionMetadata cm{
         1325 /*conv_value*/
     };
 
-    PrivateMeasurementConversionMetadata convMetadata =
-        writeAndReadFromBatcher<PrivateMeasurementConversionMetadata>(cm);
+    PrivateMeasurementConversionMetadata convMetadata{cm, emp::ALICE};
 
     std::stringstream out;
     out << cm;

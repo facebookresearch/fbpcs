@@ -11,7 +11,6 @@
 #include <fbpcf/mpc/EmpTestUtil.h>
 
 #include "../Timestamp.h"
-#include "EmpBatcherTestUtil.h"
 
 namespace measurement::private_attribution {
 
@@ -78,21 +77,19 @@ TEST(TimestampTest, TestMinus) {
   });
 }
 
-TEST(TimestampTest, TestBatcherSerialization) {
+TEST(TimestampTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     int64_t time = 10800;
 
     // Default min/max/precision
-    Timestamp ts1 = writeAndReadFromBatcher<Timestamp>(time);
+    Timestamp ts1 = Timestamp{time, emp::ALICE};
     EXPECT_EQ(time, ts1.reveal<int64_t>());
 
     // Explicitly specified min/max/precision
     auto minValue = 0;
     auto maxValue = 36000;
     auto precision = Precision::HOURS;
-    auto batcher =
-        writeToBatcher<Timestamp>(time, minValue, maxValue, precision);
-    Timestamp ts2 = Timestamp{batcher.label_ptr, minValue, maxValue, precision};
+    auto ts2 = Timestamp{time, emp::ALICE, minValue, maxValue, precision};
     EXPECT_EQ(time, ts2.reveal<int64_t>());
   });
 }

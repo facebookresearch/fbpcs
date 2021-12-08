@@ -12,11 +12,10 @@
 
 #include "../Conversion.h"
 #include "../Timestamp.h"
-#include "EmpBatcherTestUtil.h"
 
 
 namespace measurement::private_attribution {
-TEST(ConversionTest, TestBatcherSerialization) {
+TEST(ConversionTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     Conversion conv{
         12345 /*ts*/,
@@ -24,8 +23,7 @@ TEST(ConversionTest, TestBatcherSerialization) {
         8910 /*conv_metadata*/,
     };
 
-    PrivateConversion privateConv =
-        writeAndReadFromBatcher<PrivateConversion>(conv);
+    PrivateConversion privateConv{conv, emp::ALICE};
 
     std::stringstream out;
     out << conv;

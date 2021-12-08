@@ -48,12 +48,14 @@ struct MeasurementConversionMetadata {
 struct PrivateMeasurementConversionMetadata {
   emp::Integer conv_value;
 
+  explicit PrivateMeasurementConversionMetadata(
+      MeasurementConversionMetadata cvm,
+      int party)
+      : PrivateMeasurementConversionMetadata(
+            emp::Integer{INT_SIZE_32, cvm.conv_value, party}) {}
+
   explicit PrivateMeasurementConversionMetadata(const emp::Integer& _conv_value)
       : conv_value{_conv_value} {}
-
-  // emp::batcher based construction support
-  PrivateMeasurementConversionMetadata(int len, const emp::block* b)
-      : conv_value{INT_SIZE_32, b} {}
 
   // string conversion support
   template <typename T = std::string>
@@ -64,17 +66,6 @@ struct PrivateMeasurementConversionMetadata {
     out << "}";
 
     return out.str();
-  }
-
-  // emp::batcher serialization support
-  template <typename... Args>
-  static size_t bool_size(Args...) {
-    return emp::Integer::bool_size(INT_SIZE_32, 0 /* dummy value */);
-  }
-
-  // emp::batcher serialization support
-  static void bool_data(bool* data, const MeasurementConversionMetadata& conv) {
-    emp::Integer::bool_data(data, INT_SIZE_32, conv.conv_value);
   }
 };
 

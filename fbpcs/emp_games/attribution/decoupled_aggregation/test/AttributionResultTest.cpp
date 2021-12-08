@@ -11,18 +11,16 @@
 #include <fbpcf/mpc/EmpTestUtil.h>
 
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AttributionResult.h"
-#include "fbpcs/emp_games/attribution/decoupled_aggregation/test/EmpBatcherTestUtil.h"
 
 namespace aggregation::private_aggregation {
 
-TEST(AttributionResultTest, TestBatcherSerialization) {
+TEST(AttributionResultTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {
     AttributionResult ar{
         true /*is_attributed*/
     };
 
-    PrivateAttributionResult private_ar =
-        writeAndReadFromBatcher<PrivateAttributionResult>(ar);
+    PrivateAttributionResult private_ar{ar, emp::ALICE};
 
     std::stringstream out;
     out << ar;
