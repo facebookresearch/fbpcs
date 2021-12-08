@@ -100,6 +100,34 @@ def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
         "--policy_name", type=str, required=False, help="Policy name to be created"
     )
 
+    iam_policy_command_group.add_argument(
+        "--firehose_stream_name", type=str, required=False, help="Firehose stream name"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--data_bucket_name", type=str, required=False, help="Data bucket name"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--config_bucket_name", type=str, required=False, help="Config bucket name"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--database_name", type=str, required=False, help="Database name"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--data_ingestion_kms_key", type=str, required=False, help="Data ingestion bucket KMS key"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--cluster_name", type=str, required=False, help="ECS cluster name"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--ecs_task_execution_role_name", type=str, required=False, help="ECS task execution role name"
+    )
+
 
 def aws_destroy_iam_user_parser_arguments(aws_parser: argparse):
     iam_user_command_group = aws_parser.add_argument_group(

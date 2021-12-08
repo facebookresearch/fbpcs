@@ -11,6 +11,7 @@ from string import Template
 import boto3
 from botocore.exceptions import ClientError
 from botocore.exceptions import NoCredentialsError
+from .policy_params import PolicyParams
 
 
 class AwsDeploymentHelper:
@@ -117,17 +118,18 @@ class AwsDeploymentHelper:
                     f"Unexpected error occured in deletion of user {user_name}"
                 )
 
-    def create_policy(self, policy_name: str, user_name: str = None):
+    def create_policy(self, policy_name: str, policy_params: PolicyParams, user_name: str = None):
 
         # directly reading the json file from iam_policies folder
         # TODO: pass the policy to be added from cli.py when we need more granular control
 
         policy_json_data = self.read_json_file(
-            file_name="iam_policies/fb_pc_iam_policy.json"
+            file_name="iam_policies/fb_pc_iam_policy.json",
+            policy_params=policy_params
         )
 
         try:
-            self.iam.create_policy(
+            response = self.iam.create_policy(
                 PolicyName=policy_name, PolicyDocument=json.dumps(policy_json_data)
             )
             self.log.info(f"Created policy with policy name {policy_name}")
@@ -225,19 +227,19 @@ class AwsDeploymentHelper:
             )
         return access_key_list
 
-    def read_json_file(self, file_name: str, read_mode: str = "r"):
+    def read_json_file(self, file_name: str, policy_params: PolicyParams, read_mode: str = "r"):
 
         # this can be replaced with a json file which is written in deploy.sh
         interpolation_data = {
             "REGION": self.region,
             "ACCOUNT_ID": self.account_id,
-            "CLUSTER_NAME": "",
-            "DATA_BUCKET_NAME": "",
-            "CONFIG_BUCKET_NAME": "",
-            "DATA_INGESTION_KMS_KEY": "",
-            "ECS_TASK_EXECUTION_ROLE_NAME": "",
-            "FIREHOSE_STREAM_NAME": "",
-            "DATEBASE_NAME": "",
+            "CLUSTER_NAME": policy_params.cluster_name,
+            "DATA_BUCKET_NAME": policy_params.data_bucket_name,
+            "CONFIG_BUCKET_NAME": policy_params.config_bucket_name,
+            "DATA_INGESTION_KMS_KEY": policy_params.data_ingestion_kms_key,
+            "ECS_TASK_EXECUTION_ROLE_NAME": policy_params.ecs_task_execution_role_name,
+            "FIREHOSE_STREAM_NAME": policy_params.firehose_stream_name,
+            "DATEBASE_NAME": policy_params.database_name,
         }
 
         file_path = os.path.join(os.path.dirname(__file__), file_name)
