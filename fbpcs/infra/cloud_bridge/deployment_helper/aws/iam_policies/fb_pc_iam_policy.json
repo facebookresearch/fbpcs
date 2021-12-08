@@ -1,0 +1,122 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "firehose:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:firehose:${REGION}:${ACCOUNT_ID}:deliverystream/${FIREHOSE_STREAM_NAME}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "athena:*"
+            ],
+            "Resource": [
+                "arn:aws:athena:${REGION}:${ACCOUNT_ID}:datacatalog/AwsDataCatalog",
+                "arn:aws:athena:${REGION}:${ACCOUNT_ID}:workgroup/primary"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${DATA_BUCKET_NAME}",
+                "arn:aws:s3:::${DATA_BUCKET_NAME}/*",
+                "arn:aws:s3:::${CONFIG_BUCKET_NAME}",
+                "arn:aws:s3:::${CONFIG_BUCKET_NAME}/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "glue:*"
+            ],
+            "Resource": [
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:catalog",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:database/default",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:database/${DATEBASE_NAME}",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/${DATEBASE_NAME}/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "kms:*"
+            ],
+            "Resource": [
+                "arn:aws:kms:${REGION}:${ACCOUNT_ID}:key/${DATA_INGESTION_KMS_KEY}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ecs:*",
+            "Resource": [
+                "arn:aws:ecs:*:${ACCOUNT_ID}:task/*",
+                "arn:aws:ecs:*:${ACCOUNT_ID}:task-set/*/*/*",
+                "arn:aws:ecs:*:${ACCOUNT_ID}:container-instance/*",
+                "arn:aws:ecs:*:${ACCOUNT_ID}:service/*",
+                "arn:aws:ecs:*:${ACCOUNT_ID}:capacity-provider/*",
+                "arn:aws:ecs:*:${ACCOUNT_ID}:task-definition/*:*",
+                "arn:aws:ecs:${REGION}:${ACCOUNT_ID}:cluster/${CLUSTER_NAME}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "arn:aws:iam::${ACCOUNT_ID}:role/${ECS_TASK_EXECUTION_ROLE_NAME}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr-public:DescribeRegistries",
+                "ecr:DescribeImageReplicationStatus",
+                "ecr:ListTagsForResource",
+                "ecr:ListImages",
+                "ecr:BatchGetRepositoryScanningConfiguration",
+                "ecr:GetRegistryScanningConfiguration",
+                "ecs:DescribeTaskDefinition",
+                "ecs:ListServices",
+                "ecs:CreateCapacityProvider",
+                "ecs:DeregisterTaskDefinition",
+                "ecs:RegisterTaskDefinition",
+                "ecr:DescribeRepositories",
+                "ecs:ListTaskDefinitions",
+                "ecr:BatchCheckLayerAvailability",
+                "ecs:CreateTaskSet",
+                "ecs:ListClusters",
+                "ecr:GetLifecyclePolicy",
+                "ecr-public:DescribeImageTags",
+                "ecr:GetRegistryPolicy",
+                "ecs:DiscoverPollEndpoint",
+                "ecr-public:DescribeImages",
+                "ecs:PutAccountSettingDefault",
+                "ecr-public:GetAuthorizationToken",
+                "ecr:DescribeImageScanFindings",
+                "ecs:CreateCluster",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:DescribeRegistry",
+                "ecr:DescribePullThroughCacheRules",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr-public:GetRepositoryCatalogData",
+                "ecr:GetAuthorizationToken",
+                "ecr-public:GetRepositoryPolicy",
+                "ecs:PutAccountSetting",
+                "ecs:ListAccountSettings",
+                "ecr-public:DescribeRepositories",
+                "ecs:DeleteAccountSetting",
+                "ecs:ListTaskDefinitionFamilies",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr-public:GetRegistryCatalogData",
+                "ecr-public:ListTagsForResource",
+                "ecr-public:BatchCheckLayerAvailability",
+                "ecr:GetRepositoryPolicy"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

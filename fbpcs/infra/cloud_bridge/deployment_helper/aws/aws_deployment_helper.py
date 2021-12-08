@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+from string import Template
 
 import boto3
 from botocore.exceptions import ClientError
@@ -116,13 +117,13 @@ class AwsDeploymentHelper:
                     f"Unexpected error occured in deletion of user {user_name}"
                 )
 
-    def create_policy(self, policy_name: str, user_name: str):
+    def create_policy(self, policy_name: str, user_name: str = None):
 
         # directly reading the json file from iam_policies folder
         # TODO: pass the policy to be added from cli.py when we need more granular control
 
         policy_json_data = self.read_json_file(
-            file_name="iam_policies/athena_policy.json"
+            file_name="iam_policies/fb_pc_iam_policy.json"
         )
 
         try:
@@ -136,9 +137,12 @@ class AwsDeploymentHelper:
                     "Policy already exits. Attaching exising policy to the user"
                 )
             else:
-                self.log.error(
-                    f"Unexpected error occurred in policy creation for user {user_name}: {error}"
-                )
+                if user_name:
+                    self.log.error(
+                        f"Unexpected error occurred in policy {policy_name} creation for user {user_name}: {error}"
+                    )
+                else:
+                    self.log.error(f"Unexpected error occurred in policy {policy_name}")
 
     def delete_policy(self, policy_name: str):
         policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
@@ -222,9 +226,25 @@ class AwsDeploymentHelper:
         return access_key_list
 
     def read_json_file(self, file_name: str, read_mode: str = "r"):
+
+        # this can be replaced with a json file which is written in deploy.sh
+        interpolation_data = {
+            "REGION": self.region,
+            "ACCOUNT_ID": self.account_id,
+            "CLUSTER_NAME": "",
+            "DATA_BUCKET_NAME": "",
+            "CONFIG_BUCKET_NAME": "",
+            "DATA_INGESTION_KMS_KEY": "",
+            "ECS_TASK_EXECUTION_ROLE_NAME": "",
+            "FIREHOSE_STREAM_NAME": "",
+            "DATEBASE_NAME": "",
+        }
+
         file_path = os.path.join(os.path.dirname(__file__), file_name)
         with open(file_path, read_mode) as file_obj:
-            json_data = json.load(file_obj)
+            content = "".join(file_obj.readlines())
+            template = Template(content)
+            json_data = json.loads(template.substitute(interpolation_data))
         return json_data
 
     def create_user_workflow(self, user_name: str):

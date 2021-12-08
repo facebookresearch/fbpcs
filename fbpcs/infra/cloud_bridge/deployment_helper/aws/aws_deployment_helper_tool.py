@@ -20,12 +20,30 @@ class AwsDeploymentHelperTool:
 
     def create(self):
         if self.cli_args.add_iam_user:
+            if self.cli_args.user_name is None:
+                raise Exception(
+                    "Need username to add user. Please add username using --user_name argument in cli.py"
+                )
             self.aws_deployment_helper_obj.create_user_workflow(
                 user_name=self.cli_args.user_name
+            )
+
+        if self.cli_args.add_iam_policy:
+            if self.cli_args.policy_name is None:
+                raise Exception(
+                    "Need policy name to add IAM policy. Please add username using --policy_name argument in cli.py"
+                )
+            self.aws_deployment_helper_obj.create_policy(
+                policy_name=self.cli_args.policy_name
             )
 
     def destroy(self):
         if self.cli_args.delete_iam_user:
             self.aws_deployment_helper_obj.delete_user_workflow(
                 user_name=self.cli_args.user_name
+            )
+
+        if self.cli_args.delete_iam_policy:
+            self.aws_deployment_helper_obj.delete_policy(
+                policy_name=self.cli_args.policy_name
             )
