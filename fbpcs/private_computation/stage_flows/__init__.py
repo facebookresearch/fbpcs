@@ -8,19 +8,16 @@ PrivateComputationBaseStageFlow has a mapping from subclass name -> subclass.
 This only works if the subclass is imported somewhere in the global namespace.
 This logic will import all of the modules in the directory, which will guarantee
 that each subclass is imported whenever PrivateComputationBaseStageFlow is imported.
-
-Reference: https://stackoverflow.com/a/60861023/
 """
 
-from importlib import import_module
-from pathlib import Path
+# TODO(T107598106): Create StageFlowSelector class and delete custom __init__.py logic
 
-# grabs each python file
-for f in Path(__file__).parent.glob("*.py"):
-    module_name = f.stem
-    # prevents circular imports
-    if (not module_name.startswith("_")) and (module_name not in globals()):
-        import_module(f".{module_name}", __package__)
-    del f, module_name
-# unload these modules
-del import_module, Path
+__all__ = [  # noqa: ignore=F405
+    "private_computation_base_stage_flow",
+    "private_computation_decoupled_local_test_stage_flow",
+    "private_computation_decoupled_stage_flow",
+    "private_computation_local_test_stage_flow",
+    "private_computation_stage_flow",
+]
+
+from . import *  # noqa: ignore=F403

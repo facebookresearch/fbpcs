@@ -13,6 +13,9 @@ from typing import Type, TypeVar, TYPE_CHECKING
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.stage_flows.exceptions import (
+    PCStageFlowNotFoundException,
+)
 
 if TYPE_CHECKING:
     from fbpcs.private_computation.service.private_computation_stage_service import (
@@ -52,12 +55,14 @@ class PrivateComputationBaseStageFlow(StageFlow):
             A subclass of PrivateComputationBaseStageFlow
 
         Raises:
-            ValueError: raises when no subclass with the name 'name' is found
+            PCStageFlowNotFoundException: raises when no subclass with the name 'name' is found
         """
         for subclass in cls.__subclasses__():
             if name == subclass.__name__:
                 return subclass
-        raise ValueError(f"No subclass with name {name}")
+        raise PCStageFlowNotFoundException(
+            f"Could not find subclass with {name=}. Make sure it has been imported in stage_flows/__init__.py"
+        )
 
     @classmethod
     def get_cls_name(cls: Type[C]) -> str:
