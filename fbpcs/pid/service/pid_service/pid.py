@@ -7,7 +7,7 @@
 # pyre-strict
 
 import logging
-from typing import Any, DefaultDict, Dict, List, Optional
+from typing import DefaultDict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService

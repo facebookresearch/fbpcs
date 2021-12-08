@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import abc
-from typing import Any, Dict, Optional, Union
+from typing import Optional
 
 from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole
 

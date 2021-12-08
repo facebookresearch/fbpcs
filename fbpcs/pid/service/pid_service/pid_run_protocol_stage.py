@@ -5,11 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-from fbpcp.util import reflect
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.util.wait_for_containers import wait_for_containers_async
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
