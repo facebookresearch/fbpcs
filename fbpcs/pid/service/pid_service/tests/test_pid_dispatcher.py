@@ -6,7 +6,7 @@
 
 import unittest
 from collections import defaultdict
-from unittest.mock import mock_open, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 from fbpcp.service.container_aws import AWSContainerService
 from fbpcp.service.onedocker import OneDockerService

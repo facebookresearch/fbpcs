@@ -9,12 +9,13 @@
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union, Optional, Type, TYPE_CHECKING
+from typing import List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
         PrivateComputationBaseStageFlow,
     )
+    from typing import Type
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase

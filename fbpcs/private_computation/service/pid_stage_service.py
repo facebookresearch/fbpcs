@@ -6,7 +6,7 @@
 
 # pyre-strict
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fbpcs.pid.entity.pid_instance import (
     PIDInstance,

@@ -6,13 +6,11 @@
 
 import asyncio
 import logging
-import pathlib
-from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
+from typing import DefaultDict, Dict, List, Optional, Tuple
 
 import networkx as nx
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-from fbpcp.util import yaml
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.entity.pid_instance import (
     PIDInstance,
