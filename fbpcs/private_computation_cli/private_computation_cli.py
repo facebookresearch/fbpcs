@@ -42,12 +42,12 @@ from docopt import docopt
 from fbpcp.util import yaml
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
-from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
 
 # TODO: T105929150 clean up these imports once buck imports is fixed
-from fbpcs.private_computation.entity.private_computation_decoupled_local_test_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_decoupled_local_test_stage_flow import (
     PrivateComputationDecoupledLocalTestStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -56,10 +56,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     PrivateComputationGameType,
 )
-from fbpcs.private_computation.entity.private_computation_local_test_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_local_test_stage_flow import (
     PrivateComputationLocalTestStageFlow,
 )
-from fbpcs.private_computation.entity.private_computation_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
 from fbpcs.private_computation.pc_attribution_runner import get_attribution_dataset_info

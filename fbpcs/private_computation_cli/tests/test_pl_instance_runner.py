@@ -17,7 +17,7 @@ from fbpcs.pl_coordinator.pl_instance_runner import (
     PLInstanceRunner,
     PLInstanceCalculationException,
 )
-from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -29,7 +29,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_status import (

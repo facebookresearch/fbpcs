@@ -27,7 +27,7 @@ from fbpcs.pl_coordinator.exceptions import PLInstanceCalculationException
 from fbpcs.pl_coordinator.pc_partner_instance import PrivateLiftPartnerInstance
 from fbpcs.pl_coordinator.pc_publisher_instance import PrivateLiftPublisherInstance
 from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
-from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
