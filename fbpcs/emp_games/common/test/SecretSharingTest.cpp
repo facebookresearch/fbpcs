@@ -134,14 +134,28 @@ TEST(SecretSharingTest, TestMultiplyBitmask) {
         // Test 2: vector of bits
         std::vector<bool> expected2{false, true, false};
         std::vector<emp::Bit> input2{emp::Bit{true}, emp::Bit{true},
-                                      emp::Bit{true}};
+                                     emp::Bit{true}};
         std::vector<emp::Bit> bitmask2{emp::Bit{false}, emp::Bit{true},
-                                      emp::Bit{false}};
+                                       emp::Bit{false}};
 
         auto actual2 = multiplyBitmask(input2, bitmask2);
         auto revealed2 = revealVector<emp::Bit, bool>(actual2);
 
         EXPECT_EQ(expected2, revealed2);
+
+        // Test 3: vector of vector of ints
+        std::vector<std::vector<int64_t>> expected3{{1, 2}, {3, 4}, {0, 0}};
+        std::vector<std::vector<emp::Integer>> input3{
+            {emp::Integer{bitLen, 1}, emp::Integer{bitLen, 2}},
+            {emp::Integer{bitLen, 3}, emp::Integer{bitLen, 4}},
+            {emp::Integer{bitLen, 5}, emp::Integer{bitLen, 6}}};
+        std::vector<emp::Bit> bitmask3{emp::Bit{true}, emp::Bit{true},
+                                       emp::Bit{false}};
+
+        auto actual3 = multiplyBitmask(input3, bitmask3);
+        auto revealed3 = revealVectorOfVectors<emp::Integer, int64_t>(actual3);
+
+        EXPECT_EQ(expected3, revealed3);
       });
 }
 
