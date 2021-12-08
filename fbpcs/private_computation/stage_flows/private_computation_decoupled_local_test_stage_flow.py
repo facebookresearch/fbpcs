@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
     PrivateComputationStageFlowData,
 )
@@ -23,10 +23,6 @@ from fbpcs.private_computation.service.decoupled_attribution_stage_service impor
 from fbpcs.private_computation.service.dummy_stage_service import (
     DummyStageService,
 )
-from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
-from fbpcs.private_computation.service.post_processing_stage_service import (
-    PostProcessingStageService,
-)
 from fbpcs.private_computation.service.prepare_data_stage_service import (
     PrepareDataStageService,
 )
@@ -36,7 +32,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 
 
-class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
+class PrivateComputationDecoupledLocalTestStageFlow(PrivateComputationBaseStageFlow):
     """
     This enum lists all of the supported stage types and maps to their possible statuses.
     It also provides methods to get information about the next or previous stage.
@@ -51,9 +47,7 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = (
-        "CREATED ID_MATCH PREPARE DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
-    )
+    _order_ = "CREATED PREPARE DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -62,12 +56,6 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.CREATED,
         PrivateComputationInstanceStatus.CREATION_FAILED,
         False,
-    )
-    ID_MATCH = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-        PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-        PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-        True,
     )
     PREPARE = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
@@ -93,12 +81,6 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         True,
     )
-    POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
-        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
-        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
-        False,
-    )
 
     def get_stage_service(
         self, args: PrivateComputationStageServiceArgs
@@ -117,10 +99,6 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         """
         if self is self.CREATED:
             return DummyStageService()
-        elif self is self.ID_MATCH:
-            return IdMatchStageService(
-                args.pid_svc,
-            )
         elif self is self.PREPARE:
             return PrepareDataStageService(
                 args.onedocker_svc,
@@ -141,10 +119,6 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
             return AggregateShardsStageService(
                 args.onedocker_binary_config_map,
                 args.mpc_svc,
-            )
-        elif self is self.POST_PROCESSING_HANDLERS:
-            return PostProcessingStageService(
-                args.storage_svc, args.post_processing_handlers
             )
         else:
             raise NotImplementedError(f"No stage service configured for {self}")

@@ -21,10 +21,10 @@ from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
-from fbpcs.private_computation.entity.private_computation_base_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
-from fbpcs.private_computation.entity.private_computation_decoupled_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
     PrivateComputationDecoupledStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -35,7 +35,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_stage_flow import (
+from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
