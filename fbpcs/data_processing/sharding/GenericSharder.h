@@ -19,6 +19,14 @@ namespace detail {
  * @param s the string from which to remove quote characters
  */
 void stripQuotes(std::string& s);
+
+/**
+ * Convert DOS line endings to Unix line endings in a string (if necessary).
+ * Converts "\r\n" to "\n" in the string, modifying in place.
+ *
+ * @param s the string from which to remove dos line ending characters
+ */
+void dos2Unix(std::string& s);
 } // namespace detail
 
 /**

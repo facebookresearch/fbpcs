@@ -50,6 +50,19 @@ TEST(GenericSharderTest, TestStripQuotes) {
   EXPECT_EQ(quotedMiddle, "hello world");
 }
 
+TEST(GenericSharderTest, TestDos2Unix) {
+  std::string dosLine{"hello world\r\n"};
+  std::string unixLine{"hello world\n"};
+  std::string lineNoNewline{"hello world"};
+
+  detail::dos2Unix(dosLine);
+  EXPECT_EQ(dosLine, "hello world\n");
+  detail::dos2Unix(unixLine);
+  EXPECT_EQ(unixLine, "hello world\n");
+  detail::dos2Unix(lineNoNewline);
+  EXPECT_EQ(lineNoNewline, "hello world");
+}
+
 TEST(GenericSharderTest, TestGenOutputPaths) {
   std::string basePath = "/tmp";
   std::size_t start = 0;

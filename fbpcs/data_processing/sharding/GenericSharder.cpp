@@ -29,6 +29,10 @@ namespace detail {
 void stripQuotes(std::string& s) {
   s.erase(std::remove(s.begin(), s.end(), '"'), s.end());
 }
+
+void dos2Unix(std::string& s) {
+  s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
+}
 } // namespace detail
 
 std::vector<std::string> GenericSharder::genOutputPaths(
@@ -73,6 +77,7 @@ void GenericSharder::shard() {
   std::string line;
   getline(inStream, line);
   detail::stripQuotes(line);
+  detail::dos2Unix(line);
   for (const auto& tmpFile : tmpFiles) {
     *tmpFile << line << "\n";
   }
@@ -82,6 +87,7 @@ void GenericSharder::shard() {
   uint64_t lineIdx = 0;
   while (getline(inStream, line)) {
     detail::stripQuotes(line);
+    detail::dos2Unix(line);
     shardLine(std::move(line), tmpFiles);
     ++lineIdx;
     if (lineIdx % getLogRate() == 0) {
