@@ -48,6 +48,9 @@ def main():
     aws_create_iam_user_parser_arguments(aws_create_parser)
     aws_destroy_iam_user_parser_arguments(aws_destroy_parser)
 
+    aws_create_iam_policy_parser_arguments(aws_create_parser)
+    aws_destroy_iam_policy_parser_arguments(aws_destroy_parser)
+
     cli_args = cli_parser.parse_args()
 
     if cli_args.platform == "aws":
@@ -74,14 +77,27 @@ def aws_parser_arguments(aws_parser: argparse) -> argparse:
 
 def aws_create_iam_user_parser_arguments(aws_parser: argparse):
     iam_user_command_group = aws_parser.add_argument_group(
-        "iam_user", "Arguments to add iam user"
+        "iam_user", "Arguments to add IAM user"
     )
 
     iam_user_command_group.add_argument(
         "--add_iam_user", action="store_true", help="Add IAM user to AWS account"
     )
     iam_user_command_group.add_argument(
-        "--user_name", type=str, required=True, help="User name of the IAM user"
+        "--user_name", type=str, required=False, help="User name of the IAM user"
+    )
+
+
+def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
+    iam_policy_command_group = aws_parser.add_argument_group(
+        "iam_policy", "Arguments to add IAM policy"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--add_iam_policy", action="store_true", help="Add IAM policy to AWS account"
+    )
+    iam_policy_command_group.add_argument(
+        "--policy_name", type=str, required=False, help="Policy name to be created"
     )
 
 
@@ -94,7 +110,22 @@ def aws_destroy_iam_user_parser_arguments(aws_parser: argparse):
         "--delete_iam_user", action="store_true", help="Delete IAM user to AWS account"
     )
     iam_user_command_group.add_argument(
-        "--user_name", type=str, required=True, help="User name of the IAM user"
+        "--user_name", type=str, required=False, help="User name of the IAM user"
+    )
+
+
+def aws_destroy_iam_policy_parser_arguments(aws_parser: argparse):
+    iam_policy_command_group = aws_parser.add_argument_group(
+        "iam_policy", "Arguments to add IAM policy"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--delete_iam_policy",
+        action="store_true",
+        help="Delete IAM policy from AWS account",
+    )
+    iam_policy_command_group.add_argument(
+        "--policy_name", type=str, required=False, help="Policy name to be destroyed"
     )
 
 
