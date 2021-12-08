@@ -103,9 +103,9 @@ std::function<void(std::shared_ptr<AggMetrics>)> constructAdObjectFormatThreshol
     int64_t threshold) {
   return [threshold](std::shared_ptr<AggMetrics> metrics) {
     const emp::Integer hiddenMetric{
-        INT_SIZE, kHiddenMetricConstant, emp::PUBLIC};
+        INT_SIZE, kHiddenMetricConstant};
     const emp::Integer kAnonymityLevel{
-        private_measurement::INT_SIZE, threshold, emp::PUBLIC};
+        private_measurement::INT_SIZE, threshold};
 
     for (const auto& [rule, metricsMap] : metrics->getAsMap()) {
       for (const auto& [aggregationName, aggregationData] :

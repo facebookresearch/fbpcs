@@ -81,7 +81,7 @@ class Timestamp : public emp::Swappable<Timestamp>,
  public:
   explicit Timestamp(
       int64_t ts,
-      int party = emp::PUBLIC,
+      int party = emp::ALICE,
       int64_t minValue = kDefaultMinValue,
       int64_t maxValue = kDefaultMaxValue,
       Precision p = kDefaultPrecision)

@@ -65,12 +65,12 @@ struct PrivateTouchpoint {
         campaignMetadata{_campaignMetadata} {}
 
   explicit PrivateTouchpoint()
-      : isValid{false, emp::PUBLIC},
-        isClick{false, emp::PUBLIC},
-        adId{INT_SIZE, -1, emp::PUBLIC},
+      : isValid{false},
+        isClick{false},
+        adId{INT_SIZE, -1},
         ts{-1},
-        id{INT_SIZE, INVALID_TP_ID, emp::PUBLIC},
-        campaignMetadata{INT_SIZE, -1, emp::PUBLIC} {}
+        id{INT_SIZE, INVALID_TP_ID},
+        campaignMetadata{INT_SIZE, -1} {}
 
   // emp::batcher based construction support
   explicit PrivateTouchpoint(int len, const emp::block* b)
