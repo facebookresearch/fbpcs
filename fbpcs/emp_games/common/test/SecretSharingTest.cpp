@@ -114,4 +114,22 @@ TEST(SecretSharingTest, TestPrivatelyShareIntArraysNoPaddingFromBob) {
       });
 }
 
+TEST(SecretSharingTest, TestMultiplyBitmask) {
+  fbpcf::mpc::wrapTestWithParty<std::function<void(fbpcf::Party party)>>(
+      [](fbpcf::Party party) {
+        auto bitLen = 64;
+        std::vector<int64_t> expected{123, 0, 789};
+        std::vector<emp::Integer> input{emp::Integer{bitLen, 123},
+                                        emp::Integer{bitLen, 456},
+                                        emp::Integer{bitLen, 789}};
+        std::vector<emp::Bit> bitmask{emp::Bit{true}, emp::Bit{false},
+                                      emp::Bit{true}};
+
+        auto actual = multiplyBitmask(input, bitmask);
+        auto revealed = revealVector<emp::Integer, int64_t>(actual);
+
+        EXPECT_EQ(expected, revealed);
+      });
+}
+
 } // namespace private_measurement
