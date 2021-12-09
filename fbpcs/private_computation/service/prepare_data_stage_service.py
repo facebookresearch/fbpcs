@@ -7,7 +7,6 @@
 # pyre-strict
 
 
-import asyncio
 import logging
 import math
 from typing import DefaultDict
@@ -170,7 +169,7 @@ class PrepareDataStageService(PrivateComputationStageService):
         sharder = ShardingService()
         self._logger.info("Instantiated sharder")
 
-        coros = []
+        args_list  = []
         for shard_index in range(
             pl_instance.num_pid_containers + 1
             if pl_instance.is_validating
@@ -193,19 +192,17 @@ class PrepareDataStageService(PrivateComputationStageService):
             binary_config = self._onedocker_binary_config_map[
                 OneDockerBinaryNames.SHARDER.value
             ]
-            coro = sharder.shard_on_container_async(
-                shard_type=ShardType.ROUND_ROBIN,
+            args_per_shard = sharder.build_args(
                 filepath=path_to_shard,
                 output_base_path=pl_instance.data_processing_output_path,
                 file_start_index=shard_index_offset,
                 num_output_files=shards_per_file,
-                onedocker_svc=self._onedocker_svc,
-                binary_version=binary_config.binary_version,
                 tmp_directory=binary_config.tmp_directory,
-                should_log_container_urls=True,
             )
-            coros.append(coro)
+            args_list.append(args_per_shard)
+        binary_name = sharder.get_binary_name(ShardType.ROUND_ROBIN)
+        await sharder.start_containers(
+            args_list, self._onedocker_svc, binary_config.binary_version, binary_name
+        )
 
-        # Wait for all coroutines to finish
-        await asyncio.gather(*coros)
         self._logger.info("All sharding coroutines finished")
