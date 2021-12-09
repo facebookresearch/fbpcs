@@ -20,8 +20,10 @@ RUN apk --update --no-cache add \
 RUN pip install \
     awscli
 
+# Note: the dataclasses backport can be removed once Python 3 is upgraded to 3.7
 RUN pip3 install \
-    boto3
+    boto3 \
+    dataclasses
 
 ##########################################
 # Install Terraform
