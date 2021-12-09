@@ -78,9 +78,34 @@ resource "aws_default_security_group" "default" {
   }
 
   egress {
+    description = "allow local traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  egress {
+    description = "Open ports 5000-15500 to other party VPC"
+    from_port   = 5000
+    to_port     = 15500
+    protocol    = "tcp"
+    cidr_blocks = [var.otherparty_vpc_cidr]
+  }
+
+  egress {
+    description = "Open port 80 for HTTP access"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Open port 443 for HTTPS access"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
