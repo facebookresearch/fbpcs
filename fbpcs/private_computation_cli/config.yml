@@ -42,8 +42,6 @@ private_computation:
         task_definition: TODO_ONEDOCKER_TASK_DEFINITION
 pid:
   dependency:
-    ShardingService:
-      class: fbpcs.data_processing.sharding.sharding_cpp.CppShardingService
     PIDInstanceRepository:
       class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
       constructor:
@@ -59,7 +57,5 @@ mpc:
       class: fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository
       constructor:
         base_dir: /fbpcs_instances
-    ShardingService:
-      class: fbpcs.data_processing.sharding.sharding_cpp.CppShardingService
 graphapi:
   access_token: TODO
