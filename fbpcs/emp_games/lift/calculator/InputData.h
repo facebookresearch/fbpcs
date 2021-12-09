@@ -127,6 +127,9 @@ class InputData {
     return liftGranularityType_;
   }
 
+  // Helper function to determine if a header contains any feature columns
+  bool anyFeatureColumns(const std::vector<std::string>& header);
+
  private:
   // Set the features header (only matters for partner, not publisher)
   void setFeaturesHeader(const std::vector<std::string>& header);
@@ -156,9 +159,6 @@ class InputData {
    * append
    */
   void setValuesFields(std::string& str);
-
-  // Helper function to determine if a header contains any feature columns
-  bool anyFeatureColumns(const std::vector<std::string>& header);
 
   // Helper to add a line from a CSV into the component column vectors
   void addFromCSV(

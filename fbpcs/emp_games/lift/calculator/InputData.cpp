@@ -17,7 +17,6 @@
 
 #include "InputData.h"
 
-
 #include "../../common/Csv.h"
 
 namespace private_lift {
@@ -271,14 +270,15 @@ void InputData::addFromCSV(
   // Finally, check which feature groupId this row belongs to
   // If we haven't seen this feature group before, denote that it corresponds
   // to a new groupId
-  if (featureHeader_.size() > 0 &&
-      featuresToGroupId_.find(featureValues) == featuresToGroupId_.end()) {
-    featuresToGroupId_[featureValues] = numGroups_;
-    groupIdToFeatures_[numGroups_] = featureValues;
-    ++numGroups_;
+  if (featureHeader_.size() > 0) {
+    if (featuresToGroupId_.find(featureValues) == featuresToGroupId_.end()) {
+      featuresToGroupId_[featureValues] = numGroups_;
+      groupIdToFeatures_[numGroups_] = featureValues;
+      ++numGroups_;
+    }
+    // Make a note of which group this row belongs to
+    groupIds_.push_back(featuresToGroupId_[featureValues]);
   }
-  // Make a note of which group this row belongs to
-  groupIds_.push_back(featuresToGroupId_[featureValues]);
 }
 
 std::vector<int64_t> InputData::bitmaskFor(int64_t groupId) const {
