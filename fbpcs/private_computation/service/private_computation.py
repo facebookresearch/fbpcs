@@ -59,6 +59,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
 )
+from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.utils.optional import unwrap_or_default
 
 T = TypeVar("T")
@@ -306,10 +307,18 @@ class PrivateComputationService:
             raise e
         finally:
             self.instance_repository.update(pc_instance)
+
+        try:
+            log_urls = get_log_urls(pc_instance)
+            for key, url in log_urls.items():
+                self.logger.info(f"Log for {key} at {url}")
+        except Exception:
+            self.logger.warning("Failed to retrieve log URLs for instance")
+
         return pc_instance
 
     # TODO T88759390: make an async version of this function
-    # Optioinal stage, validate the correctness of aggregated results for injected synthetic data
+    # Optional stage, validate the correctness of aggregated results for injected synthetic data
     def validate_metrics(
         self,
         instance_id: str,

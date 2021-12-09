@@ -8,6 +8,7 @@
 
 
 import functools
+import logging
 import warnings
 from typing import Any, Dict, List, Optional
 
@@ -16,6 +17,8 @@ from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
+from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -201,6 +204,45 @@ def get_updated_pc_status_mpc_game(
     return status
 
 
+def get_log_urls(
+    private_computation_instance: PrivateComputationInstance,
+) -> Dict[str, str]:
+    """Get log urls for most recently run containers
+
+    Arguments:
+        private_computation_instance: The PC instance that is being updated
+
+    Returns:
+        The latest status for private_computation_instance as an ordered dict
+    """
+    # Get the last pid or mpc instance
+    last_instance = private_computation_instance.instances[-1]
+
+    # TODO - hope we're using AWS!
+    log_retriever = LogRetriever(CloudProvider.AWS)
+
+    res = {}
+    if isinstance(last_instance, PIDInstance):
+        pid_current_stage = last_instance.current_stage
+        if not pid_current_stage:
+            logging.warning("Unreachable block: no stage has run yet")
+            return res
+        containers = last_instance.stages_containers[pid_current_stage]
+        for i, container in enumerate(containers):
+            res[f"{pid_current_stage}_{i}"] = log_retriever.get_log_url(container.instance_id)
+    elif isinstance(last_instance, PCSMPCInstance):
+        containers = last_instance.containers
+        for i, container in enumerate(containers):
+            res[str(i)] = log_retriever.get_log_url(container.instance_id)
+    else:
+        logging.warning(
+            "The last instance of PrivateComputationInstance "
+            f"{private_computation_instance.instance_id} has no supported way "
+            "of retrieving log URLs"
+        )
+    return res
+
+
 # decorators are a serious pain to add typing for, so I'm not going to bother...
 # pyre-ignore return typing
 def deprecated(reason: str):
@@ -210,9 +252,11 @@ def deprecated(reason: str):
 
     # pyre-ignore return typing
     def wrap(func):
-        warning_color = '\033[93m' # orange/yellow ascii escape sequence
-        end = '\033[0m' # end ascii escape sequence
-        explanation: str = f"{warning_color}{func.__name__} is deprecated! explanation: {reason}{end}"
+        warning_color = "\033[93m"  # orange/yellow ascii escape sequence
+        end = "\033[0m"  # end ascii escape sequence
+        explanation: str = (
+            f"{warning_color}{func.__name__} is deprecated! explanation: {reason}{end}"
+        )
 
         @functools.wraps(func)
         # pyre-ignore typing on args, kwargs, and return
