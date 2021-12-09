@@ -9,7 +9,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
+from fbpcs.data_processing.service.sharding_service import ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -50,7 +50,7 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
             IdSpineCombinerService,
             "start_and_wait_for_containers",
         ) as mock_combine, patch.object(
-            CppShardingService,
+            ShardingService,
             "shard_on_container_async",
         ) as mock_shard:
             # call prepare_data
