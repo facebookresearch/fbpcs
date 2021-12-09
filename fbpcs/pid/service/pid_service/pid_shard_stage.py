@@ -6,8 +6,7 @@
 
 from typing import Optional
 
-from fbpcs.data_processing.sharding.sharding import ShardType
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
+from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService, ShardType
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
