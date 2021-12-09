@@ -17,7 +17,6 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-from fbpcs.data_processing.sharding.sharding import ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
@@ -303,10 +302,6 @@ def _build_container_service(config: Dict[str, Any]) -> ContainerService:
 
 def _build_storage_service(config: Dict[str, Any]) -> StorageService:
     return reflect.get_instance(config, StorageService)
-
-
-def _build_sharding_service(config: Dict[str, Any]) -> ShardingService:
-    return reflect.get_instance(config, ShardingService)
 
 
 def _build_onedocker_service(

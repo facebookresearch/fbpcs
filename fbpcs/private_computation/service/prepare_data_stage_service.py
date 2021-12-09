@@ -16,8 +16,7 @@ from typing import List, Optional
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
-from fbpcs.data_processing.sharding.sharding import ShardType
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
+from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService, ShardType
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
