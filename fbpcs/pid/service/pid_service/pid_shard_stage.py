@@ -85,19 +85,24 @@ class PIDShardStage(PIDStage):
         sharder = ShardingService()
 
         try:
-            container = await sharder.shard_on_container_async(
-                ShardType.HASHED_FOR_PID,
+            args = sharder.build_args(
                 input_path,
                 output_base_path=output_path,
                 file_start_index=0,
                 num_output_files=num_shards,
-                onedocker_svc=self.onedocker_svc,
-                binary_version=self.onedocker_binary_config.binary_version,
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
                 hmac_key=hmac_key,
-                wait_for_containers=wait_for_containers,
-                container_timeout=container_timeout,
             )
+            binary_name = sharder.get_binary_name(ShardType.HASHED_FOR_PID)
+            containers = await sharder.start_containers(
+                cmd_args_list=[args],
+                onedocker_svc=self.onedocker_svc,
+                binary_version=self.onedocker_binary_config.binary_version,
+                binary_name=binary_name,
+                timeout=container_timeout,
+                wait_for_containers_to_finish=wait_for_containers,
+            )
+            container = containers[0]  # there is always just 1 container
         except Exception as e:
             self.logger.exception(f"ShardingService failed: {e}")
             return PIDStageStatus.FAILED

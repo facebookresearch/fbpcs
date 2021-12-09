@@ -9,7 +9,7 @@
 from typing import List
 
 from fbpcs.pid.entity.pid_instance import PIDProtocol
-from fbpcs.private_computation.entity.private_computation_instance import (
+from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
 
