@@ -8,8 +8,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
-from fbpcs.data_processing.sharding.sharding import ShardType
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService
+from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService, ShardType
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
