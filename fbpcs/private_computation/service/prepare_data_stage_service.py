@@ -160,8 +160,8 @@ class PrepareDataStageService(PrivateComputationStageService):
             run_name=run_name,
             padding_size=padding_size,
         )
-        await combiner_service.start_and_wait_for_containers(
-            args, self._onedocker_svc, binary_config.binary_version, binary_name
+        await combiner_service.start_containers(
+            args, self._onedocker_svc, binary_config.binary_version, binary_name, True
         )
 
     async def _run_sharder_service(
