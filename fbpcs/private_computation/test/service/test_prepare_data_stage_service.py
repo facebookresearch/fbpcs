@@ -48,7 +48,7 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
 
         with patch.object(
             IdSpineCombinerService,
-            "start_and_wait_for_containers",
+            "start_containers",
         ) as mock_combine, patch.object(
             ShardingService,
             "shard_on_container_async",
@@ -66,11 +66,12 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
                 num_shards=self.test_num_containers,
                 tmp_directory=binary_config.tmp_directory,
             )
-            IdSpineCombinerService.start_and_wait_for_containers(
+            IdSpineCombinerService.start_containers(
                 cmd_args_list=args,
                 onedocker_svc=self.onedocker_service,
                 binary_version=binary_config.binary_version,
                 binary_name=binary_name,
+                wait_for_containers_to_finish=True,
             )
             mock_combine.assert_called()
             mock_shard.assert_called()
