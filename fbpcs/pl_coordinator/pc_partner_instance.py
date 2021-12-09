@@ -47,7 +47,6 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         instance_id: str,
         config: Dict[str, Any],
         input_path: str,
-        num_shards: int,
         num_mpc_containers: int,
         num_pid_containers: int,
         logger: logging.Logger,

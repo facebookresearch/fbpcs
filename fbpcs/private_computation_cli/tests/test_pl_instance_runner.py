@@ -330,7 +330,6 @@ class TestPlInstanceRunner(TestCase):
             game_type=PrivateComputationGameType.LIFT,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             aggregation_type=AggregationType.MEASUREMENT,
-            num_shards=self.num_shards,
             num_mpc_containers=self.num_shards,
             num_pid_containers=self.num_shards,
             logger=self.mock_logger,
