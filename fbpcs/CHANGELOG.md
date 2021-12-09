@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+  -
+
+### Changed
+  - Cleanup and move sharding/sharding_cpp to service/sharing_service
+  - Refactor ShardingService to reuse RunBinaryBaseService
+  - Consolidate wait_for_containers functions
+
+### Removed
+  -
+
+
+## Release 12/1/2021
+### Added
   - Created official changelog
 
 ### Changed
