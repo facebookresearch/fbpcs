@@ -16,6 +16,10 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
+    AggregationType,
+    AttributionRule,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -45,6 +49,12 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
         input_path: str,
         num_shards: int,
         logger: logging.Logger,
+        game_type: PrivateComputationGameType,
+        attribution_rule: Optional[AttributionRule] = None,
+        aggregation_type: Optional[AggregationType] = None,
+                concurrency: Optional[int] = None,
+        num_files_per_mpc_container: Optional[int] = None,
+        k_anonymity_threshold: Optional[int] = None,
     ) -> None:
         super().__init__(instance_id, logger, PrivateComputationRole.PARTNER)
         self.config: Dict[str, Any] = config
@@ -60,12 +70,17 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
                 config=self.config,
                 instance_id=self.instance_id,
                 role=PrivateComputationRole.PARTNER,
-                game_type=PrivateComputationGameType.LIFT,
+                game_type=game_type,
                 logger=self.logger,
                 input_path=self.input_path,
                 output_dir=self.output_dir,
                 num_pid_containers=num_shards,
                 num_mpc_containers=num_shards,
+                attribution_rule=attribution_rule,
+                aggregation_type=aggregation_type,
+                concurrency=concurrency,
+                num_files_per_mpc_container=num_files_per_mpc_container,
+                k_anonymity_threshold=k_anonymity_threshold,
             ).status
         self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
 
