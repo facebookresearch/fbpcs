@@ -160,7 +160,12 @@ class PrepareDataStageService(PrivateComputationStageService):
             padding_size=padding_size,
         )
         await combiner_service.start_containers(
-            args, self._onedocker_svc, binary_config.binary_version, binary_name, True
+            cmd_args_list=args,
+            onedocker_svc=self._onedocker_svc,
+            binary_version=binary_config.binary_version,
+            binary_name=binary_name,
+            timeout=None,
+            wait_for_containers_to_finish=True,
         )
 
     async def _run_sharder_service(
@@ -169,7 +174,7 @@ class PrepareDataStageService(PrivateComputationStageService):
         sharder = ShardingService()
         self._logger.info("Instantiated sharder")
 
-        args_list  = []
+        args_list = []
         for shard_index in range(
             pl_instance.num_pid_containers + 1
             if pl_instance.is_validating
@@ -202,7 +207,12 @@ class PrepareDataStageService(PrivateComputationStageService):
             args_list.append(args_per_shard)
         binary_name = sharder.get_binary_name(ShardType.ROUND_ROBIN)
         await sharder.start_containers(
-            args_list, self._onedocker_svc, binary_config.binary_version, binary_name
+            cmd_args_list=args_list,
+            onedocker_svc=self._onedocker_svc,
+            binary_version=binary_config.binary_version,
+            binary_name=binary_name,
+            timeout=None,
+            wait_for_containers_to_finish=True,
         )
 
         self._logger.info("All sharding coroutines finished")

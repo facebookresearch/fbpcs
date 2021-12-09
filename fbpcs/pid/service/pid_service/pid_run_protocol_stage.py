@@ -10,7 +10,6 @@ from typing import Dict, List, Optional
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
-from fbpcs.common.util.wait_for_containers import wait_for_containers_async
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
@@ -18,6 +17,9 @@ from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
+)
 
 
 IP_ADDRS_COORD_OBJECT = "pid_ip_addrs"
@@ -120,7 +122,7 @@ class PIDProtocolRunStage(PIDStage):
             # Wait until the containers are finished
             if wait_for_containers:
                 self.logger.info("Waiting for containers to finish")
-                containers = await wait_for_containers_async(
+                containers = await RunBinaryBaseService.wait_for_containers_async(
                     self.onedocker_svc, containers, SLEEP_UPDATE_SECONDS
                 )
                 await self.update_instance_containers(
@@ -174,7 +176,7 @@ class PIDProtocolRunStage(PIDStage):
             if wait_for_containers:
                 # Wait until the containers are finished
                 self.logger.info("Waiting for containers to finish")
-                containers = await wait_for_containers_async(
+                containers = await RunBinaryBaseService.wait_for_containers_async(
                     self.onedocker_svc, containers, SLEEP_UPDATE_SECONDS
                 )
                 await self.update_instance_containers(

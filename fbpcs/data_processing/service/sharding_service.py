@@ -23,9 +23,11 @@ CPP_SHARDER_HASHED_FOR_PID_PATH = pathlib.Path(
 # 10800 s = 3 hrs
 DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 10800
 
+
 class ShardType(enum.Enum):
     ROUND_ROBIN = 1
     HASHED_FOR_PID = 2
+
 
 class ShardingService(RunBinaryBaseService):
     @staticmethod
