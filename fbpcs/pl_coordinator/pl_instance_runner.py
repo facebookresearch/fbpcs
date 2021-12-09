@@ -30,6 +30,13 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.private_computation.entity.private_computation_instance import (
+    AggregationType,
+    AttributionRule,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
+)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -51,6 +58,12 @@ def run_instance(
     num_shards: int,
     stage_flow: Type[PrivateComputationBaseStageFlow],
     logger: logging.Logger,
+    game_type: PrivateComputationGameType,
+    attribution_rule: Optional[AttributionRule] = None,
+    aggregation_type: Optional[AggregationType] = None,
+    concurrency: Optional[int] = None,
+    num_files_per_mpc_container: Optional[int] = None,
+    k_anonymity_threshold: Optional[int] = None,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
 ) -> None:
@@ -66,8 +79,14 @@ def run_instance(
         logger,
         client,
         num_tries,
+        game_type,
         dry_run,
         stage_flow,
+        attribution_rule,
+        aggregation_type,
+        concurrency,
+        num_files_per_mpc_container,
+        k_anonymity_threshold
     )
     logger.info(f"Running private lift for instance {instance_id}")
     instance_runner.run()
@@ -106,6 +125,7 @@ def run_instances(
                     "num_shards": num_shards,
                     "stage_flow": stage_flow,
                     "logger": LoggerAdapter(logger=logger, prefix=instance_id),
+                    "game_type": PrivateComputationGameType.LIFT,
                     "num_tries": num_tries,
                     "dry_run": dry_run,
                 },
@@ -136,8 +156,14 @@ class PLInstanceRunner:
         logger: logging.Logger,
         client: PLGraphAPIClient,
         num_tries: int,
+        game_type: PrivateComputationGameType,
         dry_run: Optional[bool],
         stage_flow: Type[PrivateComputationBaseStageFlow],
+        attribution_rule: Optional[AttributionRule] = None,
+        aggregation_type: Optional[AggregationType] = None,
+        concurrency: Optional[int] = None,
+        num_files_per_mpc_container: Optional[int] = None,
+        k_anonymity_threshold: Optional[int] = None,
     ) -> None:
         self.logger = logger
         self.instance_id = instance_id
@@ -146,6 +172,12 @@ class PLInstanceRunner:
             instance_id=instance_id,
             config=config,
             input_path=input_path,
+            game_type=game_type,
+            attribution_rule=attribution_rule,
+            aggregation_type=aggregation_type,
+            concurrency=concurrency,
+            num_files_per_mpc_container=num_files_per_mpc_container,
+            k_anonymity_threshold=k_anonymity_threshold,
             num_shards=num_shards,
             logger=logger,
         )

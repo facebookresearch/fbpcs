@@ -225,6 +225,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             config=config,
             instance_id=instance_id,
             input_path=arguments["--input_path"],
+            game_type=arguments["--game_type"],
             num_shards=arguments["--num_shards"],
             stage_flow=stage_flow,
             logger=logger,

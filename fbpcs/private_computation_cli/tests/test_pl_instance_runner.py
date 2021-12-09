@@ -21,6 +21,8 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
+    AggregationType,
+    AttributionRule,
     PrivateComputationGameType,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -325,6 +327,9 @@ class TestPlInstanceRunner(TestCase):
             config={},
             instance_id=self.instance_id,
             input_path="fake_input_path",
+            game_type=PrivateComputationGameType.LIFT,
+            attribution_rule=AttributionRule.LAST_CLICK_1D,
+            aggregation_type=AggregationType.MEASUREMENT,
             num_shards=self.num_shards,
             logger=self.mock_logger,
             client=self.mock_graph_api_client,
