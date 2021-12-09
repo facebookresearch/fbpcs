@@ -16,7 +16,7 @@ from typing import List, Optional
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService, ShardType
+from fbpcs.data_processing.service.sharding_service import ShardType, ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
@@ -167,7 +167,7 @@ class PrepareDataStageService(PrivateComputationStageService):
     async def _run_sharder_service(
         self, pl_instance: PrivateComputationInstance, combine_output_path: str
     ) -> None:
-        sharder = CppShardingService()
+        sharder = ShardingService()
         self._logger.info("Instantiated sharder")
 
         coros = []
