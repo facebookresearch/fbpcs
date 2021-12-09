@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
-from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
+from fbpcs.data_processing.service.sharding_service import ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
@@ -46,7 +46,7 @@ class TestPIDShardStage(unittest.TestCase):
     @data_provider(
         lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
     )
-    @patch("fbpcs.private_computation.service.run_binary_base_service.wait_for_containers_async")
+    @patch("fbpcs.data_processing.service.sharding_service.ShardingService.wait_for_containers_async")
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")

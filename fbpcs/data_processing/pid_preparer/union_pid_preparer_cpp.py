@@ -18,9 +18,11 @@ from typing import Optional
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
-from fbpcs.common.util.wait_for_containers import wait_for_containers_async
 from fbpcs.data_processing.pid_preparer.preparer import UnionPIDDataPreparerService
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
+)
 
 
 CPP_UNION_PID_PREPARER_PATH = pathlib.Path(
@@ -162,12 +164,16 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 timeout=timeout,
             )
 
-            container = (await onedocker_svc.wait_for_pending_containers([container.instance_id for container in pending_containers]))[0]
+            container = (
+                await onedocker_svc.wait_for_pending_containers(
+                    [container.instance_id for container in pending_containers]
+                )
+            )[0]
 
             # Busy wait until the container is finished
             if wait_for_container:
                 container = (
-                    await wait_for_containers_async(onedocker_svc, [container])
+                    await RunBinaryBaseService.wait_for_containers_async(onedocker_svc, [container])
                 )[0]
                 status = container.status
             else:
