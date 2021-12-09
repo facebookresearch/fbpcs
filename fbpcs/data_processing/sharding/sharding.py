@@ -45,6 +45,7 @@ class ShardingService(abc.ABC):
         tmp_directory: str = "/tmp/",
         hmac_key: Optional[str] = None,
         wait_for_containers: bool = True,
+        should_log_container_urls: bool = False,
     ) -> ContainerInstance:
         pass
 
@@ -61,5 +62,6 @@ class ShardingService(abc.ABC):
         tmp_directory: str = "/tmp/",
         hmac_key: Optional[str] = None,
         wait_for_containers: bool = True,
+        should_log_container_urls: bool = False,
     ) -> ContainerInstance:
         pass

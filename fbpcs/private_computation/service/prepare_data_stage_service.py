@@ -203,6 +203,7 @@ class PrepareDataStageService(PrivateComputationStageService):
                 onedocker_svc=self._onedocker_svc,
                 binary_version=binary_config.binary_version,
                 tmp_directory=binary_config.tmp_directory,
+                should_log_container_urls=True,
             )
             coros.append(coro)
 

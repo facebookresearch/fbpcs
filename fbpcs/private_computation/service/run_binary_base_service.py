@@ -10,6 +10,7 @@ from typing import Optional, List
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
+from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 
 
@@ -35,6 +36,18 @@ class RunBinaryBaseService:
         containers = await onedocker_svc.wait_for_pending_containers(
             [container.instance_id for container in pending_containers]
         )
+
+        # Log the URL once... since the DataProcessingStage doesn't expose the
+        # containers, we handle the logic directly in each stage like so.
+        # It's kind of weird. T107574607 is tracking this.
+        # Hope we're using AWS!
+        log_retriever = LogRetriever(CloudProvider.AWS)
+        for i, container in enumerate(containers):
+            try:
+                log_url = log_retriever.get_log_url(container.instance_id)
+                logger.info(f"Container[{i}] URL -> {log_url}")
+            except Exception:
+                logger.warning(f"Could not look up URL for container[{i}]")
 
         # Busy wait until all containers are finished
         any_failed = False

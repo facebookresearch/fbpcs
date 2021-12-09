@@ -18,6 +18,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
 from fbpcs.common.util.wait_for_containers import wait_for_containers_async
 from fbpcs.data_processing.sharding.sharding import ShardingService, ShardType
+from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 
@@ -139,6 +140,7 @@ class CppShardingService(ShardingService):
         hmac_key: Optional[str] = None,
         container_timeout: Optional[int] = None,
         wait_for_containers: bool = True,
+        should_log_container_urls: bool = False,
     ) -> ContainerInstance:
         return asyncio.run(
             self.shard_on_container_async(
@@ -153,6 +155,7 @@ class CppShardingService(ShardingService):
                 hmac_key,
                 container_timeout,
                 wait_for_containers,
+                should_log_container_urls,
             )
         )
 
@@ -169,6 +172,7 @@ class CppShardingService(ShardingService):
         hmac_key: Optional[str] = None,
         container_timeout: Optional[int] = None,
         wait_for_containers: bool = True,
+        should_log_container_urls: bool = False,
     ) -> ContainerInstance:
         logger = logging.getLogger(__name__)
         timeout = container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC
@@ -211,6 +215,18 @@ class CppShardingService(ShardingService):
                 [container.instance_id for container in pending_containers]
             )
         )[0]
+
+        if should_log_container_urls:
+            # Log the URL once... since the DataProcessingStage doesn't expose
+            # the containers, we handle the logic directly in each stage like
+            # so. It's kind of weird. T107574607 is tracking this.
+            # Hope we're using AWS!
+            try:
+                log_retriever = LogRetriever(CloudProvider.AWS)
+                log_url = log_retriever.get_log_url(container.instance_id)
+                logging.info(f"Container URL -> {log_url}")
+            except Exception:
+                logging.warning("Failed to retrieve log URL")
 
         logger.info("Task started")
         if wait_for_containers:
