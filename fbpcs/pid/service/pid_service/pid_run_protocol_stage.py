@@ -104,7 +104,7 @@ class PIDProtocolRunStage(PIDStage):
                 await self.update_instance_status(
                     instance_id=instance_id, status=status
                 )
-                self.logger.error(f"Failed to spin up containers: {e}")
+                self.logger.exception(f"Failed to spin up containers: {e}")
                 return status
 
             # Write containers information to PID instance repository
@@ -165,7 +165,7 @@ class PIDProtocolRunStage(PIDStage):
                 await self.update_instance_status(
                     instance_id=instance_id, status=status
                 )
-                self.logger.error(f"Failed to spin up containers: {e}")
+                self.logger.exception(f"Failed to spin up containers: {e}")
                 return status
 
             # Write containers information to PID instance repository
