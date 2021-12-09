@@ -51,7 +51,7 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
             "start_containers",
         ) as mock_combine, patch.object(
             ShardingService,
-            "shard_on_container_async",
+            "start_containers",
         ) as mock_shard:
             # call prepare_data
             await self.stage_svc.run_async(private_computation_instance)
