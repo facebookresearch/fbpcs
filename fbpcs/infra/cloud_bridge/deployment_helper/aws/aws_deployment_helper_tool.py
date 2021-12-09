@@ -6,6 +6,7 @@
 import argparse
 
 from .aws_deployment_helper import AwsDeploymentHelper
+from .policy_params import PolicyParams
 
 
 class AwsDeploymentHelperTool:
@@ -33,8 +34,18 @@ class AwsDeploymentHelperTool:
                 raise Exception(
                     "Need policy name to add IAM policy. Please add username using --policy_name argument in cli.py"
                 )
+            policy_params = PolicyParams(
+                firehose_stream_name=self.cli_args.firehose_stream_name,
+                data_bucket_name=self.cli_args.data_bucket_name,
+                config_bucket_name=self.cli_args.config_bucket_name,
+                database_name=self.cli_args.database_name,
+                data_ingestion_kms_key=self.cli_args.data_ingestion_kms_key,
+                cluster_name=self.cli_args.cluster_name,
+                ecs_task_execution_role_name=self.cli_args.ecs_task_execution_role_name,
+            )
             self.aws_deployment_helper_obj.create_policy(
-                policy_name=self.cli_args.policy_name
+                policy_name=self.cli_args.policy_name,
+                policy_params=policy_params
             )
 
     def destroy(self):
