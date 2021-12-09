@@ -49,9 +49,9 @@ class ShardingService():
         # TODO: Probably put exe in an env variable?
         # Try to align with existing paths
         exe = ""
-        if shard_type == ShardType.ROUND_ROBIN:
+        if shard_type is ShardType.ROUND_ROBIN:
             exe = OneDockerBinaryNames.SHARDER.value
-        elif shard_type == ShardType.HASHED_FOR_PID:
+        elif shard_type is ShardType.HASHED_FOR_PID:
             exe = OneDockerBinaryNames.SHARDER_HASHED_FOR_PID.value
 
         cmd_args = " ".join(
