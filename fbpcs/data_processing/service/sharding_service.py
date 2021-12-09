@@ -29,7 +29,7 @@ class ShardType(enum.Enum):
     HASHED_FOR_PID = 2
 
 
-class CppShardingService():
+class ShardingService():
     async def shard_on_container_async(
         self,
         shard_type: ShardType,

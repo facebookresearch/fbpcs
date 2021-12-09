@@ -6,7 +6,7 @@
 
 from typing import Optional
 
-from fbpcs.data_processing.sharding.sharding_cpp import CppShardingService, ShardType
+from fbpcs.data_processing.service.sharding_service import ShardType, ShardingService
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
@@ -81,8 +81,8 @@ class PIDShardStage(PIDStage):
         wait_for_containers: bool = True,
         container_timeout: Optional[int] = None,
     ) -> PIDStageStatus:
-        self.logger.info(f"[{self}] Starting CppShardingService")
-        sharder = CppShardingService()
+        self.logger.info(f"[{self}] Starting ShardingService")
+        sharder = ShardingService()
 
         try:
             container = await sharder.shard_on_container_async(
@@ -99,7 +99,7 @@ class PIDShardStage(PIDStage):
                 container_timeout=container_timeout,
             )
         except Exception as e:
-            self.logger.exception(f"CppShardingService failed: {e}")
+            self.logger.exception(f"ShardingService failed: {e}")
             return PIDStageStatus.FAILED
 
         await self.update_instance_containers(instance_id, [container])
