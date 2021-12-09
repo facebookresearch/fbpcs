@@ -46,7 +46,7 @@ class TestPIDShardStage(unittest.TestCase):
     @data_provider(
         lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
     )
-    @patch("fbpcs.data_processing.service.sharding_service.wait_for_containers_async")
+    @patch("fbpcs.private_computation.service.run_binary_base_service.wait_for_containers_async")
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
@@ -168,7 +168,7 @@ class TestPIDShardStage(unittest.TestCase):
             },
         )
     )
-    @patch.object(ShardingService, "shard_on_container_async")
+    @patch.object(ShardingService, "start_containers")
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
@@ -192,7 +192,7 @@ class TestPIDShardStage(unittest.TestCase):
                 ip_address="192.0.2.0",
                 status=expected_container_status,
             )
-            mock_sharder.return_value = container
+            mock_sharder.return_value = [container]
             stage = PIDShardStage(
                 stage=UnionPIDStage.PUBLISHER_SHARD,
                 instance_repository=mock_instance_repo,
@@ -222,16 +222,4 @@ class TestPIDShardStage(unittest.TestCase):
                 res,
             )
 
-            mock_sharder.assert_called_once_with(
-                ShardType.HASHED_FOR_PID,
-                test_input_path,
-                output_base_path=test_output_path,
-                file_start_index=0,
-                num_output_files=test_num_shards,
-                onedocker_svc=stage.onedocker_svc,
-                binary_version=test_onedocker_binary_config.binary_version,
-                tmp_directory=test_onedocker_binary_config.tmp_directory,
-                hmac_key=test_hmac_key,
-                wait_for_containers=wait_for_containers,
-                container_timeout=None,
-            )
+            mock_sharder.assert_called_once()

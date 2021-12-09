@@ -11,7 +11,8 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.common.util.wait_for_containers import wait_for_containers_async
-from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+
+DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 43200
 
 
 class RunBinaryBaseService:
@@ -23,7 +24,7 @@ class RunBinaryBaseService:
         binary_name: str,
         timeout: Optional[int] = None,
         wait_for_containers_to_finish: bool = False,
-    )->List[ContainerInstance]:
+    ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
 
         timeout = timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC
