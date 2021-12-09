@@ -88,7 +88,7 @@ class TestPIDPrepareStage(unittest.TestCase):
     )
     @to_sync
     @patch(
-        "fbpcs.data_processing.pid_preparer.union_pid_preparer_cpp.wait_for_containers_async"
+        "fbpcs.private_computation.service.run_binary_base_service.RunBinaryBaseService.wait_for_containers_async"
     )
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")

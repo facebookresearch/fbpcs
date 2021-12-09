@@ -11,8 +11,9 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.service.onedocker import (
     OneDockerService,
 )
-from fbpcs.common.util.wait_for_containers import wait_for_containers_async
-
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
+)
 
 class TestWaitForContainersAsync(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.container.ContainerService")
@@ -56,7 +57,7 @@ class TestWaitForContainersAsync(IsolatedAsyncioTestCase):
             container_2_start,
         ]
 
-        updated_containers = await wait_for_containers_async(
+        updated_containers = await RunBinaryBaseService.wait_for_containers_async(
             self.onedocker_svc, containers, poll=0
         )
 
@@ -99,7 +100,7 @@ class TestWaitForContainersAsync(IsolatedAsyncioTestCase):
             container_2_start,
         ]
 
-        updated_containers = await wait_for_containers_async(
+        updated_containers = await RunBinaryBaseService.wait_for_containers_async(
             self.onedocker_svc, containers, poll=0
         )
 
