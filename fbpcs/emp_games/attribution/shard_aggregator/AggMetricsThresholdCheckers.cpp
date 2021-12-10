@@ -25,7 +25,8 @@ void hideIfConditionFails(
     emp::Bit& condition,
     emp::Integer& hiddenMetric) {
   if (value->getTag() == private_measurement::AggMetricsTag::EmpInteger) {
-    value->setEmpIntValue(emp::If(condition, value->getEmpIntValue(), hiddenMetric));
+    value->setEmpIntValue(
+        emp::If(condition, value->getEmpIntValue(), hiddenMetric));
   } else if (value->getTag() == private_measurement::AggMetricsTag::List) {
     for (auto& innerValue : value->getAsList()) {
       hideIfConditionFails(innerValue, condition, hiddenMetric);
@@ -64,20 +65,21 @@ void findLiftThresholdConditionValidNodes(
     emp::Integer hiddenMetric) {
   if (metrics->getTag() == private_measurement::AggMetricsTag::List) {
     for (auto& innerValue : metrics->getAsList()) {
-      findLiftThresholdConditionValidNodes(innerValue, kAnonymityLevel, hiddenMetric);
+      findLiftThresholdConditionValidNodes(
+          innerValue, kAnonymityLevel, hiddenMetric);
     }
   } else if (metrics->getTag() == private_measurement::AggMetricsTag::Map) {
     auto& innerMap = metrics->getAsMap();
-    if (
-        innerMap.find("testConverters") != innerMap.end()
-        && innerMap.find("controlConverters") != innerMap.end()) {
+    if (innerMap.find("testConverters") != innerMap.end() &&
+        innerMap.find("controlConverters") != innerMap.end()) {
       // We found a valid inner node, call the apply function
       applyLiftThresholdCondition(metrics, kAnonymityLevel, hiddenMetric);
     } else {
       // Otherwise, we need to keep iterating inside to see if there might be
       // a valid node deeper within the structure
       for (auto& [_, innerValue] : innerMap) {
-        findLiftThresholdConditionValidNodes(innerValue, kAnonymityLevel, hiddenMetric);
+        findLiftThresholdConditionValidNodes(
+            innerValue, kAnonymityLevel, hiddenMetric);
       }
     }
   }
@@ -94,13 +96,14 @@ std::function<void(std::shared_ptr<AggMetrics>)> constructLiftThresholdChecker(
         private_measurement::INT_SIZE, threshold, emp::PUBLIC};
 
     for (auto& [key, value] : metrics->getAsMap()) {
-      findLiftThresholdConditionValidNodes(value, kAnonymityLevel, hiddenMetric);
+      findLiftThresholdConditionValidNodes(
+          value, kAnonymityLevel, hiddenMetric);
     }
   };
 }
 
-std::function<void(std::shared_ptr<AggMetrics>)> constructAdObjectFormatThresholdChecker(
-    int64_t threshold) {
+std::function<void(std::shared_ptr<AggMetrics>)>
+constructAdObjectFormatThresholdChecker(int64_t threshold) {
   return [threshold](std::shared_ptr<AggMetrics> metrics) {
     const emp::Integer hiddenMetric{
         INT_SIZE, kHiddenMetricConstant, emp::PUBLIC};

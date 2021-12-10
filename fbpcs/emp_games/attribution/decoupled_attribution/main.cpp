@@ -8,23 +8,21 @@
 #include <gflags/gflags.h>
 #include <string>
 
+#include <fbpcf/mpc/EmpGame.h>
+#include "folly/Format.h"
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
-#include "folly/Format.h"
-#include <fbpcf/mpc/EmpGame.h>
 
-#include <fbpcs/performance_tools/CostEstimation.h>
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/mpc/MpcAppExecutor.h>
-#include "fbpcs/emp_games/attribution/decoupled_attribution/MainUtil.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/Constants.h"
+#include <fbpcs/performance_tools/CostEstimation.h>
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionOptions.h"
-
+#include "fbpcs/emp_games/attribution/decoupled_attribution/Constants.h"
+#include "fbpcs/emp_games/attribution/decoupled_attribution/MainUtil.h"
 
 int main(int argc, char* argv[]) {
-
   fbpcs::performance_tools::CostEstimation cost =
-            fbpcs::performance_tools::CostEstimation("computation_experimental");
+      fbpcs::performance_tools::CostEstimation("computation_experimental");
   cost.start();
 
   folly::init(&argc, &argv);
@@ -111,13 +109,15 @@ int main(int argc, char* argv[]) {
   cost.end();
   XLOG(INFO, cost.getEstimatedCostString());
 
-  if (FLAGS_run_name != "" && FLAGS_party == static_cast<int>(fbpcf::Party::Alice)) {
-    XLOGF(INFO, "{}", cost.writeToS3(
-                            FLAGS_run_name,
-                            cost.getEstimatedCostDynamic(
-                                  FLAGS_run_name,
-                                  FLAGS_attribution_rules,
-                                  FLAGS_aggregators)));
+  if (FLAGS_run_name != "" &&
+      FLAGS_party == static_cast<int>(fbpcf::Party::Alice)) {
+    XLOGF(
+        INFO,
+        "{}",
+        cost.writeToS3(
+            FLAGS_run_name,
+            cost.getEstimatedCostDynamic(
+                FLAGS_run_name, FLAGS_attribution_rules, FLAGS_aggregators)));
   }
 
   return 0;

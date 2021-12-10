@@ -18,14 +18,14 @@
 #include <folly/dynamic.h>
 #include <folly/json.h>
 
-#include "fbpcs/emp_games/common/PrivateData.h"
-#include "folly/json.h"
+#include <fbpcf/mpc/EmpGame.h>
+#include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionOutput.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionRule.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Constants.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Conversion.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionOutput.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Touchpoint.h"
-#include <fbpcf/mpc/EmpGame.h>
+#include "fbpcs/emp_games/common/PrivateData.h"
+#include "folly/json.h"
 
 namespace aggregation::private_attribution {
 
@@ -63,7 +63,6 @@ class AttributionInputMetrics {
   std::vector<std::vector<Touchpoint>> tpArrays_;
   std::vector<std::vector<Conversion>> convArrays_;
 };
-
 
 struct AttributionMetrics {
   std::unordered_map<std::string, AttributionResult> formatToAttribution;
@@ -106,8 +105,7 @@ struct AttributionMetrics {
   }
 };
 
-
-struct  AttributionOutputMetrics {
+struct AttributionOutputMetrics {
   std::unordered_map<std::string, AttributionMetrics> ruleToMetrics;
 
   folly::dynamic toDynamic() const {
@@ -148,7 +146,6 @@ struct  AttributionOutputMetrics {
   }
 };
 
-
 class PrivateAttributionMetrics {
  public:
   PrivateAttributionMetrics(
@@ -159,7 +156,8 @@ class PrivateAttributionMetrics {
       : _attributionRule(attributionRule) {
     for (auto attributionFormat : attributionFormats_) {
       formatToAttributor[attributionFormat.name] =
-          attributionFormat.newAttributor(attributionRule, ctx, outputVisibility);
+          attributionFormat.newAttributor(
+              attributionRule, ctx, outputVisibility);
     }
   }
 

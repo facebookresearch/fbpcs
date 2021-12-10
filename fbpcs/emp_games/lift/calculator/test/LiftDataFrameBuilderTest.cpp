@@ -19,7 +19,7 @@ constexpr int64_t kConversionCap = 2;
 using namespace private_lift;
 
 class LiftDataFrameBuilderTest : public ::testing::Test {
-public:
+ public:
   void SetUp() override {
     // clang-format off
 
@@ -61,25 +61,27 @@ TEST_F(LiftDataFrameBuilderTest, ApplyLiftRules) {
 
   builder.applyLiftRules(dfPublisher);
   EXPECT_EQ(dfPublisher.at<int64_t>("test_population"), expectedTestPopulation);
-  EXPECT_EQ(dfPublisher.at<int64_t>("control_population"),
-            expectedControlPopulation);
+  EXPECT_EQ(
+      dfPublisher.at<int64_t>("control_population"), expectedControlPopulation);
 
   auto keysPublisher = dfPublisher.keys();
-  for (const auto &key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
+  for (const auto& key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
     keysPublisher.erase(key);
   }
   // We expect |keys - necessaryKeys| = empty set
   EXPECT_TRUE(keysPublisher.empty());
 
   builder.applyLiftRules(dfPartner);
-  EXPECT_EQ(dfPartner.at<std::vector<int64_t>>("event_timestamps"),
-            expectedEventTimestampsCapped);
+  EXPECT_EQ(
+      dfPartner.at<std::vector<int64_t>>("event_timestamps"),
+      expectedEventTimestampsCapped);
   EXPECT_EQ(dfPartner.at<std::vector<int64_t>>("values"), expectedValuesCapped);
-  EXPECT_EQ(dfPartner.at<std::vector<int64_t>>("values_squared"),
-            expectedValuesSquaredPrecomputed);
+  EXPECT_EQ(
+      dfPartner.at<std::vector<int64_t>>("values_squared"),
+      expectedValuesSquaredPrecomputed);
 
   auto keysPartner = dfPartner.keys();
-  for (const auto &key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
+  for (const auto& key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
     keysPartner.erase(key);
   }
   // We expect |keys - necessaryKeys| = empty set
@@ -100,8 +102,8 @@ TEST_F(LiftDataFrameBuilderTest, AddTestControlPopulationColumns) {
 
   builder.addTestControlPopulationColumns(dfPublisher);
   EXPECT_EQ(dfPublisher.at<int64_t>("test_population"), expectedTestPopulation);
-  EXPECT_EQ(dfPublisher.at<int64_t>("control_population"),
-            expectedControlPopulation);
+  EXPECT_EQ(
+      dfPublisher.at<int64_t>("control_population"), expectedControlPopulation);
 
   // For the partner, we wouldn't expect anything to happen at all since the
   // opportunity and test flag columns are not present
@@ -122,8 +124,9 @@ TEST_F(LiftDataFrameBuilderTest, ApplyConversionCap) {
   EXPECT_EQ(keys.find("values"), keys.end());
 
   builder.applyConversionCap(dfPartner);
-  EXPECT_EQ(dfPartner.at<std::vector<int64_t>>("event_timestamps"),
-            expectedEventTimestampsCapped);
+  EXPECT_EQ(
+      dfPartner.at<std::vector<int64_t>>("event_timestamps"),
+      expectedEventTimestampsCapped);
   EXPECT_EQ(dfPartner.at<std::vector<int64_t>>("values"), expectedValuesCapped);
 }
 
@@ -142,8 +145,9 @@ TEST_F(LiftDataFrameBuilderTest, PrecomputeValuesSquared) {
   EXPECT_EQ(keys.find("values_squared"), keys.end());
 
   builder.precomputeValuesSquared(dfPartner);
-  EXPECT_EQ(dfPartner.at<std::vector<int64_t>>("values_squared"),
-            expectedValuesSquaredPrecomputed);
+  EXPECT_EQ(
+      dfPartner.at<std::vector<int64_t>>("values_squared"),
+      expectedValuesSquaredPrecomputed);
 }
 
 TEST_F(LiftDataFrameBuilderTest, DropUnnecessaryColumns) {
@@ -153,7 +157,7 @@ TEST_F(LiftDataFrameBuilderTest, DropUnnecessaryColumns) {
   auto keysPublisher = dfPublisher.keys();
 
   std::vector<std::string> diffPublisher;
-  for (const auto &key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
+  for (const auto& key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
     keysPublisher.erase(key);
   }
   // We expect |keys - necessaryKeys| = empty set
@@ -161,7 +165,7 @@ TEST_F(LiftDataFrameBuilderTest, DropUnnecessaryColumns) {
 
   builder.dropUnnecessaryColumns(dfPartner);
   auto keysPartner = dfPartner.keys();
-  for (const auto &key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
+  for (const auto& key : LiftDataFrameBuilder::getNecessaryColumnsForLift()) {
     keysPartner.erase(key);
   }
   // We expect |keys - necessaryKeys| = empty set

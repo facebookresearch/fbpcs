@@ -22,8 +22,7 @@
 
 int main(int argc, char* argv[]) {
   fbpcs::performance_tools::CostEstimation cost =
-      fbpcs::performance_tools::CostEstimation(
-          "computation_experimental");
+      fbpcs::performance_tools::CostEstimation("computation_experimental");
   cost.start();
 
   folly::init(&argc, &argv);
@@ -52,11 +51,17 @@ int main(int argc, char* argv[]) {
 
     auto inputClearTextFilePaths =
         aggregation::private_aggregation::getIOInputFilenames(
-            FLAGS_num_files, FLAGS_input_base_path, FLAGS_file_start_index, FLAGS_use_postfix);
+            FLAGS_num_files,
+            FLAGS_input_base_path,
+            FLAGS_file_start_index,
+            FLAGS_use_postfix);
 
     auto outputFilePaths =
         aggregation::private_aggregation::getIOInputFilenames(
-            FLAGS_num_files, FLAGS_output_base_path, FLAGS_file_start_index, FLAGS_use_postfix);
+            FLAGS_num_files,
+            FLAGS_output_base_path,
+            FLAGS_file_start_index,
+            FLAGS_use_postfix);
 
     int16_t concurrency = static_cast<int16_t>(FLAGS_concurrency);
 

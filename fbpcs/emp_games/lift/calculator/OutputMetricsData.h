@@ -63,8 +63,10 @@ struct OutputMetricsData {
     os << "Control Match Count: " << out.controlMatchCount << "\n";
     os << "Reached Conversions: " << out.reachedConversions << "\n";
     os << "Reached Value: " << out.reachedValue << "\n";
-    os << "Test Conversion histogram: " << folly::join(',', out.testConvHistogram) << "\n";
-    os << "Control Conversion histogram: " << folly::join(',', out.controlConvHistogram) << "\n";
+    os << "Test Conversion histogram: "
+       << folly::join(',', out.testConvHistogram) << "\n";
+    os << "Control Conversion histogram: "
+       << folly::join(',', out.controlConvHistogram) << "\n";
 
     return os;
   }

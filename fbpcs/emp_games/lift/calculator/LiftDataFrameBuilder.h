@@ -21,7 +21,7 @@ namespace private_lift {
  * conserve memory usage.
  */
 class LiftDataFrameBuilder : public IDataFrameBuilder {
-public:
+ public:
   /**
    * Construct a new LiftDataFrameBuilder pointing to a specific CSV file and
    * with the specified conversion cap
@@ -29,7 +29,7 @@ public:
    * @param filePath the path to the CSV file to read
    * @param conversionCap the maximum number of conversions to support per-user
    */
-  LiftDataFrameBuilder(const std::string &filePath, int64_t conversionCap)
+  LiftDataFrameBuilder(const std::string& filePath, int64_t conversionCap)
       : filePath_{filePath}, conversionCap_{conversionCap} {}
 
   /**
@@ -39,7 +39,7 @@ public:
    *
    * @param df the df::DataFrame to be modified in place
    */
-  void addTestControlPopulationColumns(df::DataFrame &df) const;
+  void addTestControlPopulationColumns(df::DataFrame& df) const;
 
   /**
    * Limit the number of conversions stored for each user according to the cap
@@ -47,7 +47,7 @@ public:
    *
    * @param df the df::DataFrame to be modified in place
    */
-  void applyConversionCap(df::DataFrame &df) const;
+  void applyConversionCap(df::DataFrame& df) const;
 
   /**
    * Precompute the total valid value squared at index [i] for each user by
@@ -58,7 +58,7 @@ public:
    *
    * @param df the df::DataFrame to be modified in place
    */
-  void precomputeValuesSquared(df::DataFrame &df) const;
+  void precomputeValuesSquared(df::DataFrame& df) const;
 
   /**
    * Aggressively drop columns from `df` which are unnecessary for Lift in order
@@ -66,14 +66,14 @@ public:
    *
    * @param df the df::DataFrame to be modified in place
    */
-  void dropUnnecessaryColumns(df::DataFrame &df) const;
+  void dropUnnecessaryColumns(df::DataFrame& df) const;
 
   /**
    * Apply all Lift-specific rules to a given df::DataFrame in place.
    *
    * @param df the df::DataFrame to be modified in place
    */
-  void applyLiftRules(df::DataFrame &df) const {
+  void applyLiftRules(df::DataFrame& df) const {
     addTestControlPopulationColumns(df);
     applyConversionCap(df);
     precomputeValuesSquared(df);
@@ -94,22 +94,29 @@ public:
     return df;
   }
 
-  static const df::TypeMap &getLiftTypeMap() {
+  static const df::TypeMap& getLiftTypeMap() {
     static const df::TypeMap kLiftTypeMap{
-      // NOTE: opportunity and test_flag *could* be bool columns, but Column
-      // doesn't yet supported vectorized bitwise operations, so it's not useful
-      .boolColumns = {},
-      .intColumns = {"opportunity", "test_flag", "opportunity_timestamp",
-          "num_impressions", "num_clicks", "total_spend", "cohort_id",
-          "breakdown_id"},
-      .intVecColumns = {"event_timestamps", "values"},
+        // NOTE: opportunity and test_flag *could* be bool columns, but Column
+        // doesn't yet supported vectorized bitwise operations, so it's not
+        // useful
+        .boolColumns = {},
+        .intColumns =
+            {"opportunity",
+             "test_flag",
+             "opportunity_timestamp",
+             "num_impressions",
+             "num_clicks",
+             "total_spend",
+             "cohort_id",
+             "breakdown_id"},
+        .intVecColumns = {"event_timestamps", "values"},
     };
     return kLiftTypeMap;
   }
 
-  static const std::unordered_set<std::string> &getNecessaryColumnsForLift() {
+  static const std::unordered_set<std::string>& getNecessaryColumnsForLift() {
     static const std::unordered_set<std::string> kNecessaryColumnsForLift{
-      "test_population",
+        "test_population",
         "control_population",
         "opportunity_timestamp",
         "num_impressions",
@@ -123,7 +130,7 @@ public:
     return kNecessaryColumnsForLift;
   }
 
-private:
+ private:
   std::string filePath_;
   int64_t conversionCap_;
 };

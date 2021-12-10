@@ -29,12 +29,12 @@
 
 namespace data_processing::sharder {
 namespace detail {
-std::vector<uint8_t> toBytes(const std::string &key) {
+std::vector<uint8_t> toBytes(const std::string& key) {
   std::vector<uint8_t> res(key.begin(), key.end());
   return res;
 }
 
-int32_t bytesToInt(const std::vector<uint8_t> &bytes) {
+int32_t bytesToInt(const std::vector<uint8_t>& bytes) {
   int32_t res = 0;
 
   auto bytesInSizeT = sizeof(res) / sizeof(uint8_t);
@@ -49,15 +49,16 @@ int32_t bytesToInt(const std::vector<uint8_t> &bytes) {
 }
 } // namespace detail
 
-std::size_t HashBasedSharder::getShardFor(const std::string& id,
-                                          std::size_t numShards) {
+std::size_t HashBasedSharder::getShardFor(
+    const std::string& id,
+    std::size_t numShards) {
   auto toInt = detail::bytesToInt(detail::toBytes(id));
   return toInt % numShards;
 }
 
 void HashBasedSharder::shardLine(
     std::string line,
-    const std::vector<std::unique_ptr<std::ofstream>> &outFiles) {
+    const std::vector<std::unique_ptr<std::ofstream>>& outFiles) {
   auto commaPos = line.find_first_of(",");
   auto id = line.substr(0, commaPos);
   auto numShards = outFiles.size();

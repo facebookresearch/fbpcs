@@ -18,8 +18,8 @@
 #include "folly/Random.h"
 #include "folly/logging/xlog.h"
 
-#include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/test/AttributionTestUtils.h"
+#include "fbpcs/emp_games/common/TestUtil.h"
 
 namespace aggregation::private_attribution {
 

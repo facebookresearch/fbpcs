@@ -18,13 +18,13 @@
 #include <folly/dynamic.h>
 #include <folly/json.h>
 
-#include "fbpcs/emp_games/common/PrivateData.h"
+#include <fbpcf/mpc/EmpGame.h>
 #include "Aggregator.h"
 #include "AttributionRule.h"
 #include "Constants.h"
 #include "Conversion.h"
 #include "Touchpoint.h"
-#include <fbpcf/mpc/EmpGame.h>
+#include "fbpcs/emp_games/common/PrivateData.h"
 
 namespace measurement::private_attribution {
 
@@ -120,7 +120,8 @@ class PrivateAttributionMetrics {
       : _attributionRule(attributionRule) {
     for (auto aggregationFormat : aggregationFormats_) {
       formatToAggregator[aggregationFormat.name] =
-          aggregationFormat.newAggregator(attributionRule, ctx, outputVisibility);
+          aggregationFormat.newAggregator(
+              attributionRule, ctx, outputVisibility);
     }
   }
 

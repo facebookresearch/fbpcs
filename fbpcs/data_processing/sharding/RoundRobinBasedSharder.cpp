@@ -8,9 +8,9 @@
 #include "fbpcs/data_processing/sharding/RoundRobinBasedSharder.h"
 
 namespace data_processing::sharder {
-std::size_t
-RoundRobinBasedSharder::getShardFor(const std::string & /* unused */,
-                                    std::size_t numShards) {
+std::size_t RoundRobinBasedSharder::getShardFor(
+    const std::string& /* unused */,
+    std::size_t numShards) {
   auto res = idx_ % numShards;
   ++idx_;
   return res;

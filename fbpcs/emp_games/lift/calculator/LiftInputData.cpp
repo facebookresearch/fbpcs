@@ -24,12 +24,8 @@ inline constexpr int64_t kConversionCap = 25;
 }
 
 namespace private_lift {
-LiftInputData::LiftInputData(
-    fbpcf::Party party,
-    const std::string& filePath)
-    : LiftInputData{
-          LiftDataFrameBuilder{filePath, kConversionCap},
-          party} {}
+LiftInputData::LiftInputData(fbpcf::Party party, const std::string& filePath)
+    : LiftInputData{LiftDataFrameBuilder{filePath, kConversionCap}, party} {}
 
 LiftInputData::LiftInputData(
     const LiftDataFrameBuilder& builder,
@@ -60,8 +56,7 @@ int64_t LiftInputData::calculateGroupCount() const {
   return maxId + 1;
 }
 
-std::vector<df::Column<bool>> LiftInputData::calculateBitmasks()
-    const {
+std::vector<df::Column<bool>> LiftInputData::calculateBitmasks() const {
   std::vector<df::Column<bool>> res;
   for (std::size_t group = 0; group < getGroupCount(); ++group) {
     df::Column<bool> groupColumn;

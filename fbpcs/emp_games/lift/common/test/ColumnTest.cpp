@@ -14,15 +14,15 @@
 using namespace df;
 
 class Foo {
-public:
+ public:
   explicit Foo(int64_t a) : a_{a}, b_{0} {}
   Foo(int64_t a, int64_t b) : a_{a}, b_{b} {}
 
-  friend bool operator==(const Foo &f1, const Foo &f2) {
+  friend bool operator==(const Foo& f1, const Foo& f2) {
     return f1.a_ == f2.a_ && f1.b_ == f2.b_;
   }
 
-private:
+ private:
   int64_t a_;
   int64_t b_;
 };
@@ -213,7 +213,7 @@ TEST(ColumnTest, Apply) {
   Column<int64_t> c1{1, 2, 3};
   Column<int64_t> c2{1, 4, 9};
 
-  c1.apply([](int64_t &v) { v *= v; });
+  c1.apply([](int64_t& v) { v *= v; });
   EXPECT_EQ(c1, c2);
 
   std::vector<int64_t> vec;
@@ -230,7 +230,7 @@ TEST(ColumnTest, Map) {
   EXPECT_EQ(c2, expected);
 
   // Also showing off that you can pass a function that takes a const-ref
-  c1.mapInPlace([](const int64_t &v) { return v * 2; });
+  c1.mapInPlace([](const int64_t& v) { return v * 2; });
   Column<int64_t> expected2{2, 4, 6};
 
   EXPECT_EQ(c1, expected2);
@@ -283,8 +283,9 @@ TEST(ColumnTest, Reduce) {
   EXPECT_EQ(x, 123);
 
   // Empty column, no accumulator
-  EXPECT_THROW(c2.reduce([](int64_t acc, int64_t v) { return acc + v; }),
-               std::out_of_range);
+  EXPECT_THROW(
+      c2.reduce([](int64_t acc, int64_t v) { return acc + v; }),
+      std::out_of_range);
 }
 
 TEST(ColumnTest, ToColumn) {

@@ -7,7 +7,6 @@
 
 #include <gtest/gtest.h>
 
-
 #include "../Csv.h"
 
 namespace private_measurement {

@@ -17,7 +17,7 @@
 
 namespace df {
 namespace detail {
-std::vector<std::string> split(const std::string &s) {
+std::vector<std::string> split(const std::string& s) {
   std::vector<std::string> res;
   std::size_t i = 0;
   while (i < s.size()) {
@@ -47,9 +47,9 @@ std::vector<std::string> split(const std::string &s) {
 }
 } // namespace detail
 
-CsvReader::CsvReader(const std::string &filePath) {
+CsvReader::CsvReader(const std::string& filePath) {
   auto infilePtr = fbpcf::io::getInputStream(filePath);
-  auto &infile = infilePtr->get();
+  auto& infile = infilePtr->get();
   if (!infile.good()) {
     throw CsvFileReadException{filePath};
   }

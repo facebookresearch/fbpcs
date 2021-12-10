@@ -19,7 +19,7 @@
 
 namespace aggregation::private_aggregation {
 
-//utility method used for parsing string information to vector of type T.
+// utility method used for parsing string information to vector of type T.
 template <typename T>
 static const std::vector<T> getInnerArray(std::string& str) {
   // Strip the brackets [] before splitting into individual timestamp values

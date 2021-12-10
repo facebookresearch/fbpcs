@@ -12,9 +12,13 @@
 namespace private_measurement::functional {
 namespace detail {
 // Logic adapted from https://stackoverflow.com/a/18771618/15625637
-template <class I> void advance(I &&it) { ++it; }
+template <class I>
+void advance(I&& it) {
+  ++it;
+}
 
-template <class I, class... Is> void advance(I &&it, Is &&...its) {
+template <class I, class... Is>
+void advance(I&& it, Is&&... its) {
   ++it;
   detail::advance(its...);
 }
@@ -23,7 +27,10 @@ template <class I, class... Is> void advance(I &&it, Is &&...its) {
 // In this case, zip_apply is no different from std::transform, so it is
 // unlikely anyone would use it, but it could help avoid a frustrating
 // compilation error when testing or debugging something.
-template <class... Is> void advance(Is &&...) { /* empty */; }
+template <class... Is>
+void advance(Is&&...) { /* empty */
+  ;
+}
 } // namespace detail
 
 /*
@@ -45,7 +52,7 @@ template <class... Is> void advance(Is &&...) { /* empty */; }
  * EXPECT_EQ(res, std::vector{2, 10, 20, 30, 42});
  */
 template <class Function, class I, class... Is>
-auto zip_apply(Function f, I &&begin, I &&end, Is &&...its)
+auto zip_apply(Function f, I&& begin, I&& end, Is&&... its)
     -> std::vector<decltype(f(*begin, *(its)...))> {
   std::vector<decltype(f(*begin, *(its)...))> res;
   // TODO: Would be better to check *all* iterators instead of just first

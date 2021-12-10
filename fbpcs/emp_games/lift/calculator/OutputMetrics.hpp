@@ -9,9 +9,9 @@
 
 #include "folly/logging/xlog.h"
 
+#include <fbpcf/mpc/EmpGame.h>
 #include "../../common/Functional.h"
 #include "../common/GroupedLiftMetrics.h"
-#include <fbpcf/mpc/EmpGame.h>
 
 namespace private_lift {
 
@@ -41,12 +41,13 @@ constexpr auto privatelyShareIntArraysFromPartner = private_measurement::
 
 template <int32_t MY_ROLE>
 template <class T>
-T OutputMetrics<MY_ROLE>::reveal(const emp::Integer &empInteger) const {
+T OutputMetrics<MY_ROLE>::reveal(const emp::Integer& empInteger) const {
   return shouldUseXorEncryption() ? empInteger.reveal<T>(emp::XOR)
                                   : empInteger.reveal<T>();
 }
 
-template <int32_t MY_ROLE> std::string OutputMetrics<MY_ROLE>::playGame() {
+template <int32_t MY_ROLE>
+std::string OutputMetrics<MY_ROLE>::playGame() {
   validateNumRows();
   initNumGroups();
   initShouldSkipValues();
@@ -86,7 +87,7 @@ template <int32_t MY_ROLE> std::string OutputMetrics<MY_ROLE>::playGame() {
 }
 
 template <int32_t MY_ROLE>
-void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream &outfile) {
+void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream& outfile) {
   // Start by outputting the overall results
   outfile << "Overall"
           << ",";
@@ -142,19 +143,25 @@ void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream &outfile) {
   }
 }
 
-template <int32_t MY_ROLE> std::string OutputMetrics<MY_ROLE>::toJson() const {
+template <int32_t MY_ROLE>
+std::string OutputMetrics<MY_ROLE>::toJson() const {
   GroupedLiftMetrics groupedLiftMetrics;
   groupedLiftMetrics.metrics = metrics_.toLiftMetrics();
-  std::transform(cohortMetrics_.begin(), cohortMetrics_.end(),
-                 std::back_inserter(groupedLiftMetrics.cohortMetrics),
-                 [](auto const &p) { return p.second.toLiftMetrics(); });
-  std::transform(publisherBreakdowns_.begin(), publisherBreakdowns_.end(),
-                 std::back_inserter(groupedLiftMetrics.publisherBreakdowns),
-                 [](auto const &p) { return p.second.toLiftMetrics(); });
+  std::transform(
+      cohortMetrics_.begin(),
+      cohortMetrics_.end(),
+      std::back_inserter(groupedLiftMetrics.cohortMetrics),
+      [](auto const& p) { return p.second.toLiftMetrics(); });
+  std::transform(
+      publisherBreakdowns_.begin(),
+      publisherBreakdowns_.end(),
+      std::back_inserter(groupedLiftMetrics.publisherBreakdowns),
+      [](auto const& p) { return p.second.toLiftMetrics(); });
   return groupedLiftMetrics.toJson();
 }
 
-template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::validateNumRows() {
+template <int32_t MY_ROLE>
+void OutputMetrics<MY_ROLE>::validateNumRows() {
   // TODO: We shouldn't be using MPC for this, it should just be shared over
   // a normal network socket as part of the protocol setup
   auto numRows = privatelyShareInt<MY_ROLE>(n_);
@@ -171,7 +178,8 @@ template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::validateNumRows() {
   }
 }
 
-template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::initNumGroups() {
+template <int32_t MY_ROLE>
+void OutputMetrics<MY_ROLE>::initNumGroups() {
   // TODO: We shouldn't be using MPC for this, it should just be shared over
   // a normal network socket as part of the protocol setup
   XLOG(INFO) << "Set up number of partner groups";
@@ -197,7 +205,8 @@ template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::initNumGroups() {
              << " partner cohorts";
 }
 
-template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::initShouldSkipValues() {
+template <int32_t MY_ROLE>
+void OutputMetrics<MY_ROLE>::initShouldSkipValues() {
   XLOG(INFO) << "Determine if value-based calculations should be skipped";
   bool hasValues = inputData_.getPurchaseValueArrays().empty();
   emp::Bit hasValuesBit{hasValues, PARTNER};
@@ -205,29 +214,31 @@ template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::initShouldSkipValues() {
   XLOG(INFO) << "shouldSkipValues = " << shouldSkipValues_;
 }
 
-template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::initBitsForValues() {
+template <int32_t MY_ROLE>
+void OutputMetrics<MY_ROLE>::initBitsForValues() {
   if (!shouldSkipValues_) {
     XLOG(INFO) << "Set up number of bits needed for purchase value sharing";
     auto valueBits = static_cast<int64_t>(inputData_.getNumBitsForValue());
     auto valueSquaredBits =
         static_cast<int64_t>(inputData_.getNumBitsForValueSquared());
-    emp::Integer valueBitsInteger{private_measurement::INT_SIZE, valueBits,
-                                  PARTNER};
-    emp::Integer valueSquaredBitsInteger{private_measurement::INT_SIZE,
-                                         valueSquaredBits, PARTNER};
+    emp::Integer valueBitsInteger{
+        private_measurement::INT_SIZE, valueBits, PARTNER};
+    emp::Integer valueSquaredBitsInteger{
+        private_measurement::INT_SIZE, valueSquaredBits, PARTNER};
     // TODO: Figure out why this isn't working when using values other than
     // 32/64
     valueBits_ = valueBitsInteger.reveal<int64_t>() <= QUICK_BITS ? QUICK_BITS
                                                                   : FULL_BITS;
     valueSquaredBits_ = valueSquaredBitsInteger.reveal<int64_t>() <= QUICK_BITS
-                            ? QUICK_BITS
-                            : FULL_BITS;
+        ? QUICK_BITS
+        : FULL_BITS;
     XLOG(INFO) << "Num bits for values: " << valueBits_;
     XLOG(INFO) << "Num bits for values squared: " << valueSquaredBits_;
   }
 }
 
-template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::calculateAll() {
+template <int32_t MY_ROLE>
+void OutputMetrics<MY_ROLE>::calculateAll() {
   XLOG(INFO) << "Start calculation of output metrics";
 
   std::vector<std::vector<emp::Integer>> purchaseValueArrays;
@@ -235,8 +246,10 @@ template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::calculateAll() {
   if (!shouldSkipValues_) {
     XLOG(INFO) << "Share purchase values";
     purchaseValueArrays = privatelyShareIntArraysFromPartner<MY_ROLE>(
-        inputData_.getPurchaseValueArrays(), n_, /* numVals */
-        numConversionsPerUser_ /* arraySize */, valueBits_ /* bitLen */);
+        inputData_.getPurchaseValueArrays(),
+        n_, /* numVals */
+        numConversionsPerUser_ /* arraySize */,
+        valueBits_ /* bitLen */);
   }
 
   auto validPurchaseArrays = calculateValidPurchases();
@@ -245,31 +258,40 @@ template <int32_t MY_ROLE> void OutputMetrics<MY_ROLE>::calculateAll() {
 
   // If this is (value-based) conversion lift, we also need to share purchase
   // values squared
-  if (!shouldSkipValues_ && inputData_.getLiftGranularityType() ==
-                                InputData::LiftGranularityType::Conversion) {
+  if (!shouldSkipValues_ &&
+      inputData_.getLiftGranularityType() ==
+          InputData::LiftGranularityType::Conversion) {
     purchaseValueSquaredArrays = privatelyShareIntArraysFromPartner<MY_ROLE>(
-        inputData_.getPurchaseValueSquaredArrays(), n_, /* numVals */
-        numConversionsPerUser_ /* arraySize */, valueSquaredBits_ /* bitLen */);
+        inputData_.getPurchaseValueSquaredArrays(),
+        n_, /* numVals */
+        numConversionsPerUser_ /* arraySize */,
+        valueSquaredBits_ /* bitLen */);
   }
 
-  calculateStatistics(GroupType::TEST, purchaseValueArrays,
-                      purchaseValueSquaredArrays, validPurchaseArrays);
-  calculateStatistics(GroupType::CONTROL, purchaseValueArrays,
-                      purchaseValueSquaredArrays, validPurchaseArrays);
+  calculateStatistics(
+      GroupType::TEST,
+      purchaseValueArrays,
+      purchaseValueSquaredArrays,
+      validPurchaseArrays);
+  calculateStatistics(
+      GroupType::CONTROL,
+      purchaseValueArrays,
+      purchaseValueSquaredArrays,
+      validPurchaseArrays);
 }
 
 template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::calculateStatistics(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<std::vector<emp::Integer>> &purchaseValueArrays,
-    const std::vector<std::vector<emp::Integer>> &purchaseValueSquaredArrays,
-    const std::vector<std::vector<emp::Bit>> &validPurchaseArrays) {
+    const OutputMetrics::GroupType& groupType,
+    const std::vector<std::vector<emp::Integer>>& purchaseValueArrays,
+    const std::vector<std::vector<emp::Integer>>& purchaseValueSquaredArrays,
+    const std::vector<std::vector<emp::Bit>>& validPurchaseArrays) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
              << " events, value, and value squared";
-  auto bits =
-      calculatePopulation(groupType, groupType == GroupType::TEST
-                                         ? inputData_.getTestPopulation()
-                                         : inputData_.getControlPopulation());
+  auto bits = calculatePopulation(
+      groupType,
+      groupType == GroupType::TEST ? inputData_.getTestPopulation()
+                                   : inputData_.getControlPopulation());
   auto eventArrays = calculateEvents(groupType, bits, validPurchaseArrays);
   std::vector<emp::Bit> reachedArray;
   calculateMatchCount(groupType, bits, purchaseValueArrays);
@@ -279,8 +301,9 @@ void OutputMetrics<MY_ROLE>::calculateStatistics(
   }
 
   // If this is (value-based) conversion lift, calculate value metrics now
-  if (!shouldSkipValues_ && inputData_.getLiftGranularityType() ==
-                                InputData::LiftGranularityType::Conversion) {
+  if (!shouldSkipValues_ &&
+      inputData_.getLiftGranularityType() ==
+          InputData::LiftGranularityType::Conversion) {
     calculateValue(groupType, purchaseValueArrays, eventArrays, reachedArray);
     calculateValueSquared(groupType, purchaseValueSquaredArrays, eventArrays);
   }
@@ -288,7 +311,7 @@ void OutputMetrics<MY_ROLE>::calculateStatistics(
 
 template <int32_t MY_ROLE>
 std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculatePopulation(
-    const OutputMetrics::GroupType &groupType,
+    const OutputMetrics::GroupType& groupType,
     const std::vector<int64_t> populationVec) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " population";
   const std::vector<emp::Bit> populationBits =
@@ -308,29 +331,32 @@ OutputMetrics<MY_ROLE>::calculateValidPurchases() {
   XLOG(INFO) << "Share purchase timestamps";
   const std::vector<std::vector<emp::Integer>> purchaseTimestampArrays =
       privatelyShareIntArraysFromPartner<MY_ROLE>(
-          inputData_.getPurchaseTimestampArrays(), n_, /* numVals */
-          numConversionsPerUser_ /* arraySize */, QUICK_BITS /* bitLen */);
+          inputData_.getPurchaseTimestampArrays(),
+          n_, /* numVals */
+          numConversionsPerUser_ /* arraySize */,
+          QUICK_BITS /* bitLen */);
 
   XLOG(INFO) << "Calculate valid purchases";
   return private_measurement::functional::zip_apply(
       [](emp::Integer oppTs,
          std::vector<emp::Integer> purchaseTsArray) -> std::vector<emp::Bit> {
         std::vector<emp::Bit> vec;
-        for (const auto &purchaseTs : purchaseTsArray) {
+        for (const auto& purchaseTs : purchaseTsArray) {
           const emp::Integer ten{purchaseTs.size(), 10, emp::PUBLIC};
           vec.push_back(purchaseTs + ten > oppTs);
         }
         return vec;
       },
-      opportunityTimestamps.begin(), opportunityTimestamps.end(),
+      opportunityTimestamps.begin(),
+      opportunityTimestamps.end(),
       purchaseTimestampArrays.begin());
 }
 
 template <int32_t MY_ROLE>
 std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<emp::Bit> &populationBits,
-    const std::vector<std::vector<emp::Bit>> &validPurchaseArrays) {
+    const OutputMetrics::GroupType& groupType,
+    const std::vector<emp::Bit>& populationBits,
+    const std::vector<std::vector<emp::Bit>>& validPurchaseArrays) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
              << " conversions & converters";
 
@@ -352,14 +378,19 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
   // to nuke this and fix it properly.
   auto [eventArrays, converterArrays, squaredNumConvs] =
       private_measurement::secret_sharing::zip_and_map<
-          emp::Bit, std::vector<emp::Bit>, std::vector<emp::Bit>, emp::Bit,
+          emp::Bit,
+          std::vector<emp::Bit>,
+          std::vector<emp::Bit>,
+          emp::Bit,
           emp::Integer>(
-          populationBits, validPurchaseArrays,
-          [&convHistograms](emp::Bit isUser, std::vector<emp::Bit> validPurchaseArray)
+          populationBits,
+          validPurchaseArrays,
+          [&convHistograms](
+              emp::Bit isUser, std::vector<emp::Bit> validPurchaseArray)
               -> std::tuple<std::vector<emp::Bit>, emp::Bit, emp::Integer> {
             std::vector<emp::Bit> vec;
-            emp::Integer numConvSquared{private_measurement::INT_SIZE, 0,
-                                        emp::PUBLIC};
+            emp::Integer numConvSquared{
+                private_measurement::INT_SIZE, 0, emp::PUBLIC};
             emp::Bit anyValidPurchase{false, emp::PUBLIC};
 
             for (size_t i = 0; i < validPurchaseArray.size(); ++i) {
@@ -372,10 +403,10 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
               // of elements in the array
               auto numConv = validPurchaseArray.size() - i;
               auto convSquared = static_cast<int64_t>(numConv * numConv);
-              emp::Integer numConvSquaredIfValid{numConvSquared.size(),
-                                                 convSquared, emp::PUBLIC};
-              numConvSquared = emp::If(newPurchase,
-                                       numConvSquaredIfValid, numConvSquared);
+              emp::Integer numConvSquaredIfValid{
+                  numConvSquared.size(), convSquared, emp::PUBLIC};
+              numConvSquared =
+                  emp::If(newPurchase, numConvSquaredIfValid, numConvSquared);
 
               // Interpretation: at index `i`, we're detecting if we should
               // increment the histogram at value `size() - i` because it means
@@ -390,10 +421,10 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
               anyValidPurchase = anyValidPurchase | cond;
             }
             // If the person *never* converted, increment the zero bucket now
-            // Note that the isUser check is very important to avoid overcounting
+            // Note that the isUser check is very important to avoid
+            // overcounting
             convHistograms[0].push_back(isUser & !anyValidPurchase);
-            return std::make_tuple(
-                vec, anyValidPurchase, numConvSquared);
+            return std::make_tuple(vec, anyValidPurchase, numConvSquared);
           });
 
   if (groupType == GroupType::TEST) {
@@ -418,12 +449,12 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
   // And compute for breakdowns + cohorts
   // TODO: These could be abstracted into a common function
   for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
-    const auto &mask = publisherBitmasks_.at(i);
+    const auto& mask = publisherBitmasks_.at(i);
     auto groupEventBits =
         private_measurement::secret_sharing::multiplyBitmask(eventArrays, mask);
     auto groupConverterBits =
-        private_measurement::secret_sharing::multiplyBitmask(converterArrays,
-                                                             mask);
+        private_measurement::secret_sharing::multiplyBitmask(
+            converterArrays, mask);
     auto groupEvents = sum(groupEventBits);
     auto groupConverters = sum(groupConverterBits);
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
@@ -445,17 +476,18 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
       publisherBreakdowns_[i].controlEvents = groupEvents;
       publisherBreakdowns_[i].controlConverters = groupConverters;
       publisherBreakdowns_[i].controlNumConvSquared = sum(groupInts);
-      publisherBreakdowns_[i].controlConvHistogram = std::move(groupConvHistogram);
+      publisherBreakdowns_[i].controlConvHistogram =
+          std::move(groupConvHistogram);
     }
   }
 
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    const auto &mask = partnerBitmasks_.at(i);
+    const auto& mask = partnerBitmasks_.at(i);
     auto groupEventBits =
         private_measurement::secret_sharing::multiplyBitmask(eventArrays, mask);
     auto groupConverterBits =
-        private_measurement::secret_sharing::multiplyBitmask(converterArrays,
-                                                             mask);
+        private_measurement::secret_sharing::multiplyBitmask(
+            converterArrays, mask);
     auto groupEvents = sum(groupEventBits);
     auto groupConverters = sum(groupConverterBits);
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
@@ -485,9 +517,9 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
 
 template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::calculateMatchCount(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<emp::Bit> &populationBits,
-    const std::vector<std::vector<emp::Integer>> &purchaseValueArrays) {
+    const OutputMetrics::GroupType& groupType,
+    const std::vector<emp::Bit>& populationBits,
+    const std::vector<std::vector<emp::Integer>>& purchaseValueArrays) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " MatchCount";
   // a valid test/control match is when a person with an opportunity who made
   // ANY nonzero conversion. Therefore we can just check first if an opportunity
@@ -502,10 +534,13 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
   XLOG(INFO) << "Share purchase timestamps";
   const std::vector<std::vector<emp::Integer>> purchaseTimestampArrays =
       privatelyShareIntArraysFromPartner<MY_ROLE>(
-          inputData_.getPurchaseTimestampArrays(), n_, /* numVals */
-          numConversionsPerUser_ /* arraySize */, QUICK_BITS /* bitLen */);
+          inputData_.getPurchaseTimestampArrays(),
+          n_, /* numVals */
+          numConversionsPerUser_ /* arraySize */,
+          QUICK_BITS /* bitLen */);
   auto matchArrays = private_measurement::functional::zip_apply(
-      [](emp::Bit isUser, emp::Integer opportunityTimestamp,
+      [](emp::Bit isUser,
+         emp::Integer opportunityTimestamp,
          std::vector<emp::Integer> purchaseTimestampArray) -> emp::Bit {
         const emp::Integer zero =
             emp::Integer{opportunityTimestamp.size(), 0, emp::PUBLIC};
@@ -513,14 +548,16 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
             (isUser &
              (opportunityTimestamp > zero)); // check if opportunity is valid
         emp::Bit isUserMatched = emp::Bit{0, emp::PUBLIC};
-        for (const auto &purchaseTS : purchaseTimestampArray) {
+        for (const auto& purchaseTS : purchaseTimestampArray) {
           // check for the existence of a valid purchase
           isUserMatched = isUserMatched | (purchaseTS > zero);
         }
         return isUserMatched & validOpportunity;
       },
-      populationBits.begin(), populationBits.end(),
-      opportunityTimestamps.begin(), purchaseTimestampArrays.begin());
+      populationBits.begin(),
+      populationBits.end(),
+      opportunityTimestamps.begin(),
+      purchaseTimestampArrays.begin());
 
   if (groupType == GroupType::TEST) {
     metrics_.testMatchCount = sum(matchArrays);
@@ -553,25 +590,26 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
 
 template <int32_t MY_ROLE>
 std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<emp::Bit> &populationBits) {
+    const OutputMetrics::GroupType& groupType,
+    const std::vector<emp::Bit>& populationBits) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
              << " impressions & reach";
 
   const std::vector<emp::Integer> numImpressions =
-      privatelyShareIntsFromPublisher<MY_ROLE>(inputData_.getNumImpressions(),
-                                               n_, FULL_BITS);
+      privatelyShareIntsFromPublisher<MY_ROLE>(
+          inputData_.getNumImpressions(), n_, FULL_BITS);
 
-  auto [impressionsArray, reachArray] =
-      private_measurement::secret_sharing::zip_and_map<emp::Bit, emp::Integer,
-                                                       emp::Integer, emp::Bit>(
-          populationBits, numImpressions,
+  auto [impressionsArray, reachArray] = private_measurement::secret_sharing::
+      zip_and_map<emp::Bit, emp::Integer, emp::Integer, emp::Bit>(
+          populationBits,
+          numImpressions,
           [](emp::Bit isUser,
              emp::Integer numImpressions) -> std::pair<emp::Integer, emp::Bit> {
             const emp::Integer zero =
                 emp::Integer{private_measurement::INT_SIZE, 0, emp::PUBLIC};
-            return std::make_pair(emp::If(isUser, numImpressions, zero),
-                                  isUser & (numImpressions > zero));
+            return std::make_pair(
+                emp::If(isUser, numImpressions, zero),
+                isUser & (numImpressions > zero));
           });
 
   // And compute for breakdowns + cohorts
@@ -595,9 +633,9 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
 
 template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::calculateReachedConversions(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<std::vector<emp::Bit>> &validPurchaseArrays,
-    const std::vector<emp::Bit> &reachedArray) {
+    const OutputMetrics::GroupType& groupType,
+    const std::vector<std::vector<emp::Bit>>& validPurchaseArrays,
+    const std::vector<emp::Bit>& reachedArray) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
              << " reached conversions";
   if (groupType != GroupType::TEST) {
@@ -610,12 +648,13 @@ void OutputMetrics<MY_ROLE>::calculateReachedConversions(
           [](std::vector<emp::Bit> validPurchases,
              emp::Bit reached) -> std::vector<emp::Bit> {
             std::vector<emp::Bit> res;
-            for (const auto &validPurchase : validPurchases) {
+            for (const auto& validPurchase : validPurchases) {
               res.emplace_back(validPurchase & reached);
             }
             return res;
           },
-          validPurchaseArrays.begin(), validPurchaseArrays.end(),
+          validPurchaseArrays.begin(),
+          validPurchaseArrays.end(),
           reachedArray.begin());
 
   if (groupType == GroupType::TEST) {
@@ -652,10 +691,10 @@ void OutputMetrics<MY_ROLE>::calculateReachedConversions(
 
 template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::calculateValue(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<std::vector<emp::Integer>> &purchaseValueArrays,
-    const std::vector<std::vector<emp::Bit>> &eventArrays,
-    const std::vector<emp::Bit> &reachedArray) {
+    const OutputMetrics::GroupType& groupType,
+    const std::vector<std::vector<emp::Integer>>& purchaseValueArrays,
+    const std::vector<std::vector<emp::Bit>>& eventArrays,
+    const std::vector<emp::Bit>& reachedArray) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " value";
   std::vector<std::vector<emp::Integer>> valueArrays =
       private_measurement::functional::zip_apply(
@@ -675,7 +714,9 @@ void OutputMetrics<MY_ROLE>::calculateValue(
             }
             return vec;
           },
-          eventArrays.begin(), eventArrays.end(), purchaseValueArrays.begin());
+          eventArrays.begin(),
+          eventArrays.end(),
+          purchaseValueArrays.begin());
 
   std::vector<std::vector<emp::Integer>> reachedValue;
   if (groupType == GroupType::TEST) {
@@ -683,14 +724,16 @@ void OutputMetrics<MY_ROLE>::calculateValue(
         [](std::vector<emp::Integer> validValues,
            emp::Bit reached) -> std::vector<emp::Integer> {
           std::vector<emp::Integer> vec;
-          for (const auto &validValue : validValues) {
+          for (const auto& validValue : validValues) {
             const emp::Integer zero =
                 emp::Integer{validValue.size(), 0, emp::PUBLIC};
             vec.emplace_back(emp::If(reached, validValue, zero));
           }
           return vec;
         },
-        valueArrays.begin(), valueArrays.end(), reachedArray.begin());
+        valueArrays.begin(),
+        valueArrays.end(),
+        reachedArray.begin());
 
     metrics_.testValue = sum(valueArrays);
     metrics_.reachedValue = sum(reachedValue);
@@ -731,15 +774,15 @@ void OutputMetrics<MY_ROLE>::calculateValue(
 
 template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::calculateValueSquared(
-    const OutputMetrics::GroupType &groupType,
-    const std::vector<std::vector<emp::Integer>> &purchaseValueSquaredArrays,
-    const std::vector<std::vector<emp::Bit>> &eventArrays) {
+    const OutputMetrics::GroupType& groupType,
+    const std::vector<std::vector<emp::Integer>>& purchaseValueSquaredArrays,
+    const std::vector<std::vector<emp::Bit>>& eventArrays) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " value squared";
   auto squaredValues = private_measurement::functional::zip_apply(
       [](std::vector<emp::Bit> events,
          std::vector<emp::Integer> purchaseValuesSquared) -> emp::Integer {
-        emp::Integer sumSquared{purchaseValuesSquared.at(0).size(), 0,
-                                emp::PUBLIC};
+        emp::Integer sumSquared{
+            purchaseValuesSquared.at(0).size(), 0, emp::PUBLIC};
         if (events.size() != purchaseValuesSquared.size()) {
           XLOG(FATAL) << "Numbers of event bits and purchase values squared "
                          "are inconsistent.";
@@ -756,7 +799,8 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
         }
         return sumSquared;
       },
-      eventArrays.begin(), eventArrays.end(),
+      eventArrays.begin(),
+      eventArrays.end(),
       purchaseValueSquaredArrays.begin());
 
   if (groupType == GroupType::TEST) {
@@ -768,7 +812,7 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
   // And compute for breakdowns + cohorts
   // TODO: These could be abstracted into a common function
   for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
-    const auto &mask = publisherBitmasks_.at(i);
+    const auto& mask = publisherBitmasks_.at(i);
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         squaredValues, mask);
     if (groupType == GroupType::TEST) {
@@ -778,7 +822,7 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
     }
   }
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    const auto &mask = partnerBitmasks_.at(i);
+    const auto& mask = partnerBitmasks_.at(i);
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         squaredValues, mask);
     if (groupType == GroupType::TEST) {
@@ -790,25 +834,25 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
 }
 
 template <int32_t MY_ROLE>
-int64_t OutputMetrics<MY_ROLE>::sum(const std::vector<emp::Integer> &in) const {
+int64_t OutputMetrics<MY_ROLE>::sum(const std::vector<emp::Integer>& in) const {
   return shouldUseXorEncryption()
-             ? private_measurement::emp_utils::sum<emp::XOR>(in)
-             : private_measurement::emp_utils::sum<emp::PUBLIC>(in);
+      ? private_measurement::emp_utils::sum<emp::XOR>(in)
+      : private_measurement::emp_utils::sum<emp::PUBLIC>(in);
 }
 
 template <int32_t MY_ROLE>
-int64_t OutputMetrics<MY_ROLE>::sum(const std::vector<emp::Bit> &in) const {
+int64_t OutputMetrics<MY_ROLE>::sum(const std::vector<emp::Bit>& in) const {
   return sum(private_measurement::emp_utils::bitsToInts(in));
 }
 
 template <int32_t MY_ROLE>
 int64_t OutputMetrics<MY_ROLE>::sum(
-    const std::vector<std::vector<emp::Bit>> &in) const {
+    const std::vector<std::vector<emp::Bit>>& in) const {
   // flatten the 2D vector into 1D
   // TODO: this can be optimizing by specializing this use case so we don't have
   // to make a copy of the data
   std::vector<emp::Bit> accum;
-  for (auto &sub : in) {
+  for (auto& sub : in) {
     accum.insert(std::end(accum), std::begin(sub), std::end(sub));
   }
   return sum(accum);
@@ -816,12 +860,12 @@ int64_t OutputMetrics<MY_ROLE>::sum(
 
 template <int32_t MY_ROLE>
 int64_t OutputMetrics<MY_ROLE>::sum(
-    const std::vector<std::vector<emp::Integer>> &in) const {
+    const std::vector<std::vector<emp::Integer>>& in) const {
   // flatten the 2D vector into 1D
   // TODO: this can be optimizing by specializing this use case so we don't have
   // to make a copy of the data
   std::vector<emp::Integer> accum;
-  for (auto &sub : in) {
+  for (auto& sub : in) {
     accum.insert(std::end(accum), std::begin(sub), std::end(sub));
   }
   return sum(accum);

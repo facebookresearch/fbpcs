@@ -22,4 +22,4 @@ void idSwap(
     std::istream& dataInFilePath,
     std::istream& spineIdFilePath,
     std::ostream& outFilePath);
-} // namespace pid
+} // namespace pid::combiner

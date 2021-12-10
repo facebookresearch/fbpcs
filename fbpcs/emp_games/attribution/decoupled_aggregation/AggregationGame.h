@@ -13,10 +13,10 @@
 #include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
-#include "fbpcs/emp_games/common/PrivateData.h"
-#include "fbpcs/emp_games/common/SecretSharing.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/Aggregation.hpp"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationMetrics.h"
+#include "fbpcs/emp_games/common/PrivateData.h"
+#include "fbpcs/emp_games/common/SecretSharing.h"
 
 namespace aggregation::private_aggregation {
 
@@ -35,8 +35,12 @@ class AggregationGame : public fbpcf::EmpGame<
   AggregationOutputMetrics play(
       const AggregationInputMetrics& inputData) override {
     XLOG(INFO, "Running private aggregation");
-    AggregationOutputMetrics outputMetrics = computeAggregations<MY_ROLE>(inputData, OUTPUT_VISIBILITY);
-    XLOGF(INFO, "Done. Output: {}", folly::toPrettyJson(outputMetrics.toDynamic()));
+    AggregationOutputMetrics outputMetrics =
+        computeAggregations<MY_ROLE>(inputData, OUTPUT_VISIBILITY);
+    XLOGF(
+        INFO,
+        "Done. Output: {}",
+        folly::toPrettyJson(outputMetrics.toDynamic()));
     return outputMetrics;
   }
 };

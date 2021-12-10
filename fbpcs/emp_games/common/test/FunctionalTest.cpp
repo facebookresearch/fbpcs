@@ -38,8 +38,11 @@ TEST(FunctionalTest, TestZipApplyAdvancedOutputType) {
   std::vector<int64_t> v{1, 2, 3, 4, 5};
   auto f = [](auto n) { return std::make_tuple(n, n + 1); };
   std::vector<std::tuple<int64_t, int64_t>> expected{
-      std::make_tuple(1, 2), std::make_tuple(2, 3), std::make_tuple(3, 4),
-      std::make_tuple(4, 5), std::make_tuple(5, 6)};
+      std::make_tuple(1, 2),
+      std::make_tuple(2, 3),
+      std::make_tuple(3, 4),
+      std::make_tuple(4, 5),
+      std::make_tuple(5, 6)};
   auto actual = zip_apply(f, v.begin(), v.end());
 
   EXPECT_EQ(expected, actual);

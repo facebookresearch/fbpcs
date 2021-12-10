@@ -56,17 +56,24 @@ int main(int argc, char** argv) {
       getline(ss, substr, ',');
       outputFilepaths.push_back(std::move(substr));
     }
-    HashBasedSharder sharder{FLAGS_input_filename, outputFilepaths,
-                             FLAGS_log_every_n, FLAGS_hmac_base64_key};
+    HashBasedSharder sharder{
+        FLAGS_input_filename,
+        outputFilepaths,
+        FLAGS_log_every_n,
+        FLAGS_hmac_base64_key};
     sharder.shard();
   } else if (!FLAGS_output_base_path.empty() && FLAGS_num_output_files > 0) {
     XLOG(ERR)
         << "Error: specify --output_filenames or --output_base_path, --file_start_index, and --num_output_files";
     std::size_t startIndex = FLAGS_file_start_index;
     std::size_t endIndex = startIndex + FLAGS_num_output_files;
-    HashBasedSharder sharder{FLAGS_input_filename, FLAGS_output_base_path,
-                             startIndex,           endIndex,
-                             FLAGS_log_every_n,    FLAGS_hmac_base64_key};
+    HashBasedSharder sharder{
+        FLAGS_input_filename,
+        FLAGS_output_base_path,
+        startIndex,
+        endIndex,
+        FLAGS_log_every_n,
+        FLAGS_hmac_base64_key};
     sharder.shard();
   } else {
     XLOG(ERR) << "Error: specify --output_filenames or --output_base_path, "

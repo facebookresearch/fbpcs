@@ -70,7 +70,8 @@ void validateLiftMetrics(
         groupedLiftMetrics,
         "Expected grouped lift metrics to be stored in a map");
 
-    if (groupedLiftMetrics->getAsMap().find("metrics") == groupedLiftMetrics->getAsMap().end()) {
+    if (groupedLiftMetrics->getAsMap().find("metrics") ==
+        groupedLiftMetrics->getAsMap().end()) {
       throw InvalidFormatException("Map should contain 'metrics' at a minimum");
     }
     checkIsMap(

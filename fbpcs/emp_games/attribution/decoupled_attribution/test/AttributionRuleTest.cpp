@@ -79,8 +79,6 @@ TEST_P(AttributionRuleTest, TestRule) {
 INSTANTIATE_TEST_SUITE_P(
     AttributionRules,
     AttributionRuleTest,
-    testing::Values(
-        std::make_pair(1, 0),
-        std::make_pair(1, 1)));
+    testing::Values(std::make_pair(1, 0), std::make_pair(1, 1)));
 
 } // namespace aggregation::private_attribution

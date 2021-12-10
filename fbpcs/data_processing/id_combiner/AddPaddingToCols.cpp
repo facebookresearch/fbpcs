@@ -64,7 +64,8 @@ void addPaddingToCols(
       std::vector<std::string> curr_vec =
           split(kCommaSplitRegex, curr_cols.at(c_i));
 
-      if (curr_vec.size() > static_cast<std::size_t>(padSizePerCol.at(i)) && enforceMax) {
+      if (curr_vec.size() > static_cast<std::size_t>(padSizePerCol.at(i)) &&
+          enforceMax) {
         auto truncate_size = curr_vec.size() - padSizePerCol.at(i);
         curr_vec.erase(curr_vec.end() - truncate_size, curr_vec.end());
       }

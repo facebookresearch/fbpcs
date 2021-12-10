@@ -90,8 +90,8 @@ TEST(DataFrameTest, Keys) {
   df.get<std::string>("int2") = {"456", "222"};
   df.get<std::string>("intVec") = {"[7,8,9]", "[333]"};
 
-  std::unordered_set<std::string> allKeys{"bool1", "bool2", "int1", "int2",
-                                          "intVec"};
+  std::unordered_set<std::string> allKeys{
+      "bool1", "bool2", "int1", "int2", "intVec"};
   EXPECT_EQ(allKeys, df.keys());
   EXPECT_EQ(allKeys, df.keysOf<std::string>());
 
@@ -129,8 +129,8 @@ TEST(DataFrameTest, LoadFromRowsBasic) {
       .intVecColumns = {},
   };
 
-  std::vector<std::string> header = {"bool1", "bool2", "int1", "int2",
-                                     "intVec"};
+  std::vector<std::string> header = {
+      "bool1", "bool2", "int1", "int2", "intVec"};
   std::vector<std::vector<std::string>> rows = {
       {"true", "1", "123", "456", "[7,8,9]"},
       {"false", "0", "111", "222", "[333]"},
@@ -148,8 +148,8 @@ TEST(DataFrameTest, LoadFromRowsBasic) {
   EXPECT_EQ(expected.at<std::string>("bool2"), actual.at<std::string>("bool2"));
   EXPECT_EQ(expected.at<std::string>("int1"), actual.at<std::string>("int1"));
   EXPECT_EQ(expected.at<std::string>("int2"), actual.at<std::string>("int2"));
-  EXPECT_EQ(expected.at<std::string>("intVec"),
-            actual.at<std::string>("intVec"));
+  EXPECT_EQ(
+      expected.at<std::string>("intVec"), actual.at<std::string>("intVec"));
 }
 
 TEST(DataFrameTest, LoadFromRowsAdvanced) {
@@ -159,8 +159,8 @@ TEST(DataFrameTest, LoadFromRowsAdvanced) {
       .intVecColumns = {"intVec"},
   };
 
-  std::vector<std::string> header = {"bool1", "bool2", "int1", "int2",
-                                     "intVec"};
+  std::vector<std::string> header = {
+      "bool1", "bool2", "int1", "int2", "intVec"};
   std::vector<std::vector<std::string>> rows = {
       {"true", "1", "123", "456", "[7,8,9]"},
       {"false", "0", "111", "222", "[333]"},
@@ -178,6 +178,7 @@ TEST(DataFrameTest, LoadFromRowsAdvanced) {
   EXPECT_EQ(expected.at<bool>("bool2"), actual.at<bool>("bool2"));
   EXPECT_EQ(expected.at<int64_t>("int1"), actual.at<int64_t>("int1"));
   EXPECT_EQ(expected.at<int64_t>("int2"), actual.at<int64_t>("int2"));
-  EXPECT_EQ(expected.at<std::vector<int64_t>>("intVec"),
-            actual.at<std::vector<int64_t>>("intVec"));
+  EXPECT_EQ(
+      expected.at<std::vector<int64_t>>("intVec"),
+      actual.at<std::vector<int64_t>>("intVec"));
 }

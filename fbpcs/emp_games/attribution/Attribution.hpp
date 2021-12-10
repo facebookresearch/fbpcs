@@ -103,7 +103,9 @@ const std::vector<AggregationFormat> shareAggregationFormats(
 
   std::vector<int64_t> aggregationIds;
   if constexpr (MY_ROLE == PUBLISHER) {
-    for (std::vector<AggregationFormat>::size_type i = 0; i < aggregationFormats.size(); i++) {
+    for (std::vector<AggregationFormat>::size_type i = 0;
+         i < aggregationFormats.size();
+         i++) {
       aggregationIds.push_back(aggregationFormats[i].id);
     }
     XLOGF(

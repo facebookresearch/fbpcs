@@ -10,13 +10,13 @@
 #include <fbpcf/mpc/EmpGame.h>
 #include <math.h>
 #include <memory>
-#include "fbpcs/emp_games/common/Csv.h"
-#include "folly/json.h"
-#include "folly/logging/xlog.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AttributionResult.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/Constants.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/ConversionMetadata.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/TouchPointMetadata.h"
+#include "fbpcs/emp_games/common/Csv.h"
+#include "folly/json.h"
+#include "folly/logging/xlog.h"
 
 namespace aggregation::private_aggregation {
 
@@ -34,7 +34,7 @@ struct PrivateAggregation {
   std::vector<std::vector<PrivateAttributionResult>> convAttributionResults;
   MeasurementTpmArrays privateTpm;
   MeasurementCvmArrays privateCvm;
-  //TODO: Add fields for additional aggregatiors to PrivateAggregation.
+  // TODO: Add fields for additional aggregatiors to PrivateAggregation.
 };
 
 struct ConvMetrics {
@@ -86,7 +86,8 @@ class Aggregator {
 
   virtual ~Aggregator() {}
 
-  virtual void aggregateAttributions(const PrivateAggregation& privateAggregation) = 0;
+  virtual void aggregateAttributions(
+      const PrivateAggregation& privateAggregation) = 0;
 
   virtual AggregationOutput reveal() const = 0;
 

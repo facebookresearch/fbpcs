@@ -11,9 +11,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <typeindex>
 #include <typeinfo>
-#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -32,7 +32,7 @@ namespace df {
  * a stream failure.
  */
 class ParseException : public std::exception {
-public:
+ public:
   /**
    * Construct a new ParseException that represents a failure to parse `s` as
    * the specified type.
@@ -40,13 +40,15 @@ public:
    * @param s the string being parsed
    * @param typeName a human-readable name for the type s was being parsed as
    */
-  explicit ParseException(const std::string &s, const std::string &typeName) {
+  explicit ParseException(const std::string& s, const std::string& typeName) {
     msg_ = "Failed to parse '" + s + "' as type '" + typeName + "'";
   }
 
-  const char *what() const noexcept override { return msg_.c_str(); }
+  const char* what() const noexcept override {
+    return msg_.c_str();
+  }
 
-private:
+ private:
   std::string msg_;
 };
 
@@ -55,7 +57,7 @@ private:
  * development of our dynamically typed DataFrame.
  */
 class BaseMap {
-public:
+ public:
   virtual ~BaseMap() {}
 };
 
@@ -77,7 +79,7 @@ class MapT : public BaseMap,
  * when calling `df.get<int>("stringCol")` since int != string.
  */
 class BadTypeException : public std::exception {
-public:
+ public:
   /**
    * Construct a BadTypeException.
    *
@@ -88,9 +90,11 @@ public:
     msg_ = "Expected type '" + expected + "', but got type '" + actual + "'";
   }
 
-  const char *what() const noexcept override { return msg_.c_str(); }
+  const char* what() const noexcept override {
+    return msg_.c_str();
+  }
 
-private:
+ private:
   std::string msg_;
 };
 
@@ -117,7 +121,7 @@ struct TypeMap {
  * feature may be added later.
  */
 class DataFrame {
-public:
+ public:
   using TypeInfo = std::pair<std::type_index, std::string>;
 
   /**
@@ -135,7 +139,7 @@ public:
    *     cannot parse to that type
    * @note for columns not in `typeMap`, `std::string` will be assumed
    */
-  static DataFrame readCsv(const TypeMap &typeMap, const std::string &filePath);
+  static DataFrame readCsv(const TypeMap& typeMap, const std::string& filePath);
 
   /**
    * Read a CSV into a new DataFrame. Takes a typeMap to parse strings to typed
@@ -154,9 +158,10 @@ public:
    *     cannot parse to that type
    * @note for columns not in `typeMap`, `std::string` will be assumed
    */
-  static DataFrame
-  loadFromRows(const TypeMap &typeMap, const std::vector<std::string> &header,
-               const std::vector<std::vector<std::string>> &rows);
+  static DataFrame loadFromRows(
+      const TypeMap& typeMap,
+      const std::vector<std::string>& header,
+      const std::vector<std::vector<std::string>>& rows);
 
   /**
    * Check that two types are equivalent. This is used to avoid a potentially
@@ -166,7 +171,7 @@ public:
    * @param actual the actual type supplied
    * @throws `BadTypeException` if `expected` is not equal to `actual`
    */
-  static void checkType(const TypeInfo &expected, const TypeInfo &actual) {
+  static void checkType(const TypeInfo& expected, const TypeInfo& actual) {
     if (expected.first != actual.first) {
       throw BadTypeException{expected.second, actual.second};
     }
@@ -179,7 +184,7 @@ public:
    */
   std::unordered_set<std::string> keys() const {
     std::unordered_set<std::string> res;
-    for (const auto &[typ, _] : types_) {
+    for (const auto& [typ, _] : types_) {
       res.insert(typ);
     }
     return res;
@@ -194,10 +199,11 @@ public:
    * @tparam T a filter for which keys to ask for
    * @returns the set of keys stored in this DataFrame that have type T
    */
-  template <typename T> std::unordered_set<std::string> keysOf() const {
+  template <typename T>
+  std::unordered_set<std::string> keysOf() const {
     std::unordered_set<std::string> res;
     auto target = std::type_index(typeid(T));
-    for (const auto &[typ, info] : types_) {
+    for (const auto& [typ, info] : types_) {
       if (info.first == target) {
         res.insert(typ);
       }
@@ -210,7 +216,7 @@ public:
    *
    * @returns true if `key` is stored in this DataFrame
    */
-  bool containsKey(const std::string &key) const {
+  bool containsKey(const std::string& key) const {
     return types_.find(key) != types_.end();
   }
 
@@ -228,7 +234,8 @@ public:
    *     stored as a type other than `T`
    * @throws `std::out_of_range` if `key` does not exist within this DataFrame
    */
-  template <typename T> const Column<T> &get(const std::string &key) const {
+  template <typename T>
+  const Column<T>& get(const std::string& key) const {
     auto idx = std::type_index(typeid(T));
     // If this column is defined, ensure the type is correct
     if (types_.find(key) != types_.end()) {
@@ -236,8 +243,8 @@ public:
       checkType(types_.at(key), std::make_pair(idx, typeName));
     }
 
-    auto &ptr = maps_.at(idx);
-    return dynamic_cast<MapT<T> &>(*ptr)[key];
+    auto& ptr = maps_.at(idx);
+    return dynamic_cast<MapT<T>&>(*ptr)[key];
   }
 
   /**
@@ -252,7 +259,8 @@ public:
    * @throws `BadTypeException` if the key is already in the DataFrame but
    *     stored as a type other than `T`
    */
-  template <typename T> Column<T> &get(const std::string &key) {
+  template <typename T>
+  Column<T>& get(const std::string& key) {
     auto idx = std::type_index(typeid(T));
     auto typeName = typeid(T).name();
 
@@ -266,8 +274,8 @@ public:
       types_.emplace(key, std::make_pair(idx, typeName));
     }
 
-    return const_cast<Column<T> &>(
-        const_cast<const DataFrame &>(*this).get<T>(key));
+    return const_cast<Column<T>&>(
+        const_cast<const DataFrame&>(*this).get<T>(key));
   }
 
   /**
@@ -280,7 +288,8 @@ public:
    *     stored as a type other than `T`
    * @throws `std::out_of_range` if `key` does not exist within this DataFrame
    */
-  template <typename T> const Column<T> &at(const std::string &key) const {
+  template <typename T>
+  const Column<T>& at(const std::string& key) const {
     auto idx = std::type_index(typeid(T));
     auto typeName = typeid(T).name();
     // Ensure the type is correct
@@ -300,9 +309,10 @@ public:
    *     stored as a type other than `T`
    * @throws `std::out_of_range` if `key` does not exist within this DataFrame
    */
-  template <typename T> Column<T> &at(const std::string &key) {
-    return const_cast<Column<T> &>(
-        const_cast<const DataFrame &>(*this).at<T>(key));
+  template <typename T>
+  Column<T>& at(const std::string& key) {
+    return const_cast<Column<T>&>(
+        const_cast<const DataFrame&>(*this).at<T>(key));
   }
 
   /**
@@ -314,19 +324,20 @@ public:
    *
    * @param key the key to remove from this DataFrame
    */
-  template <typename T> void drop(const std::string &key) {
+  template <typename T>
+  void drop(const std::string& key) {
     auto idx = std::type_index(typeid(T));
-    auto &ptr = maps_.at(idx);
+    auto& ptr = maps_.at(idx);
 
     // First erase from column map
-    dynamic_cast<MapT<T> &>(*ptr).erase(key);
+    dynamic_cast<MapT<T>&>(*ptr).erase(key);
 
     // Then erase from types_
     auto typeIt = types_.find(key);
     types_.erase(typeIt);
   }
 
-private:
+ private:
   std::unordered_map<std::string, TypeInfo> types_;
   std::unordered_map<std::type_index, std::unique_ptr<BaseMap>> maps_;
 };
@@ -340,7 +351,8 @@ namespace detail {
  * @returns `value` parsed as a `T`
  * @throws `ParseException` if the value cannot be parsed into a `T`
  */
-template <typename T> T parse(const std::string &value) {
+template <typename T>
+T parse(const std::string& value) {
   std::istringstream iss{value};
   T res;
   iss >> res;
@@ -371,7 +383,8 @@ template <typename T> T parse(const std::string &value) {
  * @throws `ParseException` if the value cannot be parsed into a `T`
  * @note requires that `value` begin with `[` and end with `]`
  */
-template <typename T> std::vector<T> parseVector(const std::string &value) {
+template <typename T>
+std::vector<T> parseVector(const std::string& value) {
   if (value.at(0) != '[' || value.at(value.size() - 1) != ']') {
     auto typeName = std::string{"std::vector<"} + typeid(T).name() + ">";
     throw ParseException{value, typeName};
@@ -381,12 +394,12 @@ template <typename T> std::vector<T> parseVector(const std::string &value) {
 
   // get substr between [ and ]
   std::stringstream ss{value.substr(1, value.size() - 2)};
-  while(ss.good()) {
+  while (ss.good()) {
     std::string part;
     std::getline(ss, part, ',');
-	if (!part.empty()){
-	  res.push_back(parse<T>(part));
-	}
+    if (!part.empty()) {
+      res.push_back(parse<T>(part));
+    }
   }
 
   return res;

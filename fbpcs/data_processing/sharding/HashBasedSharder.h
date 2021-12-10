@@ -100,7 +100,9 @@ class HashBasedSharder final : public GenericSharder {
    * @param line the line to be sharded
    * @param outFiles the list of output files to be sharded into
    */
-  void shardLine(std::string line, const std::vector<std::unique_ptr<std::ofstream>>& outFiles) final;
+  void shardLine(
+      std::string line,
+      const std::vector<std::unique_ptr<std::ofstream>>& outFiles) final;
 
  private:
   std::string hmacKey_;

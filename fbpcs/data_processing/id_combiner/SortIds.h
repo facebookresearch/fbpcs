@@ -33,7 +33,5 @@ id        val1       val2        val3
 2           z         [c]         v3
 3           q         [l]         v4
 */
-void sortIds(
-    std::istream& inFilePath,
-    std::ostream& outFilePath);
+void sortIds(std::istream& inFilePath, std::ostream& outFilePath);
 } // namespace pid::combiner

@@ -16,15 +16,17 @@
 #include <gtest/gtest.h>
 
 namespace data_processing::test_utils {
-void writeVecToFile(const std::vector<std::string> &rows,
-                    const std::string &filePath) {
+void writeVecToFile(
+    const std::vector<std::string>& rows,
+    const std::string& filePath) {
   std::ofstream oFile{filePath};
   std::ostream_iterator<std::string> outputIterator{oFile, "\n"};
   std::copy(rows.begin(), rows.end(), outputIterator);
 }
 
-void expectFileRowsEqual(const std::string &filePath,
-                         std::vector<std::string> &rows) {
+void expectFileRowsEqual(
+    const std::string& filePath,
+    std::vector<std::string>& rows) {
   std::ifstream iFile{filePath};
   std::string line;
   std::size_t idx = 0;

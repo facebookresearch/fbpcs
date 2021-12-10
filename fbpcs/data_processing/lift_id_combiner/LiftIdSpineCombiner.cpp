@@ -17,7 +17,6 @@
 #include "LiftIdSpineCombinerOptions.h"
 #include "LiftIdSpineFileCombiner.h"
 
-
 int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
