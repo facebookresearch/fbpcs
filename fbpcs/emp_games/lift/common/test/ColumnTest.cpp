@@ -251,10 +251,6 @@ TEST(FunctionalTest, MapWith) {
   c1.mapWithInPlace(c2, [](int64_t a, int64_t b) { return a + b + 1; });
   Column<int64_t> expected2{6, 8, 10};
   EXPECT_EQ(c1, expected2);
-
-  c2.mapWithScalarInPlace(100, [](int64_t a, int64_t b) { return b - a; });
-  Column<int64_t> expected3{96, 95, 94};
-  EXPECT_EQ(c2, expected3);
 }
 
 TEST(FunctionalTest, MapWithScalar) {
@@ -264,6 +260,10 @@ TEST(FunctionalTest, MapWithScalar) {
   Column<int64_t> expected{10, 20, 30};
   auto actual = c1.mapWithScalar(s, [](int64_t a, int64_t b) { return a * b; });
   EXPECT_EQ(expected, actual);
+
+  c1.mapWithScalarInPlace(100, [](int64_t a, int64_t b) { return b - a; });
+  Column<int64_t> expected2{99, 98, 97};
+  EXPECT_EQ(c1, expected2);
 }
 
 TEST(ColumnTest, Reduce) {
