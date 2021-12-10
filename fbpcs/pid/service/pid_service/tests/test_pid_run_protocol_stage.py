@@ -20,7 +20,6 @@ from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
 
 
-
 class TestPIDProtocolRunStage(unittest.TestCase):
     def setUp(self):
         self.onedocker_binary_config = OneDockerBinaryConfig(
@@ -71,7 +70,9 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
         mock_onedocker_service.start_containers = MagicMock(return_value=[container])
-        mock_onedocker_service.wait_for_pending_containers = AsyncMock(return_value=[container])
+        mock_onedocker_service.wait_for_pending_containers = AsyncMock(
+            return_value=[container]
+        )
         container.status = (
             ContainerInstanceStatus.COMPLETED
             if wait_for_containers
@@ -166,8 +167,14 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
         mock_onedocker_service.start_containers = MagicMock(return_value=[container])
-        mock_onedocker_service.wait_for_pending_containers = AsyncMock(return_value=[container])
-        container.status = ContainerInstanceStatus.COMPLETED if wait_for_containers else ContainerInstanceStatus.STARTED
+        mock_onedocker_service.wait_for_pending_containers = AsyncMock(
+            return_value=[container]
+        )
+        container.status = (
+            ContainerInstanceStatus.COMPLETED
+            if wait_for_containers
+            else ContainerInstanceStatus.STARTED
+        )
         mock_wait_for_containers_async.return_value = [container]
 
         with patch.object(
@@ -205,8 +212,12 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             # if we are waiting for containers, then the stage should finish
             # otherwise, it should start and then return
             self.assertEqual(
-                PIDStageStatus.COMPLETED if wait_for_containers else PIDStageStatus.STARTED,
-                await adv_run_stage.run(stage_input=stage_input, wait_for_containers=wait_for_containers),
+                PIDStageStatus.COMPLETED
+                if wait_for_containers
+                else PIDStageStatus.STARTED,
+                await adv_run_stage.run(
+                    stage_input=stage_input, wait_for_containers=wait_for_containers
+                ),
             )
 
             # Check create_instances_async was called with the correct parameters

@@ -7,7 +7,6 @@
 # pyre-strict
 
 
-from fbpcs.private_computation.entity.private_computation_instance import PrivateComputationInstanceStatus
 import asyncio
 import logging
 from typing import Dict, List, Optional
@@ -23,6 +22,9 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -117,7 +119,6 @@ class PostProcessingStageService(PrivateComputationStageService):
             pc_instance.status = pc_instance.current_stage.completed_status
         return pc_instance
 
-
     async def _run_post_processing_handler(
         self,
         private_computation_instance: PrivateComputationInstance,
@@ -143,7 +144,6 @@ class PostProcessingStageService(PrivateComputationStageService):
             ] = PostProcessingHandlerStatus.FAILED
             post_processing_instance.status = PostProcessingInstanceStatus.FAILED
 
-
     def get_status(
         self,
         pc_instance: PrivateComputationInstance,
@@ -168,7 +168,10 @@ class PostProcessingStageService(PrivateComputationStageService):
             stage = pc_instance.current_stage
             if post_processing_instance_status is PostProcessingInstanceStatus.STARTED:
                 status = stage.started_status
-            elif post_processing_instance_status is PostProcessingInstanceStatus.COMPLETED:
+            elif (
+                post_processing_instance_status
+                is PostProcessingInstanceStatus.COMPLETED
+            ):
                 status = stage.completed_status
             elif post_processing_instance_status is PostProcessingInstanceStatus.FAILED:
                 status = stage.failed_status

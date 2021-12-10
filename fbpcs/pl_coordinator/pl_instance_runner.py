@@ -27,9 +27,6 @@ from fbpcs.pl_coordinator.exceptions import PLInstanceCalculationException
 from fbpcs.pl_coordinator.pc_partner_instance import PrivateLiftPartnerInstance
 from fbpcs.pl_coordinator.pc_publisher_instance import PrivateLiftPublisherInstance
 from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
-from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
-    PrivateComputationBaseStageFlow,
-)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -39,6 +36,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
 )
 
 
@@ -88,7 +88,7 @@ def run_instance(
         aggregation_type,
         concurrency,
         num_files_per_mpc_container,
-        k_anonymity_threshold
+        k_anonymity_threshold,
     )
     logger.info(f"Running private lift for instance {instance_id}")
     instance_runner.run()

@@ -4,13 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import Dict
+
 from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole
 from fbpcs.pid.entity.pid_stages import PIDFlowUnsupportedError, UnionPIDStage
 from fbpcs.pid.service.pid_service.pid_flow_structs import (
     PIDExecutionFlowLookupKey,
     PIDFlow,
 )
-from typing import Dict
 
 
 UnionPIDPublisherFlow = PIDFlow(

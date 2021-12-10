@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
-    PrivateComputationInstanceStatus
+    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -45,4 +45,3 @@ class DummyStageService(PrivateComputationStageService):
         Does nothing except return pc_instance.status back to caller
         """
         return pc_instance.status
-

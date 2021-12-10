@@ -12,9 +12,6 @@ from typing import Any, Dict, List, Optional
 
 from fbpcs.pl_coordinator.constants import WAIT_VALID_STATUS_TIMEOUT
 from fbpcs.pl_coordinator.pc_calc_instance import PrivateLiftCalcInstance
-from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
-    PrivateComputationBaseStageFlow,
-)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -27,6 +24,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     cancel_current_stage,

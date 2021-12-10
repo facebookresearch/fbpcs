@@ -11,6 +11,7 @@ from string import Template
 import boto3
 from botocore.exceptions import ClientError
 from botocore.exceptions import NoCredentialsError
+
 from .policy_params import PolicyParams
 
 
@@ -118,14 +119,15 @@ class AwsDeploymentHelper:
                     f"Unexpected error occured in deletion of user {user_name}"
                 )
 
-    def create_policy(self, policy_name: str, policy_params: PolicyParams, user_name: str = None):
+    def create_policy(
+        self, policy_name: str, policy_params: PolicyParams, user_name: str = None
+    ):
 
         # directly reading the json file from iam_policies folder
         # TODO: pass the policy to be added from cli.py when we need more granular control
 
         policy_json_data = self.read_json_file(
-            file_name="iam_policies/fb_pc_iam_policy.json",
-            policy_params=policy_params
+            file_name="iam_policies/fb_pc_iam_policy.json", policy_params=policy_params
         )
 
         try:
@@ -227,7 +229,9 @@ class AwsDeploymentHelper:
             )
         return access_key_list
 
-    def read_json_file(self, file_name: str, policy_params: PolicyParams, read_mode: str = "r"):
+    def read_json_file(
+        self, file_name: str, policy_params: PolicyParams, read_mode: str = "r"
+    ):
 
         # this can be replaced with a json file which is written in deploy.sh
         interpolation_data = {

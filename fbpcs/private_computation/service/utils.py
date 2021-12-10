@@ -229,7 +229,9 @@ def get_log_urls(
             return res
         containers = last_instance.stages_containers[pid_current_stage]
         for i, container in enumerate(containers):
-            res[f"{pid_current_stage}_{i}"] = log_retriever.get_log_url(container.instance_id)
+            res[f"{pid_current_stage}_{i}"] = log_retriever.get_log_url(
+                container.instance_id
+            )
     elif isinstance(last_instance, PCSMPCInstance):
         containers = last_instance.containers
         for i, container in enumerate(containers):

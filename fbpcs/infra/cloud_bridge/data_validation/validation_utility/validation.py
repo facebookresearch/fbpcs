@@ -223,9 +223,9 @@ def generate_from_body(body: StreamingBody) -> str:
         if not valid_line_ending:
             skip_row_processing_offset = 1 if valid_header_row else 0
             line_number = (
-                validation_state.total_rows +
-                HEADER_ROW_OFFSET +
-                skip_row_processing_offset
+                validation_state.total_rows
+                + HEADER_ROW_OFFSET
+                + skip_row_processing_offset
             )
             validation_state.validation_messages.extend(
                 [

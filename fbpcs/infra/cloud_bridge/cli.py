@@ -117,7 +117,10 @@ def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
     iam_policy_command_group.add_argument(
-        "--data_ingestion_kms_key", type=str, required=False, help="Data ingestion bucket KMS key"
+        "--data_ingestion_kms_key",
+        type=str,
+        required=False,
+        help="Data ingestion bucket KMS key",
     )
 
     iam_policy_command_group.add_argument(
@@ -125,7 +128,10 @@ def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
     iam_policy_command_group.add_argument(
-        "--ecs_task_execution_role_name", type=str, required=False, help="ECS task execution role name"
+        "--ecs_task_execution_role_name",
+        type=str,
+        required=False,
+        help="ECS task execution role name",
     )
 
 

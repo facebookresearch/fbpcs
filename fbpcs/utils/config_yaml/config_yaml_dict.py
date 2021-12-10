@@ -5,7 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import Any, Dict
+
 from fbpcs.utils.config_yaml.exceptions import ConfigYamlFieldNotFoundError
+
 
 class ConfigYamlDict(Dict[str, Any]):
     """Wrapper around dict that throws a custom KeyError exception to inform the user
@@ -33,4 +35,3 @@ class ConfigYamlDict(Dict[str, Any]):
         for k, v in d.items():
             my_dict[k] = v
         return my_dict
-

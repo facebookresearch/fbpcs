@@ -18,9 +18,9 @@ from fbpcs.pid.entity.pid_instance import (
     PIDProtocol,
     PIDRole,
 )
+from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.pid_dispatcher import PIDDispatcher
-from fbpcs.pid.entity.pid_stages import UnionPIDStage
 
 
 TEST_INSTANCE_ID = "123"

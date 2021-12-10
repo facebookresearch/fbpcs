@@ -63,7 +63,9 @@ class PIDInstance(InstanceBase):
     data_path: Optional[str] = None
     spine_path: Optional[str] = None
     hmac_key: Optional[str] = None
-    stages_containers: Dict[UnionPIDStage, List[ContainerInstance]] = field(default_factory=dict)
+    stages_containers: Dict[UnionPIDStage, List[ContainerInstance]] = field(
+        default_factory=dict
+    )
     stages_status: Dict[UnionPIDStage, PIDStageStatus] = field(default_factory=dict)
     status: PIDInstanceStatus = PIDInstanceStatus.UNKNOWN
     current_stage: Optional[UnionPIDStage] = None

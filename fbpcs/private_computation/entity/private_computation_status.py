@@ -8,6 +8,7 @@
 
 from enum import Enum
 
+
 class PrivateComputationInstanceStatus(Enum):
     UNKNOWN = "UNKNOWN"
     CREATION_STARTED = "CREATION_STARTED"

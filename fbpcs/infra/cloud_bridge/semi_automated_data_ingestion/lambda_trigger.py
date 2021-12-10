@@ -18,7 +18,7 @@ client = boto3.client("glue")
 
 # Variables for the job:
 # same name as the aws_glue_job resource in glue.tf
-glueJobName = 'TO_BE_UPDATED_DURING_DEPLOYMENT'
+glueJobName = "TO_BE_UPDATED_DURING_DEPLOYMENT"
 
 # Define Lambda function
 def lambda_handler(event, context):
@@ -38,7 +38,7 @@ def lambda_handler(event, context):
         s3_bucket = s3_info["bucket"]["name"]
         s3_object_key = s3_info["object"]["key"]
         s3_read_path = s3_bucket + "/" + s3_object_key
-        s3_write_path = 'TO_BE_UPDATED_DURING_DEPLOYMENT'
+        s3_write_path = "TO_BE_UPDATED_DURING_DEPLOYMENT"
         logger.info("s3_read_path: " + s3_read_path)
         response = client.start_job_run(
             JobName=glueJobName,

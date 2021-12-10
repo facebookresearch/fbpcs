@@ -23,9 +23,6 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
-from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
-    PrivateComputationBaseStageFlow,
-)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -38,6 +35,9 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 )
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
+)
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
 )
 from fbpcs.utils.config_yaml import reflect
 

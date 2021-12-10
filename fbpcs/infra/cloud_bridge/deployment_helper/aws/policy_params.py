@@ -5,6 +5,7 @@
 
 from dataclasses import dataclass
 
+
 @dataclass
 class PolicyParams:
     firehose_stream_name: str

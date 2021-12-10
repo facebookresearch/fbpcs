@@ -79,7 +79,13 @@ class PLGraphAPIClient:
         return r
 
     def create_pa_instance(
-        self, dataset_id: str, attribution_rule: str, start_date: str, end_date: str, num_containers: str, result_type: str
+        self,
+        dataset_id: str,
+        attribution_rule: str,
+        start_date: str,
+        end_date: str,
+        num_containers: str,
+        result_type: str,
     ) -> requests.Response:
         params = self.params.copy()
         params["attribution_rule"] = attribution_rule
@@ -90,7 +96,6 @@ class PLGraphAPIClient:
         r = requests.post(f"{URL}/{dataset_id}/instance", params=params)
         self._check_err(r, "creating fb pa instance")
         return r
-
 
     def invoke_operation(self, instance_id: str, operation: str) -> None:
         params = self.params.copy()
@@ -108,7 +113,9 @@ class PLGraphAPIClient:
         self._check_err(r, "getting study data")
         return r
 
-    def get_attribution_dataset_info(self, dataset_id: str, fields: List[str]) -> requests.Response:
+    def get_attribution_dataset_info(
+        self, dataset_id: str, fields: List[str]
+    ) -> requests.Response:
         params = self.params.copy()
         params["fields"] = ",".join(fields)
         r = requests.get(f"{URL}/{dataset_id}", params=params)
