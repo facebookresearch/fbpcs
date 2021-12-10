@@ -385,7 +385,8 @@ T parse(const std::string& value) {
  */
 template <typename T>
 std::vector<T> parseVector(const std::string& value) {
-  if (value.at(0) != '[' || value.at(value.size() - 1) != ']') {
+  if (value.empty() || value.at(0) != '[' ||
+      value.at(value.size() - 1) != ']') {
     auto typeName = std::string{"std::vector<"} + typeid(T).name() + ">";
     throw ParseException{value, typeName};
   }

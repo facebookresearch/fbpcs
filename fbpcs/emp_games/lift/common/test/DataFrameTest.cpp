@@ -75,11 +75,17 @@ TEST(DataFrameDetail, ParseVector) {
   EXPECT_EQ(expected, detail::parseVector<int64_t>("[1,2,3]"));
   EXPECT_THROW(detail::parseVector<int64_t>("abc"), ParseException);
   // Missing trailing ']'
+  EXPECT_THROW(detail::parseVector<int64_t>("["), ParseException);
   EXPECT_THROW(detail::parseVector<int64_t>("[1,2,3"), ParseException);
   // Missing both brackets
   EXPECT_THROW(detail::parseVector<int64_t>("1,2,3"), ParseException);
   // Not a vector
   EXPECT_THROW(detail::parseVector<int64_t>("1"), ParseException);
+  // Empty string
+  EXPECT_THROW(detail::parseVector<int64_t>(""), ParseException);
+  // Empty vector
+  std::vector<int64_t> expected2{};
+  EXPECT_EQ(expected2, detail::parseVector<int64_t>("[]"));
 }
 
 TEST(DataFrameTest, Keys) {
