@@ -80,11 +80,10 @@ TEST(ColumnTest, FromVectorRValueReference) {
 }
 
 TEST(ColumnTest, FromInitializerList) {
-  Column<int64_t> c{2, 4, 6};
-  ASSERT_EQ(c.size(), 3);
+  Column<int64_t> c{2, 4};
+  ASSERT_EQ(c.size(), 2);
   EXPECT_EQ(c.at(0), 2);
   EXPECT_EQ(c.at(1), 4);
-  EXPECT_EQ(c.at(2), 6);
 }
 
 TEST(ColumnTest, FromColumnReference) {
