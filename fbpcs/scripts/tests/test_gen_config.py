@@ -38,11 +38,7 @@ class TestGenConfig(unittest.TestCase):
             self.assertEqual(res, "baz")
 
     def test_build_replacements_from_config(self):
-        config = {
-            "a": "123",
-            "b": ["1", "2", "3"],
-            "c": {"d": "e"}
-        }
+        config = {"a": "123", "b": ["1", "2", "3"], "c": {"d": "e"}}
         # This will look weird, but basically we expect to keep all "leaf"
         # nodes as replacement values, but also including basic lists
         expected = {

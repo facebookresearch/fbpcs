@@ -18,6 +18,7 @@ from fbpcs.utils.config_yaml.exceptions import (
 
 T = TypeVar("T")
 
+
 def get_class(class_path: str, target_class: Type[T]) -> Type[T]:
     """Convert a python module class path to a class object. Class path expected to be extracted from private computation config.yml file.
 
@@ -45,6 +46,7 @@ def get_class(class_path: str, target_class: Type[T]) -> Type[T]:
             class_path, target_class.__name__
         ) from None
     return cls
+
 
 def get_instance(config: Dict[str, Any], target_class: Type[T]) -> T:
     """Constructs an instance of type target_class from config.yml dict structure.

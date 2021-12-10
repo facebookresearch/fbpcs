@@ -11,15 +11,15 @@ from enum import Enum
 
 class OneDockerBinaryNames(Enum):
     ATTRIBUTION_ID_SPINE_COMBINER = "data_processing/attribution_id_combiner"
-    LIFT_ID_SPINE_COMBINER        = "data_processing/lift_id_combiner"
-    SHARDER                       = "data_processing/sharder"
-    SHARDER_HASHED_FOR_PID        = "data_processing/sharder_hashed_for_pid"
-    UNION_PID_PREPARER            = "data_processing/pid_preparer"
+    LIFT_ID_SPINE_COMBINER = "data_processing/lift_id_combiner"
+    SHARDER = "data_processing/sharder"
+    SHARDER_HASHED_FOR_PID = "data_processing/sharder_hashed_for_pid"
+    UNION_PID_PREPARER = "data_processing/pid_preparer"
 
     DECOUPLED_ATTRIBUTION = "private_attribution/decoupled_attribution"
     DECOUPLED_AGGREGATION = "private_attribution/decoupled_aggregation"
     ATTRIBUTION_COMPUTE = "private_attribution/compute"
-    SHARD_AGGREGATOR    = "private_attribution/shard-aggregator"
+    SHARD_AGGREGATOR = "private_attribution/shard-aggregator"
 
     PID_CLIENT = "pid/private-id-client"
     PID_SERVER = "pid/private-id-server"

@@ -18,6 +18,7 @@ class LogRetriever:
     Private attributes:
         _cloud_provider: Cloud Provider for which this log retriever was initialized
     """
+
     def __init__(self, cloud_provider: CloudProvider) -> None:
         self._cloud_provider = cloud_provider
 

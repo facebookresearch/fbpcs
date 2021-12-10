@@ -46,7 +46,9 @@ class TestPIDShardStage(unittest.TestCase):
     @data_provider(
         lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
     )
-    @patch("fbpcs.data_processing.service.sharding_service.ShardingService.wait_for_containers_async")
+    @patch(
+        "fbpcs.data_processing.service.sharding_service.ShardingService.wait_for_containers_async"
+    )
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")

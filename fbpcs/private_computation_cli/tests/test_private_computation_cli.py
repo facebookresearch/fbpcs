@@ -71,7 +71,6 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         validate_mock.assert_called_once()
 
-
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_next")
     def test_run_next(self, run_next_mock):
         argv = [
@@ -241,9 +240,12 @@ class TestPrivateComputationCli(TestCase):
         ]
         pc_cli.main(argv)
         print_instance_mock.assert_called_once()
-    @patch("fbpcs.private_computation_cli.private_computation_cli.get_attribution_dataset_info")
+
+    @patch(
+        "fbpcs.private_computation_cli.private_computation_cli.get_attribution_dataset_info"
+    )
     def test_get_attribution_dataset_info(self, get_attribution_dataset_info_mock):
-        argv=[
+        argv = [
             "get_attribution_dataset_info",
             "--dataset_id=dataset123",
             f"--config={self.temp_filename}",

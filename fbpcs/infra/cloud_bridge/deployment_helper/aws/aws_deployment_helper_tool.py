@@ -44,8 +44,7 @@ class AwsDeploymentHelperTool:
                 ecs_task_execution_role_name=self.cli_args.ecs_task_execution_role_name,
             )
             self.aws_deployment_helper_obj.create_policy(
-                policy_name=self.cli_args.policy_name,
-                policy_params=policy_params
+                policy_name=self.cli_args.policy_name, policy_params=policy_params
             )
 
     def destroy(self):

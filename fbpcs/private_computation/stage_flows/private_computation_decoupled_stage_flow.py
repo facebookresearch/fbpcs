@@ -4,10 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
-    PrivateComputationBaseStageFlow,
-    PrivateComputationStageFlowData,
-)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -34,6 +30,10 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
 )
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+    PrivateComputationStageFlowData,
+)
 
 
 class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
@@ -51,9 +51,7 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = (
-        "CREATED ID_MATCH PREPARE DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
-    )
+    _order_ = "CREATED ID_MATCH PREPARE DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 

@@ -23,8 +23,8 @@ class DummyStageFlowStatus(Enum):
     STAGE_3_FAILED = auto()
 
 
-
 DummyStageFlowData = StageFlowData[DummyStageFlowStatus]
+
 
 class DummyStageFlow(StageFlow):
     STAGE_1 = DummyStageFlowData(
@@ -42,4 +42,3 @@ class DummyStageFlow(StageFlow):
         DummyStageFlowStatus.STAGE_3_COMPLETED,
         DummyStageFlowStatus.STAGE_3_FAILED,
     )
-

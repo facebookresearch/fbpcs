@@ -64,7 +64,9 @@ class StageFlowMeta(EnumMeta):
         try:
             return super().__getitem__(item.upper())
         except KeyError:
-            raise StageFlowStageNotFoundError(f"{item} is not a stage in {self.__name__}. Valid stages: {self!r}") from None
+            raise StageFlowStageNotFoundError(
+                f"{item} is not a stage in {self.__name__}. Valid stages: {self!r}"
+            ) from None
 
 
 class StageFlow(Enum, metaclass=StageFlowMeta):

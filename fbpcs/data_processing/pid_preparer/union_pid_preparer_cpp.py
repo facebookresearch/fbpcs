@@ -173,7 +173,9 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
             # Busy wait until the container is finished
             if wait_for_container:
                 container = (
-                    await RunBinaryBaseService.wait_for_containers_async(onedocker_svc, [container])
+                    await RunBinaryBaseService.wait_for_containers_async(
+                        onedocker_svc, [container]
+                    )
                 )[0]
                 status = container.status
             else:
