@@ -72,12 +72,12 @@ struct PrivateTouchpoint {
         campaignMetadata{_campaignMetadata} {}
 
   explicit PrivateTouchpoint()
-      : isValid{false, emp::PUBLIC},
-        isClick{false, emp::PUBLIC},
-        adId{INT_SIZE, -1, emp::PUBLIC},
-        ts{-1},
-        id{INT_SIZE, INVALID_TP_ID, emp::PUBLIC},
-        campaignMetadata{INT_SIZE, -1, emp::PUBLIC} {}
+      : isValid{false, emp::ALICE},
+        isClick{false, emp::ALICE},
+        adId{INT_SIZE, -1, emp::ALICE},
+        ts{-1, emp::ALICE},
+        id{INT_SIZE, INVALID_TP_ID, emp::ALICE},
+        campaignMetadata{INT_SIZE, -1, emp::ALICE} {}
 
   PrivateTouchpoint select(const emp::Bit& useRhs, const PrivateTouchpoint& rhs)
       const {
