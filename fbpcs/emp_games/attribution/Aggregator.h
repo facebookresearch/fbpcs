@@ -12,10 +12,10 @@
 #include <folly/dynamic.h>
 #include <cstdlib>
 
+#include <fbpcf/mpc/EmpGame.h>
 #include "AttributionRule.h"
 #include "Conversion.h"
 #include "Touchpoint.h"
-#include <fbpcf/mpc/EmpGame.h>
 
 namespace measurement::private_attribution {
 
@@ -96,17 +96,14 @@ struct PrivateAemConvMetric {
   }
 };
 
-
 struct PcmMetrics {
   int64_t campaign_bits;
   int64_t conversion_bits;
   int64_t count;
 
   folly::dynamic toDynamic() const {
-    return folly::dynamic::object(
-        "campaign_bits", campaign_bits)(
-        "conversion_bits", conversion_bits)(
-        "count", count);
+    return folly::dynamic::object("campaign_bits", campaign_bits)(
+        "conversion_bits", conversion_bits)("count", count);
   }
 
   static PcmMetrics fromDynamic(const folly::dynamic& obj) {
@@ -134,14 +131,14 @@ struct PrivatePcmMetrics {
 
   static PrivatePcmMetrics fromDynamic(const folly::dynamic& obj, int party) {
     PrivatePcmMetrics out;
-    out.campaign_bits = emp::Integer(INT_SIZE, obj["campaign_bits"].asInt(), party);
-    out.conversion_bits = emp::Integer(INT_SIZE, obj["conversion_bits"].asInt(), party);
+    out.campaign_bits =
+        emp::Integer(INT_SIZE, obj["campaign_bits"].asInt(), party);
+    out.conversion_bits =
+        emp::Integer(INT_SIZE, obj["conversion_bits"].asInt(), party);
     out.count = emp::Integer(INT_SIZE, obj["count"].asInt(), party);
     return out;
   }
-
 };
-
 
 struct ConvMetrics {
   int64_t convs;

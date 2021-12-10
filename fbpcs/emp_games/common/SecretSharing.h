@@ -234,7 +234,6 @@ const std::vector<std::vector<O>> privatelyShareArraysFromBobNoPadding(
       in, numVals, maxArraySize);
 }
 
-
 /*
  * Share an array of pre-padded int arrays from BOB to ALICE
  *

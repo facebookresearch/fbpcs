@@ -17,8 +17,8 @@
 namespace private_lift {
 bool GroupedLiftMetrics::operator==(
     const GroupedLiftMetrics& other) const noexcept {
-  return metrics == other.metrics && cohortMetrics == other.cohortMetrics
-      && publisherBreakdowns == other.publisherBreakdowns;
+  return metrics == other.metrics && cohortMetrics == other.cohortMetrics &&
+      publisherBreakdowns == other.publisherBreakdowns;
 }
 
 GroupedLiftMetrics GroupedLiftMetrics::operator+(
@@ -80,6 +80,8 @@ GroupedLiftMetrics GroupedLiftMetrics::fromJson(const std::string& str) {
       [](auto m) { return LiftMetrics::fromDynamic(m); });
 
   return GroupedLiftMetrics{
-      LiftMetrics::fromDynamic(obj["metrics"]), cohortContainer, breakdownContainer};
+      LiftMetrics::fromDynamic(obj["metrics"]),
+      cohortContainer,
+      breakdownContainer};
 }
 } // namespace private_lift

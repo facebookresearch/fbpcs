@@ -10,7 +10,7 @@
 namespace private_measurement::test_util {
 
 std::string getBaseDirFromPath(const std::string& filePath) {
-    return filePath.substr(0, filePath.rfind("/") + 1);
+  return filePath.substr(0, filePath.rfind("/") + 1);
 }
 
-} // private_measurement::test_util
+} // namespace private_measurement::test_util

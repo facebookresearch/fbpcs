@@ -45,8 +45,8 @@ class CalculatorApp : public fbpcf::EmpApp<
         inputPath_(inputPath),
         outputPath_(outputPath),
         visibility_(
-            useXorEncryption ? fbpcf::Visibility::Xor : fbpcf::Visibility::Public) {
-  }
+            useXorEncryption ? fbpcf::Visibility::Xor
+                             : fbpcf::Visibility::Public) {}
 
   void run() override;
 

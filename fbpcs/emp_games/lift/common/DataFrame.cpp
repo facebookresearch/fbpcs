@@ -14,30 +14,37 @@
 #include "fbpcs/emp_games/lift/common/CsvReader.h"
 
 namespace df {
-DataFrame DataFrame::readCsv(const TypeMap &typeMap,
-                             const std::string &filePath) {
+DataFrame DataFrame::readCsv(
+    const TypeMap& typeMap,
+    const std::string& filePath) {
   CsvReader rdr{filePath};
   return loadFromRows(typeMap, rdr.getHeader(), rdr.getRows());
 }
 
-DataFrame
-DataFrame::loadFromRows(const TypeMap &typeMap,
-                        const std::vector<std::string> &header,
-                        const std::vector<std::vector<std::string>> &rows) {
+DataFrame DataFrame::loadFromRows(
+    const TypeMap& typeMap,
+    const std::vector<std::string>& header,
+    const std::vector<std::vector<std::string>>& rows) {
   DataFrame df;
 
-  for (const auto &row : rows) {
+  for (const auto& row : rows) {
     for (std::size_t i = 0; i < row.size(); ++i) {
       auto colName = header.at(i);
-      if (std::find(typeMap.boolColumns.begin(), typeMap.boolColumns.end(),
-                    colName) != typeMap.boolColumns.end()) {
+      if (std::find(
+              typeMap.boolColumns.begin(),
+              typeMap.boolColumns.end(),
+              colName) != typeMap.boolColumns.end()) {
         df.get<bool>(colName).push_back(detail::parse<bool>(row.at(i)));
-      } else if (std::find(typeMap.intColumns.begin(), typeMap.intColumns.end(),
-                           colName) != typeMap.intColumns.end()) {
+      } else if (
+          std::find(
+              typeMap.intColumns.begin(), typeMap.intColumns.end(), colName) !=
+          typeMap.intColumns.end()) {
         df.get<int64_t>(colName).push_back(detail::parse<int64_t>(row.at(i)));
-      } else if (std::find(typeMap.intVecColumns.begin(),
-                           typeMap.intVecColumns.end(),
-                           colName) != typeMap.intVecColumns.end()) {
+      } else if (
+          std::find(
+              typeMap.intVecColumns.begin(),
+              typeMap.intVecColumns.end(),
+              colName) != typeMap.intVecColumns.end()) {
         df.get<std::vector<int64_t>>(colName).push_back(
             detail::parseVector<int64_t>(row.at(i)));
       } else {

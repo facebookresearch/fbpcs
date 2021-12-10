@@ -15,14 +15,13 @@
 #include <gtest/gtest.h>
 #include <utility>
 
-#include "folly/logging/xlog.h"
+#include <fbpcf/mpc/EmpGame.h>
+#include "folly/Format.h"
+#include "folly/Random.h"
 #include "folly/dynamic.h"
 #include "folly/json.h"
 #include "folly/logging/xlog.h"
-#include "folly/Format.h"
-#include "folly/Random.h"
 #include "folly/test/JsonTestUtil.h"
-#include <fbpcf/mpc/EmpGame.h>
 
 #include "../AttributionApp.h"
 #include "../AttributionMetrics.h"
@@ -146,7 +145,8 @@ inline void verifyOutput(
       folly::toJson(resBob.toDynamic()), folly::toJson(expectedOutput));
 }
 
-inline std::pair<AttributionOutputMetrics, AttributionOutputMetrics> revealXORedResult(
+inline std::pair<AttributionOutputMetrics, AttributionOutputMetrics>
+revealXORedResult(
     AttributionOutputMetrics resAlice,
     AttributionOutputMetrics resBob,
     std::string aggregator,
@@ -184,59 +184,60 @@ inline std::pair<AttributionOutputMetrics, AttributionOutputMetrics> revealXORed
           aliceConvMetrics.sales ^ bobConvMetrics.sales};
 
       revealedAggregation[adId] = convMetrics.toDynamic();
-    }
-    else if (aggregator == "attribution") {
-        folly::dynamic metricsList = folly::dynamic::object;
+    } else if (aggregator == "attribution") {
+      folly::dynamic metricsList = folly::dynamic::object;
 
-        // soring impIds in Alice
-        std::vector<int64_t> aliceSortedImpIds;
-        for (const auto& id : aliceAggregation.at(adId).keys()) {
-            aliceSortedImpIds.push_back(id.asInt());
-        }
-        std::sort(aliceSortedImpIds.begin(), aliceSortedImpIds.end());
-        // populating alinePairs based on sorted impId
-        std::vector<std::pair<int64_t, AemConvMetric>> alicePairs;
-        for (const auto& impId : aliceSortedImpIds) {
-            AemConvMetric aliceMetrics = AemConvMetric::fromDynamic(aliceAggregation.at(adId)[std::to_string(impId)]);
-            alicePairs.push_back(std::make_pair(impId, aliceMetrics));
-        }
+      // soring impIds in Alice
+      std::vector<int64_t> aliceSortedImpIds;
+      for (const auto& id : aliceAggregation.at(adId).keys()) {
+        aliceSortedImpIds.push_back(id.asInt());
+      }
+      std::sort(aliceSortedImpIds.begin(), aliceSortedImpIds.end());
+      // populating alinePairs based on sorted impId
+      std::vector<std::pair<int64_t, AemConvMetric>> alicePairs;
+      for (const auto& impId : aliceSortedImpIds) {
+        AemConvMetric aliceMetrics = AemConvMetric::fromDynamic(
+            aliceAggregation.at(adId)[std::to_string(impId)]);
+        alicePairs.push_back(std::make_pair(impId, aliceMetrics));
+      }
 
-        // soring impIds in Bob
-        std::vector<int64_t> bobSortedImpIds;
-        for (const auto& id : bobAggregation.at(adId).keys()) {
-            bobSortedImpIds.push_back(id.asInt());
-        }
-        std::sort(bobSortedImpIds.begin(), bobSortedImpIds.end());
-        // populating bobPairs based on sorted impId
-        std::vector<std::pair<int64_t, AemConvMetric>> bobPairs;
-        for (const auto& impId : bobSortedImpIds) {
-            AemConvMetric bobMetrics = AemConvMetric::fromDynamic(bobAggregation.at(adId)[std::to_string(impId)]);
-            bobPairs.push_back(std::make_pair(impId, bobMetrics));
-        }
+      // soring impIds in Bob
+      std::vector<int64_t> bobSortedImpIds;
+      for (const auto& id : bobAggregation.at(adId).keys()) {
+        bobSortedImpIds.push_back(id.asInt());
+      }
+      std::sort(bobSortedImpIds.begin(), bobSortedImpIds.end());
+      // populating bobPairs based on sorted impId
+      std::vector<std::pair<int64_t, AemConvMetric>> bobPairs;
+      for (const auto& impId : bobSortedImpIds) {
+        AemConvMetric bobMetrics = AemConvMetric::fromDynamic(
+            bobAggregation.at(adId)[std::to_string(impId)]);
+        bobPairs.push_back(std::make_pair(impId, bobMetrics));
+      }
 
-        CHECK_EQ(alicePairs.size(), bobPairs.size())
-            << "Publisher and partner's vectors are not the same length.";
+      CHECK_EQ(alicePairs.size(), bobPairs.size())
+          << "Publisher and partner's vectors are not the same length.";
 
-        for (auto i=0; i<alicePairs.size(); i++) {
-            AemConvMetric metric = AemConvMetric{};
+      for (auto i = 0; i < alicePairs.size(); i++) {
+        AemConvMetric metric = AemConvMetric{};
 
-            auto impId = alicePairs[i].first ^ bobPairs[i].first;
-            metric.campaign_bits = alicePairs[i].second.campaign_bits ^ bobPairs[i].second.campaign_bits;
-            for (auto j=0; j<alicePairs[i].second.conversion_bits.size(); j++) {
-                metric.conversion_bits.push_back(
-                    alicePairs[i].second.conversion_bits[j] ^ bobPairs[i].second.conversion_bits[j]
-                );
-            }
-            for (auto j=0; j<alicePairs[i].second.is_attributed.size(); j++) {
-                metric.is_attributed.push_back(
-                    alicePairs[i].second.is_attributed[j] ^ bobPairs[i].second.is_attributed[j]
-                );
-            }
-            metricsList[std::to_string(impId)] = metric.toDynamic();
+        auto impId = alicePairs[i].first ^ bobPairs[i].first;
+        metric.campaign_bits = alicePairs[i].second.campaign_bits ^
+            bobPairs[i].second.campaign_bits;
+        for (auto j = 0; j < alicePairs[i].second.conversion_bits.size(); j++) {
+          metric.conversion_bits.push_back(
+              alicePairs[i].second.conversion_bits[j] ^
+              bobPairs[i].second.conversion_bits[j]);
         }
-        revealedAggregation[adId] = metricsList;
-    }
-    else {
+        for (auto j = 0; j < alicePairs[i].second.is_attributed.size(); j++) {
+          metric.is_attributed.push_back(
+              alicePairs[i].second.is_attributed[j] ^
+              bobPairs[i].second.is_attributed[j]);
+        }
+        metricsList[std::to_string(impId)] = metric.toDynamic();
+      }
+      revealedAggregation[adId] = metricsList;
+    } else {
       throw std::runtime_error(folly::sformat(
           "Unsupported aggregationName: [{}] passed to Shard Aggregator",
           aggregator));

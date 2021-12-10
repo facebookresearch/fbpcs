@@ -161,7 +161,8 @@ OutputMetricsData LiftCalculator::compute(
     // will see. If we ever have a weird input where the rows have different
     // lengths, doing this sort of "new max" will ensure this still works.
     // Also remember to go one *past* the size to leave a bucket for 0 convs
-    for (size_t i = out.testConvHistogram.size(); i <= eventTimestamps.size(); ++i) {
+    for (size_t i = out.testConvHistogram.size(); i <= eventTimestamps.size();
+         ++i) {
       out.testConvHistogram.push_back(0);
       out.controlConvHistogram.push_back(0);
     }
@@ -183,7 +184,6 @@ OutputMetricsData LiftCalculator::compute(
       bool converted = false;
       bool countedMatchAlready = false;
       if (testFlag) {
-
         for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
               !countedMatchAlready) {

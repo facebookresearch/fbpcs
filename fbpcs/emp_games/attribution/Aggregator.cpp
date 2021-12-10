@@ -17,7 +17,8 @@ namespace measurement::private_attribution {
 using PrivateConvMap = std::vector<std::pair<emp::Integer, PrivateConvMetrics>>;
 using PrivateAemConvMap =
     std::vector<std::pair<emp::Integer, PrivateAemConvMetric>>;
-using PrivatePcmConvMap = std::vector<std::pair<emp::Integer, std::vector<PrivatePcmMetrics>>>;
+using PrivatePcmConvMap =
+    std::vector<std::pair<emp::Integer, std::vector<PrivatePcmMetrics>>>;
 
 namespace {
 
@@ -279,10 +280,13 @@ class AttributionAggregator : public Aggregator {
       const auto adIdMatches =
           attribution.hasAttributedTouchpoint & impId.equal(attribution.tp.id);
 
-      const auto conversion_bits = emp::If(adIdMatches, attribution.conv.conv_metadata, dummy);
+      const auto conversion_bits =
+          emp::If(adIdMatches, attribution.conv.conv_metadata, dummy);
       const auto is_attributed = emp::If(adIdMatches, true_bit, false_bit);
 
-      metrics.campaign_bits = emp::If(adIdMatches, attribution.tp.campaignMetadata, metrics.campaign_bits);;
+      metrics.campaign_bits = emp::If(
+          adIdMatches, attribution.tp.campaignMetadata, metrics.campaign_bits);
+      ;
       metrics.conversion_bits.push_back(conversion_bits);
       metrics.is_attributed.push_back(is_attributed);
     }
@@ -322,7 +326,8 @@ class AttributionAggregator : public Aggregator {
 };
 
 struct PcmAggregation {
-  std::unordered_map<std::pair<int64_t, int64_t>, int64_t> campaignToConversionBitsCount;
+  std::unordered_map<std::pair<int64_t, int64_t>, int64_t>
+      campaignToConversionBitsCount;
 
   folly::dynamic toDynamic() const {
     folly::dynamic resDict = folly::dynamic::object();
@@ -330,12 +335,11 @@ struct PcmAggregation {
     for (const auto& [k, v] : campaignToConversionBitsCount) {
       folly::dynamic res = folly::dynamic::object();
 
-      res = folly::dynamic::object(
-        "campaign_bits", k.first)(
-        "conversion_bits", k.second)(
-        "count", v);
+      res = folly::dynamic::object("campaign_bits", k.first)(
+          "conversion_bits", k.second)("count", v);
 
-      resDict.insert(std::to_string(k.first)+":"+std::to_string(k.second) , res);
+      resDict.insert(
+          std::to_string(k.first) + ":" + std::to_string(k.second), res);
     }
     return resDict;
   }
@@ -376,13 +380,16 @@ class PcmAggregator : public Aggregator {
 
     CHECK_NOTNULL(map);
     for (auto& [impId, metricsList] : *map) {
-
       const auto isAttributed =
           attribution.hasAttributedTouchpoint & impId.equal(attribution.tp.id);
 
       PrivatePcmMetrics metrics;
-      metrics.campaign_bits = emp::If(isAttributed, attribution.tp.campaignMetadata, metrics.campaign_bits);
-      metrics.conversion_bits = emp::If(isAttributed, attribution.conv.conv_metadata, metrics.conversion_bits);
+      metrics.campaign_bits = emp::If(
+          isAttributed, attribution.tp.campaignMetadata, metrics.campaign_bits);
+      metrics.conversion_bits = emp::If(
+          isAttributed,
+          attribution.conv.conv_metadata,
+          metrics.conversion_bits);
       metricsList.push_back(metrics);
     }
   }
@@ -400,12 +407,15 @@ class PcmAggregator : public Aggregator {
       for (const auto& [privateImpId, metricsList] : impIdToMetrics) {
         for (const auto& metrics : metricsList) {
           IF_OMNISCIENT_MODE {
-            const auto campaign_bits = metrics.campaign_bits.reveal<int64_t>(emp::PUBLIC);
-            const auto conversion_bits = metrics.conversion_bits.reveal<int64_t>(emp::PUBLIC);
+            const auto campaign_bits =
+                metrics.campaign_bits.reveal<int64_t>(emp::PUBLIC);
+            const auto conversion_bits =
+                metrics.conversion_bits.reveal<int64_t>(emp::PUBLIC);
 
-            if ((campaign_bits != 0) && (conversion_bits != 0)){
+            if ((campaign_bits != 0) && (conversion_bits != 0)) {
               const auto key = std::pair(campaign_bits, conversion_bits);
-              if (out.campaignToConversionBitsCount.find(key) != out.campaignToConversionBitsCount.end()){
+              if (out.campaignToConversionBitsCount.find(key) !=
+                  out.campaignToConversionBitsCount.end()) {
                 out.campaignToConversionBitsCount[key] += 1;
               } else {
                 out.campaignToConversionBitsCount[key] = 1;
@@ -414,13 +424,16 @@ class PcmAggregator : public Aggregator {
           }
           else {
             // Revealing plaintext to publisher side only
-            const auto campaign_bits = metrics.campaign_bits.reveal<int64_t>(emp::ALICE);
-            const auto conversion_bits = metrics.conversion_bits.reveal<int64_t>(emp::ALICE);
+            const auto campaign_bits =
+                metrics.campaign_bits.reveal<int64_t>(emp::ALICE);
+            const auto conversion_bits =
+                metrics.conversion_bits.reveal<int64_t>(emp::ALICE);
 
             // skipping over the non-attributed metrics
-            if ((campaign_bits != 0) && (conversion_bits != 0)){
+            if ((campaign_bits != 0) && (conversion_bits != 0)) {
               const auto key = std::pair(campaign_bits, conversion_bits);
-              if (out.campaignToConversionBitsCount.find(key) != out.campaignToConversionBitsCount.end()){
+              if (out.campaignToConversionBitsCount.find(key) !=
+                  out.campaignToConversionBitsCount.end()) {
                 out.campaignToConversionBitsCount[key] += 1;
               } else {
                 out.campaignToConversionBitsCount[key] = 1;

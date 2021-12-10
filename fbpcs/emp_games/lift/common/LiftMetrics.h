@@ -36,45 +36,54 @@ struct LiftMetrics {
 
   LiftMetrics() {}
 
-  LiftMetrics(int64_t testConversions_, int64_t controlConversions_,
-              int64_t testConverters_, int64_t controlConverters_,
-              int64_t testValue_, int64_t controlValue_,
-              int64_t testValueSquared_, int64_t controlValueSquared_,
-              int64_t testNumConvSquared_, int64_t controlNumConvSquared_,
-              int64_t testMatchCount_, int64_t controlMatchCount_,
-              int64_t reachedConversions_, int64_t reachedValue_,
-              std::vector<int64_t> testConvHistogram_,
-              std::vector<int64_t> controlConvHistogram_)
+  LiftMetrics(
+      int64_t testConversions_,
+      int64_t controlConversions_,
+      int64_t testConverters_,
+      int64_t controlConverters_,
+      int64_t testValue_,
+      int64_t controlValue_,
+      int64_t testValueSquared_,
+      int64_t controlValueSquared_,
+      int64_t testNumConvSquared_,
+      int64_t controlNumConvSquared_,
+      int64_t testMatchCount_,
+      int64_t controlMatchCount_,
+      int64_t reachedConversions_,
+      int64_t reachedValue_,
+      std::vector<int64_t> testConvHistogram_,
+      std::vector<int64_t> controlConvHistogram_)
       : testConversions{testConversions_},
-  controlConversions{controlConversions_},
-  testConverters{testConverters_},
-  controlConverters{controlConverters_},
-  testValue{testValue_},
-  controlValue{controlValue_},
-  testValueSquared{testValueSquared_},
-  controlValueSquared{controlValueSquared_},
-  testNumConvSquared{testNumConvSquared_},
-  controlNumConvSquared{controlNumConvSquared_},
-  testMatchCount{testMatchCount_},
-  controlMatchCount{controlMatchCount_},
-  reachedConversions{reachedConversions_},
-  reachedValue{reachedValue_},
-  testConvHistogram{std::move(testConvHistogram_)},
-  controlConvHistogram{std::move(controlConvHistogram_)} {}
+        controlConversions{controlConversions_},
+        testConverters{testConverters_},
+        controlConverters{controlConverters_},
+        testValue{testValue_},
+        controlValue{controlValue_},
+        testValueSquared{testValueSquared_},
+        controlValueSquared{controlValueSquared_},
+        testNumConvSquared{testNumConvSquared_},
+        controlNumConvSquared{controlNumConvSquared_},
+        testMatchCount{testMatchCount_},
+        controlMatchCount{controlMatchCount_},
+        reachedConversions{reachedConversions_},
+        reachedValue{reachedValue_},
+        testConvHistogram{std::move(testConvHistogram_)},
+        controlConvHistogram{std::move(controlConvHistogram_)} {}
 
-  bool operator==(const LiftMetrics &other) const noexcept;
-  LiftMetrics operator+(const LiftMetrics &other) const noexcept;
-  LiftMetrics operator^(const LiftMetrics &other) const noexcept;
+  bool operator==(const LiftMetrics& other) const noexcept;
+  LiftMetrics operator+(const LiftMetrics& other) const noexcept;
+  LiftMetrics operator^(const LiftMetrics& other) const noexcept;
   // required for gtest to output failing tests in a human-readable format
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const LiftMetrics &obj) noexcept;
+  friend std::ostream& operator<<(
+      std::ostream& os,
+      const LiftMetrics& obj) noexcept;
 
   std::string toJson() const;
-  static LiftMetrics fromJson(const std::string &str);
+  static LiftMetrics fromJson(const std::string& str);
 
-private:
+ private:
   folly::dynamic toDynamic() const;
-  static LiftMetrics fromDynamic(const folly::dynamic &obj);
+  static LiftMetrics fromDynamic(const folly::dynamic& obj);
 
   friend struct GroupedLiftMetrics;
 };

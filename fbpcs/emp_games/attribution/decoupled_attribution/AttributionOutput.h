@@ -12,10 +12,10 @@
 #include <folly/dynamic.h>
 #include <cstdlib>
 
+#include <fbpcf/mpc/EmpGame.h>
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionRule.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Conversion.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Touchpoint.h"
-#include <fbpcf/mpc/EmpGame.h>
 
 namespace aggregation::private_attribution {
 
@@ -40,8 +40,7 @@ struct OutputMetricDefault {
   bool is_attributed;
 
   folly::dynamic toDynamic() const {
-    return folly::dynamic::object(
-        "is_attributed", is_attributed);
+    return folly::dynamic::object("is_attributed", is_attributed);
   }
 
   static OutputMetricDefault fromDynamic(const folly::dynamic& obj) {
@@ -51,7 +50,6 @@ struct OutputMetricDefault {
   }
 };
 
-
 struct PrivateOutputMetricDefault {
   emp::Bit is_attributed{false, emp::PUBLIC};
 
@@ -59,11 +57,9 @@ struct PrivateOutputMetricDefault {
     int party =
         outputVisibility == fbpcf::Visibility::Xor ? emp::XOR : emp::PUBLIC;
 
-    return OutputMetricDefault{
-          is_attributed.reveal<bool>(party)};
+    return OutputMetricDefault{is_attributed.reveal<bool>(party)};
   }
 };
-
 
 using AttributionResult = folly::dynamic;
 
@@ -97,10 +93,12 @@ struct AttributionFormat {
   // Human readable name for the this attribution format. The publisher will
   // pass in a list of names, and the output json will be keyed by this name
   std::string name;
-  // Should return a new attribution for this attribution format. The attribution
-  // should use the given attribution rule and attribution context.
-  std::function<std::unique_ptr<
-      AttributionOutput>(AttributionRule, AttributionContext, fbpcf::Visibility)>
+  // Should return a new attribution for this attribution format. The
+  // attribution should use the given attribution rule and attribution context.
+  std::function<std::unique_ptr<AttributionOutput>(
+      AttributionRule,
+      AttributionContext,
+      fbpcf::Visibility)>
       newAttributor;
 };
 

@@ -24,12 +24,15 @@ namespace data_processing::sharder {
 class GenericSharderTest final : public GenericSharder {
  public:
   using GenericSharder::GenericSharder;
-  std::size_t getShardFor(const std::string &/* unused */, std::size_t /* unused */) final {
+  std::size_t getShardFor(
+      const std::string& /* unused */,
+      std::size_t /* unused */) final {
     return shardFor_;
   }
 
-  void shardLine(std::string line,
-            const std::vector<std::unique_ptr<std::ofstream>> &/* unused */) final {
+  void shardLine(
+      std::string line,
+      const std::vector<std::unique_ptr<std::ofstream>>& /* unused */) final {
     linesCalledWith_.push_back(line);
   }
 
@@ -111,7 +114,8 @@ TEST(GenericSharderTest, TestShardLine) {
   // This test is just ensuring that internally, shardLine is being called for
   // each line of input except the header.
   auto randStart = folly::Random::secureRand64();
-  std::string inputPath = "/tmp/GenericSharderTestShardLineInput" + std::to_string(randStart);
+  std::string inputPath =
+      "/tmp/GenericSharderTestShardLineInput" + std::to_string(randStart);
   std::vector<std::string> outputPaths{
       "/tmp/GenericSharderTestShardLineOutput" + std::to_string(randStart),
       "/tmp/GenericSharderTestShardLineOutput" + std::to_string(randStart + 1),
@@ -119,13 +123,20 @@ TEST(GenericSharderTest, TestShardLine) {
   int32_t logEveryN = 123;
   GenericSharderTest actual{inputPath, outputPaths, logEveryN};
   std::vector<std::string> rows{
-      "id_,a,b,c", "abcd,1,2,3", "abcd,4,5,6", "defg,7,8,9", "hijk,0,0,0",
+      "id_,a,b,c",
+      "abcd,1,2,3",
+      "abcd,4,5,6",
+      "defg,7,8,9",
+      "hijk,0,0,0",
   };
   data_processing::test_utils::writeVecToFile(rows, inputPath);
   actual.shard();
   // Should have been called on everything except the header
   std::vector<std::string> expected{
-      "abcd,1,2,3", "abcd,4,5,6", "defg,7,8,9", "hijk,0,0,0",
+      "abcd,1,2,3",
+      "abcd,4,5,6",
+      "defg,7,8,9",
+      "hijk,0,0,0",
   };
   EXPECT_EQ(actual.linesCalledWith_, expected);
 }

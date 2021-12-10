@@ -46,8 +46,7 @@ class SortIntegralValuesTest : public testing::Test {
       const std::vector<std::string>& listColumns,
       std::vector<std::string>& expectedOutput) {
     vectorStringToStream(dataContent, inputStream_);
-    sortIntegralValues(
-        inputStream_, outputStream_, sortBy, listColumns);
+    sortIntegralValues(inputStream_, outputStream_, sortBy, listColumns);
     validateOutputFile(expectedOutput);
   }
 
@@ -71,5 +70,8 @@ TEST_F(SortIntegralValuesTest, TestSortingBasic) {
       "id_3,[125,126,390],[a,c,b]",
   };
   runTest(
-      dataInput, "event_timestamps", {"event_timestamps", "values"}, expectedOutput);
+      dataInput,
+      "event_timestamps",
+      {"event_timestamps", "values"},
+      expectedOutput);
 }

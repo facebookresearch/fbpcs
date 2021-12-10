@@ -13,9 +13,9 @@
 #include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
-#include "fbpcs/emp_games/common/SecretSharing.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationGame.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationMetrics.h"
+#include "fbpcs/emp_games/common/SecretSharing.h"
 
 namespace aggregation::private_aggregation {
 
@@ -39,7 +39,8 @@ class AggregationApp
             AggregationOutputMetrics>{static_cast<fbpcf::Party>(MY_ROLE), serverIp, port},
         aggregationFormat_{aggregationFormat},
         inputSecretShareFilePath_{inputSecretShareFilePath},
-        inputClearTextFilePath_{inputClearTextFilePath}, outputPath_{outputPath} {}
+        inputClearTextFilePath_{inputClearTextFilePath},
+        outputPath_{outputPath} {}
 
  protected:
   AggregationInputMetrics getInputData() override {
@@ -56,7 +57,8 @@ class AggregationApp
         aggregationFormat_};
   }
 
-  void putOutputData(const AggregationOutputMetrics& aggregationOutput) override {
+  void putOutputData(
+      const AggregationOutputMetrics& aggregationOutput) override {
     fbpcf::io::write(outputPath_, aggregationOutput.toJson());
   }
 

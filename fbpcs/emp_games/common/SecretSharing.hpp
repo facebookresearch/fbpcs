@@ -68,7 +68,6 @@ const std::vector<O> privatelyShareArrayFrom(
   return out;
 }
 
-
 template <
     int MY_ROLE,
     int SOURCE_ROLE,
@@ -85,8 +84,7 @@ const std::vector<O> privatelyShareArrayFromNoPadding(
       "Privately {} array[{}] = {}",
       receiveStr,
       numVals,
-      privateVecToString<MY_ROLE, SOURCE_ROLE, T>(
-          in, numVals));
+      privateVecToString<MY_ROLE, SOURCE_ROLE, T>(in, numVals));
 
   std::vector<O> out;
   out.reserve(numVals);
@@ -102,7 +100,6 @@ const std::vector<O> privatelyShareArrayFromNoPadding(
 
   return out;
 }
-
 
 // Some potential optimizations:
 // 1) Rather than just padding to maxArraySize, use DP.
@@ -193,7 +190,6 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
 
   return out;
 }
-
 
 template <int MY_ROLE, int SOURCE_ROLE, typename T, typename O>
 const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(

@@ -192,7 +192,8 @@ TEST_F(ShardAggregatorGameTest, TestPlayAdObject) {
       "ad_object_format/partner_attribution_out.json_0",
       "ad_object_format/partner_attribution_out.json_1",
   };
-  runPlayTest(aliceInput, bobInput, constructAdObjectFormatThresholdChecker(100));
+  runPlayTest(
+      aliceInput, bobInput, constructAdObjectFormatThresholdChecker(100));
 }
 
 TEST_F(ShardAggregatorGameTest, TestPlayLift) {

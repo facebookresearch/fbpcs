@@ -54,7 +54,8 @@ void InputData::setTimestamps(
   auto timestamps = private_measurement::csv::splitByComma(innerString, false);
 
   // Take up to numConversionsPerUser_ elements and ignore the rest
-  for (std::size_t i = 0; i < timestamps.size() && i < numConversionsPerUser_; ++i) {
+  for (std::size_t i = 0; i < timestamps.size() && i < numConversionsPerUser_;
+       ++i) {
     std::istringstream iss{timestamps[i]};
     int64_t parsed = 0;
     iss >> parsed;
@@ -80,7 +81,8 @@ void InputData::setValuesFields(std::string& str) {
   auto innerString = str.substr(1, str.size() - 1);
   auto values = private_measurement::csv::splitByComma(innerString, false);
   // Take up to numConversionsPerUser_ elements and ignore the rest
-  for (std::size_t i = 0; i < values.size() && i < numConversionsPerUser_; ++i) {
+  for (std::size_t i = 0; i < values.size() && i < numConversionsPerUser_;
+       ++i) {
     int64_t parsed = 0;
     std::istringstream iss{values[i]};
     iss >> parsed;

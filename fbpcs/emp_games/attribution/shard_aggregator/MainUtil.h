@@ -12,7 +12,7 @@
 
 namespace measurement::private_attribution {
 
-inline std::string getDateString(){
+inline std::string getDateString() {
   time_t timeNow = time(nullptr);
   char dateStr[12];
   struct tm newTime;

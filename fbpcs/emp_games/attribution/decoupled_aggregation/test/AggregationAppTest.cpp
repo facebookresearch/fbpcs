@@ -18,8 +18,8 @@
 #include "folly/Random.h"
 #include "folly/logging/xlog.h"
 
-#include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/test/AggregationTestUtils.h"
+#include "fbpcs/emp_games/common/TestUtil.h"
 
 namespace aggregation::private_aggregation {
 

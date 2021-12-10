@@ -49,7 +49,6 @@ static const std::vector<int64_t> getInnerArray(std::string& str) {
   return out;
 }
 
-
 static const std::vector<Touchpoint> parseTouchpoints(
     const int lineNo,
     const std::vector<std::string>& header,
@@ -86,8 +85,8 @@ static const std::vector<Touchpoint> parseTouchpoints(
   // (ad_id, ts) tuple, or some kind of id that is synchronized
   // with the caller. Id is unique per row only.
   std::vector<int64_t> unique_ids;
-  for (std::vector<int64_t>::size_type i=0; i<timestamps.size(); i++){
-      unique_ids.push_back(static_cast<int64_t>(i));
+  for (std::vector<int64_t>::size_type i = 0; i < timestamps.size(); i++) {
+    unique_ids.push_back(static_cast<int64_t>(i));
   }
 
   const std::unordered_set<int64_t> idSet{unique_ids.begin(), unique_ids.end()};
@@ -187,7 +186,8 @@ AttributionInputMetrics::AttributionInputMetrics(
         }
         XLOGF(DBG, "{}: {}", lineNo, private_measurement::vecToString(parts));
 
-        for (std::vector<std::string>::size_type i = 0; i < header.size(); ++i) {
+        for (std::vector<std::string>::size_type i = 0; i < header.size();
+             ++i) {
           auto column = header[i];
           auto value = parts[i];
 

@@ -133,9 +133,12 @@ TEST_F(InputDataTest, TestInputDataPartner) {
 }
 
 TEST_F(InputDataTest, TestInputDataPartnerConverterLift) {
-  InputData inputData{bobInputFilename2_, InputData::LiftMPCType::Standard,
-                      InputData::LiftGranularityType::Converter, 0, /* epoch */
-                      1 /* num_conversions_per_user */};
+  InputData inputData{
+      bobInputFilename2_,
+      InputData::LiftMPCType::Standard,
+      InputData::LiftGranularityType::Converter,
+      0, /* epoch */
+      1 /* num_conversions_per_user */};
   std::vector<std::vector<int64_t>> expectGetPurchaseTimestamps = {
       {0},          {1600000594}, {0}, {0}, {1600000228}, {0}, {0},
       {0},          {0},          {0}, {0}, {0},          {0}, {0},
@@ -181,9 +184,12 @@ TEST_F(InputDataTest, TestGetBitmaskFor) {
 
   std::vector<int64_t> expectCohortIds = {0, 1, 0, 0, 2, 0, 0, 0, 0, 0,
                                           0, 0, 0, 0, 1, 2, 0, 0, 0, 0};
-  std::vector<int64_t> bitmask0 = {1,0,1,1,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1};
-  std::vector<int64_t> bitmask1 = {0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0};
-  std::vector<int64_t> bitmask2 = {0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0};
+  std::vector<int64_t> bitmask0 = {1, 0, 1, 1, 0, 1, 1, 1, 1, 1,
+                                   1, 1, 1, 1, 0, 0, 1, 1, 1, 1};
+  std::vector<int64_t> bitmask1 = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                                   0, 0, 0, 0, 1, 0, 0, 0, 0, 0};
+  std::vector<int64_t> bitmask2 = {0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                                   0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
   EXPECT_EQ(bitmask0, inputData.bitmaskFor(0));
   EXPECT_EQ(bitmask1, inputData.bitmaskFor(1));
   EXPECT_EQ(bitmask2, inputData.bitmaskFor(2));

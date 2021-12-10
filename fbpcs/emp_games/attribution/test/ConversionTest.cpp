@@ -13,7 +13,6 @@
 #include "../Conversion.h"
 #include "../Timestamp.h"
 
-
 namespace measurement::private_attribution {
 TEST(ConversionTest, TestConstructor) {
   fbpcf::mpc::wrapTest<std::function<void()>>([]() {

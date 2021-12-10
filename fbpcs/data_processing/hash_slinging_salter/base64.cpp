@@ -38,8 +38,8 @@ std::string decode(const std::string& input) {
   auto cStrInput = input.c_str();
   auto len = input.length();
   std::size_t numExpectedDecodedBytes = 3 * len / 4;
-  auto output = reinterpret_cast<unsigned char*>(
-      calloc(numExpectedDecodedBytes + 1, 1));
+  auto output =
+      reinterpret_cast<unsigned char*>(calloc(numExpectedDecodedBytes + 1, 1));
   const auto numDecodedBytes = EVP_DecodeBlock(
       output, reinterpret_cast<const unsigned char*>(cStrInput), len);
   if (numExpectedDecodedBytes != numDecodedBytes) {

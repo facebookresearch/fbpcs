@@ -8,21 +8,20 @@
 #include <gflags/gflags.h>
 #include <string>
 
+#include <fbpcf/mpc/EmpGame.h>
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
-#include <fbpcf/mpc/EmpGame.h>
 
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/mpc/MpcAppExecutor.h>
 #include <fbpcs/performance_tools/CostEstimation.h>
 #include "AttributionApp.h"
-#include "fbpcs/emp_games/attribution/AttributionOptions.h"
 #include "MainUtil.h"
+#include "fbpcs/emp_games/attribution/AttributionOptions.h"
 
 int main(int argc, char* argv[]) {
-
   fbpcs::performance_tools::CostEstimation cost =
-            fbpcs::performance_tools::CostEstimation("attribution");
+      fbpcs::performance_tools::CostEstimation("attribution");
   cost.start();
 
   XLOG(INFO) << "Start of main, printing network stats: "
@@ -131,16 +130,19 @@ int main(int argc, char* argv[]) {
   cost.end();
   XLOG(INFO, cost.getEstimatedCostString());
 
-  if (FLAGS_run_name != "" && FLAGS_party == static_cast<int>(fbpcf::Party::Alice)) {
-    XLOGF(INFO, "{}", cost.writeToS3(
-                            FLAGS_run_name,
-                            cost.getEstimatedCostDynamic(
-                                  FLAGS_run_name,
-                                  FLAGS_attribution_rules,
-                                  FLAGS_aggregators)));
+  if (FLAGS_run_name != "" &&
+      FLAGS_party == static_cast<int>(fbpcf::Party::Alice)) {
+    XLOGF(
+        INFO,
+        "{}",
+        cost.writeToS3(
+            FLAGS_run_name,
+            cost.getEstimatedCostDynamic(
+                FLAGS_run_name, FLAGS_attribution_rules, FLAGS_aggregators)));
   }
 
-  // TODO: remove the following and use cost.getNetworkBytes() or cost.getEstimatedCost() instead
+  // TODO: remove the following and use cost.getNetworkBytes() or
+  // cost.getEstimatedCost() instead
   XLOG(INFO) << "End of main, printing network stats: "
              << measurement::private_attribution::exec("cat /proc/net/dev");
 

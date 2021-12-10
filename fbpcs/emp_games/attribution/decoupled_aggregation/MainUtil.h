@@ -15,9 +15,9 @@
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include <fbpcf/mpc/MpcAppExecutor.h>
+#include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationApp.h"
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
-#include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationApp.h"
 
 namespace aggregation::private_aggregation {
 
@@ -65,7 +65,9 @@ inline void startPrivateAggregationApp(
       aggregationApps;
   CHECK_EQ(inputSecretShareFilePaths.size(), inputClearTextFilePaths.size())
       << "number of attribution results and metadata files not matching.";
-  for (std::vector<std::string>::size_type i = 0; i < inputSecretShareFilePaths.size(); i++) {
+  for (std::vector<std::string>::size_type i = 0;
+       i < inputSecretShareFilePaths.size();
+       i++) {
     aggregationApps.push_back(
         std::make_unique<aggregation::private_aggregation::
                              AggregationApp<PARTY, OUTPUT_VISIBILITY>>(
