@@ -24,6 +24,7 @@ Usage:
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
+    pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --start_date=<start_date> --end_date=<end_date> --attribution_rule=<attribution_rule> --result_type=<result_type> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>[options]
 
 
 Options:
@@ -48,9 +49,15 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     PrivateComputationGameType,
 )
-from fbpcs.private_computation.pc_attribution_runner import get_attribution_dataset_info
+from fbpcs.private_computation.pc_attribution_runner import (
+    get_attribution_dataset_info,
+    run_attribution,
+)
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
+)
+from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
+    PrivateComputationDecoupledStageFlow,
 )
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
@@ -84,6 +91,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "run_instance": bool,
             "run_instances": bool,
             "run_study": bool,
+            "run_attribution": bool,
             "cancel_current_stage": bool,
             "print_instance": bool,
             "get_attribution_dataset_info": bool,
@@ -118,6 +126,9 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--num_mpc_containers": schema.Or(None, schema.Use(int)),
             "--aggregation_type": schema.Or(None, schema.Use(AggregationType)),
             "--attribution_rule": schema.Or(None, schema.Use(AttributionRule)),
+            "--result_type": schema.Or(None, str),
+            "--start_date": schema.Or(None, str),
+            "--end_date": schema.Or(None, str),
             "--num_files_per_mpc_container": schema.Or(None, schema.Use(int)),
             "--num_shards": schema.Or(None, schema.Use(int)),
             "--num_shards_list": schema.Or(
@@ -257,6 +268,25 @@ def main(argv: Optional[List[str]] = None) -> None:
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
         )
+    elif arguments["run_attribution"]:
+        stage_flow = PrivateComputationDecoupledStageFlow
+        run_attribution(
+            config=config,
+            dataset_id=arguments["--dataset_id"],
+            input_path=arguments["--input_path"],
+            start_date=arguments["--start_date"],
+            end_date=arguments["--end_date"],
+            attribution_rule=arguments["--attribution_rule"],
+            aggregation_type=arguments["--aggregation_type"],
+            concurrency=arguments["--concurrency"],
+            num_files_per_mpc_container=arguments["--num_files_per_mpc_container"],
+            k_anonymity_threshold=arguments["--k_anonymity_threshold"],
+            result_type=arguments["--result_type"],
+            logger=logger,
+            stage_flow=stage_flow,
+            num_tries=2,
+        )
+
     elif arguments["cancel_current_stage"]:
         logger.info(f"Canceling the current running stage of instance: {instance_id}")
         cancel_current_stage(

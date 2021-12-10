@@ -81,10 +81,10 @@ class PLGraphAPIClient:
     def create_pa_instance(
         self,
         dataset_id: str,
-        attribution_rule: str,
         start_date: str,
         end_date: str,
-        num_containers: str,
+        attribution_rule: str,
+        num_containers: int,
         result_type: str,
     ) -> requests.Response:
         params = self.params.copy()
@@ -120,6 +120,12 @@ class PLGraphAPIClient:
         params["fields"] = ",".join(fields)
         r = requests.get(f"{URL}/{dataset_id}", params=params)
         self._check_err(r, "getting dataset information")
+        return r
+
+    def get_existing_pa_instances(self, dataset_id: str) -> requests.Response:
+        params = self.params.copy()
+        r = requests.get(f"{URL}/{dataset_id}/instances", params=params)
+        self._check_err(r, "getting attribution instances tied to the dataset")
         return r
 
     def _check_err(self, r: requests.Response, msg: str) -> None:
