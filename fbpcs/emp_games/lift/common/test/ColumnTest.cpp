@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <cstdlib>
 #include <stdexcept>
 
 #include <gtest/gtest.h>
@@ -307,6 +308,17 @@ TEST(BinaryOpTest, Plus) {
 
   EXPECT_EQ(expectedC, actualC);
   EXPECT_EQ(expectedS, actualS);
+
+  Column<char> c3{1, 2, 3};
+  Column<int64_t> expectedC2{2, 4, 6};
+  Column<std::string> c4{"a", "b", "c"};
+  Column<std::string> expectedS2{"a!", "b!", "c!"};
+  char s2 = '!';
+  auto actualC2 = c + c3;
+  auto actualS2 = c4 + s2;
+
+  EXPECT_EQ(expectedC2, actualC2);
+  EXPECT_EQ(expectedS2, actualS2);
 }
 
 TEST(BinaryOpTest, Minus) {
@@ -352,16 +364,31 @@ TEST(BinaryOpTest, Divide) {
 }
 
 TEST(BinaryAssignmentOpTest, Plus) {
-  Column<int64_t> c{9, 8, 7};
+  Column<int64_t> c1{9, 8, 7};
   Column<int64_t> c2{5, 4, 3};
+  Column<int32_t> c3{1, 3, 5};
+  Column<std::string> c4{"a", "b", "c"};
+  Column<char> c5{'x', 'y', 'z'};
   int64_t s = 2;
+  char s2 = '!';
 
-  c += c2;
+  c1 += c2;
   c2 += s;
   Column<int64_t> expected1{14, 12, 10};
   Column<int64_t> expected2{7, 6, 5};
-  EXPECT_EQ(expected1, c);
+  EXPECT_EQ(expected1, c1);
   EXPECT_EQ(expected2, c2);
+
+  c1 += c3;
+  Column<int64_t> expected3{15, 15, 15};
+  EXPECT_EQ(expected3, c1);
+
+  c4 += s2;
+  Column<std::string> expected4{"a!", "b!", "c!"};
+  EXPECT_EQ(expected4, c4);
+  c4 += c5;
+  Column<std::string> expected5{"a!x", "b!y", "c!z"};
+  EXPECT_EQ(expected5, c4);
 }
 
 TEST(BinaryAssignmentOpTest, Minus) {

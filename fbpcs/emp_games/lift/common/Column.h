@@ -38,6 +38,7 @@ namespace df {
 template <typename T>
 class Column {
  public:
+  typedef T value_type;
   /* Basic constructors */
   Column() {}
   Column(const Column<T>& other) = default;
@@ -423,9 +424,12 @@ class Column {
   template <typename T2>
   void operator+=(T2& other) {
     if constexpr (is_specialization<T2, Column>::value) {
-      mapWithInPlace(other, [](const T& a, const T& b) { return a + b; });
+      mapWithInPlace(other, [](const T& a, const typename T2::value_type& b) {
+        return a + b;
+      });
     } else {
-      mapWithScalarInPlace(other, [](const T& a, const T& b) { return a + b; });
+      mapWithScalarInPlace(
+          other, [](const T& a, const T2& b) { return a + b; });
     }
   }
 
