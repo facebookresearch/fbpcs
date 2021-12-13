@@ -59,9 +59,9 @@ struct PrivateTouchpoint {
       : isClick{_isClick}, ts{_ts}, id{_id} {}
 
   explicit PrivateTouchpoint()
-      : isClick{false, emp::PUBLIC},
-        ts{-1},
-        id{INT_SIZE, INVALID_TP_ID, emp::PUBLIC} {}
+      : isClick{false, emp::ALICE},
+        ts{-1, emp::ALICE},
+        id{INT_SIZE, INVALID_TP_ID, emp::ALICE} {}
 
   PrivateTouchpoint select(const emp::Bit& useRhs, const PrivateTouchpoint& rhs)
       const {
