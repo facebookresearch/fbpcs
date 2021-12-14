@@ -119,6 +119,8 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
         """Post hook ran after class instantiation. Initialize the started status map."""
         super().__init_subclass__()
         cls._stage_flow_started_statuses = set()
+        cls._stage_flow_completed_statuses = set()
+        cls._stage_flow_failed_statuses = set()
 
     def __new__(cls: Type[C], data: StageFlowData[Status]) -> C:
         """Override instance creation to map from status -> stage and add start statuses to set"""
@@ -131,6 +133,10 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
 
         if data.started_status:
             cls._stage_flow_started_statuses.add(data.started_status)
+        if data.completed_status:
+            cls._stage_flow_completed_statuses.add(data.completed_status)
+        if data.failed_status:
+            cls._stage_flow_failed_statuses.add(data.failed_status)
 
         return member
 
@@ -215,6 +221,14 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
     @classmethod
     def is_started_status(cls: Type[C], status: Status) -> bool:
         return status in cls._stage_flow_started_statuses
+
+    @classmethod
+    def is_completed_status(cls: Type[C], status: Status) -> bool:
+        return status in cls._stage_flow_completed_statuses
+
+    @classmethod
+    def is_failed_status(cls: Type[C], status: Status) -> bool:
+        return status in cls._stage_flow_failed_statuses
 
     @cached_property
     def next_stage(self: C) -> Optional[C]:

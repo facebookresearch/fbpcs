@@ -59,6 +59,58 @@ class TestStageFlow(TestCase):
             )
         )
 
+    def test_is_completed_status(self):
+        completed_statuses = [
+            DummyStageFlowStatus.STAGE_1_COMPLETED,
+            DummyStageFlowStatus.STAGE_2_COMPLETED,
+            DummyStageFlowStatus.STAGE_3_COMPLETED,
+        ]
+        other_statuses = [
+            DummyStageFlowStatus.STAGE_1_FAILED,
+            DummyStageFlowStatus.STAGE_1_STARTED,
+            DummyStageFlowStatus.STAGE_2_FAILED,
+            DummyStageFlowStatus.STAGE_2_STARTED,
+            DummyStageFlowStatus.STAGE_3_FAILED,
+            DummyStageFlowStatus.STAGE_3_STARTED,
+        ]
+
+        self.assertTrue(
+            all(
+                DummyStageFlow.is_completed_status(status)
+                for status in completed_statuses
+            )
+        )
+        self.assertTrue(
+            all(
+                not DummyStageFlow.is_completed_status(status)
+                for status in other_statuses
+            )
+        )
+
+    def test_is_failed_status(self):
+        failed_statuses = [
+            DummyStageFlowStatus.STAGE_1_FAILED,
+            DummyStageFlowStatus.STAGE_2_FAILED,
+            DummyStageFlowStatus.STAGE_3_FAILED,
+        ]
+        other_statuses = [
+            DummyStageFlowStatus.STAGE_1_COMPLETED,
+            DummyStageFlowStatus.STAGE_1_STARTED,
+            DummyStageFlowStatus.STAGE_2_COMPLETED,
+            DummyStageFlowStatus.STAGE_2_STARTED,
+            DummyStageFlowStatus.STAGE_3_COMPLETED,
+            DummyStageFlowStatus.STAGE_3_STARTED,
+        ]
+
+        self.assertTrue(
+            all(DummyStageFlow.is_failed_status(status) for status in failed_statuses)
+        )
+        self.assertTrue(
+            all(
+                not DummyStageFlow.is_failed_status(status) for status in other_statuses
+            )
+        )
+
     def test_get_stage_from_status(self):
         stage_1_statuses = [
             DummyStageFlowStatus.STAGE_1_COMPLETED,
