@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include("common.cmake")
+include("perf_tools.cmake")
 
 # lift
 add_executable(
@@ -50,7 +51,8 @@ add_executable(
   ${attribution_src})
 target_link_libraries(
   attribution_calculator
-  empgamecommon)
+  empgamecommon
+  perftools)
 install(TARGETS attribution_calculator DESTINATION bin)
 
 # generic shard_aggregator
@@ -75,7 +77,8 @@ add_executable(
   ${shard_aggregator_src})
 target_link_libraries(
   shard_aggregator
-  empgamecommon)
+  empgamecommon
+  perftools)
 install(TARGETS shard_aggregator DESTINATION bin)
 
 # decoupled_attribution
@@ -90,7 +93,8 @@ add_executable(
   ${decoupled_attribution_src})
 target_link_libraries(
   decoupled_attribution_calculator
-  empgamecommon)
+  empgamecommon
+  perftools)
 install(TARGETS decoupled_attribution_calculator DESTINATION bin)
 
 # decoupled_aggregation
@@ -106,5 +110,6 @@ add_executable(
   ${decoupled_aggregation_src})
 target_link_libraries(
   decoupled_aggregation_calculator
-  empgamecommon)
+  empgamecommon
+  perftools)
 install(TARGETS decoupled_aggregation_calculator DESTINATION bin)
