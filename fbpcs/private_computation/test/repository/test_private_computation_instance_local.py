@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# @lint-ignore-every LICENSELINT
+# pyre-strict
+#
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
 # This source code is licensed under the MIT license found in the
@@ -22,7 +25,7 @@ from fbpcs.private_computation.repository.private_computation_instance_local imp
 
 
 class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         instance_id = self._get_random_id()
         self.repo = LocalPrivateComputationInstanceRepository("./")
         self.test_mpc_instance = PCSMPCInstance.create_instance(
@@ -32,7 +35,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_workers=2,
         )
 
-    def test_read(self):
+    def test_read(self) -> None:
         instance_id = self._get_random_id()
         test_read_private_computation_instance = PrivateComputationInstance(
             instance_id=instance_id,
@@ -55,7 +58,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
         )
         self.repo.delete(instance_id)
 
-    def test_create_with_invalid_num_containers(self):
+    def test_create_with_invalid_num_containers(self) -> None:
         instance_id = self._get_random_id()
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
@@ -74,7 +77,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
                 fail_fast=True,
             )
 
-    def test_update(self):
+    def test_update(self) -> None:
         instance_id = self._get_random_id()
         test_update_private_computation_instance = PrivateComputationInstance(
             instance_id=instance_id,
