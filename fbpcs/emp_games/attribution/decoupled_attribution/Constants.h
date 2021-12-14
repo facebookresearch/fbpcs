@@ -7,11 +7,14 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Debug.h"
 
 namespace aggregation::private_attribution {
 
 const int64_t INT_SIZE = 64;
+const int64_t TS_SIZE = INT_SIZE;
 const int64_t PUBLISHER = emp::ALICE;
 const int64_t PARTNER = emp::BOB;
 

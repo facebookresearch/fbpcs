@@ -21,7 +21,6 @@
 
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionMetrics.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionOptions.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
 
 namespace aggregation::private_attribution {
 

@@ -14,7 +14,6 @@
 #include "folly/logging/xlog.h"
 
 #include "Constants.h"
-#include "Timestamp.h"
 
 namespace measurement::private_attribution {
 
@@ -44,7 +43,7 @@ struct PrivateTouchpoint {
   emp::Bit isValid;
   emp::Bit isClick;
   emp::Integer adId;
-  Timestamp ts;
+  emp::Integer ts;
   emp::Integer id;
   emp::Integer campaignMetadata;
 
@@ -53,7 +52,7 @@ struct PrivateTouchpoint {
             emp::Bit{tp.isValid(), party},
             emp::Bit{tp.isClick, party},
             emp::Integer{INT_SIZE, tp.adId, party},
-            Timestamp{tp.ts, party},
+            emp::Integer{TS_SIZE, tp.ts, party},
             emp::Integer{INT_SIZE, tp.id, party},
             emp::Integer{INT_SIZE, tp.campaignMetadata, party}) {}
 
@@ -61,7 +60,7 @@ struct PrivateTouchpoint {
       const emp::Bit& _isValid,
       const emp::Bit& _isClick,
       const emp::Integer& _adId,
-      const Timestamp& _ts,
+      const emp::Integer& _ts,
       const emp::Integer& _id,
       const emp::Integer& _campaignMetadata)
       : isValid{_isValid},
@@ -75,7 +74,7 @@ struct PrivateTouchpoint {
       : isValid{false, emp::ALICE},
         isClick{false, emp::ALICE},
         adId{INT_SIZE, -1, emp::ALICE},
-        ts{-1, emp::ALICE},
+        ts{TS_SIZE, -1, emp::ALICE},
         id{INT_SIZE, INVALID_TP_ID, emp::ALICE},
         campaignMetadata{INT_SIZE, -1, emp::ALICE} {}
 

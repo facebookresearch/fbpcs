@@ -10,7 +10,6 @@
 
 #include <fbpcf/mpc/EmpTestUtil.h>
 
-#include "../Timestamp.h"
 #include "../Touchpoint.h"
 
 namespace measurement::private_attribution {

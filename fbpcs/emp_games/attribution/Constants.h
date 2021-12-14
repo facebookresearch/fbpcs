@@ -13,6 +13,7 @@
 namespace measurement::private_attribution {
 
 const int64_t INT_SIZE = private_measurement::INT_SIZE;
+const int64_t TS_SIZE = INT_SIZE;
 const int64_t PUBLISHER = emp::ALICE;
 const int64_t PARTNER = emp::BOB;
 

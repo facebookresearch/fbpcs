@@ -66,7 +66,6 @@ file(GLOB shard_aggregator_src
   "fbpcs/emp_games/attribution/Constants.h"
   "fbpcs/emp_games/attribution/Conversion.h"
   "fbpcs/emp_games/attribution/Debug.h"
-  "fbpcs/emp_games/attribution/Timestamp.h",
   "fbpcs/emp_games/attribution/Touchpoint.h",
   "fbpcs/emp_games/attribution/shard_aggregator/MainUtil.h",
   "fbpcs/emp_games/attribution/shard_aggregator/ShardAggregatorGame.h")

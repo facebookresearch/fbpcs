@@ -15,7 +15,7 @@ const AttributionRule LAST_CLICK_1D{
     /* isAttributable */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {
-      auto secondsInOneDay = 86400;
+      auto secondsInOneDay = emp::Integer{TS_SIZE, 86400};
       return tp.isClick &
           ((conv.ts > tp.ts) & (conv.ts - tp.ts < secondsInOneDay));
     },
@@ -32,7 +32,7 @@ const AttributionRule LAST_CLICK_28D{
     /* isAttributable */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {
-      auto secondsInTwentyEightDays = 2419200;
+      auto secondsInTwentyEightDays = emp::Integer{TS_SIZE, 2419200};
       return tp.isClick &
           ((conv.ts > tp.ts) & (conv.ts - tp.ts < secondsInTwentyEightDays));
     },
@@ -51,7 +51,7 @@ const AttributionRule LAST_TOUCH_CT1D_IMP1D{
     /* isAttributable: if click within 1d, if touch within 1d */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {
-      auto secondsInOneDay = 86400;
+      auto secondsInOneDay = emp::Integer{TS_SIZE, 86400};
 
       auto validConv = conv.ts > tp.ts;
       auto convDelta = conv.ts - tp.ts;
@@ -77,8 +77,8 @@ const AttributionRule LAST_TOUCH_CT28D_IMP1D{
     /* isAttributable: if click within 28d, if touch within 1d */
     [](const PrivateTouchpoint& tp,
        const PrivateConversion& conv) -> const emp::Bit {
-      auto secondsInOneDay = 86400;
-      auto secondsInTwentyEightDays = 2419200;
+      auto secondsInOneDay = emp::Integer{TS_SIZE, 86400};
+      auto secondsInTwentyEightDays = emp::Integer{TS_SIZE, 2419200};
 
       auto validConv = conv.ts > tp.ts;
       auto convDelta = conv.ts - tp.ts;

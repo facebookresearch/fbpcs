@@ -14,7 +14,6 @@
 #include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Constants.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
 
 namespace aggregation::private_attribution {
 
@@ -43,24 +42,24 @@ struct Touchpoint {
 
 struct PrivateTouchpoint {
   emp::Bit isClick;
-  aggregation::private_attribution::Timestamp ts;
+  emp::Integer ts;
   emp::Integer id;
 
   explicit PrivateTouchpoint(Touchpoint tp, int party)
       : PrivateTouchpoint(
             emp::Bit{tp.isClick, party},
-            Timestamp{tp.ts, party},
+            emp::Integer{TS_SIZE, tp.ts, party},
             emp::Integer{INT_SIZE, tp.id, party}) {}
 
   explicit PrivateTouchpoint(
       const emp::Bit& _isClick,
-      const Timestamp& _ts,
+      const emp::Integer& _ts,
       const emp::Integer& _id)
       : isClick{_isClick}, ts{_ts}, id{_id} {}
 
   explicit PrivateTouchpoint()
       : isClick{false, emp::ALICE},
-        ts{-1, emp::ALICE},
+        ts{TS_SIZE, -1, emp::ALICE},
         id{INT_SIZE, INVALID_TP_ID, emp::ALICE} {}
 
   PrivateTouchpoint select(const emp::Bit& useRhs, const PrivateTouchpoint& rhs)
@@ -73,7 +72,7 @@ struct PrivateTouchpoint {
 
   // Checking if timestamp > 0
   emp::Bit isValid() const {
-    const Timestamp one{1};
+    const emp::Integer one{TS_SIZE, 1};
     return ts >= one;
   }
 
