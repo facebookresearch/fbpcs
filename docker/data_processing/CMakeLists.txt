@@ -32,6 +32,24 @@ target_link_libraries(
   Folly::folly
   re2)
 
+
+# perf_tools
+file(GLOB perf_tools_src
+  "fbpcs/performance_tools/**.cpp"
+  "fbpcs/performance_tools/**.h")
+list(FILTER perf_tools_src EXCLUDE REGEX ".*Test.*")
+add_library(perftools STATIC
+  ${perf_tools_src})
+target_link_libraries(
+  perftools
+  INTERFACE
+  fbpcf
+  ${AWSSDK_LINK_LIBRARIES}
+  ${EMP-OT_LIBRARIES}
+  Folly::folly
+  re2)
+
+
 # sharder dependent files
 file(GLOB sharding_src
   "fbpcs/data_processing/sharding/**.c"
@@ -106,5 +124,6 @@ add_executable(
   "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineFileCombiner.cpp")
 target_link_libraries(
   attribution_id_combiner
-  idcombiner)
+  idcombiner
+  perftools)
 install(TARGETS attribution_id_combiner DESTINATION bin)
