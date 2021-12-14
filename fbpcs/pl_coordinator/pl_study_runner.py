@@ -65,7 +65,7 @@ def run_study(
     dry_run: Optional[bool] = False,  # if set to true, it will only run one stage
 ) -> None:
 
-    ## Step 1: Validation. Funciton arguments and study metadata must be valid for private lift run.
+    ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
 
     err_msgs = []
     # verify that input is valid.
@@ -229,7 +229,7 @@ def _get_cell_obj_instance(
     cells_data: List[str] = study_data[OPP_DATA_INFORMATION]
     # only consider objective_ids from function arguments (conversion datasets available).
     objectives_data: Dict[str, str] = dict(zip(objective_ids, input_paths))
-    # for some cell_obj pairs, valid instances aleady exist
+    # for some cell_obj pairs, valid instances already exist
     instances_data: List[Dict[str, Any]] = (
         study_data[INSTANCES]["data"] if INSTANCES in study_data else []
     )

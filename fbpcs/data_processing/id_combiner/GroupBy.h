@@ -20,7 +20,7 @@ This file implements the groupBy that is used to group by
 one column's value and aggregate specified column values into a list
 Any unspecified columns will be left
 
-For example, if for groupBy index 'id', specified columsn are val1 and val 2
+For example, if for groupBy index 'id', specified columns are val1 and val 2
 and this input file content:
 id        val1       val2        val3
 1           x          a           v1

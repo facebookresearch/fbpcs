@@ -101,7 +101,7 @@ class BadTypeException : public std::exception {
 /**
  * A struct for holding lists of expected types when parsing a CSV. Since C++
  * is a statically typed language, we must know *before* reading a CSV what
- * type we expect each column to have if we want to make efficent use of our
+ * type we expect each column to have if we want to make efficient use of our
  * DataFrame and avoid a bunch of dynamic_casts. By marking ahead of time which
  * columns will have which types, we have a single dynamic_cast to get into
  * the Column, but accesses to individual elements will natively be of type T.

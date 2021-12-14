@@ -375,7 +375,7 @@ class PrivateComputationService:
         )
         if private_computation_instance.status not in STAGE_FAILED_STATUSES:
             raise ValueError(
-                f"Failed to cancel the current stage unexptectedly. Instance {instance_id} has status {private_computation_instance.status}"
+                f"Failed to cancel the current stage unexpectedly. Instance {instance_id} has status {private_computation_instance.status}"
             )
 
         self.logger.info(

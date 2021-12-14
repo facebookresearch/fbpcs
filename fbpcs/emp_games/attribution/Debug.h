@@ -9,7 +9,7 @@
 
 constexpr bool omniscientModeEnabled = false;
 
-// Ensure omnsicient mode never makes it into production.
+// Ensure omniscient mode never makes it into production.
 #ifdef NDEBUG
 static_assert(
     !omniscientModeEnabled,

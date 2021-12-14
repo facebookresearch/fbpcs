@@ -100,7 +100,7 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
     your application would break
     * Hardcode a list of all possible start statuses if you want to support dry runs
 
-    tl;dr, StageFlows significantly reduces harcoding and manual/duplicate stage management logic
+    tl;dr, StageFlows significantly reduces hardcoding and manual/duplicate stage management logic
     by automating stage <-> statuses and stage <-> stage mappings.
 
     Beyond the bare minimum functionality, stage flow provides nice things for free:
@@ -116,7 +116,7 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
     """
 
     def __init_subclass__(cls: Type[C]) -> None:
-        """Post hook ran after class instantation. Intialize the started status map."""
+        """Post hook ran after class instantiation. Initialize the started status map."""
         super().__init_subclass__()
         cls._stage_flow_started_statuses = set()
 

@@ -21,7 +21,7 @@ package:
 
 To build the emp games docker image as `emp-game:<tag>`, run `./build-docker.sh emp_games -t <tag>`.
 
-If `<tag>` is ommited, then `latest` will be used as default.
+If `<tag>` is omitted, then `latest` will be used as default.
 
 `build-docker.sh` currently only supports Ubuntu but we might support Alpine in the future.
 

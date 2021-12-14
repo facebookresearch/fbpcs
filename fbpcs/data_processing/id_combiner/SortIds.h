@@ -19,7 +19,7 @@ namespace pid::combiner {
 This file implements the sortIds that is used to sort data files based on id
 in order to return a sorted file
 
-For example, if for  index 'id', specified columsn are val1 and val 2
+For example, if for  index 'id', specified columns are val1 and val 2
 and this input file content:
 id        val1       val2        val3
 2           z         [c]         v3
