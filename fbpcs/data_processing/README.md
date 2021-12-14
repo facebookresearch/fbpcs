@@ -5,7 +5,7 @@ This document describes common use cases (building, testing, extracting) for the
 
 EMP Games docker image(s) uses the fbpcf docker image as its base.  The latest will automatically be pulled by the build_docker.sh.
 
-### Building data-procesing Image (`build-docker.sh` Script)
+### Building data-processing Image (`build-docker.sh` Script)
 
 ```
 Usage: build-docker.sh <package: emp_games|data_processing|onedocker> [-u] [-t <tag>]
@@ -19,7 +19,7 @@ package:
 
 To build the emp games docker image as `data-processing:<tag>`, run `./build-docker.sh data_processing -t <tag>`.
 
-If `<tag>` is ommited, then `latest` will be used as default.
+If `<tag>` is omitted, then `latest` will be used as default.
 
 `build-docker.sh` currently only supports Ubuntu but we might support Alpine in the future.
 

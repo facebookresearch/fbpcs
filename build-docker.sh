@@ -19,7 +19,7 @@ package:
   emp_games - builds the emp-games docker image
   data_processing - builds the data-processing docker image
   onedocker - A OneDocker docker image containing emp-games and data-processing
-  pce_deployment - builds the pce-deployment docker iamge
+  pce_deployment - builds the pce-deployment docker image
 -u: builds the docker images against ubuntu (default)
 -f: force use of latest fbpcf from ghcr.io/facebookresearch
 -t TAG: tags the image with the given tag (default: latest)
@@ -58,7 +58,7 @@ cd "$SCRIPT_DIR" || exit
 
 FBPCF_IMAGE="fbpcf/${OS_VARIANT}:latest"
 if [[ " $FBPCF_DEPENDENCY " =~ $PACKAGE ]]; then # Not all packages require fbpcf
-  IMAGE_PREFIX="fbpcs/" # Current all FBPCF Dependent images are taged with "fbpcs" prefix
+  IMAGE_PREFIX="fbpcs/" # Current all FBPCF Dependent images are tagged with "fbpcs" prefix
   if [ "${FORCE_EXTERNAL}" == false ] && docker image inspect "${FBPCF_IMAGE}" >/dev/null 2>&1; then
     printf "Using locally built %s docker image (this may NOT be up-to-date...)\n\n" "${FBPCF_IMAGE}"
     printf "To use latest %s from %s please \n   1. Delete this local docker image (docker image rm %s) \nor\n   2. Use the '-f' flag\n" "${FBPCF_IMAGE}" "${GITHUB_PACKAGES}" "${FBPCF_IMAGE}"

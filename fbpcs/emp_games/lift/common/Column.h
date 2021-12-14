@@ -95,7 +95,7 @@ class Column {
   }
 
   /**
-   * Get a const_iterator to the end of this Column's data by deffering to the
+   * Get a const_iterator to the end of this Column's data by deferring to the
    * underlying vector's implementation.
    *
    * @returns a const_iterator to the end of this Column's data

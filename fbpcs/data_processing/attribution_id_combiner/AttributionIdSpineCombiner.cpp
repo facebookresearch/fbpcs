@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   std::filesystem::path outputPath{FLAGS_output_path};
   std::filesystem::path tmpDirectory{FLAGS_tmp_directory};
 
-  XLOG(INFO) << "Starting data_prcessing run on: data_path:" << FLAGS_data_path
+  XLOG(INFO) << "Starting data_processing run on: data_path:" << FLAGS_data_path
              << ", spine_path: " << FLAGS_spine_path
              << ", output_path: " << FLAGS_output_path
              << ", tmp_directory: " << FLAGS_tmp_directory

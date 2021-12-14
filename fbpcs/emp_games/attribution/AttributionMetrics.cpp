@@ -128,9 +128,9 @@ static const std::vector<Conversion> parseConversions(
   }
 
   CHECK_EQ(convTimestamps.size(), convValues.size())
-      << "Conversion timetamps and conversion value arrays are not the same length.";
+      << "Conversion timestamps and conversion value arrays are not the same length.";
   CHECK_EQ(convTimestamps.size(), convMetadata.size())
-      << "Conversion timetamps and  arrays are not the same length.";
+      << "Conversion timestamps and  arrays are not the same length.";
   CHECK_LE(convTimestamps.size(), FLAGS_max_num_conversions)
       << "Number of conversions exceeds the maximum allowed value.";
 

@@ -111,9 +111,9 @@ static const std::vector<ConversionMetadata> parseConversions(
   }
 
   CHECK_EQ(convTimestamps.size(), convValues.size())
-      << "Conversion timetamps and conversion value arrays are not the same length.";
+      << "Conversion timestamps and conversion value arrays are not the same length.";
   CHECK_EQ(convTimestamps.size(), convMetadata.size())
-      << "Conversion timetamps and  arrays are not the same length.";
+      << "Conversion timestamps and  arrays are not the same length.";
 
   std::vector<ConversionMetadata> convs;
   for (std::vector<int64_t>::size_type i = 0; i < convTimestamps.size(); i++) {

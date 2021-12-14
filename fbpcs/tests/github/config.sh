@@ -28,7 +28,7 @@ export LIFT_PUBLISHER_INPUT_FILE=$E2E_GITHUB_S3_URL/lift/inputs/publisher_e2e_in
 export LIFT_PARTNER_INPUT_FILE=$E2E_GITHUB_S3_URL/lift/inputs/partner_e2e_input.csv
 export LIFT_OUTPUT_DIR=$E2E_GITHUB_S3_URL/lift/outputs
 
-# Lift result comparision
+# Lift result comparison
 export LIFT_OUTPUT_PATH=s3://$E2E_S3_BUCKET/lift/outputs
 export LIFT_PUBLISHER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PUBLISHER_NAME"_out_dir/shard_aggregation_stage/out.json
 export LIFT_PARTNER_AGGREGATION_OUTPUT=$LIFT_OUTPUT_PATH/"$LIFT_PARTNER_NAME"_out_dir/shard_aggregation_stage/out.json
@@ -54,7 +54,7 @@ export ATTRIBUTION_PARTNER_INPUT_FILE=$E2E_GITHUB_S3_URL/attribution/inputs/part
 
 export ATTRIBUTION_OUTPUT_DIR=$E2E_GITHUB_S3_URL/attribution/outputs
 
-# Attribution result comparision
+# Attribution result comparison
 export ATTRIBUTION_OUTPUT_PATH=s3://$E2E_S3_BUCKET/attribution/outputs
 export ATTRIBUTION_PUBLISHER_AGGREGATION_OUTPUT=$ATTRIBUTION_OUTPUT_PATH/"$ATTRIBUTION_PUBLISHER_NAME"_out_dir/shard_aggregation_stage/out.json
 export ATTRIBUTION_PARTNER_AGGREGATION_OUTPUT=$ATTRIBUTION_OUTPUT_PATH/"$ATTRIBUTION_PARTNER_NAME"_out_dir/shard_aggregation_stage/out.json

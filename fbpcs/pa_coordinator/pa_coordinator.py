@@ -9,7 +9,7 @@ if __name__ == "__main__":
     print(
         "*********************************************************************************************************\n"
         + "Hello! If you're a Meta internal who is running pa_coordinator, please run private_computation_cli instead.\n"
-        + "Otherwise, it looks lke you're running an outdated version of run_fbpcs.sh.\n"
+        + "Otherwise, it looks like you're running an outdated version of run_fbpcs.sh.\n"
         + "Please follow these steps:\n"
         + '1. Run this command on your terminal to get the new run_fbpcs.sh: "curl -O https://raw.githubusercontent.com/facebookresearch/fbpcs/main/fbpcs/scripts/run_fbpcs.sh && chmod +x run_fbpcs.sh"\n'
         + '2. Modify the run_fbpcs command you ran by removing "attribution" right after "run_fbpcs"\n'

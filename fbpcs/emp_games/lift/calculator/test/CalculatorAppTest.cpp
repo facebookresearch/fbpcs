@@ -24,7 +24,7 @@
 constexpr int32_t tsOffset = 10;
 
 DEFINE_bool(is_conversion_lift, true, "is conversion lift");
-DEFINE_int32(num_conversions_per_user, 4, "num of converstions per user");
+DEFINE_int32(num_conversions_per_user, 4, "num of conversions per user");
 DEFINE_int64(epoch, 1546300800, "epoch");
 
 namespace private_lift {

@@ -76,10 +76,10 @@ int main(int argc, char* argv[]) {
         FLAGS_metrics_format_type)
         .run();
   } catch (const fbpcf::ExceptionBase& e) {
-    XLOGF(ERR, "Some error occured: {}", e.what());
+    XLOGF(ERR, "Some error occurred: {}", e.what());
     return 1;
   } catch (const std::exception& e) {
-    XLOGF(ERR, "Some unknown error occured: {}", e.what());
+    XLOGF(ERR, "Some unknown error occurred: {}", e.what());
     return -1;
   }
 

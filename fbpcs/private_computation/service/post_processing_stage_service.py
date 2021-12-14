@@ -112,7 +112,7 @@ class PostProcessingStageService(PrivateComputationStageService):
         )
 
         # if any of the handlers failed, then the status of the post processing instance would have
-        # been set to failed. If none of them failed, then tht means all of the handlers completed, so
+        # been set to failed. If none of them failed, then that means all of the handlers completed, so
         # we can set the status to completed.
         if post_processing_instance.status != PostProcessingInstanceStatus.FAILED:
             post_processing_instance.status = PostProcessingInstanceStatus.COMPLETED

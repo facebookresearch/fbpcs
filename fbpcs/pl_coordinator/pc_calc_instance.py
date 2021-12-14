@@ -47,7 +47,7 @@ class PrivateLiftCalcInstance:
 
     def update_instance(self) -> None:
         raise NotImplementedError(
-            "This is a parent method to be overrided and should not be called."
+            "This is a parent method to be overridden and should not be called."
         )
 
     def status_ready(self, status: PrivateComputationInstanceStatus) -> bool:
