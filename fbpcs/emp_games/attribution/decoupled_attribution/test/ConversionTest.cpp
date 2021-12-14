@@ -11,7 +11,6 @@
 #include <fbpcf/mpc/EmpTestUtil.h>
 
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Conversion.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
 
 namespace aggregation::private_attribution {
 TEST(ConversionTest, TestConstructor) {

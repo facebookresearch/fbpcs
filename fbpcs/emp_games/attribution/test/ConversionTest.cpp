@@ -11,7 +11,6 @@
 #include <fbpcf/mpc/EmpTestUtil.h>
 
 #include "../Conversion.h"
-#include "../Timestamp.h"
 
 namespace measurement::private_attribution {
 TEST(ConversionTest, TestConstructor) {

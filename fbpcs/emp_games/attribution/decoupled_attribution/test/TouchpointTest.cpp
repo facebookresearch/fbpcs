@@ -10,7 +10,6 @@
 
 #include <fbpcf/mpc/EmpTestUtil.h>
 
-#include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Touchpoint.h"
 
 namespace aggregation::private_attribution {

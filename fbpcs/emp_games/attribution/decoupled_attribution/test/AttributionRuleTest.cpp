@@ -15,11 +15,13 @@ namespace aggregation::private_attribution {
 
 PrivateTouchpoint createTouchpoint(bool isClick, int64_t ts) {
   return PrivateTouchpoint{
-      emp::Bit{isClick}, Timestamp{ts}, emp::Integer{INT_SIZE, /*adID*/ 100}};
+      emp::Bit{isClick},
+      emp::Integer{TS_SIZE, ts},
+      emp::Integer{INT_SIZE, /*adID*/ 100}};
 }
 
 PrivateConversion createConversion(int64_t ts) {
-  return PrivateConversion{Timestamp{ts}};
+  return PrivateConversion{emp::Integer{TS_SIZE, ts}};
 }
 
 class AttributionRuleTest

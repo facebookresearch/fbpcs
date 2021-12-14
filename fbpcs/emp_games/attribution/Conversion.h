@@ -12,7 +12,6 @@
 #include <emp-sh2pc/emp-sh2pc.h>
 
 #include "Constants.h"
-#include "Timestamp.h"
 
 namespace measurement::private_attribution {
 
@@ -32,17 +31,17 @@ struct Conversion {
 };
 
 struct PrivateConversion {
-  Timestamp ts;
+  emp::Integer ts;
   emp::Integer conv_value;
   emp::Integer conv_metadata;
 
   explicit PrivateConversion(Conversion conv, int party)
-      : ts{conv.ts, party},
+      : ts{TS_SIZE, conv.ts, party},
         conv_value{INT_SIZE, conv.conv_value, party},
         conv_metadata{INT_SIZE, conv.conv_metadata, party} {}
 
   PrivateConversion(
-      const Timestamp& _ts,
+      const emp::Integer& _ts,
       const emp::Integer& _conv_value,
       const emp::Integer& _conv_metadata)
       : ts{_ts}, conv_value{_conv_value}, conv_metadata{_conv_metadata} {}

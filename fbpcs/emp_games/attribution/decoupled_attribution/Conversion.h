@@ -12,7 +12,6 @@
 #include <emp-sh2pc/emp-sh2pc.h>
 
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Constants.h"
-#include "fbpcs/emp_games/attribution/decoupled_attribution/Timestamp.h"
 
 namespace aggregation::private_attribution {
 
@@ -32,11 +31,12 @@ struct Conversion {
 };
 
 struct PrivateConversion {
-  Timestamp ts;
+  emp::Integer ts;
 
-  explicit PrivateConversion(Conversion conv, int party) : ts{conv.ts, party} {}
+  explicit PrivateConversion(Conversion conv, int party)
+      : ts{TS_SIZE, conv.ts, party} {}
 
-  explicit PrivateConversion(const Timestamp& _ts) : ts{_ts} {}
+  explicit PrivateConversion(const emp::Integer& _ts) : ts{_ts} {}
 
   // string conversion support
   template <typename T = std::string>

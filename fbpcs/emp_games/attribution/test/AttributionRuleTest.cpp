@@ -18,14 +18,14 @@ PrivateTouchpoint createTouchpoint(bool isClick, int64_t ts) {
       emp::Bit{/*isValid*/ true},
       emp::Bit{isClick},
       emp::Integer{INT_SIZE, /*adID*/ 100},
-      Timestamp{ts},
+      emp::Integer{TS_SIZE, ts},
       emp::Integer{INT_SIZE, /*id*/ 101},
       emp::Integer{INT_SIZE, /*campaignMetadata*/ 102}};
 }
 
 PrivateConversion createConversion(int64_t ts) {
   return PrivateConversion{
-      Timestamp{ts},
+      emp::Integer{TS_SIZE, ts},
       emp::Integer{INT_SIZE, /*conv_value*/ 1000},
       emp::Integer{INT_SIZE, /*conv_metadata*/ 1001}};
 }
