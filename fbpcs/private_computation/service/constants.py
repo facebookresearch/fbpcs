@@ -31,22 +31,6 @@ NUM_NEW_SHARDS_PER_FILE: int = round(
     MAX_ROWS_PER_PID_CONTAINER / TARGET_ROWS_PER_MPC_CONTAINER
 )
 
-# List of stages with 'STARTED' status.
-STAGE_STARTED_STATUSES: List[PrivateComputationInstanceStatus] = [
-    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-    PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-    PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-    PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
-]
-
-# List of stages with 'FAILED' status.
-STAGE_FAILED_STATUSES: List[PrivateComputationInstanceStatus] = [
-    PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-    PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-    PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-    PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
-]
-
 DEFAULT_K_ANONYMITY_THRESHOLD = 100
 DEFAULT_PID_PROTOCOL: PIDProtocol = PIDProtocol.UNION_PID
 DEFAULT_HMAC_KEY: str = ""
