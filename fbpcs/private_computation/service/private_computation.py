@@ -34,8 +34,6 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 )
 from fbpcs.private_computation.service.constants import (
     NUM_NEW_SHARDS_PER_FILE,
-    STAGE_STARTED_STATUSES,
-    STAGE_FAILED_STATUSES,
     DEFAULT_CONCURRENCY,
     DEFAULT_HMAC_KEY,
     DEFAULT_K_ANONYMITY_THRESHOLD,
@@ -349,7 +347,9 @@ class PrivateComputationService:
         private_computation_instance = self.get_instance(instance_id)
 
         # pre-checks to make sure it's in a cancel-able state
-        if private_computation_instance.status not in STAGE_STARTED_STATUSES:
+        if not private_computation_instance.stage_flow.is_started_status(
+            private_computation_instance.status
+        ):
             raise ValueError(
                 f"Instance {instance_id} has status {private_computation_instance.status}. Nothing to cancel."
             )
@@ -373,7 +373,10 @@ class PrivateComputationService:
         private_computation_instance = self._update_instance(
             private_computation_instance=private_computation_instance
         )
-        if private_computation_instance.status not in STAGE_FAILED_STATUSES:
+
+        if not private_computation_instance.stage_flow.is_failed_status(
+            private_computation_instance.status
+        ):
             raise ValueError(
                 f"Failed to cancel the current stage unexpectedly. Instance {instance_id} has status {private_computation_instance.status}"
             )
