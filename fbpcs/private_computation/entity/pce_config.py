@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import List
 
 from dataclasses_json import dataclass_json
+from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 
 @dataclass_json
@@ -20,6 +21,7 @@ class PCEConfig:
     cluster: str
     region: str
     onedocker_task_definition: str
+    cloud_provider: CloudProvider = CloudProvider.AWS
 
     def __str__(self) -> str:
         # pyre-ignore
