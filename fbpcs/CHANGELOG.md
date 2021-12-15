@@ -13,12 +13,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
-  -
+  - Add class variable `cloud_provider` to `PCEConfig`
 
 ### Changed
   - Cleanup and move sharding/sharding_cpp to service/sharing_service
   - Refactor ShardingService to reuse RunBinaryBaseService
   - Consolidate wait_for_containers functions
+  - Move CloudProvider enum class
 
 ### Removed
   -
