@@ -342,7 +342,8 @@ OutputMetrics<MY_ROLE>::calculateValidPurchases() {
          std::vector<emp::Integer> purchaseTsArray) -> std::vector<emp::Bit> {
         std::vector<emp::Bit> vec;
         for (const auto& purchaseTs : purchaseTsArray) {
-          const emp::Integer ten{purchaseTs.size(), 10, emp::PUBLIC};
+          const emp::Integer ten{
+              static_cast<int>(purchaseTs.size()), 10, emp::PUBLIC};
           vec.push_back(purchaseTs + ten > oppTs);
         }
         return vec;
@@ -404,7 +405,9 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
               auto numConv = validPurchaseArray.size() - i;
               auto convSquared = static_cast<int64_t>(numConv * numConv);
               emp::Integer numConvSquaredIfValid{
-                  numConvSquared.size(), convSquared, emp::PUBLIC};
+                  static_cast<int>(numConvSquared.size()),
+                  convSquared,
+                  emp::PUBLIC};
               numConvSquared =
                   emp::If(newPurchase, numConvSquaredIfValid, numConvSquared);
 
@@ -542,8 +545,8 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
       [](emp::Bit isUser,
          emp::Integer opportunityTimestamp,
          std::vector<emp::Integer> purchaseTimestampArray) -> emp::Bit {
-        const emp::Integer zero =
-            emp::Integer{opportunityTimestamp.size(), 0, emp::PUBLIC};
+        const emp::Integer zero = emp::Integer{
+            static_cast<int>(opportunityTimestamp.size()), 0, emp::PUBLIC};
         emp::Bit validOpportunity =
             (isUser &
              (opportunityTimestamp > zero)); // check if opportunity is valid
@@ -707,8 +710,10 @@ void OutputMetrics<MY_ROLE>::calculateValue(
                              "values are inconsistent.";
             }
             for (size_t i = 0; i < testEvents.size(); ++i) {
-              const emp::Integer zero =
-                  emp::Integer{purchaseValues.at(i).size(), 0, emp::PUBLIC};
+              const emp::Integer zero = emp::Integer{
+                  static_cast<int>(purchaseValues.at(i).size()),
+                  0,
+                  emp::PUBLIC};
               vec.emplace_back(
                   emp::If(testEvents.at(i), purchaseValues.at(i), zero));
             }
@@ -725,8 +730,8 @@ void OutputMetrics<MY_ROLE>::calculateValue(
            emp::Bit reached) -> std::vector<emp::Integer> {
           std::vector<emp::Integer> vec;
           for (const auto& validValue : validValues) {
-            const emp::Integer zero =
-                emp::Integer{validValue.size(), 0, emp::PUBLIC};
+            const emp::Integer zero = emp::Integer{
+                static_cast<int>(validValue.size()), 0, emp::PUBLIC};
             vec.emplace_back(emp::If(reached, validValue, zero));
           }
           return vec;
@@ -782,7 +787,9 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
       [](std::vector<emp::Bit> events,
          std::vector<emp::Integer> purchaseValuesSquared) -> emp::Integer {
         emp::Integer sumSquared{
-            purchaseValuesSquared.at(0).size(), 0, emp::PUBLIC};
+            static_cast<int>(purchaseValuesSquared.at(0).size()),
+            0,
+            emp::PUBLIC};
         if (events.size() != purchaseValuesSquared.size()) {
           XLOG(FATAL) << "Numbers of event bits and purchase values squared "
                          "are inconsistent.";
