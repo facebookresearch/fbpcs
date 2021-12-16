@@ -77,7 +77,7 @@ struct PrivateMeasurementTouchpointMetadata {
     std::stringstream out;
 
     out << "Measurement Touchpoint Metadata { adId=";
-    out << adId.reveal<std::string>(party);
+    out << adId.reveal<int64_t>(party);
     out << "}";
 
     return out.str();

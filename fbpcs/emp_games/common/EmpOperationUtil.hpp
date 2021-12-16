@@ -73,7 +73,7 @@ const int64_t sum(const std::vector<emp::Bit>& in) {
 }
 
 inline emp::Integer secretSum(const std::vector<emp::Integer>& in) {
-  const emp::Integer zero{in.at(0).size(), 0, emp::PUBLIC};
+  const emp::Integer zero{static_cast<int>(in.at(0).size()), 0, emp::PUBLIC};
   return std::accumulate(in.begin(), in.end(), zero);
 }
 
