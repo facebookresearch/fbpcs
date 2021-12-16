@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Refactor ShardingService to reuse RunBinaryBaseService
   - Consolidate wait_for_containers functions
   - Move CloudProvider enum class
+  - Reformatted CostEstimation.h into .h/.cpp files.
 
 ### Removed
   -
