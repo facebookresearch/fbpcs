@@ -23,7 +23,7 @@
 namespace fbpcs::performance_tools {
 
 CostEstimation::CostEstimation(const std::string& app) : application_{app} {
-  s3Bucket_ = "run-logs-mpc";
+  s3Bucket_ = "cost-estimation-logs";
   if (app == "attribution") {
     s3Path_ = "pa-logs";
   } else if (app == "computation_experimental") {
