@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Move CloudProvider enum class
   - Reformatted CostEstimation.h into .h/.cpp files.
   - Upgraded version of EMP libraries (emp-tool 0.2.3, emp-ot 0.2.2, emp-sh2pc 0.2.2)
+  - Changed CostEstimation S3 bucket
 
 ### Removed
   - Removed Timestamp.h class
