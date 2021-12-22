@@ -6,6 +6,7 @@
 
 # pyre-strict
 
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
@@ -17,6 +18,7 @@ from fbpcp.entity.mpc_instance import (
 from fbpcs.common.entity.instance_base import InstanceBase
 
 
+@dataclass
 class PCSMPCInstance(MPCInstance, InstanceBase):
     @classmethod
     def create_instance(
