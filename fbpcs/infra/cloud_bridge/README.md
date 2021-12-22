@@ -65,10 +65,12 @@ example:  docker run -it --entrypoint=/bin/sh cloudbridge-private_lift-server:0.
 8. create environment variables on AWS credentials (while be removed eventually)
   * run the following command
 ```
-Note: If you don't have an AWS account, Please ask someone in the team to create a IAM role for you.
+Note: Make sure you have the credentials `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to access the AWS account.
+The `AWS_SESSION_TOKEN` is optional if you have a permanent pair of `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
 
 export AWS_ACCESS_KEY_ID=<YOUR_OWN_AWS_ACCESS_KEY> \
 export AWS_SECRET_ACCESS_KEY=<YOUR_OWN_AWS_SECRET_ACCESS_KEY> \
+export AWS_SESSION_TOKEN=<YOUR_OWN_AWS_SESSION_TOKEN> \
 export TF_LOG=DEBUG \
 export TF_LOG_PATH=/tmp/deploy.log
 ```
