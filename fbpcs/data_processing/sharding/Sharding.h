@@ -10,9 +10,14 @@
 #include <string>
 
 namespace data_processing::sharder {
-/**
- * Create a separate function to allow for easy testing
- */
+void runShard(
+    const std::string& inputFilename,
+    const std::string& outputFilenames,
+    const std::string& outputBasePath,
+    int32_t fileStartIndex,
+    int32_t numOutputFiles,
+    int32_t logEveryN);
+
 void runShardPid(
     const std::string& inputFilename,
     const std::string& outputFilenames,
