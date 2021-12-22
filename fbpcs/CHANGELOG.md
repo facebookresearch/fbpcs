@@ -14,6 +14,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 ### Added
   - Add class variable `cloud_provider` to `PCEConfig`
+  - Added PC instance, PID instance, and MPC instance serde versioning tests
+  - Added support for decoupled attribution stage cancellation
+  - Validate that config.yml doesn't contain TOODs
 
 ### Changed
   - Cleanup and move sharding/sharding_cpp to service/sharing_service
