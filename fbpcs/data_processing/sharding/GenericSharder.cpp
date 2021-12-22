@@ -81,7 +81,7 @@ void GenericSharder::shard() {
   for (const auto& tmpFile : tmpFiles) {
     *tmpFile << line << "\n";
   }
-  XLOG(INFO) << "Got header line: '" << line;
+  XLOG(INFO) << "Got header line: '" << line << "'";
 
   // Read lines and send to appropriate outFile repeatedly
   uint64_t lineIdx = 0;
