@@ -10,7 +10,7 @@
 #include <fbpcf/aws/AwsSdk.h>
 #include <folly/init/Init.h>
 
-#include "fbpcs/data_processing/sharding/ShardPid.h"
+#include "fbpcs/data_processing/sharding/Sharding.h"
 
 DEFINE_string(input_filename, "", "Name of the input file");
 DEFINE_string(
