@@ -6,10 +6,16 @@
 
 
 import unittest
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from fbpcs.common.entity.exceptions import InstanceVersionMismatchError
+from fbpcs.common.entity.exceptions import (
+    InstanceVersionMismatchError,
+    InstanceFrozenFieldError,
+)
 from fbpcs.common.entity.instance_base import InstanceBase
+from fbpcs.common.entity.instance_base_config import (
+    InstanceBaseMetadata,
+)
 
 
 @dataclass
@@ -26,8 +32,8 @@ class DummyInstanceV1(InstanceBase):
 class DummyInstanceV2(InstanceBase):
     """Dummy instance class to be used in unit tests"""
 
-    instance_id: str
-    new_field: str = "default"
+    instance_id: str = field(metadata=InstanceBaseMetadata.IMMUTABLE)
+    new_field: str = field(default="default", metadata=InstanceBaseMetadata.MUTABLE)
 
     def get_instance_id(self) -> str:
         return self.instance_id
@@ -92,3 +98,31 @@ class TestInstanceBase(unittest.TestCase):
 
         # strict won't result in exception if instance is not dirty
         DummyInstanceV1.loads_schema(serialized_instance, strict=True)
+
+    def test_change_mutable_field(self):
+        """Tests that mutable fields can be changed"""
+
+        instance = DummyInstanceV2(instance_id="123", new_field="some value")
+
+        self.assertEqual(instance.new_field, "some value")
+        self.assertEqual(instance.dirty, False)
+
+        instance.new_field = "some new value"
+        instance.dirty = True
+
+        self.assertEqual(instance.new_field, "some new value")
+        self.assertEqual(instance.dirty, True)
+
+    def test_attempt_to_change_immutable_field(self):
+        """Tests that immutable fields cannot be changed"""
+
+        instance = DummyInstanceV2(instance_id="123", new_field="some value")
+
+        self.assertEqual(instance.instance_id, "123")
+        self.assertEqual(instance.version_hash, DummyInstanceV2.generate_version_hash())
+
+        with self.assertRaises(InstanceFrozenFieldError):
+            instance.instance_id = "hello"
+
+        with self.assertRaises(InstanceFrozenFieldError):
+            instance.version_hash = "hello"

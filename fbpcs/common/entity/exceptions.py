@@ -7,9 +7,17 @@
 # pyre-strict
 
 
-class InstanceDeserializationError(Exception):
+class InstanceBaseError(Exception):
+    pass
+
+
+class InstanceDeserializationError(InstanceBaseError):
     pass
 
 
 class InstanceVersionMismatchError(ValueError, InstanceDeserializationError):
+    pass
+
+
+class InstanceFrozenFieldError(RuntimeError, InstanceBaseError):
     pass

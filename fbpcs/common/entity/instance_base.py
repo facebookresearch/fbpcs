@@ -22,6 +22,12 @@ T = TypeVar("T", bound="InstanceBase")
 from fbpcs.common.entity.exceptions import (
     InstanceDeserializationError,
     InstanceVersionMismatchError,
+    InstanceFrozenFieldError,
+)
+from fbpcs.common.entity.instance_base_config import (
+    IS_FROZEN_FIELD_DEFAULT_VALUE,
+    IS_FROZEN_FIELD_METADATA_STR,
+    InstanceBaseMetadata,
 )
 
 
@@ -38,11 +44,11 @@ class InstanceBase(DataClassJsonMixin):
     """
 
     # ignored by constructor
-    version_hash: str = field(init=False)
+    version_hash: str = field(init=False, metadata=InstanceBaseMetadata.IMMUTABLE)
     # ignored by constructor
-    dirty: bool = field(init=False)
+    dirty: bool = field(init=False, metadata=InstanceBaseMetadata.MUTABLE)
     # ignored by constructor
-    created_ts: int = field(init=False)
+    created_ts: int = field(init=False, metadata=InstanceBaseMetadata.IMMUTABLE)
 
     def __post_init__(self) -> None:
         self.version_hash = self.generate_version_hash()
@@ -56,6 +62,20 @@ class InstanceBase(DataClassJsonMixin):
 
     def __str__(self) -> str:
         return self.dumps_schema()
+
+    # pyre-ignore Missing parameter annotation [2]
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Override setattr to not change fields marked as frozen"""
+        # if field already has been set and it is marked as frozen...
+        # pyre-fixme Undefined attribute [16]: InstanceBase has no attribute __dataclass_fields__
+        if name in self.__dict__ and self.__dataclass_fields__[name].metadata.get(
+            IS_FROZEN_FIELD_METADATA_STR, IS_FROZEN_FIELD_DEFAULT_VALUE
+        ):
+            raise InstanceFrozenFieldError(
+                f"Cannot change value of {name} because it is marked as an immutable field"
+            )
+        # the field has either never been set or is marked as mutable
+        super().__setattr__(name, value)
 
     def dumps_schema(self) -> str:
         """Serializes the instance, returns as a string"""
@@ -72,16 +92,34 @@ class InstanceBase(DataClassJsonMixin):
         cls_source_code_bytes = inspect.getsource(cls).encode()
         return hashlib.md5(cls_source_code_bytes).hexdigest()
 
+    def _load_non_init_field(
+        self,
+        field_name: str,
+        # pyre-ignore Missing parameter annotation [2]
+        default_value: Any,
+        instance_json_dict: Dict[str, Any],
+    ) -> None:
+        """Reads non-init field from instance dict and sets it on instance
+
+        Arguments:
+            field_name: name of the field to load into the instance
+            default value: value to assign the field if none is in the json dict
+            instance_json_dict: a dictionary rendering of a json serialized instance
+        """
+        super().__setattr__(
+            field_name, instance_json_dict.get(field_name, default_value)
+        )
+
     def _loads_non_init_fields(self, instance_json_dict: Dict[str, Any]) -> None:
         """Reads non-init fields from instance dict and sets them on instance
 
         Arguments:
             instance_json_dict: a dictionary rendering of a json serialized instance
         """
-        self.version_hash = instance_json_dict.get("version_hash", "")
+        self._load_non_init_field("version_hash", "", instance_json_dict)
         # if dirty field DNE in json, then instance is old (and thus is dirty)
-        self.dirty = instance_json_dict.get("dirty", True)
-        self.created_ts = instance_json_dict.get("created_ts", 0)
+        self._load_non_init_field("dirty", True, instance_json_dict)
+        self._load_non_init_field("created_ts", 0, instance_json_dict)
 
     @classmethod
     def loads_schema(cls: Type[T], json_schema_str: str, strict: bool = False) -> T:
