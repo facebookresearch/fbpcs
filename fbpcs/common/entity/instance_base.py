@@ -11,6 +11,7 @@ import hashlib
 import inspect
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, Type, TypeVar
 
@@ -33,16 +34,20 @@ class InstanceBase(DataClassJsonMixin):
     Public attributes:
         version_hash: hash for instance schema. If schema changes, hash changes
         dirty: boolean that indicates if schema has changed since serialization
+        created_ts: unixtime at which the instance was created
     """
 
     # ignored by constructor
     version_hash: str = field(init=False)
     # ignored by constructor
     dirty: bool = field(init=False)
+    # ignored by constructor
+    created_ts: int = field(init=False)
 
     def __post_init__(self) -> None:
         self.version_hash = self.generate_version_hash()
         self.dirty = False
+        self.created_ts = int(time.time())
 
     # TODO(T108616043): [PCS][BE] delete get_instance_id; make instance_id required field
     @abc.abstractmethod
@@ -76,6 +81,7 @@ class InstanceBase(DataClassJsonMixin):
         self.version_hash = instance_json_dict.get("version_hash", "")
         # if dirty field DNE in json, then instance is old (and thus is dirty)
         self.dirty = instance_json_dict.get("dirty", True)
+        self.created_ts = instance_json_dict.get("created_ts", 0)
 
     @classmethod
     def loads_schema(cls: Type[T], json_schema_str: str, strict: bool = False) -> T:
