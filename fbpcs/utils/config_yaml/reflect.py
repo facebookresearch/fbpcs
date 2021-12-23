@@ -12,6 +12,7 @@ from fbpcp.util.reflect import get_class as fbpcp_get_class
 from fbpcs.utils.config_yaml.exceptions import (
     ConfigYamlModuleImportError,
     ConfigYamlClassNotFoundError,
+    ConfigYamlValidationError,
     ConfigYamlWrongClassConfiguredError,
     ConfigYamlWrongConstructorError,
 )
@@ -59,15 +60,23 @@ def get_instance(config: Dict[str, Any], target_class: Type[T]) -> T:
 
     Raises:
         ConfigYamlWrongConstructorError: incorrect arguments passed to class constructor
+        ConfigYamlValidationError: invalid arguments passed to class constructor
 
     Returns:
         instance of type target_class
-
-
     """
     cls = get_class(config["class"], target_class)
     try:
-        instance = cls(**config.get("constructor", {}))
+        args_dict = config.get("constructor", {})
+        if "TODO" in args_dict.values():
+            raise ConfigYamlValidationError(
+                cls.__name__,
+                "TODOs found in config",
+                "Fill in remaining TODO entries in config.yml",
+            )
+        instance = cls(**args_dict)
+    except ConfigYamlValidationError:
+        raise
     except TypeError as e:
         raise ConfigYamlWrongConstructorError(cls.__name__, str(e)) from None
     return instance
