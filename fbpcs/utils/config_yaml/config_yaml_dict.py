@@ -6,7 +6,10 @@
 
 from typing import Any, Dict
 
-from fbpcs.utils.config_yaml.exceptions import ConfigYamlFieldNotFoundError
+from fbpcs.utils.config_yaml.exceptions import (
+    ConfigYamlFieldNotFoundError,
+    ConfigYamlValidationError,
+)
 
 
 class ConfigYamlDict(Dict[str, Any]):
@@ -16,9 +19,17 @@ class ConfigYamlDict(Dict[str, Any]):
     def __getitem__(self, key: str) -> Any:
         """Override of dict key access, e.g. x = my_dict[key]"""
         try:
-            return super().__getitem__(key)
+            val = super().__getitem__(key)
         except KeyError:
             raise ConfigYamlFieldNotFoundError(key) from None
+
+        if val == "TODO":
+            raise ConfigYamlValidationError(
+                key,
+                "TODOs found in config",
+                "Fill in remaining TODO entries in config.yml",
+            )
+        return val
 
     def __setitem__(self, key: str, value: Any) -> None:
         """Override of dict item setting, e.g. my_dict[key] = x.
