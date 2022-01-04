@@ -23,16 +23,18 @@ class AwsDeploymentHelperTool:
         if self.cli_args.add_iam_user:
             if self.cli_args.user_name is None:
                 raise Exception(
-                    "Need username to add user. Please add username using --user_name argument in cli.py"
+                    "Need username to add user. Please add username using"
+                    " --user_name argument in cli.py"
                 )
             self.aws_deployment_helper_obj.create_user_workflow(
                 user_name=self.cli_args.user_name
             )
 
         if self.cli_args.add_iam_policy:
-            if self.cli_args.policy_name is None:
+            if self.cli_args.policy_name is None or self.cli_args.region is None:
                 raise Exception(
-                    "Need policy name to add IAM policy. Please add username using --policy_name argument in cli.py"
+                    "Need policy name to add IAM policy. Please add username using"
+                    " --policy_name argument in cli.py"
                 )
             policy_params = PolicyParams(
                 firehose_stream_name=self.cli_args.firehose_stream_name,
@@ -47,6 +49,20 @@ class AwsDeploymentHelperTool:
                 policy_name=self.cli_args.policy_name, policy_params=policy_params
             )
 
+        if self.cli_args.attach_iam_policy:
+            if (
+                self.cli_args.iam_policy_name is None
+                or self.cli_args.iam_user_name is None
+            ):
+                raise Exception(
+                    "Need username and policy_name to attach policy to user. Please use"
+                    " --user_name and --policy_name arguments in cli.py"
+                )
+            self.aws_deployment_helper_obj.attach_user_policy(
+                policy_name=self.cli_args.iam_policy_name,
+                user_name=self.cli_args.iam_user_name,
+            )
+
     def destroy(self):
         if self.cli_args.delete_iam_user:
             self.aws_deployment_helper_obj.delete_user_workflow(
@@ -56,4 +72,17 @@ class AwsDeploymentHelperTool:
         if self.cli_args.delete_iam_policy:
             self.aws_deployment_helper_obj.delete_policy(
                 policy_name=self.cli_args.policy_name
+            )
+        if self.cli_args.detach_iam_policy:
+            if (
+                self.cli_args.iam_policy_name is None
+                or self.cli_args.iam_user_name is None
+            ):
+                raise Exception(
+                    "Need username and policy_name to detach policy to user. Please use"
+                    " --user_name and --policy_name arguments in cli.py"
+                )
+            self.aws_deployment_helper_obj.detach_user_policy(
+                policy_name=self.cli_args.iam_policy_name,
+                user_name=self.cli_args.iam_user_name,
             )
