@@ -90,6 +90,7 @@ class AwsDeploymentHelper:
         self.iam = boto3.client("iam")
 
     def create_user(self, user_name: str):
+        self.log.info(f"Creating user {user_name}")
         try:
             self.iam.create_user(UserName=user_name)
             self.log.info(f"Created user with user name {user_name}")
@@ -105,6 +106,7 @@ class AwsDeploymentHelper:
                 )
 
     def delete_user(self, user_name: str):
+        self.log.info(f"Deleting user {user_name}")
         try:
             self.iam.delete_user(UserName=user_name)
             self.log.info(f"Deleted user with user name {user_name}")
@@ -122,6 +124,7 @@ class AwsDeploymentHelper:
     def create_policy(
         self, policy_name: str, policy_params: PolicyParams, user_name: str = None
     ):
+        self.log.info(f"Adding policy {policy_name}")
 
         # directly reading the json file from iam_policies folder
         # TODO: pass the policy to be added from cli.py when we need more granular control
@@ -149,6 +152,7 @@ class AwsDeploymentHelper:
                     self.log.error(f"Unexpected error occurred in policy {policy_name}")
 
     def delete_policy(self, policy_name: str):
+        self.log.info(f"Deleting policy {policy_name}")
         policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
         try:
             self.iam.delete_policy(PolicyArn=policy_arn)
@@ -160,6 +164,21 @@ class AwsDeploymentHelper:
                 self.log.error(f"Unexpected error occurred in deleting policy: {error}")
 
     def attach_user_policy(self, policy_name: str, user_name: str):
+        self.log.info(f"Attaching policy {policy_name} to user {user_name}")
+
+        current_policies = self.list_policies()
+        current_users = self.list_users()
+
+        if policy_name not in current_policies:
+            self.log.error(f"Policy {policy_name} is not present for this AWS account")
+            self.log.error("Please check policy name or add a new policy")
+            raise Exception(f"Policy {policy_name} not found")
+
+        if user_name not in current_users:
+            self.log.error(f"User {user_name} is not present for this AWS account")
+            self.log.error("Please check user name or add a new user")
+            raise Exception(f"User {user_name} not found")
+
         policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
         try:
             self.iam.attach_user_policy(UserName=user_name, PolicyArn=policy_arn)
@@ -172,6 +191,21 @@ class AwsDeploymentHelper:
             )
 
     def detach_user_policy(self, policy_name: str, user_name: str):
+        self.log.info(f"Detaching policy {policy_name} from the user {user_name}")
+
+        current_policies = self.list_policies()
+        current_users = self.list_users()
+
+        if policy_name not in current_policies:
+            self.log.error(f"Policy {policy_name} is not present for this AWS account")
+            self.log.error("Please check policy name or add a new policy")
+            raise Exception(f"Policy {policy_name} not found")
+
+        if user_name not in current_users:
+            self.log.error(f"User {user_name} is not present for this AWS account")
+            self.log.error("Please check user name or add a new user")
+            raise Exception(f"User {user_name} not found")
+
         policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
         try:
             self.iam.detach_user_policy(UserName=user_name, PolicyArn=policy_arn)
@@ -184,15 +218,28 @@ class AwsDeploymentHelper:
             )
 
     def list_policies(self):
-        iam = boto3.client("iam")
-        paginator = iam.get_paginator("list_policies")
-        for response in paginator.paginate(Scope="Local"):
-            for policy in response["Policies"]:
-                self.log.info(
-                    f"Policy Name: {policy['PolicyName']} ARN: {policy['Arn']}"
-                )
+        policy_name_list = []
+        try:
+            response = self.iam.list_policies().get("Policies", [])
+            for policy_dict in response:
+                policy_name_list.append(policy_dict["PolicyName"])
+        except ClientError as error:
+            self.log.error(f"Failed to list policies: {error}")
+        return policy_name_list
 
-    def create_access_key(self, policy_name: str, user_name: str):
+    def list_users(self):
+        user_name_list = []
+        try:
+            response = self.iam.list_users().get("Users", [])
+            for users_dict in response:
+                user_name_list.append(users_dict["UserName"])
+        except ClientError as error:
+            self.log.error(f"Failed to list users: {error}")
+        return user_name_list
+
+    def create_access_key(self, user_name: str):
+        self.log.info(f"Creating access and secret keys for user {user_name}.")
+        self.log.info("Access and secrect keys will not be printed in this log file.")
         try:
             response = self.iam.create_access_key(UserName=user_name)
             self.log.info(f"Creating access and secret key for the user {user_name}")
@@ -204,13 +251,13 @@ class AwsDeploymentHelper:
             print(f"Access Key = {access_key}")
             print(f"Secret Key = {secret_key}")
             print(f"User = {user_name}")
-            print(f"Policy = {policy_name}")
         except ClientError as error:
             self.log.error(
                 f"Error in generating access and secret for user {user_name}: {error}"
             )
 
     def delete_access_key(self, user_name: str, access_key: str):
+        self.log.info(f"Deleting access and secret keys for user {user_name}.")
         try:
             self.iam.delete_access_key(UserName=user_name, AccessKeyId=access_key)
             self.log.info(f"Deleting access and secret key for the user {user_name}")
@@ -254,44 +301,28 @@ class AwsDeploymentHelper:
         return json_data
 
     def create_user_workflow(self, user_name: str):
-        policy_name = f"{user_name}_policy"
 
         self.log.info(
             f"""Cli to create user is triggered. Following actions will be performed
         1. User {user_name} will be created
-        2. Policy {policy_name} will be created and attached to {user_name}
-        3. Access and security keys for {user_name} will be created
+        2. Access and security keys for {user_name} will be created
         """
         )
 
+        # create user
         self.create_user(user_name=user_name)
 
-        # create policy
-        self.create_policy(policy_name=policy_name, user_name=user_name)
-
-        # attach policy to the user
-        self.attach_user_policy(policy_name=policy_name, user_name=user_name)
-
         # generate access and secret keys
-        self.create_access_key(policy_name=policy_name, user_name=user_name)
+        self.create_access_key(user_name=user_name)
         self.log.info("Creation operation completed.")
 
     def delete_user_workflow(self, user_name: str):
-        policy_name = f"{user_name}_policy"
-
         self.log.info(
             f"""Cli to create user is triggered. Following actions will be performed
         1. User {user_name} will be deleted
-        2. Policy {policy_name} will be deleted and detached from {user_name}
-        3. All access and security keys of {user_name} will be deleted
+        2. All access and security keys of {user_name} will be deleted
         """
         )
-
-        # detach policy from the user
-        self.detach_user_policy(policy_name=policy_name, user_name=user_name)
-
-        # delete policy from the aws account
-        self.delete_policy(policy_name=policy_name)
 
         # delete all the access keys for the user
         access_key_list = self.list_access_keys(user_name=user_name)

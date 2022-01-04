@@ -51,6 +51,9 @@ def main():
     aws_create_iam_policy_parser_arguments(aws_create_parser)
     aws_destroy_iam_policy_parser_arguments(aws_destroy_parser)
 
+    aws_attach_iam_policy_parser_arguments(aws_create_parser)
+    aws_detach_iam_policy_parser_arguments(aws_destroy_parser)
+
     cli_args = cli_parser.parse_args()
 
     if cli_args.platform == "aws":
@@ -135,6 +138,22 @@ def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
 
+def aws_attach_iam_policy_parser_arguments(aws_parser: argparse):
+    iam_policy_command_group = aws_parser.add_argument_group(
+        "iam_policy_attach", "Arguments to attach IAM policy to the user"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--attach_iam_policy", action="store_true", help="Attaches IAM policy to a user"
+    )
+    iam_policy_command_group.add_argument(
+        "--iam_policy_name", type=str, required=False, help="Policy to be attached"
+    )
+    iam_policy_command_group.add_argument(
+        "--iam_user_name", type=str, required=False, help="Attach policy to user"
+    )
+
+
 def aws_destroy_iam_user_parser_arguments(aws_parser: argparse):
     iam_user_command_group = aws_parser.add_argument_group(
         "iam_user", "Arguments to delete iam user"
@@ -160,6 +179,25 @@ def aws_destroy_iam_policy_parser_arguments(aws_parser: argparse):
     )
     iam_policy_command_group.add_argument(
         "--policy_name", type=str, required=False, help="Policy name to be destroyed"
+    )
+
+
+def aws_detach_iam_policy_parser_arguments(aws_parser: argparse):
+    iam_policy_command_group = aws_parser.add_argument_group(
+        "iam_policy_detach", "Arguments to detach IAM policy to the user"
+    )
+
+    iam_policy_command_group.add_argument(
+        "--detach_iam_policy", action="store_true", help="Detaches IAM policy to a user"
+    )
+    iam_policy_command_group.add_argument(
+        "--iam_policy_name",
+        type=str,
+        required=False,
+        help="Policy that is to be detached",
+    )
+    iam_policy_command_group.add_argument(
+        "--iam_user_name", type=str, required=False, help="Detach policy from user"
     )
 
 
