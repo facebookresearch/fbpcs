@@ -13,6 +13,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Removed
+
+## [1.1.0] - 2022-01-05
+### Added
   - Add class variable `cloud_provider` to `PCEConfig`
 
 ### Changed
