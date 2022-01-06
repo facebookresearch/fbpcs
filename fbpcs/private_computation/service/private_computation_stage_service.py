@@ -35,6 +35,7 @@ class PrivateComputationStageServiceArgs:
     mpc_svc: MPCService
     storage_svc: StorageService
     post_processing_handlers: Dict[str, PostProcessingHandler]
+    pid_post_processing_handlers: Dict[str, PostProcessingHandler]
     onedocker_svc: OneDockerService
 
 

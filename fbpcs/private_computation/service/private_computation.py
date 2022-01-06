@@ -74,6 +74,7 @@ class PrivateComputationService:
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
+        pid_post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
     ) -> None:
         """Constructor of PrivateComputationService
         instance_repository -- repository to CRUD PrivateComputationInstance
@@ -87,12 +88,16 @@ class PrivateComputationService:
         self.post_processing_handlers: Dict[str, PostProcessingHandler] = (
             post_processing_handlers or {}
         )
+        self.pid_post_processing_handlers: Dict[str, PostProcessingHandler] = (
+            pid_post_processing_handlers or {}
+        )
         self.stage_service_args = PrivateComputationStageServiceArgs(
             self.pid_svc,
             self.onedocker_binary_config_map,
             self.mpc_svc,
             self.storage_svc,
             self.post_processing_handlers,
+            self.pid_post_processing_handlers,
             self.onedocker_svc,
         )
         self.logger: logging.Logger = logging.getLogger(__name__)
