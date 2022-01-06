@@ -67,6 +67,7 @@ def create_instance(
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
     )
 
     instance = pc_service.create_instance(
@@ -107,6 +108,7 @@ def validate(
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
     )
     pc_service.validate_metrics(
         instance_id=instance_id,
@@ -138,6 +140,7 @@ def run_next(
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
     )
 
     # Because it's possible that the "get" command never gets called to update the instance since the last step started,
@@ -164,6 +167,7 @@ def run_stage(
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
     )
 
     # Because it's possible that the "get" command never gets called to update the instance since the last step started,
@@ -193,6 +197,7 @@ def get_instance(
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
     )
     instance = pc_service.get_instance(instance_id)
     if instance.current_stage.is_started_status(instance.status):
@@ -209,6 +214,7 @@ def get_server_ips(
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
     )
 
     pc_instance = pc_service.instance_repository.read(instance_id)
@@ -284,6 +290,7 @@ def cancel_current_stage(
         config["mpc"],
         config["pid"],
         config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
     )
     instance = pc_service.cancel_current_stage(instance_id=instance_id)
     logger.info("Done canceling the current stage")
@@ -346,6 +353,7 @@ def _build_private_computation_service(
     mpc_config: Dict[str, Any],
     pid_config: Dict[str, Any],
     pph_config: Dict[str, Any],
+    pid_pph_config: Dict[str, Any],
 ) -> PrivateComputationService:
     instance_repository_config = pc_config["dependency"][
         "PrivateComputationInstanceRepository"
@@ -381,6 +389,7 @@ def _build_private_computation_service(
         onedocker_service,
         onedocker_binary_config_map,
         _get_post_processing_handlers(pph_config),
+        _get_post_processing_handlers(pid_pph_config),
     )
 
 
