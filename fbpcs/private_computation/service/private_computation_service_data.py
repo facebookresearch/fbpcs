@@ -76,14 +76,6 @@ class PrivateComputationServiceData:
         service=IdSpineCombinerService(),
     )
 
-    ATTRIBUTION_COMPUTE_STAGE_DATA: StageData = StageData(
-        binary_name=OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value,
-        game_name=BINARY_NAME_TO_GAME_NAME[
-            OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value
-        ],
-        service=None,
-    )
-
     DECOUPLED_ATTRIBUTION_STAGE_DATA: StageData = StageData(
         binary_name=OneDockerBinaryNames.DECOUPLED_ATTRIBUTION.value,
         game_name=BINARY_NAME_TO_GAME_NAME[
@@ -112,7 +104,7 @@ class PrivateComputationServiceData:
         elif game_type is PrivateComputationGameType.ATTRIBUTION:
             return cls(
                 combiner_stage=PrivateComputationServiceData.ATTRIBUTION_COMBINER_STAGE_DATA,
-                compute_stage=PrivateComputationServiceData.ATTRIBUTION_COMPUTE_STAGE_DATA,
+                compute_stage=PrivateComputationServiceData.DECOUPLED_ATTRIBUTION_STAGE_DATA,
             )
         else:
             raise ValueError("Unknown game type")

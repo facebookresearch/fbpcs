@@ -15,7 +15,6 @@ from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 class GameNames(Enum):
     LIFT = "lift"
     SHARD_AGGREGATOR = "shard_aggregator"
-    ATTRIBUTION_COMPUTE = "attribution_compute"
     DECOUPLED_ATTRIBUTION = "decoupled_attribution"
     DECOUPLED_AGGREGATION = "decoupled_aggregation"
 
@@ -40,19 +39,6 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
             {"name": "metrics_format_type", "required": True},
             {"name": "threshold", "required": True},
             {"name": "first_shard_index", "required": False},
-        ],
-    },
-    GameNames.ATTRIBUTION_COMPUTE.value: {
-        "onedocker_package_name": OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value,
-        "arguments": [
-            {"name": "aggregators", "required": True},
-            {"name": "input_base_path", "required": True},
-            {"name": "output_base_path", "required": True},
-            {"name": "attribution_rules", "required": True},
-            {"name": "concurrency", "required": True},
-            {"name": "num_files", "required": True},
-            {"name": "file_start_index", "required": True},
-            {"name": "use_xor_encryption", "required": True},
         ],
     },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
