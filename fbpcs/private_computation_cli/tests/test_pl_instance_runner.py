@@ -517,7 +517,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             ####################### NON JOINT STAGE TEST #################################3
             (
-                "ID_MATCH_COMPLETED",
+                "ID_MATCHING_POST_PROCESS_COMPLETED",
                 PrivateComputationStageFlow.PREPARE.previous_stage.completed_status,
                 PrivateComputationStageFlow.PREPARE,
                 True,
@@ -687,7 +687,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             ####################### NON JOINT STAGE TEST #################################3
             (
-                "ID_MATCH_COMPLETED",
+                "ID_MATCHING_POST_PROCESS_COMPLETED",
                 PrivateComputationStageFlow.PREPARE.previous_stage.completed_status,
                 PrivateComputationStageFlow.PREPARE,
                 True,

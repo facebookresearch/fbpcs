@@ -46,7 +46,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED PID_SHARD PID_PREPARE ID_MATCH PREPARE COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS PREPARE COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -73,6 +73,12 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
         PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
         True,
+    )
+    ID_MATCH_POST_PROCESS = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_STARTED,
+        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_COMPLETED,
+        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_FAILED,
+        False,
     )
     PREPARE = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
@@ -133,6 +139,10 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
                 args.pid_svc,
                 UnionPIDStage.PUBLISHER_RUN_PID,
                 UnionPIDStage.ADV_RUN_PID,
+            )
+        elif self is self.ID_MATCH_POST_PROCESS:
+            return PostProcessingStageService(
+                args.storage_svc, args.pid_post_processing_handlers
             )
         elif self is self.PREPARE:
             return PrepareDataStageService(
