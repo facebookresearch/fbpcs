@@ -13,11 +13,12 @@
 
 #include <emp-sh2pc/emp-sh2pc.h>
 
-#include "../../common/EmpOperationUtil.h"
-#include "../../common/PrivateData.h"
-#include "../../common/SecretSharing.h"
-#include "InputData.h"
-#include "OutputMetricsData.h"
+#include "fbpcs/emp_games/common/EmpOperationUtil.h"
+#include "fbpcs/emp_games/common/PrivateData.h"
+#include "fbpcs/emp_games/common/SecretSharing.h"
+#include "fbpcs/emp_games/lift/calculator/LiftInputData.h"
+#include "fbpcs/emp_games/lift/calculator/OutputMetricsData.h"
+#include "fbpcs/emp_games/lift/common/DataFrame.h"
 
 namespace private_lift {
 /*
@@ -32,12 +33,13 @@ class OutputMetrics {
 
   // Constructor. From an InputData object, calculate all output metrics
   OutputMetrics(
-      const InputData& inputData,
+      const LiftInputData& inputData,
       bool isConversionLift,
       bool useXorEncryption,
       int32_t numConversionsPerUser)
       : inputData_{inputData},
-        n_{static_cast<int64_t>(inputData.getNumRows())},
+        df_{inputData.getDf()},
+        n_{inputData.size()},
         isConversionLift_{isConversionLift},
         useXorEncryption_{useXorEncryption},
         numConversionsPerUser_{numConversionsPerUser} {}
@@ -181,7 +183,8 @@ class OutputMetrics {
    */
   int64_t sum(const std::vector<std::vector<emp::Integer>>& in) const;
 
-  const InputData& inputData_;
+  const LiftInputData& inputData_;
+  const df::DataFrame &df_;
   int64_t n_;
   bool isConversionLift_;
   bool useXorEncryption_;

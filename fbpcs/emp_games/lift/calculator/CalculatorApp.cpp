@@ -5,25 +5,26 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include "fbpcs/emp_games/lift/calculator/CalculatorApp.h"
+
 #include <vector>
 
 #include <gflags/gflags.h>
-#include "folly/logging/xlog.h"
 
 #include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
+#include <folly/logging/xlog.h>
 
-#include "CalculatorApp.h"
-#include "CalculatorGame.h"
-#include "CalculatorGameConfig.h"
-#include "InputData.h"
+#include "fbpcs/emp_games/lift/calculator/CalculatorGame.h"
+#include "fbpcs/emp_games/lift/calculator/CalculatorGameConfig.h"
+#include "fbpcs/emp_games/lift/calculator/LiftInputData.h"
 
 namespace private_lift {
 void CalculatorApp::run() {
   try {
     CalculatorGameConfig config = getInputData();
-    int32_t numValues = static_cast<int32_t>(config.inputData.getNumRows());
+    int32_t numValues = static_cast<int32_t>(config.inputData.size());
     XLOG(INFO) << "Have " << numValues << " values in inputData.";
 
     XLOG(INFO) << "connecting...";
@@ -50,19 +51,10 @@ CalculatorGameConfig CalculatorApp::getInputData() {
   int32_t numConversionsPerUser =
       FLAGS_is_conversion_lift ? FLAGS_num_conversions_per_user : 1;
 
-  auto liftGranularityType = FLAGS_is_conversion_lift
-      ? InputData::LiftGranularityType::Conversion
-      : InputData::LiftGranularityType::Converter;
-
   XLOG(INFO) << "Parsing input";
-  InputData inputData{
-      inputPath_,
-      InputData::LiftMPCType::Standard,
-      liftGranularityType,
-      FLAGS_epoch,
-      numConversionsPerUser};
+  LiftInputData inputData{party_, inputPath_};
   CalculatorGameConfig config = {
-      inputData, FLAGS_is_conversion_lift, numConversionsPerUser};
+    std::move(inputData), FLAGS_is_conversion_lift, numConversionsPerUser};
   return config;
 }
 

@@ -5,13 +5,27 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <limits>
+#include <string>
 #include <tuple>
-
-#include "folly/logging/xlog.h"
+#include <vector>
 
 #include <fbpcf/mpc/EmpGame.h>
-#include "../../common/Functional.h"
-#include "../common/GroupedLiftMetrics.h"
+#include <folly/logging/xlog.h>
+
+#include "fbpcs/emp_games/common/Functional.h"
+#include "fbpcs/emp_games/lift/common/GroupedLiftMetrics.h"
+
+namespace {
+inline std::vector<int64_t> boolVecToIntVec(const std::vector<bool> &vec) {
+  std::vector<int64_t> res;
+  res.reserve(vec.size());
+  for (bool value : vec) {
+    res.push_back(static_cast<int64_t>(value));
+  }
+  return res;
+}
+} // namespace
 
 namespace private_lift {
 
@@ -62,24 +76,6 @@ std::string OutputMetrics<MY_ROLE>::playGame() {
   // currently outputting.
   for (size_t i = 0; i < cohortMetrics_.size(); ++i) {
     XLOG(INFO) << "\ncohort [" << i << "] results:";
-    if (MY_ROLE == PARTNER) {
-      // This section only applies if features were suppled instead of cohorts
-      if (inputData_.getGroupIdToFeatures().size() > 0) {
-        auto features = inputData_.getGroupIdToFeatures().at(i);
-        std::stringstream headerSs;
-        for (size_t j = 0; j < features.size(); ++j) {
-          auto featureHeader = inputData_.getFeatureHeader().at(j);
-          headerSs << featureHeader << "=" << features.at(j);
-          if (j + 1 < features.size()) {
-            headerSs << ", ";
-          }
-        }
-        XLOG(INFO) << headerSs.str();
-      }
-    } else {
-      XLOG(INFO) << "(Feature header unknown to publisher)";
-    }
-
     auto cohortMetrics = cohortMetrics_[i];
     XLOG(INFO) << cohortMetrics;
   }
@@ -93,16 +89,12 @@ void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream& outfile) {
           << ",";
   outfile << metrics_.testEvents << ",";
   outfile << metrics_.controlEvents << ",";
-  // Value metrics are only relevant for conversion lift
-  if (inputData_.getLiftGranularityType() ==
-      InputData::LiftGranularityType::Conversion) {
-    outfile << metrics_.testValue << ",";
-    outfile << metrics_.controlValue << ",";
-    outfile << metrics_.testValueSquared << ",";
-    outfile << metrics_.controlValueSquared << ",";
-    outfile << metrics_.testNumConvSquared << ",";
-    outfile << metrics_.controlNumConvSquared << ",";
-  }
+  outfile << metrics_.testValue << ",";
+  outfile << metrics_.controlValue << ",";
+  outfile << metrics_.testValueSquared << ",";
+  outfile << metrics_.controlValueSquared << ",";
+  outfile << metrics_.testNumConvSquared << ",";
+  outfile << metrics_.controlNumConvSquared << ",";
   outfile << metrics_.testMatchCount << ",";
   outfile << metrics_.controlMatchCount << "\n";
 
@@ -112,34 +104,18 @@ void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream& outfile) {
   // currently outputting.
   for (size_t i = 0; i < cohortMetrics_.size(); ++i) {
     auto subOut = cohortMetrics_.at(i);
-    if (MY_ROLE == PARTNER) {
-      auto features = inputData_.getGroupIdToFeatures().at(i);
-      for (auto j = 0; j < features.size(); ++j) {
-        auto featureHeader = inputData_.getFeatureHeader().at(j);
-        outfile << featureHeader << "=" << features.at(j);
-        if (j + 1 < features.size()) {
-          outfile << " AND ";
-        }
-      }
-      outfile << ",";
-    } else {
-      outfile << "cohort " << i << ",";
-    }
+    outfile << "cohort " << i << ",";
 
     outfile << subOut.testEvents << ",";
     outfile << subOut.controlEvents << ",";
     outfile << subOut.testConverters << ",";
     outfile << subOut.controlConverters << ",";
-    // Value metrics are only relevant for conversion lift
-    if (inputData_.getLiftGranularityType() ==
-        InputData::LiftGranularityType::Conversion) {
-      outfile << subOut.testValue << ",";
-      outfile << subOut.controlValue << ",";
-      outfile << subOut.testValueSquared << ",";
-      outfile << subOut.controlValueSquared << ",";
-      outfile << subOut.testNumConvSquared << ",";
-      outfile << subOut.controlNumConvSquared << ",";
-    }
+    outfile << subOut.testValue << ",";
+    outfile << subOut.controlValue << ",";
+    outfile << subOut.testValueSquared << ",";
+    outfile << subOut.controlValueSquared << ",";
+    outfile << subOut.testNumConvSquared << ",";
+    outfile << subOut.controlNumConvSquared << ",";
   }
 }
 
@@ -185,20 +161,25 @@ void OutputMetrics<MY_ROLE>::initNumGroups() {
   XLOG(INFO) << "Set up number of partner groups";
   // emp::Integer operates on int64_t values, so we do a static cast here
   // This is fine since we shouldn't be handling more than 2^63-1 groups...
-  auto numGroups = privatelyShareInt<MY_ROLE>(inputData_.getNumGroups());
+  auto numGroups = privatelyShareInt<MY_ROLE>(inputData_.getGroupCount());
   numPublisherBreakdowns_ = numGroups.publisherInt().template reveal<int64_t>();
   numPartnerCohorts_ = numGroups.partnerInt().template reveal<int64_t>();
 
   // We pre-share the bitmasks for each group since they will be used
   // multiple times throughout the computation
+  std::vector<int64_t> dummy;
   for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
-    publisherBitmasks_[i] =
-        privatelyShareBitsFromPublisher<MY_ROLE>(inputData_.bitmaskFor(i), n_);
+    auto mask = MY_ROLE == PUBLISHER
+        ? boolVecToIntVec(inputData_.getBitmaskFor(i).data())
+        : dummy;
+    publisherBitmasks_[i] = privatelyShareBitsFromPublisher<MY_ROLE>(mask, n_);
   }
 
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    partnerBitmasks_[i] =
-        privatelyShareBitsFromPartner<MY_ROLE>(inputData_.bitmaskFor(i), n_);
+    auto mask = MY_ROLE == PARTNER
+        ? boolVecToIntVec(inputData_.getBitmaskFor(i).data())
+        : dummy;
+    partnerBitmasks_[i] = privatelyShareBitsFromPartner<MY_ROLE>(mask, n_);
   }
   XLOG(INFO) << "Will be computing metrics for " << numPublisherBreakdowns_
              << " publisher breakdowns and " << numPartnerCohorts_
@@ -208,9 +189,14 @@ void OutputMetrics<MY_ROLE>::initNumGroups() {
 template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::initShouldSkipValues() {
   XLOG(INFO) << "Determine if value-based calculations should be skipped";
-  bool hasValues = inputData_.getPurchaseValueArrays().empty();
+  df::Column<std::vector<int64_t>> dummy;
+  auto& purchaseValueArrays = df_.containsKey("values")
+    ? df_.get<std::vector<int64_t>>("values")
+    : dummy;
+  bool hasValues = !purchaseValueArrays.empty();
   emp::Bit hasValuesBit{hasValues, PARTNER};
-  shouldSkipValues_ = hasValuesBit.reveal<bool>();
+  // We shouldSkipValues if we *don't* have values in the partner dataset
+  shouldSkipValues_ = !hasValuesBit.reveal<bool>();
   XLOG(INFO) << "shouldSkipValues = " << shouldSkipValues_;
 }
 
@@ -218,9 +204,29 @@ template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::initBitsForValues() {
   if (!shouldSkipValues_) {
     XLOG(INFO) << "Set up number of bits needed for purchase value sharing";
-    auto valueBits = static_cast<int64_t>(inputData_.getNumBitsForValue());
-    auto valueSquaredBits =
-        static_cast<int64_t>(inputData_.getNumBitsForValueSquared());
+    df::Column<std::vector<int64_t>> dummy;
+    auto& purchaseValueArrays = df_.containsKey("values")
+      ? df_.get<std::vector<int64_t>>("values")
+      : dummy;
+    int64_t valueSum = 0;
+    int64_t valueSquaredSum = 0;
+    purchaseValueArrays.apply([&valueSum, &valueSquaredSum](const auto& vec) {
+        int64_t innerSum = 0;
+        for (auto value : vec) {
+          innerSum += value;
+        }
+        valueSum += innerSum;
+        valueSquaredSum += innerSum * innerSum;
+    });
+
+    int64_t valueBits = valueSum > std::numeric_limits<int32_t>::max()
+      ? 64
+      : 32;
+
+    int64_t valueSquaredBits = valueSquaredSum > std::numeric_limits<int32_t>::max()
+      ? 64
+      : 32;
+
     emp::Integer valueBitsInteger{
         private_measurement::INT_SIZE, valueBits, PARTNER};
     emp::Integer valueSquaredBitsInteger{
@@ -245,11 +251,13 @@ void OutputMetrics<MY_ROLE>::calculateAll() {
 
   if (!shouldSkipValues_) {
     XLOG(INFO) << "Share purchase values";
+    df::Column<std::vector<int64_t>> dummy;
+    auto& column = df_.containsKey("values")
+      ? df_.get<std::vector<int64_t>>("values")
+      : dummy;
     purchaseValueArrays = privatelyShareIntArraysFromPartner<MY_ROLE>(
-        inputData_.getPurchaseValueArrays(),
-        n_, /* numVals */
-        numConversionsPerUser_ /* arraySize */,
-        valueBits_ /* bitLen */);
+        column.data(), n_, /* numVals */
+        numConversionsPerUser_ /* arraySize */, valueBits_ /* bitLen */);
   }
 
   auto validPurchaseArrays = calculateValidPurchases();
@@ -258,26 +266,20 @@ void OutputMetrics<MY_ROLE>::calculateAll() {
 
   // If this is (value-based) conversion lift, we also need to share purchase
   // values squared
-  if (!shouldSkipValues_ &&
-      inputData_.getLiftGranularityType() ==
-          InputData::LiftGranularityType::Conversion) {
+  if (!shouldSkipValues_) {
+    df::Column<std::vector<int64_t>> dummy;
+    auto& column = df_.containsKey("values_squared")
+      ? df_.get<std::vector<int64_t>>("values_squared")
+      : dummy;
     purchaseValueSquaredArrays = privatelyShareIntArraysFromPartner<MY_ROLE>(
-        inputData_.getPurchaseValueSquaredArrays(),
-        n_, /* numVals */
-        numConversionsPerUser_ /* arraySize */,
-        valueSquaredBits_ /* bitLen */);
+        column.data(), n_, /* numVals */
+        numConversionsPerUser_ /* arraySize */, valueSquaredBits_ /* bitLen */);
   }
 
-  calculateStatistics(
-      GroupType::TEST,
-      purchaseValueArrays,
-      purchaseValueSquaredArrays,
-      validPurchaseArrays);
-  calculateStatistics(
-      GroupType::CONTROL,
-      purchaseValueArrays,
-      purchaseValueSquaredArrays,
-      validPurchaseArrays);
+  calculateStatistics(GroupType::TEST, purchaseValueArrays,
+                      purchaseValueSquaredArrays, validPurchaseArrays);
+  calculateStatistics(GroupType::CONTROL, purchaseValueArrays,
+                      purchaseValueSquaredArrays, validPurchaseArrays);
 }
 
 template <int32_t MY_ROLE>
@@ -288,10 +290,17 @@ void OutputMetrics<MY_ROLE>::calculateStatistics(
     const std::vector<std::vector<emp::Bit>>& validPurchaseArrays) {
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
              << " events, value, and value squared";
-  auto bits = calculatePopulation(
-      groupType,
-      groupType == GroupType::TEST ? inputData_.getTestPopulation()
-                                   : inputData_.getControlPopulation());
+  df::Column<int64_t> dummy;
+  auto& columnTest = df_.containsKey("test_population")
+    ? df_.get<int64_t>("test_population")
+    : dummy;
+  auto& columnControl = df_.containsKey("control_population")
+    ? df_.get<int64_t>("control_population")
+    : dummy;
+  auto bits =
+      calculatePopulation(groupType, groupType == GroupType::TEST
+                                         ? columnTest.data()
+                                         : columnControl.data());
   auto eventArrays = calculateEvents(groupType, bits, validPurchaseArrays);
   std::vector<emp::Bit> reachedArray;
   calculateMatchCount(groupType, bits, purchaseValueArrays);
@@ -301,9 +310,7 @@ void OutputMetrics<MY_ROLE>::calculateStatistics(
   }
 
   // If this is (value-based) conversion lift, calculate value metrics now
-  if (!shouldSkipValues_ &&
-      inputData_.getLiftGranularityType() ==
-          InputData::LiftGranularityType::Conversion) {
+  if (!shouldSkipValues_) {
     calculateValue(groupType, purchaseValueArrays, eventArrays, reachedArray);
     calculateValueSquared(groupType, purchaseValueSquaredArrays, eventArrays);
   }
@@ -316,25 +323,30 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculatePopulation(
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType) << " population";
   const std::vector<emp::Bit> populationBits =
       privatelyShareBitsFromPublisher<MY_ROLE>(populationVec, n_);
+
   return populationBits;
 }
 
 template <int32_t MY_ROLE>
 std::vector<std::vector<emp::Bit>>
 OutputMetrics<MY_ROLE>::calculateValidPurchases() {
-  // TODO: We're using 32 bits for timestamps along with an offset setting the
-  // epoch to 2019-01-01. This will break in the year 2087.
   XLOG(INFO) << "Share opportunity timestamps";
+  df::Column<int64_t> dummyOppTs;
+  auto& columnOppTs = df_.containsKey("opportunity_timestamp")
+    ? df_.get<int64_t>("opportunity_timestamp")
+    : dummyOppTs;
   const std::vector<emp::Integer> opportunityTimestamps =
       privatelyShareIntsFromPublisher<MY_ROLE>(
-          inputData_.getOpportunityTimestamps(), n_, QUICK_BITS);
+          columnOppTs.data(), n_, QUICK_BITS);
   XLOG(INFO) << "Share purchase timestamps";
+  df::Column<std::vector<int64_t>> dummyEventTss;
+  auto& columnEventTss = df_.containsKey("event_timestamps")
+    ? df_.get<std::vector<int64_t>>("event_timestamps")
+    : dummyEventTss;
   const std::vector<std::vector<emp::Integer>> purchaseTimestampArrays =
       privatelyShareIntArraysFromPartner<MY_ROLE>(
-          inputData_.getPurchaseTimestampArrays(),
-          n_, /* numVals */
-          numConversionsPerUser_ /* arraySize */,
-          QUICK_BITS /* bitLen */);
+          columnEventTss.data(), n_, /* numVals */
+          numConversionsPerUser_ /* arraySize */, QUICK_BITS /* bitLen */);
 
   XLOG(INFO) << "Calculate valid purchases";
   return private_measurement::functional::zip_apply(
@@ -379,15 +391,10 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
   // to nuke this and fix it properly.
   auto [eventArrays, converterArrays, squaredNumConvs] =
       private_measurement::secret_sharing::zip_and_map<
-          emp::Bit,
-          std::vector<emp::Bit>,
-          std::vector<emp::Bit>,
-          emp::Bit,
+          emp::Bit, std::vector<emp::Bit>, std::vector<emp::Bit>, emp::Bit,
           emp::Integer>(
-          populationBits,
-          validPurchaseArrays,
-          [&convHistograms](
-              emp::Bit isUser, std::vector<emp::Bit> validPurchaseArray)
+          populationBits, validPurchaseArrays,
+          [&convHistograms](emp::Bit isUser, std::vector<emp::Bit> validPurchaseArray)
               -> std::tuple<std::vector<emp::Bit>, emp::Bit, emp::Integer> {
             std::vector<emp::Bit> vec;
             emp::Integer numConvSquared{
@@ -404,12 +411,10 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
               // of elements in the array
               auto numConv = validPurchaseArray.size() - i;
               auto convSquared = static_cast<int64_t>(numConv * numConv);
-              emp::Integer numConvSquaredIfValid{
-                  static_cast<int>(numConvSquared.size()),
-                  convSquared,
-                  emp::PUBLIC};
-              numConvSquared =
-                  emp::If(newPurchase, numConvSquaredIfValid, numConvSquared);
+              emp::Integer numConvSquaredIfValid{static_cast<int32_t>(numConvSquared.size()),
+                                                 convSquared, emp::PUBLIC};
+              numConvSquared = emp::If(newPurchase,
+                                       numConvSquaredIfValid, numConvSquared);
 
               // Interpretation: at index `i`, we're detecting if we should
               // increment the histogram at value `size() - i` because it means
@@ -531,22 +536,27 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
   // matched with any opportunity
 
   XLOG(INFO) << "Share opportunity timestamps";
+  df::Column<int64_t> dummyOppTs;
+  auto& columnOppTs = df_.containsKey("opportunity_timestamp")
+    ? df_.get<int64_t>("opportunity_timestamp")
+    : dummyOppTs;
   const std::vector<emp::Integer> opportunityTimestamps =
       privatelyShareIntsFromPublisher<MY_ROLE>(
-          inputData_.getOpportunityTimestamps(), n_, QUICK_BITS);
+          columnOppTs.data(), n_, QUICK_BITS);
   XLOG(INFO) << "Share purchase timestamps";
+  df::Column<std::vector<int64_t>> dummyEventTss;
+  auto& columnEventTss = df_.containsKey("event_timestamps")
+    ? df_.get<std::vector<int64_t>>("event_timestamps")
+    : dummyEventTss;
   const std::vector<std::vector<emp::Integer>> purchaseTimestampArrays =
       privatelyShareIntArraysFromPartner<MY_ROLE>(
-          inputData_.getPurchaseTimestampArrays(),
-          n_, /* numVals */
-          numConversionsPerUser_ /* arraySize */,
-          QUICK_BITS /* bitLen */);
+          columnEventTss.data(), n_, /* numVals */
+          numConversionsPerUser_ /* arraySize */, QUICK_BITS /* bitLen */);
   auto matchArrays = private_measurement::functional::zip_apply(
-      [](emp::Bit isUser,
-         emp::Integer opportunityTimestamp,
+      [](emp::Bit isUser, emp::Integer opportunityTimestamp,
          std::vector<emp::Integer> purchaseTimestampArray) -> emp::Bit {
-        const emp::Integer zero = emp::Integer{
-            static_cast<int>(opportunityTimestamp.size()), 0, emp::PUBLIC};
+        const emp::Integer zero =
+            emp::Integer{static_cast<int32_t>(opportunityTimestamp.size()), 0, emp::PUBLIC};
         emp::Bit validOpportunity =
             (isUser &
              (opportunityTimestamp > zero)); // check if opportunity is valid
@@ -598,38 +608,23 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
   XLOG(INFO) << "Calculate " << getGroupTypeStr(groupType)
              << " impressions & reach";
 
+  df::Column<int64_t> dummy;
+  auto& column = df_.containsKey("num_impressions")
+    ? df_.get<int64_t>("num_impressions")
+    : dummy;
   const std::vector<emp::Integer> numImpressions =
-      privatelyShareIntsFromPublisher<MY_ROLE>(
-          inputData_.getNumImpressions(), n_, FULL_BITS);
+      privatelyShareIntsFromPublisher<MY_ROLE>(column.data(), n_, FULL_BITS);
 
-  auto [impressionsArray, reachArray] = private_measurement::secret_sharing::
-      zip_and_map<emp::Bit, emp::Integer, emp::Integer, emp::Bit>(
-          populationBits,
-          numImpressions,
+  auto reachArray =
+      private_measurement::secret_sharing::zip_and_map<emp::Bit, emp::Integer, emp::Bit>(
+          populationBits, numImpressions,
           [](emp::Bit isUser,
-             emp::Integer numImpressions) -> std::pair<emp::Integer, emp::Bit> {
+             emp::Integer numImpressions) -> emp::Bit {
             const emp::Integer zero =
                 emp::Integer{private_measurement::INT_SIZE, 0, emp::PUBLIC};
-            return std::make_pair(
-                emp::If(isUser, numImpressions, zero),
-                isUser & (numImpressions > zero));
+            // TODO: Optimization possible by precomputing "is_reached"
+            return isUser & (numImpressions > zero);
           });
-
-  // And compute for breakdowns + cohorts
-  // TODO: These could be abstracted into a common function
-  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
-    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        impressionsArray, publisherBitmasks_.at(i));
-    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        reachArray, publisherBitmasks_.at(i));
-  }
-
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
-        impressionsArray, partnerBitmasks_.at(i));
-    auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
-        reachArray, partnerBitmasks_.at(i));
-  }
 
   return reachArray;
 }

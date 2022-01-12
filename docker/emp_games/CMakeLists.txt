@@ -12,28 +12,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include("common.cmake")
 include("perf_tools.cmake")
 
+# common
+file(GLOB common_src
+  "fbpcs/emp_games/common/**.c"
+  "fbpcs/emp_games/common/**.cpp"
+  "fbpcs/emp_games/common/**.h"
+  "fbpcs/emp_games/common/**.hpp"
+)
+list(FILTER common_src EXCLUDE REGEX ".*Test.*")
+
 # lift
+file(GLOB lift_src
+  "fbpcs/emp_games/lift/**.c"
+  "fbpcs/emp_games/lift/**.cpp"
+  "fbpcs/emp_games/lift/**.h"
+  "fbpcs/emp_games/lift/**.hpp")
+list(FILTER lift_src EXCLUDE REGEX ".*Test.*")
 add_executable(
   lift_calculator
-  "fbpcs/emp_games/lift/calculator/main.cpp"
-  "fbpcs/emp_games/lift/calculator/OutputMetrics.hpp"
-  "fbpcs/emp_games/lift/common/GroupedLiftMetrics.h"
-  "fbpcs/emp_games/lift/common/GroupedLiftMetrics.cpp"
-  "fbpcs/emp_games/lift/common/LiftMetrics.h"
-  "fbpcs/emp_games/lift/common/LiftMetrics.cpp"
-  "fbpcs/emp_games/lift/calculator/CalculatorApp.h"
-  "fbpcs/emp_games/lift/calculator/CalculatorApp.cpp"
-  "fbpcs/emp_games/lift/calculator/CalculatorGame.h"
-  "fbpcs/emp_games/lift/calculator/OutputMetrics.h"
-  "fbpcs/emp_games/lift/calculator/InputData.cpp"
-  "fbpcs/emp_games/lift/calculator/InputData.h"
-  "fbpcs/emp_games/lift/calculator/CalculatorGameConfig.h"
-  "fbpcs/emp_games/lift/calculator/OutputMetricsData.h"
-  "fbpcs/emp_games/common/PrivateData.h"
-  "fbpcs/emp_games/common/SecretSharing.h"
-  "fbpcs/emp_games/common/EmpOperationUtil.h"
-  "fbpcs/emp_games/common/Csv.h"
-  "fbpcs/emp_games/common/Csv.cpp")
+  ${common_src}
+  ${lift_src})
 target_link_libraries(
   lift_calculator
   empgamecommon)
@@ -57,22 +55,14 @@ install(TARGETS attribution_calculator DESTINATION bin)
 
 # generic shard_aggregator
 file(GLOB shard_aggregator_src
-  "fbpcs/emp_games/attribution/shard_aggregator/AggMetrics.cpp",
-  "fbpcs/emp_games/attribution/shard_aggregator/AggMetricsThresholdCheckers.cpp",
-  "fbpcs/emp_games/attribution/shard_aggregator/ShardAggregatorApp.cpp",
-  "fbpcs/emp_games/attribution/shard_aggregator/ShardAggregatorValidation.cpp",
-  "fbpcs/emp_games/attribution/shard_aggregator/main.cpp"
-  "fbpcs/emp_games/attribution/Aggregator.h"
-  "fbpcs/emp_games/attribution/AttributionMetrics.h"
-  "fbpcs/emp_games/attribution/AttributionRule.h"
-  "fbpcs/emp_games/attribution/Constants.h"
-  "fbpcs/emp_games/attribution/Conversion.h"
-  "fbpcs/emp_games/attribution/Debug.h"
-  "fbpcs/emp_games/attribution/Touchpoint.h",
-  "fbpcs/emp_games/attribution/shard_aggregator/MainUtil.h",
-  "fbpcs/emp_games/attribution/shard_aggregator/ShardAggregatorGame.h")
+  "fbpcs/emp_games/attribution/shard_aggregator/**.c"
+  "fbpcs/emp_games/attribution/shard_aggregator/**.cpp"
+  "fbpcs/emp_games/attribution/shard_aggregator/**.h"
+  "fbpcs/emp_games/attribution/shard_aggregator/**.hpp")
+list(FILTER shard_aggregator_src EXCLUDE REGEX ".*Test.*")
 add_executable(
   shard_aggregator
+  ${attribution_src}
   ${shard_aggregator_src})
 target_link_libraries(
   shard_aggregator
