@@ -286,7 +286,7 @@ void InputData::addFromCSV(
 std::vector<int64_t> InputData::bitmaskFor(int64_t groupId) const {
   std::vector<int64_t> res(numRows_);
   for (std::size_t i = 0; i < res.size(); ++i) {
-    res[i] = groupIds_.at(i) == groupId ? 1 : 0;
+    res[i] = groupIds_.size() > i && groupIds_.at(i) == groupId ? 1 : 0;
   }
   return res;
 }

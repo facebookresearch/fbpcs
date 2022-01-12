@@ -419,7 +419,10 @@ inline const std::vector<emp::Integer> multiplyBitmask(
   std::vector<emp::Integer> out;
   out.reserve(vec.size());
 
-  const emp::Integer zero{INT_SIZE, 0, emp::PUBLIC};
+  // If vec.size() is zero, the created int doesn't matter since the loop
+  // will never execute.
+  auto sz = static_cast<int32_t>(vec.size() > 0 ? vec.at(0).size() : INT_SIZE);
+  const emp::Integer zero{sz, 0, emp::PUBLIC};
 
   for (std::vector<emp::Integer>::size_type i = 0; i < vec.size(); ++i) {
     // emp::If(condition, true_case, false_case)
@@ -454,7 +457,11 @@ inline const std::vector<std::vector<emp::Integer>> multiplyBitmask(
   out.reserve(vec.size());
   for (size_t i = 0; i < vec.size(); ++i) {
     out.emplace_back();
-    const emp::Integer zero{INT_SIZE, 0, emp::PUBLIC};
+    // If vec.size() is zero, the created int doesn't matter since the loop
+    // will never execute.
+    auto sz = static_cast<int32_t>(
+        vec.at(i).size() > 0 ? vec.at(i).at(0).size() : INT_SIZE);
+    const emp::Integer zero{sz, 0, emp::PUBLIC};
     for (size_t j = 0; j < vec.at(i).size(); ++j) {
       out.back().push_back(zero.select(bitmask.at(i), vec.at(i).at(j)));
     }
