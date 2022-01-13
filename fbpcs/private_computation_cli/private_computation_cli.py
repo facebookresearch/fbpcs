@@ -162,8 +162,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
     instance_id = arguments["<instance_id>"]
 
-    logging.basicConfig(filename=log_path, level=log_level)
+    logging.basicConfig(filename=log_path, level=logging.INFO)
     logger = logging.getLogger(__name__)
+    logger.setLevel(log_level)
 
     if arguments["create_instance"]:
         logger.info(f"Create instance: {instance_id}")
