@@ -17,15 +17,15 @@ DOCKER_CREDENTIALS_PATH="/root/.aws/credentials"
 
 ECR_URL='539290649537.dkr.ecr.us-west-2.amazonaws.com'
 IMAGE_NAME='pl-coordinator-env'
-TAG='latest'
-DOCKER_IMAGE="${ECR_URL}/${IMAGE_NAME}:${TAG}"
+tag='latest'
 
 DEPENDENCIES=( docker aws )
 
 function usage ()
 {
-    echo "Usage :  $0 <command with arguments>"
+    echo "Usage :  $0 <PC-CLI command> -- <$0 configuration arguments>"
     echo "e.g. $0 get_instance 123 --config='path/to/config.yml'"
+    echo "e.g. $0 get_instance 123 --config='path/to/config.yml' -- --version=rc"
 }
 
 function main () {
@@ -40,6 +40,24 @@ function check_dependencies() {
         command -v "$cmd" >/dev/null 2>&1 || { echo "Could not find ${cmd} - is it installed?" >&2; exit 1; }
     done
 }
+
+function replace_config_var() {
+  # Dumps result to stdout
+
+  # arg 1: var to replace (e.g. binary_version)
+  # arg 2: value (e.g. rc)
+  # arg 3: config path
+
+  # "to replace" section:
+      # capture whitespace, var to replace, and colon into capture group 1
+      # match the rest of the line
+  # "substitute with" section:
+      # keep capture group 1
+      # add space back
+      # add value (e.g. rc)
+  sed "s/\(\s*${1}:\).*/\1 ${2}/g" "$3"
+}
+
 
 function parse_args() {
     if [[ $# -eq 0 ]]; then
@@ -72,6 +90,7 @@ function parse_args() {
             ;;
     esac
 
+    # PC-CLI arguments
     for arg in "$@"
     do
         case $arg in
@@ -83,6 +102,11 @@ function parse_args() {
                     exit 1
                 fi
                 docker_cmd+=("--config=${DOCKER_CONFIG_PATH}")
+                ;;
+            --)
+                # separates PC-CLI specific arguments from run_fbpcs.sh specific arguments
+                shift
+                break
                 ;;
             *)
                 docker_cmd+=("$arg")
@@ -96,16 +120,34 @@ function parse_args() {
         usage
         exit 1
     fi
+
+    # run_fbpcs.sh specific arguments
+    for arg in "$@"
+    do
+        case $arg in
+            --version=*)
+                tag="${arg#*=}"
+                echo "Overriding docker version tag and config.yml binary tag with $tag"
+
+                modified_config_path=$(mktemp)
+                replace_config_var binary_version "$tag" "$real_config_path" > "$modified_config_path"
+                real_config_path="$modified_config_path"
+                ;;
+        esac
+        shift
+    done
+
+    docker_image="${ECR_URL}/${IMAGE_NAME}:${tag}"
 }
 
 function run_fbpcs() {
     aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin "$ECR_URL"
-    docker pull "$DOCKER_IMAGE"
+    docker pull "$docker_image"
     docker run --rm \
         -v "$real_config_path":"$DOCKER_CONFIG_PATH" \
         -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
         -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
-        ${DOCKER_IMAGE} "${docker_cmd[@]}"
+        "${docker_image}" "${docker_cmd[@]}"
 }
 
 main "$@"
