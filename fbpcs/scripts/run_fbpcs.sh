@@ -67,29 +67,6 @@ function parse_args() {
 
     docker_cmd=( python3.8 -m fbpcs.private_computation_cli.private_computation_cli )
 
-    RED='\033[0;31m'
-    NC='\033[0m' # No Color
-
-    case $1 in
-        lift )
-            echo -e "${RED}********************************************************"
-            echo -e "Because you specified game name \"$1\", it looks like you're running a deprecated version of this command."
-            echo -e "Please remove \"$1\" from the command and try again."
-            echo -e "********************************************************${NC}"
-            exit 1
-            ;;
-        attribution )
-            echo -e "${RED}********************************************************"
-            echo -e "Because you specified game name \"$1\", it looks like you're running a deprecated version of this command."
-            echo -e "Please modify your commands according to the instruction below and try again:"
-            echo -e "1. Remove \"attribution\" right after \"run_fbpcs\""
-            echo -e "2. Add a new argument \"--game_type=attribution\" to the \"run_fbpcs.sh create_instance ...\" command"
-            echo -e "3. Replace \"compute_attribution\" with \"compute_metrics\""
-            echo -e "********************************************************${NC}"
-            exit 1
-            ;;
-    esac
-
     # PC-CLI arguments
     for arg in "$@"
     do
