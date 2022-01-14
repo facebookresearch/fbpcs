@@ -17,6 +17,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 
 ### Removed
+  - Removed pl_coordinator.py and pa_coordinator.py which already only had deprecation messages and no logic
+  - Removed instruction on using new commands from run_fbpcs.sh
 
 ## [1.1.0] - 2022-01-05
 ### Added
