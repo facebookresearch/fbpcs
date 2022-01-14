@@ -30,7 +30,7 @@ from fbpcs.private_computation.service.constants import (
 
 class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.mpc.MPCService")
-    def setUp(self, mock_mpc_svc):
+    def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
 
@@ -43,7 +43,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
             onedocker_binary_config_map, self.mock_mpc_svc
         )
 
-    async def test_compute_metrics(self):
+    async def test_compute_metrics(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=private_computation_instance.instance_id + "_compute_metrics0",
@@ -62,7 +62,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
 
         self.assertEqual(mpc_instance, private_computation_instance.instances[0])
 
-    def test_get_game_args(self):
+    def test_get_game_args(self) -> None:
         # TODO: add game args test for attribution args
         private_computation_instance = self._create_pc_instance()
         test_game_args = [
