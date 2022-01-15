@@ -19,13 +19,30 @@ ECR_URL='539290649537.dkr.ecr.us-west-2.amazonaws.com'
 IMAGE_NAME='pl-coordinator-env'
 tag='latest'
 
-DEPENDENCIES=( docker aws )
+DEPENDENCIES=( docker aws realpath )
+
 
 function usage ()
 {
-    echo "Usage :  $0 <PC-CLI command> -- <$0 configuration arguments>"
-    echo "e.g. $0 get_instance 123 --config='path/to/config.yml'"
-    echo "e.g. $0 get_instance 123 --config='path/to/config.yml' -- --version=rc"
+    example1="$0 run_study <study_id> --objective_ids=<objective_id_1>,<objective_id_2> \
+--config=config.yml --input_paths=https://<s3_conversion_data_file_path_for_objective_1>,\
+https://<s3_conversion_data_file_path_for_objective_2> \
+--log_path=/fbpcs_instances/output.txt"
+
+    example2="$example1 -- --version=latest"
+
+    echo "Usage :  $0 [PC-CLI options] -- [$0 options]
+    PC-CLI Options:
+      Refer to handbook for guidance on using PC-CLI
+
+    $0 Options:
+      --version=<version>   specify the release version of lift/attribution is used
+
+    Examples:
+      $example1
+
+      $example2
+    "
 }
 
 function main () {
@@ -109,6 +126,11 @@ function parse_args() {
                 modified_config_path=$(mktemp)
                 replace_config_var binary_version "$tag" "$real_config_path" > "$modified_config_path"
                 real_config_path="$modified_config_path"
+                ;;
+            *)
+                >&2 echo "$arg is not a valid argument"
+                usage
+                exit 1
                 ;;
         esac
         shift
