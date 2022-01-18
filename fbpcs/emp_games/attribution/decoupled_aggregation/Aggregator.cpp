@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -55,9 +56,13 @@ class MeasurementAggregator : public Aggregator {
       const std::vector<int64_t>& validAdIds,
       const fbpcf::Visibility& outputVisibility)
       : Aggregator{outputVisibility} {
-    for (auto adId : validAdIds) {
+    int numValidAdIds = validAdIds.size();
+    validOriginalAdIds_ = validAdIds;
+    for (uint16_t compressedAdId = 1; compressedAdId <= numValidAdIds;
+         compressedAdId++) {
       _adIdToMetrics.push_back(std::make_pair(
-          emp::Integer{INT_SIZE, adId, emp::PUBLIC}, PrivateConvMetrics{}));
+          emp::Integer{INT_SIZE_16, compressedAdId, emp::PUBLIC},
+          PrivateConvMetrics{}));
     }
   }
 
@@ -172,8 +177,18 @@ class MeasurementAggregator : public Aggregator {
 
   virtual AggregationOutput reveal() const override {
     MeasurementAggregation out;
+
+    std::unordered_map<uint16_t, int64_t> compressedAdIdToAdIdMap;
+
+    // Mapping the sorted original adIds with the compressed Ids : 1 to
+    // num_of_ad_ids.
+    for (auto i = 0; i < validOriginalAdIds_.size(); i++) {
+      compressedAdIdToAdIdMap.insert({i + 1, validOriginalAdIds_.at(i)});
+    }
     for (auto& [adId, metrics] : _adIdToMetrics) {
-      const auto rAdId = adId.reveal<int64_t>();
+      const auto compressedAdId =
+          static_cast<uint16_t>(adId.reveal<uint32_t>());
+      const auto rAdId = compressedAdIdToAdIdMap.at(compressedAdId);
       XLOGF(DBG, "Revealing measurement metrics for adId={}", rAdId);
       const auto rMetrics = metrics.reveal(outputVisibility_);
       out.metrics[rAdId] = rMetrics;

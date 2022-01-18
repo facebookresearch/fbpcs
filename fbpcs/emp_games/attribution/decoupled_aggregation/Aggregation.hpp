@@ -33,10 +33,10 @@ const AttributionResult ATTRIBUTION_RESULTS_PADDING_VALUE{
     /* is_attributed */ false};
 
 const MeasurementTouchpointMedata MEASUREMENT_TOUCHPOINT_PADDING_VALUE{
-    /* ad_id */ -1};
+    /* ad_id */ 0};
 
 const MeasurementConversionMetadata MEASUREMENT_CONVERSION_PADDING_VALUE{
-    /* conv_value */ -1};
+    /* conv_value */ 0};
 
 // privately sharing attribution results from publisher side.
 template <int MY_ROLE>
@@ -164,21 +164,13 @@ const std::vector<AggregationFormat> shareAggregationFormats(
 // ad Ids will be used as keys for aggregation in Measurement aggregator.
 // sharing the Ids with partner.
 template <int MY_ROLE>
-const std::vector<int64_t> shareValidAdIds(
-    const std::vector<std::vector<TouchpointMetadata>>& tpmArrays) {
+const std::vector<int64_t> shareValidAdIds(const std::vector<int64_t>& adIds) {
   // Compute and then send over the integer ad ids.
-  std::vector<int64_t> adIds;
   int64_t numValidAdIds = 0;
   if (MY_ROLE == aggregation::private_aggregation::PUBLISHER) {
     XLOG(DBG, "Computing valid ad ids for sending to partner");
     std::unordered_set<int64_t> adIdSet;
-    for (const auto& tmpArray : tpmArrays) {
-      for (const auto& tpm : tmpArray) {
-        adIdSet.insert(tpm.adId);
-      }
-    }
-    adIds.insert(adIds.end(), adIdSet.begin(), adIdSet.end());
-    numValidAdIds = adIdSet.size();
+    numValidAdIds = adIds.size();
   }
 
   const emp::Integer empNumValidAdIds{INT_SIZE, numValidAdIds, PUBLISHER};
@@ -243,8 +235,7 @@ AggregationOutputMetrics computeAggregations(
   const auto aggregationFormats =
       shareAggregationFormats<MY_ROLE>(inputData.getAggregationFormats());
 
-  const auto& adIds =
-      shareValidAdIds<MY_ROLE>(inputData.getTouchpointMetadata());
+  const auto& adIds = shareValidAdIds<MY_ROLE>(inputData.getOriginalAdIds());
 
   MeasurementTpmArrays privateTpmArrays;
   MeasurementCvmArrays privateCvmArrays;

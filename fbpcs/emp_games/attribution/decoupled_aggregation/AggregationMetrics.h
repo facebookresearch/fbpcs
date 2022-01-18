@@ -182,6 +182,10 @@ class AggregationInputMetrics {
     return ids_;
   }
 
+  const std::vector<int64_t>& getOriginalAdIds() const {
+    return originalAdIds_;
+  }
+
   const std::vector<std::string>& getAttributionRules() const {
     return attributionRules_;
   }
@@ -212,6 +216,7 @@ class AggregationInputMetrics {
 
  private:
   std::vector<int64_t> ids_;
+  std::vector<int64_t> originalAdIds_;
   std::vector<std::string> attributionRules_;
   std::vector<AggregationFormat> aggregationFormats_;
   AggregationMetrics::AttributionResultsList touchpointSecretShare_;

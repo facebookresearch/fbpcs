@@ -36,7 +36,7 @@ static const std::vector<TouchpointMetadata> parseTouchpointMetadata(
     const int lineNo,
     const std::vector<std::string>& header,
     const std::vector<std::string>& parts) {
-  std::vector<int64_t> adIds;
+  std::vector<int64_t> originalAdIds;
   std::vector<int64_t> timestamps;
   std::vector<int64_t> isClicks;
   std::vector<int64_t> campaignMetadata;
@@ -44,7 +44,7 @@ static const std::vector<TouchpointMetadata> parseTouchpointMetadata(
     auto column = header[i];
     auto value = parts[i];
     if (column == "ad_ids") {
-      adIds = getInnerArray<int64_t>(value);
+      originalAdIds = getInnerArray<int64_t>(value);
     } else if (column == "timestamps") {
       timestamps = getInnerArray<int64_t>(value);
     } else if (column == "is_click") {
@@ -54,11 +54,11 @@ static const std::vector<TouchpointMetadata> parseTouchpointMetadata(
     }
   }
 
-  CHECK_EQ(adIds.size(), timestamps.size())
+  CHECK_EQ(originalAdIds.size(), timestamps.size())
       << "Ad ids and timestamps arrays are not the same length.";
-  CHECK_EQ(adIds.size(), isClicks.size())
+  CHECK_EQ(originalAdIds.size(), isClicks.size())
       << "Ad ids and is_click arrays are not the same length.";
-  CHECK_EQ(adIds.size(), campaignMetadata.size())
+  CHECK_EQ(originalAdIds.size(), campaignMetadata.size())
       << "Ad ids and campaign_metadata arrays are not the same length.";
 
   std::vector<int64_t> unique_ids;
@@ -72,17 +72,71 @@ static const std::vector<TouchpointMetadata> parseTouchpointMetadata(
       << "This implementation currently only supports unique touchpoint ids per user.";
 
   std::vector<TouchpointMetadata> tpms;
-  for (std::vector<int64_t>::size_type i = 0; i < adIds.size(); i++) {
+  for (std::vector<int64_t>::size_type i = 0; i < originalAdIds.size(); i++) {
     tpms.push_back(TouchpointMetadata{
-        /* adId */ adIds.at(i),
+        /* original Ad Id */ originalAdIds.at(i),
         /* ts */ timestamps.at(i),
         /* isClick */ isClicks.at(i) == 1,
-        /* campaignMetadata */ campaignMetadata.at(i)});
+        /* campaignMetadata */ campaignMetadata.at(i),
+        /* compressed Ad Id */ 0});
   }
 
   std::sort(tpms.begin(), tpms.end());
 
   return tpms;
+}
+
+static const std::vector<int64_t> retrieveOriginalAdIds(
+    const std::vector<std::vector<TouchpointMetadata>>&
+        touchpointMetadataArrays) {
+  std::unordered_set<int64_t> adIdSet;
+  for (auto& touchpointMetadataArray : touchpointMetadataArrays) {
+    for (auto& touchpointMetadata : touchpointMetadataArray) {
+      if (touchpointMetadata.originalAdId > 0) {
+        adIdSet.insert(touchpointMetadata.originalAdId);
+      }
+    }
+  }
+
+  // Added a check here to make sure that number of ad Ids never exceed 65,536
+  // (16 unsigned bit)
+  CHECK_LE(adIdSet.size(), 65536)
+      << "Number of ad Ids cannot be more than 65,536.";
+
+  std::vector<int64_t> validOriginalAdIds;
+  validOriginalAdIds.insert(
+      validOriginalAdIds.end(), adIdSet.begin(), adIdSet.end());
+  std::sort(validOriginalAdIds.begin(), validOriginalAdIds.end());
+  return validOriginalAdIds;
+}
+
+// Ad Ids are represent by 64 bit integers. For measurement aggregation
+// computation, the number of ad Ids received is much smaller. Thus for the
+// computation, we are
+// mapping original adId to compressed adId. This method will map the adIds to
+// compressed adIds.
+// replace all original ad Ids with compressed values in touchpoint Metadata and
+// return the map of
+// compressed ad Id to original ad Id.
+static void replaceAdIdWithCompressedAdId(
+    std::vector<std::vector<TouchpointMetadata>>& touchpointMetadataArrays,
+    std::vector<int64_t>& validOriginalAdIds) {
+  auto compressedAdId = 1;
+  std::unordered_map<int64_t, uint16_t> adIdToCompressedAdIdMap;
+
+  for (auto adId : validOriginalAdIds) {
+    adIdToCompressedAdIdMap.insert({adId, compressedAdId});
+    compressedAdId++;
+  }
+
+  for (auto& touchpointMetadataArray : touchpointMetadataArrays) {
+    for (auto& touchpointMetadata : touchpointMetadataArray) {
+      if (touchpointMetadata.originalAdId > 0) {
+        touchpointMetadata.adId =
+            adIdToCompressedAdIdMap.at(touchpointMetadata.originalAdId);
+      }
+    }
+  }
 }
 
 // Aggregation Formats are received by publisher and will be shared to partner
@@ -198,6 +252,10 @@ AggregationInputMetrics::AggregationInputMetrics(
     touchpointSecretShare_ =
         AggregationMetrics::getAttributionsArrayfromDynamic(
             attributionResultJson);
+
+    XLOG(INFO, "Replacing original ad Ids with compressed ad Ids");
+    originalAdIds_ = retrieveOriginalAdIds(touchpointMetadataArrays_);
+    replaceAdIdWithCompressedAdId(touchpointMetadataArrays_, originalAdIds_);
   } else {
     conversionSecretShare_ =
         AggregationMetrics::getAttributionsArrayfromDynamic(

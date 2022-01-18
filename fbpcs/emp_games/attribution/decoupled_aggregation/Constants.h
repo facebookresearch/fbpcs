@@ -16,6 +16,7 @@ enum AGGREGATION_FORMAT { AD_OBJECT_FORMAT = 1 };
 
 const int64_t INT_SIZE = 64;
 const int64_t INT_SIZE_32 = 32;
+const int64_t INT_SIZE_16 = 16;
 const int64_t PUBLISHER = emp::ALICE;
 const int64_t PARTNER = emp::BOB;
 
