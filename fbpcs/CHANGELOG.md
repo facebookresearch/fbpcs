@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Added version argument to run_fbpcs.sh
 
 ### Changed
+- Add Ad Id compression logic to decoupled aggregation game.
 
 ### Removed
   - Removed pl_coordinator.py and pa_coordinator.py which already only had deprecation messages and no logic

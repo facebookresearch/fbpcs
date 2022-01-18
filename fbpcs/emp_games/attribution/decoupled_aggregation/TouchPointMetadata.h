@@ -18,10 +18,11 @@
 namespace aggregation::private_aggregation {
 
 struct TouchpointMetadata {
-  int64_t adId;
+  int64_t originalAdId;
   int64_t ts;
   bool isClick;
   int64_t campaignMetadata;
+  uint16_t adId;
 
   /**
    * If both are clicks, or both are views, the earliest one comes first.
@@ -33,7 +34,7 @@ struct TouchpointMetadata {
 };
 
 struct MeasurementTouchpointMedata {
-  const int64_t adId;
+  const uint16_t adId;
 
   // privatelyShareArrayFrom support
   friend bool operator==(
@@ -56,10 +57,10 @@ struct PrivateMeasurementTouchpointMetadata {
       MeasurementTouchpointMedata tpm,
       int party)
       : PrivateMeasurementTouchpointMetadata(
-            emp::Integer(INT_SIZE, tpm.adId, party)) {}
+            emp::Integer(INT_SIZE_16, tpm.adId, party)) {}
 
   explicit PrivateMeasurementTouchpointMetadata()
-      : adId{INT_SIZE, -1, emp::PUBLIC} {}
+      : adId{INT_SIZE_16, 0, emp::PUBLIC} {}
 
   explicit PrivateMeasurementTouchpointMetadata(const emp::Integer& _adId)
       : adId{_adId} {}

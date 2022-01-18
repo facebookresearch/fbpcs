@@ -10,6 +10,7 @@
 #include <fbpcf/mpc/EmpGame.h>
 #include <math.h>
 #include <memory>
+#include <vector>
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AttributionResult.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/Constants.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/ConversionMetadata.h"
@@ -93,6 +94,7 @@ class Aggregator {
 
  protected:
   const fbpcf::Visibility outputVisibility_;
+  std::vector<int64_t> validOriginalAdIds_;
 };
 
 struct AggregationContext {
