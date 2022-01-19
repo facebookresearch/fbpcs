@@ -57,8 +57,8 @@ RUN python3.8 -m pip install 'git+https://github.com/facebookresearch/fbpcp.git'
 # installing pip requirements
 RUN mkdir -p /home/pcs/src/
 WORKDIR /home/pcs/src
-RUN wget https://raw.githubusercontent.com/facebookresearch/fbpcp/main/onedocker/pip_requirements.txt && \
-    python3.8 -m pip install --user -r pip_requirements.txt
+COPY fbpcs/pip_requirements.txt /home/pcs/src/.
+RUN python3.8 -m pip install --user -r pip_requirements.txt
 
 # Link all the binaries into /home/pcs/onedocker/package
 RUN mkdir -p /home/pcs/onedocker/package
