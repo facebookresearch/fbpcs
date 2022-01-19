@@ -1,15 +1,17 @@
-# pyre-strict
 #!/usr/bin/env python3
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
+
 from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.mpc_instance import MPCParty
+from fbpcp.service.mpc import MPCService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -31,7 +33,7 @@ from fbpcs.private_computation.service.constants import (
 
 class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.mpc.MPCService")
-    def setUp(self, mock_mpc_svc) -> None:
+    def setUp(self, mock_mpc_svc: MPCService) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
 
