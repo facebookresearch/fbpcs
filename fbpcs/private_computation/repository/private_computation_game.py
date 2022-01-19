@@ -4,8 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
+
+
 from enum import Enum
-from typing import List
+from typing import List, TypedDict, Dict
 
 from fbpcp.entity.mpc_game_config import MPCGameArgument, MPCGameConfig
 from fbpcp.repository.mpc_game_repository import MPCGameRepository
@@ -19,55 +22,67 @@ class GameNames(Enum):
     DECOUPLED_AGGREGATION = "decoupled_aggregation"
 
 
-PRIVATE_COMPUTATION_GAME_CONFIG = {
+class OneDockerArgument(TypedDict):
+    name: str
+    required: bool
+
+
+class GameNamesValue(TypedDict):
+    onedocker_package_name: str
+    arguments: List[OneDockerArgument]
+
+
+PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
     GameNames.LIFT.value: {
         "onedocker_package_name": OneDockerBinaryNames.LIFT_COMPUTE.value,
         "arguments": [
-            {"name": "input_base_path", "required": True},
-            {"name": "output_base_path", "required": True},
-            {"name": "file_start_index", "required": False},
-            {"name": "num_files", "required": True},
-            {"name": "concurrency", "required": True},
+            OneDockerArgument({"name": "input_base_path", "required": True}),
+            OneDockerArgument({"name": "output_base_path", "required": True}),
+            OneDockerArgument({"name": "file_start_index", "required": False}),
+            OneDockerArgument({"name": "num_files", "required": True}),
+            OneDockerArgument({"name": "concurrency", "required": True}),
         ],
     },
     GameNames.SHARD_AGGREGATOR.value: {
         "onedocker_package_name": OneDockerBinaryNames.SHARD_AGGREGATOR.value,
         "arguments": [
-            {"name": "input_base_path", "required": True},
-            {"name": "num_shards", "required": True},
-            {"name": "output_path", "required": True},
-            {"name": "metrics_format_type", "required": True},
-            {"name": "threshold", "required": True},
-            {"name": "first_shard_index", "required": False},
+            OneDockerArgument({"name": "input_base_path", "required": True}),
+            OneDockerArgument({"name": "num_shards", "required": True}),
+            OneDockerArgument({"name": "output_path", "required": True}),
+            OneDockerArgument({"name": "metrics_format_type", "required": True}),
+            OneDockerArgument({"name": "threshold", "required": True}),
+            OneDockerArgument({"name": "first_shard_index", "required": False}),
         ],
     },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
         "onedocker_package_name": OneDockerBinaryNames.DECOUPLED_ATTRIBUTION.value,
         "arguments": [
-            {"name": "input_base_path", "required": True},
-            {"name": "output_base_path", "required": True},
-            {"name": "attribution_rules", "required": True},
-            {"name": "aggregators", "required": False},
-            {"name": "concurrency", "required": True},
-            {"name": "num_files", "required": True},
-            {"name": "file_start_index", "required": True},
-            {"name": "use_xor_encryption", "required": True},
-            {"name": "use_postfix", "required": True},
+            OneDockerArgument({"name": "input_base_path", "required": True}),
+            OneDockerArgument({"name": "output_base_path", "required": True}),
+            OneDockerArgument({"name": "attribution_rules", "required": True}),
+            OneDockerArgument({"name": "aggregators", "required": False}),
+            OneDockerArgument({"name": "concurrency", "required": True}),
+            OneDockerArgument({"name": "num_files", "required": True}),
+            OneDockerArgument({"name": "file_start_index", "required": True}),
+            OneDockerArgument({"name": "use_xor_encryption", "required": True}),
+            OneDockerArgument({"name": "use_postfix", "required": True}),
         ],
     },
     GameNames.DECOUPLED_AGGREGATION.value: {
         "onedocker_package_name": OneDockerBinaryNames.DECOUPLED_AGGREGATION.value,
         "arguments": [
-            {"name": "aggregators", "required": True},
-            {"name": "input_base_path", "required": True},
-            {"name": "input_base_path_secret_share", "required": True},
-            {"name": "output_base_path", "required": True},
-            {"name": "attribution_rules", "required": False},
-            {"name": "concurrency", "required": True},
-            {"name": "num_files", "required": True},
-            {"name": "file_start_index", "required": True},
-            {"name": "use_xor_encryption", "required": True},
-            {"name": "use_postfix", "required": True},
+            OneDockerArgument({"name": "aggregators", "required": True}),
+            OneDockerArgument({"name": "input_base_path", "required": True}),
+            OneDockerArgument(
+                {"name": "input_base_path_secret_share", "required": True}
+            ),
+            OneDockerArgument({"name": "output_base_path", "required": True}),
+            OneDockerArgument({"name": "attribution_rules", "required": False}),
+            OneDockerArgument({"name": "concurrency", "required": True}),
+            OneDockerArgument({"name": "num_files", "required": True}),
+            OneDockerArgument({"name": "file_start_index", "required": True}),
+            OneDockerArgument({"name": "use_xor_encryption", "required": True}),
+            OneDockerArgument({"name": "use_postfix", "required": True}),
         ],
     },
 }
@@ -75,7 +90,9 @@ PRIVATE_COMPUTATION_GAME_CONFIG = {
 
 class PrivateComputationGameRepository(MPCGameRepository):
     def __init__(self) -> None:
-        self.private_computation_game_config = PRIVATE_COMPUTATION_GAME_CONFIG
+        self.private_computation_game_config: Dict[
+            str, GameNamesValue
+        ] = PRIVATE_COMPUTATION_GAME_CONFIG
 
     def get_game(self, name: str) -> MPCGameConfig:
         if name not in self.private_computation_game_config:
