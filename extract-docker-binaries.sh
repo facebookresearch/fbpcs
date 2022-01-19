@@ -44,7 +44,6 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [ "$PACKAGE" = "emp_games" ]; then
 docker create -ti --name temp_container "fbpcs/emp-games:${TAG}"
 docker cp temp_container:/usr/local/bin/lift_calculator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/attribution_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/decoupled_attribution_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/decoupled_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/shard_aggregator "$SCRIPT_DIR/binaries_out/."

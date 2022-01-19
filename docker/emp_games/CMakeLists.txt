@@ -39,22 +39,6 @@ target_link_libraries(
   empgamecommon)
 install(TARGETS lift_calculator DESTINATION bin)
 
-# attribution
-file(GLOB attribution_src
-  "fbpcs/emp_games/attribution/**.c"
-  "fbpcs/emp_games/attribution/**.cpp"
-  "fbpcs/emp_games/attribution/**.h"
-  "fbpcs/emp_games/attribution/**.hpp")
-list(FILTER attribution_src EXCLUDE REGEX ".*Test.*")
-add_executable(
-  attribution_calculator
-  ${attribution_src})
-target_link_libraries(
-  attribution_calculator
-  empgamecommon
-  perftools)
-install(TARGETS attribution_calculator DESTINATION bin)
-
 # generic shard_aggregator
 file(GLOB shard_aggregator_src
   "fbpcs/emp_games/attribution/shard_aggregator/AggMetrics.cpp",
