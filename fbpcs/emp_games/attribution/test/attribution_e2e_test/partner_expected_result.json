@@ -2,8 +2,8 @@
     "last_touch_1d": {
         "measurement": {
             "4": {
-                "sales": 0,
-                "convs": 0
+                "sales": -1,
+                "convs": -1
             },
             "3": {
                 "sales": 504800,
@@ -16,10 +16,6 @@
             "1": {
                 "sales": 1212700,
                 "convs": 1000
-            },
-            "0": {
-                "sales": 0,
-                "convs": 0
             }
         }
     }
