@@ -66,7 +66,6 @@ WORKDIR /usr/local/bin
 RUN for b in $(ls attribution* lift* pid* shard* private-id* decoupled*); do ln -s $(pwd)/$b /home/pcs/onedocker/package/$b; done
 
 # Link binaries name to match with onedocker binaries name
-RUN ln -s attribution_calculator /home/pcs/onedocker/package/compute
 RUN ln -s decoupled_attribution_calculator /home/pcs/onedocker/package/decoupled_attribution
 RUN ln -s decoupled_aggregation_calculator /home/pcs/onedocker/package/decoupled_aggregation
 RUN ln -s lift_calculator /home/pcs/onedocker/package/lift
