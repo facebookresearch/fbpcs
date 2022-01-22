@@ -158,6 +158,17 @@ jobs:
         ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
        working-directory: ./fbpcs/tests/github/
 
+     - name: Lift - PID export metrics
+       run: |
+        ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} pid_metric_export
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
+       working-directory: ./fbpcs/tests/github/
+
      - name: Lift - Prepare Compute Input
        run: |
         ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} prepare_compute_input
@@ -236,6 +247,17 @@ jobs:
        timeout-minutes: 5
        run: |
         ./check_status.sh ${{ env.PA_CONTAINER_NAME }} attribution
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Attribution - PID export metrics
+       run: |
+        ./lift_run_stages.sh ${{ env.PL_CONTAINER_NAME }} pid_metric_export
+       working-directory: ./fbpcs/tests/github/
+
+     - name: Check Status
+       timeout-minutes: 5
+       run: |
+        ./check_status.sh ${{ env.PL_CONTAINER_NAME }} attribution
        working-directory: ./fbpcs/tests/github/
 
      - name: Attribution - Prepare Compute Input
