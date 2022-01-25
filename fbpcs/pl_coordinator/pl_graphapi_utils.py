@@ -16,6 +16,9 @@ from fbpcs.private_computation.entity.private_computation_status import (
 URL = "https://graph.facebook.com/v12.0"
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     "CREATED": PrivateComputationInstanceStatus.CREATED,
+    "INPUT_DATA_VALIDATION_STARTED": PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_STARTED,
+    "INPUT_DATA_VALIDATION_COMPLETED": PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED,
+    "INPUT_DATA_VALIDATION_FAILED": PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
     "INSTANCE_FAILURE": PrivateComputationInstanceStatus.UNKNOWN,
     "PID_SHARD_STARTED": PrivateComputationInstanceStatus.PID_SHARD_STARTED,
     "PID_SHARD_COMPLETED": PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
