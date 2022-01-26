@@ -1,0 +1,28 @@
+name: Docker Tag CI
+
+on:
+  workflow_call:
+    inputs:
+      existing_tag:
+        description: 'The existing tag of the docker image'
+        required: true
+        type: string
+      new_tag:
+        description: 'The new tag of the docker image'
+        required: true
+        type: string
+        
+        
+env:
+  RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Tag docker image
+      run: docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{inputs.existing_tag}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{inputs.new_tag}}
