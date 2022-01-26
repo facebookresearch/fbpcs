@@ -28,6 +28,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
+    ResultVisibility,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -126,6 +127,7 @@ class PrivateComputationService:
         k_anonymity_threshold: Optional[int] = None,
         fail_fast: bool = False,
         stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
+        result_visibility: ResultVisibility = ResultVisibility.PUBLIC,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -168,6 +170,7 @@ class PrivateComputationService:
                 if game_type is PrivateComputationGameType.ATTRIBUTION
                 else PrivateComputationStageFlow,
             ).get_cls_name(),
+            result_visibility=result_visibility,
         )
 
         self.instance_repository.create(instance)
