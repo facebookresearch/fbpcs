@@ -21,6 +21,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
+    ResultVisibility,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
@@ -142,6 +143,11 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
                 },
             ]
+            # We should only export visibility to scribe when it's set
+            if pc_instance.result_visibility is not ResultVisibility.PUBLIC:
+                result_visibility = int(pc_instance.result_visibility)
+                for arg in game_args:
+                    arg["visibility"] = result_visibility
 
             mpc_instance = await create_and_start_mpc_instance(
                 mpc_svc=self._mpc_service,
@@ -168,6 +174,12 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
                 },
             ]
+            # We should only export visibility to scribe when it's set
+            if pc_instance.result_visibility is not ResultVisibility.PUBLIC:
+                result_visibility = int(pc_instance.result_visibility)
+                for arg in game_args:
+                    arg["visibility"] = result_visibility
+
             mpc_instance = await create_and_start_mpc_instance(
                 mpc_svc=self._mpc_service,
                 instance_id=pc_instance.instance_id

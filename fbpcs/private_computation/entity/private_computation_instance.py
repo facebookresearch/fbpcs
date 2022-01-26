@@ -8,7 +8,7 @@
 
 import os
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -58,6 +58,13 @@ class AttributionRule(Enum):
 
 class AggregationType(Enum):
     MEASUREMENT = "measurement"
+
+
+# This is the visibility defined in https://fburl.com/code/i1itu32l
+class ResultVisibility(IntEnum):
+    PUBLIC = 0
+    PUBLISHER = 1
+    PARTNER = 2
 
 
 UnionedPCInstance = Union[PIDInstance, PCSMPCInstance, PostProcessingInstance]
@@ -132,6 +139,8 @@ class PrivateComputationInstance(InstanceBase):
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
     _stage_flow_cls_name: str = "PrivateComputationStageFlow"
+
+    result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
     def __post_init__(self) -> None:
         if self.num_pid_containers > self.num_mpc_containers:
