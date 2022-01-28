@@ -267,10 +267,7 @@ def _get_cell_obj_instance(
         # they do, select a random one.
         if created_time > cell_obj_instance[cell_id][objective_id][
             "latest_data_ts"
-        ] and (
-            created_time > current_time - INSTANCE_LIFESPAN
-            or status is PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
-        ):
+        ] and (created_time > current_time - INSTANCE_LIFESPAN):
             cell_obj_instance[cell_id][objective_id]["instance_id"] = instance_data[
                 "id"
             ]
