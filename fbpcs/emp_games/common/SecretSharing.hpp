@@ -133,11 +133,8 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
   if (MY_ROLE == SOURCE_ROLE) {
     XLOG(DBG, "padding arrays");
 
-    // POTENTIAL OPTIMIZATION: the value we reserve for the flattened
-    // padded array is an upper bound. We can probably do better, if we
-    // want to save memory.
     paddedLengths.reserve(numVals);
-    paddedArrays.reserve(numVals * maxArraySize);
+    paddedArrays.reserve(numVals);
 
     for (size_t i = 0; i < numVals; i++) {
       auto vec = in.at(i);
