@@ -241,6 +241,16 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         print_instance_mock.assert_called_once()
 
+    @patch("fbpcs.private_computation_cli.private_computation_cli.print_log_urls")
+    def test_print_log_urls(self, print_log_urls_mock):
+        argv = [
+            "print_log_urls",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        print_log_urls_mock.assert_called_once()
+
     @patch(
         "fbpcs.private_computation_cli.private_computation_cli.get_attribution_dataset_info"
     )
