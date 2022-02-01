@@ -195,9 +195,7 @@ class PrivateComputationService:
         stage_svc = stage.get_stage_service(self.stage_service_args)
         self.logger.info(f"Updating instance | {stage}={stage!r}")
         new_status = stage_svc.get_status(private_computation_instance)
-        private_computation_instance = self._update_status(
-            private_computation_instance, new_status
-        )
+        private_computation_instance.update_status(new_status, self.logger)
         self.instance_repository.update(private_computation_instance)
         self.logger.info(
             f"Finished updating instance: {private_computation_instance.instance_id}"
@@ -296,19 +294,15 @@ class PrivateComputationService:
             instance_id, stage, server_ips, dry_run
         )
 
-        self._update_status(
-            private_computation_instance=pc_instance,
-            new_status=stage.started_status,
-        )
+        pc_instance.update_status(new_status=stage.started_status, logger=self.logger)
         self.logger.info(repr(stage))
         try:
             stage_svc = stage_svc or stage.get_stage_service(self.stage_service_args)
             pc_instance = await stage_svc.run_async(pc_instance, server_ips)
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage}\n{e}")
-            self._update_status(
-                private_computation_instance=pc_instance,
-                new_status=stage.failed_status,
+            pc_instance.update_status(
+                new_status=stage.failed_status, logger=self.logger
             )
             raise e
         finally:
@@ -397,22 +391,6 @@ class PrivateComputationService:
     @staticmethod
     def get_ts_now() -> int:
         return int(datetime.now(tz=timezone.utc).timestamp())
-
-    def _update_status(
-        self,
-        private_computation_instance: PrivateComputationInstance,
-        new_status: PrivateComputationInstanceStatus,
-    ) -> PrivateComputationInstance:
-        old_status = private_computation_instance.status
-        private_computation_instance.status = new_status
-        if old_status != new_status:
-            private_computation_instance.status_update_ts = (
-                PrivateComputationService.get_ts_now()
-            )
-            self.logger.info(
-                f"Updating status of {private_computation_instance.instance_id} from {old_status} to {private_computation_instance.status} at time {private_computation_instance.status_update_ts}"
-            )
-        return private_computation_instance
 
     def _get_param(
         self, param_name: str, instance_param: Optional[T], override_param: Optional[T]

@@ -18,6 +18,9 @@ if TYPE_CHECKING:
         PrivateComputationBaseStageFlow,
     )
 
+from datetime import timezone, datetime
+from logging import Logger
+
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -229,3 +232,14 @@ class PrivateComputationInstance(InstanceBase):
         * If the instance has a completed status, return the next stage in the flow (which could be None)
         """
         return self.stage_flow.get_next_runnable_stage_from_status(self.status)
+
+    def update_status(
+        self, new_status: PrivateComputationInstanceStatus, logger: Logger
+    ) -> None:
+        old_status = self.status
+        self.status = new_status
+        if old_status is not new_status:
+            self.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
+            logger.info(
+                f"Updating status of {self.instance_id} from {old_status} to {self.status} at time {self.status_update_ts}"
+            )
