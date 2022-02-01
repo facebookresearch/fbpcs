@@ -207,7 +207,7 @@ const std::vector<std::vector<O>> privatelyShareArraysFromNoPadding(
     XLOG(DBG, "preparing arrays");
 
     vecLengths.reserve(numVals);
-    vecArrays.reserve(numVals * maxArraySize);
+    vecArrays.reserve(numVals);
 
     for (size_t i = 0; i < numVals; i++) {
       auto vec = in.at(i);
