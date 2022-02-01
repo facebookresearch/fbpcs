@@ -9,6 +9,7 @@
 import logging
 from typing import List, Optional
 
+from fbpcp.service.storage import StorageService
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
@@ -31,6 +32,14 @@ class InputDataValidationStageService(PrivateComputationStageService):
     It is implemented in a Cloud agnostic way.
     """
 
+    def __init__(
+        self,
+        storage_svc: StorageService,
+        validation_results_path: Optional[str] = None,
+    ) -> None:
+        self._storage_svc = storage_svc
+        self._logger: logging.Logger = logging.getLogger(__name__)
+
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
@@ -39,12 +48,20 @@ class InputDataValidationStageService(PrivateComputationStageService):
         """
         Updates the status to COMPLETED and returns the pc_instance
         """
-        logging.info("[InputDataValidation] - Starting stage")
+        self._logger.info("[InputDataValidation] - Starting stage")
         # TODO: call the data_input_validation library
-        pc_instance.status = (
+        validation_status = (
             PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
         )
-        logging.info("[InputDataValidation] - Finished stage")
+        if not self._storage_svc.file_exists(pc_instance.input_path):
+            validation_status = (
+                PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
+            )
+            self._logger.error(
+                f"[InputDataValidation] Error - input_path {pc_instance.input_path} does not exist"
+            )
+        pc_instance.status = validation_status
+        self._logger.info("[InputDataValidation] - Finished stage")
         return pc_instance
 
     def get_status(
