@@ -36,6 +36,7 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
+from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
@@ -202,7 +203,6 @@ def get_instance(
     instance = pc_service.get_instance(instance_id)
     if instance.current_stage.is_started_status(instance.status):
         instance = pc_service.update_instance(instance_id)
-    logger.info(instance)
     return instance
 
 
@@ -301,6 +301,23 @@ def print_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> None:
     print(get_instance(config, instance_id, logger))
+
+
+def print_log_urls(
+    config: Dict[str, Any], instance_id: str, logger: logging.Logger
+) -> None:
+    """
+    To print the log urls with id instance_id.
+    Printing out by stages and correspondens log url
+    """
+    instance = get_instance(config, instance_id, logger)
+    log_urls = get_log_urls(instance)
+    if not log_urls:
+        logger.warning(f"Unable to get log container urls for instance {instance_id}")
+        return
+
+    for stage, log_url in log_urls.items():
+        print(f"[{stage}]: {log_url}")
 
 
 def _build_container_service(config: Dict[str, Any]) -> ContainerService:

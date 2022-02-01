@@ -23,6 +23,7 @@ Usage:
     pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
+    pc-cli print_log_urls <instance_id> --config=<config_file> [options]
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
     pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --start_date=<start_date> --end_date=<end_date> --attribution_rule=<attribution_rule> --result_type=<result_type> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>[options]
 
@@ -70,6 +71,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     get_pid,
     get_server_ips,
     print_instance,
+    print_log_urls,
     run_next,
     run_stage,
     validate,
@@ -94,6 +96,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "run_attribution": bool,
             "cancel_current_stage": bool,
             "print_instance": bool,
+            "print_log_urls": bool,
             "get_attribution_dataset_info": bool,
             "<instance_id>": schema.Or(None, str),
             "<instance_ids>": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
@@ -212,7 +215,8 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
     elif arguments["get_instance"]:
         logger.info(f"Get instance: {instance_id}")
-        get_instance(config, instance_id, logger)
+        instance = get_instance(config, instance_id, logger)
+        logger.info(instance)
     elif arguments["get_server_ips"]:
         get_server_ips(config, instance_id, logger)
     elif arguments["get_pid"]:
@@ -297,6 +301,12 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
     elif arguments["print_instance"]:
         print_instance(
+            config=config,
+            instance_id=instance_id,
+            logger=logger,
+        )
+    elif arguments["print_log_urls"]:
+        print_log_urls(
             config=config,
             instance_id=instance_id,
             logger=logger,
