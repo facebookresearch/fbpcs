@@ -23,12 +23,16 @@ from libfb.py.testutil import data_provider
 class TestPIDShardStage(unittest.TestCase):
     @to_sync
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    async def test_ready(self, mock_instance_repo):
+    async def test_ready(self, mock_instance_repo) -> None:
         stage = PIDShardStage(
             stage=UnionPIDStage.PUBLISHER_SHARD,
             instance_repository=mock_instance_repo,
+            # pyre-fixme[6]: For 3rd param expected `StorageService` but got `str`.
             storage_svc="STORAGE",
+            # pyre-fixme[6]: For 4th param expected `OneDockerService` but got `str`.
             onedocker_svc="ONEDOCKER",
+            # pyre-fixme[6]: For 5th param expected `OneDockerBinaryConfig` but got
+            #  `str`.
             onedocker_binary_config="OD_CONFIG",
         )
         stage_input = PIDStageInput(
@@ -60,7 +64,7 @@ class TestPIDShardStage(unittest.TestCase):
         mock_storage_svc,
         mock_wait_for_containers_async,
         wait_for_containers: bool,
-    ):
+    ) -> None:
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
 
@@ -183,7 +187,7 @@ class TestPIDShardStage(unittest.TestCase):
         mock_sharder,
         wait_for_containers: bool,
         expected_container_status: ContainerInstanceStatus,
-    ):
+    ) -> None:
         with patch.object(PIDStage, "update_instance_containers"):
             test_onedocker_binary_config = OneDockerBinaryConfig(
                 tmp_directory="/test_tmp_directory/",

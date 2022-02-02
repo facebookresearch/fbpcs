@@ -33,15 +33,17 @@ from fbpcs.private_computation.service.post_processing_stage_service import (
 
 class TestPostProcessingStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.storage_s3.S3StorageService")
-    def setUp(self, mock_storage_svc):
+    def setUp(self, mock_storage_svc) -> None:
         self.mock_storage_svc = mock_storage_svc
 
-    async def test_post_processing_all_succeed(self):
+    async def test_post_processing_all_succeed(self) -> None:
         # create two handlers that never fail
         handlers = {
             f"handler{i}": PostProcessingDummyHandler(probability_of_failure=0)
             for i in range(2)
         }
+        # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
+        #  but got `Dict[str, PostProcessingDummyHandler]`.
         stage_svc = PostProcessingStageService(self.mock_storage_svc, handlers)
 
         private_computation_instance = self._create_pc_instance()
@@ -61,15 +63,21 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             for handler_name in handlers.keys()
         }
         self.assertEqual(
-            post_processing_instance.handler_statuses, expected_handler_statuses
+            # pyre-fixme[16]: Item `PCSMPCInstance` of `Union[PCSMPCInstance,
+            #  PIDInstance, PostProcessingInstance]` has no attribute
+            #  `handler_statuses`.
+            post_processing_instance.handler_statuses,
+            expected_handler_statuses,
         )
 
-    async def test_post_processing_all_fail(self):
+    async def test_post_processing_all_fail(self) -> None:
         # create two handlers that always fail
         handlers = {
             f"handler{i}": PostProcessingDummyHandler(probability_of_failure=1)
             for i in range(2)
         }
+        # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
+        #  but got `Dict[str, PostProcessingDummyHandler]`.
         stage_svc = PostProcessingStageService(self.mock_storage_svc, handlers)
 
         private_computation_instance = self._create_pc_instance()
@@ -89,15 +97,21 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             for handler_name in handlers.keys()
         }
         self.assertEqual(
-            post_processing_instance.handler_statuses, expected_handler_statuses
+            # pyre-fixme[16]: Item `PCSMPCInstance` of `Union[PCSMPCInstance,
+            #  PIDInstance, PostProcessingInstance]` has no attribute
+            #  `handler_statuses`.
+            post_processing_instance.handler_statuses,
+            expected_handler_statuses,
         )
 
-    async def test_post_processing_one_fail(self):
+    async def test_post_processing_one_fail(self) -> None:
         # create two handlers, one that fails, one that succeeds
         handlers = {
             f"handler{i}": PostProcessingDummyHandler(probability_of_failure=i)
             for i in range(2)
         }
+        # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
+        #  but got `Dict[str, PostProcessingDummyHandler]`.
         stage_svc = PostProcessingStageService(self.mock_storage_svc, handlers)
 
         private_computation_instance = self._create_pc_instance()
@@ -122,7 +136,11 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             )
         )
         self.assertEqual(
-            post_processing_instance.handler_statuses, expected_handler_statuses
+            # pyre-fixme[16]: Item `PCSMPCInstance` of `Union[PCSMPCInstance,
+            #  PIDInstance, PostProcessingInstance]` has no attribute
+            #  `handler_statuses`.
+            post_processing_instance.handler_statuses,
+            expected_handler_statuses,
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:

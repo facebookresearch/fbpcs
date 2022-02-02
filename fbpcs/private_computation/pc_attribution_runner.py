@@ -26,7 +26,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 
 
 class LoggerAdapter(logging.LoggerAdapter):
-    def __init__(self, logger: logging.Logger, prefix: str):
+    def __init__(self, logger: logging.Logger, prefix: str) -> None:
         super(LoggerAdapter, self).__init__(logger, {})
         self.prefix = prefix
 
@@ -47,7 +47,7 @@ POLL_INTERVAL = 60
 WAIT_VALID_STATUS_TIMEOUT = 600
 WAIT_VALID_STAGE_TIMEOUT = 300
 OPERATION_REQUEST_TIMEOUT = 1200
-CANCEL_STAGE_TIMEOUT = POLL_INTERVAL * 5
+CANCEL_STAGE_TIMEOUT: int = POLL_INTERVAL * 5
 
 MIN_TRIES = 1
 MAX_TRIES = 2

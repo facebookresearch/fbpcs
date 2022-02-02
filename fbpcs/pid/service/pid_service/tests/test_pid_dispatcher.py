@@ -28,7 +28,7 @@ from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 
 
 class TestPIDDispatcher(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.onedocker_binary_config = OneDockerBinaryConfig(
             tmp_directory="/tmp/",
             binary_version="latest",
@@ -38,7 +38,7 @@ class TestPIDDispatcher(unittest.TestCase):
     def test_pid_flow_unsupported_protocol(
         self,
         mock_instance_repo,
-    ):
+    ) -> None:
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
@@ -49,8 +49,13 @@ class TestPIDDispatcher(unittest.TestCase):
                 num_shards=50,
                 protocol=PIDProtocol.PS3I_M_TO_M,
                 role=PIDRole.PUBLISHER,
+                # pyre-fixme[6]: For 6th param expected `StorageService` but got `str`.
                 storage_svc="STORAGE",
+                # pyre-fixme[6]: For 7th param expected `OneDockerService` but got
+                #  `str`.
                 onedocker_svc="ONEDOCKER",
+                # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+                #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
                 onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=True,
             )
@@ -70,7 +75,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_onedocker_service,
         mock_s3_storage_service,
         mock_file_coordination_service,
-    ):
+    ) -> None:
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
@@ -82,6 +87,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=PIDRole.PUBLISHER,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             fail_fast=True,
         )
@@ -119,7 +126,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_onedocker_service,
         mock_s3_storage_service,
         mock_file_coordination_service,
-    ):
+    ) -> None:
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
@@ -133,6 +140,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=PIDRole.PUBLISHER,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             data_path="data.txt",
             spine_path="spine.txt",
@@ -172,7 +181,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_onedocker_service,
         mock_s3_storage_service,
         mock_file_coordination_service,
-    ):
+    ) -> None:
         dispatcher = PIDDispatcher(
             instance_id="456", instance_repository=mock_instance_repo
         )
@@ -184,6 +193,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=PIDRole.PARTNER,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             fail_fast=True,
         )
@@ -223,7 +234,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_pid_shard_stage,
         mock_pid_prepare_stage,
         mock_pid_run_protocol_stage,
-    ):
+    ) -> None:
         complete_mock = AsyncMock(return_value=PIDStageStatus.COMPLETED)
         mock_pid_shard_stage().run = complete_mock
         mock_pid_prepare_stage().run = complete_mock
@@ -262,6 +273,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=pid_role,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             fail_fast=True,
         )
@@ -291,7 +304,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_pid_shard_stage,
         mock_pid_prepare_stage,
         mock_pid_run_protocol_stage,
-    ):
+    ) -> None:
         mock_pid_shard_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
         mock_pid_prepare_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
         mock_pid_run_protocol_stage().run = AsyncMock(
@@ -317,6 +330,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=pid_role,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             fail_fast=True,
         )
@@ -365,7 +380,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_pid_shard_stage,
         mock_pid_prepare_stage,
         mock_pid_run_protocol_stage,
-    ):
+    ) -> None:
         mock_pid_shard_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
         mock_pid_prepare_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
         mock_pid_run_protocol_stage().run = AsyncMock(
@@ -413,6 +428,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=pid_role,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             fail_fast=True,
         )
@@ -446,7 +463,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_pid_run_protocol_stage,
         mock_pid_prepare_stage,
         mock_pid_shard_stage,
-    ):
+    ) -> None:
         mock_pid_prepare_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
         mock_pid_shard_stage().stage_type = UnionPIDStage.PUBLISHER_SHARD
         mock_pid_shard_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
@@ -466,6 +483,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=PIDRole.PARTNER,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             fail_fast=False,
         )
@@ -524,7 +543,7 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_pid_run_protocol_stage,
         mock_pid_prepare_stage,
         mock_pid_shard_stage,
-    ):
+    ) -> None:
         mock_pid_prepare_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
         mock_pid_shard_stage().stage_type = UnionPIDStage.PUBLISHER_SHARD
         mock_pid_shard_stage().run = AsyncMock(return_value=PIDStageStatus.COMPLETED)
@@ -547,6 +566,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=PIDRole.PARTNER,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             data_path="data.txt",
             spine_path="spine.txt",
@@ -612,11 +633,13 @@ class TestPIDDispatcher(unittest.TestCase):
         mock_pid_run_protocol_stage,
         mock_pid_prepare_stage,
         mock_pid_shard_stage,
-    ):
+    ) -> None:
         # custom flow with non-linear dependency
         mock_get_execution_flow.return_value = PIDFlow(
             name="union_pid_advertiser",
             base_flow="union_pid",
+            # pyre-fixme[6]: For 3rd param expected `Dict[UnionPIDStage, List[str]]`
+            #  but got `List[Variable[_T]]`.
             extra_args=[],
             flow={
                 UnionPIDStage.ADV_SHARD: [
@@ -646,6 +669,8 @@ class TestPIDDispatcher(unittest.TestCase):
             role=PIDRole.PARTNER,
             storage_svc=mock_s3_storage_service,
             onedocker_svc=mock_onedocker_service,
+            # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
+            #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             fail_fast=False,
         )

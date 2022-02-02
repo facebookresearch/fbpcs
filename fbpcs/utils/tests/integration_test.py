@@ -10,7 +10,7 @@ from typing import Optional
 from fbpcs.utils import abstract_file_ctx
 
 
-def test_s3_file_helper():
+def test_s3_file_helper() -> None:
     # NOTE: os.environ must set for PL_AWS_* to instantiate S3StorageService
     s3_path = pathlib.Path("s3://file_helper_example/test_file")
 
@@ -22,6 +22,7 @@ def test_s3_file_helper():
     content: Optional[str] = None
     print("Start reader")
     with abstract_file_ctx.abstract_file_reader_path(s3_path) as reader:
+        # pyre-fixme[16]: `Path` has no attribute `read`.
         content = reader.read()
     print("Reader done")
 

@@ -10,7 +10,7 @@ from datetime import datetime
 import boto3
 import validation
 
-DEBUG_MODE = str(os.environ.get("VALIDATION_DEBUG_MODE")) == "1"
+DEBUG_MODE: bool = str(os.environ.get("VALIDATION_DEBUG_MODE")) == "1"
 DEFAULT_VALIDATION_RESULTS_S3_KEY = "events-validation-results"
 
 

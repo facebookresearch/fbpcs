@@ -14,18 +14,18 @@ from fbpcs.private_computation_cli import private_computation_cli as pc_cli
 
 
 class TestPrivateComputationCli(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         # We don't actually use the config, but we need to write a file so that
         # the yaml load won't blow up in `main`
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
             json.dump({}, f)
             self.temp_filename = f.name
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         os.unlink(self.temp_filename)
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.create_instance")
-    def test_create_instance(self, create_mock):
+    def test_create_instance(self, create_mock) -> None:
         # Normally such *ultra-specific* test cases against a CLI would be an
         # antipattern, but since this is our public interface, we want to be
         # very careful before making that interface change.
@@ -60,7 +60,7 @@ class TestPrivateComputationCli(TestCase):
         create_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
-    def test_validate(self, validate_mock):
+    def test_validate(self, validate_mock) -> None:
         argv = [
             "validate",
             "instance123",
@@ -72,7 +72,7 @@ class TestPrivateComputationCli(TestCase):
         validate_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_next")
-    def test_run_next(self, run_next_mock):
+    def test_run_next(self, run_next_mock) -> None:
         argv = [
             "run_next",
             "instance123",
@@ -92,7 +92,7 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_instance")
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_stage")
-    def test_run_stage(self, run_stage_mock, get_instance_mock):
+    def test_run_stage(self, run_stage_mock, get_instance_mock) -> None:
         argv = [
             "run_stage",
             "instance123",
@@ -116,7 +116,7 @@ class TestPrivateComputationCli(TestCase):
         get_instance_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_instance")
-    def test_get_instance(self, get_instance_mock):
+    def test_get_instance(self, get_instance_mock) -> None:
         argv = [
             "get_instance",
             "instance123",
@@ -126,7 +126,7 @@ class TestPrivateComputationCli(TestCase):
         get_instance_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_server_ips")
-    def test_get_server_ips(self, get_ips_mock):
+    def test_get_server_ips(self, get_ips_mock) -> None:
         argv = [
             "get_server_ips",
             "instance123",
@@ -136,7 +136,7 @@ class TestPrivateComputationCli(TestCase):
         get_ips_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_pid")
-    def test_get_pid(self, get_pid_mock):
+    def test_get_pid(self, get_pid_mock) -> None:
         argv = [
             "get_pid",
             "instance123",
@@ -146,7 +146,7 @@ class TestPrivateComputationCli(TestCase):
         get_pid_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.get_mpc")
-    def test_get_mpc(self, get_mpc_mock):
+    def test_get_mpc(self, get_mpc_mock) -> None:
         argv = [
             "get_mpc",
             "instance123",
@@ -156,7 +156,7 @@ class TestPrivateComputationCli(TestCase):
         get_mpc_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_instance")
-    def test_run_instance(self, run_instance_mock):
+    def test_run_instance(self, run_instance_mock) -> None:
         argv = [
             "run_instance",
             "instance123",
@@ -178,7 +178,7 @@ class TestPrivateComputationCli(TestCase):
         run_instance_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_instances")
-    def test_run_instances(self, run_instances_mock):
+    def test_run_instances(self, run_instances_mock) -> None:
         argv = [
             "run_instances",
             "instance123,instance456",
@@ -200,7 +200,7 @@ class TestPrivateComputationCli(TestCase):
         run_instances_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_study")
-    def test_run_study(self, run_study_mock):
+    def test_run_study(self, run_study_mock) -> None:
         argv = [
             "run_study",
             "12345",
@@ -222,7 +222,7 @@ class TestPrivateComputationCli(TestCase):
         run_study_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.cancel_current_stage")
-    def test_cancel_current_stage(self, cancel_stage_mock):
+    def test_cancel_current_stage(self, cancel_stage_mock) -> None:
         argv = [
             "cancel_current_stage",
             "instance123",
@@ -232,7 +232,7 @@ class TestPrivateComputationCli(TestCase):
         cancel_stage_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.print_instance")
-    def test_print_instance(self, print_instance_mock):
+    def test_print_instance(self, print_instance_mock) -> None:
         argv = [
             "print_instance",
             "instance123",
@@ -242,7 +242,7 @@ class TestPrivateComputationCli(TestCase):
         print_instance_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.print_log_urls")
-    def test_print_log_urls(self, print_log_urls_mock):
+    def test_print_log_urls(self, print_log_urls_mock) -> None:
         argv = [
             "print_log_urls",
             "instance123",
@@ -254,7 +254,9 @@ class TestPrivateComputationCli(TestCase):
     @patch(
         "fbpcs.private_computation_cli.private_computation_cli.get_attribution_dataset_info"
     )
-    def test_get_attribution_dataset_info(self, get_attribution_dataset_info_mock):
+    def test_get_attribution_dataset_info(
+        self, get_attribution_dataset_info_mock
+    ) -> None:
         argv = [
             "get_attribution_dataset_info",
             "--dataset_id=dataset123",

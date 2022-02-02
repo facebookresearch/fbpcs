@@ -45,7 +45,7 @@ class TestPIDPrepareStage(unittest.TestCase):
         mock_instance_repo,
         wait_for_containers,
         expected_container_status,
-    ):
+    ) -> None:
         with patch.object(
             CppUnionPIDDataPreparerService, "prepare_on_container_async"
         ) as mock_prepare_on_container_async, patch.object(
@@ -61,7 +61,10 @@ class TestPIDPrepareStage(unittest.TestCase):
             stage = PIDPrepareStage(
                 stage=UnionPIDStage.PUBLISHER_PREPARE,
                 instance_repository=mock_instance_repo,
+                # pyre-fixme[6]: For 3rd param expected `StorageService` but got `str`.
                 storage_svc="STORAGE",
+                # pyre-fixme[6]: For 4th param expected `OneDockerService` but got
+                #  `str`.
                 onedocker_svc="ONEDOCKER",
                 onedocker_binary_config=MagicMock(
                     task_definition="offline-task:1#container",
@@ -100,7 +103,7 @@ class TestPIDPrepareStage(unittest.TestCase):
         mock_storage_svc,
         mock_wait_for_containers_async,
         wait_for_containers: bool,
-    ):
+    ) -> None:
         ip = "192.0.2.0"
         container = ContainerInstance(
             instance_id="123", ip_address=ip, status=ContainerInstanceStatus.STARTED

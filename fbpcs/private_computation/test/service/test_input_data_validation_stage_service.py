@@ -21,7 +21,7 @@ from fbpcs.private_computation.service.input_data_validation_stage_service impor
 
 
 class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._pc_instance = PrivateComputationInstance(
             instance_id="123",
             role=PrivateComputationRole.PARTNER,

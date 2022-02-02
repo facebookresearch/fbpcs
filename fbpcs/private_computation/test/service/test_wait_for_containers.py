@@ -18,12 +18,12 @@ from fbpcs.private_computation.service.run_binary_base_service import (
 
 class TestWaitForContainersAsync(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.container.ContainerService")
-    def setUp(self, MockContainerService):
+    def setUp(self, MockContainerService) -> None:
         self.container_svc = MockContainerService()
         self.onedocker_svc = OneDockerService(self.container_svc, "task_def")
 
     @mock.patch("fbpcp.service.onedocker.OneDockerService.get_containers")
-    async def test_wait_for_containers_success(self, get_containers):
+    async def test_wait_for_containers_success(self, get_containers) -> None:
         container_1_start = ContainerInstance(
             "arn:aws:ecs:region:account_id:task/container_id_1",
             "192.0.2.0",
@@ -66,7 +66,7 @@ class TestWaitForContainersAsync(IsolatedAsyncioTestCase):
         self.assertEqual(updated_containers[1], container_2_complete)
 
     @mock.patch("fbpcp.service.onedocker.OneDockerService.get_containers")
-    async def test_wait_for_containers_fail(self, get_containers):
+    async def test_wait_for_containers_fail(self, get_containers) -> None:
         container_1_start = ContainerInstance(
             "arn:aws:ecs:region:account_id:task/container_id_1",
             "192.0.2.0",

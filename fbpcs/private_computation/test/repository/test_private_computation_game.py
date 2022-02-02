@@ -29,10 +29,10 @@ class TestPrivateComputationGameRepository(unittest.TestCase):
             },
         },
     )
-    def setUp(self):
+    def setUp(self) -> None:
         self.game_repository = PrivateComputationGameRepository()
 
-    def test_get_game(self):
+    def test_get_game(self) -> None:
         game_config = self.game_repository.private_computation_game_config
         expected_game_name = "attribution_compute_dev"
         expected_onedocker_package_name = game_config[expected_game_name][
@@ -51,7 +51,7 @@ class TestPrivateComputationGameRepository(unittest.TestCase):
         )
         self.assertEqual(attribution_game_config.arguments, expected_arguments)
 
-    def test_unsupported_game(self):
+    def test_unsupported_game(self) -> None:
         unsupported_game_name = "unsupported game"
         with self.assertRaisesRegex(
             ValueError, f"Game {unsupported_game_name} is not supported."

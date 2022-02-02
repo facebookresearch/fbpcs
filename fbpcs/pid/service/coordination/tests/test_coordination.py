@@ -16,7 +16,8 @@ from fbpcs.pid.service.coordination.coordination import (
 
 class TestCoordinationService(unittest.TestCase):
     @patch.object(CoordinationService, "__abstractmethods__", set())
-    def test_add_coordination_object(self):
+    def test_add_coordination_object(self) -> None:
+        # pyre-fixme[45]: Cannot instantiate abstract class `CoordinationService`.
         svc = CoordinationService({}, storage_svc=None)
         self.assertEqual(len(svc.coordination_objects), 0)
         # Test default add
@@ -35,7 +36,8 @@ class TestCoordinationService(unittest.TestCase):
             svc.add_coordination_object("key1", params=params)
 
     @patch.object(CoordinationService, "__abstractmethods__", set())
-    def test_is_tracking(self):
+    def test_is_tracking(self) -> None:
+        # pyre-fixme[45]: Cannot instantiate abstract class `CoordinationService`.
         svc = CoordinationService({}, storage_svc=None)
         self.assertFalse(svc.is_tracking("key1"))
 
@@ -45,9 +47,10 @@ class TestCoordinationService(unittest.TestCase):
 
     @patch.object(CoordinationService, "__abstractmethods__", set())
     @patch("time.sleep", return_value=None)
-    def test_wait(self, mock_time_sleep):
+    def test_wait(self, mock_time_sleep) -> None:
         params = {"value": "value", "sleep_interval_secs": 99, "timeout_secs": 100}
         objs = {"key1": params}
+        # pyre-fixme[45]: Cannot instantiate abstract class `CoordinationService`.
         svc = CoordinationService(objs, None)
 
         # Test that we call until True is returned
@@ -67,9 +70,10 @@ class TestCoordinationService(unittest.TestCase):
             self.assertEqual(m.call_count, 4)
 
     @patch.object(CoordinationService, "__abstractmethods__", set())
-    def test_put_payload(self):
+    def test_put_payload(self) -> None:
         params = {"value": "value1"}
         objs = {"key1": params}
+        # pyre-fixme[45]: Cannot instantiate abstract class `CoordinationService`.
         svc = CoordinationService(objs, None)
 
         # Test default behavior
@@ -83,9 +87,10 @@ class TestCoordinationService(unittest.TestCase):
             svc.put_payload("bad key", data)
 
     @patch.object(CoordinationService, "__abstractmethods__", set())
-    def test_get_payload(self):
+    def test_get_payload(self) -> None:
         params = {"value": "value1"}
         objs = {"key1": params}
+        # pyre-fixme[45]: Cannot instantiate abstract class `CoordinationService`.
         svc = CoordinationService(objs, None)
 
         # Test default behavior

@@ -12,7 +12,7 @@ from fbpcs.scripts import gen_fake_data
 
 
 class TestGenFakeData(unittest.TestCase):
-    def test_gen_adjusted_purchase_rate(self):
+    def test_gen_adjusted_purchase_rate(self) -> None:
         # test user - Within bounds
         res = gen_fake_data._gen_adjusted_purchase_rate(
             is_test=True, purchase_rate=0.9, incrementality_rate=0.2
@@ -37,7 +37,7 @@ class TestGenFakeData(unittest.TestCase):
                 is_test=False, purchase_rate=0.1, incrementality_rate=0.3
             )
 
-    def test_faked_data(self):
+    def test_faked_data(self) -> None:
         header = [
             gen_fake_data.InputColumn.id_,
             gen_fake_data.InputColumn.row_count,
@@ -235,7 +235,7 @@ class TestGenFakeData(unittest.TestCase):
             num_convs, len(res[header.index(gen_fake_data.InputColumn.values)])
         )
 
-    def test_generate_line(self):
+    def test_generate_line(self) -> None:
         # Basic test
         header = [gen_fake_data.InputColumn.id_]
         line = "123"
@@ -318,7 +318,7 @@ class TestGenFakeData(unittest.TestCase):
         self.assertEqual("123", res[0])
         self.assertEqual("555", res[1])
 
-    def test_make_input_csv(self):
+    def test_make_input_csv(self) -> None:
         # First test without --num_records
         input_lines = ["id_,opportunity,test_flag", "1", "2", "3", "4", "5"]
         input_text = "\n".join(input_lines)
@@ -359,6 +359,8 @@ class TestGenFakeData(unittest.TestCase):
         m = mock_open(read_data=input_text)
         with patch("builtins.open", m):
             gen_fake_data._make_input_csv(args)
+        # pyre-fixme[58]: `+` is not supported for operand types `Union[float,
+        #  pathlib.Path]` and `int`.
         self.assertEqual(args["--num_records"] + 1, m().readline.call_count)
         m().write.assert_has_calls(
             [
@@ -378,8 +380,12 @@ class TestGenFakeData(unittest.TestCase):
         m = mock_open(read_data=input_text)
         with patch("builtins.open", m):
             gen_fake_data._make_input_csv(args)
+        # pyre-fixme[58]: `+` is not supported for operand types `Union[float,
+        #  pathlib.Path]` and `int`.
         self.assertEqual(args["--num_records"] + 1, m().readline.call_count)
         calls = [call("id_,opportunity,test_flag\n")]
+        # pyre-fixme[6]: For 1st param expected `SupportsIndex` but got
+        #  `Union[float, Path]`.
         for i in range(args["--num_records"]):
             calls.append(call(f"{i},0,0\n"))
         m().write.assert_has_calls(calls)
@@ -387,13 +393,17 @@ class TestGenFakeData(unittest.TestCase):
         # Test with --from_header and --num_records set
         m.reset_mock()
         args["--num_records"] = 10
+        # pyre-fixme[6]: For 2nd param expected `Union[float, Path]` but got `str`.
         args["--from_header"] = "id_,opportunity,test_flag"
+        # pyre-fixme[6]: For 2nd param expected `Union[float, Path]` but got `None`.
         args["<input_path>"] = None
         m = mock_open()
         with patch("builtins.open", m):
             gen_fake_data._make_input_csv(args)
 
         calls = [call("id_,opportunity,test_flag\n")]
+        # pyre-fixme[6]: For 1st param expected `SupportsIndex` but got
+        #  `Union[float, Path]`.
         for i in range(args["--num_records"]):
             calls.append(call(f"{i},0,0\n"))
         m().write.assert_has_calls(calls)

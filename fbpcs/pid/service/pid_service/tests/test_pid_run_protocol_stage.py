@@ -21,7 +21,7 @@ from libfb.py.testutil import data_provider
 
 
 class TestPIDProtocolRunStage(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.onedocker_binary_config = OneDockerBinaryConfig(
             tmp_directory="/tmp/",
             binary_version="latest",
@@ -29,7 +29,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
 
     @to_sync
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    async def test_not_ready(self, mock_instance_repo):
+    async def test_not_ready(self, mock_instance_repo) -> None:
         stage_input = PIDStageInput(
             input_paths=["not_exists"],
             output_paths=["out"],
@@ -39,7 +39,9 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         adv_run_stage = PIDProtocolRunStage(
             stage=UnionPIDStage.ADV_RUN_PID,
             instance_repository=mock_instance_repo,
+            # pyre-fixme[6]: For 3rd param expected `StorageService` but got `str`.
             storage_svc="STORAGE",
+            # pyre-fixme[6]: For 4th param expected `OneDockerService` but got `str`.
             onedocker_svc="ONEDOCKER",
             onedocker_binary_config=self.onedocker_binary_config,
         )
@@ -66,7 +68,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         mock_storage_service,
         mock_wait_for_containers_async,
         wait_for_containers: bool,
-    ):
+    ) -> None:
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
         mock_onedocker_service.start_containers = MagicMock(return_value=[container])
@@ -163,7 +165,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         mock_storage_service,
         mock_wait_for_containers_async,
         wait_for_containers: bool,
-    ):
+    ) -> None:
         ip = "192.0.2.0"
         container = ContainerInstance(instance_id="123", ip_address=ip)
         mock_onedocker_service.start_containers = MagicMock(return_value=[container])

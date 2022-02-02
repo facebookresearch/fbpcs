@@ -80,7 +80,7 @@ def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
 
 
 class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         container_svc_patcher = patch("fbpcp.service.container_aws.AWSContainerService")
         storage_svc_patcher = patch("fbpcp.service.storage_s3.S3StorageService")
         mpc_instance_repo_patcher = patch(
@@ -157,7 +157,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.test_concurrency = 1
         self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
-    def test_create_instance(self):
+    def test_create_instance(self) -> None:
         test_role = PrivateComputationRole.PUBLISHER
         self.private_computation_service.create_instance(
             instance_id=self.test_private_computation_id,
@@ -172,7 +172,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             hmac_key=self.test_hmac_key,
         )
         # check instance_repository.create is called with the correct arguments
+        # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
         self.private_computation_service.instance_repository.create.assert_called()
+        # pyre-fixme[16]: Callable `create` has no attribute `call_args`.
         args = self.private_computation_service.instance_repository.create.call_args[0][
             0
         ]
@@ -180,7 +182,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(test_role, args.role)
         self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
 
-    def test_update_instance(self):
+    def test_update_instance(self) -> None:
         test_pid_id = self.test_private_computation_id + "_id_match"
         test_pid_role = PIDRole.PUBLISHER
         test_input_path = "pid_in"
@@ -222,16 +224,20 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         # check update instance called on the right pid instance
+        # pyre-fixme[16]: Callable `update_instance` has no attribute `assert_called`.
         self.private_computation_service.pid_svc.update_instance.assert_called()
         self.assertEqual(
             test_pid_id,
+            # pyre-fixme[16]: Callable `update_instance` has no attribute `call_args`.
             self.private_computation_service.pid_svc.update_instance.call_args[0][0],
         )
 
         # check update instance called on the right private lift instance
+        # pyre-fixme[16]: Callable `update` has no attribute `assert_called`.
         self.private_computation_service.instance_repository.update.assert_called()
         self.assertEqual(
             private_computation_instance,
+            # pyre-fixme[16]: Callable `update` has no attribute `call_args`.
             self.private_computation_service.instance_repository.update.call_args[0][0],
         )
 
@@ -270,9 +276,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         # check update instance called on the right mpc instance
+        # pyre-fixme[16]: Callable `update_instance` has no attribute `assert_called`.
         self.private_computation_service.mpc_svc.update_instance.assert_called()
         self.assertEqual(
             test_mpc_id,
+            # pyre-fixme[16]: Callable `update_instance` has no attribute `call_args`.
             self.private_computation_service.mpc_svc.update_instance.call_args[0][0],
         )
 
@@ -496,7 +504,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(pl_instance.status, stage.failed_status)
 
     @patch("fbpcp.service.mpc.MPCService")
-    async def test_create_and_start_mpc_instance(self, mock_mpc_svc):
+    async def test_create_and_start_mpc_instance(self, mock_mpc_svc) -> None:
         mock_mpc_svc.create_instance = MagicMock()
         mock_mpc_svc.start_instance_async = AsyncMock()
 
@@ -529,6 +537,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             binary_version=binary_version,
             container_timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
             server_ips=server_ips,
+            # pyre-fixme[6]: For 9th param expected `Optional[List[Dict[str,
+            #  typing.Any]]]` but got `Dict[str, Union[int, str]]`.
             game_args=game_args,
         )
 
@@ -554,7 +564,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             mock_mpc_svc.start_instance_async.call_args,
         )
 
-    def test_map_private_computation_role_to_mpc_party(self):
+    def test_map_private_computation_role_to_mpc_party(self) -> None:
         self.assertEqual(
             MPCParty.SERVER,
             map_private_computation_role_to_mpc_party(PrivateComputationRole.PUBLISHER),
@@ -564,7 +574,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             map_private_computation_role_to_mpc_party(PrivateComputationRole.PARTNER),
         )
 
-    def test_get_status_from_stage(self):
+    def test_get_status_from_stage(self) -> None:
         # Test get status from an MPC stage
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id="test_mpc_id",
@@ -611,8 +621,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             self.private_computation_service._update_instance(pc_instance).status,
         )
 
-    def test_validate_metrics_results_doesnt_match(self):
+    def test_validate_metrics_results_doesnt_match(self) -> None:
         self.private_computation_service.storage_svc.read = MagicMock()
+        # pyre-fixme[16]: Callable `read` has no attribute `side_effect`.
         self.private_computation_service.storage_svc.read.side_effect = [
             '{"subGroupMetrics":[],"metrics":{"controlClicks":1,"testSpend":0,"controlImpressions":0,"testImpressions":0,"controlMatchCount":0,"testMatchCount":0,"controlNumConvSquared":0,"testNumConvSquared":0,"testValueSquared":0,"controlValue":0,"testValue":0,"testConverters":0,"testConversions":0,"testPopulation":0,"controlClickers":0,"testClickers":0,"controlReach":0,"testReach":0,"controlSpend":0,"testClicks":0,"controlValueSquared":0,"controlConverters":0,"controlConversions":0,"controlPopulation":0}}',
             '{"subGroupMetrics":[],"metrics":{"testSpend":0,"controlClicks":0,"controlImpressions":0,"testImpressions":0,"controlMatchCount":0,"testMatchCount":0,"controlNumConvSquared":0,"testNumConvSquared":0,"testValueSquared":0,"controlValue":0,"testValue":0,"testConverters":0,"testConversions":0,"testPopulation":0,"controlClickers":0,"testClickers":0,"controlReach":0,"testReach":0,"controlSpend":0,"testClicks":0,"controlValueSquared":0,"controlConverters":0,"controlConversions":0,"controlPopulation":0}}',
@@ -624,7 +635,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 expected_result_path="expected_result_path",
             )
 
-    def test_cancel_current_stage(self):
+    def test_cancel_current_stage(self) -> None:
         test_mpc_id = self.test_private_computation_id + "_compute_metrics"
         test_game_name = GameNames.LIFT.value
         test_mpc_party = MPCParty.CLIENT
@@ -675,7 +686,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             private_computation_instance.status,
         )
 
-    def test_gen_game_args_to_retry(self):
+    def test_gen_game_args_to_retry(self) -> None:
         test_input = "test_input_retry"
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id="mpc_instance",
@@ -709,7 +720,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         game_args = gen_mpc_game_args_to_retry(private_computation_instance)
 
+        # pyre-fixme[6]: For 1st param expected `Sized` but got
+        #  `Optional[List[Dict[str, typing.Any]]]`.
         self.assertEqual(1, len(game_args))  # only 1 failed container
+        # pyre-fixme[16]: `Optional` has no attribute `__getitem__`.
         self.assertEqual(test_input, game_args[0]["input_filenames"])
 
     def create_sample_instance(

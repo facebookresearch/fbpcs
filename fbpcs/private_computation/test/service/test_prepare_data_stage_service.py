@@ -30,7 +30,7 @@ from fbpcs.private_computation.service.prepare_data_stage_service import (
 
 class TestPrepareDataStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.onedocker.OneDockerService")
-    def setUp(self, onedocker_service):
+    def setUp(self, onedocker_service) -> None:
         self.onedocker_service = onedocker_service
         self.test_num_containers = 2
 
@@ -43,7 +43,7 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
             self.onedocker_service, self.onedocker_binary_config_map
         )
 
-    async def test_prepare_data(self):
+    async def test_prepare_data(self) -> None:
         private_computation_instance = self.create_sample_instance()
 
         with patch.object(
@@ -66,6 +66,7 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
                 num_shards=self.test_num_containers,
                 tmp_directory=binary_config.tmp_directory,
             )
+            # pyre-fixme[20]: Argument `self` expected.
             IdSpineCombinerService.start_containers(
                 cmd_args_list=args,
                 onedocker_svc=self.onedocker_service,

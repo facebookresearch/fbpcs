@@ -126,7 +126,7 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
         self.assertEqual(len(pc_instance.instances), 1)
         self.assertEqual(pc_instance.instances[0], new_pid_instance)
 
-    def test_map_private_computation_role_to_pid_role(self):
+    def test_map_private_computation_role_to_pid_role(self) -> None:
         self.assertEqual(
             PIDRole.PUBLISHER,
             PIDStageService._map_private_computation_role_to_pid_role(

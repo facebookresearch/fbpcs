@@ -10,7 +10,7 @@ from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetrie
 
 
 class TestLogRetriever(unittest.TestCase):
-    def test_get_aws_cloudwatch_log_url(self):
+    def test_get_aws_cloudwatch_log_url(self) -> None:
         retriever = LogRetriever(CloudProvider.AWS)
         container_id = "arn:aws:ecs:us-west-2:539290649537:task/onedocker-cluster-fake-amazon/3a5e4213036b4456a6c16695b938b361"
         expected = "https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/$252Fecs$252Fonedocker-container-fake-amazon/log-events/ecs$252Fonedocker-container-fake-amazon$252F3a5e4213036b4456a6c16695b938b361"
@@ -20,7 +20,7 @@ class TestLogRetriever(unittest.TestCase):
         with self.assertRaises(IndexError):
             retriever._get_aws_cloudwatch_log_url("aaaaaaaaaaaaaaa")
 
-    def test_get_log_url_aws_provider(self):
+    def test_get_log_url_aws_provider(self) -> None:
         retriever = LogRetriever(CloudProvider.AWS)
         container_id = "arn:aws:ecs:us-west-2:539290649537:task/onedocker-cluster-fake-amazon/3a5e4213036b4456a6c16695b938b361"
         expected = "https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/$252Fecs$252Fonedocker-container-fake-amazon/log-events/ecs$252Fonedocker-container-fake-amazon$252F3a5e4213036b4456a6c16695b938b361"
@@ -30,7 +30,7 @@ class TestLogRetriever(unittest.TestCase):
         with self.assertRaises(IndexError):
             retriever.get_log_url("aaaaaaaaaaaaaaa")
 
-    def test_get_log_url_gcp_provider(self):
+    def test_get_log_url_gcp_provider(self) -> None:
         retriever = LogRetriever(CloudProvider.GCP)
         container_id = "fancy_container"
         with self.assertRaises(NotImplementedError):

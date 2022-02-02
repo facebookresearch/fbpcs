@@ -43,7 +43,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 
 
 class LoggerAdapter(logging.LoggerAdapter):
-    def __init__(self, logger: logging.Logger, prefix: str):
+    def __init__(self, logger: logging.Logger, prefix: str) -> None:
         super(LoggerAdapter, self).__init__(logger, {})
         self.prefix = prefix
 

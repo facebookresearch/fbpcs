@@ -11,7 +11,7 @@ from fbpcs.scripts import gen_config
 
 
 class TestGenConfig(unittest.TestCase):
-    def test_prompt(self):
+    def test_prompt(self) -> None:
 
         # Test if Valid replacement exists and --accept_all passed - we use existing
         res = gen_config.prompt("key", replacements={"key": "baz"}, accept_all=True)
@@ -37,7 +37,7 @@ class TestGenConfig(unittest.TestCase):
             res = gen_config.prompt("key", replacements={"key": "baz"})
             self.assertEqual(res, "baz")
 
-    def test_build_replacements_from_config(self):
+    def test_build_replacements_from_config(self) -> None:
         config = {"a": "123", "b": ["1", "2", "3"], "c": {"d": "e"}}
         # This will look weird, but basically we expect to keep all "leaf"
         # nodes as replacement values, but also including basic lists
@@ -50,7 +50,7 @@ class TestGenConfig(unittest.TestCase):
         self.assertEqual(res, expected)
 
     @patch("builtins.input", return_value="new")
-    def test_update_dict(self, mock_input):
+    def test_update_dict(self, mock_input) -> None:
         # Simple replacement (call prompt 1 time)
         d = {"key": "REPLACE"}
         expected = {"key": "new"}
@@ -78,7 +78,7 @@ class TestGenConfig(unittest.TestCase):
     @patch("fbpcp.util.yaml.load", return_value="LOAD")
     @patch("fbpcp.util.yaml.dump")
     @patch("fbpcs.scripts.gen_config.update_dict")
-    def test_gen_config(self, mock_update, mock_dump, mock_load):
+    def test_gen_config(self, mock_update, mock_dump, mock_load) -> None:
         args = {
             "<input_path>": "foo",
             "<new_output_path>": "bar",

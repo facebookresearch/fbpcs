@@ -16,13 +16,13 @@ SLEEP_INTERVAL_SECS = 5
 
 
 class CoordinationObjectAlreadyExistsError(ValueError):
-    def __init__(self, key: str, *args: Any):
+    def __init__(self, key: str, *args) -> None:
         self.message = f"Object {key} already in coordination objects list"
         super().__init__(self, key, *args)
 
 
 class MissingCoordinationObjectError(RuntimeError):
-    def __init__(self, key: str, *args: Any):
+    def __init__(self, key: str, *args) -> None:
         self.message = f"Missing required coordination object: {key}"
         super().__init__(self, key, *args)
 
@@ -41,7 +41,7 @@ class CoordinationService(abc.ABC):
         self,
         coordination_objects: Dict[str, Dict[str, Any]],
         storage_svc: Optional[StorageService],
-    ):
+    ) -> None:
         self.storage_svc = storage_svc
         self.coordination_objects = {}
         for key, params in coordination_objects.items():
@@ -51,7 +51,7 @@ class CoordinationService(abc.ABC):
         self,
         key: str,
         params: Dict[str, Any],
-        raise_on_overwrite=True,
+        raise_on_overwrite: bool = True,
     ) -> CoordinationObject:
         """
         Add a new coordination object for tracking. This method is called from

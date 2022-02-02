@@ -13,13 +13,13 @@ from fbpcs.utils import abstract_file_ctx
 
 
 class TestAbstractFileCtx(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         os.environ["PL_AWS_REGION"] = "us-west-1"
         os.environ["PL_AWS_KEY_ID"] = "key"
         os.environ["PL_AWS_KEY_DATA"] = "key_data"
 
     @patch("fbpcs.utils.abstract_file_ctx.BufferedS3Reader")
-    def test_abstract_file_reader_path(self, mock_s3_reader):
+    def test_abstract_file_reader_path(self, mock_s3_reader) -> None:
         # Check a local path
         local_path = pathlib.Path("/path/to/local_file.txt")
         res = abstract_file_ctx.abstract_file_reader_path(local_path)
@@ -32,15 +32,17 @@ class TestAbstractFileCtx(unittest.TestCase):
         mock_s3_reader.assert_called_once()
         self.assertNotEqual(res, s3_path)
         # Check the path was copied to local
+        # pyre-fixme[16]: `Path` has no attribute `startswith`.
         self.assertTrue(res.startswith("/"))
 
     @patch("fbpcs.utils.abstract_file_ctx.BufferedS3Writer")
-    def test_abstract_file_writer_ctx(self, mock_s3_writer):
+    def test_abstract_file_writer_ctx(self, mock_s3_writer) -> None:
         # Check a local path
         local_path = pathlib.Path("/path/to/local_file.txt")
         with patch("builtins.open", mock_open()) as m:
             res = abstract_file_ctx.abstract_file_writer_ctx(local_path)
             # Easiest way to test for equality is to do a quick write
+            # pyre-fixme[16]: `ContextManager` has no attribute `write`.
             res.write("abc")
             m().write.assert_called_once_with("abc")
 

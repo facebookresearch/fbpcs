@@ -14,7 +14,7 @@ NUM_IDS = 100
 
 
 class TestGenIdsFromSpine(unittest.TestCase):
-    def test_gen_ids_from_spine(self):
+    def test_gen_ids_from_spine(self) -> None:
         # NUM_IDS integers with a trailing newline at the end of the file
         input_lines = "\n".join(str(i) for i in range(NUM_IDS)) + "\n"
 

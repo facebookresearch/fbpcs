@@ -29,7 +29,9 @@ from fbpcs.pid.service.pid_service.pid_stage_mapper import PIDStageMapper
 
 # Builds the complete DAG and invoke stages as needed
 class PIDDispatcher(Dispatcher):
-    def __init__(self, instance_id: str, instance_repository: PIDInstanceRepository):
+    def __init__(
+        self, instance_id: str, instance_repository: PIDInstanceRepository
+    ) -> None:
         self.instance_id = instance_id
         self.instance_repository = instance_repository
         self.dag = nx.DiGraph()  # build DAG of stages

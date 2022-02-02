@@ -32,7 +32,7 @@ from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_f
 
 class TestAggregationStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.mpc.MPCService")
-    def setUp(self, mock_mpc_svc):
+    def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
 
@@ -45,7 +45,7 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
             onedocker_binary_config_map, self.mock_mpc_svc
         )
 
-    async def test_aggregation_stage(self):
+    async def test_aggregation_stage(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=private_computation_instance.instance_id
@@ -65,7 +65,7 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
 
         self.assertEqual(mpc_instance, private_computation_instance.instances[0])
 
-    def test_get_game_args(self):
+    def test_get_game_args(self) -> None:
         private_computation_instance = self._create_pc_instance()
 
         common_game_args = {
@@ -79,7 +79,9 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
             else "",
             "max_num_touchpoints": private_computation_instance.padding_size,
             "max_num_conversions": private_computation_instance.padding_size,
+            # pyre-fixme[16]: Optional type has no attribute `value`.
             "attribution_rules": private_computation_instance.attribution_rule.value,
+            # pyre-fixme[16]: Optional type has no attribute `value`.
             "aggregators": private_computation_instance.aggregation_type.value,
             "use_xor_encryption": True,
             "use_postfix": True,

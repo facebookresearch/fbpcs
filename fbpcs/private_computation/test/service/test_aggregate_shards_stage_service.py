@@ -30,7 +30,7 @@ from fbpcs.private_computation.service.constants import (
 
 class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.mpc.MPCService")
-    def setUp(self, mock_mpc_svc):
+    def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
 
@@ -43,7 +43,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             onedocker_binary_config_map, self.mock_mpc_svc
         )
 
-    async def test_aggregate_shards(self):
+    async def test_aggregate_shards(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=private_computation_instance.instance_id

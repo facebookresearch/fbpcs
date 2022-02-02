@@ -46,7 +46,7 @@ class TestPlInstanceRunner(TestCase):
         self,
         mock_graph_api_client,
         mock_logger,
-    ):
+    ) -> None:
         self.mock_graph_api_client = mock_graph_api_client
         self.mock_logger = mock_logger
         self.num_shards = 2

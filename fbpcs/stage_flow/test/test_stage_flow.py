@@ -14,27 +14,27 @@ from fbpcs.stage_flow.test.dummy_stage_flow import (
 
 
 class TestStageFlow(TestCase):
-    def test_get_first_stage(self):
+    def test_get_first_stage(self) -> None:
         self.assertEqual(DummyStageFlow.STAGE_1, DummyStageFlow.get_first_stage())
 
-    def test_get_last_stage(self):
+    def test_get_last_stage(self) -> None:
         self.assertEqual(DummyStageFlow.STAGE_3, DummyStageFlow.get_last_stage())
 
-    def test_move_forward(self):
+    def test_move_forward(self) -> None:
         stage = DummyStageFlow.get_first_stage()
         self.assertEqual(DummyStageFlow.STAGE_1, stage)
         self.assertEqual(DummyStageFlow.STAGE_2, stage.next_stage)
         self.assertEqual(DummyStageFlow.STAGE_3, stage.next_stage.next_stage)
         self.assertEqual(None, stage.next_stage.next_stage.next_stage)
 
-    def test_move_backwards(self):
+    def test_move_backwards(self) -> None:
         stage = DummyStageFlow.get_last_stage()
         self.assertEqual(DummyStageFlow.STAGE_3, stage)
         self.assertEqual(DummyStageFlow.STAGE_2, stage.previous_stage)
         self.assertEqual(DummyStageFlow.STAGE_1, stage.previous_stage.previous_stage)
         self.assertEqual(None, stage.previous_stage.previous_stage.previous_stage)
 
-    def test_is_started_status(self):
+    def test_is_started_status(self) -> None:
         start_statuses = [
             DummyStageFlowStatus.STAGE_1_STARTED,
             DummyStageFlowStatus.STAGE_2_STARTED,
@@ -59,7 +59,7 @@ class TestStageFlow(TestCase):
             )
         )
 
-    def test_is_completed_status(self):
+    def test_is_completed_status(self) -> None:
         completed_statuses = [
             DummyStageFlowStatus.STAGE_1_COMPLETED,
             DummyStageFlowStatus.STAGE_2_COMPLETED,
@@ -87,7 +87,7 @@ class TestStageFlow(TestCase):
             )
         )
 
-    def test_is_failed_status(self):
+    def test_is_failed_status(self) -> None:
         failed_statuses = [
             DummyStageFlowStatus.STAGE_1_FAILED,
             DummyStageFlowStatus.STAGE_2_FAILED,
@@ -111,7 +111,7 @@ class TestStageFlow(TestCase):
             )
         )
 
-    def test_get_stage_from_status(self):
+    def test_get_stage_from_status(self) -> None:
         stage_1_statuses = [
             DummyStageFlowStatus.STAGE_1_COMPLETED,
             DummyStageFlowStatus.STAGE_1_FAILED,
@@ -135,7 +135,7 @@ class TestStageFlow(TestCase):
             for status in statuses:
                 self.assertIs(stage, DummyStageFlow.get_stage_from_status(status))
 
-    def test_get_next_runnable_stage_from_status(self):
+    def test_get_next_runnable_stage_from_status(self) -> None:
         stage_1_is_next = [DummyStageFlowStatus.STAGE_1_FAILED]
         stage_2_is_next = [
             DummyStageFlowStatus.STAGE_1_COMPLETED,
@@ -166,7 +166,7 @@ class TestStageFlow(TestCase):
                     stage, DummyStageFlow.get_next_runnable_stage_from_status(status)
                 )
 
-    def test_get_stage_from_name(self):
+    def test_get_stage_from_name(self) -> None:
         # setup
         expected_stage = DummyStageFlow.get_first_stage()
 
