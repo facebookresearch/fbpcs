@@ -1,0 +1,46 @@
+name: Docker Tag CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      existing_tag:
+        description: 'The existing tag of the docker image'
+        required: true
+        type: string
+      new_tag:
+        description: 'The new tag of the docker image'
+        required: true
+        type: string
+      image_name:
+        description: 'The name of the docker image to tag'
+        required: true
+        type: string
+
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: docker/login-action@v1
+      with:
+         registry: ${{ env.REGISTRY }}
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull image from rc registry
+      run: docker pull ${{ env.IMAGE_NAME }}:${{ github.event.inputs.existing_tag }}
+
+    - name: Tag docker image
+      run: docker tag ${{ env.IMAGE_NAME }}:${{ github.event.inputs.existing_tag }} ${{ env.IMAGE_NAME }}:${{ github.event.inputs.new_tag }}
+
+    - name: Push docker image to prod registry
+      run: docker push --all-tags ${{ env.IMAGE_NAME }}
