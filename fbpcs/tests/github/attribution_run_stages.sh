@@ -46,7 +46,7 @@ case "$stage" in
             --aggregation_type="$ATTRIBUTION_TYPE"
             ;;
     # Stages without passing IP addresses
-    prepare_compute_input | pid_metric_export )
+    prepare_compute_input | pid_metric_export | data_validation )
         echo "Attribution Publisher $stage starts"
         $docker_command run_next "$ATTRIBUTION_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
