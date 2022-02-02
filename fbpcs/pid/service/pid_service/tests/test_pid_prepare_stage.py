@@ -4,7 +4,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
 import unittest
+from typing import Tuple, Dict, Union
 from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
@@ -21,37 +23,49 @@ from libfb.py.asyncio.mock import AsyncMock
 from libfb.py.testutil import data_provider
 
 
-class TestPIDPrepareStage(unittest.TestCase):
-    @data_provider(
-        lambda: (
-            {
-                "wait_for_containers": True,
-                "expected_container_status": ContainerInstanceStatus.COMPLETED,
-            },
-            {
-                "wait_for_containers": True,
-                "expected_container_status": ContainerInstanceStatus.FAILED,
-            },
-            {
-                "wait_for_containers": False,
-                "expected_container_status": ContainerInstanceStatus.STARTED,
-            },
-        )
+def data_test_prepare() -> Tuple[
+    Dict[str, Union[ContainerInstanceStatus, bool]],
+    Dict[str, Union[ContainerInstanceStatus, bool]],
+    Dict[str, Union[ContainerInstanceStatus, bool]],
+]:
+    return (
+        {
+            "wait_for_containers": True,
+            "expected_container_status": ContainerInstanceStatus.COMPLETED,
+        },
+        {
+            "wait_for_containers": True,
+            "expected_container_status": ContainerInstanceStatus.FAILED,
+        },
+        {
+            "wait_for_containers": False,
+            "expected_container_status": ContainerInstanceStatus.STARTED,
+        },
     )
+
+
+def data_test_run() -> Tuple[
+    Dict[str, bool],
+    Dict[str, bool],
+]:
+    return ({"wait_for_containers": True}, {"wait_for_containers": False})
+
+
+class TestPIDPrepareStage(unittest.TestCase):
+    @data_provider(data_test_prepare)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
     @to_sync
     async def test_prepare(
         self,
-        mock_instance_repo,
-        wait_for_containers,
-        expected_container_status,
+        mock_instance_repo: unittest.mock.MagicMock,
+        wait_for_containers: bool,
+        expected_container_status: ContainerInstanceStatus,
     ) -> None:
         with patch.object(
             CppUnionPIDDataPreparerService, "prepare_on_container_async"
         ) as mock_prepare_on_container_async, patch.object(
             PIDStage, "update_instance_containers"
         ):
-
             container = ContainerInstance(
                 instance_id="123",
                 ip_address="192.0.2.0",
@@ -61,11 +75,8 @@ class TestPIDPrepareStage(unittest.TestCase):
             stage = PIDPrepareStage(
                 stage=UnionPIDStage.PUBLISHER_PREPARE,
                 instance_repository=mock_instance_repo,
-                # pyre-fixme[6]: For 3rd param expected `StorageService` but got `str`.
-                storage_svc="STORAGE",
-                # pyre-fixme[6]: For 4th param expected `OneDockerService` but got
-                #  `str`.
-                onedocker_svc="ONEDOCKER",
+                storage_svc="STORAGE",  # pyre-ignore
+                onedocker_svc="ONEDOCKER",  # pyre-ignore
                 onedocker_binary_config=MagicMock(
                     task_definition="offline-task:1#container",
                     tmp_directory="/tmp/",
@@ -86,9 +97,7 @@ class TestPIDPrepareStage(unittest.TestCase):
                 res,
             )
 
-    @data_provider(
-        lambda: ({"wait_for_containers": True}, {"wait_for_containers": False})
-    )
+    @data_provider(data_test_run)
     @to_sync
     @patch(
         "fbpcs.private_computation.service.run_binary_base_service.RunBinaryBaseService.wait_for_containers_async"
@@ -98,10 +107,10 @@ class TestPIDPrepareStage(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService")
     async def test_run(
         self,
-        mock_onedocker_svc,
-        mock_instance_repo,
-        mock_storage_svc,
-        mock_wait_for_containers_async,
+        mock_onedocker_svc: unittest.mock.MagicMock,
+        mock_instance_repo: unittest.mock.MagicMock,
+        mock_storage_svc: unittest.mock.MagicMock,
+        mock_wait_for_containers_async: unittest.mock.MagicMock,
         wait_for_containers: bool,
     ) -> None:
         ip = "192.0.2.0"
