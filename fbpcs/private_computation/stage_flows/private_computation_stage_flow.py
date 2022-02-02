@@ -17,6 +17,9 @@ from fbpcs.private_computation.service.compute_metrics_stage_service import (
 from fbpcs.private_computation.service.dummy_stage_service import (
     DummyStageService,
 )
+from fbpcs.private_computation.service.input_data_validation_stage_service import (
+    InputDataValidationStageService,
+)
 from fbpcs.private_computation.service.pid_stage_service import PIDStageService
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
@@ -46,7 +49,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS PREPARE COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED INPUT_DATA_VALIDATION PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS PREPARE COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -54,6 +57,12 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.CREATION_STARTED,
         PrivateComputationInstanceStatus.CREATED,
         PrivateComputationInstanceStatus.CREATION_FAILED,
+        False,
+    )
+    INPUT_DATA_VALIDATION = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_STARTED,
+        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED,
+        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
         False,
     )
     PID_SHARD = PrivateComputationStageFlowData(
@@ -122,6 +131,8 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         """
         if self is self.CREATED:
             return DummyStageService()
+        elif self is self.INPUT_DATA_VALIDATION:
+            return InputDataValidationStageService(args.storage_svc)
         elif self is self.PID_SHARD:
             return PIDStageService(
                 args.pid_svc,
