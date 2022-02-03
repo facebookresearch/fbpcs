@@ -1,18 +1,17 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:11
 
 ##########################################
 # Install packages
 ##########################################
-RUN apk --update --no-cache add \
+RUN apt-get update && apt-get install -y \
+    openssh-client \
     curl \
     git \
-    jq \
-    libc6-compat \
-    openssh-client \
-    py-pip \
-    python \
     python3 \
-    vim
+    jq \
+    vim \
+    python3-pip
+
 
 ##########################################
 # Install python modules
@@ -24,6 +23,11 @@ RUN pip install \
 RUN pip3 install \
     boto3 \
     dataclasses
+
+##########################################
+# Install fbpcp modules
+##########################################
+RUN python3 -m pip install fbpcp
 
 ##########################################
 # Install Terraform
@@ -57,7 +61,6 @@ COPY config.yml /terraform_deployment
 COPY data_validation /terraform_deployment/terraform_scripts/data_validation
 COPY cli.py /terraform_deployment
 COPY deployment_helper /terraform_deployment/deployment_helper
-
 # #########################################
 # Spring Boot
 # #########################################

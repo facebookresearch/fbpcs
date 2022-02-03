@@ -90,6 +90,24 @@ validate_bucket_name() {
 
 }
 
+validateDeploymentResources () {
+    local region=$1
+    local pce_id=$2
+    local successMessage="Your PCE environments are set up correctly."
+    echo "##### validating through PCE validator starts"
+    local pceValidatorOutput=$(python3 -m pce.validator --region="$region" --key-id="$AWS_ACCESS_KEY_ID" --key-data="$AWS_SECRET_ACCESS_KEY" --pce-id="$pce_id" 2>&1)
+    echo "$pceValidatorOutput"
+    if echo "$pceValidatorOutput" | grep -q "$successMessage"
+    then
+        echo "PCE validation successful";
+    else
+        echo "PCE validator found some issue..please analyze further to debug the issue"
+        # TODO, once T111250475 is implemneted grep based on exit code
+        # exit 1
+    fi
+    echo "##### validating through PCE validator end"
+}
+
 
 
 input_validation () {
