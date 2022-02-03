@@ -95,7 +95,7 @@ public class DeploymentRunner extends Thread {
 
   private void buildDeployCommand(boolean shouldDeploy, DeploymentParams deployment) {
     deployCommand = new ArrayList<String>();
-    deployCommand.add("/bin/sh");
+    deployCommand.add("/bin/bash");
     deployCommand.add("/terraform_deployment/deploy.sh");
     if (shouldDeploy) {
       deployCommand.add("deploy");

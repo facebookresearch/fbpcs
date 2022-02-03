@@ -390,6 +390,10 @@ deploy_aws_resources() {
         --cluster_name "$aws_ecs_cluster_name" \
         --ecs_task_execution_role_name "$ecs_task_execution_role_name"
     echo "######################## Finished deploy resources policy ########################"
+
+    # validate generated resources through PCE validator
+    validateDeploymentResources "$region" "$pce_id"
+
 }
 
 
