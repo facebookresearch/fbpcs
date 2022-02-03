@@ -1,0 +1,52 @@
+private_computation:
+  dependency:
+    PrivateComputationInstanceRepository:
+      class: fbpcs.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository
+      constructor:
+        base_dir: /instances
+    ContainerService:
+      class: fbpcp.service.container_aws.AWSContainerService
+      constructor:
+        region: us-west-2
+        cluster: fbpcs-github-cicd
+        subnets: [subnet-088f1eb93d161dcba,subnet-08bb1386ed1908488]
+        access_key_id:
+        access_key_data:
+    StorageService:
+      class: fbpcp.service.storage_s3.S3StorageService
+      constructor:
+        region: us-west-2
+        access_key_id:
+        access_key_data:
+    ValidationConfig:
+      is_validating: false
+      synthetic_shard_path:
+    OneDockerBinaryConfig:
+      default:
+        constructor:
+          tmp_directory: /tmp
+          binary_version: latest
+    OneDockerServiceConfig:
+      constructor:
+        task_definition: fbpcs-github-cicd:4#fbpcs-github-cicd
+pid:
+  dependency:
+    PIDInstanceRepository:
+      class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
+      constructor:
+        base_dir: /instances
+  skip_aggregation_step: true
+  task_definition:
+mpc:
+  dependency:
+    MPCGameService:
+      class: fbpcp.service.mpc_game.MPCGameService
+      dependency:
+        PrivateComputationGameRepository:
+          class: fbpcs.private_computation.repository.private_computation_game.PrivateComputationGameRepository
+    MPCInstanceRepository:
+      class: fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository
+      constructor:
+        base_dir: /instances
+graphapi:
+  access_token: TODO

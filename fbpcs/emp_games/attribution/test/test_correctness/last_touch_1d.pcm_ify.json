@@ -1,0 +1,46 @@
+{
+    "last_touch_1d": {
+      "pcm_ify": {
+        "77:4": {
+          "campaign_bits": 77,
+          "conversion_bits": 4,
+          "count": 1
+        },
+        "77:5": {
+          "campaign_bits": 77,
+          "conversion_bits": 5,
+          "count": 1
+        },
+        "88:3": {
+          "campaign_bits": 88,
+          "conversion_bits": 3,
+          "count": 7
+        },
+        "88:4": {
+          "campaign_bits": 88,
+          "conversion_bits": 4,
+          "count": 2
+        },
+        "88:5": {
+          "campaign_bits": 88,
+          "conversion_bits": 5,
+          "count": 1
+        },
+        "99:3": {
+          "campaign_bits": 99,
+          "conversion_bits": 3,
+          "count": 10
+        },
+        "99:4": {
+          "campaign_bits": 99,
+          "conversion_bits": 4,
+          "count": 2
+        },
+        "99:5": {
+          "campaign_bits": 99,
+          "conversion_bits": 5,
+          "count": 1
+        }
+      }
+    }
+  }

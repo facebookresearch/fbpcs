@@ -1,0 +1,36 @@
+{
+    "cohortMetrics": [
+    ],
+    "publisherBreakdowns": [
+    ],
+    "metrics": {
+        "controlConvHistogram": [1,2,3,4],
+        "testConvHistogram": [4,3,2,1],
+        "testValueSquared": 2949102338,
+        "controlValueSquared": 2259601706,
+        "testNumConvSquared": 949102338,
+        "controlNumConvSquared": 259601706,
+        "controlValue": 469983800,
+        "controlConverters": 2946139347,
+        "controlConversions": 2946139347,
+        "testValue": 1642701889,
+        "controlPopulation": 3836083150,
+        "testConverters": 2514797727,
+        "testConversions": 2514797727,
+        "testPopulation": 402991293,
+        "controlMatchCount": 2,
+        "testMatchCount": 2,
+        "testImpressions": 12345,
+        "controlImpressions": 54321,
+        "testClicks": 13579,
+        "controlClicks": 97351,
+        "testSpend": 25928,
+        "controlSpend": 39281,
+        "testReach": 12314,
+        "controlReach": 12333,
+        "testClickers": 13412,
+        "controlClickers": 41231,
+        "reachedConversions": 2514797727,
+        "reachedValue": 1642701889
+    }
+}

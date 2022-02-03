@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+plugins {
+  id 'org.springframework.boot' version '2.4.4'
+  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+  id 'java'
+}
+
+group = 'com.facebook'
+version = '0.1.0'
+sourceCompatibility = '1.8'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.988'
+}
+
+test {
+  useJUnitPlatform()
+}

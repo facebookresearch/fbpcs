@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -12,7 +12,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR" || exit
 
 docker run --rm \
-    -v "$SCRIPT_DIR/../../fbpmp/data_processing/test/attribution_id_combiner:/input" \
+    -v "$SCRIPT_DIR/../../fbpcs/data_processing/test/attribution_id_combiner:/input" \
     -v "$USERDIR/test-output:/output" \
     --network=host data-processing:latest \
         attribution_id_combiner \

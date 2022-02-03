@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -13,10 +13,12 @@ WORKDIR /root/build/emp_game
 # cmake files
 COPY docker/emp_games/CMakeLists.txt .
 COPY docker/emp_games/common.cmake .
+COPY docker/emp_games/perf_tools.cmake .
 # attribution, lift and shard aggregator build and install
-COPY fbpmp/emp_games/attribution/ ./fbpmp/emp_games/attribution
-COPY fbpmp/emp_games/lift/ ./fbpmp/emp_games/lift
-COPY fbpmp/emp_games/common/ ./fbpmp/emp_games/common
+COPY fbpcs/performance_tools/ ./fbpcs/performance_tools
+COPY fbpcs/emp_games/attribution/ ./fbpcs/emp_games/attribution
+COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
+COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
 
 RUN cmake . -DTHREADING=ON -DEMP_USE_RANDOM_DEVICE=ON
 RUN make && make install
@@ -39,5 +41,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     zlib1g
 
 COPY --from=dev /root/build/emp_game/bin/. /usr/local/bin/.
+RUN useradd -ms /bin/bash pcs
+USER pcs
 WORKDIR /usr/local/bin
 CMD ["/bin/sh"]

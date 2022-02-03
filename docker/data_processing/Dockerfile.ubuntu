@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -13,13 +13,14 @@ WORKDIR /root/build/data_processing
 # cmake files
 COPY docker/data_processing/CMakeLists.txt .
 # data processing build and install
-COPY fbpmp/data_processing/attribution_id_combiner/ ./attribution_id_combiner
-COPY fbpmp/data_processing/common/ ./common
-COPY fbpmp/data_processing/hash_slinging_salter/ ./hash_slinging_salter
-COPY fbpmp/data_processing/id_combiner/ ./id_combiner
-COPY fbpmp/data_processing/lift_id_combiner/ ./lift_id_combiner
-COPY fbpmp/data_processing/pid_preparer/ ./pid_preparer
-COPY fbpmp/data_processing/sharding/ ./sharding
+COPY fbpcs/performance_tools/ ./fbpcs/performance_tools
+COPY fbpcs/data_processing/attribution_id_combiner/ ./fbpcs/data_processing/attribution_id_combiner
+COPY fbpcs/data_processing/common/ ./fbpcs/data_processing/common
+COPY fbpcs/data_processing/hash_slinging_salter/ ./fbpcs/data_processing/hash_slinging_salter
+COPY fbpcs/data_processing/id_combiner/ ./fbpcs/data_processing/id_combiner
+COPY fbpcs/data_processing/lift_id_combiner/ ./fbpcs/data_processing/lift_id_combiner
+COPY fbpcs/data_processing/pid_preparer/ ./fbpcs/data_processing/pid_preparer
+COPY fbpcs/data_processing/sharding/ ./fbpcs/data_processing/sharding
 
 RUN cmake . -DTHREADING=ON -DEMP_USE_RANDOM_DEVICE=ON
 RUN make && make install
@@ -42,5 +43,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     zlib1g
 
 COPY --from=dev /root/build/data_processing/bin/. /usr/local/bin/.
+RUN useradd -ms /bin/bash pcs
+USER pcs
 WORKDIR /usr/local/bin
 CMD ["/bin/sh"]
