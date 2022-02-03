@@ -145,8 +145,6 @@ class MeasurementAggregator : public Aggregator {
     int numOfResults = tpmArray.size() - 1;
     int atIndex = tpmAttributionResults.size() - 1;
     for (auto convIndex = numOfResults; convIndex >= 0; convIndex--) {
-      // Start with an unattributed attribution
-      auto hasAttributedTouchpoint = emp::Bit{false};
       MeasurementAggregation::PrivateMeasurementAggregationResult
           aggregationResult{
               /* hasAttributedTouchpoint */ emp::Bit{false},
