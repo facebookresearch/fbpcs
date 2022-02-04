@@ -13,7 +13,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Removed
+
+## [1.2.0] - 2022-02-03
+### Added
   - Added version argument to run_fbpcs.sh
+  - Added pid metric export stage
+  - Added results visibility to private computation instance
+  - Check for TODOs in config.yml parsing
 
 ### Changed
 - Add Ad Id compression logic to decoupled aggregation game.
