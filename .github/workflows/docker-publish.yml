@@ -15,7 +15,7 @@ env:
   LOCAL_IMAGE_NAME: fbpcs/onedocker
   RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
   PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
-  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator:latest
+  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator:rc
   PL_CONTAINER_NAME: e2e_pl_container
   PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
@@ -366,7 +366,7 @@ jobs:
      - name: Tag image
        run: |
         docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
-        docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:latest
+        docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:rc
         docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ steps.vars.outputs.ref }}
 
      - name: Push docker image to prod registry
