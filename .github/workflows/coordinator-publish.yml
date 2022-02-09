@@ -1,12 +1,8 @@
 name: Publish Coordinator Image
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'fbpcs/private_computation_cli/**'
-      - 'fbpcs/pip_requirements.txt'
-      - 'fbpcs/Dockerfile'
+  schedule:
+    - cron: '0 16 * * 1-5'
   workflow_dispatch:
     inputs:
       name:
