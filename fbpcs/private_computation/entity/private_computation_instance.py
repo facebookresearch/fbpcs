@@ -210,8 +210,7 @@ class PrivateComputationInstance(InstanceBase):
         )
 
     @property
-    def stage_flow(self):
-        # type: () -> Type[PrivateComputationBaseStageFlow]
+    def stage_flow(self) -> "Type[PrivateComputationBaseStageFlow]":
         from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
             PrivateComputationBaseStageFlow,
         )
