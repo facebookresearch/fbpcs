@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -112,6 +114,16 @@ public class DeployController {
     return new APIReturn(APIReturn.Status.STATUS_SUCCESS, output, rootNode);
   }
 
+  @GetMapping(path = "/v1/deployment/streamLogs", produces = "application/json")
+  public List<String> deploymentStreamLogs() {
+    logger.info("Received getStream log request");
+    List<String> result = new ArrayList<>();
+    if (runner != null) {
+      result = runner.getStreamingLogs();
+    }
+    return result;
+  }
+
   @GetMapping(path = "/v1/deployment/logs")
   public byte[] downloadDeploymentLogs() {
     logger.info("Received logs request");
@@ -121,6 +133,7 @@ public class DeployController {
       compressIfExists("/tmp/server.log", "server.log", zout);
       compressIfExists("/tmp/deploy.log", "deploy.log", zout);
       compressIfExists("/tmp/terraform.log", "terraform.log", zout);
+      compressIfExists("/tmp/deploymentStream.log", "deploymentStream.log", zout);
       zout.close();
     } catch (IOException e) {
       logger.debug(
