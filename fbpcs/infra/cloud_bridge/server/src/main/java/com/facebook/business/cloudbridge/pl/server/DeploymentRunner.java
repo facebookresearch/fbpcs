@@ -8,16 +8,8 @@
 package com.facebook.business.cloudbridge.pl.server;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +21,7 @@ public class DeploymentRunner extends Thread {
   private Runnable deploymentFinishedCallback;
   private Process provisioningProcess;
   private BufferedWriter deployLogFile;
+  private BufferedReader deployStreamFile;
 
   private int exitValue;
 
@@ -88,9 +81,26 @@ public class DeploymentRunner extends Thread {
 
     try {
       deployLogFile = new BufferedWriter(new FileWriter("/tmp/deploy.log", true));
+      File file = new File(Constants.DEPLOYMENT_STREAMING_LOG_FILE);
+      file.createNewFile();
+      deployStreamFile =
+          new BufferedReader(new FileReader(Constants.DEPLOYMENT_STREAMING_LOG_FILE));
     } catch (IOException e) {
-      logger.error("An exception happened preventing the logger to log to file: /tmp/deploy.log");
+      logger.error("An exception happened: ", e.getMessage());
     }
+  }
+
+  public ArrayList<String> getStreamingLogs() {
+    String s = null;
+    ArrayList<String> messages = new ArrayList<String>();
+    try {
+      while (deployStreamFile.ready() && (s = deployStreamFile.readLine()) != null) {
+        messages.add(s);
+      }
+    } catch (final Exception e) {
+      logger.error("An exception happened during reading: " + e.getMessage());
+    }
+    return messages;
   }
 
   private void buildDeployCommand(boolean shouldDeploy, DeploymentParams deployment) {
@@ -130,7 +140,7 @@ public class DeploymentRunner extends Thread {
     environmentVariables = new HashMap<String, String>();
     environmentVariables.put("AWS_ACCESS_KEY_ID", deployment.awsAccessKeyId);
     environmentVariables.put("AWS_SECRET_ACCESS_KEY", deployment.awsSecretAccessKey);
-
+    environmentVariables.put("TF_LOG_STREAMING", Constants.DEPLOYMENT_STREAMING_LOG_FILE);
     if (deployment.logLevel != DeploymentParams.LogLevel.DISABLED) {
       if (deployment.logLevel == null) deployment.logLevel = DeploymentParams.LogLevel.DEBUG;
       environmentVariables.put("TF_LOG", deployment.logLevel.getLevel());
@@ -172,6 +182,7 @@ public class DeploymentRunner extends Thread {
     deploymentState = DeploymentState.STATE_HALTED;
     try {
       deployLogFile.close();
+      deployStreamFile.close();
     } catch (IOException e) {
       logger.error("Failed to close Logger File");
     }

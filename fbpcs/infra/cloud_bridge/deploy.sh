@@ -58,6 +58,7 @@ if [ -z ${TF_LOG+x} ]; then
 else
     echo "Terraform Log Level: $TF_LOG"
     echo "Terraform Log File: $TF_LOG_PATH"
+    echo "Terraform Log File: $TF_LOG_STREAMING"
     echo
 fi
 
@@ -66,7 +67,7 @@ fi
 undeploy_aws_resources() {
     # validate all the inputs
     input_validation "$region" "$pce_id" "$aws_account_id" "$publisher_aws_account_id" "$publisher_vpc_id" "$s3_bucket_for_storage" "$s3_bucket_data_pipeline" "$build_semi_automated_data_pipeline" "$undeploy"
-
+    echo "undeployment process started..." >> "$TF_LOG_STREAMING"
     echo "Start undeploying AWS resource under PCE_shared..."
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce_shared$tag_postfix.tfstate" "$aws_account_id"
@@ -194,15 +195,18 @@ undeploy_aws_resources() {
     echo "The following resources may have been deleted:"
     echo "  # S3 data bucket ${s3_bucket_for_storage} (it will be deleted only if it is empty)"
     echo "  # iam policy ${policy_name} (it will be deleted only if it is not attached to any users)"
+    echo "undeployment process finished" >> "$TF_LOG_STREAMING"
 }
 
 
 deploy_aws_resources() {
+    # first log, making sure the file is re-written fresh
+    echo "validating inputs..." > "$TF_LOG_STREAMING"
     # validate all the inputs
     input_validation "$region" "$pce_id" "$aws_account_id" "$publisher_aws_account_id" "$publisher_vpc_id" "$s3_bucket_for_storage" "$s3_bucket_data_pipeline" "$build_semi_automated_data_pipeline" "$undeploy"
     # Create the S3 bucket (to store config files) if it doesn't exist
+    echo "creating s3 bucket, if not existing!" >> "${TF_LOG_STREAMING}"
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
-
 
     # Deploy PCE Terraform scripts
     onedocker_ecs_container_image='539290649537.dkr.ecr.us-west-2.amazonaws.com/one-docker-prod:latest'
@@ -232,6 +236,7 @@ deploy_aws_resources() {
 
     cd /terraform_deployment/terraform_scripts/common/pce
     echo "########################Initializing terraform working directory########################"
+    echo "creating core infra resources..." >> "$TF_LOG_STREAMING"
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
@@ -250,7 +255,7 @@ deploy_aws_resources() {
     subnet_ids=$(terraform output subnets | tr -d '""[]\ \n')
     route_table_id=$(terraform output route_table_id | tr -d '"')
     aws_ecs_cluster_name=$(terraform output aws_ecs_cluster_name | tr -d '"')
-
+    echo "establishing vpc peering connection..." >> "$TF_LOG_STREAMING"
     # Issue VPC Peering Connection to Publisher's VPC and add a route to the route table
     echo "########################Issue VPC Peering connection to Publisher's VPC########################"
     cd /terraform_deployment/terraform_scripts/partner/vpc_peering
@@ -281,6 +286,7 @@ deploy_aws_resources() {
     echo "########################Configure Data Ingestion Pipeline from CB to S3########################"
     cd /terraform_deployment/terraform_scripts/data_ingestion
     echo "######################## Initializing terraform working directory started ########################"
+    echo "configuring data ingestion pipeline..." >> "$TF_LOG_STREAMING"
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
@@ -355,7 +361,7 @@ deploy_aws_resources() {
     fi
 
     echo "########################Finished AWS Infrastructure Deployment########################"
-
+    echo "finished deploying resources..." >> "$TF_LOG_STREAMING"
     echo "########################Start populating config.yml ########################"
     cd /terraform_deployment
     sed -i "s/region: .*/region: $region/g" config.yml
@@ -377,6 +383,7 @@ deploy_aws_resources() {
     echo "########################Finished upload config.ymls to S3########################"
 
     echo "######################## Deploy resources policy ########################"
+    echo "deploying resources policies..." >> "$TF_LOG_STREAMING"
     cd /terraform_deployment
     python3 cli.py create aws \
         --add_iam_policy \
@@ -390,7 +397,7 @@ deploy_aws_resources() {
         --cluster_name "$aws_ecs_cluster_name" \
         --ecs_task_execution_role_name "$ecs_task_execution_role_name"
     echo "######################## Finished deploy resources policy ########################"
-
+    echo "validating generated resoureces and policies..." >> "$TF_LOG_STREAMING"
     # validate generated resources through PCE validator
     validateDeploymentResources "$region" "$pce_id"
 
