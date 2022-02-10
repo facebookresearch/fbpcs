@@ -13,8 +13,6 @@
 
 #include "fbpcf/io/FileManagerUtil.h"
 
-#include "fbpcs/emp_games/lift/common/DataFrame.h"
-
 namespace df {
 namespace detail {
 std::vector<std::string> split(const std::string& s) {

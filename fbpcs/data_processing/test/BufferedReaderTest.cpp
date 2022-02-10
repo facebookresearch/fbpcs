@@ -11,7 +11,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <fbpcf/io/FileManagerUtil.h>
 #include "fbpcf/io/LocalFileManager.h"
 #include "fbpcs/data_processing/common/BufferedReader.h"
 

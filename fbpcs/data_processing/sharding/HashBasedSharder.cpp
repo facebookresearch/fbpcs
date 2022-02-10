@@ -18,13 +18,8 @@
 #include <string>
 #include <vector>
 
-#include <fbpcf/io/FileManagerUtil.h>
-#include <folly/Random.h>
 #include <folly/logging/xlog.h>
 
-#include "fbpcs/data_processing/common/FilepathHelpers.h"
-#include "fbpcs/data_processing/common/Logging.h"
-#include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
 #include "fbpcs/data_processing/hash_slinging_salter/HashSlingingSalter.hpp"
 
 namespace data_processing::sharder {

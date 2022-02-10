@@ -10,7 +10,6 @@
 
 #include <fbpcf/mpc/EmpTestUtil.h>
 #include <string>
-#include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/MainUtil.h"
