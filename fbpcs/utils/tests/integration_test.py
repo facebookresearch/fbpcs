@@ -22,8 +22,7 @@ def test_s3_file_helper() -> None:
     content: Optional[str] = None
     print("Start reader")
     with abstract_file_ctx.abstract_file_reader_path(s3_path) as reader:
-        # pyre-fixme[16]: `Path` has no attribute `read`.
-        content = reader.read()
+        content = reader.read_text()
     print("Reader done")
 
     assert content == "abcdef"
