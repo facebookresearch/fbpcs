@@ -36,11 +36,12 @@ void CalculatorApp::run() {
 
     putOutputData(output);
   } catch (const std::exception& e) {
+    auto path = inputPath_.u8string();
     XLOGF(
         ERR,
         "Error: Exception caught in CalculatorApp run.\n \t error msg: {} \n \t input shard: {}.",
         e.what(),
-        inputPath_.u8string());
+        reinterpret_cast<const char*>(path.c_str()));
     std::exit(1);
   }
 };
