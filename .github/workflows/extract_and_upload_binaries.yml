@@ -30,7 +30,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_TAG: ${{ github.event.inputs.image_tag }}
-  IMAGE_NAME: ${{ github.event.inputs.image_name }}
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}
   IMAGE_PATH: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }}
 
 jobs:
