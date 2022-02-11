@@ -16,7 +16,7 @@ env:
   LOCAL_IMAGE_NAME: fbpcs/onedocker
   RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
   PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
-  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator:${{ env.VERSION_TAG }}
+  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator:latest-build
   PL_CONTAINER_NAME: e2e_pl_container
   PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
