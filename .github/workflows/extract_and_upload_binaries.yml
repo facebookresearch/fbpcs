@@ -1,0 +1,67 @@
+name: Extract and Upload Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: 'The name of the binary to extract and upload: <emp_games | data_processing>'
+        required: true
+        type: string
+      image_name:
+        description: 'The name of the docker image to extract from'
+        required: false
+        type: string
+        default: onedocker
+      image_tag:
+        description: 'The tag of the docker image to extract from'
+        required: false
+        type: string
+        default: rc
+      aws_region:
+        description: 'The AWS region to upload to'
+        required: false
+        type: string
+        default: us-west-2
+      s3_tag:
+        description: 'The version/aws subfolder name for the binaries'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+  IMAGE_NAME: ${{ github.event.inputs.image_name }}
+  IMAGE_PATH: ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/login-action@v1
+      with:
+         registry: ${{ env.REGISTRY }}
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull image from rc registry
+      run: docker pull ${{ env.IMAGE_PATH }}
+
+    - name: Extract binaries
+      run: |
+        ./extract-docker-binaries.sh ${{ github.event.inputs.package_name }} -d ${{ env.IMAGE_NAME }} -t ${{ env.IMAGE_TAG }}
+
+    - name: Diff Extracted Binaries
+      run: diff <(sort binaries_out_lists/${{ github.event.inputs.package_name }}.txt) <(ls -1 binaries_out)
+
+    - name: Set AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ github.event.inputs.aws_region }}
+
+    - name: Deploy to S3
+      run: ./upload-binaries-to-s3.sh ${{ github.event.inputs.package_name }} ${{ github.event.inputs.s3_tag }}
