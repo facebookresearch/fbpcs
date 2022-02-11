@@ -32,6 +32,7 @@ class CostEstimation {
   std::string s3Bucket_;
   std::string s3Path_;
   std::string application_;
+  std::string version_; // example: decoupled, pcf2
   double estimatedCost_;
   int64_t runningTimeInSec_;
   long networkRXBytes_; // Network Receive bytes
@@ -41,6 +42,7 @@ class CostEstimation {
 
  public:
   explicit CostEstimation(const std::string& app);
+  explicit CostEstimation(const std::string& app, const std::string& version);
 
   std::string& getApplication();
   double& getEstimatedCost();
@@ -51,14 +53,19 @@ class CostEstimation {
   std::string getEstimatedCostString();
   folly::dynamic getEstimatedCostDynamic(
       std::string run_name,
-      std::string attribution_rules,
-      std::string aggregators);
+      std::string party,
+      folly::dynamic info);
   folly::dynamic getEstimatedCostDynamic(std::string run_name);
 
   void start();
   void end();
 
+  std::string writeToS3(
+      std::string party,
+      std::string run_name,
+      folly::dynamic costDynamic);
   std::string writeToS3(std::string run_name, folly::dynamic costDynamic);
+  std::string _writeToS3(std::string filePath, folly::dynamic costDynamic);
 };
 
 } // namespace fbpcs::performance_tools
