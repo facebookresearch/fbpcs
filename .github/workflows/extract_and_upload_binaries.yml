@@ -31,7 +31,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_TAG: ${{ github.event.inputs.image_tag }}
   IMAGE_NAME: ${{ github.event.inputs.image_name }}
-  IMAGE_PATH: ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+  IMAGE_PATH: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }}
 
 jobs:
 
