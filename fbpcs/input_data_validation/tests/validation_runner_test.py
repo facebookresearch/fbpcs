@@ -15,10 +15,13 @@ TEST_INPUT_FILE_PATH = "s3://test-bucket/data.csv"
 
 
 class TestValidationRunner(TestCase):
-    def test_initializating_the_validation_runner_fields(self) -> None:
+    @patch("fbpcp.service.storage_s3.S3StorageService")
+    def test_initializating_the_validation_runner_fields(self, _mock) -> None:
         cloud_provider = CloudProvider.AWS
 
-        validation_runner = ValidationRunner(TEST_INPUT_FILE_PATH, cloud_provider)
+        validation_runner = ValidationRunner(
+            TEST_INPUT_FILE_PATH, cloud_provider, "us-west-2"
+        )
 
         self.assertEqual(validation_runner._input_file_path, TEST_INPUT_FILE_PATH)
         self.assertEqual(validation_runner._cloud_provider, cloud_provider)
@@ -30,16 +33,15 @@ class TestValidationRunner(TestCase):
         cloud_provider = CloudProvider.AWS
         access_key_id = "id1"
         access_key_data = "data2"
+        region = "us-east-2"
         constructed_storage_service = MagicMock()
         mock_storage_service.__init__(return_value=constructed_storage_service)
 
         validation_runner = ValidationRunner(
-            TEST_INPUT_FILE_PATH, cloud_provider, access_key_id, access_key_data
+            TEST_INPUT_FILE_PATH, cloud_provider, region, access_key_id, access_key_data
         )
 
-        mock_storage_service.assert_called_with(
-            "us-west-1", access_key_id, access_key_data
-        )
+        mock_storage_service.assert_called_with(region, access_key_id, access_key_data)
         self.assertEqual(
             validation_runner._storage_service, constructed_storage_service
         )

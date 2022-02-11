@@ -29,6 +29,7 @@ class ValidationRunner:
         self,
         input_file_path: str,
         cloud_provider: CloudProvider,
+        region: str,
         access_key_id: Optional[str] = None,
         access_key_data: Optional[str] = None,
         start_timestamp: Optional[str] = None,
@@ -37,6 +38,4 @@ class ValidationRunner:
     ) -> None:
         self._input_file_path = input_file_path
         self._cloud_provider = cloud_provider
-        self._storage_service = S3StorageService(
-            "us-west-1", access_key_id, access_key_data
-        )
+        self._storage_service = S3StorageService(region, access_key_id, access_key_data)
