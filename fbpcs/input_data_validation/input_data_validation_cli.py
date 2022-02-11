@@ -15,6 +15,7 @@ Usage:
     input_data_validation_cli
         --input-file-path=<input-file-path>
         --cloud-provider=<cloud-provider>
+        --region=<region>
         [--access-key-id=<access-key-id>]
         [--access-key-data=<access-key-data>]
         [--start-timestamp=<start-timestamp>]
@@ -30,6 +31,7 @@ from schema import Schema, Optional, Or, Use
 
 INPUT_FILE_PATH = "--input-file-path"
 CLOUD_PROVIDER = "--cloud-provider"
+REGION = "--region"
 ACCESS_KEY_ID = "--access-key-id"
 ACCESS_KEY_DATA = "--access-key-data"
 START_TIMESTAMP = "--start-timestamp"
@@ -45,6 +47,7 @@ def main() -> None:
         {
             INPUT_FILE_PATH: str,
             CLOUD_PROVIDER: cloud_provider_from_string,
+            REGION: str,
             Optional(ACCESS_KEY_ID): optional_string,
             Optional(ACCESS_KEY_DATA): optional_string,
             Optional(START_TIMESTAMP): optional_string,
@@ -58,6 +61,7 @@ def main() -> None:
     ValidationRunner(
         arguments[INPUT_FILE_PATH],
         arguments[CLOUD_PROVIDER],
+        arguments[REGION],
         arguments[ACCESS_KEY_ID],
         arguments[ACCESS_KEY_DATA],
     )
