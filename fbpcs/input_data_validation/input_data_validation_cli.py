@@ -25,6 +25,7 @@ Usage:
 
 
 from docopt import docopt
+from fbpcs.input_data_validation.enums import ValidationResult
 from fbpcs.input_data_validation.validation_runner import ValidationRunner
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 from schema import Schema, Optional, Or, Use
@@ -58,13 +59,26 @@ def main() -> None:
     arguments = s.validate(docopt(__doc__))
     assert arguments
     print("Parsed input_data_validation_cli arguments")
-    ValidationRunner(
+
+    validation_runner = ValidationRunner(
         arguments[INPUT_FILE_PATH],
         arguments[CLOUD_PROVIDER],
         arguments[REGION],
         arguments[ACCESS_KEY_ID],
         arguments[ACCESS_KEY_DATA],
     )
+    validation_report = validation_runner.run()
+
+    validation_report_status = validation_report["status"]
+    if validation_report_status == ValidationResult.FAILED.value:
+        raise Exception(validation_report)
+    elif validation_report_status == ValidationResult.SUCCESS.value:
+        print(f"Success: {validation_report}")
+    else:
+        raise Exception(
+            "Unknown validation_report status: {validation_report_status}.\n"
+            + "Validation report: {validation_report}"
+        )
 
 
 if __name__ == "__main__":
