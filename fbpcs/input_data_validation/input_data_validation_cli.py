@@ -24,6 +24,7 @@ Usage:
 
 
 from docopt import docopt
+from fbpcs.input_data_validation.validation_runner import ValidationRunner
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 from schema import Schema, Optional, Or, Use
 
@@ -54,6 +55,12 @@ def main() -> None:
     arguments = s.validate(docopt(__doc__))
     assert arguments
     print("Parsed input_data_validation_cli arguments")
+    ValidationRunner(
+        arguments[INPUT_FILE_PATH],
+        arguments[CLOUD_PROVIDER],
+        arguments[ACCESS_KEY_ID],
+        arguments[ACCESS_KEY_DATA],
+    )
 
 
 if __name__ == "__main__":
