@@ -5,6 +5,12 @@ provider "aws" {
 
 terraform {
   backend "s3" {}
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
 }
 
 resource "aws_vpc_peering_connection" "vpc_peering_conn" {
