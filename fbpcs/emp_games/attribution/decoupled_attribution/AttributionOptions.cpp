@@ -51,3 +51,7 @@ DEFINE_bool(
     "A postfix number added to input/output files to accommodate sharding");
 DEFINE_int32(max_num_touchpoints, 4, "Maximum touchpoints per user");
 DEFINE_int32(max_num_conversions, 4, "Maximum conversions per user");
+DEFINE_bool(
+    log_cost,
+    false,
+    "Log cost info into cloud which will be used for dashboard");
