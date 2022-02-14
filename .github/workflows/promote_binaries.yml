@@ -1,0 +1,40 @@
+name: Promote Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      existing_tag:
+        description: 'The existing tag/s3 subfolder of the binaries'
+        required: true
+        type: string
+      new_tag:
+        description: 'The new tag/s3 subfolder of the binaries'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/login-action@v1
+      with:
+         registry: ${{ env.REGISTRY }}
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ github.event.inputs.aws_region }}
+
+    - name: Promote Binaries
+      run: |
+                ./promote_scripts/promote_binaries.sh ${{ github.event.inputs.existing_tag }} ${{ github.event.inputs.new_tag }} < <(yes 'yes')
