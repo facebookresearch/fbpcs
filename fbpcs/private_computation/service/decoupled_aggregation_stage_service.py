@@ -187,6 +187,7 @@ class AggregationStageService(PrivateComputationStageService):
                 else "",
                 "max_num_touchpoints": private_computation_instance.padding_size,
                 "max_num_conversions": private_computation_instance.padding_size,
+                "log_cost": self._log_cost_to_s3,
             }
 
             game_args = [

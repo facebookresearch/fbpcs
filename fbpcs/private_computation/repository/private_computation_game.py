@@ -84,6 +84,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument({"name": "file_start_index", "required": True}),
             OneDockerArgument({"name": "use_xor_encryption", "required": True}),
             OneDockerArgument({"name": "use_postfix", "required": True}),
+            OneDockerArgument({"name": "log_cost", "required": False}),
         ],
     },
 }

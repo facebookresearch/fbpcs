@@ -85,6 +85,7 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
             "aggregators": private_computation_instance.aggregation_type.value,
             "use_xor_encryption": True,
             "use_postfix": True,
+            "log_cost": True,
         }
         test_game_args = [
             {
