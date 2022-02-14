@@ -25,3 +25,7 @@ DEFINE_string(
     sort_strategy,
     "sort",
     "Sorting strategy selected for the output data - options: (sort|keep_original)");
+DEFINE_bool(
+    log_cost,
+    false,
+    "Log cost info into cloud which will be used for dashboard");

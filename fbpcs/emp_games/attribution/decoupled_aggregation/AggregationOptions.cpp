@@ -56,3 +56,7 @@ DEFINE_string(
     "A user given run name that will be used in s3 filename");
 DEFINE_int32(max_num_touchpoints, 4, "Maximum touchpoints per user");
 DEFINE_int32(max_num_conversions, 4, "Maximum conversions per user");
+DEFINE_bool(
+    log_cost,
+    false,
+    "Log cost info into cloud which will be used for dashboard");

@@ -39,6 +39,10 @@ DEFINE_string(
     "ad_object",
     "Options are 'ad_object' or 'lift'");
 DEFINE_string(run_name, "", "User given name used to write cost info in S3");
+DEFINE_bool(
+    log_cost,
+    false,
+    "Log cost info into cloud which will be used for dashboard");
 
 int main(int argc, char* argv[]) {
   fbpcs::performance_tools::CostEstimation cost{"shard_aggregator"};
@@ -90,15 +94,27 @@ int main(int argc, char* argv[]) {
 
   cost.end();
   XLOG(INFO) << cost.getEstimatedCostString();
-  if (FLAGS_run_name != "") {
-    std::string runName = folly::to<std::string>(
-        cost.getApplication(),
-        "_",
-        FLAGS_run_name,
-        "_",
-        measurement::private_attribution::getDateString());
-    XLOG(INFO) << cost.writeToS3(
-        runName, cost.getEstimatedCostDynamic(runName));
+  if (FLAGS_log_cost) {
+    auto run_name = (FLAGS_run_name != "") ? FLAGS_run_name : "temp_run_name";
+    auto party_str = (FLAGS_party == static_cast<int>(fbpcf::Party::Alice))
+        ? "Publisher"
+        : "Partner";
+    folly::dynamic extra_info = folly::dynamic::object(
+        "publisher_input_basepath",
+        (std::strcmp(party_str, "Publisher") == 0) ? FLAGS_input_base_path
+                                                   : "")(
+        "partner_input_basepath",
+        (std::strcmp(party_str, "Partner") == 0) ? FLAGS_input_base_path : "")(
+        "output_path",
+        FLAGS_output_path)("num_shards", FLAGS_num_shards)("first_shard_index", FLAGS_first_shard_index)("metrics_format_type", FLAGS_metrics_format_type)("threshold", FLAGS_threshold);
+
+    XLOGF(
+        INFO,
+        "{}",
+        cost.writeToS3(
+            party_str,
+            run_name,
+            cost.getEstimatedCostDynamic(run_name, party_str, extra_info)));
   }
 
   return 0;

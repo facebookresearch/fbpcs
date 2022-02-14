@@ -22,7 +22,7 @@
 
 int main(int argc, char* argv[]) {
   fbpcs::performance_tools::CostEstimation cost =
-      fbpcs::performance_tools::CostEstimation("computation_experimental");
+      fbpcs::performance_tools::CostEstimation("aggregator", "decoupled");
   cost.start();
 
   folly::init(&argc, &argv);
@@ -124,15 +124,30 @@ int main(int argc, char* argv[]) {
     cost.end();
     XLOG(INFO, cost.getEstimatedCostString());
 
-    if (FLAGS_run_name != "" &&
-        FLAGS_party == static_cast<int>(fbpcf::Party::Alice)) {
+    if (FLAGS_log_cost) {
+      auto run_name = (FLAGS_run_name != "") ? FLAGS_run_name : "temp_run_name";
+      auto party = (FLAGS_party == static_cast<int>(fbpcf::Party::Alice))
+          ? "Publisher"
+          : "Partner";
+      folly::dynamic extra_info = folly::dynamic::object(
+          "publisher_input_basepath",
+          (std::strcmp(party, "Publisher") == 0) ? FLAGS_input_base_path : "")(
+          "partner_input_basepath",
+          (std::strcmp(party, "Partner") == 0) ? FLAGS_input_base_path : "")(
+          "publisher_output_basepath",
+          (std::strcmp(party, "Publisher") == 0) ? FLAGS_output_base_path : "")(
+          "partner_output_basepath",
+          (std::strcmp(party, "Partner") == 0) ? FLAGS_output_base_path : "")(
+          "num_files",
+          FLAGS_num_files)("file_start_index", FLAGS_file_start_index)("concurrency", FLAGS_concurrency)("use_xor_encryption", FLAGS_use_xor_encryption);
+
       XLOGF(
           INFO,
           "{}",
           cost.writeToS3(
-              FLAGS_run_name,
-              cost.getEstimatedCostDynamic(
-                  FLAGS_run_name, "", FLAGS_aggregators)));
+              party,
+              run_name,
+              cost.getEstimatedCostDynamic(run_name, party, extra_info)));
     }
 
     return 0;
