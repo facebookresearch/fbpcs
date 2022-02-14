@@ -14,7 +14,7 @@ env:
   DISTRO: ubuntu
   REGISTRY: ghcr.io
   VERSION_TAG: latest-build
-  LOCAL_IMAGE_NAME: ${{ github.event.repository.name }}/coordinator
+  LOCAL_IMAGE_NAME: coordinator-local
   REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/coordinator
 
 jobs:
