@@ -8,6 +8,7 @@
 import calendar
 import json
 import logging
+import sys
 import time
 from typing import Any, Dict, List, Optional
 from typing import Type
@@ -28,6 +29,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
+)
+from fbpcs.private_computation_cli.private_computation_service_wrapper import (
+    get_instance,
 )
 
 # study information fields
@@ -193,6 +197,20 @@ def run_study(
         new_cell_obj_instances,
         logger,
     )
+
+    try:
+        for instance_id in instance_ids:
+            if (
+                get_instance(config, instance_id, logger).status
+                is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
+            ):
+                logger.error(f"{instance_id=} FAILED.")
+                sys.exit(1)
+    except Exception as e:
+        logger.exception(e)
+        sys.exit(1)
+    else:
+        sys.exit(0)
 
 
 def _get_study_data(study_id: str, client: PLGraphAPIClient) -> Any:
