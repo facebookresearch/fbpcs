@@ -11,6 +11,11 @@ on:
         description: 'The new tag/s3 subfolder of the binaries'
         required: true
         type: string
+      aws_region:
+        description: 'The AWS region where the bucket is defined'
+        required: false
+        type: string
+        default: us-west-2
 
 env:
   REGISTRY: ghcr.io
