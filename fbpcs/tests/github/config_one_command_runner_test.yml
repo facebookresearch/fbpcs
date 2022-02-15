@@ -8,10 +8,8 @@ private_computation:
       class: fbpcp.service.container_aws.AWSContainerService
       constructor:
         region: us-west-2
-        # TODO: change this when new pce is created
-        cluster: fbpcs-github-cicd
-        # TODO: change this when new pce is created
-        subnets: [subnet-088f1eb93d161dcba,subnet-08bb1386ed1908488]
+        cluster: onedocker-cluster-pc-e2e-test
+        subnets: [subnet-0cb7f2ec4f37a3bfc,subnet-04409a48fd74b7d3b,subnet-008d1ccd71560e08e,subnet-09ec3cb9e7d9c3e8a,]
         access_key_id:
         access_key_data:
     StorageService:
@@ -27,19 +25,16 @@ private_computation:
       default:
         constructor:
           tmp_directory: /tmp
-          binary_version: TODO
+          binary_version: latest
     OneDockerServiceConfig:
       constructor:
-        # TODO: change this when new pce is created
-        task_definition: fbpcs-github-cicd:4#fbpcs-github-cicd
+        task_definition: onedocker-task-comp-ui-e2e:1#onedocker-container-comp-ui-e2e
 pid:
   dependency:
     PIDInstanceRepository:
       class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
       constructor:
         base_dir: /fbpcs_instances
-  skip_aggregation_step: true
-  task_definition:
 mpc:
   dependency:
     MPCGameService:
