@@ -16,3 +16,4 @@ DECLARE_string(output_path);
 DECLARE_string(tmp_directory);
 DECLARE_string(run_name);
 DECLARE_string(sort_strategy);
+DECLARE_bool(log_cost);

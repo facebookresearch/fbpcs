@@ -81,15 +81,21 @@ int main(int argc, char** argv) {
 
   cost.end();
   XLOG(INFO) << cost.getEstimatedCostString();
-  if (FLAGS_run_name != "") {
-    std::string runName = folly::to<std::string>(
-        cost.getApplication(),
-        "_",
-        FLAGS_run_name,
-        "_",
-        measurement::private_attribution::getDateString());
-    XLOG(INFO) << cost.writeToS3(
-        runName, cost.getEstimatedCostDynamic(runName));
+
+  if (FLAGS_log_cost) {
+    auto run_name = (FLAGS_run_name != "") ? FLAGS_run_name : "temp_run_name";
+    folly::dynamic extra_info = folly::dynamic::object(
+        "padding_size", FLAGS_padding_size)("spine_path", FLAGS_spine_path)(
+        "data_path",
+        FLAGS_data_path)("output_path", FLAGS_output_path)("sort_strategy", FLAGS_sort_strategy);
+
+    XLOGF(
+        INFO,
+        "{}",
+        cost.writeToS3(
+            "",
+            run_name,
+            cost.getEstimatedCostDynamic(run_name, "", extra_info)));
   }
 
   return 0;
