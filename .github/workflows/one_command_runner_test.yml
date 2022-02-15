@@ -1,0 +1,49 @@
+name: One command runner test
+
+on:
+  workflow_dispatch:
+    inputs:
+      study_id:
+        description: Lift study id
+        required: true
+        default: 25402204995942
+      objective_id:
+        description: Lift objective id
+        required: true
+        default: 49502203606212
+      input_path:
+        description: S3 path to synthetic data
+        required: true
+        default: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv
+      tag:
+        description: Version tag to use
+        required: true
+        default: rc
+
+env:
+  FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
+  FBPCS_IMAGE_NAME: coordinator
+  FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_GRAPH_API_TOKEN }}
+
+jobs:
+  ### Private Lift E2E tests
+  pl_test:
+    name: Private Lift E2E Tests
+    runs-on: self-hosted
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+
+    # TODO: add data validation step
+    steps:
+      - uses: actions/checkout@v2
+      - name: One command runner
+        run: |
+          ./fbpcs/scripts/run_fbpcs.sh run_study \
+          ${{ github.event.inputs.study_id }} \
+          --objective_ids=${{ github.event.inputs.objective_id }} \
+          --input_paths=${{ github.event.inputs.input_path }} \
+          --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
+          -- \
+          --version=${{ github.event.inputs.tag }}
