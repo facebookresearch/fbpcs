@@ -24,3 +24,4 @@ DECLARE_string(run_name);
 DECLARE_bool(use_postfix);
 DECLARE_int32(max_num_touchpoints);
 DECLARE_int32(max_num_conversions);
+DECLARE_bool(log_cost);

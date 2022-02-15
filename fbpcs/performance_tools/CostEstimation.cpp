@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include "fbpcs/performance_tools/CostEstimation.h"
 #include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcs/performance_tools/CostEstimation.h>
 #include <folly/dynamic.h>
@@ -12,8 +13,10 @@
 #include <folly/logging/xlog.h>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <ctime>
 #include <fstream>
+#include <iomanip>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -22,18 +25,39 @@
 
 namespace fbpcs::performance_tools {
 
+const std::unordered_map<std::string, std::string> SUPPORTED_APPLICATIONS(
+    {{"data_processing", "dp-logs"},
+     {"attributor", "att-logs"},
+     {"aggregator", "agg-logs"},
+     {"shard_aggregator", "sa-logs"}});
+const std::vector<std::string> SUPPORTED_VERSIONS{"decoupled", "pcf2"};
+const std::string S3_COST_BUCKET = "cost-estimation-logs";
+const std::string CLOUD = "aws";
+
 CostEstimation::CostEstimation(const std::string& app) : application_{app} {
-  s3Bucket_ = "cost-estimation-logs";
-  if (app == "attribution") {
-    s3Path_ = "pa-logs";
-  } else if (app == "computation_experimental") {
-    s3Path_ = "attr-logs";
-  } else if (app == "xor_ss") {
-    s3Path_ = "ss-logs";
-  } else if (app == "data_processing") {
-    s3Path_ = "dp-logs";
-  } else if (app == "shard_aggregator") {
-    s3Path_ = "sa-logs";
+  s3Bucket_ = S3_COST_BUCKET;
+  if (SUPPORTED_APPLICATIONS.find(app) == SUPPORTED_APPLICATIONS.end()) {
+    XLOGF(ERR, "Application {} is not supported!", app);
+  } else {
+    s3Path_ = SUPPORTED_APPLICATIONS.at(app);
+    version_ = "not_specified";
+  }
+}
+
+CostEstimation::CostEstimation(
+    const std::string& app,
+    const std::string& version)
+    : application_{app}, version_{version} {
+  s3Bucket_ = S3_COST_BUCKET;
+  if (SUPPORTED_APPLICATIONS.find(app) == SUPPORTED_APPLICATIONS.end()) {
+    XLOGF(ERR, "Application {} is not supported!", app);
+  } else {
+    s3Path_ = SUPPORTED_APPLICATIONS.at(app);
+  }
+  if (std::find(
+          SUPPORTED_VERSIONS.begin(), SUPPORTED_VERSIONS.end(), version) ==
+      SUPPORTED_VERSIONS.end()) {
+    XLOGF(ERR, "Version {} is not supported!", version);
   }
 }
 
@@ -96,21 +120,35 @@ std::string CostEstimation::getEstimatedCostString() {
 
 folly::dynamic CostEstimation::getEstimatedCostDynamic(
     std::string run_name,
-    std::string attribution_rules,
-    std::string aggregators) {
+    std::string party,
+    folly::dynamic info) {
   folly::dynamic result = folly::dynamic::object;
 
   const auto now_ts = std::chrono::time_point_cast<std::chrono::seconds>(
       std::chrono::system_clock::now());
   const auto timestamp = now_ts.time_since_epoch().count();
+
+  auto t = std::time(nullptr);
+  char ds_string[40];
+  struct tm newTime;
+  std::strftime(
+      ds_string, sizeof(ds_string), "%Y-%m-%d", localtime_r(&t, &newTime));
+
   result.insert("name", run_name);
+  result.insert("party", party);
+  result.insert("ds", ds_string);
   result.insert("timestamp", timestamp);
-  result.insert("attribution_rule", attribution_rules);
-  result.insert("aggregator", aggregators);
-  result.insert("running_time", runningTimeInSec_);
-  result.insert("rx_bytes", networkRXBytes_);
-  result.insert("tx_bytes", networkTXBytes_);
+  result.insert("app_name", application_);
+  result.insert("app_version", version_);
+  result.insert("wall_time", runningTimeInSec_);
+  result.insert("rx_bytes_dev", networkRXBytes_);
+  result.insert("tx_bytes_dev", networkTXBytes_);
+  result.insert("mem_alloted", MEMORY_SIZE);
+  result.insert("cpu_alloted", vCPUS);
   result.insert("estimated_cost", estimatedCost_);
+  result.insert("cloud_provider", CLOUD);
+  result.insert("additional_info", folly::toJson(info));
+
   return result;
 }
 
@@ -151,13 +189,38 @@ void CostEstimation::end() {
 }
 
 std::string CostEstimation::writeToS3(
+    std::string party,
     std::string run_name,
     folly::dynamic costDynamic) {
-  std::string costData = folly::toPrettyJson(costDynamic);
   std::string s3FullPath = folly::to<std::string>(
       "https://", s3Bucket_, ".s3.us-west-2.amazonaws.com/", s3Path_, "/");
-  std::string filePath = folly::to<std::string>(s3FullPath, run_name, ".json");
+  std::string filePath = folly::to<std::string>(
+      s3FullPath,
+      run_name,
+      "_",
+      party,
+      "_",
+      costDynamic["timestamp"].asString(),
+      ".json");
 
+  return _writeToS3(filePath, costDynamic);
+}
+
+std::string CostEstimation::writeToS3(
+    std::string run_name,
+    folly::dynamic costDynamic) {
+  std::string s3FullPath = folly::to<std::string>(
+      "https://", s3Bucket_, ".s3.us-west-2.amazonaws.com/", s3Path_, "/");
+  std::string filePath = folly::to<std::string>(
+      s3FullPath, run_name, "_", costDynamic["timestamp"].asString(), ".json");
+
+  return _writeToS3(filePath, costDynamic);
+}
+
+std::string CostEstimation::_writeToS3(
+    std::string filePath,
+    folly::dynamic costDynamic) {
+  std::string costData = folly::toPrettyJson(costDynamic);
   try {
     fbpcf::io::write(filePath, costData);
   } catch (const std::exception& e) {
