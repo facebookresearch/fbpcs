@@ -15,6 +15,10 @@ on:
         description: 'The name of the docker image to tag'
         required: true
         type: string
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
 
 
 env:
@@ -29,6 +33,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Print Tracker Hash
+      run: echo ${{ github.event.inputs.tracker_hash}}
 
     - uses: docker/login-action@v1
       with:
