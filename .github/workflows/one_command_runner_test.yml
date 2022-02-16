@@ -6,15 +6,15 @@ on:
       study_id:
         description: Lift study id
         required: true
-        default: 25402204995942
+        default: 32102205110410
       objective_id:
         description: Lift objective id
         required: true
-        default: 49502203606212
+        default: 23502204952992
       input_path:
         description: S3 path to synthetic data
         required: true
-        default: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
       tag:
         description: Version tag to use
         required: true
