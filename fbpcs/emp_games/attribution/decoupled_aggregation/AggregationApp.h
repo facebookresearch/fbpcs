@@ -32,11 +32,13 @@ class AggregationApp
       const std::string& aggregationFormat,
       const std::string& inputSecretShareFilePath,
       const std::string& inputClearTextFilePath,
-      const std::string& outputPath)
+      const std::string& outputPath,
+      const bool useTls,
+      const std::string& tlsDir)
       : fbpcf::EmpApp<
             AggregationGame<MY_ROLE, emp::NetIO, OUTPUT_VISIBILITY>,
             AggregationInputMetrics,
-            AggregationOutputMetrics>{static_cast<fbpcf::Party>(MY_ROLE), serverIp, port},
+            AggregationOutputMetrics>{static_cast<fbpcf::Party>(MY_ROLE), serverIp, port, useTls, tlsDir},
         aggregationFormat_{aggregationFormat},
         inputSecretShareFilePath_{inputSecretShareFilePath},
         inputClearTextFilePath_{inputClearTextFilePath},

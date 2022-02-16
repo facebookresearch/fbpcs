@@ -60,7 +60,9 @@ int main(int argc, char* argv[]) {
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
-            FLAGS_attribution_rules);
+            FLAGS_attribution_rules,
+            FLAGS_use_tls,
+            FLAGS_tls_dir);
       } else {
         aggregation::private_attribution::startAttributionAppsForShardedFiles<
             aggregation::private_attribution::PUBLISHER,
@@ -70,7 +72,9 @@ int main(int argc, char* argv[]) {
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
-            FLAGS_attribution_rules);
+            FLAGS_attribution_rules,
+            FLAGS_use_tls,
+            FLAGS_tls_dir);
       }
 
     } else if (FLAGS_party == static_cast<int>(fbpcf::Party::Bob)) {
@@ -85,7 +89,9 @@ int main(int argc, char* argv[]) {
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
-            FLAGS_attribution_rules);
+            FLAGS_attribution_rules,
+            FLAGS_use_tls,
+            FLAGS_tls_dir);
       } else {
         aggregation::private_attribution::startAttributionAppsForShardedFiles<
             aggregation::private_attribution::PARTNER,
@@ -95,7 +101,9 @@ int main(int argc, char* argv[]) {
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
-            FLAGS_attribution_rules);
+            FLAGS_attribution_rules,
+            FLAGS_use_tls,
+            FLAGS_tls_dir);
       }
 
     } else {

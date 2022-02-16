@@ -43,7 +43,9 @@ static void runGame(
       aggregationFormat,
       inputSecretShareFilePath,
       inputClearTextFilePath,
-      outputPath)
+      outputPath,
+      false, // useTls
+      "") // tlsDir
       .run();
 }
 

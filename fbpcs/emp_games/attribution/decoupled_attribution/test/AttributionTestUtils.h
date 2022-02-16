@@ -42,7 +42,7 @@ static void runGame(
     const std::filesystem::path& inputPath,
     const std::string& outputPath) {
   AttributionApp<PARTY, OUTPUT_VISIBILITY>(
-      serverIp, port, attributionRules, inputPath, outputPath)
+      serverIp, port, attributionRules, inputPath, outputPath, false, "")
       .run();
 }
 
