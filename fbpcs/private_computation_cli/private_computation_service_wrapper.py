@@ -101,8 +101,8 @@ def validate(
     config: Dict[str, Any],
     instance_id: str,
     logger: logging.Logger,
-    aggregated_result_path: str,
     expected_result_path: str,
+    aggregated_result_path: Optional[str] = None,
 ) -> None:
     pc_service = _build_private_computation_service(
         config["private_computation"],
