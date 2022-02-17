@@ -16,10 +16,20 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Added optional new argument --log_cost to private decoupled attribution, private decoupled aggregation, private shard aggregator and data processing stages
   - In logging the cost for MPC runs, added few more fields in CostEstimation.cpp
   - Added log_cost argument to MPC stage services
-
 ### Changed
 
 ### Removed
+
+## [1.3.0] - 2022-02-14
+### Added
+  - Added version 1 of input data validation stage.
+  - Adding additional tests for decoupled_aggregation.
+
+### Changed
+  - Changes for stream log implementation.
+
+### Removed
+  - Remove directories as buck sources in fbcode/fbpcs/emp_games/TARGETS.
 
 ## [1.2.0] - 2022-02-03
 ### Added
