@@ -81,6 +81,7 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             "attribution_rules": AttributionRule.LAST_CLICK_1D.value,
             "use_xor_encryption": True,
             "use_postfix": True,
+            "log_cost": True,
         }
         test_game_args = [
             {
