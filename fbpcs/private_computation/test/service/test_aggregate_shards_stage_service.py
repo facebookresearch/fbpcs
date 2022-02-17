@@ -71,6 +71,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
                 "run_name": private_computation_instance.instance_id
                 if self.stage_svc._log_cost_to_s3
                 else "",
+                "log_cost": True,
             }
         ]
 

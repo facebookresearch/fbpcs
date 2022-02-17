@@ -131,6 +131,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "first_shard_index": 0,
                     "threshold": pc_instance.k_anonymity_threshold,
                     "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
+                    "log_cost": self._log_cost_to_s3,
                 },
                 {
                     "input_base_path": input_stage_path,
@@ -141,6 +142,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "first_shard_index": synthetic_data_shard_start_index,
                     "threshold": pc_instance.k_anonymity_threshold,
                     "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
+                    "log_cost": self._log_cost_to_s3,
                 },
             ]
             # We should only export visibility to scribe when it's set
@@ -172,6 +174,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "output_path": pc_instance.shard_aggregate_stage_output_path,
                     "threshold": pc_instance.k_anonymity_threshold,
                     "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
+                    "log_cost": self._log_cost_to_s3,
                 },
             ]
             # We should only export visibility to scribe when it's set
