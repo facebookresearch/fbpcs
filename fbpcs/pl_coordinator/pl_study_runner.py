@@ -165,9 +165,11 @@ def run_study(
 
     ## Step 3. Run Instances. Run maximum number of instances in parallel
 
+    all_instance_ids = []
     chunks = _get_chunks(instances_input_path, MAX_NUM_INSTANCES)
     for chunk in chunks:
         instance_ids = list(chunk.keys())
+        all_instance_ids.extend(instance_ids)
         chunk_input_paths = list(map(lambda x: x["input_path"], chunk.values()))
         chunk_num_shards = list(map(lambda x: x["num_shards"], chunk.values()))
         logger.info(f"Start running instances {instance_ids}.")
@@ -199,7 +201,7 @@ def run_study(
     )
 
     try:
-        for instance_id in instance_ids:
+        for instance_id in all_instance_ids:
             if (
                 get_instance(config, instance_id, logger).status
                 is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
