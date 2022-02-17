@@ -139,9 +139,11 @@ class PrepareDataStageService(PrivateComputationStageService):
         if pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
             run_name = pl_instance.instance_id if log_cost_to_s3 else ""
             padding_size = checked_cast(int, pl_instance.padding_size)
+            log_cost = log_cost_to_s3
         else:
             run_name = None
             padding_size = None
+            log_cost = None
 
         combiner_service = checked_cast(
             IdSpineCombinerService,
@@ -158,6 +160,7 @@ class PrepareDataStageService(PrivateComputationStageService):
             tmp_directory=binary_config.tmp_directory,
             run_name=run_name,
             padding_size=padding_size,
+            log_cost=log_cost,
         )
         await combiner_service.start_containers(
             cmd_args_list=args,

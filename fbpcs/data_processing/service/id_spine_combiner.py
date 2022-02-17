@@ -32,6 +32,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
         padding_size: Optional[int] = None,
         # run_name is the binary name used by the log cost to s3 feature
         run_name: Optional[str] = None,
+        log_cost: Optional[bool] = False,
     ) -> List[str]:
         # TODO: Combiner could be made async so we don't have to spawn our
         # own ThreadPoolExecutor here and instead use async primitives
@@ -50,6 +51,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
                 padding_size=padding_size,
                 run_name=run_name,
                 sort_strategy=sort_strategy,
+                log_cost=log_cost,
             )
             cmd_args_list.append(cmd_args)
         return cmd_args_list
