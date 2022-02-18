@@ -67,9 +67,14 @@ jobs:
     - name: Tag docker image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      run: docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.NEW_IMAGE_TAG }}
+      run: |
+        docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.IMAGE_NAME }}:${{ env.NEW_IMAGE_TAG }}
+        docker tag ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.NEW_IMAGE_TAG }}
 
-    - name: Push image to Amazon ECR
+    - name: Push image to Amazon ECR registry
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.NEW_IMAGE_TAG }}
+
+    - name: Push image back to rc registry
+      run: docker push --all-tags ${{ env.IMAGE_NAME }}
