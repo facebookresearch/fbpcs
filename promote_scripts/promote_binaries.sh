@@ -8,14 +8,11 @@
 
 set -e
 
-# TODO T110861946: once private_lift_service is deprecated, remove the sfid argument
-#   and use hard-coded "private_measurement/private_computation_service"
 old_tag=$1
 new_tag=$2
 
 if [ $# -ne 2 ]; then
     echo "Usage: ./promote_binaries.sh old_tag new_tag"
-    echo "Validate sfids: ad_measurement/private_lift_service, private_measurement/private_computation_service"
     echo "Example tags: rc, canary, latest, etc."
     exit
 fi
