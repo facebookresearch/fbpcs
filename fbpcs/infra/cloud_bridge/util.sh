@@ -100,8 +100,10 @@ validateDeploymentResources () {
     if echo "$pceValidatorOutput" | grep -q "$successMessage"
     then
         echo "PCE validation successful";
+        echo "PCE validation successful" >> "$TF_LOG_STREAMING"
     else
         echo "PCE validator found some issue..please analyze further to debug the issue"
+        echo "validator found some issue..please analyze logs further to debug the issue" >> "$TF_LOG_STREAMING"
         # TODO, once T111250475 is implemneted grep based on exit code
         # exit 1
     fi
