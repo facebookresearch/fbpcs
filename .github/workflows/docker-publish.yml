@@ -72,7 +72,10 @@ jobs:
         run: |
           docker tag ${{ env.LOCAL_IMAGE_NAME }}:${{env.VERSION_TAG}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
           docker tag ${{ env.LOCAL_IMAGE_NAME }}:${{env.VERSION_TAG}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{env.VERSION_TAG}}
-
+          # temporarily tagging with rc because the task definition
+          # (fbpcs-github-cicd:4 https://us-west-2.console.aws.amazon.com/ecs/home?region=us-west-2#/taskDefinitions/fbpcs-github-cicd/4)
+          # points at :rc instead of latest-build
+          docker tag ${{ env.LOCAL_IMAGE_NAME }}:${{env.VERSION_TAG}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:rc
       - name: Push image with to rc registry
         run: |
           docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
