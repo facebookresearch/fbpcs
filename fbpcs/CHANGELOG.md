@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - In logging the cost for MPC runs, added few more fields in CostEstimation.cpp
   - Added log_cost argument to MPC stage services
 ### Changed
+  - Changed LogRetriever to cover the publisher side use case.
 
 ### Removed
 

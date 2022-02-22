@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import re
+
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 
@@ -53,7 +55,7 @@ class LogRetriever:
         log_region = container_id_info[3]
         task_id_info = container_id_info[-1].split("/")
         cluster_name = task_id_info[1]
-        container_name = cluster_name.replace("-cluster", "-container")
+        container_name = self._get_container_name(cluster_name, log_region)
         task_id = task_id_info[-1]
         log_group_name = f"$252Fecs$252F{container_name}"
         log_stream_name = f"ecs$252F{container_name}$252F{task_id}"
@@ -64,3 +66,27 @@ class LogRetriever:
             f"log-group/{log_group_name}/"
             f"log-events/{log_stream_name}"
         )
+
+    def _get_container_name(self, cluster_name: str, log_region: str) -> str:
+        """Get the container_name. For publisher side log group, if it's created by PCE service,
+        it will be changed to format "onedocker-container-shared-<region>"
+        Args:
+            cluster_name: the name of cluster in format "onedocker-cluster-<tag>"
+            log_region: the AWS region
+
+        Returns:
+            return: The container_name
+
+        Raises:
+            IndexError: if container_name is not well-formed
+        """
+        container_name = cluster_name.replace("-cluster", "-container")
+        container_name_parts = container_name.split("-")
+
+        # If the name does not have a 32 bit random string inside, return directly
+        # Otherwise, it means it's a container created by the PCE service,
+        # and it should be replaced with "-shared-<region>"
+        if not re.search(r"[0-9a-f]{32}", container_name_parts[-1]):
+            return container_name
+
+        return f"{container_name.rsplit('-', 1)[0]}-shared-{log_region}"
