@@ -23,6 +23,10 @@ on:
         description: Version tag to use
         required: true
         default: rc
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
 
 env:
   FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
@@ -41,6 +45,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash}}
+
       - name: One command runner
         run: |
           ./fbpcs/scripts/run_fbpcs.sh run_study \
