@@ -25,6 +25,7 @@ from typing import Dict, Optional
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.input_data_validation.constants import INPUT_DATA_TMP_FILE_PATH
 from fbpcs.input_data_validation.enums import ValidationResult
+from fbpcs.input_data_validation.header_validator import HeaderValidator
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 
@@ -56,6 +57,11 @@ class ValidationRunner:
             self._storage_service.copy(self._input_file_path, self._local_file_path)
             with open(self._local_file_path) as local_file:
                 csv_reader = csv.DictReader(local_file)
+                field_names = csv_reader.fieldnames or []
+
+                header_validator = HeaderValidator()
+                header_validator.validate(field_names)
+
                 for _ in csv_reader:
                     rows_processed_count += 1
         except Exception as e:
