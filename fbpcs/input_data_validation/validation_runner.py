@@ -26,6 +26,7 @@ from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.input_data_validation.constants import INPUT_DATA_TMP_FILE_PATH
 from fbpcs.input_data_validation.enums import ValidationResult
 from fbpcs.input_data_validation.header_validator import HeaderValidator
+from fbpcs.input_data_validation.line_ending_validator import LineEndingValidator
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 
@@ -62,8 +63,16 @@ class ValidationRunner:
                 header_validator = HeaderValidator()
                 header_validator.validate(field_names)
 
-                for _ in csv_reader:
+            with open(self._local_file_path, "rb") as local_file:
+                line_ending_validator = LineEndingValidator()
+                header_line = local_file.readline().decode("utf-8")
+                line_ending_validator.validate(header_line)
+
+                while raw_line := local_file.readline():
+                    line = raw_line.decode("utf-8")
+                    line_ending_validator.validate(line)
                     rows_processed_count += 1
+
         except Exception as e:
             return self._format_validation_result(
                 ValidationResult.FAILED,

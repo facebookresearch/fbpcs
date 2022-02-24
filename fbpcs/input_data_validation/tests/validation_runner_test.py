@@ -152,3 +152,30 @@ class TestValidationRunner(TestCase):
         report = validation_runner.run()
 
         self.assertDictEqual(report, expected_report)
+
+    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
+    @patch("fbpcs.input_data_validation.validation_runner.time")
+    def test_run_validations_errors_when_the_line_ending_is_unsupported(
+        self, time_mock: Mock, _storage_service_mock: Mock
+    ) -> None:
+        exception_message = "Detected an unexpected line ending. The only supported line ending is '\\n'"
+        time_mock.time.return_value = TEST_TIMESTAMP
+        cloud_provider = CloudProvider.AWS
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,100,1645157987\r\n",
+            b"abcd/1234+WXYZ=,100,1645157987\r\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = {
+            "status": ValidationResult.FAILED.value,
+            "message": f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            "rows_processed_count": "0",
+        }
+
+        validation_runner = ValidationRunner(
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+        )
+        report = validation_runner.run()
+
+        self.assertDictEqual(report, expected_report)
