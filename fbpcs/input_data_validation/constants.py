@@ -6,3 +6,5 @@
 # pyre-strict
 
 INPUT_DATA_TMP_FILE_PATH = "/tmp"
+PA_FIELDS = ["id_", "conversion_value", "conversion_timestamp", "conversion_metadata"]
+PL_FIELDS = ["id_", "value", "event_timestamp"]
