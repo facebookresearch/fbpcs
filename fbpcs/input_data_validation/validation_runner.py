@@ -18,6 +18,7 @@ Error handling:
 * If an unhandled error occurs, it will be returned in the report
 """
 
+import csv
 import time
 from typing import Dict, Optional
 
@@ -50,23 +51,31 @@ class ValidationRunner:
         return f"{INPUT_DATA_TMP_FILE_PATH}/{filename}-{now}"
 
     def run(self) -> Dict[str, str]:
+        rows_processed_count = 0
         try:
             self._storage_service.copy(self._input_file_path, self._local_file_path)
+            with open(self._local_file_path) as local_file:
+                csv_reader = csv.DictReader(local_file)
+                for _ in csv_reader:
+                    rows_processed_count += 1
         except Exception as e:
             return self._format_validation_result(
                 ValidationResult.FAILED,
                 f"File: {self._input_file_path} failed validation. Error: {e}",
+                rows_processed_count,
             )
 
         return self._format_validation_result(
             ValidationResult.SUCCESS,
             f"File: {self._input_file_path} was validated successfully",
+            rows_processed_count,
         )
 
     def _format_validation_result(
-        self, status: ValidationResult, message: str
+        self, status: ValidationResult, message: str, rows_processed_count: int
     ) -> Dict[str, str]:
         return {
             "status": status.value,
             "message": message,
+            "rows_processed_count": str(rows_processed_count),
         }
