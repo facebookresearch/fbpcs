@@ -9,14 +9,14 @@
 
 #include <filesystem>
 
-#include "InputData.h"
+#include "fbpcs/emp_games/lift/calculator/LiftInputData.h"
 
 namespace private_lift {
 /*
  * Simple struct representing the all the input arguments for a CalculatorGame
  */
 struct CalculatorGameConfig {
-  InputData inputData;
+  LiftInputData inputData;
   bool isConversionLift;
   int32_t numConversionsPerUser;
 };

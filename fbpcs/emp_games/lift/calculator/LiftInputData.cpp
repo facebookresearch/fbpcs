@@ -14,12 +14,14 @@
 #include <emp-tool/emp-tool.h>
 
 #include <fbpcf/mpc/EmpGame.h>
+#include <folly/logging/xlog.h>
 
 #include "fbpcs/emp_games/lift/calculator/LiftDataFrameBuilder.h"
 #include "fbpcs/emp_games/lift/common/Column.h"
 #include "fbpcs/emp_games/lift/common/DataFrame.h"
 
 namespace {
+// TODO: Move this back to being a configurable variable
 inline constexpr int64_t kConversionCap = 25;
 }
 
@@ -31,10 +33,23 @@ LiftInputData::LiftInputData(
     const LiftDataFrameBuilder& builder,
     fbpcf::Party party)
     : party_{party}, groupKey_{getGroupKeyForParty(party)} {
+  XLOG(INFO) << "Building DataFrame...";
   df_ = builder.buildNew();
+  XLOG(INFO) << "\tDataFrame built.";
+
+  XLOG(INFO) << "Calculating group count...";
   groupCount_ = calculateGroupCount();
+  XLOG(INFO) << "\tHave " << groupCount_ << " groups.";
+
+  XLOG(INFO) << "Precalculating bitmasks...";
   bitmasks_ = calculateBitmasks();
+  XLOG(INFO) << "\tBitmasks precalculated.";
+
+  XLOG(INFO) << "Calculating total size...";
   size_ = calculateSize();
+  XLOG(INFO) << "\tSize is " << size_ << " rows.";
+
+  XLOG(INFO) << "Done constructing LiftInputData.";
 }
 
 int64_t LiftInputData::calculateGroupCount() const {
