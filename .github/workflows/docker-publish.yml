@@ -8,15 +8,24 @@ on:
       name:
         description: 'Manually running this workflow will skip "Check New Commits" step and build image directly'
         default: 'Run'
+      new_tag:
+        description: 'The new tag of the docker image'
+        required: false
+        type: string
+        default: latest-build
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
 
 env:
   DISTRO: ubuntu
   REGISTRY: ghcr.io
-  VERSION_TAG: latest-build
+  VERSION_TAG: ${{ github.event.inputs.new_tag }}
   LOCAL_IMAGE_NAME: fbpcs/onedocker
   RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
   PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
-  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator:latest-build
+  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator:${{ github.event.inputs.new_tag }}
   PL_CONTAINER_NAME: e2e_pl_container
   PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
@@ -90,6 +99,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Print Tracker Hash
+       run: echo ${{ github.event.inputs.tracker_hash }}
 
       - name: Cleanup ECS running tasks and previous running results
         run: |
