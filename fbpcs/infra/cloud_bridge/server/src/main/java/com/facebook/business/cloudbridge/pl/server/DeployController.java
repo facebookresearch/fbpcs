@@ -93,25 +93,30 @@ public class DeployController {
     logger.info("Received status request");
 
     DeploymentRunner.DeploymentState state;
-    String output;
-
+    String output = "";
     ObjectMapper mapper = new ObjectMapper();
     ObjectNode rootNode = mapper.createObjectNode();
-    if (runner == null) {
-      logger.debug("  No deployment created yet");
-      output = "";
-    } else {
-      state = runner.getDeploymentState();
-      output = runner.getOutput();
+    try {
+      synchronized (this) {
+        if (runner == null) {
+          logger.debug("  No deployment created yet");
+          output = "";
+        } else {
+          state = runner.getDeploymentState();
+          output = runner.getOutput();
 
-      rootNode.put("state", state.toString());
-      if (state == DeploymentRunner.DeploymentState.STATE_HALTED) {
-        rootNode.put("exitValue", runner.getExitValue());
-        runner = null;
+          rootNode.put("state", state.toString());
+          if (state == DeploymentRunner.DeploymentState.STATE_HALTED) {
+            rootNode.put("exitValue", runner.getExitValue());
+            runner = null;
+          }
+        }
+        return new APIReturn(APIReturn.Status.STATUS_SUCCESS, output, rootNode);
       }
+    } catch (final Exception e) {
+      logger.error(" Error happened : " + e.getMessage());
     }
-
-    return new APIReturn(APIReturn.Status.STATUS_SUCCESS, output, rootNode);
+    return new APIReturn(APIReturn.Status.STATUS_ERROR, output, rootNode);
   }
 
   @GetMapping(path = "/v1/deployment/streamLogs", produces = "application/json")
