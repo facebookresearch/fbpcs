@@ -146,6 +146,7 @@ class PrivateComputationInstance(InstanceBase):
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
     def __post_init__(self) -> None:
+        super().__post_init__()
         if self.num_pid_containers > self.num_mpc_containers:
             raise ValueError(
                 f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.num_pid_containers} and num_mpc_containers = {self.num_mpc_containers}"
