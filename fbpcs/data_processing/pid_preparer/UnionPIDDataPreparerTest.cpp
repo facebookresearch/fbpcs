@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -37,6 +38,23 @@ static void validateFileContents(
     const std::filesystem::path& path,
     bool shouldAssert = false) {
   auto actual = readFile(path);
+  if (shouldAssert) {
+    ASSERT_EQ(expected, actual);
+  } else {
+    EXPECT_EQ(expected, actual);
+  }
+}
+
+static void validateRowCounts(
+    const std::int32_t& expected,
+    const std::filesystem::path& path,
+    bool shouldAssert = false) {
+  std::ifstream f{path};
+  std::string line;
+  std::int32_t actual = 0;
+  while (getline(f, line)) {
+    actual++;
+  }
   if (shouldAssert) {
     ASSERT_EQ(expected, actual);
   } else {
@@ -101,6 +119,18 @@ TEST(UnionPIDDataPreparerTest, ValidTest) {
   UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/"};
   preparer.prepare();
   validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, RowCountTest) {
+  std::vector<std::string> lines = {"id_"};
+  std::int32_t rowCountExpected = 1;
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/"};
+  preparer.prepare();
+  validateRowCounts(rowCountExpected, outpath);
 }
 
 } // namespace measurement::pid
