@@ -1,0 +1,58 @@
+name: Create Hotfix
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'The name of the branch to create where the hotfix will live'
+        required: true
+        type: string
+      base_commit:
+        description: 'Commit hash on which to base the changes'
+        required: false
+        type: string
+        default: null
+      hotfix_commit:
+        description: 'Commit to patch into the base revision'
+        required: true
+        type: string
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: string
+
+env:
+  PROD_REGISTRY_IMAGE_NAME: facebookresearch/fbpcs/coordinator
+  PROD_TAG: latest
+
+jobs:
+  create_hotfix:
+    name: Create hotfix commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash }}
+
+      - name: Find the base commit from the prod docker image
+        run: |
+            echo "BASE_COMMIT=$(
+            [[ -n ${{ github.event.inputs.base_commit }} ]] &&
+            echo ${{ github.event.inputs.base_commit}} ||
+            ./hotfix_scripts/find_base_commit.sh ${{ env.PROD_REGISTRY_IMAGE_NAME }} ${{ env.PROD_TAG }}
+            )" >> $GITHUB_ENV
+
+      - name: Create new branch for hotfix at base commit
+        uses: peterjgrainger/action-create-branch@v2.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            branch: ${{ github.event.inputs.branch_name }}
+            sha: ${{ env.BASE_COMMIT }}
+
+      - name: Create hotfix commit on new branch
+        run: |
+            git checkout ${{ github.event.inputs.branch_name }}
+            git cherry-pick ${{ github.event.inputs.hotfix_commit }}
+            git commit -m "Hotfix creation for ${{ github.event.inputs.branch_name }}"
