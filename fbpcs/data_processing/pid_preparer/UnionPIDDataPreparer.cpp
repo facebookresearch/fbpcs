@@ -136,6 +136,13 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
              << private_lift::logging::formatNumber(res.duplicateIdCount)
              << " duplicate ids.";
 
+  if (res.linesProcessed == 0) {
+    XLOG(INFO) << "The file is empty. Adding random dummy row";
+    // Using random value to avoid accidental match with other-side data
+    auto randomDummyRow = std::to_string(folly::Random::secureRand64());
+    *tmpFile << randomDummyRow << "\n";
+  }
+
   XLOG(INFO) << "Now copying prepared data to final output path";
   // Reset underlying unique_ptr to ensure buffer gets flushed
   tmpFile.reset();
