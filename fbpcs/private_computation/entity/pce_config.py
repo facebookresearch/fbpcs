@@ -8,7 +8,7 @@
 
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from dataclasses_json import dataclass_json
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
@@ -21,6 +21,7 @@ class PCEConfig:
     cluster: str
     region: str
     onedocker_task_definition: str
+    partner_name: Optional[str] = None
     cloud_provider: CloudProvider = CloudProvider.AWS
 
     def __str__(self) -> str:
