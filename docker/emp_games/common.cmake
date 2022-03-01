@@ -23,5 +23,6 @@ target_link_libraries(
   fbpcf
   ${AWSSDK_LINK_LIBRARIES}
   ${EMP-OT_LIBRARIES}
+  google-cloud-cpp::storage
   Folly::folly
   re2)
