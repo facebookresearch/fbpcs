@@ -53,6 +53,7 @@ jobs:
 
       - name: Create hotfix commit on new branch
         run: |
+            git fetch
             git checkout ${{ github.event.inputs.branch_name }}
             git cherry-pick ${{ github.event.inputs.hotfix_commit }}
             git commit -m "Hotfix creation for ${{ github.event.inputs.branch_name }}"
