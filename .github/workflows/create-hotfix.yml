@@ -47,9 +47,9 @@ jobs:
         uses: peterjgrainger/action-create-branch@v2.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            branch: ${{ github.event.inputs.branch_name }}
-            sha: ${{ env.BASE_COMMIT }}
+        with:
+          branch: ${{ github.event.inputs.branch_name }}
+          sha: ${{ env.BASE_COMMIT }}
 
       - name: Create hotfix commit on new branch
         run: |
