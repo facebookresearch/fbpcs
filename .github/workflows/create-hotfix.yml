@@ -22,7 +22,7 @@ on:
         type: string
 
 env:
-  PROD_REGISTRY_IMAGE_NAME: facebookresearch/fbpcs/coordinator
+  PROD_REGISTRY_IMAGE_NAME: ghcr.io/facebookresearch/fbpcs/coordinator
   PROD_TAG: latest
 
 jobs:
@@ -37,12 +37,13 @@ jobs:
 
       - name: Find the base commit from the prod docker image
         run: |
-            echo "BASE_COMMIT=$( \
-            [[ -n \"${{ github.event.inputs.base_commit }}\" ]] && \
-            echo ${{ github.event.inputs.base_commit}} || \
-            ./hotfix_scripts/find_base_commit.sh ${{ env.PROD_REGISTRY_IMAGE_NAME }} ${{ env.PROD_TAG }} \
-            )" >> $GITHUB_ENV
-            echo "Will create branch ${{ github.event.inputs.branch_name }} at ${{ env.BASE_COMMIT }}"
+            BASE_COMMIT= $( \
+              [[ -n "${{ github.event.inputs.base_commit }}" ]] && \
+              echo ${{ github.event.inputs.base_commit}} || \
+              ./hotfix_scripts/find_base_commit.sh ${{ env.PROD_REGISTRY_IMAGE_NAME }} ${{ env.PROD_TAG }} \
+            )
+            echo "BASE_COMMIT=$BASE_COMMIT" >> $GITHUB_ENV
+            echo "Will create branch ${{ github.event.inputs.branch_name }} at $BASE_COMMIT"
 
       - name: Create new branch for hotfix at base commit
         uses: peterjgrainger/action-create-branch@v2.1.0
