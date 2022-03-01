@@ -21,6 +21,7 @@ image_tag=$2
 # same github commit as our internal commit at build-time, so... this is the
 # best we have. It *really* needs improved once we have that available since
 # this is one hell of an assumption to make.
+docker pull "$image_name:$image_tag"
 res=$(docker image inspect "$image_name:$image_tag" \
     | jq '.[0].RepoTags' \
     | awk '{gsub(/"/, "", $1); print length,$1}' \
