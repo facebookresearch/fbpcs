@@ -39,6 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash }}
+
       - name: Print latest commit id
         run: echo ${{ github.sha }}
 
@@ -97,8 +100,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Print Tracker Hash
-        run: echo ${{ github.event.inputs.tracker_hash }}
 
       - name: Cleanup ECS running tasks and previous running results
         run: |
