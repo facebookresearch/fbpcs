@@ -114,9 +114,10 @@ class PrivateComputationInstance(InstanceBase):
     aggregation_type: Optional[AggregationType] = None
 
     retry_counter: int = 0
-    partial_container_retry_enabled: bool = (
-        False  # TODO T98578624: once the product is stabilized, we can enable this
-    )
+
+    # this field is deprecated
+    partial_container_retry_enabled: bool = False
+
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
 

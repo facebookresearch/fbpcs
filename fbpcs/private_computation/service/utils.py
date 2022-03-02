@@ -12,7 +12,6 @@ import logging
 import warnings
 from typing import Any, Dict, List, Optional
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
@@ -93,73 +92,6 @@ def map_private_computation_role_to_mpc_party(
         return MPCParty.CLIENT
     else:
         raise ValueError(f"No mpc party defined for {private_computation_role}")
-
-
-def ready_for_partial_container_retry(
-    private_computation_instance: PrivateComputationInstance,
-) -> bool:
-    """Determines if private computation instance can attempt a partial container retry
-
-    During the computation stage, if some containers fail, it is possible to only retry the
-    containers that fail instead of starting from the beginning. This function determines if
-    the proper conditions and settings are met.
-
-    Args:
-        pc_instance: the private computation instance to attempt partial container retry with
-
-    Returns:
-        True if the instance can perform a partial container retry, False otherwise.
-    """
-    return (
-        private_computation_instance.partial_container_retry_enabled
-        and private_computation_instance.status
-        is PrivateComputationInstanceStatus.COMPUTATION_FAILED
-    )
-
-
-def gen_mpc_game_args_to_retry(
-    private_computation_instance: PrivateComputationInstance,
-) -> Optional[List[Dict[str, Any]]]:
-    """Gets the game args associated with MPC containers that did not complete.
-
-    During the computation stage, if some containers fail, it is possible to only retry the
-    containers that fail instead of starting from the beginning. This function gets the game args
-    for the containers that did not complete.
-
-    Args:
-        pc_instance: the private computation instance to attempt partial container retry with
-
-    Returns:
-        MPC game args for containers that did not complete
-
-    Exceptions:
-        ValueError: raised when the last instance stored by private_computation_instance is NOT an MPCInstance
-    """
-    # Get the last mpc instance
-    last_mpc_instance = private_computation_instance.instances[-1]
-
-    # Validate the last instance
-    if not isinstance(last_mpc_instance, MPCInstance):
-        raise ValueError(
-            f"The last instance of PrivateComputationInstance {private_computation_instance.instance_id} is NOT an MPCInstance"
-        )
-
-    containers = last_mpc_instance.containers
-    game_args = last_mpc_instance.game_args
-    game_args_to_retry = game_args
-
-    # We have to do the check here because occasionally when containers failed to spawn,
-    #   len(containers) < len(game_args), in which case we should not get game args from
-    #   failed containers; if we do, we will miss game args that belong to those containers
-    #   failed to be spawned
-    if containers and game_args and len(containers) == len(game_args):
-        game_args_to_retry = [
-            game_arg
-            for game_arg, container_instance in zip(game_args, containers)
-            if container_instance.status is not ContainerInstanceStatus.COMPLETED
-        ]
-
-    return game_args_to_retry
 
 
 def get_updated_pc_status_mpc_game(
