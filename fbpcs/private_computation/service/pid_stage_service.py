@@ -123,7 +123,6 @@ class PIDStageService(PrivateComputationStageService):
         # Run pid
         pid_instance = await self._pid_svc.run_stage_or_next(
             instance_id=pid_instance.instance_id,
-            fail_fast=pc_instance.fail_fast,
             server_ips=server_ips,
             pid_union_stage=self._publisher_stage
             if pc_instance.role is PrivateComputationRole.PUBLISHER

@@ -15,9 +15,6 @@ from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 
 
-MAX_RETRY = 0
-
-
 class PIDPrepareStage(PIDStage):
     async def run(
         self,
@@ -55,7 +52,6 @@ class PIDPrepareStage(PIDStage):
             input_paths[0],
             output_paths[0],
             num_shards,
-            stage_input.fail_fast or False,
             wait_for_containers,
             container_timeout,
         )
@@ -68,7 +64,6 @@ class PIDPrepareStage(PIDStage):
         input_path: str,
         output_path: str,
         num_shards: int,
-        fail_fast: bool,
         wait_for_containers: bool = True,
         container_timeout: Optional[int] = None,
     ) -> PIDStageStatus:
@@ -86,7 +81,6 @@ class PIDPrepareStage(PIDStage):
                 onedocker_svc=self.onedocker_svc,
                 binary_version=self.onedocker_binary_config.binary_version,
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
-                max_retry=0 if fail_fast else MAX_RETRY,
                 wait_for_container=wait_for_containers,
                 container_timeout=container_timeout,
             )

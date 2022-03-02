@@ -14,7 +14,6 @@ class PIDStageInput:
     output_paths: List[str]
     num_shards: int
     instance_id: str
-    fail_fast: bool = False
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
     hmac_key: Optional[str] = None

@@ -89,7 +89,6 @@ class TestPIDPrepareStage(unittest.TestCase):
                 input_path="in",
                 output_path="out",
                 num_shards=1,
-                fail_fast=False,
                 wait_for_containers=wait_for_containers,
             )
             self.assertEqual(
@@ -182,17 +181,15 @@ class TestPIDPrepareStage(unittest.TestCase):
             self.assertEqual(mock_instance_repo.read.call_count, 4)
             self.assertEqual(mock_instance_repo.update.call_count, 4)
 
-        fail_fast = True
         with patch.object(PIDPrepareStage, "files_exist") as mock_fe, patch.object(
             PIDPrepareStage, "prepare"
         ) as mock_prepare:
             mock_fe.return_value = True
-            stage_input.fail_fast = fail_fast
             status = await stage.run(
                 stage_input, wait_for_containers=wait_for_containers
             )
             mock_prepare.assert_called_with(
-                instance_id, "in", "out", 2, fail_fast, wait_for_containers, None
+                instance_id, "in", "out", 2, wait_for_containers, None
             )
 
         # Input not ready

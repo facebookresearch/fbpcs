@@ -82,7 +82,6 @@ class PIDService:
     async def run_stage_or_next(
         self,
         instance_id: str,
-        fail_fast: bool = False,
         server_ips: Optional[List[str]] = None,
         pid_union_stage: Optional[UnionPIDStage] = None,
         wait_for_containers: bool = True,
@@ -100,9 +99,7 @@ class PIDService:
         instance = self.instance_repository.read(instance_id)
 
         # Create the dispatcher and build stages.
-        dispatcher = self.__get_dispatcher_and_build_stages(
-            instance, fail_fast, server_ips
-        )
+        dispatcher = self.__get_dispatcher_and_build_stages(instance, server_ips)
 
         if pid_union_stage is None:
             # If pid_union_stage is not given, call run_next by default.
@@ -137,7 +134,6 @@ class PIDService:
     async def run_instance(
         self,
         instance_id: str,
-        fail_fast: bool = False,
         server_ips: Optional[List[str]] = None,
     ) -> PIDInstance:
         self.logger.info(f"Running PID instance: {instance_id}")
@@ -149,9 +145,7 @@ class PIDService:
             raise ValueError("Missing server_ips")
 
         # Call the dispatcher to run all stages
-        dispatcher = self.__get_dispatcher_and_build_stages(
-            instance, fail_fast, server_ips
-        )
+        dispatcher = self.__get_dispatcher_and_build_stages(instance, server_ips)
         await dispatcher.run_all()
 
         # Return refreshed instance
@@ -195,7 +189,6 @@ class PIDService:
     def __get_dispatcher_and_build_stages(
         self,
         instance: PIDInstance,
-        fail_fast: bool = False,
         server_ips: Optional[List[str]] = None,
     ) -> PIDDispatcher:
         dispatcher = PIDDispatcher(
@@ -213,7 +206,6 @@ class PIDService:
             onedocker_svc=self.onedocker_svc,
             storage_svc=self.storage_svc,
             onedocker_binary_config_map=self.onedocker_binary_config_map,
-            fail_fast=fail_fast,
             server_ips=server_ips,
             data_path=instance.data_path,
             spine_path=instance.spine_path,

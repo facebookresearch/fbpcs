@@ -88,7 +88,6 @@ class IdMatchStageService(PrivateComputationStageService):
         # Run pid
         pid_instance = await self._pid_svc.run_instance(
             instance_id=pid_instance_id,
-            fail_fast=pc_instance.fail_fast,
             server_ips=server_ips,
         )
 

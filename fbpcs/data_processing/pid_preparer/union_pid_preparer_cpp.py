@@ -29,8 +29,6 @@ CPP_UNION_PID_PREPARER_PATH = pathlib.Path(
     os.environ.get("CPP_UNION_PID_PREPARER_PATH", "cpp_bin/union_pid_data_preparer")
 )
 
-DEFAULT_MAX_RETRY = 0
-
 # 10800 s = 3 hrs
 DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 10800
 
@@ -97,7 +95,6 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         onedocker_svc: OneDockerService,
         binary_version: str,
         tmp_directory: str = "/tmp/",
-        max_retry: int = DEFAULT_MAX_RETRY,
         container_timeout: Optional[int] = None,
         wait_for_container: bool = True,
     ) -> ContainerInstance:
@@ -108,7 +105,6 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 onedocker_svc,
                 binary_version,
                 tmp_directory,
-                max_retry,
                 container_timeout,
                 wait_for_container,
             )
@@ -122,7 +118,6 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         onedocker_svc: OneDockerService,
         binary_version: str,
         tmp_directory: str = "/tmp/",
-        max_retry: int = DEFAULT_MAX_RETRY,
         container_timeout: Optional[int] = None,
         wait_for_container: bool = True,
     ) -> ContainerInstance:
@@ -143,14 +138,6 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         exe = OneDockerBinaryNames.UNION_PID_PREPARER.value
         container = None
         while status is not ContainerInstanceStatus.COMPLETED:
-            # Retry for up to max_retry times on FAILED status
-            if status is ContainerInstanceStatus.FAILED:
-                current_retry += 1
-                if current_retry > max_retry:
-                    logger.info("Retry attempts exhausted.")
-                    break
-                logger.info(f"Retry attempt ({current_retry}/{max_retry})")
-
             logger.info(
                 f"Starting container: <{onedocker_svc.task_definition}, {exe} {cmd_args}>"
             )
