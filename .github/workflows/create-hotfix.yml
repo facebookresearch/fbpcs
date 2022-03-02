@@ -55,6 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           branch: ${{ github.event.inputs.branch_name }}
+          sha: ${{ env.BASE_COMMIT }}
 
       - uses: actions/checkout@v2
         with:
@@ -62,5 +63,9 @@ jobs:
 
       - name: Create hotfix commit on new branch
         run: |
+            # We *hope* that the hotfix commit is within 100 from the main branch
+            git config --global user.name "GithubActions CreateHotfix"
+            git config --global user.email "pc_release@fb.com"
+            git fetch --depth=100 -a
             git cherry-pick ${{ github.event.inputs.hotfix_commit }}
-            git commit -m "Hotfix creation for ${{ github.event.inputs.branch_name }}"
+            git push
