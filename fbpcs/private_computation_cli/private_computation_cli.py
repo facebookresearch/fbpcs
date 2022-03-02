@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --fail_fast --stage_flow=<stage_flow>] [options]
+    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --stage_flow=<stage_flow>] [options]
     pc-cli validate <instance_id> --config=<config_file> --expected_result_path=<expected_result_path> [--aggregated_result_path=<aggregated_result_path>] [options]
     pc-cli run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
@@ -143,7 +143,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--k_anonymity_threshold": schema.Or(None, schema.Use(int)),
             "--hmac_key": schema.Or(None, str),
             "--tries_per_stage": schema.Or(None, schema.Use(int)),
-            "--fail_fast": bool,
             "--dry_run": bool,
             "--log_path": schema.Or(None, schema.Use(Path)),
             "--stage_flow": schema.Or(
@@ -189,7 +188,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             hmac_key=arguments["--hmac_key"],
             padding_size=arguments["--padding_size"],
             k_anonymity_threshold=arguments["--k_anonymity_threshold"],
-            fail_fast=arguments["--fail_fast"],
             stage_flow_cls=arguments["--stage_flow"],
         )
     elif arguments["run_next"]:

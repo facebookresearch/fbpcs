@@ -703,7 +703,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             game_type=PrivateComputationGameType.LIFT,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
-            fail_fast=True,
             k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD,
             hmac_key=self.test_hmac_key,
         )

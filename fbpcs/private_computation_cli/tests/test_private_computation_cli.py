@@ -52,7 +52,6 @@ class TestPrivateComputationCli(TestCase):
                 "--padding_size=555",
                 "--k_anonymity_threshold=666",
                 "--hmac_key=bigmac",
-                "--fail_fast",
                 "--stage_flow=PrivateComputationLocalTestStageFlow",
             ]
         )

@@ -16,10 +16,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Added optional new argument --log_cost to private decoupled attribution, private decoupled aggregation, private shard aggregator and data processing stages
   - In logging the cost for MPC runs, added few more fields in CostEstimation.cpp
   - Added log_cost argument to MPC stage services
+
 ### Changed
   - Changed LogRetriever to cover the publisher side use case.
 
 ### Removed
+  - Removed the usages of the `fail_fast` and `partial_container_retry_enabled` fields of PrivateComputationInstance
+  in order to cleanup partially implemented "partial container failure recovery" feature
 
 ## [1.3.0] - 2022-02-14
 ### Added

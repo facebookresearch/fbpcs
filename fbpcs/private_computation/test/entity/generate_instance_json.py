@@ -160,7 +160,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         padding_size=25,
         is_test=False,
         k_anonymity_threshold=100,
-        fail_fast=False,
         _stage_flow_cls_name="PrivateComputationStageFlow",
         breakdown_key=BreakdownKey.get_default_key(),
         pce_config=PCEConfig(
