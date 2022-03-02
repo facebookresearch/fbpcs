@@ -32,9 +32,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.private_computation.service.utils import (
     create_and_start_mpc_instance,
-    gen_mpc_game_args_to_retry,
     map_private_computation_role_to_mpc_party,
-    ready_for_partial_container_retry,
     get_updated_pc_status_mpc_game,
 )
 
@@ -48,7 +46,6 @@ class AggregationStageService(PrivateComputationStageService):
         _is_validating: if a test shard is injected to do run time correctness validation
         _log_cost_to_s3: if money cost of the computation will be logged to S3
         _container_timeout: optional duration in seconds before cloud containers timeout
-        _skip_partial_container_retry: don't perform a partial container retry, even if conditions are met.
     """
 
     def __init__(
@@ -58,14 +55,12 @@ class AggregationStageService(PrivateComputationStageService):
         is_validating: bool = False,
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         container_timeout: Optional[int] = None,
-        skip_partial_container_retry: bool = False,
     ) -> None:
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._mpc_service = mpc_service
         self._is_validating = is_validating
         self._log_cost_to_s3 = log_cost_to_s3
         self._container_timeout = container_timeout
-        self._skip_partial_container_retry = skip_partial_container_retry
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of run_async() so that it can be called by Thrift
@@ -141,65 +136,46 @@ class AggregationStageService(PrivateComputationStageService):
         Returns:
             MPC game args to be used by onedocker
         """
-        game_args = []
 
-        # If this is to recover from a previous MPC compute failure
-        if (
-            ready_for_partial_container_retry(private_computation_instance)
-            and not self._skip_partial_container_retry
-        ):
-            game_args_to_retry = gen_mpc_game_args_to_retry(
-                private_computation_instance
-            )
-            if game_args_to_retry:
-                game_args = game_args_to_retry
+        logging.info(
+            f"PATH : {private_computation_instance.decoupled_attribution_stage_output_base_path}"
+        )
+        aggregation_type = checked_cast(
+            AggregationType, private_computation_instance.aggregation_type
+        )
+        # decoupled aggregation game does not need the attribution rule. Passing it here just for cost logging,
+        # so that we get to know how much the game cost for a aggregation format and attribution rule.
+        attribution_rule = checked_cast(
+            AttributionRule, private_computation_instance.attribution_rule
+        )
+        common_game_args = {
+            "input_base_path": private_computation_instance.data_processing_output_path,
+            "output_base_path": private_computation_instance.decoupled_aggregation_stage_output_base_path,
+            "num_files": private_computation_instance.num_files_per_mpc_container,
+            "concurrency": private_computation_instance.concurrency,
+            "aggregators": aggregation_type.value,
+            "attribution_rules": attribution_rule.value,
+            "input_base_path_secret_share": private_computation_instance.decoupled_attribution_stage_output_base_path,
+            "use_xor_encryption": True,
+            "use_postfix": True,
+            "run_name": private_computation_instance.instance_id
+            if self._log_cost_to_s3
+            else "",
+            "max_num_touchpoints": private_computation_instance.padding_size,
+            "max_num_conversions": private_computation_instance.padding_size,
+            "log_cost": self._log_cost_to_s3,
+        }
 
-        # If this is a normal run, dry_run, or unable to get the game args to retry from mpc service
-        if not game_args:
-            num_containers = private_computation_instance.num_mpc_containers
-            # update num_containers if is_vaildating = true
-            if self._is_validating:
-                num_containers += 1
-
-            logging.info(
-                f"PATH : {private_computation_instance.decoupled_attribution_stage_output_base_path}"
-            )
-            aggregation_type = checked_cast(
-                AggregationType, private_computation_instance.aggregation_type
-            )
-            # decoupled aggregation game does not need the attribution rule. Passing it here just for cost logging,
-            # so that we get to know how much the game cost for a aggregation format and attribution rule.
-            attribution_rule = checked_cast(
-                AttributionRule, private_computation_instance.attribution_rule
-            )
-            common_game_args = {
-                "input_base_path": private_computation_instance.data_processing_output_path,
-                "output_base_path": private_computation_instance.decoupled_aggregation_stage_output_base_path,
-                "num_files": private_computation_instance.num_files_per_mpc_container,
-                "concurrency": private_computation_instance.concurrency,
-                "aggregators": aggregation_type.value,
-                "attribution_rules": attribution_rule.value,
-                "input_base_path_secret_share": private_computation_instance.decoupled_attribution_stage_output_base_path,
-                "use_xor_encryption": True,
-                "use_postfix": True,
-                "run_name": private_computation_instance.instance_id
-                if self._log_cost_to_s3
-                else "",
-                "max_num_touchpoints": private_computation_instance.padding_size,
-                "max_num_conversions": private_computation_instance.padding_size,
-                "log_cost": self._log_cost_to_s3,
+        game_args = [
+            {
+                **common_game_args,
+                **{
+                    "file_start_index": i
+                    * private_computation_instance.num_files_per_mpc_container,
+                },
             }
-
-            game_args = [
-                {
-                    **common_game_args,
-                    **{
-                        "file_start_index": i
-                        * private_computation_instance.num_files_per_mpc_container,
-                    },
-                }
-                for i in range(private_computation_instance.num_mpc_containers)
-            ]
+            for i in range(private_computation_instance.num_mpc_containers)
+        ]
 
         return game_args
 
