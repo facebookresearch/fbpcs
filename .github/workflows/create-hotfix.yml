@@ -37,7 +37,7 @@ jobs:
 
       - name: Find the base commit from the prod docker image
         run: |
-            BASE_COMMIT= $( \
+            BASE_COMMIT=$( \
               [[ -n "${{ github.event.inputs.base_commit }}" ]] && \
               echo ${{ github.event.inputs.base_commit}} || \
               ./hotfix_scripts/find_base_commit.sh ${{ env.PROD_REGISTRY_IMAGE_NAME }} ${{ env.PROD_TAG }} \
