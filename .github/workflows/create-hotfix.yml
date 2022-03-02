@@ -9,9 +9,8 @@ on:
         type: string
       base_commit:
         description: 'Commit hash on which to base the changes'
-        required: false
+        required: true
         type: string
-        default: null
       hotfix_commit:
         description: 'Commit to patch into the base revision'
         required: true
@@ -31,41 +30,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Print Tracker Hash
         run: echo ${{ github.event.inputs.tracker_hash }}
 
-      - name: Find the base commit from the prod docker image
-        run: |
-            BASE_COMMIT=$( \
-              [[ -n "${{ github.event.inputs.base_commit }}" ]] && \
-              echo ${{ github.event.inputs.base_commit}} || \
-              ./hotfix_scripts/find_base_commit.sh ${{ env.PROD_REGISTRY_IMAGE_NAME }} ${{ env.PROD_TAG }} \
-            )
-            echo "BASE_COMMIT=$BASE_COMMIT" >> $GITHUB_ENV
-            echo "Will create branch ${{ github.event.inputs.branch_name }} at $BASE_COMMIT"
-
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ env.BASE_COMMIT }}
-
-      - name: Create new branch for hotfix at base commit
-        uses: peterjgrainger/action-create-branch@v2.1.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          branch: ${{ github.event.inputs.branch_name }}
-          sha: ${{ env.BASE_COMMIT }}
-
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.branch_name }}
-
       - name: Create hotfix commit on new branch
         run: |
-            # We *hope* that the hotfix commit is within 100 from the main branch
             git config --global user.name "GithubActions CreateHotfix"
             git config --global user.email "pc_release@fb.com"
-            git fetch --depth=100 -a
+            git checkout ${{ github.event.inputs.base_commit }} -b ${{ github.event.inputs.branch_name }}
             git cherry-pick ${{ github.event.inputs.hotfix_commit }}
-            git push
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.event.inputs.branch_name }}
