@@ -57,7 +57,6 @@ class TestPIDDispatcher(unittest.TestCase):
                 # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
                 #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
                 onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-                fail_fast=True,
             )
 
     @patch(
@@ -90,7 +89,6 @@ class TestPIDDispatcher(unittest.TestCase):
             # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
             #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-            fail_fast=True,
         )
         constructed_map = {}
         for stage in dispatcher.dag.nodes:
@@ -145,7 +143,6 @@ class TestPIDDispatcher(unittest.TestCase):
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             data_path="data.txt",
             spine_path="spine.txt",
-            fail_fast=True,
         )
         constructed_map = {}
         for stage in dispatcher.dag.nodes:
@@ -196,7 +193,6 @@ class TestPIDDispatcher(unittest.TestCase):
             # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
             #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-            fail_fast=True,
         )
         constructed_map = {}
         for stage in dispatcher.dag.nodes:
@@ -276,7 +272,6 @@ class TestPIDDispatcher(unittest.TestCase):
             # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
             #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-            fail_fast=True,
         )
 
         # pre-run DAG should have 3 nodes
@@ -333,7 +328,6 @@ class TestPIDDispatcher(unittest.TestCase):
             # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
             #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-            fail_fast=True,
         )
 
         # pre-run DAG should have 3 nodes
@@ -431,7 +425,6 @@ class TestPIDDispatcher(unittest.TestCase):
             # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
             #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-            fail_fast=True,
         )
 
         # pre-run DAG should have 2 nodes, since PID Shard is already finished
@@ -486,7 +479,6 @@ class TestPIDDispatcher(unittest.TestCase):
             # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
             #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-            fail_fast=False,
         )
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
@@ -571,7 +563,6 @@ class TestPIDDispatcher(unittest.TestCase):
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
             data_path="data.txt",
             spine_path="spine.txt",
-            fail_fast=False,
         )
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
@@ -672,7 +663,6 @@ class TestPIDDispatcher(unittest.TestCase):
             # pyre-fixme[6]: For 8th param expected `DefaultDict[str,
             #  OneDockerBinaryConfig]` but got `DefaultDict[Variable[_KT], str]`.
             onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
-            fail_fast=False,
         )
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
