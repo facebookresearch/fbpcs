@@ -4,19 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       branch_name:
-        description: 'The name of the branch to create where the hotfix will live'
+        description: "The name of the branch to create where the hotfix will live"
         required: true
         type: string
       base_commit:
-        description: 'Commit hash on which to base the changes'
+        description: "Commit hash on which to base the changes"
         required: true
         type: string
       hotfix_commit:
-        description: 'Commit to patch into the base revision'
+        description: "Commit to patch into the base revision"
         required: true
         type: string
       tracker_hash:
-        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        description: "[Internal usage] Used for tracking workflow job status within Meta infra"
         required: false
         type: string
 
@@ -38,13 +38,9 @@ jobs:
 
       - name: Create hotfix commit on new branch
         run: |
-            git config --global user.name "GithubActions CreateHotfix"
-            git config --global user.email "pc_release@fb.com"
-            git checkout ${{ github.event.inputs.base_commit }} -b ${{ github.event.inputs.branch_name }}
-            git cherry-pick ${{ github.event.inputs.hotfix_commit }}
-
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.event.inputs.branch_name }}
+          git config --global user.name "GithubActions CreateHotfix"
+          git config --global user.email "pc_release@fb.com"
+          git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/facebookresearch/fbpcs.git
+          git checkout ${{ github.event.inputs.base_commit }} -b ${{ github.event.inputs.branch_name }}
+          git cherry-pick ${{ github.event.inputs.hotfix_commit }}
+          git push -u origin ${{ github.event.inputs.branch_name }}
