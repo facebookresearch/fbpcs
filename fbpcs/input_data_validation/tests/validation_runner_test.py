@@ -6,6 +6,8 @@
 # pyre-strict
 
 import os
+import random
+import time
 from typing import Iterable
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
@@ -19,10 +21,12 @@ from fbpcs.input_data_validation.enums import ValidationResult
 from fbpcs.input_data_validation.validation_runner import ValidationRunner
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
-TEST_INPUT_FILE_PATH = "s3://test-bucket/data.csv"
+# Name the file randomly in order to avoid failures when the tests run concurrently
+TEST_FILENAME = f"test-input-data-validation-{random.randint(0, 1000000)}.csv"
+TEST_INPUT_FILE_PATH = f"s3://test-bucket/{TEST_FILENAME}"
 TEST_REGION = "us-west-2"
-TEST_TIMESTAMP = 1644538741.077141
-TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/data.csv-{TEST_TIMESTAMP}"
+TEST_TIMESTAMP: float = time.time()
+TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAMP}"
 
 
 class TestValidationRunner(TestCase):
