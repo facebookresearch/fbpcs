@@ -28,10 +28,6 @@ resource "aws_s3_bucket_object" "upload_lambda" {
   etag   = filemd5("data_transformation_lambda.py")
 }
 
-resource "aws_kms_key" "s3_kms_key" {
-  description = "This key is used to encrypt bucket objects"
-}
-
 resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   name        = "cb-data-ingestion-stream${var.tag_postfix}"
   destination = "extended_s3"
@@ -43,7 +39,6 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
     buffer_interval     = 900
     prefix              = "year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
     error_output_prefix = "!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
-    kms_key_arn         = aws_kms_key.s3_kms_key.arn
     processing_configuration {
       enabled = "true"
 
@@ -67,10 +62,8 @@ resource "aws_s3_bucket" "bucket" {
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.s3_kms_key.arn
-        sse_algorithm     = "aws:kms"
+        sse_algorithm = "AES256"
       }
-      bucket_key_enabled = true
     }
   }
 
@@ -155,26 +148,6 @@ resource "aws_iam_role_policy" "attach_s3_access" {
       "Resource": [
         "arn:aws:s3:::${var.data_processing_output_bucket}",
         "arn:aws:s3:::${var.data_processing_output_bucket}/*"
-      ]
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_role_policy" "kms_policy_firehose" {
-  name   = "firehose-kms-policy${var.tag_postfix}"
-  role   = aws_iam_role.firehose_role.id
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "kms:*",
-      "Resource": [
-        "arn:aws:kms:*:${var.aws_account_id}:key/*",
-        "arn:aws:kms:*:${var.aws_account_id}:alias/*"
       ]
     }
   ]

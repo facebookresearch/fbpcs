@@ -53,26 +53,6 @@ resource "aws_iam_role_policy" "s3_policy" {
 EOF
 }
 
-resource "aws_iam_role_policy" "kms_policy_glue" {
-  name   = "kms-policy${var.tag_postfix}"
-  role   = aws_iam_role.glue_service_role.id
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "kms:*",
-      "Resource": [
-        "arn:aws:kms:*:${var.aws_account_id}:key/*",
-        "arn:aws:kms:*:${var.aws_account_id}:alias/*"
-      ]
-    }
-  ]
-}
-EOF
-}
-
 resource "aws_glue_crawler" "mpc_events_crawler" {
   database_name = aws_glue_catalog_database.mpc_database.name
   name          = "mpc-events-crawler${var.tag_postfix}"
