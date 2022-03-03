@@ -10,7 +10,6 @@ from typing import List, Optional, Tuple
 from unittest.mock import MagicMock, call, patch
 from unittest.mock import Mock
 
-from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -47,7 +46,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.private_computation.service.utils import (
     create_and_start_mpc_instance,
-    gen_mpc_game_args_to_retry,
     map_private_computation_role_to_mpc_party,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
 )
@@ -685,46 +683,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             private_computation_instance.status,
         )
-
-    def test_gen_game_args_to_retry(self) -> None:
-        test_input = "test_input_retry"
-        mpc_instance = PCSMPCInstance.create_instance(
-            instance_id="mpc_instance",
-            game_name=GameNames.LIFT.value,
-            mpc_party=MPCParty.SERVER,
-            num_workers=2,
-            status=MPCInstanceStatus.FAILED,
-            containers=[
-                ContainerInstance(
-                    instance_id="container_instance_0",
-                    status=ContainerInstanceStatus.FAILED,
-                ),
-                ContainerInstance(
-                    instance_id="container_instance_1",
-                    status=ContainerInstanceStatus.COMPLETED,
-                ),
-            ],
-            game_args=[
-                {
-                    "input_filenames": test_input,
-                },
-                {
-                    "input_filenames": "input_filenames",
-                },
-            ],
-        )
-        private_computation_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-            instances=[mpc_instance],
-        )
-
-        game_args = gen_mpc_game_args_to_retry(private_computation_instance)
-
-        # pyre-fixme[6]: For 1st param expected `Sized` but got
-        #  `Optional[List[Dict[str, typing.Any]]]`.
-        self.assertEqual(1, len(game_args))  # only 1 failed container
-        # pyre-fixme[16]: `Optional` has no attribute `__getitem__`.
-        self.assertEqual(test_input, game_args[0]["input_filenames"])
 
     def create_sample_instance(
         self,
