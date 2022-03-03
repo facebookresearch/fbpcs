@@ -40,7 +40,7 @@ jobs:
         run: |
           git config --global user.name "GithubActions CreateHotfix"
           git config --global user.email "pc_release@fb.com"
-          git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/facebookresearch/fbpcs.git
+          git remote set-url origin https://${{ secrets.OMNI_PERSONAL_ACCESS_TOKEN }}@github.com/facebookresearch/fbpcs.git
           git checkout ${{ github.event.inputs.base_commit }} -b ${{ github.event.inputs.branch_name }}
           git cherry-pick ${{ github.event.inputs.hotfix_commit }}
           echo "------------------------- Created patch -------------------------"
