@@ -43,4 +43,7 @@ jobs:
           git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/facebookresearch/fbpcs.git
           git checkout ${{ github.event.inputs.base_commit }} -b ${{ github.event.inputs.branch_name }}
           git cherry-pick ${{ github.event.inputs.hotfix_commit }}
+          echo "------------------------- Created patch -------------------------"
+          git diff HEAD^
+          echo "--------------------------- End patch ---------------------------"
           git push -u origin ${{ github.event.inputs.branch_name }}
