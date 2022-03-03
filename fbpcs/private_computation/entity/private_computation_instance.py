@@ -128,13 +128,8 @@ class PrivateComputationInstance(InstanceBase):
 
     concurrency: int = 1  # used only by MPC compute metrics stage. TODO T102588568: rename to compute_metrics_concurrency
     k_anonymity_threshold: int = 0
-    retry_counter: int = 0
 
-    # This boolean is used to determine whether auto retry will be performed at any data processing step
-    #   of the computation. For now, when fail_fast = False, the pid preparer step
-    #   will retry up to MAX_RETRY times, which is set to be 0, because almost all problems
-    #   we've seen so far won't get resolved by just retrying. In the future, when the product is more stable,
-    #   we will increase MAX_RETRY and allow other steps to auto retry as well.
+    # this field is deprecated
     fail_fast: bool = False
 
     breakdown_key: Optional[BreakdownKey] = None

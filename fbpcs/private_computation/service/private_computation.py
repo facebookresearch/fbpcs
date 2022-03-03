@@ -125,7 +125,6 @@ class PrivateComputationService:
         hmac_key: Optional[str] = None,
         padding_size: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
-        fail_fast: bool = False,
         stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
         result_visibility: ResultVisibility = ResultVisibility.PUBLIC,
     ) -> PrivateComputationInstance:
@@ -163,7 +162,6 @@ class PrivateComputationService:
             k_anonymity_threshold=unwrap_or_default(
                 optional=k_anonymity_threshold, default=DEFAULT_K_ANONYMITY_THRESHOLD
             ),
-            fail_fast=fail_fast,
             _stage_flow_cls_name=unwrap_or_default(
                 optional=stage_flow_cls,
                 default=PrivateComputationDecoupledStageFlow

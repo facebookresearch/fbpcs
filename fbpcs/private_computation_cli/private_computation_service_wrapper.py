@@ -60,7 +60,6 @@ def create_instance(
     num_files_per_mpc_container: Optional[int] = None,
     padding_size: Optional[int] = None,
     k_anonymity_threshold: Optional[int] = None,
-    fail_fast: bool = False,
     stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
@@ -89,7 +88,6 @@ def create_instance(
         hmac_key=hmac_key,
         padding_size=padding_size,
         k_anonymity_threshold=k_anonymity_threshold,
-        fail_fast=fail_fast,
         stage_flow_cls=stage_flow_cls,
     )
 
