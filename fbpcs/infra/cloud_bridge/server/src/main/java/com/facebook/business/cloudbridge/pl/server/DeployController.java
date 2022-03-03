@@ -119,6 +119,11 @@ public class DeployController {
     return new APIReturn(APIReturn.Status.STATUS_ERROR, output, rootNode);
   }
 
+  @GetMapping(path = "/v2/deployment/healthCheck", produces = "application/json")
+  public void checkHealth() {
+    logger.info("checkHealth: Received status request");
+  }
+
   @GetMapping(path = "/v1/deployment/streamLogs", produces = "application/json")
   public List<String> deploymentStreamLogs() {
     logger.info("Received getStream log request");
