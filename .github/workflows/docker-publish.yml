@@ -1,8 +1,6 @@
 name: Publish OneDocker image
 
 on:
-  schedule:
-    - cron: "0 17 * * 1-5"
   workflow_dispatch:
     inputs:
       name:
@@ -30,30 +28,8 @@ env:
   TIME_RANGE: 24 hours
 
 jobs:
-  ### Check if there are new commits for past 24 hours, return Yes if there are, otherwise No
-  new_commits_check:
-    runs-on: self-hosted
-    name: Check New Commmits
-    outputs:
-      new_commits: ${{ steps.new_commits.outputs.new_commits }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Print Tracker Hash
-        run: echo ${{ github.event.inputs.tracker_hash }}
-
-      - name: Print latest commit id
-        run: echo ${{ github.sha }}
-
-      - name: Check new commits (only for scheduled events)
-        if: ${{ github.event_name == 'schedule' }}
-        id: new_commits
-        run: test -z $(git rev-list --after="${{ env.TIME_RANGE }}" ${{ github.sha }}) && echo "::set-output name=new_commits::no" || echo "::set-output name=new_commits::yes"
-
   ### Build and publish rc/onedocker image
   build_image:
-    needs: new_commits_check
-    if: needs.new_commits_check.outputs.new_commits == 'yes' || github.event_name == 'workflow_dispatch'
     name: Build Image
     runs-on: self-hosted
     permissions:
@@ -62,6 +38,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash }}
 
       - name: Remove unused images
         run: |
@@ -90,45 +68,16 @@ jobs:
         run: |
           docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
 
-  prepare_tests:
-    needs: build_image
-    name: Prepare
-    runs-on: self-hosted
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v2
-
       - name: Cleanup ECS running tasks and previous running results
         run: |
           ./cleanup.sh
         working-directory: ./fbpcs/tests/github/
 
-  ### Private Lift E2E tests
-  pl_test:
-    name: Private Lift E2E Tests
-    needs: prepare_tests
-    runs-on: self-hosted
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Pull coordinator image
         run: |
           docker pull ${{ env.COORDINATOR_IMAGE }}:${{ github.event.inputs.new_tag }}
 
+      ### Private Lift E2E tests
       - name: Start container
         run: |
           ./start_container.sh ${{ env.PL_CONTAINER_NAME }} ${{ env.COORDINATOR_IMAGE }}:${{ github.event.inputs.new_tag }}
@@ -237,22 +186,12 @@ jobs:
           docker stop ${{ env.PL_CONTAINER_NAME }}
           docker rm ${{ env.PL_CONTAINER_NAME }}
 
-  ### Private Attribution E2E tests
-  pa_test:
-    name: Private Attribution E2E Tests
-    needs: prepare_tests
-    runs-on: self-hosted
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Pull coordinator image
+      - name: Cleanup ECS running tasks and previous running results
         run: |
-          docker pull ${{ env.COORDINATOR_IMAGE }}:${{ github.event.inputs.new_tag }}
+          ./cleanup.sh
+        working-directory: ./fbpcs/tests/github/
 
+      # attribution e2e test
       - name: Start container
         run: |
           ./start_container.sh ${{ env.PA_CONTAINER_NAME }} ${{ env.COORDINATOR_IMAGE }}:${{ github.event.inputs.new_tag }}
@@ -350,24 +289,6 @@ jobs:
           docker stop ${{ env.PA_CONTAINER_NAME }}
           docker rm ${{ env.PA_CONTAINER_NAME }}
 
-  ### Push rc/onedocker to onedocker
-  prod_push:
-    needs: [pl_test, pa_test]
-    runs-on: self-hosted
-    name: Push to Prod
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull image from rc registry
         run: |
