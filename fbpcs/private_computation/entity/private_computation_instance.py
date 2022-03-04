@@ -112,6 +112,7 @@ class PrivateComputationInstance(InstanceBase):
 
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = None
+    tier: Optional[str] = None
 
     retry_counter: int = 0
 

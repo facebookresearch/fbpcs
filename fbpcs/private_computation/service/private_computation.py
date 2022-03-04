@@ -127,6 +127,7 @@ class PrivateComputationService:
         k_anonymity_threshold: Optional[int] = None,
         stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
         result_visibility: ResultVisibility = ResultVisibility.PUBLIC,
+        tier: Optional[str] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -169,6 +170,7 @@ class PrivateComputationService:
                 else PrivateComputationStageFlow,
             ).get_cls_name(),
             result_visibility=result_visibility,
+            tier=tier,
         )
 
         self.instance_repository.create(instance)
