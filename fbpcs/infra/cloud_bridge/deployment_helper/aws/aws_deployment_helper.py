@@ -287,7 +287,6 @@ class AwsDeploymentHelper:
             "CLUSTER_NAME": policy_params.cluster_name,
             "DATA_BUCKET_NAME": policy_params.data_bucket_name,
             "CONFIG_BUCKET_NAME": policy_params.config_bucket_name,
-            "DATA_INGESTION_KMS_KEY": policy_params.data_ingestion_kms_key,
             "ECS_TASK_EXECUTION_ROLE_NAME": policy_params.ecs_task_execution_role_name,
             "FIREHOSE_STREAM_NAME": policy_params.firehose_stream_name,
             "DATEBASE_NAME": policy_params.database_name,
