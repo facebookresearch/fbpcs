@@ -18,6 +18,8 @@ class OneDockerBinaryNames(Enum):
 
     DECOUPLED_ATTRIBUTION = "private_attribution/decoupled_attribution"
     DECOUPLED_AGGREGATION = "private_attribution/decoupled_aggregation"
+    PCF2_ATTRIBUTION = "private_attribution/pcf2_attribution"
+    PCF2_AGGREGATION = "private_attribution/pcf2_aggregation"
     SHARD_AGGREGATOR = "private_attribution/shard-aggregator"
 
     PID_CLIENT = "pid/private-id-client"

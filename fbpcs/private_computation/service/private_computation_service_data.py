@@ -92,6 +92,18 @@ class PrivateComputationServiceData:
         service=None,
     )
 
+    PCF2_ATTRIBUTION_STAGE_DATA: StageData = StageData(
+        binary_name=OneDockerBinaryNames.PCF2_ATTRIBUTION.value,
+        game_name=BINARY_NAME_TO_GAME_NAME[OneDockerBinaryNames.PCF2_ATTRIBUTION.value],
+        service=None,
+    )
+
+    PCF2_AGGREGATION_STAGE_DATA: StageData = StageData(
+        binary_name=OneDockerBinaryNames.PCF2_AGGREGATION.value,
+        game_name=BINARY_NAME_TO_GAME_NAME[OneDockerBinaryNames.PCF2_AGGREGATION.value],
+        service=None,
+    )
+
     @classmethod
     def get(
         cls, game_type: PrivateComputationGameType
