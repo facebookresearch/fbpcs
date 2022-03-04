@@ -70,6 +70,9 @@ def create_instance(
         config.get("pid_post_processing_handlers", {}),
     )
 
+    binary_config = pc_service.onedocker_binary_config_map["default"]
+    tier = binary_config.binary_version if binary_config else None
+
     instance = pc_service.create_instance(
         instance_id=instance_id,
         role=role,
@@ -81,6 +84,7 @@ def create_instance(
         concurrency=concurrency,
         attribution_rule=attribution_rule,
         aggregation_type=aggregation_type,
+        tier=tier,
         num_files_per_mpc_container=num_files_per_mpc_container,
         is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
             "is_validating"
