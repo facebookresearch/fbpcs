@@ -1,7 +1,3 @@
-resource "aws_kms_key" "s3_kms_key" {
-  description = "This key is used to encrypt bucket objects"
-}
-
 data "archive_file" "zip_lambda" {
   type        = "zip"
   source_file = "lambda_trigger.py"
@@ -76,24 +72,4 @@ resource "aws_iam_role_policy_attachment" "lambda_glue_service_role" {
 resource "aws_iam_role_policy_attachment" "lambda_cloudwatch" {
   role       = aws_iam_role.lambda_iam.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy" "kms_policy_lambda" {
-  name   = "lambda-kms-policy${var.tag_postfix}"
-  role   = aws_iam_role.lambda_iam.id
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "kms:*",
-      "Resource": [
-        "arn:aws:kms:*:${var.aws_account_id}:key/*",
-        "arn:aws:kms:*:${var.aws_account_id}:alias/*"
-      ]
-    }
-  ]
-}
-EOF
 }
