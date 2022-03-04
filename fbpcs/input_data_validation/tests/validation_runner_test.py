@@ -99,7 +99,7 @@ class TestValidationRunner(TestCase):
         self.write_lines_to_file(lines)
         expected_report = {
             "status": ValidationResult.SUCCESS.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} was validated successfully",
+            "message": f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
             "rows_processed_count": "3",
         }
 
@@ -175,6 +175,47 @@ class TestValidationRunner(TestCase):
             "status": ValidationResult.FAILED.value,
             "message": f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
             "rows_processed_count": "0",
+        }
+
+        validation_runner = ValidationRunner(
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+        )
+        report = validation_runner.run()
+
+        self.assertDictEqual(report, expected_report)
+
+    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
+    @patch("fbpcs.input_data_validation.validation_runner.time")
+    def test_run_validations_reports_when_row_values_are_empty(
+        self, time_mock: Mock, _storage_service_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        cloud_provider = CloudProvider.AWS
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b",100,1645157987\n",
+            b"abcd/1234+WXYZ=,,1645157987\n",
+            b"abcd/1234+WXYZ=,100,\n",
+            b"abcd/1234+WXYZ=,,\n",
+            b"abcd/1234+WXYZ=,100,\n",
+            b"abcd/1234+WXYZ=,100,\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = {
+            "status": ValidationResult.SUCCESS.value,
+            "message": f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            "rows_processed_count": "6",
+            "validation_errors": {
+                "id_": {
+                    "empty": 1,
+                },
+                "value": {
+                    "empty": 2,
+                },
+                "event_timestamp": {
+                    "empty": 4,
+                },
+            },
         }
 
         validation_runner = ValidationRunner(
