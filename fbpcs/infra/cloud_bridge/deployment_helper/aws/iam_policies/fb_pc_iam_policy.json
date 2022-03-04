@@ -44,15 +44,6 @@
         },
         {
             "Effect": "Allow",
-            "Action": [
-                "kms:*"
-            ],
-            "Resource": [
-                "arn:aws:kms:${REGION}:${ACCOUNT_ID}:key/${DATA_INGESTION_KMS_KEY}"
-            ]
-        },
-        {
-            "Effect": "Allow",
             "Action": "ecs:*",
             "Resource": [
                 "arn:aws:ecs:*:${ACCOUNT_ID}:task/*",

@@ -120,13 +120,6 @@ def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
     iam_policy_command_group.add_argument(
-        "--data_ingestion_kms_key",
-        type=str,
-        required=False,
-        help="Data ingestion bucket KMS key",
-    )
-
-    iam_policy_command_group.add_argument(
         "--cluster_name", type=str, required=False, help="ECS cluster name"
     )
 
