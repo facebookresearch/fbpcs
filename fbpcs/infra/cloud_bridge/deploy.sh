@@ -311,7 +311,6 @@ deploy_aws_resources() {
     app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
     app_data_input_bucket_arn=$(terraform output data_processing_output_bucket_arn | tr -d '"')
     firehose_stream_name=$(terraform output firehose_stream_name | tr -d '"')
-    data_ingestion_kms_key=$(terraform output data_ingestion_kms_key | tr -d '"')
 
     if "$build_semi_automated_data_pipeline"
     then
@@ -397,7 +396,6 @@ deploy_aws_resources() {
         --data_bucket_name "$s3_bucket_data_pipeline" \
         --config_bucket_name "$s3_bucket_for_storage" \
         --database_name "$database_name" \
-        --data_ingestion_kms_key "$data_ingestion_kms_key" \
         --cluster_name "$aws_ecs_cluster_name" \
         --ecs_task_execution_role_name "$ecs_task_execution_role_name"
     echo "######################## Finished deploy resources policy ########################"
