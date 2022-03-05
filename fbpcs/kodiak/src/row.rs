@@ -10,7 +10,7 @@ pub struct Row {
     // This allows us to track which columns have already been calculated
     // This struct would likely handle building the DAG to know which columns can
     // be computed next.
-    columns: HashMap<String, Box<dyn MPCColumn>>,
+    columns: HashMap<String, Box<dyn MPCMetric>>,
 }
 
 impl Row {
@@ -20,7 +20,7 @@ impl Row {
         }
     }
 
-    fn get_data<T: MPCColumn>(&self) -> Option<T::DType> {
+    fn get_data<T: MPCMetric>(&self) -> Option<T::DType> {
         self.columns
             .get(T.name())?
             .as_any()

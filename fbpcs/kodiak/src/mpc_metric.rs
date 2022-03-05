@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-pub trait MPCColumn {
+pub trait MPCMetric {
     /// The type of data stored in this column
     type DType;
 
@@ -13,7 +13,7 @@ pub trait MPCColumn {
     fn name() -> String;
 
     /// List of columns required by this column
-    fn requires() -> Vec<Box<dyn MPCColumn>>;
+    fn requires() -> Vec<Box<dyn MPCMetric>>;
 
     /// Compute this value - assume requirements are satisfied
     fn compute(&mut self, r: Row) -> Result<()>;

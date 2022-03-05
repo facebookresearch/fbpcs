@@ -6,16 +6,16 @@
  */
 
 pub struct MPCMetrics {
-    input_columns: Vec<Box<dyn MPCColumn>>,
-    metrics: Vec<dyn MPCColumn>,
-    grouping_sets: Vec<Vec<dyn MPCColumn>>,
+    input_columns: Vec<Box<dyn MPCMetric>>,
+    metrics: Vec<dyn MPCMetric>,
+    grouping_sets: Vec<Vec<dyn MPCMetric>>,
 }
 
 impl MPCMetrics {
     pub fn new(
-        input_columns: Vec<Box<dyn MPCColumn>>,
-        metrics: Vec<dyn MPCColumn>,
-        grouping_sets: Vec<Vec<dyn MPCColumn>>,
+        input_columns: Vec<Box<dyn MPCMetric>>,
+        metrics: Vec<dyn MPCMetric>,
+        grouping_sets: Vec<Vec<dyn MPCMetric>>,
     ) -> Self {
         Self {
             input_columns,
