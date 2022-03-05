@@ -6,9 +6,9 @@
  */
 
 pub struct MPCMetricsBuilder {
-    input_columns: Vec<Box<dyn MPCColumn>>,
-    metrics: Vec<dyn MPCColumn>,
-    grouping_sets: Vec<Vec<dyn MPCColumn>>,
+    input_columns: Vec<Box<dyn MPCMetric>>,
+    metrics: Vec<dyn MPCMetric>,
+    grouping_sets: Vec<Vec<dyn MPCMetric>>,
 }
 
 impl MPCMetricsBuilder {
@@ -20,17 +20,17 @@ impl MPCMetricsBuilder {
         }
     }
 
-    pub fn with_input_column(&mut self, role: MPCRole, col: Box<dyn MPCColumn>) -> Self {
+    pub fn with_input_column(&mut self, role: MPCRole, col: Box<dyn MPCMetric>) -> Self {
         input_columns.push(col);
         self
     }
 
-    pub fn with_metric(&mut self, metric: Box<dyn MPCColumn>) -> Self {
+    pub fn with_metric(&mut self, metric: Box<dyn MPCMetric>) -> Self {
         metrics.push(metric);
         self
     }
 
-    pub fn with_grouping_set(&mut self, grouping_set: Vec<Box<dyn MPCColumn>>) -> Self {
+    pub fn with_grouping_set(&mut self, grouping_set: Vec<Box<dyn MPCMetric>>) -> Self {
         grouping_sets.push(grouping_set);
         self
     }
