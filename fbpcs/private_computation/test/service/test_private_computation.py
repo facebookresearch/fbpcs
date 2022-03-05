@@ -7,8 +7,7 @@
 import unittest
 from collections import defaultdict
 from typing import List, Optional, Tuple
-from unittest.mock import MagicMock, call, patch
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
@@ -58,10 +57,6 @@ from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_f
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
-
-# TODO T94666166: libfb won't work in OSS
-from libfb.py.asyncio.mock import AsyncMock
-from libfb.py.testutil import data_provider
 
 
 def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
@@ -350,156 +345,188 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(None, instance.get_next_runnable_stage())
 
-    @data_provider(_get_valid_stages_data)
     def test_run_stage_correct_stage_order(
         self,
-        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that run_stage runs stage_svc when the stage_svc is the next stage in the sequence
         """
-        ################# PREVIOUS STAGE COMPLETED OR RETRY #######################
-        stage_svc = self._get_dummy_stage_svc()
-        for status in (
-            stage.previous_stage.completed_status,
-            stage.failed_status,
-        ):
-            pl_instance = self.create_sample_instance(status=status)
+
+        def _run_sub_test(stage: PrivateComputationBaseStageFlow):
+            ################# PREVIOUS STAGE COMPLETED OR RETRY #######################
+            stage_svc = self._get_dummy_stage_svc()
+            for status in (
+                stage.previous_stage.completed_status,
+                stage.failed_status,
+            ):
+                pl_instance = self.create_sample_instance(status=status)
+                self.private_computation_service.instance_repository.read = MagicMock(
+                    return_value=pl_instance
+                )
+
+                pl_instance = self.private_computation_service.run_stage(
+                    pl_instance.instance_id, stage, stage_svc
+                )
+                self.assertEqual(pl_instance.status, stage.started_status)
+
+        for data_test in _get_valid_stages_data():
+            stage = data_test[0]
+            with self.subTest(stage=stage):
+                _run_sub_test(stage)
+
+    def test_run_stage_status_already_started(
+        self,
+    ) -> None:
+        """
+        tests that run_stage does not run stage_svc when the instance status is already started
+        """
+
+        def _run_sub_test(stage: PrivateComputationBaseStageFlow):
+            ################# CURRENT STAGE STATUS NOT VALID #######################
+            stage_svc = self._get_dummy_stage_svc()
+            pl_instance = self.create_sample_instance(status=stage.started_status)
+
+            self.private_computation_service.instance_repository.read = MagicMock(
+                return_value=pl_instance
+            )
+
+            with self.assertRaises(ValueError):
+                pl_instance = self.private_computation_service.run_stage(
+                    pl_instance.instance_id, stage, stage_svc
+                )
+
+        for data_test in _get_valid_stages_data():
+            stage = data_test[0]
+            with self.subTest(stage=stage):
+                _run_sub_test(stage)
+
+    def test_run_stage_out_of_order_with_dry_run(
+        self,
+    ) -> None:
+        """
+        tests that run_stage runs stage_svc out of order when dry run is passed
+        """
+
+        def _run_sub_test(stage: PrivateComputationBaseStageFlow):
+            ################ STAGE OUT OF ORDER WITH DRY RUN #####################
+            stage_svc = self._get_dummy_stage_svc()
+            pl_instance = self.create_sample_instance(
+                status=PrivateComputationInstanceStatus.UNKNOWN
+            )
+
             self.private_computation_service.instance_repository.read = MagicMock(
                 return_value=pl_instance
             )
 
             pl_instance = self.private_computation_service.run_stage(
-                pl_instance.instance_id, stage, stage_svc
+                pl_instance.instance_id, stage, stage_svc, dry_run=True
             )
             self.assertEqual(pl_instance.status, stage.started_status)
 
-    @data_provider(_get_valid_stages_data)
-    def test_run_stage_status_already_started(
-        self,
-        stage: PrivateComputationBaseStageFlow,
-    ) -> None:
-        """
-        tests that run_stage does not run stage_svc when the instance status is already started
-        """
-        ################# CURRENT STAGE STATUS NOT VALID #######################
-        stage_svc = self._get_dummy_stage_svc()
-        pl_instance = self.create_sample_instance(status=stage.started_status)
+        for data_test in _get_valid_stages_data():
+            stage = data_test[0]
+            with self.subTest(stage=stage):
+                _run_sub_test(stage)
 
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=pl_instance
-        )
-
-        with self.assertRaises(ValueError):
-            pl_instance = self.private_computation_service.run_stage(
-                pl_instance.instance_id, stage, stage_svc
-            )
-
-    @data_provider(_get_valid_stages_data)
-    def test_run_stage_out_of_order_with_dry_run(
-        self,
-        stage: PrivateComputationBaseStageFlow,
-    ) -> None:
-        """
-        tests that run_stage runs stage_svc out of order when dry run is passed
-        """
-        ################ STAGE OUT OF ORDER WITH DRY RUN #####################
-        stage_svc = self._get_dummy_stage_svc()
-        pl_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.UNKNOWN
-        )
-
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=pl_instance
-        )
-
-        pl_instance = self.private_computation_service.run_stage(
-            pl_instance.instance_id, stage, stage_svc, dry_run=True
-        )
-        self.assertEqual(pl_instance.status, stage.started_status)
-
-    @data_provider(_get_valid_stages_data)
     def test_run_stage_out_of_order_without_dry_run(
         self,
-        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that run_stage does not run stage_svc out of order when dry run is not passed
         """
-        ####################### STAGE OUT OF ORDER NO DRY RUN ############################
-        stage_svc = self._get_dummy_stage_svc()
-        pl_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.UNKNOWN
-        )
 
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=pl_instance
-        )
-
-        with self.assertRaises(ValueError):
-            pl_instance = self.private_computation_service.run_stage(
-                pl_instance.instance_id, stage, stage_svc, dry_run=False
+        def _run_sub_test(stage: PrivateComputationBaseStageFlow):
+            ####################### STAGE OUT OF ORDER NO DRY RUN ############################
+            stage_svc = self._get_dummy_stage_svc()
+            pl_instance = self.create_sample_instance(
+                status=PrivateComputationInstanceStatus.UNKNOWN
             )
 
-    @data_provider(_get_valid_stages_data)
+            self.private_computation_service.instance_repository.read = MagicMock(
+                return_value=pl_instance
+            )
+
+            with self.assertRaises(ValueError):
+                pl_instance = self.private_computation_service.run_stage(
+                    pl_instance.instance_id, stage, stage_svc, dry_run=False
+                )
+
+        for data_test in _get_valid_stages_data():
+            stage = data_test[0]
+            with self.subTest(stage=stage):
+                _run_sub_test(stage)
+
     def test_run_stage_partner_no_server_ips(
         self,
-        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         if it's a joint stage (partner requires server ips) but partner doesn't provide server ips, value error is thrown.
         Otherwise, things run as they should.
         """
-        ####################### PARTNER NO SERVER IPS ############################
-        stage_svc = self._get_dummy_stage_svc()
-        pl_instance = self.create_sample_instance(
-            status=stage.previous_stage.completed_status,
-            role=PrivateComputationRole.PARTNER,
-        )
 
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=pl_instance
-        )
+        def _run_sub_test(stage: PrivateComputationBaseStageFlow):
+            ####################### PARTNER NO SERVER IPS ############################
+            stage_svc = self._get_dummy_stage_svc()
+            pl_instance = self.create_sample_instance(
+                status=stage.previous_stage.completed_status,
+                role=PrivateComputationRole.PARTNER,
+            )
 
-        if stage.is_joint_stage:
-            with self.assertRaises(ValueError):
+            self.private_computation_service.instance_repository.read = MagicMock(
+                return_value=pl_instance
+            )
+
+            if stage.is_joint_stage:
+                with self.assertRaises(ValueError):
+                    pl_instance = self.private_computation_service.run_stage(
+                        pl_instance.instance_id, stage, stage_svc
+                    )
+            else:
                 pl_instance = self.private_computation_service.run_stage(
                     pl_instance.instance_id, stage, stage_svc
                 )
-        else:
-            pl_instance = self.private_computation_service.run_stage(
-                pl_instance.instance_id, stage, stage_svc
-            )
-            self.assertEqual(pl_instance.status, stage.started_status)
+                self.assertEqual(pl_instance.status, stage.started_status)
 
-    @data_provider(_get_valid_stages_data)
+        for data_test in _get_valid_stages_data():
+            stage = data_test[0]
+            with self.subTest(stage=stage):
+                _run_sub_test(stage)
+
     def test_run_stage_fails(
         self,
-        stage: PrivateComputationBaseStageFlow,
     ) -> None:
         """
         tests that statuses are set properly when a run fails
         """
-        ######################### STAGE FAILS ####################################
-        stage_svc = self._get_dummy_stage_svc()
-        pl_instance = self.create_sample_instance(
-            status=stage.previous_stage.completed_status
-        )
 
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=pl_instance
-        )
-
-        # create a custom exception class to make sure we have a unique exception for the test
-        stage_failure_exception = type("TestStageFailureException", (Exception,), {})
-        stage_svc.run_async = AsyncMock(side_effect=stage_failure_exception())
-
-        with self.assertRaises(stage_failure_exception):
-            pl_instance = self.private_computation_service.run_stage(
-                pl_instance.instance_id, stage, stage_svc
+        def _run_sub_test(stage: PrivateComputationBaseStageFlow):
+            ######################### STAGE FAILS ####################################
+            stage_svc = self._get_dummy_stage_svc()
+            pl_instance = self.create_sample_instance(
+                status=stage.previous_stage.completed_status
             )
 
-        self.assertEqual(pl_instance.status, stage.failed_status)
+            self.private_computation_service.instance_repository.read = MagicMock(
+                return_value=pl_instance
+            )
+
+            # create a custom exception class to make sure we have a unique exception for the test
+            stage_failure_exception = type(
+                "TestStageFailureException", (Exception,), {}
+            )
+            stage_svc.run_async = AsyncMock(side_effect=stage_failure_exception())
+
+            with self.assertRaises(stage_failure_exception):
+                pl_instance = self.private_computation_service.run_stage(
+                    pl_instance.instance_id, stage, stage_svc
+                )
+
+            self.assertEqual(pl_instance.status, stage.failed_status)
+
+        for data_test in _get_valid_stages_data():
+            stage = data_test[0]
+            with self.subTest(stage=stage):
+                _run_sub_test(stage)
 
     @patch("fbpcp.service.mpc.MPCService")
     async def test_create_and_start_mpc_instance(self, mock_mpc_svc) -> None:
