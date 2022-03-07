@@ -7,15 +7,12 @@
 
 pub struct MPCGame {
     mpc_config: MPCConfig,
-    metrics: MPCMetrics,
+    view: MPCView,
 }
 
 impl MPCGame {
-    pub fn new(mpc_config: MPCConfig, metrics: MPCMetrics) -> Self {
-        Self {
-            mpc_config,
-            metrics,
-        }
+    pub fn new(mpc_config: MPCConfig, view: MPCView) -> Self {
+        Self { mpc_config, view }
     }
 
     pub fn play(&mut self) {
