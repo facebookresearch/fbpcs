@@ -20,13 +20,15 @@ Error handling:
 
 import csv
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.input_data_validation.constants import INPUT_DATA_TMP_FILE_PATH
 from fbpcs.input_data_validation.enums import ValidationResult
 from fbpcs.input_data_validation.header_validator import HeaderValidator
 from fbpcs.input_data_validation.line_ending_validator import LineEndingValidator
+from fbpcs.input_data_validation.row_validator import RowValidator
+from fbpcs.input_data_validation.validation_issues import ValidationIssues
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 
@@ -54,23 +56,31 @@ class ValidationRunner:
 
     def run(self) -> Dict[str, str]:
         rows_processed_count = 0
+        validation_issues = ValidationIssues()
         try:
             self._storage_service.copy(self._input_file_path, self._local_file_path)
+            header_row = ""
             with open(self._local_file_path) as local_file:
                 csv_reader = csv.DictReader(local_file)
                 field_names = csv_reader.fieldnames or []
+                header_row = ",".join(field_names)
 
                 header_validator = HeaderValidator()
                 header_validator.validate(field_names)
 
             with open(self._local_file_path, "rb") as local_file:
                 line_ending_validator = LineEndingValidator()
+                row_validator = RowValidator(validation_issues)
                 header_line = local_file.readline().decode("utf-8")
                 line_ending_validator.validate(header_line)
 
                 while raw_line := local_file.readline():
                     line = raw_line.decode("utf-8")
                     line_ending_validator.validate(line)
+                    csv_row_reader = csv.DictReader([header_row, line])
+                    for row in csv_row_reader:
+                        for field, value in row.items():
+                            row_validator.validate(field, value)
                     rows_processed_count += 1
 
         except Exception as e:
@@ -78,19 +88,32 @@ class ValidationRunner:
                 ValidationResult.FAILED,
                 f"File: {self._input_file_path} failed validation. Error: {e}",
                 rows_processed_count,
+                validation_issues,
             )
 
         return self._format_validation_result(
             ValidationResult.SUCCESS,
-            f"File: {self._input_file_path} was validated successfully",
+            f"File: {self._input_file_path} completed validation successfully",
             rows_processed_count,
+            validation_issues,
         )
 
     def _format_validation_result(
-        self, status: ValidationResult, message: str, rows_processed_count: int
-    ) -> Dict[str, str]:
-        return {
+        self,
+        status: ValidationResult,
+        message: str,
+        rows_processed_count: int,
+        validation_issues: ValidationIssues,
+    ) -> Dict[str, Any]:
+        result = {
             "status": status.value,
             "message": message,
             "rows_processed_count": str(rows_processed_count),
         }
+
+        validation_errors = validation_issues.get_as_dict()
+        if validation_errors:
+            result["validation_errors"] = validation_errors
+            result["message"] += ", with some errors."
+
+        return result
