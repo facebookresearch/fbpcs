@@ -5,13 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-pub struct MPCMetrics {
+pub struct MPCView {
     input_columns: Vec<Box<dyn MPCMetric>>,
     metrics: Vec<dyn MPCMetric>,
     grouping_sets: Vec<Vec<dyn MPCMetric>>,
 }
 
-impl MPCMetrics {
+impl MPCView {
     pub fn new(
         input_columns: Vec<Box<dyn MPCMetric>>,
         metrics: Vec<dyn MPCMetric>,
