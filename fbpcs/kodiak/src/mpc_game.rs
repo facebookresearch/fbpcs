@@ -6,13 +6,16 @@
  */
 
 pub struct MPCGame {
-    mpc_config: MPCConfig,
+    execution_config: ExecutionConfig,
     view: MPCView,
 }
 
 impl MPCGame {
-    pub fn new(mpc_config: MPCConfig, view: MPCView) -> Self {
-        Self { mpc_config, view }
+    pub fn new(execution_config: ExecutionConfig, view: MPCView) -> Self {
+        Self {
+            execution_config,
+            view,
+        }
     }
 
     pub fn play(&mut self) {
