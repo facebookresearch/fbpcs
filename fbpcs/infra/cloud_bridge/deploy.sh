@@ -175,21 +175,6 @@ undeploy_aws_resources() {
             -var "tag_postfix=$tag_postfix" \
             -var "aws_account_id=$aws_account_id" \
             -var "data_upload_key_path=$data_upload_key_path"
-
-        cd /terraform_deployment/terraform_scripts/data_validation
-        terraform init -reconfigure \
-            -backend-config "bucket=$s3_bucket_for_storage" \
-            -backend-config "region=$region" \
-            -backend-config "key=tfstate/data_validation$tag_postfix.tfstate"
-
-        terraform destroy \
-            -auto-approve \
-            -var "aws_region=$region" \
-            -var "tag_postfix=$tag_postfix" \
-            -var "aws_account_id=$aws_account_id" \
-            -var "upload_and_validation_s3_bucket=$s3_bucket_data_pipeline" \
-            -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
-            -var "semi_automated_key_path=$data_upload_key_path"
     fi
     echo "Finished destroying all AWS resources " >> "$TF_LOG_STREAMING"
     echo "Finished destroying all AWS resources, except for:"
@@ -319,8 +304,8 @@ deploy_aws_resources() {
         # configure semi-automated data ingestion pipeline, if true
         cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
         echo "Updating trigger function configurations..."
-        sed -i "s/glueJobName = 'TO_BE_UPDATED_DURING_DEPLOYMENT'/glueJobName = 'glue-ETL$tag_postfix'/g" lambda_trigger.py
-        sed -i "s~s3_write_path = 'TO_BE_UPDATED_DURING_DEPLOYMENT'~s3_write_path = '$app_data_input_bucket_id'~g" lambda_trigger.py
+        sed -i "s/glueJobName = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"/glueJobName = \"glue-ETL$tag_postfix\"/g" lambda_trigger.py
+        sed -i "s~s3_write_path = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"~s3_write_path = \"$app_data_input_bucket_id\"~g" lambda_trigger.py
 
         echo "######################## Initializing terraform working directory started ########################"
         terraform init -reconfigure \
@@ -340,25 +325,6 @@ deploy_aws_resources() {
             -var "app_data_input_bucket_arn=$app_data_input_bucket_arn" \
             -var "data_upload_key_path=$data_upload_key_path"
         echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
-
-        echo "######################## Configure Data Validation Pipeline ########################"
-        cd /terraform_deployment/terraform_scripts/data_validation
-        echo "######################## Initializing terraform working directory started ########################"
-        terraform init -reconfigure \
-            -backend-config "bucket=$s3_bucket_for_storage" \
-            -backend-config "region=$region" \
-            -backend-config "key=tfstate/data_validation$tag_postfix.tfstate"
-        echo "######################## Initializing terraform working directory completed ########################"
-        echo "######################## Deploy Data Validation Terraform scripts started ########################"
-        terraform apply \
-            -auto-approve \
-            -var "aws_region=$region" \
-            -var "tag_postfix=$tag_postfix" \
-            -var "aws_account_id=$aws_account_id" \
-            -var "upload_and_validation_s3_bucket=$s3_bucket_data_pipeline" \
-            -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
-            -var "semi_automated_key_path=$data_upload_key_path"
-        echo "######################## Deploy Data Validation Terraform scripts completed ########################"
     fi
 
     echo "########################Finished AWS Infrastructure Deployment########################"
