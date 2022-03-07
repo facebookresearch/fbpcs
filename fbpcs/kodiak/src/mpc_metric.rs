@@ -5,15 +5,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-pub trait MPCMetric {
+pub trait MPCMetric<T: ColumnMetadata> {
     /// The type of data stored in this column
     type DType;
 
-    /// Used to get keys for our map
-    fn name() -> String;
-
-    /// List of columns required by this column
-    fn requires() -> Vec<Box<dyn MPCMetric>>;
+    /// Used to look up name and dependencies for this metric
+    fn column_metadata() -> T;
 
     /// Compute this value - assume requirements are satisfied
     fn compute(&mut self, r: Row) -> Result<()>;
