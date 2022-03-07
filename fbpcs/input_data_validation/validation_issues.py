@@ -9,24 +9,40 @@
 from collections import Counter
 from typing import Any, Dict
 
+from fbpcs.input_data_validation.constants import (
+    ID_FIELD,
+    VALUE_FIELD,
+    EVENT_TIMESTAMP_FIELD,
+    CONVERSION_METADATA_FIELD,
+    CONVERSION_VALUE_FIELD,
+    CONVERSION_TIMESTAMP_FIELD,
+)
+
 
 class ValidationIssues:
     def __init__(self) -> None:
         self.empty_counter: Counter[str] = Counter()
 
     def get_as_dict(self) -> Dict[str, Any]:
-        result = {}
-        empty_id_count = self.empty_counter["id_"]
-        empty_value_count = self.empty_counter["value"]
-        empty_event_timestamp_count = self.empty_counter["event_timestamp"]
-        if empty_id_count > 0:
-            result["id_"] = {"empty": empty_id_count}
-        if empty_value_count > 0:
-            result["value"] = {"empty": empty_value_count}
-        if empty_event_timestamp_count > 0:
-            result["event_timestamp"] = {"empty": empty_event_timestamp_count}
+        issues = {}
+        fields = [
+            ID_FIELD,
+            VALUE_FIELD,
+            EVENT_TIMESTAMP_FIELD,
+            CONVERSION_METADATA_FIELD,
+            CONVERSION_VALUE_FIELD,
+            CONVERSION_TIMESTAMP_FIELD,
+        ]
+        for field in fields:
+            self.set_if_empty_on_issues(issues, field, self.empty_counter[field])
 
-        return result
+        return issues
 
     def count_empty_field(self, field: str) -> None:
         self.empty_counter[field] += 1
+
+    def set_if_empty_on_issues(
+        self, issues: Dict[str, Any], field: str, empty_count: int
+    ) -> None:
+        if empty_count > 0:
+            issues[field] = {"empty": empty_count}
