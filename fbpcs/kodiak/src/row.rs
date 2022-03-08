@@ -22,7 +22,7 @@ impl Row {
         }
     }
 
-    fn get_data(&self, column_name: &str) -> Option<Box<dyn MPCMetricDType>> {
+    fn get_data(&self, column_name: &str) -> Option<MPCMetricDType> {
         Some(self.columns.get(column_name)?.data())
     }
 }
