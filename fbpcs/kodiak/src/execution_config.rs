@@ -5,7 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-struct ExecutionConfig {
+use crate::network_config::NetworkConfig;
+use crate::operation_config::OperationConfig;
+
+pub struct ExecutionConfig {
     network_config: NetworkConfig,
     operation_config: OperationConfig,
 }

@@ -5,7 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-struct NetworkConfig {
+use crate::mpc_role::MPCRole;
+
+pub struct NetworkConfig {
     role: MPCRole,
     host: String,
     port: u16,
