@@ -7,6 +7,9 @@
 
 pub mod column_metadata;
 pub mod execution_config;
+pub mod input_reader;
+pub mod metric_config;
+pub mod metric_config_builder;
 pub mod mpc_game;
 pub mod mpc_metric;
 pub mod mpc_metric_dtype;
