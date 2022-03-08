@@ -5,6 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::execution_config::ExecutionConfig;
+use crate::mpc_view::MPCView;
+
 pub struct MPCGame {
     execution_config: ExecutionConfig,
     view: MPCView,
