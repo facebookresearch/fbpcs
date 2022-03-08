@@ -9,15 +9,15 @@ use crate::mpc_metric::MPCMetric;
 
 pub struct MPCView {
     input_columns: Vec<Box<dyn MPCMetric>>,
-    metrics: Vec<dyn MPCMetric>,
-    grouping_sets: Vec<Vec<dyn MPCMetric>>,
+    metrics: Vec<Box<dyn MPCMetric>>,
+    grouping_sets: Vec<Vec<Box<dyn MPCMetric>>>,
 }
 
 impl MPCView {
     pub fn new(
         input_columns: Vec<Box<dyn MPCMetric>>,
-        metrics: Vec<dyn MPCMetric>,
-        grouping_sets: Vec<Vec<dyn MPCMetric>>,
+        metrics: Vec<Box<dyn MPCMetric>>,
+        grouping_sets: Vec<Vec<Box<dyn MPCMetric>>>,
     ) -> Self {
         Self {
             input_columns,

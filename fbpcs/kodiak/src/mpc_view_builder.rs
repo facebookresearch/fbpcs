@@ -11,8 +11,8 @@ use crate::mpc_view::MPCView;
 
 pub struct MPCViewBuilder {
     input_columns: Vec<Box<dyn MPCMetric>>,
-    metrics: Vec<dyn MPCMetric>,
-    grouping_sets: Vec<Vec<dyn MPCMetric>>,
+    metrics: Vec<Box<dyn MPCMetric>>,
+    grouping_sets: Vec<Vec<Box<dyn MPCMetric>>>,
 }
 
 impl MPCViewBuilder {
