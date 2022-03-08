@@ -22,22 +22,22 @@ impl OperationConfigBuilder {
         }
     }
 
-    pub fn with_concurrency(&mut self, concurrency: u32) -> Self {
+    pub fn with_concurrency(&mut self, concurrency: u32) -> &Self {
         self.concurrency = concurrency;
         self
     }
 
-    pub fn with_log_level(&mut self, log_level: log::Level) -> Self {
+    pub fn with_log_level(&mut self, log_level: log::Level) -> &Self {
         self.log_level = log_level;
         self
     }
 
-    pub fn with_debug(&mut self, debug: bool) -> Self {
+    pub fn with_debug(&mut self, debug: bool) -> &Self {
         self.debug = debug;
         self
     }
 
-    pub fn build(&self) -> OperationConfig {
+    pub fn build(self) -> OperationConfig {
         OperationConfig::new(self.concurrency, self.log_level, self.debug)
     }
 }

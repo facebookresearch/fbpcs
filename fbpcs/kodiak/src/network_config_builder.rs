@@ -23,22 +23,22 @@ impl NetworkConfigBuilder {
         }
     }
 
-    pub fn with_role(&mut self, role: MPCRole) -> Self {
+    pub fn with_role(&mut self, role: MPCRole) -> &Self {
         self.role = role;
         self
     }
 
-    pub fn with_host(&mut self, host: String) -> Self {
+    pub fn with_host(&mut self, host: String) -> &Self {
         self.host = host;
         self
     }
 
-    pub fn with_port(&mut self, port: u16) -> Self {
+    pub fn with_port(&mut self, port: u16) -> &Self {
         self.port = port;
         self
     }
 
-    pub fn build(&self) -> NetworkConfig {
+    pub fn build(self) -> NetworkConfig {
         NetworkConfig::new(self.role, self.host, self.port)
     }
 }
