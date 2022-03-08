@@ -5,6 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::mpc_metric::MPCMetric;
+use crate::mpc_role::MPCRole;
+use crate::mpc_view::MPCView;
+
 pub struct MPCViewBuilder {
     input_columns: Vec<Box<dyn MPCMetric>>,
     metrics: Vec<dyn MPCMetric>,
