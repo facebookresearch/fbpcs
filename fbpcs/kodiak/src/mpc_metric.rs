@@ -6,18 +6,8 @@
  */
 
 use crate::column_metadata::ColumnMetadata;
+use crate::mpc_metric_dtype::MPCMetricDType;
 use crate::row::Row;
-
-/// The type of data stored in a column
-pub enum MPCMetricDType {
-    // TODO: Will replace with MPCInt64 and such after FFI is available
-    MPCInt32(i32),
-    MPCInt64(i64),
-    MPCUInt32(u32),
-    MPCUInt64(u64),
-    MPCBool(bool),
-    Vec(Vec<MPCMetricDType>),
-}
 
 pub trait MPCMetric {
     /// Used to look up name and dependencies for this metric
