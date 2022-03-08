@@ -6,6 +6,7 @@
 # pyre-strict
 
 
+from fbpcs.input_data_validation.constants import VALIDATION_REGEXES
 from fbpcs.input_data_validation.validation_issues import ValidationIssues
 
 
@@ -16,3 +17,5 @@ class RowValidator:
     def validate(self, field: str, value: str) -> None:
         if value.strip() == "":
             self.validation_issues.count_empty_field(field)
+        elif field in VALIDATION_REGEXES and not VALIDATION_REGEXES[field].match(value):
+            self.validation_issues.count_format_error_field(field)

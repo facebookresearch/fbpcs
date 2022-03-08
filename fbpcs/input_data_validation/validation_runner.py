@@ -108,7 +108,7 @@ class ValidationRunner:
         result = {
             "status": status.value,
             "message": message,
-            "rows_processed_count": str(rows_processed_count),
+            "rows_processed_count": rows_processed_count,
         }
 
         validation_errors = validation_issues.get_as_dict()
