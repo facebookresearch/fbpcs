@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use mpc_role::MPCRole;
-use network_config::NetworkConfig;
+use crate::mpc_role::MPCRole;
+use crate::network_config::NetworkConfig;
 
 struct NetworkConfigBuilder {
     role: MPCRole,
