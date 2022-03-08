@@ -9,8 +9,15 @@ use crate::column_metadata::ColumnMetadata;
 use crate::row::Row;
 
 /// The type of data stored in a column
-/// https://stackoverflow.com/a/52414480/9063770
-pub trait MPCMetricDType {}
+pub enum MPCMetricDType {
+    // TODO: Will replace with MPCInt64 and such after FFI is available
+    MPCInt32(i32),
+    MPCInt64(i64),
+    MPCUInt32(u32),
+    MPCUInt64(u64),
+    MPCBool(bool),
+    Vec(Vec<MPCMetricDType>),
+}
 
 pub trait MPCMetric {
     /// Used to look up name and dependencies for this metric
@@ -32,5 +39,8 @@ pub trait MPCMetric {
     fn json_value(&self) -> String;
 
     /// Retrieve the data in this column
-    fn data(&self) -> Box<dyn MPCMetricDType>;
+    // TODO: Should be able to "force" the type to the actual inner type
+    // Probably use some sort of template here to get discriminator and panic
+    // otherwise... maybe just functions like as_int32() in the enum?
+    fn data(&self) -> MPCMetricDType;
 }
