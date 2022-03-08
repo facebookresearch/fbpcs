@@ -199,6 +199,10 @@ class PrivateComputationInstance(InstanceBase):
         return self._get_stage_output_path("decoupled_aggregation_stage", "json")
 
     @property
+    def pcf2_aggregation_stage_output_base_path(self) -> str:
+        return self._get_stage_output_path("pcf2_aggregation_stage", "json")
+
+    @property
     def shard_aggregate_stage_output_path(self) -> str:
         return self._get_stage_output_path("shard_aggregation_stage", "json")
 
