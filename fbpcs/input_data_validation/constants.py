@@ -7,7 +7,7 @@
 
 
 import re
-from typing import List, Pattern
+from typing import Dict, List, Pattern
 
 INPUT_DATA_TMP_FILE_PATH = "/tmp"
 
@@ -29,5 +29,18 @@ PL_FIELDS: List[str] = [
     VALUE_FIELD,
     EVENT_TIMESTAMP_FIELD,
 ]
+
+INTEGER_REGEX: Pattern[str] = re.compile(r"^[0-9]+$")
+TIMESTAMP_REGEX: Pattern[str] = re.compile(r"^[0-9]{10}$")
+BASE64_REGEX: Pattern[str] = re.compile(r"^[A-Za-z0-9+/]+={0,2}$")
+
+VALIDATION_REGEXES: Dict[str, Pattern[str]] = {
+    ID_FIELD: BASE64_REGEX,
+    CONVERSION_VALUE_FIELD: INTEGER_REGEX,
+    CONVERSION_TIMESTAMP_FIELD: TIMESTAMP_REGEX,
+    CONVERSION_METADATA_FIELD: INTEGER_REGEX,
+    VALUE_FIELD: INTEGER_REGEX,
+    EVENT_TIMESTAMP_FIELD: TIMESTAMP_REGEX,
+}
 
 VALID_LINE_ENDING_REGEX: Pattern[str] = re.compile(r".*(\S|\S\n)$")
