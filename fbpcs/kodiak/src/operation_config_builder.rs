@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::operation_config::OperationConfig;
+
 pub struct OperationConfigBuilder {
     concurrency: u32,
     log_level: log::Level,
@@ -15,7 +17,7 @@ impl OperationConfigBuilder {
     pub fn new() -> Self {
         Self {
             concurrency: 1,
-            log_level: log::Info,
+            log_level: log::Level::Info,
             debug: false,
         }
     }
@@ -30,7 +32,7 @@ impl OperationConfigBuilder {
         self
     }
 
-    pub fn with_debug(&mut self, dbug: bool) -> Self {
+    pub fn with_debug(&mut self, debug: bool) -> Self {
         self.debug = debug;
         self
     }

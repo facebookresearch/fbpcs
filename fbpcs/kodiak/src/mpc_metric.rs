@@ -5,6 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::column_metadata::ColumnMetadata;
+use crate::row::Row;
+
 pub trait MPCMetric<T: ColumnMetadata> {
     /// The type of data stored in this column
     type DType;
@@ -13,7 +16,7 @@ pub trait MPCMetric<T: ColumnMetadata> {
     fn column_metadata() -> T;
 
     /// Compute this value - assume requirements are satisfied
-    fn compute(&mut self, r: Row) -> Result<()>;
+    fn compute(&mut self, r: Row) -> Result<(), ()>;
 
     /// Aggregate this row with another (basically enable `reduce`)
     fn aggregate(&self, other: &Self) -> Self;
@@ -26,5 +29,5 @@ pub trait MPCMetric<T: ColumnMetadata> {
     fn json_value(&self) -> String;
 
     /// Retrieve the data in this column
-    fn data(&self) -> DType;
+    fn data(&self) -> Self::DType;
 }
