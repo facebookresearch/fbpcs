@@ -12,6 +12,8 @@ Types of changes
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.4.0] - 2022-03-07
 ### Added
   - Added optional new argument --log_cost to private decoupled attribution, private decoupled aggregation, private shard aggregator and data processing stages
   - In logging the cost for MPC runs, added few more fields in CostEstimation.cpp
@@ -19,10 +21,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
   - Changed LogRetriever to cover the publisher side use case.
+  - Refactor the logic of update MPC repository
 
 ### Removed
-  - Removed the usages of the `fail_fast` and `partial_container_retry_enabled` fields of PrivateComputationInstance
-  in order to cleanup partially implemented "partial container failure recovery" feature
+  - Removed the usages of the `fail_fast` and `partial_container_retry_enabled` fields of PrivateComputationInstance in order to cleanup partially implemented "partial container failure recovery" feature
+
+### Fixed
+  - Fixed bug when shard data is empty by adding dummy data.
 
 ## [1.3.0] - 2022-02-14
 ### Added
