@@ -85,3 +85,12 @@ class AwsDeploymentHelperTool:
                 policy_name=self.cli_args.iam_policy_name,
                 user_name=self.cli_args.iam_user_name,
             )
+        if self.cli_args.delete_s3_bucket:
+            if self.cli_args.s3_bucket_names is None:
+                raise Exception(
+                    "Need s3 bucket name to delete s3 buckets from AWS. Please use"
+                    " --s3_bucket_names in cli.py"
+                )
+            self.aws_deployment_helper_obj.delete_s3_bucket(
+                s3_bucket_names=self.cli_args.s3_bucket_names,
+            )

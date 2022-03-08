@@ -59,9 +59,21 @@ class AwsDeploymentHelper:
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
             )
+            self.s3 = boto3.client(
+                "s3",
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key,
+            )
+            self.s3_resource(
+                "s3",
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key,
+            )
         else:
             sts = boto3.client("sts")
             self.iam = boto3.client("iam")
+            self.s3 = boto3.client("s3")
+            self.s3_resource = boto3.resource("s3")
 
         # verify if the account details are correct
         try:
@@ -331,3 +343,38 @@ class AwsDeploymentHelper:
         # delete user
         self.delete_user(user_name=user_name)
         self.log.info("Deletion operation completed.")
+
+    def delete_s3_bucket(self, s3_bucket_names: list):
+        s3_bucket_list_found = set()
+        s3_bucket_list_not_found = set()
+
+        self.log.info(f"Deleting S3 buckets {s3_bucket_names}")
+
+        # Fetch all the buckets from AWS account
+        self.log.info("Fetching all the S3 buckets from AWS account.")
+        response = self.s3.list_buckets()
+
+        self.log.info("Checking if S3 bucket names provided is present in AWS account.")
+        s3_bucket_list_found = {
+            bucket["Name"]
+            for bucket in response["Buckets"]
+            if bucket["Name"] in s3_bucket_names
+        }
+
+        s3_bucket_list_not_found = set(
+            filter(lambda x: x not in s3_bucket_list_found, s3_bucket_names)
+        )
+
+        self.log.info(
+            f"From CLI input found buckets in AWS account which will be delete {list(s3_bucket_list_found)}"
+        )
+        self.log.info(
+            f"Couldn't find these buckets in AWS account, please check the names again: {list(s3_bucket_list_not_found)}"
+        )
+
+        self.log.info(f"Deleting buckets {s3_bucket_list_found}")
+        for bucket in s3_bucket_list_found:
+            bucket_obj = self.s3_resource.Bucket(bucket)
+            bucket_obj.object_versions.all().delete()
+            self.s3.delete_bucket(Bucket=bucket)
+        self.log.info("Completed S3 bucket deletion.")
