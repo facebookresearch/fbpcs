@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use crate::mpc_metric::MPCMetric;
+use crate::mpc_metric::{MPCMetric, MPCMetricDType};
 
 pub struct Row {
     // Dynamic columns because we don't really care about the underlying "data"
@@ -22,11 +22,7 @@ impl Row {
         }
     }
 
-    fn get_data<T: MPCMetric>(&self) -> Option<T::DType> {
-        self.columns
-            .get(T.name())?
-            .as_any()
-            .downcast_ref::<T>()
-            .data()
+    fn get_data(&self, column_name: &str) -> Option<Box<dyn MPCMetricDType>> {
+        Some(self.columns.get(column_name)?.data())
     }
 }
