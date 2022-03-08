@@ -24,22 +24,22 @@ impl MPCViewBuilder {
         }
     }
 
-    pub fn with_input_column(&mut self, role: MPCRole, col: Box<dyn MPCMetric>) -> Self {
+    pub fn with_input_column(&mut self, role: MPCRole, col: Box<dyn MPCMetric>) -> &Self {
         self.input_columns.push(col);
         self
     }
 
-    pub fn with_metric(&mut self, metric: Box<dyn MPCMetric>) -> Self {
+    pub fn with_metric(&mut self, metric: Box<dyn MPCMetric>) -> &Self {
         self.metrics.push(metric);
         self
     }
 
-    pub fn with_grouping_set(&mut self, grouping_set: Vec<Box<dyn MPCMetric>>) -> Self {
+    pub fn with_grouping_set(&mut self, grouping_set: Vec<Box<dyn MPCMetric>>) -> &Self {
         self.grouping_sets.push(grouping_set);
         self
     }
 
-    pub fn build(&self) -> MPCView {
+    pub fn build(self) -> MPCView {
         MPCView::new(self.input_columns, self.metrics, self.grouping_sets)
     }
 }
