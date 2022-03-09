@@ -5,6 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+from yaml import YAMLError
+
+
 class ConfigYamlBaseException(Exception):
     pass
 
@@ -54,4 +57,12 @@ class ConfigYamlValidationError(ValueError, ConfigYamlBaseException):
 
     def __init__(self, class_name: str, cause: str, remediation: str) -> None:
         msg = f"{class_name} (specified in your config.yml) failed validation. Cause: {cause}. Suggested remediation: {remediation}"
+        super().__init__(msg)
+
+
+class ConfigYamlFileParsingError(YAMLError, ConfigYamlBaseException):
+    """Raised when the content of file is not in a valid YAML format"""
+
+    def __init__(self, file_name: str, cause: str) -> None:
+        msg = f"{file_name} is not a valid YAML file. Please make sure that your config file is valid YAML file.\nCause: {cause}."
         super().__init__(msg)
