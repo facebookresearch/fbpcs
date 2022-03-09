@@ -5,23 +5,36 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-pub trait ColumnMetadata {
+use crate::mpc_metric_dtype::MPCMetricDType;
+use crate::row::Row;
+
+pub trait ColumnMetadata: std::cmp::Eq + std::hash::Hash + Sized {
+    /// Used to look up a human-readable name for this metric.
+    /// Should be known at compile time, so &'static is fine.
     fn name(&self) -> &'static str;
-    fn dependencies(&self) -> Vec<Self>
-    where
-        // the Size of Self must be known at compilation time
-        Self: Sized;
+
+    /// A list of columns which this column depends on. This will be used
+    /// to generate a DAG of columns to be built.
+    fn dependencies(&self) -> Vec<Self>;
+
+    /// Compute this column's data for the given row
+    fn from_row(&self, r: &Row<Self>) -> MPCMetricDType;
+
+    /// Aggregate all values in this column across the iterator of rows
+    /// into the final value
+    fn aggregate<I: Iterator<Item = Row<Self>>>(&self, rows: I) -> MPCMetricDType;
 }
 
 #[macro_export]
 macro_rules! column_metadata {
+
     (@dependencies ($name:ident, $($variant:ident),*)) => (vec![$($name::$variant),*]);
 
     ($name:ident {
         $($variant:ident -> [$($deps:ident),*]),*,
     }) => {
 
-        #[derive(Debug, PartialEq, Eq)]
+        #[derive(Debug, PartialEq, Eq, std::hash::Hash)]
         pub enum $name {
             $($variant),*
         }
@@ -38,6 +51,13 @@ macro_rules! column_metadata {
                     $($name::$variant => column_metadata!(@dependencies ($name, $($deps),*))),*
                 }
             }
+
+            fn from_row(&self, r: &Row<Self>) -> MPCMetricDType {
+                self.from_row(r)
+            }
+            fn aggregate<I: Iterator<Item = Row<Self>>>(&self, rows: I) -> MPCMetricDType {
+                self.aggregate(rows)
+            }
         }
     };
 }
@@ -45,6 +65,8 @@ macro_rules! column_metadata {
 #[cfg(test)]
 mod tests {
     use crate::column_metadata::ColumnMetadata;
+    use crate::mpc_metric_dtype::MPCMetricDType;
+    use crate::row::Row;
 
     column_metadata! {
         TestEnum {
@@ -52,6 +74,15 @@ mod tests {
             Variant2 -> [Variant1],
             Variant3 -> [Variant1],
             Variant4 -> [Variant2, Variant3],
+        }
+    }
+
+    impl TestEnum {
+        fn from_row(&self, r: &Row<Self>) -> MPCMetricDType {
+            panic!("Undefined for test");
+        }
+        fn aggregate<I: Iterator<Item = Row<Self>>>(&self, rows: I) -> MPCMetricDType {
+            panic!("Undefined for test");
         }
     }
 

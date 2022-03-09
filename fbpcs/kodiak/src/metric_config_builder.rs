@@ -5,17 +5,18 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::column_metadata::ColumnMetadata;
 use crate::input_reader::InputReader;
 use crate::metric_config::MetricConfig;
 use crate::mpc_view::MPCView;
 use crate::mpc_view_builder::MPCViewBuilder;
 
-pub struct MetricConfigBuilder {
+pub struct MetricConfigBuilder<T: ColumnMetadata> {
     input_reader: InputReader,
-    view: MPCView,
+    view: MPCView<T>,
 }
 
-impl MetricConfigBuilder {
+impl<T: ColumnMetadata> MetricConfigBuilder<T> {
     pub fn new() -> Self {
         Self {
             input_reader: InputReader::new(""),
@@ -28,12 +29,12 @@ impl MetricConfigBuilder {
         self
     }
 
-    pub fn with_view(&mut self, view: MPCView) -> &Self {
+    pub fn with_view(&mut self, view: MPCView<T>) -> &Self {
         self.view = view;
         self
     }
 
-    pub fn build(self) -> MetricConfig {
+    pub fn build(self) -> MetricConfig<T> {
         MetricConfig::new(self.input_reader, self.view)
     }
 }

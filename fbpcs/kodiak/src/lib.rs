@@ -11,7 +11,6 @@ pub mod input_reader;
 pub mod metric_config;
 pub mod metric_config_builder;
 pub mod mpc_game;
-pub mod mpc_metric;
 pub mod mpc_metric_dtype;
 pub mod mpc_role;
 pub mod mpc_view;

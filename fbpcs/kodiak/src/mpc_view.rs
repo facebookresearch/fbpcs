@@ -5,22 +5,25 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use crate::mpc_metric::MPCMetric;
+use crate::column_metadata::ColumnMetadata;
 
-pub struct MPCView {
-    input_columns: Vec<Box<dyn MPCMetric>>,
-    metrics: Vec<Box<dyn MPCMetric>>,
-    grouping_sets: Vec<Vec<Box<dyn MPCMetric>>>,
+pub struct MPCView<T: ColumnMetadata> {
+    input_columns: Vec<T>,
+    helper_columns: Vec<T>,
+    metrics: Vec<T>,
+    grouping_sets: Vec<Vec<T>>,
 }
 
-impl MPCView {
+impl<T: ColumnMetadata> MPCView<T> {
     pub fn new(
-        input_columns: Vec<Box<dyn MPCMetric>>,
-        metrics: Vec<Box<dyn MPCMetric>>,
-        grouping_sets: Vec<Vec<Box<dyn MPCMetric>>>,
+        input_columns: Vec<T>,
+        helper_columns: Vec<T>,
+        metrics: Vec<T>,
+        grouping_sets: Vec<Vec<T>>,
     ) -> Self {
         Self {
             input_columns,
+            helper_columns,
             metrics,
             grouping_sets,
         }

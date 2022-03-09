@@ -5,16 +5,17 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::column_metadata::ColumnMetadata;
 use crate::execution_config::ExecutionConfig;
 use crate::mpc_view::MPCView;
 
-pub struct MPCGame {
+pub struct MPCGame<T: ColumnMetadata> {
     execution_config: ExecutionConfig,
-    view: MPCView,
+    view: MPCView<T>,
 }
 
-impl MPCGame {
-    pub fn new(execution_config: ExecutionConfig, view: MPCView) -> Self {
+impl<T: ColumnMetadata> MPCGame<T> {
+    pub fn new(execution_config: ExecutionConfig, view: MPCView<T>) -> Self {
         Self {
             execution_config,
             view,
