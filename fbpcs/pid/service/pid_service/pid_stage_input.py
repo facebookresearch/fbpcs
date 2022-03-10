@@ -17,6 +17,7 @@ class PIDStageInput:
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
     hmac_key: Optional[str] = None
+    pid_use_row_numbers: bool = False
 
     def add_to_inputs(self, input_path: str) -> None:
         self.input_paths.append(input_path)

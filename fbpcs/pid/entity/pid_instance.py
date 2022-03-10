@@ -70,6 +70,7 @@ class PIDInstance(InstanceBase):
     status: PIDInstanceStatus = PIDInstanceStatus.UNKNOWN
     current_stage: Optional[UnionPIDStage] = None
     server_ips: List[str] = field(default_factory=list)
+    pid_use_row_numbers: bool = False
 
     def get_instance_id(self) -> str:
         return self.instance_id

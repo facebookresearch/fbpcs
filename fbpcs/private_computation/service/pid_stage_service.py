@@ -106,6 +106,7 @@ class PIDStageService(PrivateComputationStageService):
                 synthetic_shard_path=self._synthetic_shard_path
                 or pc_instance.synthetic_shard_path,
                 hmac_key=pc_instance.hmac_key,
+                pid_use_row_numbers=pc_instance.pid_use_row_numbers,
             )
         else:
             # If there no previous instance, then we should run shard first

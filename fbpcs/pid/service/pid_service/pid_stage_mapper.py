@@ -38,6 +38,7 @@ class PIDStageMapper:
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         server_ips: Optional[List[str]] = None,
+        use_row_numbers: bool = False,
     ) -> PIDStage:
         if stage is UnionPIDStage.PUBLISHER_SHARD:
             return PIDShardStage(
@@ -110,6 +111,7 @@ class PIDStageMapper:
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         hmac_key: Optional[str] = None,
+        pid_use_row_numbers: bool = False,
     ) -> PIDStageInput:
         try:
             return PIDStageInput(
@@ -120,6 +122,7 @@ class PIDStageMapper:
                 is_validating=is_validating,
                 synthetic_shard_path=synthetic_shard_path,
                 hmac_key=hmac_key,
+                pid_use_row_numbers=pid_use_row_numbers,
             )
         except KeyError:
             raise ValueError(
