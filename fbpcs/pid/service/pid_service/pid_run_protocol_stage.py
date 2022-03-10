@@ -80,6 +80,8 @@ class PIDProtocolRunStage(PIDStage):
         await self.update_instance_status(
             instance_id=instance_id, status=PIDStageStatus.STARTED
         )
+        if stage_input.pid_use_row_numbers:
+            self.logger.info("use-row-numbers is enabled for Private ID")
         if self.stage_type is UnionPIDStage.PUBLISHER_RUN_PID:
             # Run publisher commands in container
             self.logger.info("Publisher spinning up containers")
@@ -91,6 +93,7 @@ class PIDProtocolRunStage(PIDStage):
                         input_path=input_paths[0],
                         output_path=output_paths[0],
                         num_shards=num_shards,
+                        use_row_numbers=stage_input.pid_use_row_numbers,
                     ),
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
@@ -152,6 +155,7 @@ class PIDProtocolRunStage(PIDStage):
                         output_path=output_paths[0],
                         num_shards=num_shards,
                         server_hostnames=hostnames,
+                        use_row_numbers=stage_input.pid_use_row_numbers,
                     ),
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
@@ -193,6 +197,7 @@ class PIDProtocolRunStage(PIDStage):
         input_path: str,
         output_path: str,
         num_shards: int,
+        use_row_numbers: bool,
         server_hostnames: Optional[List[str]] = None,
         port: int = 15200,
     ) -> List[str]:
@@ -208,6 +213,7 @@ class PIDProtocolRunStage(PIDStage):
                     output_path=self.get_sharded_filepath(output_path, i),
                     port=port,
                     server_hostname=server_hostnames[i],
+                    use_row_numbers=use_row_numbers,
                 )
                 for i in range(num_shards)
             ]
@@ -219,6 +225,7 @@ class PIDProtocolRunStage(PIDStage):
                     output_path=self.get_sharded_filepath(output_path, i),
                     port=port,
                     server_hostname=None,
+                    use_row_numbers=use_row_numbers,
                 )
                 for i in range(num_shards)
             ]
@@ -229,6 +236,7 @@ class PIDProtocolRunStage(PIDStage):
         output_path: str,
         port: int,
         server_hostname: Optional[str] = None,
+        use_row_numbers: bool = False,
     ) -> str:
         if server_hostname:
             return " ".join(
@@ -237,6 +245,7 @@ class PIDProtocolRunStage(PIDStage):
                     f"--input {input_path}",
                     f"--output {output_path}",
                     "--no-tls",
+                    "--use-row-numbers" if use_row_numbers else "",
                 ]
             )
         else:
@@ -246,6 +255,7 @@ class PIDProtocolRunStage(PIDStage):
                     f"--input {input_path}",
                     f"--output {output_path}",
                     "--no-tls",
+                    "--use-row-numbers" if use_row_numbers else "",
                 ]
             )
 

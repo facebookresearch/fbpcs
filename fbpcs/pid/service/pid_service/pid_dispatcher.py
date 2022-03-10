@@ -55,6 +55,7 @@ class PIDDispatcher(Dispatcher):
         data_path: Optional[str] = None,
         spine_path: Optional[str] = None,
         hmac_key: Optional[str] = None,
+        pid_use_row_numbers: bool = False,
     ) -> None:
         flow_map = pid_execution_map.get_execution_flow(role, protocol)
 
@@ -97,6 +98,7 @@ class PIDDispatcher(Dispatcher):
                 is_validating,
                 synthetic_shard_path,
                 hmac_key,
+                pid_use_row_numbers=pid_use_row_numbers,
             )
 
             if (

@@ -151,6 +151,10 @@ class PrivateComputationInstance(InstanceBase):
 
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
+    # this is used by Private ID protocol to indicate whether we should
+    # enable 'use-row-numbers' argument.
+    pid_use_row_numbers: bool = False
+
     def __post_init__(self) -> None:
         if self.num_pid_containers > self.num_mpc_containers:
             raise ValueError(

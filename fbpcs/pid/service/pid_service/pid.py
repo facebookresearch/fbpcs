@@ -60,6 +60,7 @@ class PIDService:
         is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         hmac_key: Optional[str] = None,
+        pid_use_row_numbers: bool = False,
     ) -> PIDInstance:
         self.logger.info(f"Creating PID instance: {instance_id}")
         instance = PIDInstance(
@@ -75,6 +76,7 @@ class PIDService:
             data_path=data_path,
             spine_path=spine_path,
             hmac_key=hmac_key,
+            pid_use_row_numbers=pid_use_row_numbers,
         )
         self.instance_repository.create(instance)
         return instance
@@ -210,5 +212,6 @@ class PIDService:
             data_path=instance.data_path,
             spine_path=instance.spine_path,
             hmac_key=instance.hmac_key,
+            pid_use_row_numbers=instance.pid_use_row_numbers,
         )
         return dispatcher
