@@ -4,12 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from pathlib import Path
 from typing import Any, Dict
 
+from fbpcp.util import yaml
 from fbpcs.utils.config_yaml.exceptions import (
     ConfigYamlFieldNotFoundError,
     ConfigYamlValidationError,
+    ConfigYamlFileParsingError,
 )
+from yaml import YAMLError
 
 
 class ConfigYamlDict(Dict[str, Any]):
@@ -46,3 +50,12 @@ class ConfigYamlDict(Dict[str, Any]):
         for k, v in d.items():
             my_dict[k] = v
         return my_dict
+
+    @classmethod
+    def from_file(cls, config_file_path: str) -> "ConfigYamlDict":
+        """Read a yaml file to a ConfigYamlDict"""
+        try:
+            config_dict = yaml.load(Path(config_file_path))
+        except YAMLError as e:
+            raise ConfigYamlFileParsingError(config_file_path, str(e))
+        return ConfigYamlDict.from_dict(config_dict)

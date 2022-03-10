@@ -41,7 +41,6 @@ from typing import List, Optional
 
 import schema
 from docopt import docopt
-from fbpcp.util import yaml
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -158,7 +157,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     )
 
     arguments = s.validate(docopt(__doc__, argv))
-    config = ConfigYamlDict.from_dict(yaml.load(Path(arguments["--config"])))
+    config = ConfigYamlDict.from_file(arguments["--config"])
 
     log_path = arguments["--log_path"]
     log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
