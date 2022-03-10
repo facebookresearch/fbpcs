@@ -55,6 +55,10 @@ impl<T: ColumnMetadata> Dag<T> {
         let node_to_index = input_columns
             .iter()
             .chain(helper_columns.iter().chain(metrics.iter()))
+            // petgraph node and edge retrieval is ordered based on most recent node insertion.
+            // In order to have the columns from the front of the column vecs be first in
+            // the topographical sort, we can reverse insertion order.
+            .rev()
             .fold(std::collections::HashMap::new(), |mut acc, &node| {
                 let i = graph.add_node(node.clone());
                 acc.insert(node, i);
@@ -103,9 +107,11 @@ mod tests {
     column_metadata! {
         TestEnum {
             Variant1 -> [],
-            Variant2 -> [Variant1],
+            Variant2 -> [],
             Variant3 -> [Variant1],
-            Variant4 -> [Variant2, Variant3],
+            Variant4 -> [Variant1],
+            Variant5 -> [Variant3, Variant4],
+            Variant6 -> [Variant2, Variant3],
         }
     }
 
@@ -118,28 +124,52 @@ mod tests {
         }
     }
 
-    fn get_mpc_view() -> MPCView<TestEnum> {
-        MPCView::new(
-            vec![TestEnum::Variant1],
-            vec![TestEnum::Variant2, TestEnum::Variant3],
-            vec![TestEnum::Variant4],
-            vec![],
-        )
-    }
-
     #[test]
     fn dag_next_node() {
-        let mpc_view = get_mpc_view();
+        let mpc_view = MPCView::new(
+            vec![TestEnum::Variant1, TestEnum::Variant2],
+            vec![TestEnum::Variant3, TestEnum::Variant4],
+            vec![TestEnum::Variant5, TestEnum::Variant6],
+            vec![],
+        );
+
         let mut dag = Dag::from_mpc_view(mpc_view);
         assert_eq!(dag.next_column(), Some(&TestEnum::Variant1));
-        assert_eq!(dag.next_column(), Some(&TestEnum::Variant3));
         assert_eq!(dag.next_column(), Some(&TestEnum::Variant2));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant3));
         assert_eq!(dag.next_column(), Some(&TestEnum::Variant4));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant5));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant6));
         assert_eq!(dag.next_column(), None);
         dag.reset();
         assert_eq!(dag.next_column(), Some(&TestEnum::Variant1));
-        assert_eq!(dag.next_column(), Some(&TestEnum::Variant3));
         assert_eq!(dag.next_column(), Some(&TestEnum::Variant2));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant3));
         assert_eq!(dag.next_column(), Some(&TestEnum::Variant4));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant5));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant6));
+
+        let mpc_view = MPCView::new(
+            vec![TestEnum::Variant2, TestEnum::Variant1],
+            vec![TestEnum::Variant3, TestEnum::Variant4],
+            vec![TestEnum::Variant6, TestEnum::Variant5],
+            vec![],
+        );
+
+        let mut dag = Dag::from_mpc_view(mpc_view);
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant2));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant1));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant3));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant4));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant6));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant5));
+        assert_eq!(dag.next_column(), None);
+        dag.reset();
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant2));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant1));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant3));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant4));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant6));
+        assert_eq!(dag.next_column(), Some(&TestEnum::Variant5));
     }
 }
