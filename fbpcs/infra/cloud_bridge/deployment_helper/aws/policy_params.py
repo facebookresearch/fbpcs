@@ -12,5 +12,6 @@ class PolicyParams:
     data_bucket_name: str
     config_bucket_name: str
     database_name: str
+    table_name: str
     cluster_name: str
     ecs_task_execution_role_name: str

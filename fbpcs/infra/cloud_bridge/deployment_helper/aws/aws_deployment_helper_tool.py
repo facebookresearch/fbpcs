@@ -41,6 +41,7 @@ class AwsDeploymentHelperTool:
                 data_bucket_name=self.cli_args.data_bucket_name,
                 config_bucket_name=self.cli_args.config_bucket_name,
                 database_name=self.cli_args.database_name,
+                table_name=self.cli_args.table_name,
                 cluster_name=self.cli_args.cluster_name,
                 ecs_task_execution_role_name=self.cli_args.ecs_task_execution_role_name,
             )
