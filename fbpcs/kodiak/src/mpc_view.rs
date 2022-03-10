@@ -8,9 +8,9 @@
 use crate::column_metadata::ColumnMetadata;
 
 pub struct MPCView<T: ColumnMetadata> {
-    input_columns: Vec<T>,
-    helper_columns: Vec<T>,
-    metrics: Vec<T>,
+    pub input_columns: Vec<T>,
+    pub helper_columns: Vec<T>,
+    pub metrics: Vec<T>,
     grouping_sets: Vec<Vec<T>>,
 }
 

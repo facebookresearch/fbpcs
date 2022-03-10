@@ -8,7 +8,7 @@
 use crate::mpc_metric_dtype::MPCMetricDType;
 use crate::row::Row;
 
-pub trait ColumnMetadata: std::cmp::Eq + std::hash::Hash + Sized {
+pub trait ColumnMetadata: std::cmp::Eq + std::hash::Hash + Sized + Clone + Copy {
     /// Used to look up a human-readable name for this metric.
     /// Should be known at compile time, so &'static is fine.
     fn name(&self) -> &'static str;
@@ -34,7 +34,7 @@ macro_rules! column_metadata {
         $($variant:ident -> [$($deps:ident),*]),*,
     }) => {
 
-        #[derive(Debug, PartialEq, Eq, std::hash::Hash)]
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, std::hash::Hash)]
         pub enum $name {
             $($variant),*
         }
