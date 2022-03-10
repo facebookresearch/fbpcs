@@ -7,3 +7,4 @@ edition = "2021"
 [dependencies]
 derive_more = "0.99.3"
 log = { version = "0.4.14", features = ["kv_unstable", "kv_unstable_std"] }
+petgraph = "0.6"
