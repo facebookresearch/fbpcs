@@ -24,6 +24,10 @@ from logging import Logger
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.common.entity.stage_state_instance import (
+    StageStateInstance,
+    StageStateInstanceStatus,
+)
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
@@ -70,9 +74,14 @@ class ResultVisibility(IntEnum):
     PARTNER = 2
 
 
-UnionedPCInstance = Union[PIDInstance, PCSMPCInstance, PostProcessingInstance]
+UnionedPCInstance = Union[
+    PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
+]
 UnionedPCInstanceStatus = Union[
-    PIDInstanceStatus, MPCInstanceStatus, PostProcessingInstanceStatus
+    PIDInstanceStatus,
+    MPCInstanceStatus,
+    PostProcessingInstanceStatus,
+    StageStateInstanceStatus,
 ]
 
 
