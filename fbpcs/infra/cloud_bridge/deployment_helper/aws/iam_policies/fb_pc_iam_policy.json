@@ -39,7 +39,8 @@
                 "arn:aws:glue:${REGION}:${ACCOUNT_ID}:catalog",
                 "arn:aws:glue:${REGION}:${ACCOUNT_ID}:database/default",
                 "arn:aws:glue:${REGION}:${ACCOUNT_ID}:database/${DATEBASE_NAME}",
-                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/${DATEBASE_NAME}/*"
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/${DATEBASE_NAME}/*",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/default/${TABLE_NAME}"
             ]
         },
         {

@@ -362,6 +362,7 @@ deploy_aws_resources() {
         --data_bucket_name "$s3_bucket_data_pipeline" \
         --config_bucket_name "$s3_bucket_for_storage" \
         --database_name "$database_name" \
+        --table_name "$table_name" \
         --cluster_name "$aws_ecs_cluster_name" \
         --ecs_task_execution_role_name "$ecs_task_execution_role_name"
     echo "######################## Finished deploy resources policy ########################"
@@ -387,7 +388,6 @@ else
     # s3_bucket_for_storage is set, but add tags to it
     s3_bucket_for_storage="$s3_bucket_for_storage$tag_postfix"
 fi
-database_name=${s3_bucket_for_storage//-/_}
 
 if [ -z ${s3_bucket_data_pipeline+x} ]
 then
@@ -399,6 +399,8 @@ else
 fi
 
 policy_name="fb-pc-policy${tag_postfix}"
+database_name="mpc-events-db${tag_postfix}"
+table_name=${s3_bucket_data_pipeline//-/_}
 data_upload_key_path="semi-automated-data-ingestion"
 events_data_upload_s3_key="events-data-validation"
 query_results_key_path="query-results"

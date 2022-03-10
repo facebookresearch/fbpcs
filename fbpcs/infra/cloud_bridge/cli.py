@@ -120,6 +120,10 @@ def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
     iam_policy_command_group.add_argument(
+        "--table_name", type=str, required=False, help="Table name"
+    )
+
+    iam_policy_command_group.add_argument(
         "--cluster_name", type=str, required=False, help="ECS cluster name"
     )
 

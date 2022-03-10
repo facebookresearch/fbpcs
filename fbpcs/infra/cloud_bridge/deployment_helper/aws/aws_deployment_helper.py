@@ -290,6 +290,7 @@ class AwsDeploymentHelper:
             "ECS_TASK_EXECUTION_ROLE_NAME": policy_params.ecs_task_execution_role_name,
             "FIREHOSE_STREAM_NAME": policy_params.firehose_stream_name,
             "DATEBASE_NAME": policy_params.database_name,
+            "TABLE_NAME": policy_params.table_name,
         }
 
         file_path = os.path.join(os.path.dirname(__file__), file_name)
