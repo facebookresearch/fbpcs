@@ -22,9 +22,9 @@ repositories {
 dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-web'
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
-  implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.988'
+  implementation 'com.amazonaws:aws-java-sdk-sts'
+  implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.+')
 }
-
 test {
   useJUnitPlatform()
 }

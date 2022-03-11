@@ -7,6 +7,12 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
+import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
+import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
@@ -55,6 +61,22 @@ public class DeployController {
   private APIReturn runDeployment(boolean shouldDeploy, DeploymentParams deployment) {
     try {
       deployment.validate();
+      String accountId = getAccountIDUsingAccessKey(deployment);
+      // TODO separate them to a pre-validation library
+
+      if (accountId == null) {
+        logger.error("Invalid credentials received");
+        return new APIReturn(APIReturn.Status.STATUS_FAIL, "invalid credentials");
+      }
+      if (!accountId.equals(deployment.accountId)) {
+        logger.error(
+            "Invalid credentials received vs provided, received: "
+                + deployment.accountId
+                + " provided: "
+                + accountId);
+        return new APIReturn(
+            APIReturn.Status.STATUS_FAIL, "Account id doesn't match with credentials provided");
+      }
     } catch (InvalidDeploymentArgumentException ex) {
       return new APIReturn(APIReturn.Status.STATUS_FAIL, ex.getMessage());
     }
@@ -85,6 +107,26 @@ public class DeployController {
       return new APIReturn(APIReturn.Status.STATUS_ERROR, ex.getMessage());
     } finally {
       logger.info("  Deployment request finalized");
+    }
+  }
+
+  private String getAccountIDUsingAccessKey(DeploymentParams deployment) {
+    AWSSecurityTokenService stsService =
+        AWSSecurityTokenServiceClientBuilder.standard()
+            .withCredentials(
+                new AWSStaticCredentialsProvider(
+                    new BasicAWSCredentials(
+                        deployment.awsAccessKeyId, deployment.awsSecretAccessKey)))
+            .withRegion(deployment.region)
+            .build();
+    try {
+      GetCallerIdentityResult callerIdentity =
+          stsService.getCallerIdentity(new GetCallerIdentityRequest());
+      logger.info("account info: " + callerIdentity.getAccount());
+      return callerIdentity.getAccount();
+    } catch (final Exception e) {
+      logger.error("Got exception while verifying credentials " + e.getMessage());
+      return null;
     }
   }
 
