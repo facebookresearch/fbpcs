@@ -36,7 +36,7 @@ class TestLogRetriever(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             retriever.get_log_url(container_id)
 
-    def test_get_log_url_shared_log_group_on_publisher(self):
+    def test_get_log_url_shared_log_group_on_publisher(self) -> None:
         retriever = LogRetriever(CloudProvider.AWS)
         container_id = "arn:aws:ecs:us-west-2:539290649537:task/onedocker-cluster-ee9bc805f22e40f9bbc107d5f006b6e1/3a5e4213036b4456a6c16695b938b361"
         expected = "https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/$252Fecs$252Fonedocker-container-shared-us-west-2/log-events/ecs$252Fonedocker-container-shared-us-west-2$252F3a5e4213036b4456a6c16695b938b361"

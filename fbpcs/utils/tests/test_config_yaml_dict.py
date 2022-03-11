@@ -28,14 +28,14 @@ class TestConfigYamlDict(unittest.TestCase):
     """
 
     @patch("builtins.open", new_callable=mock_open, read_data=valid_data)
-    def test_load_from_file_success(self, mock_file):
+    def test_load_from_file_success(self, mock_file) -> None:
         self.assertEqual(open(self.test_filename).read(), self.valid_data)
 
         load_data = ConfigYamlDict.from_file(self.test_filename)
         self.assertEqual(load_data, self.test_dict)
 
     @patch("builtins.open", new_callable=mock_open, read_data=invalid_data)
-    def test_load_from_invalid_file(self, mock_file):
+    def test_load_from_invalid_file(self, mock_file) -> None:
         self.assertEqual(open(self.test_filename).read(), self.invalid_data)
 
         with self.assertRaises(ConfigYamlFileParsingError) as error_context:

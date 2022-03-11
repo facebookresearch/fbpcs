@@ -14,7 +14,7 @@ from fbpcs.common.entity.stage_state_instance import (
 
 
 class TestStageStateInstance(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.stage_state_instance = StageStateInstance(
             instance_id="stage_state_instance",
             stage_name="test_stage",
