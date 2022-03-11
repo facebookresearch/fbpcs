@@ -1,0 +1,88 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+#pragma once
+
+#include <fbpcf/io/FileManagerUtil.h>
+#include <gtest/gtest.h>
+
+#include "folly/dynamic.h"
+#include "folly/json.h"
+#include "folly/test/JsonTestUtil.h"
+
+#include "fbpcs/emp_games/pcf2_attribution/AttributionApp.h"
+#include "fbpcs/emp_games/pcf2_attribution/AttributionMetrics.h"
+#include "fbpcs/emp_games/pcf2_attribution/AttributionOutput.h"
+#include "fbpcs/emp_games/pcf2_attribution/Constants.h"
+
+namespace pcf2_attribution {
+
+// verify the attribution output
+inline void verifyOutput(
+    AttributionOutputMetrics output,
+    std::string outputJsonFileName) {
+  folly::dynamic expectedOutput =
+      folly::parseJson(fbpcf::io::read(outputJsonFileName));
+
+  FOLLY_EXPECT_JSON_EQ(
+      folly::toJson(output.toDynamic()), folly::toJson(expectedOutput));
+}
+
+inline AttributionOutputMetrics revealXORedResult(
+    AttributionOutputMetrics resAlice,
+    AttributionOutputMetrics resBob,
+    std::string attributionRule) {
+  auto aliceAttributionOutput =
+      resAlice.ruleToMetrics.at(attributionRule).formatToAttribution;
+  auto bobAttributionOutput =
+      resBob.ruleToMetrics.at(attributionRule).formatToAttribution;
+  auto attributionFormat = "default";
+
+  // initiate new objects to store revealed data
+  // use std::move to ensure no memory leak
+  folly::dynamic revealedAttributionMetrics = folly::dynamic::object;
+  folly::dynamic revealedMetricsMap = folly::dynamic::object;
+  folly::dynamic revealedAttributionResultsPerId = folly::dynamic::object;
+
+  // Attribution output contains results based on attribution format (currently
+  // only "default").
+  AttributionResult aliceAttribution =
+      aliceAttributionOutput.at(attributionFormat);
+  AttributionResult bobAttribution = bobAttributionOutput.at(attributionFormat);
+
+  // first sort the keys so that alice and bob are reading
+  // corresponding rows
+  std::vector<std::string> sortedIds;
+  for (const auto& id : aliceAttribution.keys()) {
+    sortedIds.push_back(id.asString());
+  }
+  std::sort(sortedIds.begin(), sortedIds.end());
+
+  for (const auto& adId : sortedIds) {
+    auto& aliceResults = aliceAttribution.at(adId);
+    auto& bobResults = bobAttribution.at(adId);
+    folly::dynamic revealedResults = folly::dynamic::array;
+    for (auto i = 0; i < aliceResults.size(); i++) {
+      const auto& aliceResult =
+          OutputMetricDefault::fromDynamic(aliceResults.at(i));
+      const auto& bobResult =
+          OutputMetricDefault::fromDynamic(bobResults.at(i));
+      revealedResults.push_back(OutputMetricDefault{
+          aliceResult.is_attributed != bobResult.is_attributed}
+                                    .toDynamic());
+    }
+    revealedAttributionResultsPerId[adId] = revealedResults;
+  }
+  revealedMetricsMap[attributionFormat] =
+      std::move(revealedAttributionResultsPerId);
+  revealedAttributionMetrics[attributionRule] = std::move(revealedMetricsMap);
+
+  // return Json format
+  return AttributionOutputMetrics::fromDynamic(revealedAttributionMetrics);
+}
+
+} // namespace pcf2_attribution
