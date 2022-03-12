@@ -32,7 +32,13 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     libgoogle-glog0v5 \
     libssl1.1 \
     libre2-5 \
-    zlib1g
+    zlib1g \
+    # pyinstaller
+    gcc \
+    python3-dev
+
+# Install pip packages
+RUN pip install pyinstaller
 
 # Create the pcs user
 RUN useradd -ms /bin/bash pcs
@@ -48,6 +54,10 @@ COPY --from=private_id /opt/private-id/bin/private-id-server /usr/local/bin/priv
 # OneDocker likes to change permissions as 'pcs' in /usr/local/bin, set these to be owned by 'pcs' to prevent an error
 RUN chown pcs:pcs /usr/local/bin/*
 
+# Copy fbpcs for building the input_data_validation_cli binary later
+COPY fbpcs/ /tmp/fbpcs-temp/fbpcs/
+RUN chown -R pcs:pcs /tmp/fbpcs-temp/fbpcs/
+
 # Switch to pcs user
 USER pcs
 
@@ -59,6 +69,18 @@ RUN mkdir -p /home/pcs/src/
 WORKDIR /home/pcs/src
 COPY fbpcs/pip_requirements.txt /home/pcs/src/.
 RUN python3.8 -m pip install --user -r pip_requirements.txt
+
+# Build and copy the input_data_validation_cli binary
+USER pcs
+WORKDIR /tmp/fbpcs-temp/fbpcs/input_data_validation/
+RUN pyinstaller input_data_validation_cli.py --onefile
+
+USER root
+RUN cp ./dist/input_data_validation_cli /usr/local/bin/
+RUN chown pcs:pcs /usr/local/bin/input_data_validation_cli
+WORKDIR /
+RUN rm -rf /tmp/fbpcs-temp/fbpcs/
+USER pcs
 
 # Link all the binaries into /home/pcs/onedocker/package
 RUN mkdir -p /home/pcs/onedocker/package
