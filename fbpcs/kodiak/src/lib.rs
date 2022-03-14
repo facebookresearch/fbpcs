@@ -21,12 +21,4 @@ pub mod network_config_builder;
 pub mod operation_config;
 pub mod operation_config_builder;
 pub mod row;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+pub mod shared_test_data;
