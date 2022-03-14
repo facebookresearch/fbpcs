@@ -1,0 +1,26 @@
+{
+    "last_touch_2_7d": {
+        "measurement": {
+            "1": {
+                "sales": 20259,
+                "convs": 15
+            },
+            "2": {
+                "sales": 12133,
+                "convs": 9
+            },
+            "3": {
+                "sales": 5048,
+                "convs": 2
+            },
+            "4": {
+                "sales": 0,
+                "convs": 0
+            },
+            "10000000000000": {
+                "sales": 0,
+                "convs": 0
+            }
+        }
+    }
+}
