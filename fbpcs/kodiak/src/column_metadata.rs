@@ -79,27 +79,8 @@ macro_rules! column_metadata {
 #[cfg(test)]
 mod tests {
     use crate::column_metadata::ColumnMetadata;
-    use crate::mpc_metric_dtype::MPCMetricDType;
-    use crate::row::Row;
+    use crate::shared_test_data::TestEnum;
     use std::str::FromStr;
-
-    column_metadata! {
-        TestEnum {
-            Variant1 -> [],
-            Variant2 -> [Variant1],
-            Variant3 -> [Variant1],
-            Variant4 -> [Variant2, Variant3],
-        }
-    }
-
-    impl TestEnum {
-        fn from_row(&self, r: &Row<Self>) -> MPCMetricDType {
-            panic!("Undefined for test");
-        }
-        fn aggregate<I: Iterator<Item = Row<Self>>>(&self, rows: I) -> MPCMetricDType {
-            panic!("Undefined for test");
-        }
-    }
 
     #[test]
     fn name_generation() {
@@ -112,10 +93,15 @@ mod tests {
     #[test]
     fn dependency_generation() {
         assert_eq!(TestEnum::Variant1.dependencies(), vec![]);
-        assert_eq!(TestEnum::Variant2.dependencies(), vec![TestEnum::Variant1]);
+        assert_eq!(TestEnum::Variant2.dependencies(), vec![]);
         assert_eq!(TestEnum::Variant3.dependencies(), vec![TestEnum::Variant1]);
+        assert_eq!(TestEnum::Variant4.dependencies(), vec![TestEnum::Variant1]);
         assert_eq!(
-            TestEnum::Variant4.dependencies(),
+            TestEnum::Variant5.dependencies(),
+            vec![TestEnum::Variant3, TestEnum::Variant4]
+        );
+        assert_eq!(
+            TestEnum::Variant6.dependencies(),
             vec![TestEnum::Variant2, TestEnum::Variant3]
         );
     }

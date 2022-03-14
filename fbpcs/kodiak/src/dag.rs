@@ -97,32 +97,10 @@ impl<T: ColumnMetadata> Dag<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::column_metadata;
     use crate::column_metadata::ColumnMetadata;
     use crate::dag::Dag;
-    use crate::mpc_metric_dtype::MPCMetricDType;
     use crate::mpc_view::MPCView;
-    use crate::row::Row;
-
-    column_metadata! {
-        TestEnum {
-            Variant1 -> [],
-            Variant2 -> [],
-            Variant3 -> [Variant1],
-            Variant4 -> [Variant1],
-            Variant5 -> [Variant3, Variant4],
-            Variant6 -> [Variant2, Variant3],
-        }
-    }
-
-    impl TestEnum {
-        fn from_row(&self, _r: &Row<Self>) -> MPCMetricDType {
-            panic!("Undefined for test");
-        }
-        fn aggregate<I: Iterator<Item = Row<Self>>>(&self, _rows: I) -> MPCMetricDType {
-            panic!("Undefined for test");
-        }
-    }
+    use crate::shared_test_data::TestEnum;
 
     #[test]
     fn dag_next_node() {
