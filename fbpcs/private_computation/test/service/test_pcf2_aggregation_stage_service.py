@@ -114,7 +114,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
             instances=[],
-            status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_COMPLETED,
+            status=PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_COMPLETED,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             aggregation_type=AggregationType.MEASUREMENT,
             status_update_ts=1600000000,

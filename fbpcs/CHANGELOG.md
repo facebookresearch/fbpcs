@@ -12,8 +12,9 @@ Types of changes
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-##Added
+### Added
   - Added pcf2.0 based attribution and aggregation games to fbpcs folder.
+  - Added new flow for PCF2.0 to pcs.
 ## [1.4.0] - 2022-03-07
 ### Added
   - Added optional new argument --log_cost to private decoupled attribution, private decoupled aggregation, private shard aggregator and data processing stages

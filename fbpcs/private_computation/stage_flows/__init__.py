@@ -17,6 +17,8 @@ __all__ = [  # noqa: ignore=F405
     "private_computation_decoupled_local_test_stage_flow",
     "private_computation_decoupled_stage_flow",
     "private_computation_local_test_stage_flow",
+    "private_computation_pcf2_local_test_stage_flow",
+    "private_computation_pcf2_stage_flow",
     "private_computation_stage_flow",
 ]
 
