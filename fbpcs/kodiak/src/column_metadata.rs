@@ -7,8 +7,9 @@
 
 use crate::mpc_metric_dtype::MPCMetricDType;
 use crate::row::Row;
+use std::str::FromStr;
 
-pub trait ColumnMetadata: std::cmp::Eq + std::hash::Hash + Sized + Clone + Copy {
+pub trait ColumnMetadata: std::cmp::Eq + std::hash::Hash + Sized + Clone + Copy + FromStr {
     /// Used to look up a human-readable name for this metric.
     /// Should be known at compile time, so &'static is fine.
     fn name(&self) -> &'static str;
@@ -59,6 +60,19 @@ macro_rules! column_metadata {
                 self.aggregate(rows)
             }
         }
+
+        impl std::str::FromStr for $name {
+            type Err = ();
+
+            // TODO: accept a column name alias in column_metadata macro
+            // so that input columns can have multiple mappings
+            fn from_str(s: &str) -> Result<Self, ()> {
+                match s {
+                    $(stringify!($variant) => Ok($name::$variant)),*,
+                    _ => Err(())
+                }
+            }
+        }
     };
 }
 
@@ -67,6 +81,7 @@ mod tests {
     use crate::column_metadata::ColumnMetadata;
     use crate::mpc_metric_dtype::MPCMetricDType;
     use crate::row::Row;
+    use std::str::FromStr;
 
     column_metadata! {
         TestEnum {
@@ -103,5 +118,12 @@ mod tests {
             TestEnum::Variant4.dependencies(),
             vec![TestEnum::Variant2, TestEnum::Variant3]
         );
+    }
+
+    #[test]
+    fn from_str() {
+        assert_eq!(TestEnum::Variant1, TestEnum::from_str("Variant1").unwrap());
+        assert!(TestEnum::from_str("VariantDNE").is_err());
+        assert!(TestEnum::from_str("").is_err());
     }
 }
