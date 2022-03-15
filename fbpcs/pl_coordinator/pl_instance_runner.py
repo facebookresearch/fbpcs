@@ -25,7 +25,9 @@ from fbpcs.pl_coordinator.constants import (
 )
 from fbpcs.pl_coordinator.exceptions import PLInstanceCalculationException
 from fbpcs.pl_coordinator.pc_partner_instance import PrivateLiftPartnerInstance
-from fbpcs.pl_coordinator.pc_publisher_instance import PrivateLiftPublisherInstance
+from fbpcs.pl_coordinator.pc_publisher_instance import (
+    PrivateComputationPublisherInstance,
+)
 from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
@@ -171,7 +173,9 @@ class PLInstanceRunner:
     ) -> None:
         self.logger = logger
         self.instance_id = instance_id
-        self.publisher = PrivateLiftPublisherInstance(instance_id, logger, client)
+        self.publisher = PrivateComputationPublisherInstance(
+            instance_id, logger, client
+        )
         self.partner = PrivateLiftPartnerInstance(
             instance_id=instance_id,
             config=config,

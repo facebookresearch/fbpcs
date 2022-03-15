@@ -28,8 +28,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 )
 
 
-# TODO(T107103749): [BE] rename PrivateLiftPublisherInstance
-class PrivateLiftPublisherInstance(PrivateLiftCalcInstance):
+class PrivateComputationPublisherInstance(PrivateLiftCalcInstance):
     """
     Representation of a publisher instance.
     """
