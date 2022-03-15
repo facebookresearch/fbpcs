@@ -6,12 +6,10 @@
  */
 
 use std::fs::File;
-use std::io::BufRead;
-use std::io::BufReader;
+use std::io::{BufRead, BufReader};
 
 pub trait InputReader {
-    fn next_line(&mut self) -> String;
-    fn read_all(&self) -> Vec<String>;
+    fn read(&self) -> Box<dyn Iterator<Item = String>>;
 }
 
 // TODO(T114390321): [BE][Kodiak] move LocalInputReader to its own file
@@ -28,15 +26,9 @@ impl LocalInputReader {
 }
 
 impl InputReader for LocalInputReader {
-    fn next_line(&mut self) -> String {
-        unimplemented!();
-    }
-
-    fn read_all(&self) -> Vec<String> {
+    fn read(&self) -> Box<dyn Iterator<Item = String>> {
         let file = File::open(&self.filepath).expect("no such file");
         let buf = BufReader::new(file);
-        buf.lines()
-            .map(|l| l.expect("Could not parse line"))
-            .collect()
+        Box::new(buf.lines().map(|line| line.expect("Could not read line")))
     }
 }
