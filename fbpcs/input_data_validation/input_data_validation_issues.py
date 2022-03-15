@@ -19,7 +19,7 @@ from fbpcs.input_data_validation.constants import (
 )
 
 
-class ValidationIssues:
+class InputDataValidationIssues:
     def __init__(self) -> None:
         self.empty_counter: Counter[str] = Counter()
         self.format_error_counter: Counter[str] = Counter()
