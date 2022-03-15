@@ -10,12 +10,12 @@ use crate::input_reader::InputReader;
 use crate::mpc_view::MPCView;
 
 pub struct MetricConfig<T: ColumnMetadata> {
-    input_reader: InputReader,
+    input_reader: Box<dyn InputReader>,
     view: MPCView<T>,
 }
 
 impl<T: ColumnMetadata> MetricConfig<T> {
-    pub fn new(input_reader: InputReader, view: MPCView<T>) -> Self {
+    pub fn new(input_reader: Box<dyn InputReader>, view: MPCView<T>) -> Self {
         Self { input_reader, view }
     }
 }
