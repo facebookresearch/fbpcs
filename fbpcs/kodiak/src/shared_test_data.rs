@@ -23,9 +23,20 @@ column_metadata! {
 
 impl TestEnum {
     fn from_row(&self, _r: &Row<Self>) -> MPCMetricDType {
-        panic!("Undefined for test");
+        unimplemented!("Undefined for test");
     }
     fn aggregate<I: Iterator<Item = Row<Self>>>(&self, _rows: I) -> MPCMetricDType {
-        panic!("Undefined for test");
+        unimplemented!("Undefined for test");
+    }
+    fn from_input(&self, input: &str) -> MPCMetricDType {
+        let parsed_input = input.parse().unwrap();
+        match &self {
+            Self::Variant1 => MPCMetricDType::MPCInt64(parsed_input),
+            Self::Variant2 => MPCMetricDType::MPCInt64(parsed_input),
+            Self::Variant3 => MPCMetricDType::MPCInt64(parsed_input),
+            Self::Variant4 => MPCMetricDType::MPCInt64(parsed_input),
+            Self::Variant5 => MPCMetricDType::MPCInt64(parsed_input),
+            Self::Variant6 => MPCMetricDType::MPCInt64(parsed_input),
+        }
     }
 }
