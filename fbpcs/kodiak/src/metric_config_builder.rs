@@ -6,25 +6,25 @@
  */
 
 use crate::column_metadata::ColumnMetadata;
-use crate::input_reader::InputReader;
+use crate::input_reader::{InputReader, LocalInputReader};
 use crate::metric_config::MetricConfig;
 use crate::mpc_view::MPCView;
 use crate::mpc_view_builder::MPCViewBuilder;
 
 pub struct MetricConfigBuilder<T: ColumnMetadata> {
-    input_reader: InputReader,
+    input_reader: Box<dyn InputReader>,
     view: MPCView<T>,
 }
 
 impl<T: ColumnMetadata> MetricConfigBuilder<T> {
     pub fn new() -> Self {
         Self {
-            input_reader: InputReader::new(""),
+            input_reader: Box::new(LocalInputReader::new("")),
             view: MPCViewBuilder::new().build(),
         }
     }
 
-    pub fn with_input_reader(&mut self, input_reader: InputReader) -> &Self {
+    pub fn with_input_reader(&mut self, input_reader: Box<dyn InputReader>) -> &Self {
         self.input_reader = input_reader;
         self
     }
