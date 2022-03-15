@@ -18,7 +18,7 @@ from fbpcs.input_data_validation.constants import (
     PL_FIELDS,
 )
 from fbpcs.input_data_validation.enums import ValidationResult
-from fbpcs.input_data_validation.validation_runner import ValidationRunner
+from fbpcs.input_data_validation.input_data_validator import InputDataValidator
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 # Name the file randomly in order to avoid failures when the tests run concurrently
@@ -29,7 +29,7 @@ TEST_TIMESTAMP: float = time.time()
 TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAMP}"
 
 
-class TestValidationRunner(TestCase):
+class TestInputDataValidator(TestCase):
     def setUp(self) -> None:
         with open(TEST_TEMP_FILEPATH, "a") as file:
             file.write("")
@@ -41,7 +41,7 @@ class TestValidationRunner(TestCase):
         with open(TEST_TEMP_FILEPATH, "wb") as tmp_csv_file:
             tmp_csv_file.writelines(lines)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     def test_initializing_the_validation_runner_fields(
         self, mock_storage_service: Mock
     ) -> None:
@@ -52,18 +52,16 @@ class TestValidationRunner(TestCase):
         constructed_storage_service = MagicMock()
         mock_storage_service.__init__(return_value=constructed_storage_service)
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, region, access_key_id, access_key_data
         )
 
         mock_storage_service.assert_called_with(region, access_key_id, access_key_data)
-        self.assertEqual(
-            validation_runner._storage_service, constructed_storage_service
-        )
-        self.assertEqual(validation_runner._input_file_path, TEST_INPUT_FILE_PATH)
-        self.assertEqual(validation_runner._cloud_provider, cloud_provider)
+        self.assertEqual(validator._storage_service, constructed_storage_service)
+        self.assertEqual(validator._input_file_path, TEST_INPUT_FILE_PATH)
+        self.assertEqual(validator._cloud_provider, cloud_provider)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     def test_run_validations_failure(self, storage_service_mock: Mock) -> None:
         exception_message = "failed to copy"
         input_file_path = "s3://test-bucket/data.csv"
@@ -76,15 +74,13 @@ class TestValidationRunner(TestCase):
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.copy.side_effect = Exception(exception_message)
 
-        validation_runner = ValidationRunner(
-            input_file_path, cloud_provider, "us-west-2"
-        )
-        report = validation_runner.run()
+        validator = InputDataValidator(input_file_path, cloud_provider, "us-west-2")
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_reads_the_local_csv_rows(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -103,15 +99,15 @@ class TestValidationRunner(TestCase):
             "rows_processed_count": 3,
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_errors_when_input_data_fields_not_found(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -130,15 +126,15 @@ class TestValidationRunner(TestCase):
             "rows_processed_count": 0,
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_errors_when_there_is_no_header_row(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -150,15 +146,15 @@ class TestValidationRunner(TestCase):
             "rows_processed_count": 0,
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_errors_when_the_line_ending_is_unsupported(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -177,15 +173,15 @@ class TestValidationRunner(TestCase):
             "rows_processed_count": 0,
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_reports_for_pl_when_row_values_are_empty(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -218,15 +214,15 @@ class TestValidationRunner(TestCase):
             },
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_reports_for_pa_when_row_values_are_empty(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -259,15 +255,15 @@ class TestValidationRunner(TestCase):
             },
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_reports_for_pl_when_row_values_are_not_valid(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -300,15 +296,15 @@ class TestValidationRunner(TestCase):
             },
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.validation_runner.S3StorageService")
-    @patch("fbpcs.input_data_validation.validation_runner.time")
+    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.input_data_validation.input_data_validator.time")
     def test_run_validations_reports_for_pa_when_row_values_are_not_valid(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -341,9 +337,9 @@ class TestValidationRunner(TestCase):
             },
         }
 
-        validation_runner = ValidationRunner(
+        validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
-        report = validation_runner.run()
+        report = validator.validate()
 
         self.assertDictEqual(report, expected_report)
