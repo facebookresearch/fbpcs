@@ -8,6 +8,7 @@
 use crate::column_metadata::ColumnMetadata;
 use crate::mpc_metric_dtype::MPCMetricDType;
 
+#[derive(Debug, PartialEq)]
 pub struct Row<T: ColumnMetadata> {
     // Dynamic columns because we don't really care about the underlying "data"
     // This allows us to track which columns have already been calculated
@@ -17,17 +18,17 @@ pub struct Row<T: ColumnMetadata> {
 }
 
 impl<T: ColumnMetadata> Row<T> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             columns: std::collections::HashMap::new(),
         }
     }
 
-    fn get_data(&self, t: &T) -> Option<&MPCMetricDType> {
+    pub fn get_data(&self, t: &T) -> Option<&MPCMetricDType> {
         self.columns.get(t)
     }
 
-    fn insert(&mut self, k: T, v: MPCMetricDType) -> Option<MPCMetricDType> {
+    pub fn insert(&mut self, k: T, v: MPCMetricDType) -> Option<MPCMetricDType> {
         self.columns.insert(k, v)
     }
 }

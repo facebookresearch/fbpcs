@@ -8,6 +8,7 @@
 pub mod column_metadata;
 pub mod dag;
 pub mod execution_config;
+pub mod input_processor;
 pub mod input_reader;
 pub mod metric_config;
 pub mod metric_config_builder;
