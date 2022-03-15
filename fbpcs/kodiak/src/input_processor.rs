@@ -17,6 +17,20 @@ pub struct InputProcessor<C: ColumnMetadata> {
 }
 
 impl<C: ColumnMetadata> InputProcessor<C> {
+    pub fn process_input(&self) -> impl Iterator<Item = Row<C>> + '_ {
+        let mut raw_lines = self.input_reader.read();
+        let header_line = raw_lines
+            .next()
+            .expect("Input file is empty (has no header)");
+        let header_tokens = self.tokenizer.tokenize(&header_line);
+        let header = self.to_header(header_tokens);
+        // we have to move the ownership of the header into the closure
+        // so that it doesn't go out of scope
+        raw_lines.map(move |line| {
+            let row_tokens = self.tokenizer.tokenize(&line);
+            self.to_row(row_tokens, &header)
+        })
+    }
     fn to_row(&self, tokens: Vec<&str>, header: &[Option<C>]) -> Row<C> {
         let mut row = Row::new();
         for (token, maybe_column) in tokens.into_iter().zip(header) {
