@@ -21,6 +21,9 @@ pub trait ColumnMetadata: std::cmp::Eq + std::hash::Hash + Sized + Clone + Copy 
     /// Compute this column's data for the given row
     fn from_row(&self, r: &Row<Self>) -> MPCMetricDType;
 
+    /// convert a data cell to an MPCMetricDType
+    fn from_input(&self, input: &str) -> MPCMetricDType;
+
     /// Aggregate all values in this column across the iterator of rows
     /// into the final value
     fn aggregate<I: Iterator<Item = Row<Self>>>(&self, rows: I) -> MPCMetricDType;
@@ -58,6 +61,9 @@ macro_rules! column_metadata {
             }
             fn aggregate<I: Iterator<Item = Row<Self>>>(&self, rows: I) -> MPCMetricDType {
                 self.aggregate(rows)
+            }
+            fn from_input(&self, input: &str) -> MPCMetricDType {
+                self.from_input(input)
             }
         }
 
