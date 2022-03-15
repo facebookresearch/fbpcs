@@ -64,56 +64,75 @@ impl<C: ColumnMetadata> InputProcessor<C> {
 #[cfg(test)]
 mod tests {
     use crate::input_processor::InputProcessor;
-    use crate::input_reader::LocalInputReader;
+    use crate::input_reader::InputReader;
     use crate::mpc_metric_dtype::MPCMetricDType;
     use crate::row::Row;
     use crate::shared_test_data::TestEnum;
     use crate::tokenizer::CSVTokenizer;
 
-    fn test_row_tokens() -> Vec<&'static str> {
-        vec!["1", "2", "3"]
+    //////////////////////// UTIL STRUCT //////////////////////
+    struct TestInputReader;
+
+    impl InputReader for TestInputReader {
+        fn read(&self) -> Box<dyn Iterator<Item = String>> {
+            Box::new(
+                vec![
+                    "Variant1,Variant2,Variant3".to_string(),
+                    "1,2,3".to_string(),
+                ]
+                .into_iter(),
+            )
+        }
     }
 
-    fn test_header_tokens() -> Vec<&'static str> {
-        vec!["Variant1", "Variant2", "Variant3"]
-    }
-
-    fn test_row() -> Row<TestEnum> {
+    //////////////////////// UTIL FUNCTIONS //////////////////////
+    fn get_expected_row() -> Row<TestEnum> {
         let mut row = Row::new();
         row.insert(TestEnum::Variant1, MPCMetricDType::MPCInt64(1));
         row.insert(TestEnum::Variant2, MPCMetricDType::MPCInt64(2));
         row
     }
 
-    fn test_header() -> Vec<Option<TestEnum>> {
+    fn get_expected_header() -> Vec<Option<TestEnum>> {
         vec![Some(TestEnum::Variant1), Some(TestEnum::Variant2), None]
     }
 
-    fn test_columns() -> Vec<TestEnum> {
+    fn get_expected_columns() -> Vec<TestEnum> {
         vec![TestEnum::Variant1, TestEnum::Variant2]
     }
 
-    fn test_processor() -> InputProcessor<TestEnum> {
+    fn get_test_processor() -> InputProcessor<TestEnum> {
         InputProcessor {
-            input_columns: test_columns(),
+            input_columns: get_expected_columns(),
             tokenizer: Box::new(CSVTokenizer),
-            input_reader: Box::new(LocalInputReader::new("")),
+            input_reader: Box::new(TestInputReader),
         }
     }
 
+    //////////////////////// UNIT TESTS //////////////////////
     #[test]
     fn test_to_header() {
-        let processor = test_processor();
-        let tokens = test_header_tokens();
+        let processor = get_test_processor();
+        let tokens = vec!["Variant1", "Variant2", "Variant3"];
         let actual_header = processor.to_header(tokens);
-        assert_eq!(test_header(), actual_header);
+        let expected_header = get_expected_header();
+        assert_eq!(expected_header, actual_header);
     }
 
     #[test]
     fn test_to_row() {
-        let processor = test_processor();
-        let tokens = test_row_tokens();
-        let actual_row = processor.to_row(tokens, &test_header());
-        assert_eq!(test_row(), actual_row);
+        let processor = get_test_processor();
+        let tokens = vec!["1", "2", "3"];
+        let actual_row = processor.to_row(tokens, &get_expected_header());
+        let expected_row = get_expected_row();
+        assert_eq!(expected_row, actual_row);
+    }
+
+    #[test]
+    fn test_process_input() {
+        let processor = get_test_processor();
+        let expected_rows = vec![get_expected_row()];
+        let actual_rows: Vec<_> = processor.process_input().collect();
+        assert_eq!(expected_rows, actual_rows);
     }
 }
