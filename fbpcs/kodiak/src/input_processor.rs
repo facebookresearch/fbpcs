@@ -46,3 +46,60 @@ impl<C: ColumnMetadata> InputProcessor<C> {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::input_processor::InputProcessor;
+    use crate::input_reader::LocalInputReader;
+    use crate::mpc_metric_dtype::MPCMetricDType;
+    use crate::row::Row;
+    use crate::shared_test_data::TestEnum;
+    use crate::tokenizer::CSVTokenizer;
+
+    fn test_row_tokens() -> Vec<&'static str> {
+        vec!["1", "2", "3"]
+    }
+
+    fn test_header_tokens() -> Vec<&'static str> {
+        vec!["Variant1", "Variant2", "Variant3"]
+    }
+
+    fn test_row() -> Row<TestEnum> {
+        let mut row = Row::new();
+        row.insert(TestEnum::Variant1, MPCMetricDType::MPCInt64(1));
+        row.insert(TestEnum::Variant2, MPCMetricDType::MPCInt64(2));
+        row
+    }
+
+    fn test_header() -> Vec<Option<TestEnum>> {
+        vec![Some(TestEnum::Variant1), Some(TestEnum::Variant2), None]
+    }
+
+    fn test_columns() -> Vec<TestEnum> {
+        vec![TestEnum::Variant1, TestEnum::Variant2]
+    }
+
+    fn test_processor() -> InputProcessor<TestEnum> {
+        InputProcessor {
+            input_columns: test_columns(),
+            tokenizer: Box::new(CSVTokenizer),
+            input_reader: Box::new(LocalInputReader::new("")),
+        }
+    }
+
+    #[test]
+    fn test_to_header() {
+        let processor = test_processor();
+        let tokens = test_header_tokens();
+        let actual_header = processor.to_header(tokens);
+        assert_eq!(test_header(), actual_header);
+    }
+
+    #[test]
+    fn test_to_row() {
+        let processor = test_processor();
+        let tokens = test_row_tokens();
+        let actual_row = processor.to_row(tokens, &test_header());
+        assert_eq!(test_row(), actual_row);
+    }
+}
