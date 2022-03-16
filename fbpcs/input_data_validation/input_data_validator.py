@@ -7,7 +7,7 @@
 
 
 """
-This is the main class that runs all of the validations.
+This is the main class that runs the input data validations.
 
 This class handles the overall logic to:
 * Copy the file to local storage
@@ -20,12 +20,12 @@ Error handling:
 
 import csv
 import time
-from typing import Any, Dict, Optional
-from typing import Sequence
+from typing import Sequence, Optional
 
 from fbpcp.service.storage_s3 import S3StorageService
-from fbpcs.input_data_validation.constants import INPUT_DATA_TMP_FILE_PATH
 from fbpcs.input_data_validation.constants import (
+    INPUT_DATA_TMP_FILE_PATH,
+    INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
     PL_FIELDS,
     VALID_LINE_ENDING_REGEX,
@@ -35,10 +35,12 @@ from fbpcs.input_data_validation.enums import ValidationResult
 from fbpcs.input_data_validation.input_data_validation_issues import (
     InputDataValidationIssues,
 )
+from fbpcs.input_data_validation.validation_report import ValidationReport
+from fbpcs.input_data_validation.validator import Validator
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 
-class InputDataValidator:
+class InputDataValidator(Validator):
     def __init__(
         self,
         input_file_path: str,
@@ -54,13 +56,18 @@ class InputDataValidator:
         self._local_file_path: str = self._get_local_filepath()
         self._cloud_provider = cloud_provider
         self._storage_service = S3StorageService(region, access_key_id, access_key_data)
+        self._name: str = INPUT_DATA_VALIDATOR_NAME
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def _get_local_filepath(self) -> str:
         now = time.time()
         filename = self._input_file_path.split("/")[-1]
         return f"{INPUT_DATA_TMP_FILE_PATH}/{filename}-{now}"
 
-    def validate(self) -> Dict[str, str]:
+    def __validate__(self) -> ValidationReport:
         rows_processed_count = 0
         validation_issues = InputDataValidationIssues()
         try:
@@ -86,14 +93,14 @@ class InputDataValidator:
                     rows_processed_count += 1
 
         except Exception as e:
-            return self._format_validation_result(
+            return self._format_validation_report(
                 ValidationResult.FAILED,
                 f"File: {self._input_file_path} failed validation. Error: {e}",
                 rows_processed_count,
                 validation_issues,
             )
 
-        return self._format_validation_result(
+        return self._format_validation_report(
             ValidationResult.SUCCESS,
             f"File: {self._input_file_path} completed validation successfully",
             rows_processed_count,
@@ -130,22 +137,32 @@ class InputDataValidator:
         elif field in VALIDATION_REGEXES and not VALIDATION_REGEXES[field].match(value):
             validation_issues.count_format_error_field(field)
 
-    def _format_validation_result(
+    def _format_validation_report(
         self,
-        status: ValidationResult,
+        result: ValidationResult,
         message: str,
         rows_processed_count: int,
         validation_issues: InputDataValidationIssues,
-    ) -> Dict[str, Any]:
-        result = {
-            "status": status.value,
-            "message": message,
-            "rows_processed_count": rows_processed_count,
-        }
+    ) -> ValidationReport:
 
         validation_errors = validation_issues.get_as_dict()
-        if validation_errors:
-            result["validation_errors"] = validation_errors
-            result["message"] += ", with some errors."
 
-        return result
+        if validation_errors:
+            return ValidationReport(
+                validation_result=result,
+                validator_name=INPUT_DATA_VALIDATOR_NAME,
+                message=f"{message}, with some errors.",
+                details={
+                    "rows_processed_count": rows_processed_count,
+                    "validation_errors": validation_errors,
+                },
+            )
+        else:
+            return ValidationReport(
+                validation_result=result,
+                validator_name=INPUT_DATA_VALIDATOR_NAME,
+                message=message,
+                details={
+                    "rows_processed_count": rows_processed_count,
+                },
+            )

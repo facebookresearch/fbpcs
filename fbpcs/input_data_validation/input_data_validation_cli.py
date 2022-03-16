@@ -69,14 +69,14 @@ def main() -> None:
     )
     validation_report = validator.validate()
 
-    validation_report_status = validation_report["status"]
-    if validation_report_status == ValidationResult.FAILED.value:
+    validation_result = validation_report.validation_result
+    if validation_result == ValidationResult.FAILED:
         raise Exception(validation_report)
-    elif validation_report_status == ValidationResult.SUCCESS.value:
+    elif validation_result == ValidationResult.SUCCESS:
         print(f"Success: {validation_report}")
     else:
         raise Exception(
-            "Unknown validation_report status: {validation_report_status}.\n"
+            "Unknown validation result: {validation_result}.\n"
             + "Validation report: {validation_report}"
         )
 

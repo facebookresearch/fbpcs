@@ -13,12 +13,14 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 
 from fbpcs.input_data_validation.constants import (
+    INPUT_DATA_VALIDATOR_NAME,
     INPUT_DATA_TMP_FILE_PATH,
     PA_FIELDS,
     PL_FIELDS,
 )
 from fbpcs.input_data_validation.enums import ValidationResult
 from fbpcs.input_data_validation.input_data_validator import InputDataValidator
+from fbpcs.input_data_validation.validation_report import ValidationReport
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 # Name the file randomly in order to avoid failures when the tests run concurrently
@@ -66,18 +68,21 @@ class TestInputDataValidator(TestCase):
         exception_message = "failed to copy"
         input_file_path = "s3://test-bucket/data.csv"
         cloud_provider = CloudProvider.AWS
-        expected_report = {
-            "status": ValidationResult.FAILED.value,
-            "message": f"File: {input_file_path} failed validation. Error: {exception_message}",
-            "rows_processed_count": 0,
-        }
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {input_file_path} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.copy.side_effect = Exception(exception_message)
 
         validator = InputDataValidator(input_file_path, cloud_provider, "us-west-2")
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -93,18 +98,21 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,100,1645157987\n",
         ]
         self.write_lines_to_file(lines)
-        expected_report = {
-            "status": ValidationResult.SUCCESS.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
-            "rows_processed_count": 3,
-        }
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
+            details={
+                "rows_processed_count": 3,
+            },
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -120,18 +128,21 @@ class TestInputDataValidator(TestCase):
             b"4,5,6\n",
         ]
         self.write_lines_to_file(lines)
-        expected_report = {
-            "status": ValidationResult.FAILED.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
-            "rows_processed_count": 0,
-        }
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -140,18 +151,21 @@ class TestInputDataValidator(TestCase):
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         cloud_provider = CloudProvider.AWS
-        expected_report = {
-            "status": ValidationResult.FAILED.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: The header row was empty.",
-            "rows_processed_count": 0,
-        }
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: The header row was empty.",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -167,18 +181,21 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,100,1645157987\r\n",
         ]
         self.write_lines_to_file(lines)
-        expected_report = {
-            "status": ValidationResult.FAILED.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
-            "rows_processed_count": 0,
-        }
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -197,29 +214,32 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,100,\n",
         ]
         self.write_lines_to_file(lines)
-        expected_report = {
-            "status": ValidationResult.SUCCESS.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
-            "rows_processed_count": 6,
-            "validation_errors": {
-                "id_": {
-                    "empty": 1,
-                },
-                "value": {
-                    "empty": 2,
-                },
-                "event_timestamp": {
-                    "empty": 4,
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            details={
+                "rows_processed_count": 6,
+                "validation_errors": {
+                    "id_": {
+                        "empty": 1,
+                    },
+                    "value": {
+                        "empty": 2,
+                    },
+                    "event_timestamp": {
+                        "empty": 4,
+                    },
                 },
             },
-        }
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -238,29 +258,32 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,100,,\n",
         ]
         self.write_lines_to_file(lines)
-        expected_report = {
-            "status": ValidationResult.SUCCESS.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
-            "rows_processed_count": 6,
-            "validation_errors": {
-                "conversion_value": {
-                    "empty": 2,
-                },
-                "conversion_timestamp": {
-                    "empty": 4,
-                },
-                "conversion_metadata": {
-                    "empty": 3,
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            details={
+                "rows_processed_count": 6,
+                "validation_errors": {
+                    "conversion_value": {
+                        "empty": 2,
+                    },
+                    "conversion_timestamp": {
+                        "empty": 4,
+                    },
+                    "conversion_metadata": {
+                        "empty": 3,
+                    },
                 },
             },
-        }
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -278,30 +301,33 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,,&\n",
         ]
         self.write_lines_to_file(lines)
-        expected_report = {
-            "status": ValidationResult.SUCCESS.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
-            "rows_processed_count": 5,
-            "validation_errors": {
-                "id_": {
-                    "bad_format": 1,
-                },
-                "value": {
-                    "bad_format": 1,
-                    "empty": 2,
-                },
-                "event_timestamp": {
-                    "bad_format": 3,
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            details={
+                "rows_processed_count": 5,
+                "validation_errors": {
+                    "id_": {
+                        "bad_format": 1,
+                    },
+                    "value": {
+                        "bad_format": 1,
+                        "empty": 2,
+                    },
+                    "event_timestamp": {
+                        "bad_format": 3,
+                    },
                 },
             },
-        }
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
 
     @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.input_data_validation.input_data_validator.time")
@@ -318,28 +344,31 @@ class TestInputDataValidator(TestCase):
             b",100,...,data\n",
         ]
         self.write_lines_to_file(lines)
-        expected_report = {
-            "status": ValidationResult.SUCCESS.value,
-            "message": f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
-            "rows_processed_count": 4,
-            "validation_errors": {
-                "id_": {
-                    "bad_format": 2,
-                    "empty": 1,
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            details={
+                "rows_processed_count": 4,
+                "validation_errors": {
+                    "id_": {
+                        "bad_format": 2,
+                        "empty": 1,
+                    },
+                    "conversion_value": {
+                        "bad_format": 1,
+                    },
+                    "conversion_timestamp": {
+                        "bad_format": 2,
+                    },
+                    "conversion_metadata": {"bad_format": 1, "empty": 2},
                 },
-                "conversion_value": {
-                    "bad_format": 1,
-                },
-                "conversion_timestamp": {
-                    "bad_format": 2,
-                },
-                "conversion_metadata": {"bad_format": 1, "empty": 2},
             },
-        }
+        )
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 
-        self.assertDictEqual(report, expected_report)
+        self.assertEqual(report, expected_report)
