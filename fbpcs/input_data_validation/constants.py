@@ -10,6 +10,7 @@ import re
 from typing import Dict, List, Pattern
 
 INPUT_DATA_TMP_FILE_PATH = "/tmp"
+INPUT_DATA_VALIDATOR_NAME = "Input Data Validator"
 
 ID_FIELD = "id_"
 CONVERSION_VALUE_FIELD = "conversion_value"
