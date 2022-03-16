@@ -23,6 +23,9 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
+from fbpcs.private_computation.entity.pc_validator_config import (
+    PCValidatorConfig,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -407,6 +410,7 @@ def _build_private_computation_service(
         ),
         onedocker_service,
         onedocker_binary_config_map,
+        _parse_pc_validator_config(pc_config),
         _get_post_processing_handlers(pph_config),
         _get_post_processing_handlers(pid_pph_config),
     )
@@ -453,3 +457,14 @@ def _build_onedocker_binary_cfg_map(
         onedocker_binary_cfg_map[binary_name] = _build_onedocker_binary_cfg(config)
 
     return onedocker_binary_cfg_map
+
+
+def _parse_pc_validator_config(pc_config: Dict[str, Any]) -> PCValidatorConfig:
+    raw_pc_validator_config = pc_config["dependency"].get("PCValidatorConfig")
+    if not raw_pc_validator_config:
+        storage_svc_region = pc_config["dependency"]["StorageService"]["constructor"][
+            "region"
+        ]
+        # The Validator needs to run in the same region as the storage_svc by default
+        return PCValidatorConfig(region=storage_svc_region)
+    return reflect.get_instance(raw_pc_validator_config, PCValidatorConfig)
