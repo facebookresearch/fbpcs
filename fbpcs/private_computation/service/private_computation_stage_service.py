@@ -17,6 +17,9 @@ from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
+from fbpcs.private_computation.entity.pc_validator_config import (
+    PCValidatorConfig,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -37,6 +40,7 @@ class PrivateComputationStageServiceArgs:
     post_processing_handlers: Dict[str, PostProcessingHandler]
     pid_post_processing_handlers: Dict[str, PostProcessingHandler]
     onedocker_svc: OneDockerService
+    pc_validator_config: PCValidatorConfig
 
 
 class PrivateComputationStageService(abc.ABC):

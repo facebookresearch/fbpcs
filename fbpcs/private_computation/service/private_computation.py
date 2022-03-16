@@ -20,6 +20,9 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
+from fbpcs.private_computation.entity.pc_validator_config import (
+    PCValidatorConfig,
+)
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
@@ -74,6 +77,7 @@ class PrivateComputationService:
         pid_svc: PIDService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
+        pc_validator_config: PCValidatorConfig,
         post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
         pid_post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
     ) -> None:
@@ -92,6 +96,7 @@ class PrivateComputationService:
         self.pid_post_processing_handlers: Dict[str, PostProcessingHandler] = (
             pid_post_processing_handlers or {}
         )
+        self.pc_validator_config = pc_validator_config
         self.stage_service_args = PrivateComputationStageServiceArgs(
             self.pid_svc,
             self.onedocker_binary_config_map,
@@ -100,6 +105,7 @@ class PrivateComputationService:
             self.post_processing_handlers,
             self.pid_post_processing_handlers,
             self.onedocker_svc,
+            self.pc_validator_config,
         )
         self.logger: logging.Logger = logging.getLogger(__name__)
 

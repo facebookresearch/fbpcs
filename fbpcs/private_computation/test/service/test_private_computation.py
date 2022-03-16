@@ -23,6 +23,9 @@ from fbpcs.pid.entity.pid_instance import (
     UnionPIDStage,
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.private_computation.entity.pc_validator_config import (
+    PCValidatorConfig,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -133,6 +136,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             onedocker_binary_config_map=self.onedocker_binary_config_map,
         )
 
+        self.pc_validator_config = PCValidatorConfig(
+            region="us-west-2",
+        )
+
         self.private_computation_service = PrivateComputationService(
             instance_repository=private_computation_instance_repository,
             storage_svc=storage_svc,
@@ -140,6 +147,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             pid_svc=self.pid_service,
             onedocker_svc=self.onedocker_service,
             onedocker_binary_config_map=self.onedocker_binary_config_map,
+            pc_validator_config=self.pc_validator_config,
         )
 
         self.test_private_computation_id = "test_private_computation_id"

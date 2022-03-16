@@ -9,6 +9,9 @@
 import logging
 from typing import List, Optional
 
+from fbpcs.private_computation.entity.pc_validator_config import (
+    PCValidatorConfig,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
@@ -31,11 +34,12 @@ class InputDataValidationStageService(PrivateComputationStageService):
     It is implemented in a Cloud agnostic way.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, pc_validator_config: PCValidatorConfig) -> None:
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._failed_status: PrivateComputationInstanceStatus = (
             PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
         )
+        self._pc_validator_config: PCValidatorConfig = pc_validator_config
 
     async def run_async(
         self,

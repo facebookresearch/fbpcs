@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import Mock
 
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -37,8 +38,10 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
 
     async def test_run_async_changes_the_status_when_there_are_no_issues(self) -> None:
         pc_instance = self._pc_instance
-        stage_service = InputDataValidationStageService()
+        mock_pc_validator_config = Mock("PC Validator Config")
+        stage_service = InputDataValidationStageService(mock_pc_validator_config)
 
+        self.assertEqual(stage_service._pc_validator_config, mock_pc_validator_config)
         self.assertEqual(
             pc_instance.status,
             PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_STARTED,
