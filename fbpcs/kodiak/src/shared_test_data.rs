@@ -25,7 +25,10 @@ impl TestEnum {
     fn from_row(&self, _r: &Row<Self>) -> MPCMetricDType {
         unimplemented!("Undefined for test");
     }
-    fn aggregate<I: Iterator<Item = Row<Self>>>(&self, _rows: I) -> MPCMetricDType {
+    fn aggregate<'a, I: Iterator<Item = &'a Row<Self>>>(&self, _rows: I) -> MPCMetricDType
+    where
+        Self: 'a,
+    {
         unimplemented!("Undefined for test");
     }
     fn from_input(&self, input: &str) -> MPCMetricDType {
@@ -38,5 +41,49 @@ impl TestEnum {
             Self::Variant5 => MPCMetricDType::MPCInt64(parsed_input),
             Self::Variant6 => MPCMetricDType::MPCInt64(parsed_input),
         }
+    }
+}
+
+struct Variant1;
+struct Variant2;
+
+impl Variant1 {
+    fn from_row(_r: &Row<TestEnumWithAuto>) -> MPCMetricDType {
+        MPCMetricDType::MPCInt64(1)
+    }
+
+    fn from_input(_input: &str) -> MPCMetricDType {
+        MPCMetricDType::MPCInt64(2)
+    }
+
+    fn aggregate<'a, I: Iterator<Item = &'a Row<TestEnumWithAuto>>>(_rows: I) -> MPCMetricDType
+    where
+        TestEnumWithAuto: 'a,
+    {
+        MPCMetricDType::MPCInt64(3)
+    }
+}
+
+impl Variant2 {
+    fn from_row(_r: &Row<TestEnumWithAuto>) -> MPCMetricDType {
+        MPCMetricDType::MPCInt64(4)
+    }
+
+    fn from_input(_input: &str) -> MPCMetricDType {
+        MPCMetricDType::MPCInt64(5)
+    }
+
+    fn aggregate<'a, I: Iterator<Item = &'a Row<TestEnumWithAuto>>>(_rows: I) -> MPCMetricDType
+    where
+        TestEnumWithAuto: 'a,
+    {
+        MPCMetricDType::MPCInt64(6)
+    }
+}
+
+column_metadata! {
+    TestEnumWithAuto auto {
+        Variant1 -> [],
+        Variant2 -> [Variant1],
     }
 }
