@@ -132,7 +132,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         if self is self.CREATED:
             return DummyStageService()
         elif self is self.INPUT_DATA_VALIDATION:
-            return InputDataValidationStageService(args.storage_svc)
+            return InputDataValidationStageService()
         elif self is self.PID_SHARD:
             return PIDStageService(
                 args.pid_svc,
