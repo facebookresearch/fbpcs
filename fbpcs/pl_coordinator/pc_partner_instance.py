@@ -36,8 +36,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 )
 
 
-# TODO(T107103724): [BE] rename PrivateLiftPartnerInstance
-class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
+class PrivateComputationPartnerInstance(PrivateLiftCalcInstance):
     """
     Representation of a partner instance.
     """

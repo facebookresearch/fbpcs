@@ -24,7 +24,7 @@ from fbpcs.pl_coordinator.constants import (
     CANCEL_STAGE_TIMEOUT,
 )
 from fbpcs.pl_coordinator.exceptions import PLInstanceCalculationException
-from fbpcs.pl_coordinator.pc_partner_instance import PrivateLiftPartnerInstance
+from fbpcs.pl_coordinator.pc_partner_instance import PrivateComputationPartnerInstance
 from fbpcs.pl_coordinator.pc_publisher_instance import (
     PrivateComputationPublisherInstance,
 )
@@ -176,7 +176,7 @@ class PLInstanceRunner:
         self.publisher = PrivateComputationPublisherInstance(
             instance_id, logger, client
         )
-        self.partner = PrivateLiftPartnerInstance(
+        self.partner = PrivateComputationPartnerInstance(
             instance_id=instance_id,
             config=config,
             input_path=input_path,
