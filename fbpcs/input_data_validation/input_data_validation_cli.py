@@ -24,9 +24,13 @@ Usage:
 """
 
 
+from typing import cast
+
 from docopt import docopt
 from fbpcs.input_data_validation.enums import ValidationResult
 from fbpcs.input_data_validation.input_data_validator import InputDataValidator
+from fbpcs.input_data_validation.validator import Validator
+from fbpcs.input_data_validation.validators_runner import run_validators
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 from schema import Schema, Optional, Or, Use
 
@@ -60,24 +64,29 @@ def main() -> None:
     assert arguments
     print("Parsed input_data_validation_cli arguments")
 
-    validator = InputDataValidator(
-        arguments[INPUT_FILE_PATH],
-        arguments[CLOUD_PROVIDER],
-        arguments[REGION],
-        arguments[ACCESS_KEY_ID],
-        arguments[ACCESS_KEY_DATA],
-    )
-    validation_report = validator.validate()
+    validators = [
+        cast(
+            Validator,
+            InputDataValidator(
+                arguments[INPUT_FILE_PATH],
+                arguments[CLOUD_PROVIDER],
+                arguments[REGION],
+                arguments[ACCESS_KEY_ID],
+                arguments[ACCESS_KEY_DATA],
+            ),
+        )
+    ]
 
-    validation_result = validation_report.validation_result
-    if validation_result == ValidationResult.FAILED:
-        raise Exception(validation_report)
-    elif validation_result == ValidationResult.SUCCESS:
-        print(f"Success: {validation_report}")
+    (aggregated_result, aggregated_report) = run_validators(validators)
+
+    if aggregated_result == ValidationResult.FAILED:
+        raise Exception(aggregated_report)
+    elif aggregated_result == ValidationResult.SUCCESS:
+        print(f"Success: {aggregated_report}")
     else:
         raise Exception(
-            "Unknown validation result: {validation_result}.\n"
-            + "Validation report: {validation_report}"
+            "Unknown validation result: {aggregated_result}.\n"
+            + "Validation report: {aggregated_report}"
         )
 
 
