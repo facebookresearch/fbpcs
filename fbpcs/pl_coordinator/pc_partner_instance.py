@@ -11,7 +11,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from fbpcs.pl_coordinator.constants import WAIT_VALID_STATUS_TIMEOUT
-from fbpcs.pl_coordinator.pc_calc_instance import PrivateLiftCalcInstance
+from fbpcs.pl_coordinator.pc_calc_instance import PrivateComputationCalcInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -36,7 +36,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 )
 
 
-class PrivateComputationPartnerInstance(PrivateLiftCalcInstance):
+class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
     """
     Representation of a partner instance.
     """

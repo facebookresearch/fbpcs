@@ -11,7 +11,7 @@ import logging
 from typing import List, Optional
 
 from fbpcs.pl_coordinator.constants import WAIT_VALID_STATUS_TIMEOUT
-from fbpcs.pl_coordinator.pc_calc_instance import PrivateLiftCalcInstance
+from fbpcs.pl_coordinator.pc_calc_instance import PrivateComputationCalcInstance
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     GRAPHAPI_INSTANCE_STATUSES,
     GraphAPIGenericException,
@@ -28,7 +28,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 )
 
 
-class PrivateComputationPublisherInstance(PrivateLiftCalcInstance):
+class PrivateComputationPublisherInstance(PrivateComputationCalcInstance):
     """
     Representation of a publisher instance.
     """
