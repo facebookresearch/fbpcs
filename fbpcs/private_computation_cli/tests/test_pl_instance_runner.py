@@ -53,7 +53,7 @@ class TestPlInstanceRunner(TestCase):
         self.instance_id = "123"
 
     @patch(
-        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_valid_status"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateComputationCalcInstance.wait_valid_status"
     )
     @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_ready_for_stage(self, mock_get_instance, mock_wait_valid_status) -> None:
@@ -89,7 +89,7 @@ class TestPlInstanceRunner(TestCase):
                 )
 
     @patch(
-        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_valid_status"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateComputationCalcInstance.wait_valid_status"
     )
     @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_get_valid_stage(self, mock_get_instance, mock_wait_valid_status) -> None:
@@ -119,7 +119,7 @@ class TestPlInstanceRunner(TestCase):
                 self.assertEqual(valid_stage, stage)
 
     @patch(
-        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_valid_status"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateComputationCalcInstance.wait_valid_status"
     )
     @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
     def test_should_invoke(self, mock_get_instance, mock_wait_valid_status) -> None:
@@ -162,7 +162,7 @@ class TestPlInstanceRunner(TestCase):
 
     @patch("fbpcs.pl_coordinator.pc_partner_instance.run_stage")
     @patch(
-        "fbpcs.pl_coordinator.pc_calc_instance.PrivateLiftCalcInstance.wait_stage_start"
+        "fbpcs.pl_coordinator.pc_calc_instance.PrivateComputationCalcInstance.wait_stage_start"
     )
     @patch(
         "fbpcs.pl_coordinator.pl_instance_runner.PLInstanceRunner.wait_stage_complete"
