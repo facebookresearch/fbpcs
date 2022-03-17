@@ -9,6 +9,7 @@
 
 import functools
 import logging
+import re
 import warnings
 from typing import Any, Dict, List, Optional
 
@@ -207,3 +208,86 @@ def deprecated(reason: str):
         return wrapped
 
     return wrap
+
+
+def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str:
+    """Transforms URL paths passed through the CLI to preferred access formats
+
+    Args:
+        file_path: The path to be transformed
+
+    Returns:
+        A URL in our preffered format (virtual-hosted server or local)
+
+    Exceptions:
+        ValueError:
+    """
+
+    # Check if it matches the path style access format, https://s3.Region.amazonaws.com/bucket-name/key-name
+    if re.search(
+        r"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/[a-z0-9.-]+/[a-z0-9.-/]+",
+        file_path,
+    ):
+
+        # Extract Bucket, Key, and Region
+        key_name_search = re.search(
+            r"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/[a-z0-9.-]+/", file_path
+        )
+        bucket_name_search = re.search(
+            r"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/", file_path
+        )
+        region_start_search = re.search(r"https://[sS]3\.", file_path)
+        region_end_search = re.search(r".amazonaws\.com/", file_path)
+        bucket = ""
+        key = ""
+
+        # Check for not None rather than extracting on search, to keep pyre happy
+        if (
+            key_name_search
+            and bucket_name_search
+            and region_start_search
+            and region_end_search
+        ):
+            aws_region = file_path[
+                region_start_search.span()[1] : region_end_search.span()[0]
+            ]
+            bucket = file_path[
+                bucket_name_search.span()[1] : key_name_search.span()[1] - 1
+            ]
+            key = file_path[key_name_search.span()[1] :]
+
+        file_path = f"https://{bucket}.s3.{aws_region}.amazonaws.com/{key}"
+
+    # Check if it matches the s3 style access format, s3://bucket-name/key-name
+    if re.search(r"[sS]3://[a-z0-9.-]+/[a-z0-9.-/]+", file_path):
+
+        if aws_region is not None:
+
+            # Extract Bucket, Key
+            bucket_name_search = re.search(r"[sS]3://", file_path)
+            key_name_search = re.search(r"[sS]3://[a-z0-9.-]+/", file_path)
+            bucket = ""
+            key = ""
+
+            # Check for not None rather than extracting on search, to keep pyre happy
+            if key_name_search and bucket_name_search:
+
+                bucket = file_path[
+                    bucket_name_search.span()[1] : key_name_search.span()[1] - 1
+                ]
+                key = file_path[key_name_search.span()[1] :]
+
+            file_path = f"https://{bucket}.s3.{aws_region}.amazonaws.com/{key}"
+
+        else:
+            raise ValueError("Cannot be parsed to expected virtual-hosted-file format")
+
+    if re.search(
+        r"https://[a-zA-Z0-9.-]+\.s3\.[a-zA-Z0-9.-]+\.amazonaws.com/[a-z0-9.-/]+",
+        file_path,
+    ):
+        return file_path
+    else:
+        raise ValueError(
+            "Error transforming into expected virtual-hosted format. Bad input?"
+        )

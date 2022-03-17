@@ -50,6 +50,7 @@ from fbpcs.private_computation.service.utils import (
     create_and_start_mpc_instance,
     map_private_computation_role_to_mpc_party,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+    transform_file_path,
 )
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -741,3 +742,63 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD,
             hmac_key=self.test_hmac_key,
         )
+
+
+class TestTransformFilePath(unittest.TestCase):
+    def test_virtual_hosted_format(self):
+
+        test_cases = [
+            "https://bucket-name.s3.Region.amazonaws.com/key-name",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://s3-S3-amazonaws-com-name.s3.Region.amazonaws.com/us-west-s3S3amazoncom/-name",  # contrived, 'worst' case example
+        ]
+        expected_results = [
+            "https://bucket-name.s3.Region.amazonaws.com/key-name",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://s3-S3-amazonaws-com-name.s3.Region.amazonaws.com/us-west-s3S3amazoncom/-name",
+        ]
+
+        for x, y in zip(test_cases, expected_results):
+            self.assertEqual(transform_file_path(x), y)
+
+    def test_s3_format(self):
+
+        test_cases = [
+            "S3://bucket-name/key-name",
+            "s3://bucket-name/key-name",
+            "s3://fbpcs-github-e2e/lift/results/partner_expected_result.json",
+        ]
+        expected_results = [
+            "https://bucket-name.s3.Region.amazonaws.com/key-name",
+            "https://bucket-name.s3.Region.amazonaws.com/key-name",
+            "https://fbpcs-github-e2e.s3.Region.amazonaws.com/lift/results/partner_expected_result.json",
+        ]
+
+        for x, y in zip(test_cases, expected_results):
+            self.assertEqual(transform_file_path(x, "Region"), y)
+
+    def test_path_format(self):
+
+        test_cases = [
+            "https://s3.Region.amazonaws.com/bucket-name/key-name",
+            "https://s3.us-west-2.amazonaws.com/fbpcs-github-e2e/lift/results/partner_expected_result.json",
+        ]
+        expected_results = [
+            "https://bucket-name.s3.Region.amazonaws.com/key-name",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+        ]
+
+        for x, y in zip(test_cases, expected_results):
+            self.assertEqual(transform_file_path(x), y)
+
+    def test_bad_inputs(self):
+
+        test_cases = [
+            "",
+            "www.facebook.com",
+            "aaaa",
+        ]
+
+        for x in test_cases:
+            with self.assertRaises(ValueError):
+                transform_file_path(x)
