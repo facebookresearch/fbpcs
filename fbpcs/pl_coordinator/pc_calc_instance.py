@@ -28,6 +28,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 
+
 class PrivateComputationCalcInstance:
     """
     Representation of a publisher or partner instance being calculated.
