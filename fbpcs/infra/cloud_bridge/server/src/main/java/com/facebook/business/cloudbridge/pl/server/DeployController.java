@@ -39,6 +39,7 @@ public class DeployController {
 
   private DeploymentRunner runner;
   private Semaphore singleProvisioningLock = new Semaphore(1);
+  private LogStreamer logStreamer = new LogStreamer();
 
   @PostMapping(
       path = "/v1/deployment",
@@ -89,7 +90,7 @@ public class DeployController {
         return new APIReturn(APIReturn.Status.STATUS_FAIL, errorMessage);
       }
       logger.info("  No deployment conflicts found");
-
+      logStreamer.startFresh();
       runner =
           new DeploymentRunner(
               shouldDeploy,
@@ -166,12 +167,16 @@ public class DeployController {
     logger.info("checkHealth: Received status request");
   }
 
-  @GetMapping(path = "/v1/deployment/streamLogs", produces = "application/json")
-  public List<String> deploymentStreamLogs() {
-    logger.info("Received getStream log request");
+  @GetMapping(
+      path = "/v1/deployment/streamLogs",
+      produces = "application/json",
+      consumes = "application/json")
+  public List<String> deploymentStreamLogs(@RequestBody Boolean refresh) {
+    logger.info("Received getStream log request: refresh " + refresh);
     List<String> result = new ArrayList<>();
-    if (runner != null) {
-      result = runner.getStreamingLogs();
+    result = logStreamer.getStreamingLogs(refresh);
+    if (runner == null) {
+      logStreamer.pause();
     }
     return result;
   }

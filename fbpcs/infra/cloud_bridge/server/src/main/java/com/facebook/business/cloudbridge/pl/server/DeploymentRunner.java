@@ -21,8 +21,6 @@ public class DeploymentRunner extends Thread {
   private Runnable deploymentFinishedCallback;
   private Process provisioningProcess;
   private BufferedWriter deployLogFile;
-  private BufferedReader deployStreamFile;
-
   private int exitValue;
 
   public int getExitValue() {
@@ -81,26 +79,9 @@ public class DeploymentRunner extends Thread {
 
     try {
       deployLogFile = new BufferedWriter(new FileWriter("/tmp/deploy.log", true));
-      File file = new File(Constants.DEPLOYMENT_STREAMING_LOG_FILE);
-      file.createNewFile();
-      deployStreamFile =
-          new BufferedReader(new FileReader(Constants.DEPLOYMENT_STREAMING_LOG_FILE));
     } catch (IOException e) {
       logger.error("An exception happened: ", e.getMessage());
     }
-  }
-
-  public ArrayList<String> getStreamingLogs() {
-    String s = null;
-    ArrayList<String> messages = new ArrayList<String>();
-    try {
-      while (deployStreamFile.ready() && (s = deployStreamFile.readLine()) != null) {
-        messages.add(s);
-      }
-    } catch (final Exception e) {
-      logger.error("An exception happened during reading: " + e.getMessage());
-    }
-    return messages;
   }
 
   private void buildDeployCommand(boolean shouldDeploy, DeploymentParams deployment) {
@@ -182,7 +163,6 @@ public class DeploymentRunner extends Thread {
     deploymentState = DeploymentState.STATE_HALTED;
     try {
       deployLogFile.close();
-      deployStreamFile.close();
     } catch (IOException e) {
       logger.error("Failed to close Logger File");
     }
