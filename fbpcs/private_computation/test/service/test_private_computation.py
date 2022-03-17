@@ -4,9 +4,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
+import time
 import unittest
 from collections import defaultdict
 from typing import List, Optional, Tuple
+from unittest import mock
 from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
@@ -159,6 +162,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.test_concurrency = 1
         self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
+    @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance(self) -> None:
         test_role = PrivateComputationRole.PUBLISHER
         self.private_computation_service.create_instance(
@@ -183,7 +187,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.test_private_computation_id, args.instance_id)
         self.assertEqual(test_role, args.role)
         self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
+        self.assertEqual(1, args.creation_ts)
 
+    @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
         test_pid_id = self.test_private_computation_id + "_id_match"
         test_pid_role = PIDRole.PUBLISHER
@@ -219,6 +225,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.private_computation_service.instance_repository.read = MagicMock(
             return_value=private_computation_instance
         )
+
+        # end_ts should not be calculated until the instance run is complete.
+        self.assertEqual(0, private_computation_instance.end_ts)
 
         # call update on the PrivateComputationInstance
         updated_instance = self.private_computation_service.update_instance(
@@ -297,6 +306,27 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
             updated_instance.status,
+        )
+
+        # elapsed_time should report current running time if the run is incomplete.
+        self.assertEqual(
+            time.time() - private_computation_instance.creation_ts + 1,
+            private_computation_instance.elapsed_time,
+        )
+
+        expected_end_ts = time.time() + 2
+        private_computation_instance.update_status(
+            private_computation_instance.stage_flow.get_last_stage().completed_status,
+            logging.getLogger(),
+        )
+        self.assertEqual(expected_end_ts, private_computation_instance.end_ts)
+        expected_elapsed_time = (
+            private_computation_instance.end_ts
+            - private_computation_instance.creation_ts
+        )
+        self.assertEqual(
+            expected_elapsed_time,
+            private_computation_instance.elapsed_time,
         )
 
     @staticmethod

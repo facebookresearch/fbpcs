@@ -7,6 +7,7 @@
 # pyre-strict
 
 import os
+import time
 from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import List, Union, Optional, TYPE_CHECKING
@@ -155,11 +156,16 @@ class PrivateComputationInstance(InstanceBase):
     # enable 'use-row-numbers' argument.
     pid_use_row_numbers: bool = False
 
+    creation_ts: int = 0
+    end_ts: int = 0
+
     def __post_init__(self) -> None:
         if self.num_pid_containers > self.num_mpc_containers:
             raise ValueError(
                 f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.num_pid_containers} and num_mpc_containers = {self.num_mpc_containers}"
             )
+        if self.creation_ts == 0:
+            self.creation_ts = int(time.time())
 
     def get_instance_id(self) -> str:
         return self.instance_id
@@ -241,6 +247,11 @@ class PrivateComputationInstance(InstanceBase):
     def current_stage(self) -> "PrivateComputationBaseStageFlow":
         return self.stage_flow.get_stage_from_status(self.status)
 
+    @property
+    def elapsed_time(self) -> int:
+        end_ts = self.end_ts or int(time.time())
+        return end_ts - self.creation_ts
+
     def get_next_runnable_stage(self) -> Optional["PrivateComputationBaseStageFlow"]:
         """Returns the next runnable stage in the instance's stage flow
 
@@ -260,3 +271,5 @@ class PrivateComputationInstance(InstanceBase):
             logger.info(
                 f"Updating status of {self.instance_id} from {old_status} to {self.status} at time {self.status_update_ts}"
             )
+        if self.status is self.stage_flow.get_last_stage().completed_status:
+            self.end_ts = int(time.time())
