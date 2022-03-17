@@ -62,6 +62,8 @@ docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
 docker cp temp_container:/usr/local/bin/lift_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/decoupled_attribution_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/decoupled_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/usr/local/bin/pcf2_attribution_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/usr/local/bin/pcf2_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/shard_aggregator "$SCRIPT_DIR/binaries_out/."
 docker rm -f temp_container
 fi

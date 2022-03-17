@@ -32,6 +32,8 @@ lift_package="s3://$one_docker_repo/private_lift/lift/${TAG}/lift"
 attribution_repo="s3://$one_docker_repo/private_attribution"
 decoupled_attribution="$attribution_repo/decoupled_attribution/${TAG}/decoupled_attribution"
 decoupled_aggregation="$attribution_repo/decoupled_aggregation/${TAG}/decoupled_aggregation"
+pcf2_attribution="s3://$one_docker_repo/pcf2_attribution/${TAG}/pcf2_attribution"
+pcf2_aggregation="s3://$one_docker_repo/pcf2_aggregation/${TAG}/pcf2_aggregation"
 shard_aggregator_package="$attribution_repo/shard-aggregator/${TAG}/shard-aggregator"
 data_processing_repo="s3://$one_docker_repo/data_processing"
 
@@ -40,6 +42,8 @@ cd binaries_out || exit
 aws s3 cp lift_calculator "$lift_package"
 aws s3 cp decoupled_attribution_calculator "$decoupled_attribution"
 aws s3 cp decoupled_aggregation_calculator "$decoupled_aggregation"
+aws s3 cp pcf2_attribution_calculator "$pcf2_attribution"
+aws s3 cp pcf2_aggregation_calculator "$pcf2_aggregation"
 aws s3 cp shard_aggregator "$shard_aggregator_package"
 cd .. || exit
 fi

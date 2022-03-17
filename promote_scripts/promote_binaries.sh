@@ -31,6 +31,8 @@ binary_names=(
     'private_lift/aggregator'
     'private_attribution/decoupled_attribution'
     'private_attribution/decoupled_aggregation'
+    'pcf2_attribution'
+    'pcf2_aggregation'
     'private_attribution/shard-aggregator'
     # Uncomment when PID is ready to be released again
     # 'pid/private-id-client'

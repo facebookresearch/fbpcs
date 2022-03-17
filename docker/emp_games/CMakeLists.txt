@@ -96,3 +96,35 @@ target_link_libraries(
   empgamecommon
   perftools)
 install(TARGETS decoupled_aggregation_calculator DESTINATION bin)
+
+# pcf2_attribution
+file(GLOB pcf2_attribution_src
+  "fbpcs/emp_games/pcf2_attribution/**.c"
+  "fbpcs/emp_games/pcf2_attribution/**.cpp"
+  "fbpcs/emp_games/pcf2_attribution/**.h"
+  "fbpcs/emp_games/pcf2_attribution/**.hpp")
+list(FILTER pcf2_attribution_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  pcf2_attribution_calculator
+  ${pcf2_attribution_src})
+target_link_libraries(
+  pcf2_attribution_calculator
+  empgamecommon
+  perftools)
+install(TARGETS pcf2_attribution_calculator DESTINATION bin)
+
+# pcf2_aggregation
+file(GLOB pcf2_aggregation_src
+  "fbpcs/emp_games/pcf2_aggregation/**.c"
+  "fbpcs/emp_games/pcf2_aggregation/**.cpp"
+  "fbpcs/emp_games/pcf2_aggregation/**.h"
+  "fbpcs/emp_games/pcf2_aggregation/**.hpp")
+list(FILTER pcf2_aggregation_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  pcf2_aggregation_calculator
+  ${pcf2_aggregation_src})
+target_link_libraries(
+  pcf2_aggregation_calculator
+  empgamecommon
+  perftools)
+install(TARGETS pcf2_aggregation_calculator DESTINATION bin)

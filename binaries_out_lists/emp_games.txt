@@ -1,4 +1,6 @@
 lift_calculator
 decoupled_attribution_calculator
 decoupled_aggregation_calculator
+pcf2_attribution_calculator
+pcf2_aggregation_calculator
 shard_aggregator
