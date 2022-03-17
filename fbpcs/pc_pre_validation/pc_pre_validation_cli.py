@@ -27,6 +27,9 @@ Usage:
 from typing import cast
 
 from docopt import docopt
+from fbpcs.pc_pre_validation.binaries_accessibility_validator import (
+    BinariesAccessibilityValidator,
+)
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
 from fbpcs.pc_pre_validation.validator import Validator
@@ -74,7 +77,15 @@ def main() -> None:
                 arguments[ACCESS_KEY_ID],
                 arguments[ACCESS_KEY_DATA],
             ),
-        )
+        ),
+        cast(
+            Validator,
+            BinariesAccessibilityValidator(
+                region=arguments[REGION],
+                access_key_id=arguments[ACCESS_KEY_ID],
+                access_key_data=arguments[ACCESS_KEY_DATA],
+            ),
+        ),
     ]
 
     (aggregated_result, aggregated_report) = run_validators(validators)

@@ -9,8 +9,10 @@
 import re
 from typing import Dict, List, Pattern
 
-INPUT_DATA_TMP_FILE_PATH = "/tmp"
 INPUT_DATA_VALIDATOR_NAME = "Input Data Validator"
+BINARIES_ACCESSIBILITY_VALIDATOR_NAME = "Binaries Accessibility Validator"
+
+INPUT_DATA_TMP_FILE_PATH = "/tmp"
 
 ID_FIELD = "id_"
 CONVERSION_VALUE_FIELD = "conversion_value"
@@ -45,3 +47,21 @@ VALIDATION_REGEXES: Dict[str, Pattern[str]] = {
 }
 
 VALID_LINE_ENDING_REGEX: Pattern[str] = re.compile(r".*(\S|\S\n)$")
+
+BINARY_REPOSITORY = "https://one-docker-repository-prod.s3.us-west-2.amazonaws.com"
+BINARY_PATHS = [
+    "data_processing/attribution_id_combiner/latest/attribution_id_combiner",
+    "data_processing/lift_id_combiner/latest/lift_id_combiner",
+    "data_processing/pid_preparer/latest/pid_preparer",
+    "data_processing/sharder_hashed_for_pid/latest/sharder_hashed_for_pid",
+    "pid/private-id-client/latest/cross-psi-client",
+    "pid/private-id-client/latest/cross-psi-xor-client",
+    "pid/private-id-client/latest/private-id-client",
+    "pid/private-id-server/latest/cross-psi-server",
+    "pid/private-id-server/latest/cross-psi-xor-server",
+    "pid/private-id-server/latest/private-id-server",
+    "private_attribution/compute/latest/compute",
+    "private_attribution/decoupled_aggregation/latest/decoupled_aggregation",
+    "private_attribution/shard-aggregator/latest/shard-aggregator",
+    "private_lift/lift/latest/lift",
+]
