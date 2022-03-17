@@ -28,6 +28,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 
+
 class PrivateComputationCalcInstance:
     """
     Representation of a publisher or partner instance being calculated.
@@ -75,7 +76,9 @@ class PrivateComputationCalcInstance:
                     return
                 sleep(POLL_INTERVAL)
             raise PLInstanceCalculationException(
-                f"Poll {self.role} status timed out after {timeout}s expecting valid status."
+                "Timeout",
+                f"Poll {self.role} status timed out after {timeout}s expecting valid status.",
+                "Try running again",
             )
 
     def wait_instance_status(
@@ -101,11 +104,15 @@ class PrivateComputationCalcInstance:
                 PrivateComputationInstanceStatus.TIMEOUT,
             ]:
                 raise PLInstanceCalculationException(
-                    f"{self.role} failed with status {self.status}. Expecting status {status}."
+                    f"{self.role} failed with status {self.status}. Expecting status {status}.",
+                    "unknown",
+                    "Try running again",
                 )
             sleep(POLL_INTERVAL)
         raise PLInstanceCalculationException(
-            f"Poll {self.role} status timed out after {timeout}s expecting status: {status}."
+            "Timeout",
+            f"Poll {self.role} status timed out after {timeout}s expecting status: {status}.",
+            "Try running again",
         )
 
     def ready_for_stage(self, stage: PrivateComputationBaseStageFlow) -> bool:
