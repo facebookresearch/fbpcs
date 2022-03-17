@@ -90,6 +90,14 @@ validate_bucket_name() {
 
 }
 
+cleanup_generated_resources() {
+    # check if previously existed config.yml is present, if yes then remove it
+    cd /terraform_deployment || return
+    rm config.yml || true
+    # copy config.yml template
+    cp /terraform_deployment/config/config.yml /terraform_deployment
+}
+
 validateDeploymentResources () {
     local region=$1
     local pce_id=$2
