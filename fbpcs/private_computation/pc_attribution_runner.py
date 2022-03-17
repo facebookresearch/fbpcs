@@ -43,20 +43,6 @@ NUM_SHARDS = "num_shards"
 NUM_CONTAINERS = "num_containers"
 
 
-POLL_INTERVAL = 60
-WAIT_VALID_STATUS_TIMEOUT = 600
-WAIT_VALID_STAGE_TIMEOUT = 300
-OPERATION_REQUEST_TIMEOUT = 1200
-CANCEL_STAGE_TIMEOUT: int = POLL_INTERVAL * 5
-
-MIN_TRIES = 1
-MAX_TRIES = 2
-RETRY_INTERVAL = 60
-
-MIN_NUM_INSTANCES = 1
-PROCESS_WAIT = 1  # interval between starting processes.
-INSTANCE_SLA = 14400  # 2 hr instance sla, 2 tries per stage, total 4 hrs.
-
 """
 The input to this function will be the input path, the dataset_id as well as the following params to choose
 a specific dataset range to create and run a PA instance on
