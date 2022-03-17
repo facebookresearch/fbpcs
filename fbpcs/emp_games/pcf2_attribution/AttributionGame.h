@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include <gtest/gtest_prod.h>
-#include "folly/logging/xlog.h"
-
 #include "fbpcf/frontend/mpcGame.h"
 #include "fbpcs/emp_games/common/Debug.h"
 #include "fbpcs/emp_games/common/Util.h"
@@ -19,6 +16,7 @@
 #include "fbpcs/emp_games/pcf2_attribution/Constants.h"
 #include "fbpcs/emp_games/pcf2_attribution/Conversion.h"
 #include "fbpcs/emp_games/pcf2_attribution/Touchpoint.h"
+#include "folly/logging/xlog.h"
 
 namespace pcf2_attribution {
 
@@ -36,7 +34,6 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const int myRole,
       const AttributionInputMetrics<usingBatch, inputEncryption>& inputData);
 
- private:
   using PrivateTouchpointT = ConditionalVector<
       PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>,
       !usingBatch>;
@@ -92,14 +89,6 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>&
           thresholds,
       size_t batchSize);
-
-  FRIEND_TEST(AttributionGameTest, TestPrivateTouchpointPlaintext);
-  FRIEND_TEST(AttributionGameTest, TestPrivateTouchpointPlaintextBatch);
-  FRIEND_TEST(AttributionGameTest, TestPrivateConversionPlaintext);
-  FRIEND_TEST(AttributionGameTest, TestPrivateConversionPlaintextBatch);
-  FRIEND_TEST(AttributionGameTest, TestAttributionLogicPlaintext);
-  FRIEND_TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch);
-  FRIEND_TEST(AttributionGameTest, TestShareAttributionRules);
 };
 
 } // namespace pcf2_attribution
