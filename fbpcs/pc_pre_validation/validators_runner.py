@@ -8,9 +8,9 @@
 
 from typing import List, Tuple
 
-from fbpcs.input_data_validation.enums import ValidationResult
-from fbpcs.input_data_validation.validation_report import ValidationReport
-from fbpcs.input_data_validation.validator import Validator
+from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.validation_report import ValidationReport
+from fbpcs.pc_pre_validation.validator import Validator
 
 
 def run_validators(validators: List[Validator]) -> Tuple[ValidationResult, str]:

@@ -7,10 +7,10 @@
 
 from unittest import TestCase
 
-from fbpcs.input_data_validation.enums import ValidationResult
-from fbpcs.input_data_validation.validation_report import ValidationReport
-from fbpcs.input_data_validation.validator import Validator
-from fbpcs.input_data_validation.validators_runner import run_validators
+from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.validation_report import ValidationReport
+from fbpcs.pc_pre_validation.validator import Validator
+from fbpcs.pc_pre_validation.validators_runner import run_validators
 
 
 class TestDummyValidator(Validator):
