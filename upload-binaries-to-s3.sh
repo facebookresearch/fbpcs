@@ -9,17 +9,18 @@ set -e
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <emp_games|data_processing> <tag>
+Usage: $PROG_NAME <emp_games|data_processing|pid> <tag>
 
 package:
   emp_games - extracts the binaries from fbpcs/emp-games docker image
   data_processing - extracts the binaries from fbpcs/data-processing docker image
+  pid - extracts the binaries from private-id docker image
   tag: used to determine the subfolder/version in s3 for each binary
 EOF
   exit 1
 }
 
-PACKAGES="emp_games data_processing"
+PACKAGES="emp_games data_processing pid"
 PACKAGE=$1
 TAG=$2
 if [[ ! " $PACKAGES " =~ $PACKAGE ]] || [[ ! " $TAG " =~ $TAG ]]; then
@@ -34,6 +35,7 @@ decoupled_attribution="$attribution_repo/decoupled_attribution/${TAG}/decoupled_
 decoupled_aggregation="$attribution_repo/decoupled_aggregation/${TAG}/decoupled_aggregation"
 shard_aggregator_package="$attribution_repo/shard-aggregator/${TAG}/shard-aggregator"
 data_processing_repo="s3://$one_docker_repo/data_processing"
+private_id_repo="s3:://$one_docker_repo/pid"
 
 if [ "$PACKAGE" = "emp_games" ]; then
 cd binaries_out || exit
@@ -52,4 +54,12 @@ aws s3 cp sharder_hashed_for_pid "$data_processing_repo/sharder_hashed_for_pid/$
 aws s3 cp pid_preparer "$data_processing_repo/pid_preparer/${TAG}/pid_preparer"
 aws s3 cp lift_id_combiner "$data_processing_repo/lift_id_combiner/${TAG}/lift_id_combiner"
 aws s3 cp attribution_id_combiner "$data_processing_repo/attribution_id_combiner/${TAG}/attribution_id_combiner"
+fi
+
+if [ "$PACKAGE" = "pid" ]; then
+cd binaries_out || exit
+aws s3 cp private-id-server "$private_id_repo/private-id-server/${TAG}/private-id-server"
+aws s3 cp private-id-client "$private_id_repo/private-id-client/${TAG}/private-id-client"
+aws s3 cp private-id-multi-key-server "$private_id_repo/private-id-multi-key-server/${TAG}/private-id-multi-key-server"
+aws s3 cp private-id-multi-key-client "$private_id_repo/private-id-multi-key-client/${TAG}/private-id-multi-key-client"
 fi

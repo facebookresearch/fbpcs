@@ -9,18 +9,19 @@ set -e
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <emp_games|data_processing> [-t TAG] [-d DOCKER_IMAGE_NAME]
+Usage: $PROG_NAME <emp_games|data_processing|pid> [-t TAG] [-d DOCKER_IMAGE_NAME]
 
 package:
   emp_games - extracts the binaries from fbpcs/emp-games docker image
   data_processing - extracts the binaries from fbpcs/data-processing docker image
+  pid - extracts the binaries from private-id docker image
 -t TAG: uses the image with the given tag (default: latest)
 -d DOCKER_IMAGE_NAME: defines the image name to extract from
 EOF
   exit 1
 }
 
-PACKAGES="emp_games data_processing"
+PACKAGES="emp_games data_processing pid"
 PACKAGE=$1
 if [[ ! " $PACKAGES " =~ $PACKAGE ]]; then
    usage
@@ -48,6 +49,7 @@ if [ -z "$DOCKER_IMAGE_NAME" ]; then
   case $PACKAGE in
     emp_games) DOCKER_IMAGE_NAME="fbpcs/emp-games";;
     data_processing) DOCKER_IMAGE_NAME="fbpcs/data-processing";;
+    pid) DOCKER_IMAGE_NAME="private-id";;
   esac
 fi
 DOCKER_IMAGE_PATH="${DOCKER_IMAGE_NAME}:${TAG}"
@@ -73,5 +75,14 @@ docker cp temp_container:/usr/local/bin/sharder_hashed_for_pid "$SCRIPT_DIR/bina
 docker cp temp_container:/usr/local/bin/pid_preparer "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/lift_id_combiner "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/attribution_id_combiner "$SCRIPT_DIR/binaries_out/."
+docker rm -f temp_container
+fi
+
+if [ "$PACKAGE" = "pid" ]; then
+docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
+docker cp temp_container:/opt/private-id/bin/private-id-server "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/opt/private-id/bin/private-id-client "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/opt/private-id/bin/private-id-multi-key-server "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/opt/private-id/bin/private-id-multi-key-client "$SCRIPT_DIR/binaries_out/."
 docker rm -f temp_container
 fi
