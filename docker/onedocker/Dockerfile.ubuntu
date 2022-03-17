@@ -90,6 +90,8 @@ RUN for b in $(ls attribution* lift* pid* shard* private-id* decoupled*); do ln 
 # Link binaries name to match with onedocker binaries name
 RUN ln -s decoupled_attribution_calculator /home/pcs/onedocker/package/decoupled_attribution
 RUN ln -s decoupled_aggregation_calculator /home/pcs/onedocker/package/decoupled_aggregation
+RUN ln -s pcf2_attribution_calculator /home/pcs/onedocker/package/pcf2_attribution
+RUN ln -s pcf2_aggregation_calculator /home/pcs/onedocker/package/pcf2_aggregation
 RUN ln -s lift_calculator /home/pcs/onedocker/package/lift
 RUN ln -s shard_aggregator /home/pcs/onedocker/package/shard-aggregator
 
