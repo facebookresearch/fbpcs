@@ -23,7 +23,7 @@ import time
 from typing import Sequence, Optional
 
 from fbpcp.service.storage_s3 import S3StorageService
-from fbpcs.input_data_validation.constants import (
+from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
@@ -31,12 +31,12 @@ from fbpcs.input_data_validation.constants import (
     VALID_LINE_ENDING_REGEX,
     VALIDATION_REGEXES,
 )
-from fbpcs.input_data_validation.enums import ValidationResult
-from fbpcs.input_data_validation.input_data_validation_issues import (
+from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.input_data_validation_issues import (
     InputDataValidationIssues,
 )
-from fbpcs.input_data_validation.validation_report import ValidationReport
-from fbpcs.input_data_validation.validator import Validator
+from fbpcs.pc_pre_validation.validation_report import ValidationReport
+from fbpcs.pc_pre_validation.validator import Validator
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 

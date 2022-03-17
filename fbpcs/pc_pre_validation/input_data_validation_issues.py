@@ -9,7 +9,7 @@
 from collections import Counter
 from typing import Any, Dict
 
-from fbpcs.input_data_validation.constants import (
+from fbpcs.pc_pre_validation.constants import (
     ID_FIELD,
     VALUE_FIELD,
     EVENT_TIMESTAMP_FIELD,

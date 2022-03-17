@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any
 
 from dataclasses_json import dataclass_json
-from fbpcs.input_data_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.enums import ValidationResult
 
 
 @dataclass_json

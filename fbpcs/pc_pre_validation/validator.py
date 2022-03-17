@@ -8,8 +8,8 @@
 
 import abc
 
-from fbpcs.input_data_validation.enums import ValidationResult
-from fbpcs.input_data_validation.validation_report import ValidationReport
+from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.validation_report import ValidationReport
 
 
 class Validator(abc.ABC):

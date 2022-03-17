@@ -12,15 +12,15 @@ from typing import Iterable
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 
-from fbpcs.input_data_validation.constants import (
+from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_VALIDATOR_NAME,
     INPUT_DATA_TMP_FILE_PATH,
     PA_FIELDS,
     PL_FIELDS,
 )
-from fbpcs.input_data_validation.enums import ValidationResult
-from fbpcs.input_data_validation.input_data_validator import InputDataValidator
-from fbpcs.input_data_validation.validation_report import ValidationReport
+from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
+from fbpcs.pc_pre_validation.validation_report import ValidationReport
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 # Name the file randomly in order to avoid failures when the tests run concurrently
@@ -43,7 +43,7 @@ class TestInputDataValidator(TestCase):
         with open(TEST_TEMP_FILEPATH, "wb") as tmp_csv_file:
             tmp_csv_file.writelines(lines)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     def test_initializing_the_validation_runner_fields(
         self, mock_storage_service: Mock
     ) -> None:
@@ -63,7 +63,7 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(validator._input_file_path, TEST_INPUT_FILE_PATH)
         self.assertEqual(validator._cloud_provider, cloud_provider)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     def test_run_validations_failure(self, storage_service_mock: Mock) -> None:
         exception_message = "failed to copy"
         input_file_path = "s3://test-bucket/data.csv"
@@ -84,8 +84,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reads_the_local_csv_rows(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -114,8 +114,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_errors_when_input_data_fields_not_found(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -144,8 +144,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_errors_when_there_is_no_header_row(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -167,8 +167,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_errors_when_the_line_ending_is_unsupported(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -197,8 +197,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pl_when_row_values_are_empty(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -241,8 +241,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pa_when_row_values_are_empty(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -285,8 +285,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pl_when_row_values_are_not_valid(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
@@ -329,8 +329,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.input_data_validation.input_data_validator.S3StorageService")
-    @patch("fbpcs.input_data_validation.input_data_validator.time")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pa_when_row_values_are_not_valid(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:

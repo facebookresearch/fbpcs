@@ -12,7 +12,7 @@ CLI for running validations on the input data for private computations
 
 
 Usage:
-    input_data_validation_cli
+    pc_pre_validation_cli
         --input-file-path=<input-file-path>
         --cloud-provider=<cloud-provider>
         --region=<region>
@@ -27,10 +27,10 @@ Usage:
 from typing import cast
 
 from docopt import docopt
-from fbpcs.input_data_validation.enums import ValidationResult
-from fbpcs.input_data_validation.input_data_validator import InputDataValidator
-from fbpcs.input_data_validation.validator import Validator
-from fbpcs.input_data_validation.validators_runner import run_validators
+from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
+from fbpcs.pc_pre_validation.validator import Validator
+from fbpcs.pc_pre_validation.validators_runner import run_validators
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 from schema import Schema, Optional, Or, Use
 
@@ -62,7 +62,7 @@ def main() -> None:
     )
     arguments = s.validate(docopt(__doc__))
     assert arguments
-    print("Parsed input_data_validation_cli arguments")
+    print("Parsed pc_pre_validation_cli arguments")
 
     validators = [
         cast(
