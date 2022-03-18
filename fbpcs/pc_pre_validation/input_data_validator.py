@@ -71,7 +71,7 @@ class InputDataValidator(Validator):
         rows_processed_count = 0
         validation_issues = InputDataValidationIssues()
         try:
-            self._storage_service.copy(self._input_file_path, self._local_file_path)
+            self._download_input_file()
             header_row = ""
             with open(self._local_file_path) as local_file:
                 csv_reader = csv.DictReader(local_file)
@@ -106,6 +106,14 @@ class InputDataValidator(Validator):
             rows_processed_count,
             validation_issues,
         )
+
+    def _download_input_file(self) -> None:
+        try:
+            self._storage_service.copy(self._input_file_path, self._local_file_path)
+        except Exception as e:
+            raise Exception(
+                f"Failed to download the input file. Please check the file path and its permission.\n\t{e}"
+            )
 
     def _validate_header(self, header_row: Sequence[str]) -> None:
         if not header_row:

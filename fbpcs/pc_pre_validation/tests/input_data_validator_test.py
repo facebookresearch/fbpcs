@@ -64,14 +64,14 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(validator._cloud_provider, cloud_provider)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
-    def test_run_validations_failure(self, storage_service_mock: Mock) -> None:
+    def test_run_validations_copy_failure(self, storage_service_mock: Mock) -> None:
         exception_message = "failed to copy"
         input_file_path = "s3://test-bucket/data.csv"
         cloud_provider = CloudProvider.AWS
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {input_file_path} failed validation. Error: {exception_message}",
+            message=f"File: {input_file_path} failed validation. Error: Failed to download the input file. Please check the file path and its permission.\n\t{exception_message}",
             details={
                 "rows_processed_count": 0,
             },
