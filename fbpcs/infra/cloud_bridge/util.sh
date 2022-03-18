@@ -98,6 +98,11 @@ cleanup_generated_resources() {
     cp /terraform_deployment/config/config.yml /terraform_deployment
 }
 
+log_streaming_data() {
+    local text=$1
+    echo "$(date +"%M:%S") -> $text" >> "$TF_LOG_STREAMING"
+}
+
 validateDeploymentResources () {
     local region=$1
     local pce_id=$2
@@ -108,10 +113,10 @@ validateDeploymentResources () {
     if echo "$pceValidatorOutput" | grep -q "$successMessage"
     then
         echo "PCE validation successful";
-        echo "PCE validation successful" >> "$TF_LOG_STREAMING"
+        log_streaming_data "PCE validation successful"
     else
         echo "PCE validator found some issue..please analyze further to debug the issue"
-        echo "validator found some issue..please analyze logs further to debug the issue" >> "$TF_LOG_STREAMING"
+        log_streaming_data "validator found some issue..please analyze logs further to debug the issue"
         # TODO, once T111250475 is implemneted grep based on exit code
         # exit 1
     fi
