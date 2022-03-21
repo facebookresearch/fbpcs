@@ -47,9 +47,12 @@ RUN useradd -ms /bin/bash pcs
 COPY --from=emp_games /usr/local/bin/. /usr/local/bin/.
 COPY --from=data_processing /usr/local/bin/. /usr/local/bin/.
 
-# Copy private_id executables: private-id-client and private-id-server
+# Copy private_id executables: private-id-client, private-id-server,
+#                              private-id-multi-key-client, private-id-multi-key-server
 COPY --from=private_id /opt/private-id/bin/private-id-client /usr/local/bin/private-id-client
 COPY --from=private_id /opt/private-id/bin/private-id-server /usr/local/bin/private-id-server
+COPY --from=private_id /opt/private-id/bin/private-id-multi-key-client /usr/local/bin/private-id-multi-key-client
+COPY --from=private_id /opt/private-id/bin/private-id-multi-key-server /usr/local/bin/private-id-multi-key-server
 
 # OneDocker likes to change permissions as 'pcs' in /usr/local/bin, set these to be owned by 'pcs' to prevent an error
 RUN chown pcs:pcs /usr/local/bin/*

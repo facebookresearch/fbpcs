@@ -37,6 +37,8 @@ binary_names=(
     # Uncomment when PID is ready to be released again
     # 'pid/private-id-client'
     # 'pid/private-id-server'
+    # 'pid/private-id-multi-key-client'
+    # 'pid/private-id-multi-key-server'
     'data_processing/sharder'
     'data_processing/sharder_hashed_for_pid'
     'data_processing/pid_preparer'
