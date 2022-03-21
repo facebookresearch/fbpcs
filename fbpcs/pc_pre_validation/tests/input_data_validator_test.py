@@ -5,10 +5,11 @@
 
 # pyre-strict
 
+import json
 import os
 import random
 import time
-from typing import Iterable
+from typing import Dict, Iterable, List
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 
@@ -17,6 +18,7 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_TMP_FILE_PATH,
     PA_FIELDS,
     PL_FIELDS,
+    DEFAULT_VALID_THRESHOLDS,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
@@ -29,6 +31,20 @@ TEST_INPUT_FILE_PATH = f"s3://test-bucket/{TEST_FILENAME}"
 TEST_REGION = "us-west-2"
 TEST_TIMESTAMP: float = time.time()
 TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAMP}"
+TEST_THRESHOLD_OVERRIDES: Dict[str, float] = {
+    "id_": 0.5,
+    "value": 0.76,
+}
+TEST_THRESHOLD_OVERRIDES_STR: str = json.dumps(TEST_THRESHOLD_OVERRIDES)
+SKIP_THRESHOLD_VALIDATION_STR: str = json.dumps(
+    {
+        "id_": 0,
+        "value": 0,
+        "conversion_value": 0,
+        "event_timestamp": 0,
+        "conversion_timestamp": 0,
+    }
+)
 
 
 class TestInputDataValidator(TestCase):
@@ -111,7 +127,6 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
-
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
@@ -235,7 +250,10 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH,
+            cloud_provider,
+            TEST_REGION,
+            valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
         )
         report = validator.validate()
 
@@ -279,7 +297,10 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH,
+            cloud_provider,
+            TEST_REGION,
+            valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
         )
         report = validator.validate()
 
@@ -323,7 +344,10 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH,
+            cloud_provider,
+            TEST_REGION,
+            valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
         )
         report = validator.validate()
 
@@ -367,8 +391,87 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH,
+            cloud_provider,
+            TEST_REGION,
+            valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_it_fails_if_good_rows_count_falls_under_the_threshold(
+        self, time_mock: Mock, _storage_service_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        expected_actual_thresholds = {
+            "id_": 0.4,
+            "value": 0.5,
+            "event_timestamp": 0.9,
+        }
+        all_thresholds = self._merge_default_threshold_into_override(
+            TEST_THRESHOLD_OVERRIDES, list(expected_actual_thresholds.keys())
+        )
+        exception_message = "\n".join(
+            [
+                "Too many row values for 'id_,value' are unusable:",
+                f"Required data quality: {all_thresholds}",
+                f"Actual data quality: {expected_actual_thresholds}",
+            ]
+        )
+        cloud_provider = CloudProvider.AWS
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"...,100,\n",
+            b",$100,1645157987\n",
+            b",$100,1645157987\n",
+            b",$100,1645157987\n",
+            b",100,1645157987\n",
+            b",100,1645157987\n",
+            b"abcd/1234+WXYZ=,,1645157987\n",
+            b"abcd/1234+WXYZ=,,1645157987\n",
+            b"abcd/1234+WXYZ=,,1645157987\n",
+            b"abcd/1234+WXYZ=,,1645157987\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 10,
+                "validation_errors": {
+                    "id_": {
+                        "bad_format": 1,
+                        "empty": 5,
+                    },
+                    "value": {
+                        "bad_format": 3,
+                        "empty": 4,
+                    },
+                    "event_timestamp": {
+                        "empty": 1,
+                    },
+                },
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH,
+            cloud_provider,
+            TEST_REGION,
+            valid_threshold_override=TEST_THRESHOLD_OVERRIDES_STR,
         )
         report = validator.validate()
 
         self.assertEqual(report, expected_report)
+
+    def _merge_default_threshold_into_override(
+        self, override_thresholds: Dict[str, float], actual_threshold_keys: List[str]
+    ) -> Dict[str, float]:
+        merged_thresholds = override_thresholds.copy()
+        for field, threshold in DEFAULT_VALID_THRESHOLDS.items():
+            if field not in merged_thresholds and field in actual_threshold_keys:
+                merged_thresholds[field] = threshold
+        return merged_thresholds

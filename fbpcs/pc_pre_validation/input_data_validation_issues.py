@@ -7,7 +7,7 @@
 
 
 from collections import Counter
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fbpcs.pc_pre_validation.constants import (
     ID_FIELD,
@@ -22,7 +22,10 @@ from fbpcs.pc_pre_validation.constants import (
 class InputDataValidationIssues:
     def __init__(self) -> None:
         self.empty_counter: Counter[str] = Counter()
+        self.not_empty_counter: Counter[str] = Counter()
         self.format_error_counter: Counter[str] = Counter()
+        self.fields_under_threshold: List[str] = []
+        self.field_thresholds: Dict[str, float] = {}
 
     def get_as_dict(self) -> Dict[str, Any]:
         issues = {}
@@ -42,6 +45,9 @@ class InputDataValidationIssues:
     def count_empty_field(self, field: str) -> None:
         self.empty_counter[field] += 1
 
+    def count_not_empty_field(self, field: str) -> None:
+        self.not_empty_counter[field] += 1
+
     def count_format_error_field(self, field: str) -> None:
         self.format_error_counter[field] += 1
 
@@ -55,3 +61,9 @@ class InputDataValidationIssues:
             field_issues["bad_format"] = format_error_count
         if field_issues:
             issues[field] = field_issues
+
+    def add_field_under_threshold(self, field: str) -> None:
+        self.fields_under_threshold.append(field)
+
+    def set_field_threshold(self, field: str, threshold: float) -> None:
+        self.field_thresholds[field] = threshold
