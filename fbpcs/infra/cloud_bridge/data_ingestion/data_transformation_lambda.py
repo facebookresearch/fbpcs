@@ -98,6 +98,27 @@ def lambda_handler(
             _parse_client_user_agent(client_user_agent) if client_user_agent else {}
         )
 
+        # app data fields
+        app_data_fields = [
+            "advertiser_tracking_enabled",
+            "application_tracking_enabled",
+            "consider_views",
+            "device_token",
+            "include_dwell_data",
+            "include_video_data",
+            "install_referrer",
+            "installer_package",
+            "receipt_data",
+            "url_schemes",
+            "extinfo",
+        ]
+
+        app_data = row_data.get("app_data", dummy_dict)
+        parsed_app_data = {}
+        for field in app_data_fields:
+            if field in app_data:
+                parsed_app_data[field] = app_data[field]
+
         # make sure not all values are None
         if all(
             value is None
@@ -147,6 +168,7 @@ def lambda_handler(
             user_data[DEVICE_OS_VERSION] = parsed_user_agent_fields[DEVICE_OS_VERSION]
 
         data["user_data"] = user_data
+        data["app_data"] = parsed_app_data
         # firehose need data to be b64-encoded
         data = json.dumps(data) + "\n"
         data = data.encode("utf-8")
