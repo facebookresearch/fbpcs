@@ -75,12 +75,15 @@ def main(argv: OptionalType[List[str]] = None) -> None:
         cast(
             Validator,
             InputDataValidator(
-                arguments[INPUT_FILE_PATH],
-                arguments[CLOUD_PROVIDER],
-                arguments[REGION],
-                arguments[PC_ROLE],
-                arguments[ACCESS_KEY_ID],
-                arguments[ACCESS_KEY_DATA],
+                input_file_path=arguments[INPUT_FILE_PATH],
+                cloud_provider=arguments[CLOUD_PROVIDER],
+                region=arguments[REGION],
+                pc_role=arguments[PC_ROLE],
+                start_timestamp=arguments[START_TIMESTAMP],
+                end_timestamp=arguments[END_TIMESTAMP],
+                valid_threshold_override=arguments[VALID_THRESHOLD_OVERRIDE],
+                access_key_id=arguments[ACCESS_KEY_ID],
+                access_key_data=arguments[ACCESS_KEY_DATA],
             ),
         ),
         cast(

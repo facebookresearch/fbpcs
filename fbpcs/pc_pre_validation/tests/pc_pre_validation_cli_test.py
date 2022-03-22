@@ -46,15 +46,77 @@ class TestPCPreValidationCLI(TestCase):
         validation_cli.main(argv)
 
         input_data_validator_mock.assert_called_with(
-            expected_input_file_path,
-            expected_cloud_provider,
-            expected_region,
-            expected_pc_role,
-            None,
-            None,
+            input_file_path=expected_input_file_path,
+            cloud_provider=expected_cloud_provider,
+            region=expected_region,
+            pc_role=expected_pc_role,
+            start_timestamp=None,
+            end_timestamp=None,
+            valid_threshold_override=None,
+            access_key_id=None,
+            access_key_data=None,
         )
         binary_file_validator_mock.assert_called_with(
             region=expected_region, access_key_id=None, access_key_data=None
+        )
+        run_validators_mock.assert_called_with(
+            [input_data_validator_mock(), binary_file_validator_mock()]
+        )
+
+    @patch("fbpcs.pc_pre_validation.pc_pre_validation_cli.print")
+    @patch("fbpcs.pc_pre_validation.pc_pre_validation_cli.InputDataValidator")
+    @patch("fbpcs.pc_pre_validation.pc_pre_validation_cli.BinaryFileValidator")
+    @patch("fbpcs.pc_pre_validation.pc_pre_validation_cli.run_validators")
+    def test_parsing_all_args(
+        self,
+        run_validators_mock: Mock,
+        binary_file_validator_mock: Mock,
+        input_data_validator_mock: Mock,
+        _print_mock: Mock,
+    ) -> None:
+        aggregated_result = ValidationResult.SUCCESS
+        aggregated_report = "Aggregated report..."
+        run_validators_mock.side_effect = [[aggregated_result, aggregated_report]]
+        expected_input_file_path = "https://test/input-file-path0"
+        cloud_provider_str = "AWS"
+        expected_cloud_provider = CloudProvider.AWS
+        expected_region = "region1"
+        expected_pc_role = PCRole.PARTNER
+        pc_role_str = "PARTNER"
+        expected_start_timestamp = "1600000000"
+        expected_end_timestamp = "1640000000"
+        expected_valid_threshold_override = '{"id_":0.6,"timestamp":0.7,"value":0.2}'
+        expected_access_key_id = "access_key_id2"
+        expected_access_key_data = "access_key_data3"
+        argv = [
+            f"--input-file-path={expected_input_file_path}",
+            f"--cloud-provider={cloud_provider_str}",
+            f"--region={expected_region}",
+            f"--pc-role={pc_role_str}",
+            f"--start-timestamp={expected_start_timestamp}",
+            f"--end-timestamp={expected_end_timestamp}",
+            f"--valid-threshold-override={expected_valid_threshold_override}",
+            f"--access-key-id={expected_access_key_id}",
+            f"--access-key-data={expected_access_key_data}",
+        ]
+
+        validation_cli.main(argv)
+
+        input_data_validator_mock.assert_called_with(
+            input_file_path=expected_input_file_path,
+            cloud_provider=expected_cloud_provider,
+            region=expected_region,
+            pc_role=expected_pc_role,
+            start_timestamp=expected_start_timestamp,
+            end_timestamp=expected_end_timestamp,
+            valid_threshold_override=expected_valid_threshold_override,
+            access_key_id=expected_access_key_id,
+            access_key_data=expected_access_key_data,
+        )
+        binary_file_validator_mock.assert_called_with(
+            region=expected_region,
+            access_key_id=expected_access_key_id,
+            access_key_data=expected_access_key_data,
         )
         run_validators_mock.assert_called_with(
             [input_data_validator_mock(), binary_file_validator_mock()]
