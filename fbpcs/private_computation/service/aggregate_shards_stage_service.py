@@ -91,21 +91,21 @@ class AggregateShardsStageService(PrivateComputationStageService):
         binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
         binary_config = self._onedocker_binary_config_map[binary_name]
 
-        # Check if the flow is Decoupled flow, meaning that this a PA decoupled flow.
-        # We now have DecoupledFlow as the default flow for PA when computation is performed using run_next.
-        # i.e. if PA computation is called using run_next method, we will always run Decoupled Flow
-        # and if the methods are called directly, we will always run the legacy flow.
+        # Get output path of previous stage depending on what stage flow we are using
         # Using "PrivateComputationDecoupledStageFlow" instead of PrivateComputationDecoupledStageFlow.get_cls_name() to avoid
         # circular import error.
-        input_stage_path = (
-            pc_instance.decoupled_aggregation_stage_output_base_path
-            if pc_instance.get_flow_cls_name
-            in [
-                "PrivateComputationDecoupledStageFlow",
-                "PrivateComputationDecoupledLocalTestStageFlow",
-            ]
-            else pc_instance.compute_stage_output_base_path
-        )
+        if pc_instance.get_flow_cls_name in [
+            "PrivateComputationDecoupledStageFlow",
+            "PrivateComputationDecoupledLocalTestStageFlow",
+        ]:
+            input_stage_path = pc_instance.decoupled_aggregation_stage_output_base_path
+        elif pc_instance.get_flow_cls_name in [
+            "PrivateComputationPCF2StageFlow",
+            "PrivateComputationPCF2LocalTestStageFlow",
+        ]:
+            input_stage_path = pc_instance.pcf2_aggregation_stage_output_base_path
+        else:
+            input_stage_path = pc_instance.compute_stage_output_base_path
 
         if self._is_validating:
             # num_containers_real_data is the number of containers processing real data
