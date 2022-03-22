@@ -131,7 +131,9 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         if self is self.CREATED:
             return DummyStageService()
         elif self is self.INPUT_DATA_VALIDATION:
-            return InputDataValidationStageService(args.pc_validator_config)
+            return InputDataValidationStageService(
+                args.pc_validator_config, args.onedocker_svc
+            )
         elif self is self.ID_MATCH:
             return IdMatchStageService(
                 args.pid_svc,

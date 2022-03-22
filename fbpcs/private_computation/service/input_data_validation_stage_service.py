@@ -6,9 +6,13 @@
 
 # pyre-strict
 
+import json
 import logging
 from typing import List, Optional
 
+from fbpcp.service.onedocker import OneDockerService
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import (
     PCValidatorConfig,
 )
@@ -21,6 +25,12 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
+from fbpcs.private_computation.service.utils import (
+    get_pc_status_from_stage_state,
+)
+
+# 20 minutes
+PRE_VALIDATION_CHECKS_TIMEOUT: int = 1200
 
 
 class InputDataValidationStageService(PrivateComputationStageService):
@@ -34,12 +44,15 @@ class InputDataValidationStageService(PrivateComputationStageService):
     It is implemented in a Cloud agnostic way.
     """
 
-    def __init__(self, pc_validator_config: PCValidatorConfig) -> None:
+    def __init__(
+        self, pc_validator_config: PCValidatorConfig, onedocker_svc: OneDockerService
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._failed_status: PrivateComputationInstanceStatus = (
             PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
         )
         self._pc_validator_config: PCValidatorConfig = pc_validator_config
+        self._onedocker_svc = onedocker_svc
 
     async def run_async(
         self,
@@ -49,13 +62,55 @@ class InputDataValidationStageService(PrivateComputationStageService):
         """
         Updates the status to COMPLETED and returns the pc_instance
         """
-        self._logger.info("[InputDataValidation] - Starting stage")
-        # TODO: call the data_input_validation library
-        pc_instance.status = (
-            PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
-        )
-        self._logger.info("[InputDataValidation] - Finished stage")
+        self._logger.info("[PCPreValidation] - Starting stage")
+        if self._pc_validator_config.pc_pre_validator_enabled:
+            self._logger.info(
+                "[PCPreValidation] - starting a pc_pre_validation_cli run"
+            )
+            try:
+                await self.run_pc_pre_validation_cli(pc_instance)
+            except Exception as e:
+                self._logger.info(
+                    f"[PCPreValidation] - exception occurred while running validations: {e}"
+                )
+        else:
+            self._logger.info("[PCPreValidation] - skipped run validations")
+
+        self._logger.info("[PCPreValidation] - Finished stage")
         return pc_instance
+
+    async def run_pc_pre_validation_cli(
+        self, pc_instance: PrivateComputationInstance
+    ) -> None:
+        region = self._pc_validator_config.region
+        cmd_args = [
+            f"--input-file-path={pc_instance.input_path}",
+            "--cloud-provider=AWS",
+            f"--region={region}",
+        ]
+        threshold_overrides = (
+            self._pc_validator_config.data_validation_threshold_overrides
+        )
+        if threshold_overrides:
+            threshold_overrides_str = json.dumps(threshold_overrides)
+            cmd_args.append(f"--valid-threshold-override='{threshold_overrides_str}'")
+
+        cmd_args_str = " ".join(cmd_args)
+
+        container_instance = self._onedocker_svc.start_container(
+            package_name=OneDockerBinaryNames.PC_PRE_VALIDATION.value,
+            timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
+            cmd_args=cmd_args_str,
+        )
+        stage_state = StageStateInstance(
+            pc_instance.instance_id,
+            pc_instance.current_stage.name,
+            containers=[container_instance],
+        )
+        pc_instance.instances.append(stage_state)
+        self._logger.info(
+            f"[PCPreValidation] - Started container instance_id: {container_instance.instance_id} status: {container_instance.status}"
+        )
 
     def get_status(
         self,
@@ -64,4 +119,8 @@ class InputDataValidationStageService(PrivateComputationStageService):
         """
         Returns the pc_instance's current status
         """
-        return pc_instance.status
+        # When this stage is not enabled, it can complete immediately since no container was launched
+        if not self._pc_validator_config.pc_pre_validator_enabled:
+            return PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
+
+        return get_pc_status_from_stage_state(pc_instance, self._onedocker_svc)
