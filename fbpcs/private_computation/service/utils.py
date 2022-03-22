@@ -11,27 +11,38 @@ import functools
 import logging
 import re
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import DefaultDict, Any, Dict, List, Optional
 
+from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
+from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
     StageStateInstanceStatus,
     StageStateInstance,
 )
+from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_LOG_COST_TO_S3,
+    DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+)
+from fbpcs.private_computation.service.private_computation_service_data import (
+    PrivateComputationServiceData,
+)
 
 
 async def create_and_start_mpc_instance(
@@ -182,6 +193,73 @@ def get_pc_status_from_stage_state(
             status = current_stage.failed_status
 
     return status
+
+
+# TODO: If we're going to deprecate prepare_data_stage_service.py,
+# we can just move this method to id_spine_combiner_stage_service.py as private method
+async def start_combiner_service(
+    private_computation_instance: PrivateComputationInstance,
+    onedocker_svc: OneDockerService,
+    onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
+    combine_output_path: str,
+    log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
+    wait_for_containers: bool = False,
+) -> List[ContainerInstance]:
+    """Run combiner service and return those container instances
+
+    Args:
+        private_computation_instance: The PC instance to run combiner service with
+        onedocker_svc: Spins up containers that run binaries in the cloud
+        onedocker_binary_config_map: Stores a mapping from mpc game to OneDockerBinaryConfig (binary version and tmp directory)
+        combine_output_path: out put path for the combine result
+        log_cost_to_s3: if money cost of the computation will be logged to S3
+        wait_for_containers: block until containers to finish running, default False
+
+    Returns:
+        return: list of container instances running combiner service
+    """
+    stage_data = PrivateComputationServiceData.get(
+        private_computation_instance.game_type
+    ).combiner_stage
+
+    binary_name = stage_data.binary_name
+    binary_config = onedocker_binary_config_map[binary_name]
+
+    # TODO: T106159008 Add on attribution specific args
+    if private_computation_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
+        run_name = private_computation_instance.instance_id if log_cost_to_s3 else ""
+        padding_size = checked_cast(int, private_computation_instance.padding_size)
+        log_cost = log_cost_to_s3
+    else:
+        run_name = None
+        padding_size = None
+        log_cost = None
+
+    combiner_service = checked_cast(
+        IdSpineCombinerService,
+        stage_data.service,
+    )
+
+    args = combiner_service.build_args(
+        spine_path=private_computation_instance.pid_stage_output_spine_path,
+        data_path=private_computation_instance.pid_stage_output_data_path,
+        output_path=combine_output_path,
+        num_shards=private_computation_instance.num_pid_containers + 1
+        if private_computation_instance.is_validating
+        else private_computation_instance.num_pid_containers,
+        tmp_directory=binary_config.tmp_directory,
+        run_name=run_name,
+        padding_size=padding_size,
+        log_cost=log_cost,
+    )
+    return await combiner_service.start_containers(
+        cmd_args_list=args,
+        onedocker_svc=onedocker_svc,
+        binary_version=binary_config.binary_version,
+        binary_name=binary_name,
+        timeout=None,
+        wait_for_containers_to_finish=wait_for_containers,
+    )
 
 
 def get_log_urls(
