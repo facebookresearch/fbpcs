@@ -16,7 +16,12 @@ from typing import Any, Dict, List, Optional
 from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcp.service.mpc import MPCService
+from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.common.entity.stage_state_instance import (
+    StageStateInstanceStatus,
+    StageStateInstance,
+)
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -132,6 +137,48 @@ def get_updated_pc_status_mpc_game(
             MPCInstanceStatus.FAILED,
             MPCInstanceStatus.CANCELED,
         ):
+            status = current_stage.failed_status
+
+    return status
+
+
+def get_pc_status_from_stage_state(
+    private_computation_instance: PrivateComputationInstance,
+    onedocker_svc: OneDockerService,
+    stage_name: Optional[str] = None,
+) -> PrivateComputationInstanceStatus:
+    """Updates the StageStateInstances and gets latest PrivateComputationInstance status
+
+    Arguments:
+        private_computation_instance: The PC instance that is being updated
+        onedocker_svc: Used to get latest Containers to update StageState instance status
+        stage_name: if passed stage_name, will check the stage name from StageState instance
+
+    Returns:
+        The latest status for private_computation_instance
+    """
+    status = private_computation_instance.status
+    if private_computation_instance.instances:
+        # TODO: we should have some identifier or stage_name
+        # to pick up the right instance instead of the last one
+        last_instance = private_computation_instance.instances[-1]
+        if not isinstance(last_instance, StageStateInstance):
+            raise ValueError(
+                f"The last instance type not StageStateInstance but {type(last_instance)}"
+            )
+
+        if stage_name is None:
+            stage_name = last_instance.stage_name
+
+        assert stage_name == private_computation_instance.current_stage.name
+        # calling onedocker_svc to update newest containers in StageState
+        stage_state_instance_status = last_instance.update_status(onedocker_svc)
+        current_stage = private_computation_instance.current_stage
+        if stage_state_instance_status is StageStateInstanceStatus.STARTED:
+            status = current_stage.started_status
+        elif stage_state_instance_status is StageStateInstanceStatus.COMPLETED:
+            status = current_stage.completed_status
+        elif stage_state_instance_status is StageStateInstanceStatus.FAILED:
             status = current_stage.failed_status
 
     return status
