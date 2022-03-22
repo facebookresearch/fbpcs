@@ -8,6 +8,7 @@
 #include "UnionPIDDataPreparer.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -33,11 +34,7 @@
 
 namespace measurement::pid {
 
-// The `split` function internally uses RE2 which relies on consuming patterns.
-// This pattern indicates it will get all the non commas in a capture group.
-// The ,? at the end means there may not be a comma in the line at all.
-static const std::string kCommaSplitRegex = "([^,]+),?";
-static const std::string kIdColumnName = "id_";
+static const std::string kIdColumnPrefix = "id_";
 
 template <typename T>
 static std::string vectorToString(const std::vector<T>& vec) {
@@ -53,6 +50,20 @@ static std::string vectorToString(const std::vector<T>& vec) {
   }
   buf << "]";
   return buf.str();
+}
+
+static std::vector<std::string> splitByCharDelimiter(
+    std::string& str,
+    const char& delim) {
+  // Preprocessing step: Remove spaces if any
+  str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+  std::vector<std::string> tokens;
+  std::stringstream ss(str);
+  std::string token;
+  while (std::getline(ss, token, delim)) {
+    tokens.push_back(token);
+  }
+  return tokens;
 }
 
 std::vector<std::string> UnionPIDDataPreparer::split(
@@ -88,20 +99,35 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   std::string line;
 
   getline(inStream, line);
-  auto header = split(line, kCommaSplitRegex);
-  auto idIter = std::find(header.begin(), header.end(), kIdColumnName);
-  if (idIter == header.end()) {
+  auto header = splitByCharDelimiter(line, ',');
+  // auto header = split(line, kCommaSplitRegex);
+  auto idIter = header.begin();
+  std::vector<std::int64_t> idColumnIndices;
+  std::int64_t idColumnCount = 0;
+
+  // find indices of columns with its column name start with kIdColumnPrefix
+  while (
+      (idIter = std::find_if(idIter, header.end(), [&](std::string const& c) {
+         return c.rfind(kIdColumnPrefix) == 0;
+       })) != header.end()) {
+    idColumnIndices.push_back(std::distance(header.begin(), idIter));
+    idIter++;
+    if (++idColumnCount == maxColumnCnt_) {
+      break;
+    }
+  }
+  if (0 == idColumnCount) {
     // note: it's not *essential* to clean up tmpfile here, but it will
     // pollute our test directory otherwise, which is just somewhat annoying.
     std::remove(tmpFilename.c_str());
-    XLOG(FATAL) << kIdColumnName << " column missing from input header\n"
+    XLOG(FATAL) << kIdColumnPrefix << " column missing from input header\n"
                 << "Header: " << vectorToString(header);
   }
 
-  auto idColumnIdx = std::distance(header.begin(), idIter);
   std::unordered_set<std::string> seenIds;
   while (getline(inStream, line)) {
-    auto cols = split(line, kCommaSplitRegex);
+    auto cols = splitByCharDelimiter(line, ',');
+    // auto cols = split(line, kCommaSplitRegex);
     auto rowSize = cols.size();
     auto headerSize = header.size();
 
@@ -117,10 +143,25 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
                   << "Row   : " << vectorToString(cols);
     }
 
-    auto id = cols.at(idColumnIdx);
-    if (seenIds.find(id) == seenIds.end()) {
-      *tmpFile << id << '\n';
-      seenIds.insert(id);
+    std::vector<std::string> ids;
+    for (std::int64_t idColumnIdx : idColumnIndices) {
+      ids.push_back(cols.at(idColumnIdx));
+    }
+    // join all the ids with delimiter ","
+    std::string concatIds = std::accumulate(
+        ids.begin(),
+        ids.end(),
+        std::string(),
+        [&](std::string x, std::string y) {
+          return x.empty() ? y : x + std::string(",") + y;
+        });
+
+    // we simply concatenate id columns to see if the same concatenated ids
+    // appeared before. therefore, if the order of ids is different, we would
+    // not catch duplicates.
+    if (seenIds.find(concatIds) == seenIds.end()) {
+      *tmpFile << concatIds << '\n';
+      seenIds.insert(concatIds);
     } else {
       ++res.duplicateIdCount;
     }
