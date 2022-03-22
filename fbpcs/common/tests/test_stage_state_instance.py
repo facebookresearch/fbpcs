@@ -31,8 +31,8 @@ class TestStageStateInstance(unittest.TestCase):
                     status=ContainerInstanceStatus.COMPLETED,
                 ),
             ],
-            start_time=1646642432,
-            end_time=1646642432 + 5,
+            creation_ts=1646642432,
+            end_ts=1646642432 + 5,
         )
 
     def test_server_ips(self) -> None:
