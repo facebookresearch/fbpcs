@@ -71,6 +71,7 @@ macro_rules! impl_operator {
 }
 
 impl_operator!(std::ops::Add, add, +);
+impl_operator!(std::ops::Sub, sub, -);
 
 #[cfg(test)]
 mod tests {
@@ -120,6 +121,60 @@ mod tests {
         assert_eq!(
             MPCMetricDType::MPCInt32(2)
                 + MPCMetricDType::Vec(vec![
+                    MPCMetricDType::MPCInt32(1),
+                    MPCMetricDType::MPCInt32(1)
+                ]),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(3),
+                MPCMetricDType::MPCInt32(3)
+            ])
+        );
+    }
+
+    #[test]
+    fn sub() {
+        assert_eq!(
+            MPCMetricDType::MPCInt32(5) - MPCMetricDType::MPCInt32(2),
+            MPCMetricDType::MPCInt32(3)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCInt64(5) - MPCMetricDType::MPCInt64(2),
+            MPCMetricDType::MPCInt64(3)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCUInt32(5) - MPCMetricDType::MPCUInt32(2),
+            MPCMetricDType::MPCUInt32(3)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCUInt64(5) - MPCMetricDType::MPCUInt64(2),
+            MPCMetricDType::MPCUInt64(3)
+        );
+        assert_eq!(
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(5),
+                MPCMetricDType::MPCInt32(5)
+            ]) - MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(2),
+                MPCMetricDType::MPCInt32(2)
+            ]),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(3),
+                MPCMetricDType::MPCInt32(3)
+            ])
+        );
+        assert_eq!(
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(5),
+                MPCMetricDType::MPCInt32(5)
+            ]) - MPCMetricDType::MPCInt32(2),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(3),
+                MPCMetricDType::MPCInt32(3)
+            ])
+        );
+        assert_eq!(
+            MPCMetricDType::MPCInt32(4)
+                - MPCMetricDType::Vec(vec![
                     MPCMetricDType::MPCInt32(1),
                     MPCMetricDType::MPCInt32(1)
                 ]),
