@@ -32,6 +32,18 @@ PL_FIELDS: List[str] = [
     VALUE_FIELD,
     EVENT_TIMESTAMP_FIELD,
 ]
+VALUE_FIELDS: List[str] = [
+    VALUE_FIELD,
+    CONVERSION_VALUE_FIELD,
+]
+ALL_FIELDS: List[str] = [
+    ID_FIELD,
+    CONVERSION_VALUE_FIELD,
+    CONVERSION_TIMESTAMP_FIELD,
+    CONVERSION_METADATA_FIELD,
+    VALUE_FIELD,
+    EVENT_TIMESTAMP_FIELD,
+]
 
 INTEGER_REGEX: Pattern[str] = re.compile(r"^[0-9]+$")
 TIMESTAMP_REGEX: Pattern[str] = re.compile(r"^[0-9]{10}$")
@@ -65,3 +77,13 @@ BINARY_PATHS = [
     "private_attribution/shard-aggregator/latest/shard-aggregator",
     "private_lift/lift/latest/lift",
 ]
+
+DEFAULT_VALID_THRESHOLDS: Dict[str, float] = {
+    ID_FIELD: 0.75,
+    VALUE_FIELD: 0.5,
+    CONVERSION_VALUE_FIELD: 0.5,
+    EVENT_TIMESTAMP_FIELD: 0.9,
+    CONVERSION_TIMESTAMP_FIELD: 0.9,
+    # This field is unused
+    CONVERSION_METADATA_FIELD: 0,
+}

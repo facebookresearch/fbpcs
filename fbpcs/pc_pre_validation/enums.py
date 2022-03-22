@@ -11,3 +11,9 @@ from enum import Enum
 class ValidationResult(Enum):
     SUCCESS = "success"
     FAILED = "failed"
+
+
+# T114991551
+class PCRole(Enum):
+    PUBLISHER = "PUBLISHER"
+    PARTNER = "PARTNER"
