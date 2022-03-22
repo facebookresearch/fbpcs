@@ -34,7 +34,7 @@ from fbpcs.pc_pre_validation.constants import (
     VALIDATION_REGEXES,
     VALUE_FIELDS,
 )
-from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.enums import PCRole, ValidationResult
 from fbpcs.pc_pre_validation.input_data_validation_issues import (
     InputDataValidationIssues,
 )
@@ -49,6 +49,7 @@ class InputDataValidator(Validator):
         input_file_path: str,
         cloud_provider: CloudProvider,
         region: str,
+        pc_role: PCRole,
         access_key_id: Optional[str] = None,
         access_key_data: Optional[str] = None,
         start_timestamp: Optional[str] = None,
@@ -58,6 +59,7 @@ class InputDataValidator(Validator):
         self._input_file_path = input_file_path
         self._local_file_path: str = self._get_local_filepath()
         self._cloud_provider = cloud_provider
+        self._pc_role = pc_role
         self._storage_service = S3StorageService(region, access_key_id, access_key_data)
         self._name: str = INPUT_DATA_VALIDATOR_NAME
         self._valid_thresholds: Dict[str, float] = self._get_valid_thresholds(

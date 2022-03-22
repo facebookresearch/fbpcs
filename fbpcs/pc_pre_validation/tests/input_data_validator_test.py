@@ -20,7 +20,7 @@ from fbpcs.pc_pre_validation.constants import (
     PL_FIELDS,
     DEFAULT_VALID_THRESHOLDS,
 )
-from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.enums import PCRole, ValidationResult
 from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
 from fbpcs.pc_pre_validation.validation_report import ValidationReport
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
@@ -29,6 +29,7 @@ from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 TEST_FILENAME = f"test-input-data-validation-{random.randint(0, 1000000)}.csv"
 TEST_INPUT_FILE_PATH = f"s3://test-bucket/{TEST_FILENAME}"
 TEST_REGION = "us-west-2"
+TEST_PC_ROLE: PCRole = PCRole.PARTNER
 TEST_TIMESTAMP: float = time.time()
 TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAMP}"
 TEST_THRESHOLD_OVERRIDES: Dict[str, float] = {
@@ -64,6 +65,7 @@ class TestInputDataValidator(TestCase):
         self, mock_storage_service: Mock
     ) -> None:
         cloud_provider = CloudProvider.AWS
+        pc_role = PCRole.PUBLISHER
         access_key_id = "id1"
         access_key_data = "data2"
         region = "us-east-2"
@@ -71,13 +73,19 @@ class TestInputDataValidator(TestCase):
         mock_storage_service.__init__(return_value=constructed_storage_service)
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, region, access_key_id, access_key_data
+            TEST_INPUT_FILE_PATH,
+            cloud_provider,
+            region,
+            pc_role,
+            access_key_id,
+            access_key_data,
         )
 
         mock_storage_service.assert_called_with(region, access_key_id, access_key_data)
         self.assertEqual(validator._storage_service, constructed_storage_service)
         self.assertEqual(validator._input_file_path, TEST_INPUT_FILE_PATH)
         self.assertEqual(validator._cloud_provider, cloud_provider)
+        self.assertEqual(validator._pc_role, pc_role)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     def test_run_validations_copy_failure(self, storage_service_mock: Mock) -> None:
@@ -95,7 +103,9 @@ class TestInputDataValidator(TestCase):
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.copy.side_effect = Exception(exception_message)
 
-        validator = InputDataValidator(input_file_path, cloud_provider, "us-west-2")
+        validator = InputDataValidator(
+            input_file_path, cloud_provider, "us-west-2", TEST_PC_ROLE
+        )
         report = validator.validate()
 
         self.assertEqual(report, expected_report)
@@ -124,7 +134,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_PC_ROLE
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -153,7 +163,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_PC_ROLE
         )
         report = validator.validate()
 
@@ -176,7 +186,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_PC_ROLE
         )
         report = validator.validate()
 
@@ -206,7 +216,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_PC_ROLE
         )
         report = validator.validate()
 
@@ -253,6 +263,7 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH,
             cloud_provider,
             TEST_REGION,
+            TEST_PC_ROLE,
             valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
         )
         report = validator.validate()
@@ -300,6 +311,7 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH,
             cloud_provider,
             TEST_REGION,
+            TEST_PC_ROLE,
             valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
         )
         report = validator.validate()
@@ -347,6 +359,7 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH,
             cloud_provider,
             TEST_REGION,
+            TEST_PC_ROLE,
             valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
         )
         report = validator.validate()
@@ -394,6 +407,7 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH,
             cloud_provider,
             TEST_REGION,
+            TEST_PC_ROLE,
             valid_threshold_override=SKIP_THRESHOLD_VALIDATION_STR,
         )
         report = validator.validate()
@@ -461,6 +475,7 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH,
             cloud_provider,
             TEST_REGION,
+            TEST_PC_ROLE,
             valid_threshold_override=TEST_THRESHOLD_OVERRIDES_STR,
         )
         report = validator.validate()
