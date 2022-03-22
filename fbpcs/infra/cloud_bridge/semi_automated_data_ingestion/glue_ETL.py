@@ -72,6 +72,7 @@ data_frame = dynamic_frame_read.toDF()
 ### first, check column existence, if not, add dummy identifier columns
 listColumns = data_frame.columns
 expected_column_list = [
+    # user_data fields
     "email",
     "phone",
     "device_id",
@@ -82,6 +83,19 @@ expected_column_list = [
     "browser_name",
     "device_os",
     "device_os_version",
+    # app_data fields
+    "advertiser_tracking_enabled",
+    "application_tracking_enabled",
+    "consider_views",
+    "device_token",
+    "include_dwell_data",
+    "include_video_data",
+    "install_referrer",
+    "installer_package",
+    "receipt_data",
+    "url_schemes",
+    "extinfo",
+    # other fields
     "data_source_id",
     "timestamp",
     "currency_type",
@@ -117,6 +131,22 @@ augmented_df = (
             "device_os_version",
         ),
     )
+    .withColumn(
+        "app_data",
+        struct(
+            "advertiser_tracking_enabled",
+            "application_tracking_enabled",
+            "consider_views",
+            "device_token",
+            "include_dwell_data",
+            "include_video_data",
+            "install_referrer",
+            "installer_package",
+            "receipt_data",
+            "url_schemes",
+            "extinfo",
+        ),
+    )
     .drop(col("email"))
     .drop(col("phone"))
     .drop(col("device_id"))
@@ -127,6 +157,17 @@ augmented_df = (
     .drop(col("browser_name"))
     .drop(col("device_os"))
     .drop(col("device_os_version"))
+    .drop(col("advertiser_tracking_enabled"))
+    .drop(col("application_tracking_enabled"))
+    .drop(col("consider_views"))
+    .drop(col("device_token"))
+    .drop(col("include_dwell_data"))
+    .drop(col("include_video_data"))
+    .drop(col("install_referrer"))
+    .drop(col("installer_package"))
+    .drop(col("receipt_data"))
+    .drop(col("url_schemes"))
+    .drop(col("extinfo"))
     .drop(col("date_col"))
     .drop(col("unixtime"))
     .repartition(1)
