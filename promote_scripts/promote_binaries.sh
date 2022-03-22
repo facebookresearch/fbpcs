@@ -17,14 +17,6 @@ if [ $# -ne 2 ]; then
     exit
 fi
 
-# Remove when PID is ready to be released again
-# Confirm PID binaries will be skipped
-read -rp "Please acknowledge that you are aware PID binaries are skipped by typing 'yes': " yesno
-case $yesno in
-  yes ) ;;
-  * ) printf "'yes' not confirmed, exiting...\n"; exit;;
-esac
-
 # list of the binaries
 binary_names=(
     'private_lift/lift'
@@ -34,9 +26,8 @@ binary_names=(
     'pcf2_attribution'
     'pcf2_aggregation'
     'private_attribution/shard-aggregator'
-    # Uncomment when PID is ready to be released again
-    # 'pid/private-id-client'
-    # 'pid/private-id-server'
+    'pid/private-id-client'
+    'pid/private-id-server'
     # 'pid/private-id-multi-key-client'
     # 'pid/private-id-multi-key-server'
     'data_processing/sharder'
