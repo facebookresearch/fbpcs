@@ -11,7 +11,8 @@ from dataclasses import field, dataclass
 from enum import Enum
 from typing import Optional, List
 
-from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
+from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.instance_base import InstanceBase
 
@@ -30,8 +31,8 @@ class StageStateInstance(InstanceBase):
     stage_name: str
     status: StageStateInstanceStatus = StageStateInstanceStatus.CREATED
     containers: List[ContainerInstance] = field(default_factory=list)
-    start_time: int = field(default_factory=lambda: int(time.time()))
-    end_time: Optional[int] = None
+    creation_ts: int = field(default_factory=lambda: int(time.time()))
+    end_ts: Optional[int] = None
 
     @property
     def server_ips(self) -> List[str]:
@@ -41,10 +42,30 @@ class StageStateInstance(InstanceBase):
 
     @property
     def elapsed_time(self) -> int:
-        if self.end_time is None:
-            return int(time.time()) - self.start_time
-
-        return self.end_time - self.start_time
+        end_ts = self.end_ts or int(time.time())
+        return end_ts - self.creation_ts
 
     def get_instance_id(self) -> str:
         return self.instance_id
+
+    def update_status(
+        self,
+        onedocker_svc: OneDockerService,
+    ) -> StageStateInstanceStatus:
+        container_ids = [container.instance_id for container in self.containers]
+        containers = list(filter(None, onedocker_svc.get_containers(container_ids)))
+        # replacing new containers to have it update to date
+        self.containers = containers
+        statuses = [container.status for container in self.containers]
+        # updating stage state status based on containers status
+        if ContainerInstanceStatus.FAILED in statuses:
+            self.status = StageStateInstanceStatus.FAILED
+        elif all(status is ContainerInstanceStatus.COMPLETED for status in statuses):
+            self.status = StageStateInstanceStatus.COMPLETED
+            self.end_ts = int(time.time())
+        elif ContainerInstanceStatus.STARTED in statuses:
+            self.status = StageStateInstanceStatus.STARTED
+        else:
+            self.status = StageStateInstanceStatus.UNKNOWN
+
+        return self.status
