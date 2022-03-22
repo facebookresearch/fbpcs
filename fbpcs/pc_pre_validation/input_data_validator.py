@@ -25,7 +25,9 @@ from typing import Dict, List, Sequence, Optional
 
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.pc_pre_validation.constants import (
+    ALL_FIELDS,
     DEFAULT_VALID_THRESHOLDS,
+    ID_FIELD,
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
@@ -114,7 +116,7 @@ class InputDataValidator(Validator):
         )
 
         if validation_issues.fields_under_threshold:
-            fields_str = ",".join(validation_issues.fields_under_threshold)
+            fields_str = ",".join(sorted(validation_issues.fields_under_threshold))
             validation_thresholds_required = {
                 key: value
                 for key, value in self._valid_thresholds.items()
@@ -123,8 +125,8 @@ class InputDataValidator(Validator):
             error_message = "\n".join(
                 [
                     f"Too many row values for '{fields_str}' are unusable:",
-                    f"Required data quality: {validation_thresholds_required}",
-                    f"Actual data quality: {validation_issues.field_thresholds}",
+                    f"Required data quality: {self._thresholds_to_str(validation_thresholds_required)}",
+                    f"Actual data quality: {self._thresholds_to_str(validation_issues.field_thresholds)}",
                 ]
             )
             return self._format_validation_report(
@@ -165,9 +167,17 @@ class InputDataValidator(Validator):
         if match_pl_fields:
             return PL_FIELDS
 
-        raise Exception(
-            f"Failed to parse the header row. The header row fields must be either: {PL_FIELDS} or: {PA_FIELDS}"
-        )
+        if self._pc_role == PCRole.PARTNER:
+            raise Exception(
+                f"Failed to parse the header row. The header row fields must be either: {PL_FIELDS} or: {PA_FIELDS}"
+            )
+
+        if ID_FIELD not in header_row:
+            raise Exception(
+                f"Failed to parse the header row. The header row fields must contain at least: {ID_FIELD}"
+            )
+
+        return list(set(ALL_FIELDS).intersection(set(header_row)))
 
     def _validate_line_ending(self, line: str) -> None:
         if not VALID_LINE_ENDING_REGEX.match(line):
@@ -265,3 +275,6 @@ class InputDataValidator(Validator):
                 and actual_ratio < self._valid_thresholds[field]
             ):
                 validation_issues.add_field_under_threshold(field)
+
+    def _thresholds_to_str(self, thresholds: Dict[str, float]) -> str:
+        return json.dumps(thresholds, sort_keys=True)

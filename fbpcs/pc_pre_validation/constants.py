@@ -36,6 +36,14 @@ VALUE_FIELDS: List[str] = [
     VALUE_FIELD,
     CONVERSION_VALUE_FIELD,
 ]
+ALL_FIELDS: List[str] = [
+    ID_FIELD,
+    CONVERSION_VALUE_FIELD,
+    CONVERSION_TIMESTAMP_FIELD,
+    CONVERSION_METADATA_FIELD,
+    VALUE_FIELD,
+    EVENT_TIMESTAMP_FIELD,
+]
 
 INTEGER_REGEX: Pattern[str] = re.compile(r"^[0-9]+$")
 TIMESTAMP_REGEX: Pattern[str] = re.compile(r"^[0-9]{10}$")

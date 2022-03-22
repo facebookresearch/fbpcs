@@ -417,11 +417,12 @@ class TestInputDataValidator(TestCase):
         all_thresholds = self._merge_default_threshold_into_override(
             TEST_THRESHOLD_OVERRIDES, list(expected_actual_thresholds.keys())
         )
+        sorted_fields = ",".join(sorted(["id_", "value"]))
         exception_message = "\n".join(
             [
-                "Too many row values for 'id_,value' are unusable:",
-                f"Required data quality: {all_thresholds}",
-                f"Actual data quality: {expected_actual_thresholds}",
+                f"Too many row values for '{sorted_fields}' are unusable:",
+                f"Required data quality: {self._thresholds_to_str(all_thresholds)}",
+                f"Actual data quality: {self._thresholds_to_str(expected_actual_thresholds)}",
             ]
         )
         lines = [
@@ -471,11 +472,76 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_the_publisher_must_specify_at_least_the_id_field(
+        self, time_mock: Mock, _storage_service_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        expected_actual_thresholds = {
+            "id_": 0.6,
+            "event_timestamp": 0.2,
+        }
+        all_thresholds = self._merge_default_threshold_into_override(
+            TEST_THRESHOLD_OVERRIDES, list(expected_actual_thresholds.keys())
+        )
+        exception_message = "\n".join(
+            [
+                "Too many row values for 'event_timestamp' are unusable:",
+                f"Required data quality: {self._thresholds_to_str(all_thresholds)}",
+                f"Actual data quality: {self._thresholds_to_str(expected_actual_thresholds)}",
+            ]
+        )
+        lines = [
+            b"id_,event_timestamp\n",
+            b"...,\n",
+            b"abcd/1234+WXYZ=,1645157987\n",
+            b"abcd/1234+WXYZ=,\n",
+            b"abcd/1234+WXYZ=,\n",
+            b",2022-03-21\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 5,
+                "validation_errors": {
+                    "id_": {
+                        "bad_format": 1,
+                        "empty": 1,
+                    },
+                    "event_timestamp": {
+                        "empty": 3,
+                        "bad_format": 1,
+                    },
+                },
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH,
+            TEST_CLOUD_PROVIDER,
+            TEST_REGION,
+            PCRole.PUBLISHER,
+            valid_threshold_override=TEST_THRESHOLD_OVERRIDES_STR,
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
     def _merge_default_threshold_into_override(
         self, override_thresholds: Dict[str, float], actual_threshold_keys: List[str]
     ) -> Dict[str, float]:
-        merged_thresholds = override_thresholds.copy()
+        merged_thresholds = {}
         for field, threshold in DEFAULT_VALID_THRESHOLDS.items():
+            if field in override_thresholds and field in actual_threshold_keys:
+                merged_thresholds[field] = override_thresholds[field]
             if field not in merged_thresholds and field in actual_threshold_keys:
                 merged_thresholds[field] = threshold
+
         return merged_thresholds
+
+    def _thresholds_to_str(self, thresholds: Dict[str, float]) -> str:
+        return json.dumps(thresholds, sort_keys=True)
