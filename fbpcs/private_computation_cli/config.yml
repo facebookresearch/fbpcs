@@ -43,11 +43,11 @@ private_computation:
     PCValidatorConfig:
       class: fbpcs.private_computation.entity.pc_validator_config.PCValidatorConfig
       constructor:
-        # Toggle running the PCPreValidator
-        pc_pre_validator_enabled: true
-        # AWS region - ex. us-west-2
+        ### AWS region - ex. us-west-2
         region: TODO
-        # Overrides for the passing validation thresholds
+        ### Toggle running the PCPreValidator
+        # pc_pre_validator_enabled: false
+        ### Overrides for the passing validation thresholds
         # data_validation_threshold_overrides:
         #   id_: 0.6
         #   event_timestamp: 0.7

@@ -17,7 +17,9 @@ from dataclasses_json import dataclass_json
 @dataclass
 class PCValidatorConfig:
     region: str
-    pc_pre_validator_enabled: bool = True
+    # Temporarily disable the pre validator by default, until it
+    # is ready to be always run
+    pc_pre_validator_enabled: bool = False
     data_validation_threshold_overrides: Optional[Dict[str, float]] = None
 
     def __str__(self) -> str:

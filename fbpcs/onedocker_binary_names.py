@@ -30,3 +30,5 @@ class OneDockerBinaryNames(Enum):
     CROSS_PSI_COR_CLIENT = "pid/cross-psi-xor-client"
 
     LIFT_COMPUTE = "private_lift/lift"
+
+    PC_PRE_VALIDATION = "validation/pc_pre_validation_cli"
