@@ -31,6 +31,45 @@ impl MPCMetricDType {
     }
 }
 
+// Right now, this is only for non bitwise operations.
+// There may be a separate macro for that later.
+macro_rules! impl_operator {
+    ($trait_name:path, $function_name:ident, $op:tt) => {
+        impl $trait_name for MPCMetricDType {
+            type Output = Self;
+
+            fn $function_name(self, other: Self) -> Self {
+                match (self, other) {
+                    (Self::MPCInt32(lhs), Self::MPCInt32(rhs)) => Self::MPCInt32(lhs $op rhs),
+                    (Self::MPCInt64(lhs), Self::MPCInt64(rhs)) => Self::MPCInt64(lhs $op rhs),
+                    (Self::MPCUInt32(lhs), Self::MPCUInt32(rhs)) => Self::MPCUInt32(lhs $op rhs),
+                    (Self::MPCUInt64(lhs), Self::MPCUInt64(rhs)) => Self::MPCUInt64(lhs $op rhs),
+                    (Self::Vec(lhs), Self::Vec(rhs)) => Self::Vec(
+                        lhs.into_iter()
+                            .zip(rhs.into_iter())
+                            .map(|(val1, val2)| val1 $op val2)
+                            .collect(),
+                    ),
+                    (scalar_dtype, Self::Vec(vec)) => Self::Vec(
+                        vec.into_iter()
+                            .map(|vec_element_dtype| scalar_dtype.clone() $op vec_element_dtype)
+                            .collect(),
+                    ),
+                    (Self::Vec(vec), scalar_dtype) => Self::Vec(
+                        vec.into_iter()
+                            .map(|vec_element_dtype|  vec_element_dtype $op scalar_dtype.clone())
+                            .collect(),
+                    ),
+                    (Self::MPCBool(_lhs), Self::MPCBool(_rhs)) => {
+                        panic!("Operator not defined for MPC bool")
+                    }
+                    (_, _) => panic!("Differing MPCMetricDType variants not supported"),
+                }
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use crate::mpc_metric_dtype::MPCMetricDType;
