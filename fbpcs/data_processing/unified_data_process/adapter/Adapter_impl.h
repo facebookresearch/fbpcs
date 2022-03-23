@@ -45,7 +45,7 @@ std::vector<int64_t> Adapter<schedulerId>::adapt(
     ids[1 + indexWidth + i] = SecBit(myShare, party1Id_);
   }
 
-  auto shuffledIds = shuffler_->shuffle(std::move(ids));
+  auto shuffledIds = shuffler_->shuffle(std::move(ids), unionSize);
   auto match0 = shuffledIds[0].openToParty(party0Id_);
   auto match1 = shuffledIds[0].openToParty(party1Id_);
   auto matchResult =
