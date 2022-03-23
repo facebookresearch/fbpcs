@@ -9,6 +9,7 @@
 
 import functools
 import logging
+import math
 import re
 import warnings
 from typing import DefaultDict, Any, Dict, List, Optional
@@ -25,9 +26,12 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
 )
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
+from fbpcs.data_processing.service.sharding_service import ShardType, ShardingService
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDInstance
+from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -254,6 +258,72 @@ async def start_combiner_service(
     )
     return await combiner_service.start_containers(
         cmd_args_list=args,
+        onedocker_svc=onedocker_svc,
+        binary_version=binary_config.binary_version,
+        binary_name=binary_name,
+        timeout=None,
+        wait_for_containers_to_finish=wait_for_containers,
+    )
+
+
+# TODO: If we're going to deprecate prepare_data_stage_service.py,
+# we can just move this method to shard_stage_service.py as private method
+async def start_sharder_service(
+    private_computation_instance: PrivateComputationInstance,
+    onedocker_svc: OneDockerService,
+    onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
+    combine_output_path: str,
+    wait_for_containers: bool = False,
+) -> List[ContainerInstance]:
+    """Run combiner service and return those container instances
+
+    Args:
+        private_computation_instance: The PC instance to run sharder service with
+        onedocker_svc: Spins up containers that run binaries in the cloud
+        onedocker_binary_config_map: Stores a mapping from mpc game to OneDockerBinaryConfig (binary version and tmp directory)
+        combine_output_path: out put path for the combine result
+        wait_for_containers: block until containers to finish running, default False
+
+    Returns:
+        return: list of container instances running combiner service
+    """
+    sharder = ShardingService()
+    logging.info("Instantiated sharder")
+
+    args_list = []
+    for shard_index in range(
+        private_computation_instance.num_pid_containers + 1
+        if private_computation_instance.is_validating
+        else private_computation_instance.num_pid_containers
+    ):
+        path_to_shard = PIDStage.get_sharded_filepath(combine_output_path, shard_index)
+        logging.info(f"Input path to sharder: {path_to_shard}")
+
+        shards_per_file = math.ceil(
+            (
+                private_computation_instance.num_mpc_containers
+                / private_computation_instance.num_pid_containers
+            )
+            * private_computation_instance.num_files_per_mpc_container
+        )
+        shard_index_offset = shard_index * shards_per_file
+        logging.info(
+            f"Output base path to sharder: {private_computation_instance.data_processing_output_path}, {shard_index_offset=}"
+        )
+
+        binary_config = onedocker_binary_config_map[OneDockerBinaryNames.SHARDER.value]
+        args_per_shard = sharder.build_args(
+            filepath=path_to_shard,
+            output_base_path=private_computation_instance.data_processing_output_path,
+            file_start_index=shard_index_offset,
+            num_output_files=shards_per_file,
+            tmp_directory=binary_config.tmp_directory,
+        )
+        args_list.append(args_per_shard)
+
+    binary_name = sharder.get_binary_name(ShardType.ROUND_ROBIN)
+    return await sharder.start_containers(
+        cmd_args_list=args_list,
         onedocker_svc=onedocker_svc,
         binary_version=binary_config.binary_version,
         binary_name=binary_name,
