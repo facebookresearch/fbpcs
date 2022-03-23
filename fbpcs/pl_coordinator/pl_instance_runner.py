@@ -234,7 +234,9 @@ class PLInstanceRunner:
                 self.logger.info(f"Valid stage found: {valid_stage}")
                 return valid_stage
         raise PLInstanceCalculationException(
-            f"Waiting for valid stage timed out after {timeout}s."
+            "Timeout error",
+            f"Waiting for valid stage timed out after {timeout}s.",
+            "Try running again",
         )
 
     def is_finished(self) -> bool:
@@ -329,9 +331,13 @@ class PLInstanceRunner:
                     cancel_time += POLL_INTERVAL
                 else:
                     raise PLInstanceCalculationException(
-                        f"Stage {stage.name} failed. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
+                        f"Stage {stage.name} failed.",
+                        f"Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.",
+                        "Try running again",
                     )
             sleep(POLL_INTERVAL)
         raise PLInstanceCalculationException(
-            f"Stage {stage.name} timed out after {timeout}s. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
+            f"Stage {stage.name} timed out after {timeout}s. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.",
+            "unknown",
+            "Try running again",
         )
