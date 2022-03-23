@@ -191,10 +191,23 @@ class PrivateComputationService:
     # TODO T88759390: make an async version of this function
     def update_instance(self, instance_id: str) -> PrivateComputationInstance:
         private_computation_instance = self.instance_repository.read(instance_id)
-        self.logger.info(f"Updating instance: {instance_id}")
-        return self._update_instance(
-            private_computation_instance=private_computation_instance
-        )
+        # if the status is started, then we need to update the instance
+        # to either failed, started, or completed
+        if private_computation_instance.stage_flow.is_started_status(
+            private_computation_instance.status
+        ):
+            self.logger.info(f"Updating instance: {instance_id}")
+            return self._update_instance(
+                private_computation_instance=private_computation_instance
+            )
+        else:
+            # if the status is not started, then nothing should have changed and we
+            # don't need to update the status
+            # trying to prevent issues like this: https://fburl.com/yrrozywg
+            self.logger.info(
+                f"Not updating {instance_id}: status is {private_computation_instance.status}"
+            )
+            return private_computation_instance
 
     def _update_instance(
         self, private_computation_instance: PrivateComputationInstance

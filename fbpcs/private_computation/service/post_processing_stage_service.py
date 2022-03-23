@@ -114,9 +114,11 @@ class PostProcessingStageService(PrivateComputationStageService):
         # if any of the handlers failed, then the status of the post processing instance would have
         # been set to failed. If none of them failed, then that means all of the handlers completed, so
         # we can set the status to completed.
-        if post_processing_instance.status != PostProcessingInstanceStatus.FAILED:
+        if post_processing_instance.status is not PostProcessingInstanceStatus.FAILED:
             post_processing_instance.status = PostProcessingInstanceStatus.COMPLETED
-            pc_instance.status = pc_instance.current_stage.completed_status
+            pc_instance.update_status(
+                pc_instance.current_stage.completed_status, self._logger
+            )
         return pc_instance
 
     async def _run_post_processing_handler(
