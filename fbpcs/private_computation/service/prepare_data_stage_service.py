@@ -13,15 +13,10 @@ from typing import DefaultDict
 from typing import List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
-from fbpcp.util.typing import checked_cast
-from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.data_processing.service.sharding_service import ShardType, ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
-)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
@@ -29,11 +24,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
-from fbpcs.private_computation.service.private_computation_service_data import (
-    PrivateComputationServiceData,
-)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
+)
+from fbpcs.private_computation.service.utils import (
+    start_combiner_service,
 )
 
 
@@ -87,10 +82,14 @@ class PrepareDataStageService(PrivateComputationStageService):
 
         # TODO: we will write log_cost_to_s3 to the instance, so this function interface
         #   will get simplified
-        await self._run_combiner_service(
-            pc_instance, combine_output_path, self._log_cost_to_s3
+        await start_combiner_service(
+            pc_instance,
+            self._onedocker_svc,
+            self._onedocker_binary_config_map,
+            combine_output_path,
+            log_cost_to_s3=self._log_cost_to_s3,
+            wait_for_containers=True,
         )
-
         self._logger.info("Finished running CombinerService, starting to reshard")
 
         # reshard each file into x shards
@@ -121,55 +120,6 @@ class PrepareDataStageService(PrivateComputationStageService):
             The latest status for private_computation_instance
         """
         return pc_instance.status
-
-    async def _run_combiner_service(
-        self,
-        pl_instance: PrivateComputationInstance,
-        combine_output_path: str,
-        log_cost_to_s3: bool,
-    ) -> None:
-        stage_data = PrivateComputationServiceData.get(
-            pl_instance.game_type
-        ).combiner_stage
-
-        binary_name = stage_data.binary_name
-        binary_config = self._onedocker_binary_config_map[binary_name]
-
-        # TODO: T106159008 Add on attribution specific args
-        if pl_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
-            run_name = pl_instance.instance_id if log_cost_to_s3 else ""
-            padding_size = checked_cast(int, pl_instance.padding_size)
-            log_cost = log_cost_to_s3
-        else:
-            run_name = None
-            padding_size = None
-            log_cost = None
-
-        combiner_service = checked_cast(
-            IdSpineCombinerService,
-            stage_data.service,
-        )
-
-        args = combiner_service.build_args(
-            spine_path=pl_instance.pid_stage_output_spine_path,
-            data_path=pl_instance.pid_stage_output_data_path,
-            output_path=combine_output_path,
-            num_shards=pl_instance.num_pid_containers + 1
-            if pl_instance.is_validating
-            else pl_instance.num_pid_containers,
-            tmp_directory=binary_config.tmp_directory,
-            run_name=run_name,
-            padding_size=padding_size,
-            log_cost=log_cost,
-        )
-        await combiner_service.start_containers(
-            cmd_args_list=args,
-            onedocker_svc=self._onedocker_svc,
-            binary_version=binary_config.binary_version,
-            binary_name=binary_name,
-            timeout=None,
-            wait_for_containers_to_finish=True,
-        )
 
     async def _run_sharder_service(
         self, pl_instance: PrivateComputationInstance, combine_output_path: str
