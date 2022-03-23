@@ -16,6 +16,7 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import (
 from fbpcs.pl_coordinator.pl_instance_runner import (
     PLInstanceRunner,
     PLInstanceCalculationException,
+    IncompatibleStageError,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
@@ -117,6 +118,41 @@ class TestPlInstanceRunner(TestCase):
                 runner.partner.status = partner_status
                 valid_stage = runner.get_valid_stage()
                 self.assertEqual(valid_stage, stage)
+        for publisher_status, partner_status in (
+            ("PID_PREPARE_COMPLETED", PrivateComputationInstanceStatus.CREATED),
+            (
+                "COMPUTATION_COMPLETED",
+                PrivateComputationInstanceStatus.PREPARE_DATA_COMPLETED,
+            ),
+            (
+                "COMPUTATION_COMPLETED",
+                PrivateComputationInstanceStatus.COMPUTATION_FAILED,
+            ),
+            ("CREATED", PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED),
+            (
+                "PREPARE_DATA_COMPLETED",
+                PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+            ),
+            (
+                "COMPUTATION_FAILED",
+                PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+            ),
+        ):
+            with self.subTest(
+                "Testing incompatible stages",
+                publisher_status=publisher_status,
+                partner_status=partner_status,
+            ):
+                self.mock_graph_api_client.get_instance.return_value = (
+                    self._get_graph_api_output(publisher_status)
+                )
+                mock_get_instance.return_value = self._get_pc_instance(partner_status)
+
+                runner = self._get_runner(PrivateComputationStageFlow)
+                runner.publisher.status = GRAPHAPI_INSTANCE_STATUSES[publisher_status]
+                runner.partner.status = partner_status
+                with self.assertRaises(IncompatibleStageError):
+                    stage = runner.get_valid_stage()
 
     @patch(
         "fbpcs.pl_coordinator.pc_calc_instance.PrivateComputationCalcInstance.wait_valid_status"
@@ -649,6 +685,20 @@ class TestPlInstanceRunner(TestCase):
                 PrivateComputationStageFlow.COMPUTE,
                 True,
                 True,
+            ),
+            (
+                "COMPUTATION_COMPLETED",
+                PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+                PrivateComputationStageFlow.COMPUTE,
+                False,
+                False,
+            ),
+            (
+                "COMPUTATION_STARTED",
+                PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+                PrivateComputationStageFlow.COMPUTE,
+                False,
+                False,
             ),
             (
                 "COMPUTATION_COMPLETED",

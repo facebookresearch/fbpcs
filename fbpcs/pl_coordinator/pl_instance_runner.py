@@ -23,7 +23,10 @@ from fbpcs.pl_coordinator.constants import (
     RETRY_INTERVAL,
     CANCEL_STAGE_TIMEOUT,
 )
-from fbpcs.pl_coordinator.exceptions import PLInstanceCalculationException
+from fbpcs.pl_coordinator.exceptions import (
+    PLInstanceCalculationException,
+    IncompatibleStageError,
+)
 from fbpcs.pl_coordinator.pc_partner_instance import PrivateComputationPartnerInstance
 from fbpcs.pl_coordinator.pc_publisher_instance import (
     PrivateComputationPublisherInstance,
@@ -209,13 +212,33 @@ class PLInstanceRunner:
                 return publisher_stage
 
             elif publisher_stage is partner_stage.previous_stage:
-                if not publisher_stage.is_joint_stage:
-                    # Example: publisher is PREPARE_DATA_FAILED, partner is PREPARE_DATA_COMPLETED
+                # if it's not a joint stage, the statuses don't matter at all since
+                # each party operates independently
+                # Example: publisher is PREPARE_DATA_FAILED, partner is PREPARE_DATA_COMPLETED
+                if not publisher_stage.is_joint_stage or (
+                    # it's fine if one party is completed and the other is started
+                    # because the one with the started status just needs to call
+                    # update_instance one more time
+                    # Example: publisher is COMPUTATION_STARTED, partner is COMPUTATION_COMPLETED
+                    self.stage_flow.is_started_status(self.publisher.status)
+                    and self.stage_flow.is_completed_status(self.partner.status)
+                ):
                     return publisher_stage
             elif partner_stage is publisher_stage.previous_stage:
-                if not partner_stage.is_joint_stage:
-                    # Example: publisher is PREPARE_DATA_COMPLETED, partner is PREPARE_DATA_FAILED
+                # Example: publisher is PREPARE_DATA_COMPLETED, partner is PREPARE_DATA_FAILED
+                if not partner_stage.is_joint_stage or (
+                    # Example: publisher is COMPUTATION_COMPLETED, partner is COMPUTATION_STARTED
+                    self.stage_flow.is_started_status(self.partner.status)
+                    and self.stage_flow.is_completed_status(self.publisher.status)
+                ):
                     return partner_stage
+
+            # Example: partner is CREATED, publisher is PID_PREPARE_COMPLETED
+            # Example: publisher is COMPUTATION COMPLETED, partner is PREPARE_COMPLETED
+            # Example: publisher is COMPUTATION_COMPLETED, partner is COMPUTATION_FAILED
+            raise IncompatibleStageError.make_error(
+                publisher_stage.name, partner_stage.name
+            )
         return None
 
     def wait_valid_stage(self, timeout: int) -> PrivateComputationBaseStageFlow:
