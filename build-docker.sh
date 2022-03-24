@@ -29,8 +29,8 @@ EOF
 FBPCF_DEPENDENCY="emp_games data_processing onedocker"
 AVAILABLE_PACKAGES="emp_games data_processing pce_deployment onedocker"
 PACKAGE=$1
-if [[ ! " $AVAILABLE_PACKAGES " =~ $PACKAGE ]]; then
-   usage
+if [[ ! " $AVAILABLE_PACKAGES " =~ $PACKAGE || -z "$PACKAGE" ]]; then
+  usage
 fi
 shift
 
