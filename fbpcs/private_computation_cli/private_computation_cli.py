@@ -37,7 +37,7 @@ Options:
 import logging
 import os
 from pathlib import Path, PurePath
-from typing import List, Optional
+from typing import List, Optional, Iterable, Union
 
 import schema
 from docopt import docopt
@@ -53,6 +53,7 @@ from fbpcs.private_computation.pc_attribution_runner import (
     get_attribution_dataset_info,
     run_attribution,
 )
+from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
@@ -76,6 +77,37 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     validate,
 )
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
+
+
+def transform_path(path_to_check: str) -> str:
+    """
+    Checks that a path is a valid file or a valid S3 path.
+    If necessary, S3 path will be re-formated into the  “virtual-hosted-style access” format
+
+    Arg:
+        path_to_check: string containing file or S3 path
+
+    Returns:
+        a string valid file path or a valid S3 path
+    """
+    # If the file exists on the local system,
+    # the path is good and nothing else to do
+    if os.path.exists(path_to_check):
+        return path_to_check
+    # Otherwise, check if the path is an S3 path and
+    # carry out any necessary transformation into virtual-hosted format
+    s3_path = transform_file_path(path_to_check)
+    return s3_path
+
+
+def transform_many_paths(paths_to_check: Union[str, Iterable[str]]) -> List[str]:
+    """
+    Similar to calling `transform_path` multiple times on a list of paths
+    """
+    if isinstance(paths_to_check, str):
+        paths_to_check = paths_to_check.split(",")
+    paths = [transform_path(path) for path in paths_to_check]
+    return paths
 
 
 def main(argv: Optional[List[str]] = None) -> None:
@@ -119,9 +151,9 @@ def main(argv: Optional[List[str]] = None) -> None:
             ),
             "--objective_ids": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--dataset_id": schema.Or(None, str),
-            "--input_path": schema.Or(None, str),
-            "--input_paths": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
-            "--output_dir": schema.Or(None, str),
+            "--input_path": schema.Or(None, transform_path),
+            "--input_paths": schema.Or(None, schema.Use(transform_many_paths)),
+            "--output_dir": schema.Or(None, transform_path),
             "--aggregated_result_path": schema.Or(None, str),
             "--expected_result_path": schema.Or(None, str),
             "--num_pid_containers": schema.Or(None, schema.Use(int)),
