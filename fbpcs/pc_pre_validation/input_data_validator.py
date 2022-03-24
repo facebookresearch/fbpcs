@@ -50,7 +50,6 @@ class InputDataValidator(Validator):
         access_key_data: Optional[str] = None,
         start_timestamp: Optional[str] = None,
         end_timestamp: Optional[str] = None,
-        valid_threshold_override: Optional[str] = None,
     ) -> None:
         self._input_file_path = input_file_path
         self._local_file_path: str = self._get_local_filepath()
