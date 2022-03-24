@@ -6,7 +6,8 @@
 
 # pyre-strict
 
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Union
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.entity.mpc_instance import (
@@ -15,9 +16,20 @@ from fbpcp.entity.mpc_instance import (
     MPCInstanceStatus,
 )
 from fbpcs.common.entity.instance_base import InstanceBase
+from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
 
 
+@dataclass
 class PCSMPCInstance(MPCInstance, InstanceBase):
+    instance_id: str
+    game_name: str
+    mpc_party: MPCParty
+    num_workers: int
+    server_ips: Optional[List[str]]
+    containers: List[Union[PCSContainerInstance, ContainerInstance]]
+    status: MPCInstanceStatus
+    game_args: Optional[List[Dict[str, Any]]]
+
     @classmethod
     def create_instance(
         cls,
@@ -26,7 +38,9 @@ class PCSMPCInstance(MPCInstance, InstanceBase):
         mpc_party: MPCParty,
         num_workers: int,
         server_ips: Optional[List[str]] = None,
-        containers: Optional[List[ContainerInstance]] = None,
+        containers: Optional[
+            List[Union[PCSContainerInstance, ContainerInstance]]
+        ] = None,
         status: MPCInstanceStatus = MPCInstanceStatus.UNKNOWN,
         game_args: Optional[List[Dict[str, Any]]] = None,
     ) -> "PCSMPCInstance":

@@ -9,13 +9,14 @@
 import time
 from dataclasses import field, dataclass
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.instance_base import InstanceBase
+from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
 
 
 class StageStateInstanceStatus(Enum):
@@ -31,7 +32,9 @@ class StageStateInstance(InstanceBase):
     instance_id: str
     stage_name: str
     status: StageStateInstanceStatus = StageStateInstanceStatus.CREATED
-    containers: List[ContainerInstance] = field(default_factory=list)
+    containers: List[Union[PCSContainerInstance, ContainerInstance]] = field(
+        default_factory=list
+    )
     creation_ts: int = field(default_factory=lambda: int(time.time()))
     end_ts: Optional[int] = None
 
