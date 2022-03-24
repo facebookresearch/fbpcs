@@ -24,6 +24,8 @@ Usage:
 """
 
 
+from typing import List
+from typing import Optional as OptionalType
 from typing import cast
 
 from docopt import docopt
@@ -45,7 +47,7 @@ END_TIMESTAMP = "--end-timestamp"
 VALID_THRESHOLD_OVERRIDE = "--valid-threshold-override"
 
 
-def main() -> None:
+def main(argv: OptionalType[List[str]] = None) -> None:
     optional_string = Or(None, str)
     cloud_provider_from_string = Use(lambda arg: CloudProvider[arg])
 
@@ -61,7 +63,7 @@ def main() -> None:
             Optional(VALID_THRESHOLD_OVERRIDE): optional_string,
         }
     )
-    arguments = s.validate(docopt(__doc__))
+    arguments = s.validate(docopt(__doc__, argv))
     assert arguments
     print("Parsed pc_pre_validation_cli arguments")
 
