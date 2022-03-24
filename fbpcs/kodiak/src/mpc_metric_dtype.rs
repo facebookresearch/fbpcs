@@ -107,6 +107,7 @@ impl MPCMetricDType {
 
     impl_comparision_method!(lt, <);
     impl_comparision_method!(lte, <=);
+    impl_comparision_method!(gt, >);
 }
 
 #[cfg(test)]
@@ -221,6 +222,62 @@ mod tests {
             MPCMetricDType::Vec(vec![
                 MPCMetricDType::MPCBool(true),
                 MPCMetricDType::MPCBool(false)
+            ])
+        );
+    }
+
+    #[test]
+    fn gt() {
+        assert_eq!(
+            MPCMetricDType::MPCInt32(1).gt(&MPCMetricDType::MPCInt32(2)),
+            MPCMetricDType::MPCBool(false)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCInt64(1).gt(&MPCMetricDType::MPCInt64(2)),
+            MPCMetricDType::MPCBool(false)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCUInt32(1).gt(&MPCMetricDType::MPCUInt32(2)),
+            MPCMetricDType::MPCBool(false)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCUInt64(1).gt(&MPCMetricDType::MPCUInt64(2)),
+            MPCMetricDType::MPCBool(false)
+        );
+
+        assert_eq!(
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(1),
+                MPCMetricDType::MPCInt32(2)
+            ])
+            .gt(&MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(2),
+                MPCMetricDType::MPCInt32(1)
+            ])),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCBool(false),
+                MPCMetricDType::MPCBool(true)
+            ])
+        );
+        assert_eq!(
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(2),
+                MPCMetricDType::MPCInt32(1)
+            ])
+            .gt(&MPCMetricDType::MPCInt32(2)),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCBool(false),
+                MPCMetricDType::MPCBool(false)
+            ])
+        );
+        assert_eq!(
+            MPCMetricDType::MPCInt32(2).gt(&MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(2),
+                MPCMetricDType::MPCInt32(1)
+            ])),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCBool(false),
+                MPCMetricDType::MPCBool(true)
             ])
         );
     }
