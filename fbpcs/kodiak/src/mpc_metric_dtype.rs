@@ -104,11 +104,72 @@ impl MPCMetricDType {
     {
         T::try_from(self)
     }
+
+    impl_comparision_method!(lt, <);
+    impl_comparision_method!(lte, <=);
+    impl_comparision_method!(gt, <);
+    impl_comparision_method!(gte, <=);
 }
 
 #[cfg(test)]
 mod tests {
     use crate::mpc_metric_dtype::MPCMetricDType;
+
+    #[test]
+    fn lt() {
+        assert_eq!(
+            MPCMetricDType::MPCInt32(1).lt(&MPCMetricDType::MPCInt32(2)),
+            MPCMetricDType::MPCBool(true)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCInt64(1).lt(&MPCMetricDType::MPCInt64(2)),
+            MPCMetricDType::MPCBool(true)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCUInt32(1).lt(&MPCMetricDType::MPCUInt32(2)),
+            MPCMetricDType::MPCBool(true)
+        );
+        assert_eq!(
+            MPCMetricDType::MPCUInt64(1).lt(&MPCMetricDType::MPCUInt64(2)),
+            MPCMetricDType::MPCBool(true)
+        );
+
+        assert_eq!(
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(1),
+                MPCMetricDType::MPCInt32(2)
+            ])
+            .lt(&MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(2),
+                MPCMetricDType::MPCInt32(1)
+            ])),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCBool(true),
+                MPCMetricDType::MPCBool(false)
+            ])
+        );
+        assert_eq!(
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(2),
+                MPCMetricDType::MPCInt32(1)
+            ])
+            .lt(&MPCMetricDType::MPCInt32(2)),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCBool(false),
+                MPCMetricDType::MPCBool(true)
+            ])
+        );
+        assert_eq!(
+            MPCMetricDType::MPCInt32(2).lt(&MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCInt32(2),
+                MPCMetricDType::MPCInt32(1)
+            ])),
+            MPCMetricDType::Vec(vec![
+                MPCMetricDType::MPCBool(false),
+                MPCMetricDType::MPCBool(false)
+            ])
+        );
+    }
 
     #[test]
     fn add() {
