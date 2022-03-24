@@ -17,6 +17,7 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
+from fbpcs.common.service.pcs_container_service import PCSContainerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
@@ -325,8 +326,8 @@ def print_log_urls(
         print(f"[{stage}]: {log_url}")
 
 
-def _build_container_service(config: Dict[str, Any]) -> ContainerService:
-    return reflect.get_instance(config, ContainerService)
+def _build_container_service(config: Dict[str, Any]) -> PCSContainerService:
+    return PCSContainerService(reflect.get_instance(config, ContainerService))
 
 
 def _build_storage_service(config: Dict[str, Any]) -> StorageService:

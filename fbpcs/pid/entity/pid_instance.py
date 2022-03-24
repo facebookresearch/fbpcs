@@ -8,10 +8,11 @@
 
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.instance_base import InstanceBase
+from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 
 
@@ -63,9 +64,9 @@ class PIDInstance(InstanceBase):
     data_path: Optional[str] = None
     spine_path: Optional[str] = None
     hmac_key: Optional[str] = None
-    stages_containers: Dict[UnionPIDStage, List[ContainerInstance]] = field(
-        default_factory=dict
-    )
+    stages_containers: Dict[
+        UnionPIDStage, List[Union[PCSContainerInstance, ContainerInstance]]
+    ] = field(default_factory=dict)
     stages_status: Dict[UnionPIDStage, PIDStageStatus] = field(default_factory=dict)
     status: PIDInstanceStatus = PIDInstanceStatus.UNKNOWN
     current_stage: Optional[UnionPIDStage] = None
