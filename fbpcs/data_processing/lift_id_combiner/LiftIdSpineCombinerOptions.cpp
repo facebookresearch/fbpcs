@@ -28,3 +28,4 @@ DEFINE_string(
     sort_strategy,
     "sort",
     "Sorting strategy selected for the output data - options: (sort|keep_original)");
+DEFINE_int32(max_id_column_cnt, 1, "Maximum number of id columns to use as id");

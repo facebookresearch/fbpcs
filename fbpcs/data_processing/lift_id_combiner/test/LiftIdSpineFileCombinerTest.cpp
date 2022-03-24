@@ -343,3 +343,44 @@ TEST_F(LiftIdSpineFileCombinerTest, VerifySortByTime) {
   FLAGS_multi_conversion_limit = 4;
   runTest(dataInput, spineInput, expectedOutput);
 }
+
+// Verify that LiftIdSpineMultiConversionInput sorts values pairwise by time
+// and stores them in a sorted manner
+TEST_F(LiftIdSpineFileCombinerTest, MultiKey) {
+  std::vector<std::string> dataInput = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      "123,,,127,104",
+      "123,456,,126,103",
+      "123,456,789,125,102",
+  };
+  std::vector<std::string> spineInput = {"AAAA,123"};
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values",
+      "AAAA,[125,126,127,128],[102,103,104,105]",
+  };
+  FLAGS_multi_conversion_limit = 4;
+  FLAGS_max_id_column_cnt = 1;
+  runTest(dataInput, spineInput, expectedOutput);
+
+  spineInput = {"AAAA,123", "BBBB,123,456", "CCCC,NA"};
+  expectedOutput = {
+      "id_,event_timestamps,values",
+      "AAAA,[0,0,127],[0,0,104]",
+      "BBBB,[125,126,128],[102,103,105]",
+      "CCCC,[0,0,0],[0,0,0]"};
+  FLAGS_multi_conversion_limit = 3;
+  FLAGS_max_id_column_cnt = 2;
+  runTest(dataInput, spineInput, expectedOutput);
+
+  spineInput = {"AAAA,123", "BBBB,123,456", "CCCC,NA", "DDDD,123,456,789"};
+  expectedOutput = {
+      "id_,event_timestamps,values",
+      "AAAA,[0,0,127],[0,0,104]",
+      "BBBB,[0,0,126],[0,0,103]",
+      "CCCC,[0,0,0],[0,0,0]",
+      "DDDD,[0,125,128],[0,102,105]"};
+  FLAGS_multi_conversion_limit = 3;
+  FLAGS_max_id_column_cnt = 3;
+  runTest(dataInput, spineInput, expectedOutput);
+}

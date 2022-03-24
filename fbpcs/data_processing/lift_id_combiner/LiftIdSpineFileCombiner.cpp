@@ -30,12 +30,12 @@
 #include "../id_combiner/DataPreparationHelpers.h"
 #include "../id_combiner/DataValidation.h"
 #include "../id_combiner/GroupBy.h"
-#include "../id_combiner/IdInsert.h"
-#include "../id_combiner/IdSwap.h"
+#include "../id_combiner/IdSwapMultiKey.h"
 #include "../id_combiner/SortIds.h"
 #include "../id_combiner/SortIntegralValues.h"
 #include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcf/io/IInputStream.h"
+#include "fbpcs/data_processing/lift_id_combiner/LiftIdSpineCombinerOptions.h"
 
 namespace pid {
 void LiftIdSpineFileCombiner::combineFile() {
@@ -81,14 +81,18 @@ void LiftIdSpineFileCombiner::combineFile() {
     XLOG(FATAL) << "Invalid headers for dataset.";
   }
 
-  // run idSwap followed by idInsert
   // TODO: Switch from stringstreams to a real random filename
   std::stringstream idSwapOutFile;
   std::stringstream idMappedOutFile;
-  pid::combiner::idSwap(dataInStream, spineInStream, idMappedOutFile);
-  spineInStream.clear();
-  spineInStream.seekg(0);
-  pid::combiner::idInsert(idMappedOutFile, spineInStream, idSwapOutFile);
+  pid::combiner::idSwapMultiKey(
+      dataInStream, spineInStream, idSwapOutFile, FLAGS_max_id_column_cnt);
+
+  std::string idSwapOutFileHeaderLine;
+  getline(idSwapOutFile, idSwapOutFileHeaderLine);
+  std::vector<std::string> idSwapOutFileHeader;
+  folly::split(",", idSwapOutFileHeaderLine, idSwapOutFileHeader);
+  idSwapOutFile.clear();
+  idSwapOutFile.seekg(0);
 
   std::string line;
 
@@ -100,7 +104,7 @@ void LiftIdSpineFileCombiner::combineFile() {
   if (isPartnerDataset) {
     // get all columns that are not id_, these are the columns we want to
     // aggregate
-    std::vector<std::string> aggregatedCols = header;
+    std::vector<std::string> aggregatedCols = idSwapOutFileHeader;
     aggregatedCols.erase(
         std::find(aggregatedCols.begin(), aggregatedCols.end(), "id_"));
 
@@ -120,7 +124,7 @@ void LiftIdSpineFileCombiner::combineFile() {
 
     // add "s" to all aggregated column headers
     std::stringstream renamedColsFile;
-    std::vector<std::string> renamedColsVec = header;
+    std::vector<std::string> renamedColsVec = idSwapOutFileHeader;
     for (auto& colName : aggregatedCols) {
       auto it = find(renamedColsVec.begin(), renamedColsVec.end(), colName);
       colName.append("s");
@@ -145,7 +149,9 @@ void LiftIdSpineFileCombiner::combineFile() {
     // It's possible that this is a "valueless" run
     // Also remember that we need to search for the *original* header name
     // since we have pluralized it in a previous step
-    if (std::find(header.begin(), header.end(), "value") != header.end()) {
+    if (std::find(
+            idSwapOutFileHeader.begin(), idSwapOutFileHeader.end(), "value") !=
+        idSwapOutFileHeader.end()) {
       listColumns.push_back("values");
     }
     pid::combiner::sortIntegralValues(
@@ -156,10 +162,10 @@ void LiftIdSpineFileCombiner::combineFile() {
     // We need to get the timestamp index *before* we add the new column
     // Otherwise, we'll get a std::out_of_range exception
     auto timestampIndex =
-        combiner::headerIndex(header, "opportunity_timestamp");
+        combiner::headerIndex(idSwapOutFileHeader, "opportunity_timestamp");
     // add opportunity to header
-    header.insert(header.end() - 1, "opportunity");
-    *tmpFile << combiner::vectorToString(header) << "\n";
+    idSwapOutFileHeader.insert(idSwapOutFileHeader.end() - 1, "opportunity");
+    *tmpFile << combiner::vectorToString(idSwapOutFileHeader) << "\n";
 
     // add opportunity value.
     // if timestamp is 0, opportunity is 0
