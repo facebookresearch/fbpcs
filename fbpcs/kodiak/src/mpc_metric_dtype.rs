@@ -21,19 +21,7 @@ pub enum MPCMetricDType {
     Vec(Vec<MPCMetricDType>),
 }
 
-impl MPCMetricDType {
-    pub fn take_inner_val<T>(self) -> Result<T, <T as TryFrom<MPCMetricDType>>::Error>
-    where
-        T: std::convert::TryFrom<MPCMetricDType>,
-        <T as TryFrom<MPCMetricDType>>::Error: std::fmt::Debug,
-    {
-        T::try_from(self)
-    }
-}
-
-// Right now, this is only for non bitwise operations.
-// There may be a separate macro for that later.
-macro_rules! impl_operator {
+macro_rules! impl_arithmetic_operator {
     ($trait_name:path, $function_name:ident, $op:tt) => {
         impl $trait_name for MPCMetricDType {
             type Output = Self;
@@ -70,10 +58,53 @@ macro_rules! impl_operator {
     };
 }
 
-impl_operator!(std::ops::Add, add, +);
-impl_operator!(std::ops::Sub, sub, -);
-impl_operator!(std::ops::Mul, mul, *);
-impl_operator!(std::ops::Div, div, /);
+macro_rules! impl_comparision_method {
+    ($function_name:ident, $op:tt) => {
+            pub fn $function_name(&self, other: &Self) -> Self {
+                match (&self, &other) {
+                    (Self::MPCInt32(lhs), Self::MPCInt32(rhs)) => Self::MPCBool(lhs $op rhs),
+                    (Self::MPCInt64(lhs), Self::MPCInt64(rhs)) => Self::MPCBool(lhs $op rhs),
+                    (Self::MPCUInt32(lhs), Self::MPCUInt32(rhs)) => Self::MPCBool(lhs $op rhs),
+                    (Self::MPCUInt64(lhs), Self::MPCUInt64(rhs)) => Self::MPCBool(lhs $op rhs),
+                    (Self::Vec(lhs), Self::Vec(rhs)) => Self::Vec(
+                        lhs.iter()
+                            .zip(rhs.iter())
+                            .map(|(val1, val2)| val1.$function_name(val2))
+                            .collect(),
+                    ),
+                    (scalar_dtype, Self::Vec(vec)) => Self::Vec(
+                        vec.iter()
+                            .map(|vec_element_dtype| scalar_dtype.$function_name(vec_element_dtype))
+                            .collect(),
+                    ),
+                    (Self::Vec(vec), scalar_dtype) => Self::Vec(
+                        vec.iter()
+                            .map(|vec_element_dtype|  vec_element_dtype.$function_name(scalar_dtype))
+                            .collect(),
+                    ),
+                    (Self::MPCBool(_lhs), Self::MPCBool(_rhs)) => {
+                        panic!("Operator not defined for MPC bool")
+                    }
+                    (_, _) => panic!("Differing MPCMetricDType variants not supported"),
+                }
+            }
+    };
+}
+
+impl_arithmetic_operator!(std::ops::Add, add, +);
+impl_arithmetic_operator!(std::ops::Sub, sub, -);
+impl_arithmetic_operator!(std::ops::Mul, mul, *);
+impl_arithmetic_operator!(std::ops::Div, div, /);
+
+impl MPCMetricDType {
+    pub fn take_inner_val<T>(self) -> Result<T, <T as TryFrom<MPCMetricDType>>::Error>
+    where
+        T: std::convert::TryFrom<MPCMetricDType>,
+        <T as TryFrom<MPCMetricDType>>::Error: std::fmt::Debug,
+    {
+        T::try_from(self)
+    }
+}
 
 #[cfg(test)]
 mod tests {
