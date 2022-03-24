@@ -94,15 +94,14 @@ class InputDataValidator(Validator):
 
         except Exception as e:
             return self._format_validation_report(
-                ValidationResult.FAILED,
                 f"File: {self._input_file_path} failed validation. Error: {e}",
                 rows_processed_count,
                 validation_issues,
+                had_exception=True,
             )
 
         return self._format_validation_report(
-            ValidationResult.SUCCESS,
-            f"File: {self._input_file_path} completed validation successfully",
+            f"File: {self._input_file_path}",
             rows_processed_count,
             validation_issues,
         )
@@ -147,29 +146,53 @@ class InputDataValidator(Validator):
 
     def _format_validation_report(
         self,
-        result: ValidationResult,
         message: str,
         rows_processed_count: int,
         validation_issues: InputDataValidationIssues,
+        had_exception: bool = False,
     ) -> ValidationReport:
+        validation_errors = validation_issues.get_errors()
+        validation_warnings = validation_issues.get_warnings()
 
-        validation_errors = validation_issues.get_as_dict()
-
-        if validation_errors:
+        if had_exception:
             return ValidationReport(
-                validation_result=result,
+                validation_result=ValidationResult.FAILED,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message}, with some errors.",
+                message=message,
                 details={
                     "rows_processed_count": rows_processed_count,
-                    "validation_errors": validation_errors,
+                },
+            )
+
+        if validation_errors:
+            error_fields = ", ".join(sorted(validation_errors.keys()))
+            details = {
+                "rows_processed_count": rows_processed_count,
+                "validation_errors": validation_errors,
+            }
+            if validation_warnings:
+                details["validation_warnings"] = validation_warnings
+            return ValidationReport(
+                validation_result=ValidationResult.FAILED,
+                validator_name=INPUT_DATA_VALIDATOR_NAME,
+                message=f"{message} failed validation, with errors on '{error_fields}'.",
+                details=details,
+            )
+        elif validation_warnings:
+            return ValidationReport(
+                validation_result=ValidationResult.SUCCESS,
+                validator_name=INPUT_DATA_VALIDATOR_NAME,
+                message=f"{message} completed validation successfully, with some warnings.",
+                details={
+                    "rows_processed_count": rows_processed_count,
+                    "validation_warnings": validation_warnings,
                 },
             )
         else:
             return ValidationReport(
-                validation_result=result,
+                validation_result=ValidationResult.SUCCESS,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=message,
+                message=f"{message} completed validation successfully",
                 details={
                     "rows_processed_count": rows_processed_count,
                 },
