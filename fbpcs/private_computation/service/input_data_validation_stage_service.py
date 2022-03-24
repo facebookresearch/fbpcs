@@ -117,7 +117,37 @@ class InputDataValidationStageService(PrivateComputationStageService):
         """
         # When this stage is enabled, it should return the status based on the container status
         if self._should_run_pre_validation(pc_instance):
-            return get_pc_status_from_stage_state(pc_instance, self._onedocker_svc)
+            instance_status = get_pc_status_from_stage_state(
+                pc_instance, self._onedocker_svc
+            )
+
+            task_id = ""
+            if pc_instance.instances:
+                last_instance = pc_instance.instances[-1]
+                if isinstance(last_instance, StageStateInstance):
+                    last_container = last_instance.containers[-1]
+                    task_id = (
+                        last_container.instance_id.split("/")[-1]
+                        if last_container
+                        else ""
+                    )
+
+            if instance_status == self._failed_status and task_id:
+                region = self._pc_validator_config.region
+                cluster = self._onedocker_svc.container_svc.get_cluster()
+                failed_task_link = f"https://{region}.console.aws.amazon.com/ecs/home?region={region}#/clusters/{cluster}/tasks/{task_id}/details"
+
+                error_message = (
+                    f"[PCPreValidation] - stage failed because of some failed validations. Please check the logs in ECS for task id '{task_id}' to see the validation issues:\n"
+                    + f"Failed task link: {failed_task_link}"
+                )
+                self._logger.error(error_message)
+            elif instance_status == self._failed_status:
+                self._logger.error(
+                    "[PCPreValidation] - stage failed because of some failed validations. Please check the logs in ECS"
+                )
+
+            return instance_status
 
         return PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
 
