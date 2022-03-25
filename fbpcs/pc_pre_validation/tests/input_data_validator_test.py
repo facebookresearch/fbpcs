@@ -25,6 +25,7 @@ from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 # Name the file randomly in order to avoid failures when the tests run concurrently
 TEST_FILENAME = f"test-input-data-validation-{random.randint(0, 1000000)}.csv"
+TEST_CLOUD_PROVIDER: CloudProvider = CloudProvider.AWS
 TEST_INPUT_FILE_PATH = f"s3://test-bucket/{TEST_FILENAME}"
 TEST_REGION = "us-west-2"
 TEST_TIMESTAMP: float = time.time()
@@ -47,35 +48,33 @@ class TestInputDataValidator(TestCase):
     def test_initializing_the_validation_runner_fields(
         self, mock_storage_service: Mock
     ) -> None:
-        cloud_provider = CloudProvider.AWS
         access_key_id = "id1"
         access_key_data = "data2"
-        region = "us-east-2"
         constructed_storage_service = MagicMock()
         mock_storage_service.__init__(return_value=constructed_storage_service)
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH,
-            cloud_provider,
-            region,
+            TEST_CLOUD_PROVIDER,
+            TEST_REGION,
             access_key_id,
             access_key_data,
         )
 
-        mock_storage_service.assert_called_with(region, access_key_id, access_key_data)
+        mock_storage_service.assert_called_with(
+            TEST_REGION, access_key_id, access_key_data
+        )
         self.assertEqual(validator._storage_service, constructed_storage_service)
         self.assertEqual(validator._input_file_path, TEST_INPUT_FILE_PATH)
-        self.assertEqual(validator._cloud_provider, cloud_provider)
+        self.assertEqual(validator._cloud_provider, TEST_CLOUD_PROVIDER)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     def test_run_validations_copy_failure(self, storage_service_mock: Mock) -> None:
         exception_message = "failed to copy"
-        input_file_path = "s3://test-bucket/data.csv"
-        cloud_provider = CloudProvider.AWS
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {input_file_path} failed validation. Error: Failed to download the input file. Please check the file path and its permission.\n\t{exception_message}",
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: Failed to download the input file. Please check the file path and its permission.\n\t{exception_message}",
             details={
                 "rows_processed_count": 0,
             },
@@ -83,7 +82,9 @@ class TestInputDataValidator(TestCase):
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.copy.side_effect = Exception(exception_message)
 
-        validator = InputDataValidator(input_file_path, cloud_provider, "us-west-2")
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
         report = validator.validate()
 
         self.assertEqual(report, expected_report)
@@ -94,7 +95,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,value,event_timestamp\n",
             b"abcd/1234+WXYZ=,100,1645157987\n",
@@ -112,7 +112,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
 
@@ -161,7 +161,6 @@ class TestInputDataValidator(TestCase):
     ) -> None:
         exception_message = f"Failed to parse the header row. The header row fields must be either: {PL_FIELDS} or: {PA_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"bad,header,row\n",
             b"1,2,3\n",
@@ -178,7 +177,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
 
@@ -190,7 +189,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
@@ -201,7 +199,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
 
@@ -214,7 +212,6 @@ class TestInputDataValidator(TestCase):
     ) -> None:
         exception_message = "Detected an unexpected line ending. The only supported line ending is '\\n'"
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,value,event_timestamp\n",
             b"abcd/1234+WXYZ=,100,1645157987\r\n",
@@ -231,7 +228,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
 
@@ -243,7 +240,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,value,event_timestamp\n",
             b",100,1645157987\n",
@@ -278,7 +274,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
 
@@ -290,7 +286,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,conversion_value,conversion_timestamp,conversion_metadata\n",
             b"abcd/1234+WXYZ=,100,1645157987,\n",
@@ -325,7 +320,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
 
@@ -337,7 +332,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,value,event_timestamp\n",
             b"ab...,100,1645157987\n",
@@ -372,7 +366,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
 
@@ -384,7 +378,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,conversion_value,conversion_timestamp,conversion_metadata\n",
             b"abcd/1234+WXYZ=,$100,1645157987,\n",
@@ -419,8 +412,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
-
         self.assertEqual(report, expected_report)
