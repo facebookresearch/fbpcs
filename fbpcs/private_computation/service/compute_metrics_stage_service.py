@@ -116,6 +116,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,
+            repository_path=binary_config.repository_path,
         )
 
         logging.info("MPC instance started running.")

@@ -34,9 +34,12 @@ class TestShardStageService(IsolatedAsyncioTestCase):
 
         self.onedocker_binary_config_map = defaultdict(
             lambda: OneDockerBinaryConfig(
-                tmp_directory="/test_tmp_directory/", binary_version="latest"
+                tmp_directory="/test_tmp_directory/",
+                binary_version="latest",
+                repository_path="test_path/",
             )
         )
+
         self.stage_svc = ShardStageService(
             self.onedocker_service, self.onedocker_binary_config_map
         )

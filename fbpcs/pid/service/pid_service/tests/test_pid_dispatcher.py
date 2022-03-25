@@ -32,6 +32,7 @@ class TestPIDDispatcher(unittest.TestCase):
         self.onedocker_binary_config = OneDockerBinaryConfig(
             tmp_directory="/tmp/",
             binary_version="latest",
+            repository_path="test_path/",
         )
 
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
