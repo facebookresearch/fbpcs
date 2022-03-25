@@ -32,6 +32,7 @@ from fbpcs.pc_pre_validation.constants import (
     VALIDATION_REGEXES,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
+from fbpcs.pc_pre_validation.exceptions import InputDataValidationException
 from fbpcs.pc_pre_validation.input_data_validation_issues import (
     InputDataValidationIssues,
 )
@@ -91,7 +92,7 @@ class InputDataValidator(Validator):
                             self._validate_row(validation_issues, field, value)
                     rows_processed_count += 1
 
-        except Exception as e:
+        except InputDataValidationException as e:
             return self._format_validation_report(
                 f"File: {self._input_file_path} failed validation. Error: {e}",
                 rows_processed_count,
@@ -109,13 +110,13 @@ class InputDataValidator(Validator):
         try:
             self._storage_service.copy(self._input_file_path, self._local_file_path)
         except Exception as e:
-            raise Exception(
+            raise InputDataValidationException(
                 f"Failed to download the input file. Please check the file path and its permission.\n\t{e}"
             )
 
     def _validate_header(self, header_row: Sequence[str]) -> None:
         if not header_row:
-            raise Exception("The header row was empty.")
+            raise InputDataValidationException("The header row was empty.")
 
         match_pa_fields = len(set(PA_FIELDS).intersection(set(header_row))) == len(
             PA_FIELDS
@@ -125,13 +126,13 @@ class InputDataValidator(Validator):
         )
 
         if not (match_pa_fields or match_pl_fields):
-            raise Exception(
+            raise InputDataValidationException(
                 f"Failed to parse the header row. The header row fields must be either: {PL_FIELDS} or: {PA_FIELDS}"
             )
 
     def _validate_line_ending(self, line: str) -> None:
         if not VALID_LINE_ENDING_REGEX.match(line):
-            raise Exception(
+            raise InputDataValidationException(
                 "Detected an unexpected line ending. The only supported line ending is '\\n'"
             )
 

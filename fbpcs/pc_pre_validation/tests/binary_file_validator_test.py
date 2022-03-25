@@ -99,7 +99,7 @@ class TestBinaryFileValidator(TestCase):
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
-            message=f"WARNING: {BINARY_FILE_VALIDATOR_NAME} throws an unexpected error: An internal error occurred (500)",
+            message=f"WARNING: {BINARY_FILE_VALIDATOR_NAME} threw an unexpected error: An internal error occurred (500)",
         )
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.file_exists.side_effect = PcpError(

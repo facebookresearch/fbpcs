@@ -416,3 +416,34 @@ class TestInputDataValidator(TestCase):
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch(
+        "fbpcs.pc_pre_validation.input_data_validator.InputDataValidationIssues.count_empty_field"
+    )
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_an_unhandled_exception_propagates_to_the_caller(
+        self,
+        time_mock: Mock,
+        count_empty_field_mock: Mock,
+        _storage_service_mock: Mock,
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        expected_exception_message = "bug in the logic"
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,,1645157987\n",
+        ]
+        self.write_lines_to_file(lines)
+        count_empty_field_mock.side_effect = Exception(expected_exception_message)
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report.validation_result, ValidationResult.SUCCESS)
+        self.assertRegex(
+            report.message,
+            f"WARNING: {INPUT_DATA_VALIDATOR_NAME} threw an unexpected error: {expected_exception_message}",
+        )

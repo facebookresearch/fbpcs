@@ -25,7 +25,7 @@ class Validator(abc.ABC):
             return ValidationReport(
                 ValidationResult.SUCCESS,
                 self.name,
-                f"WARNING: {self.name} throws an unexpected error: {e}",
+                f"WARNING: {self.name} threw an unexpected error: {e}",
             )
 
     @property
