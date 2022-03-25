@@ -55,7 +55,11 @@ class TestInputDataValidator(TestCase):
         mock_storage_service.__init__(return_value=constructed_storage_service)
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, region, access_key_id, access_key_data
+            TEST_INPUT_FILE_PATH,
+            cloud_provider,
+            region,
+            access_key_id,
+            access_key_data,
         )
 
         mock_storage_service.assert_called_with(region, access_key_id, access_key_data)
