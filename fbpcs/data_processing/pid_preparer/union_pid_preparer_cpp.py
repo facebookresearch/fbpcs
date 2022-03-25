@@ -13,7 +13,7 @@ import pathlib
 import subprocess
 import sys
 import tempfile
-from typing import Optional
+from typing import Dict, Optional
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
@@ -97,6 +97,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         tmp_directory: str = "/tmp/",
         container_timeout: Optional[int] = None,
         wait_for_container: bool = True,
+        env_vars: Optional[Dict[str, str]] = None,
     ) -> ContainerInstance:
         return asyncio.run(
             self.prepare_on_container_async(
@@ -107,6 +108,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 tmp_directory,
                 container_timeout,
                 wait_for_container,
+                env_vars,
             )
         )
 
@@ -120,6 +122,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         tmp_directory: str = "/tmp/",
         container_timeout: Optional[int] = None,
         wait_for_container: bool = True,
+        env_vars: Optional[Dict[str, str]] = None,
     ) -> ContainerInstance:
         logger = logging.getLogger(__name__)
         timeout = container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC
@@ -149,6 +152,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 version=binary_version,
                 cmd_args_list=[cmd_args],
                 timeout=timeout,
+                env_vars=env_vars,
             )
 
             container = (

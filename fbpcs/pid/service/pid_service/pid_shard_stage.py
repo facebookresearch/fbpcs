@@ -93,6 +93,9 @@ class PIDShardStage(PIDStage):
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
                 hmac_key=hmac_key,
             )
+            env_vars = {
+                "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
+            }
             binary_name = sharder.get_binary_name(ShardType.HASHED_FOR_PID)
             containers = await sharder.start_containers(
                 cmd_args_list=[args],
@@ -101,6 +104,7 @@ class PIDShardStage(PIDStage):
                 binary_name=binary_name,
                 timeout=container_timeout,
                 wait_for_containers_to_finish=wait_for_containers,
+                env_vars=env_vars,
             )
             container = containers[0]  # there is always just 1 container
         except Exception as e:

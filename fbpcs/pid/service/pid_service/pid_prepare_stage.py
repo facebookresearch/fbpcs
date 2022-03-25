@@ -75,6 +75,9 @@ class PIDPrepareStage(PIDStage):
         for shard in range(num_shards):
             next_input_path = self.get_sharded_filepath(input_path, shard)
             next_output_path = self.get_sharded_filepath(output_path, shard)
+            env_vars = {
+                "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
+            }
             coro = preparer.prepare_on_container_async(
                 input_path=next_input_path,
                 output_path=next_output_path,
@@ -83,6 +86,7 @@ class PIDPrepareStage(PIDStage):
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
                 wait_for_container=wait_for_containers,
                 container_timeout=container_timeout,
+                env_vars=env_vars,
             )
             coroutines.append(coro)
 
