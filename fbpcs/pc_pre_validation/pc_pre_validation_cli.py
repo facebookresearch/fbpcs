@@ -91,15 +91,16 @@ def main(argv: OptionalType[List[str]] = None) -> None:
     ]
 
     (aggregated_result, aggregated_report) = run_validators(validators)
+    overall_result_str = f"Overall Validation Result: {aggregated_result.value}"
 
     if aggregated_result == ValidationResult.FAILED:
-        raise Exception(aggregated_report)
+        raise Exception(f"{aggregated_report}\n{overall_result_str}")
     elif aggregated_result == ValidationResult.SUCCESS:
-        print(f"Success: {aggregated_report}")
+        print(f"Success: {aggregated_report}\n{overall_result_str}")
     else:
         raise Exception(
-            "Unknown validation result: {aggregated_result}.\n"
-            + "Validation report: {aggregated_report}"
+            f"Unknown validation result: {aggregated_result}.\n"
+            + f"Validation report: {aggregated_report}\n{overall_result_str}"
         )
 
 
