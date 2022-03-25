@@ -86,7 +86,7 @@ class TestInputDataValidator(TestCase):
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_run_validations_reads_the_local_csv_rows(
+    def test_run_validations_success_for_pl_fields(
         self, time_mock: Mock, _storage_service_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
@@ -104,6 +104,42 @@ class TestInputDataValidator(TestCase):
             message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
             details={
                 "rows_processed_count": 3,
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_success_for_pa_fields(
+        self, time_mock: Mock, _storage_service_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        cloud_provider = CloudProvider.AWS
+        lines = [
+            b"id_,conversion_value,conversion_timestamp,conversion_metadata\n",
+            b"abcd/1234+WXYZ=,,1645157987,0\n",
+            b"abcd/1234+WXYZ=,,1645157987,0\n",
+            b"abcd/1234+WXYZ=,$20,1645157987,0\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some warnings.",
+            details={
+                "rows_processed_count": 3,
+                "validation_warnings": {
+                    "conversion_value": {
+                        "empty_count": 2,
+                        "bad_format_count": 1,
+                    },
+                },
             },
         )
 
@@ -214,21 +250,24 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,100,\n",
         ]
         self.write_lines_to_file(lines)
+        error_fields = "event_timestamp, id_"
         expected_report = ValidationReport(
-            validation_result=ValidationResult.SUCCESS,
+            validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on '{error_fields}'.",
             details={
                 "rows_processed_count": 6,
                 "validation_errors": {
                     "id_": {
-                        "empty": 1,
-                    },
-                    "value": {
-                        "empty": 2,
+                        "empty_count": 1,
                     },
                     "event_timestamp": {
-                        "empty": 4,
+                        "empty_count": 4,
+                    },
+                },
+                "validation_warnings": {
+                    "value": {
+                        "empty_count": 2,
                     },
                 },
             },
@@ -258,21 +297,24 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,100,,\n",
         ]
         self.write_lines_to_file(lines)
+        error_fields = "conversion_timestamp"
         expected_report = ValidationReport(
-            validation_result=ValidationResult.SUCCESS,
+            validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on '{error_fields}'.",
             details={
                 "rows_processed_count": 6,
                 "validation_errors": {
-                    "conversion_value": {
-                        "empty": 2,
-                    },
                     "conversion_timestamp": {
-                        "empty": 4,
+                        "empty_count": 4,
+                    },
+                },
+                "validation_warnings": {
+                    "conversion_value": {
+                        "empty_count": 2,
                     },
                     "conversion_metadata": {
-                        "empty": 3,
+                        "empty_count": 3,
                     },
                 },
             },
@@ -301,22 +343,25 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,,&\n",
         ]
         self.write_lines_to_file(lines)
+        error_fields = "event_timestamp, id_"
         expected_report = ValidationReport(
-            validation_result=ValidationResult.SUCCESS,
+            validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on '{error_fields}'.",
             details={
                 "rows_processed_count": 5,
                 "validation_errors": {
                     "id_": {
-                        "bad_format": 1,
-                    },
-                    "value": {
-                        "bad_format": 1,
-                        "empty": 2,
+                        "bad_format_count": 1,
                     },
                     "event_timestamp": {
-                        "bad_format": 3,
+                        "bad_format_count": 3,
+                    },
+                },
+                "validation_warnings": {
+                    "value": {
+                        "bad_format_count": 1,
+                        "empty_count": 2,
                     },
                 },
             },
@@ -344,24 +389,27 @@ class TestInputDataValidator(TestCase):
             b",100,...,data\n",
         ]
         self.write_lines_to_file(lines)
+        error_fields = "conversion_timestamp, id_"
         expected_report = ValidationReport(
-            validation_result=ValidationResult.SUCCESS,
+            validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some errors.",
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on '{error_fields}'.",
             details={
                 "rows_processed_count": 4,
                 "validation_errors": {
                     "id_": {
-                        "bad_format": 2,
-                        "empty": 1,
-                    },
-                    "conversion_value": {
-                        "bad_format": 1,
+                        "bad_format_count": 2,
+                        "empty_count": 1,
                     },
                     "conversion_timestamp": {
-                        "bad_format": 2,
+                        "bad_format_count": 2,
                     },
-                    "conversion_metadata": {"bad_format": 1, "empty": 2},
+                },
+                "validation_warnings": {
+                    "conversion_metadata": {"bad_format_count": 1, "empty_count": 2},
+                    "conversion_value": {
+                        "bad_format_count": 1,
+                    },
                 },
             },
         )
