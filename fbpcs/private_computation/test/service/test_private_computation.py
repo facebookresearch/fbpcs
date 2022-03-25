@@ -118,7 +118,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         self.onedocker_binary_config_map = defaultdict(
             lambda: OneDockerBinaryConfig(
-                tmp_directory="/test_tmp_directory/", binary_version="latest"
+                tmp_directory="/test_tmp_directory/",
+                binary_version="latest",
+                repository_path="test_path/",
             )
         )
 
@@ -618,12 +620,14 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             mock_mpc_svc.create_instance.call_args,
         )
 
+        env_vars = {}
         self.assertEqual(
             call(
                 instance_id=instance_id,
                 server_ips=server_ips,
                 timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
                 version=binary_version,
+                env_vars=env_vars,
             ),
             mock_mpc_svc.start_instance_async.call_args,
         )

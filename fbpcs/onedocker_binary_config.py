@@ -16,3 +16,6 @@ from dataclasses_json import dataclass_json
 class OneDockerBinaryConfig:
     tmp_directory: str
     binary_version: str
+    repository_path: str = (
+        "https://one-docker-repository-prod.s3.us-west-2.amazonaws.com/"
+    )
