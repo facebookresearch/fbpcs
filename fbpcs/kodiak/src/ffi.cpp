@@ -42,6 +42,12 @@ int32_t reveal_mpc_int32(const CppMPCInt32& a) {
   auto res = a.openToParty(0);
   return res.getValue();
 }
+std::unique_ptr<CppMPCInt32> mpc_int32_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCInt32& trueCase,
+    const CppMPCInt32& falseCase) {
+  return std::make_unique<CppMPCInt32>(trueCase.mux(choiceBit, falseCase));
+}
 std::unique_ptr<CppMPCInt32> mpc_int32_add(
     const CppMPCInt32& a,
     const CppMPCInt32& b) {
@@ -83,6 +89,12 @@ std::unique_ptr<CppMPCInt64> new_mpc_int64(int64_t a, int32_t partyId) {
 int64_t reveal_mpc_int64(const CppMPCInt64& a) {
   auto res = a.openToParty(0);
   return res.getValue();
+}
+std::unique_ptr<CppMPCInt64> mpc_int64_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCInt64& trueCase,
+    const CppMPCInt64& falseCase) {
+  return std::make_unique<CppMPCInt64>(trueCase.mux(choiceBit, falseCase));
 }
 std::unique_ptr<CppMPCInt64> mpc_int64_add(
     const CppMPCInt64& a,
@@ -126,6 +138,12 @@ uint32_t reveal_mpc_uint32(const CppMPCUInt32& a) {
   auto res = a.openToParty(0);
   return res.getValue();
 }
+std::unique_ptr<CppMPCUInt32> mpc_uint32_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCUInt32& trueCase,
+    const CppMPCUInt32& falseCase) {
+  return std::make_unique<CppMPCUInt32>(trueCase.mux(choiceBit, falseCase));
+}
 std::unique_ptr<CppMPCUInt32> mpc_uint32_add(
     const CppMPCUInt32& a,
     const CppMPCUInt32& b) {
@@ -167,6 +185,12 @@ std::unique_ptr<CppMPCUInt64> new_mpc_uint64(uint64_t a, int32_t partyId) {
 uint64_t reveal_mpc_uint64(const CppMPCUInt64& a) {
   auto res = a.openToParty(0);
   return res.getValue();
+}
+std::unique_ptr<CppMPCUInt64> mpc_uint64_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCUInt64& trueCase,
+    const CppMPCUInt64& falseCase) {
+  return std::make_unique<CppMPCUInt64>(trueCase.mux(choiceBit, falseCase));
 }
 std::unique_ptr<CppMPCUInt64> mpc_uint64_add(
     const CppMPCUInt64& a,

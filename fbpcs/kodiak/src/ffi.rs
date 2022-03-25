@@ -23,9 +23,6 @@ mod ffi {
         type CppMPCBool;
 
         // Functions implemented in C++.
-        // TODO: Need to add `mux` operation
-        // fn mpc_INTTYPE_mux(choice: &CppMPCBool, true_case: &INTTYPE, false_case: &INTTYPE) -> UniquePtr<INTTYPE>;
-
         // Create a new game
         // NOTE: Construct a CxxString with cxx::let_cxx_string!()
         fn new_kodiak_game(role: i32, host: &CxxString, port: i16) -> UniquePtr<KodiakGame>;
@@ -51,6 +48,11 @@ mod ffi {
         fn mpc_int32_gte(lhs: &CppMPCInt32, rhs: &CppMPCInt32) -> UniquePtr<CppMPCBool>;
         fn mpc_int32_eq(lhs: &CppMPCInt32, rhs: &CppMPCInt32) -> UniquePtr<CppMPCBool>;
         //fn mpc_int32_neq(lhs: &CppMPCInt32, rhs: &CppMPCInt32) -> UniquePtr<CppMPCBool>;
+        fn mpc_int32_mux(
+            choice: &CppMPCBool,
+            true_case: &CppMPCInt32,
+            false_case: &CppMPCInt32,
+        ) -> UniquePtr<CppMPCInt32>;
 
         // MPC Int64 functions
         fn mpc_int64_add(lhs: &CppMPCInt64, rhs: &CppMPCInt64) -> UniquePtr<CppMPCInt64>;
@@ -66,6 +68,11 @@ mod ffi {
         fn mpc_int64_gte(lhs: &CppMPCInt64, rhs: &CppMPCInt64) -> UniquePtr<CppMPCBool>;
         fn mpc_int64_eq(lhs: &CppMPCInt64, rhs: &CppMPCInt64) -> UniquePtr<CppMPCBool>;
         //fn mpc_int64_neq(lhs: &CppMPCInt64, rhs: &CppMPCInt64) -> UniquePtr<CppMPCBool>;
+        fn mpc_int64_mux(
+            choice: &CppMPCBool,
+            true_case: &CppMPCInt64,
+            false_case: &CppMPCInt64,
+        ) -> UniquePtr<CppMPCInt64>;
 
         // MPC UInt32 functions
         fn mpc_uint32_add(lhs: &CppMPCUInt32, rhs: &CppMPCUInt32) -> UniquePtr<CppMPCUInt32>;
@@ -81,6 +88,11 @@ mod ffi {
         fn mpc_uint32_gte(lhs: &CppMPCUInt32, rhs: &CppMPCUInt32) -> UniquePtr<CppMPCBool>;
         fn mpc_uint32_eq(lhs: &CppMPCUInt32, rhs: &CppMPCUInt32) -> UniquePtr<CppMPCBool>;
         //fn mpc_uint32_neq(lhs: &CppMPCUInt32, rhs: &CppMPCUInt32) -> UniquePtr<CppMPCBool>;
+        fn mpc_uint32_mux(
+            choice: &CppMPCBool,
+            true_case: &CppMPCUInt32,
+            false_case: &CppMPCUInt32,
+        ) -> UniquePtr<CppMPCUInt32>;
 
         // MPC UInt64 functions
         fn mpc_uint64_add(lhs: &CppMPCUInt64, rhs: &CppMPCUInt64) -> UniquePtr<CppMPCUInt64>;
@@ -96,6 +108,11 @@ mod ffi {
         fn mpc_uint64_gte(lhs: &CppMPCUInt64, rhs: &CppMPCUInt64) -> UniquePtr<CppMPCBool>;
         fn mpc_uint64_eq(lhs: &CppMPCUInt64, rhs: &CppMPCUInt64) -> UniquePtr<CppMPCBool>;
         //fn mpc_uint64_neq(lhs: &CppMPCUInt64, rhs: &CppMPCUInt64) -> UniquePtr<CppMPCBool>;
+        fn mpc_uint64_mux(
+            choice: &CppMPCBool,
+            true_case: &CppMPCUInt64,
+            false_case: &CppMPCUInt64,
+        ) -> UniquePtr<CppMPCUInt64>;
 
         // MPC bool functions
         fn mpc_bool_and(lhs: &CppMPCBool, rhs: &CppMPCBool) -> UniquePtr<CppMPCBool>;

@@ -75,6 +75,10 @@ std::unique_ptr<CppMPCBool> mpc_bool_xor(
     const CppMPCBool& b);
 std::unique_ptr<CppMPCInt32> new_mpc_int32(int32_t a, int32_t partyId);
 int32_t reveal_mpc_int32(const CppMPCInt32& a);
+std::unique_ptr<CppMPCInt32> mpc_int32_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCInt32& trueCase,
+    const CppMPCInt32& falseCase);
 std::unique_ptr<CppMPCInt32> mpc_int32_add(
     const CppMPCInt32& a,
     const CppMPCInt32& b);
@@ -98,6 +102,10 @@ std::unique_ptr<CppMPCBool> mpc_int32_gte(
     const CppMPCInt32& b);
 std::unique_ptr<CppMPCInt64> new_mpc_int64(int64_t a, int32_t partyId);
 int64_t reveal_mpc_int64(const CppMPCInt64& a);
+std::unique_ptr<CppMPCInt64> mpc_int64_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCInt64& trueCase,
+    const CppMPCInt64& falseCase);
 std::unique_ptr<CppMPCInt64> mpc_int64_add(
     const CppMPCInt64& a,
     const CppMPCInt64& b);
@@ -121,6 +129,10 @@ std::unique_ptr<CppMPCBool> mpc_int64_gte(
     const CppMPCInt64& b);
 std::unique_ptr<CppMPCUInt32> new_mpc_uint32(uint32_t a, int32_t partyId);
 uint32_t reveal_mpc_uint32(const CppMPCUInt32& a);
+std::unique_ptr<CppMPCUInt32> mpc_uint32_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCUInt32& trueCase,
+    const CppMPCUInt32& falseCase);
 std::unique_ptr<CppMPCUInt32> mpc_uint32_add(
     const CppMPCUInt32& a,
     const CppMPCUInt32& b);
@@ -144,6 +156,10 @@ std::unique_ptr<CppMPCBool> mpc_uint32_gte(
     const CppMPCUInt32& b);
 std::unique_ptr<CppMPCUInt64> new_mpc_uint64(uint64_t a, int32_t partyId);
 uint64_t reveal_mpc_uint64(const CppMPCUInt64& a);
+std::unique_ptr<CppMPCUInt64> mpc_uint64_mux(
+    const CppMPCBool& choiceBit,
+    const CppMPCUInt64& trueCase,
+    const CppMPCUInt64& falseCase);
 std::unique_ptr<CppMPCUInt64> mpc_uint64_add(
     const CppMPCUInt64& a,
     const CppMPCUInt64& b);

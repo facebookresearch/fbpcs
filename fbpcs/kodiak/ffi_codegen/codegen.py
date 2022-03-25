@@ -190,6 +190,21 @@ def make_reveal_func(type_info: TypeInfo) -> str:
     )
 
 
+def make_mux_func(type_info: TypeInfo) -> str:
+    cpp_type = type_info.cpp_name
+    arg_name = type_info.arg_name
+    return (
+        # Signature and funcname
+        f"std::unique_ptr<{cpp_type}> {arg_name}_mux"
+        # parameters
+        f"(const CppMPCBool& choiceBit, const {cpp_type}& trueCase, const {cpp_type}& falseCase) {{\n"
+        # statements
+        f"  return std::make_unique<{cpp_type}>(trueCase.mux(choiceBit, falseCase));"
+        # end of func
+        "}"
+    )
+
+
 def make_binop_func(type_info: TypeInfo, op_info: OperatorInfo) -> str:
     # If the operator explicitly defines a return type, use that
     # otherwise fall back to assuming A <op> A -> A
@@ -257,9 +272,15 @@ def main() -> None:
             new_f = make_new_func(type_info)
             print(func_to_header_declaration(new_f), file=f_h)
             print(new_f, file=f_cpp)
+
             reveal_f = make_reveal_func(type_info)
             print(func_to_header_declaration(reveal_f), file=f_h)
             print(reveal_f, file=f_cpp)
+
+            mux_f = make_mux_func(type_info)
+            print(func_to_header_declaration(mux_f), file=f_h)
+            print(mux_f, file=f_cpp)
+
             for operator_info in ARITHMETIC_OPS:
                 binop_f = make_binop_func(type_info, operator_info)
                 print(func_to_header_declaration(binop_f), file=f_h)
