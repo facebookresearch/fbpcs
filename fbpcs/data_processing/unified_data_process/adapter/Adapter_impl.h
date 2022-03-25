@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cmath>
+#include <stdexcept>
 #include "fbpcs/data_processing/unified_data_process/adapter/Adapter.h"
 
 namespace unified_data_process::adapter {
@@ -70,6 +71,7 @@ std::vector<int64_t> Adapter<schedulerId>::adapt(
       }
     }
   }
+
   SecString share0(
       typename SecString::ExtractedString(std::move(share0Plaintext)));
   SecString share1(
@@ -80,9 +82,9 @@ std::vector<int64_t> Adapter<schedulerId>::adapt(
                             : std::move(myShare0).getValue();
 
   std::vector<int64_t> rst(intersectionSize, 0);
-  for (size_t i = 0; i < indexWidth; i++) {
-    for (size_t j = 0; j < intersectionSize; j++) {
-      rst[j] += (myShare.at(i).at(j)) << i;
+  for (size_t i = 0; i < intersectionSize; i++) {
+    for (size_t j = 0; j < indexWidth; j++) {
+      rst[i] += (myShare.at(i).at(j)) << j;
     }
   }
   return rst;
