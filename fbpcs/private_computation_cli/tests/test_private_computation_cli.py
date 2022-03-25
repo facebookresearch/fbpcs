@@ -6,6 +6,7 @@
 
 import json
 import os
+import shutil
 import tempfile
 from unittest import TestCase
 from unittest.mock import patch
@@ -20,23 +21,36 @@ class TestPrivateComputationCli(TestCase):
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
             json.dump({}, f)
             self.temp_filename = f.name
+        # Create many temporary files for testing
+        self.temp_files_paths = []
+        for _ in range(5):
+            with tempfile.NamedTemporaryFile(
+                mode="w+", delete=False
+            ) as temp_file_object:
+                temp_file_object.write("Hello world!")
+                self.temp_files_paths.append(temp_file_object.name)
+        self.temp_dir_path = tempfile.mkdtemp()
 
     def tearDown(self) -> None:
         os.unlink(self.temp_filename)
+        for temp_file_path in self.temp_files_paths:
+            os.unlink(temp_file_path)
+        shutil.rmtree(self.temp_dir_path)
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.create_instance")
     def test_create_instance(self, create_mock) -> None:
         # Normally such *ultra-specific* test cases against a CLI would be an
         # antipattern, but since this is our public interface, we want to be
         # very careful before making that interface change.
+        # Create a temporary folder for testing
         argv = [
             "create_instance",
             "instance123",
             f"--config={self.temp_filename}",
             "--role=PUBLISHER",
             "--game_type=LIFT",
-            "--input_path=/tmp/in",
-            "--output_dir=/tmp/",
+            f"--input_path={self.temp_files_paths[0]}",
+            f"--output_dir={self.temp_dir_path}",
             "--num_pid_containers=111",
             "--num_mpc_containers=222",
         ]
@@ -57,6 +71,44 @@ class TestPrivateComputationCli(TestCase):
         )
         pc_cli.main(argv)
         create_mock.assert_called_once()
+        # Test with additional input paths of various formats
+        additional_input_paths = [
+            "https://bucket-name.s3.Region.amazonaws.com/key-name",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://fbpcs-github-e2e.s3.Region.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://s3.Region.amazonaws.com/bucket-name/key-name",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+        ]
+        for additional_input_path in additional_input_paths:
+            create_mock.reset_mock()
+            argv = [
+                "create_instance",
+                "instance123",
+                f"--config={self.temp_filename}",
+                "--role=PUBLISHER",
+                "--game_type=LIFT",
+                f"--input_path={additional_input_path}",
+                f"--output_dir={self.temp_dir_path}",
+                "--num_pid_containers=111",
+                "--num_mpc_containers=222",
+            ]
+            pc_cli.main(argv)
+            create_mock.assert_called_once()
+            create_mock.reset_mock()
+            argv.extend(
+                [
+                    "--attribution_rule=last_click_1d",
+                    "--aggregation_type=measurement",
+                    "--concurrency=333",
+                    "--num_files_per_mpc_container=444",
+                    "--padding_size=555",
+                    "--k_anonymity_threshold=666",
+                    "--hmac_key=bigmac",
+                    "--stage_flow=PrivateComputationLocalTestStageFlow",
+                ]
+            )
+            pc_cli.main(argv)
+            create_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
     def test_validate(self, validate_mock) -> None:
@@ -160,7 +212,7 @@ class TestPrivateComputationCli(TestCase):
             "run_instance",
             "instance123",
             f"--config={self.temp_filename}",
-            "--input_path=/tmp/in",
+            f"--input_path={self.temp_filename}",
             "--num_shards=456",
         ]
         pc_cli.main(argv)
@@ -178,11 +230,12 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_instances")
     def test_run_instances(self, run_instances_mock) -> None:
+        # Test with real temporary file and folder
         argv = [
             "run_instances",
             "instance123,instance456",
             f"--config={self.temp_filename}",
-            "--input_paths=/tmp/in1,/tmp/in2",
+            f"--input_paths={','.join(self.temp_files_paths[:2])}",
             "--num_shards_list=456,789",
         ]
         pc_cli.main(argv)
@@ -205,7 +258,7 @@ class TestPrivateComputationCli(TestCase):
             "12345",
             f"--config={self.temp_filename}",
             "--objective_ids=12,34,56,78,90",
-            "--input_paths=/tmp/in1,/tmp/in2,/tmp/in3,/tmp/in4,/tmp/in5",
+            f"--input_paths={','.join(self.temp_files_paths)}",
         ]
         pc_cli.main(argv)
         run_study_mock.assert_called_once()
