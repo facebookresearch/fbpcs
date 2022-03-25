@@ -99,7 +99,7 @@ class TestValidationReport(TestCase):
         expected_report_thrown_by_validator = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name="TestExceptionValidator",
-            message="WARNING: TestExceptionValidator throws an unexpected error: test error message",
+            message="WARNING: TestExceptionValidator threw an unexpected error: test error message",
         )
         expected_aggregated_result = ValidationResult.SUCCESS
         expected_aggregated_report = (
