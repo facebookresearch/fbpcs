@@ -195,6 +195,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                 server_ips=server_ips,
                 game_args=game_args,
                 container_timeout=self._container_timeout,
+                repository_path=binary_config.repository_path,
             )
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
         pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))

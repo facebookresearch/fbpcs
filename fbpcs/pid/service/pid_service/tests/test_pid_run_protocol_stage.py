@@ -23,6 +23,7 @@ class TestPIDProtocolRunStage(unittest.TestCase):
         self.onedocker_binary_config = OneDockerBinaryConfig(
             tmp_directory="/tmp/",
             binary_version="latest",
+            repository_path="test_path/",
         )
 
     @to_sync

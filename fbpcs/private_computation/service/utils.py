@@ -59,6 +59,7 @@ async def create_and_start_mpc_instance(
     server_ips: Optional[List[str]] = None,
     game_args: Optional[List[Dict[str, Any]]] = None,
     container_timeout: Optional[int] = None,
+    repository_path: Optional[str] = None,
 ) -> MPCInstance:
     """Creates an MPC instance and runs MPC service with it
 
@@ -72,11 +73,11 @@ async def create_and_start_mpc_instance(
         server_ips: ip addresses of the publisher's containers.
         game_args: arguments that are passed to game binaries by onedocker
         container_timeout: optional duration in seconds before cloud containers timeout
+        repository_path: Path from where we can download the required executable.
 
     Returns:
         return: an mpc instance started by mpc service
     """
-
     mpc_svc.create_instance(
         instance_id=instance_id,
         game_name=game_name,
@@ -85,11 +86,16 @@ async def create_and_start_mpc_instance(
         game_args=game_args,
     )
 
+    env_vars = {}
+    if repository_path:
+        env_vars["ONEDOCKER_REPOSITORY_PATH"] = repository_path
+
     return await mpc_svc.start_instance_async(
         instance_id=instance_id,
         server_ips=server_ips,
         timeout=container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
         version=binary_version,
+        env_vars=env_vars,
     )
 
 

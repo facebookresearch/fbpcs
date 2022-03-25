@@ -79,6 +79,7 @@ class TestPIDShardStage(unittest.TestCase):
             test_onedocker_binary_config = OneDockerBinaryConfig(
                 tmp_directory="/test_tmp_directory/",
                 binary_version="latest",
+                repository_path="test_path/",
             )
             stage = PIDShardStage(
                 stage=UnionPIDStage.PUBLISHER_SHARD,
@@ -187,6 +188,7 @@ class TestPIDShardStage(unittest.TestCase):
                 test_onedocker_binary_config = OneDockerBinaryConfig(
                     tmp_directory="/test_tmp_directory/",
                     binary_version="latest",
+                    repository_path="test_path/",
                 )
                 container = ContainerInstance(
                     instance_id="123",
