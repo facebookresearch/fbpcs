@@ -14,7 +14,10 @@
 #include <unordered_map>
 
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
+#include "fbpcf/mpc_std_lib/permuter/AsWaksmanPermuterFactory.h"
+#include "fbpcf/mpc_std_lib/permuter/DummyPermuterFactory.h"
 #include "fbpcf/mpc_std_lib/shuffler/NonShufflerFactory.h"
+#include "fbpcf/mpc_std_lib/shuffler/PermuteBasedShufflerFactory.h"
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcf/test/TestHelper.h"
 #include "fbpcs/data_processing/unified_data_process/adapter/AdapterFactory.h"
@@ -128,6 +131,76 @@ TEST(AdapterTest, testAdapterWithNonShuffler) {
       std::make_unique<
           fbpcf::mpc_std_lib::shuffler::insecure::NonShufflerFactory<
               fbpcf::frontend::BitString<true, 1, true>>>());
+
+  adapterTest(factory0.create(), factory1.create());
+}
+
+TEST(AdapterTest, testAdapterWithPermuteBasedShufflerAndDummyPermuter) {
+  auto agentFactories =
+      fbpcf::engine::communication::getInMemoryAgentFactory(2);
+  fbpcf::setupRealBackend<0, 1>(*agentFactories[0], *agentFactories[1]);
+  AdapterFactory<0> factory0(
+      true,
+      0,
+      1,
+      std::make_unique<
+          fbpcf::mpc_std_lib::shuffler::PermuteBasedShufflerFactory<
+              fbpcf::frontend::BitString<true, 0, true>>>(
+          0,
+          1,
+          std::make_unique<
+              fbpcf::mpc_std_lib::permuter::insecure::DummyPermuterFactory<
+                  fbpcf::frontend::BitString<true, 0, true>>>(0, 1),
+          std::make_unique<fbpcf::engine::util::AesPrgFactory>()));
+
+  AdapterFactory<1> factory1(
+      false,
+      0,
+      1,
+      std::make_unique<
+          fbpcf::mpc_std_lib::shuffler::PermuteBasedShufflerFactory<
+              fbpcf::frontend::BitString<true, 1, true>>>(
+          1,
+          0,
+          std::make_unique<
+              fbpcf::mpc_std_lib::permuter::insecure::DummyPermuterFactory<
+                  fbpcf::frontend::BitString<true, 1, true>>>(1, 0),
+          std::make_unique<fbpcf::engine::util::AesPrgFactory>()));
+
+  adapterTest(factory0.create(), factory1.create());
+}
+
+TEST(AdapterTest, testAdapterWithSecurePermuteBasedShuffler) {
+  auto agentFactories =
+      fbpcf::engine::communication::getInMemoryAgentFactory(2);
+  fbpcf::setupRealBackend<0, 1>(*agentFactories[0], *agentFactories[1]);
+  AdapterFactory<0> factory0(
+      true,
+      0,
+      1,
+      std::make_unique<
+          fbpcf::mpc_std_lib::shuffler::PermuteBasedShufflerFactory<
+              fbpcf::frontend::BitString<true, 0, true>>>(
+          0,
+          1,
+          std::make_unique<fbpcf::mpc_std_lib::permuter::
+                               AsWaksmanPermuterFactory<std::vector<bool>, 0>>(
+              0, 1),
+          std::make_unique<fbpcf::engine::util::AesPrgFactory>()));
+
+  AdapterFactory<1> factory1(
+      false,
+      0,
+      1,
+      std::make_unique<
+          fbpcf::mpc_std_lib::shuffler::PermuteBasedShufflerFactory<
+              fbpcf::frontend::BitString<true, 1, true>>>(
+          1,
+          0,
+          std::make_unique<fbpcf::mpc_std_lib::permuter::
+                               AsWaksmanPermuterFactory<std::vector<bool>, 1>>(
+              1, 0),
+          std::make_unique<fbpcf::engine::util::AesPrgFactory>()));
 
   adapterTest(factory0.create(), factory1.create());
 }
