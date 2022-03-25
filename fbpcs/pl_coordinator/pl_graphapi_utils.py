@@ -54,6 +54,12 @@ GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     "PREPARE_DATA_STARTED": PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
     "PREPARE_DATA_COMPLETED": PrivateComputationInstanceStatus.PREPARE_DATA_COMPLETED,
     "PREPARE_DATA_FAILED": PrivateComputationInstanceStatus.PREPARE_DATA_FAILED,
+    "ID_SPINE_COMBINER_STARTED": PrivateComputationInstanceStatus.ID_SPINE_COMBINER_STARTED,
+    "ID_SPINE_COMBINER_COMPLETED": PrivateComputationInstanceStatus.ID_SPINE_COMBINER_COMPLETED,
+    "ID_SPINE_COMBINER_FAILED": PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED,
+    "RESHARD_STARTED": PrivateComputationInstanceStatus.RESHARD_STARTED,
+    "RESHARD_COMPLETED": PrivateComputationInstanceStatus.RESHARD_COMPLETED,
+    "RESHARD_FAILED": PrivateComputationInstanceStatus.RESHARD_FAILED,
     "TIMEOUT": PrivateComputationInstanceStatus.TIMEOUT,
 }
 
