@@ -10,12 +10,8 @@ from collections import Counter
 from typing import Any, Dict
 
 from fbpcs.pc_pre_validation.constants import (
-    ID_FIELD,
-    VALUE_FIELD,
-    EVENT_TIMESTAMP_FIELD,
-    CONVERSION_METADATA_FIELD,
-    CONVERSION_VALUE_FIELD,
-    CONVERSION_TIMESTAMP_FIELD,
+    ALL_FIELDS,
+    REQUIRED_FIELDS,
 )
 
 
@@ -24,20 +20,21 @@ class InputDataValidationIssues:
         self.empty_counter: Counter[str] = Counter()
         self.format_error_counter: Counter[str] = Counter()
 
-    def get_as_dict(self) -> Dict[str, Any]:
-        issues = {}
-        fields = [
-            ID_FIELD,
-            VALUE_FIELD,
-            EVENT_TIMESTAMP_FIELD,
-            CONVERSION_METADATA_FIELD,
-            CONVERSION_VALUE_FIELD,
-            CONVERSION_TIMESTAMP_FIELD,
-        ]
-        for field in fields:
-            self.set_issues_for_field(issues, field)
+    def get_errors(self) -> Dict[str, Any]:
+        errors = {}
+        for field in ALL_FIELDS:
+            if field in REQUIRED_FIELDS:
+                self.set_for_field(errors, field)
 
-        return issues
+        return errors
+
+    def get_warnings(self) -> Dict[str, Any]:
+        warnings = {}
+        for field in ALL_FIELDS:
+            if field not in REQUIRED_FIELDS:
+                self.set_for_field(warnings, field)
+
+        return warnings
 
     def count_empty_field(self, field: str) -> None:
         self.empty_counter[field] += 1
@@ -45,13 +42,14 @@ class InputDataValidationIssues:
     def count_format_error_field(self, field: str) -> None:
         self.format_error_counter[field] += 1
 
-    def set_issues_for_field(self, issues: Dict[str, Any], field: str) -> None:
-        field_issues = {}
+    def set_for_field(self, fields_counts: Dict[str, Any], field: str) -> None:
+        counts = {}
         empty_count = self.empty_counter[field]
         format_error_count = self.format_error_counter[field]
         if empty_count > 0:
-            field_issues["empty"] = empty_count
+            counts["empty_count"] = empty_count
         if format_error_count > 0:
-            field_issues["bad_format"] = format_error_count
-        if field_issues:
-            issues[field] = field_issues
+            counts["bad_format_count"] = format_error_count
+
+        if counts:
+            fields_counts[field] = counts
