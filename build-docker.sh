@@ -13,7 +13,7 @@ GITHUB_PACKAGES="ghcr.io/facebookresearch"
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-t TAG]
+Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-g] [-t TAG]
 
 package:
   emp_games - builds the emp-games docker image
@@ -22,6 +22,7 @@ package:
   pce_deployment - builds the pce-deployment docker image
 -u: builds the docker images against ubuntu (default)
 -f: force use of latest fbpcf from ghcr.io/facebookresearch
+-g Only used for the pce_deployment package to build the GCP docker image instead of the AWS image
 -t TAG: tags the image with the given tag (default: latest)
 EOF
   exit 1
@@ -40,12 +41,14 @@ OS_RELEASE=${UBUNTU_RELEASE}
 DOCKER_EXTENSION=".ubuntu"
 TAG="latest"
 FORCE_EXTERNAL=false
-while getopts "u,f,t:" o; do
+USE_GCP=false
+while getopts "u,f,g,t:" o; do
   case $o in
     (u) OS_VARIANT="ubuntu"
         OS_RELEASE=${UBUNTU_RELEASE}
         DOCKER_EXTENSION=".ubuntu";;
     (f) FORCE_EXTERNAL=true;;
+    (g) USE_GCP=true;;
     (t) TAG=$OPTARG;;
     (*) usage
   esac
@@ -83,6 +86,11 @@ fi
 
 for P in $PACKAGE; do
   DOCKER_PACKAGE=${P/_/-}
+  if [[ "$P" == "pce_deployment" && "$USE_GCP" == true ]]; then
+      DOCKER_PACKAGE="$DOCKER_PACKAGE-gcp"
+      P="$P/gcp"
+  fi
+
   printf "\nBuilding %s %s docker image...\n" "${P}" "${OS_VARIANT}"
   docker build  \
     --build-arg tag="${TAG}" \
