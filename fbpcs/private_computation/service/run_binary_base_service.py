@@ -8,7 +8,7 @@
 
 import asyncio
 import logging
-from typing import Optional, List
+from typing import Dict, Optional, List
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
@@ -29,6 +29,7 @@ class RunBinaryBaseService:
         binary_name: str,
         timeout: Optional[int] = None,
         wait_for_containers_to_finish: bool = False,
+        env_vars: Optional[Dict[str, str]] = None,
     ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class RunBinaryBaseService:
             version=binary_version,
             cmd_args_list=cmd_args_list,
             timeout=timeout,
+            env_vars=env_vars,
         )
 
         containers = await onedocker_svc.wait_for_pending_containers(

@@ -262,5 +262,6 @@ class PIDProtocolRunStage(PIDStage):
     def _gen_env_vars(self) -> Dict[str, str]:
         env_vars = {
             "RUST_LOG": "info",
+            "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path,
         }
         return env_vars
