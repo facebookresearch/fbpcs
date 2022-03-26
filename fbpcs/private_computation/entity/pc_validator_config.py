@@ -18,7 +18,6 @@ from dataclasses_json import dataclass_json
 class PCValidatorConfig:
     region: str
     pc_pre_validator_enabled: bool = True
-    data_validation_threshold_overrides: Optional[Dict[str, float]] = None
 
     def __str__(self) -> str:
         # pyre-ignore

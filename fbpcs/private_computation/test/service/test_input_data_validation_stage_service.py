@@ -50,11 +50,6 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         self, mock_stage_state_instance
     ) -> None:
         pc_instance = self._pc_instance
-        threshold_overrides = {
-            "id_": 0.95,
-            "value": 0.8,
-        }
-        threshold_overrides_str = json.dumps(threshold_overrides)
         mock_container_instance = MagicMock()
         mock_onedocker_svc = MagicMock()
         mock_onedocker_svc.start_container.side_effect = [mock_container_instance]
@@ -64,13 +59,11 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
                 f"--input-file-path={self._pc_instance.input_path}",
                 "--cloud-provider=AWS",
                 f"--region={region}",
-                f"--valid-threshold-override='{threshold_overrides_str}'",
             ]
         )
         pc_validator_config = PCValidatorConfig(
             region=region,
             pc_pre_validator_enabled=True,
-            data_validation_threshold_overrides=threshold_overrides,
         )
         stage_service = InputDataValidationStageService(
             pc_validator_config, mock_onedocker_svc

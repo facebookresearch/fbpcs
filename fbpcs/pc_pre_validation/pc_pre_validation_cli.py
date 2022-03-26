@@ -20,7 +20,6 @@ Usage:
         [--access-key-data=<access-key-data>]
         [--start-timestamp=<start-timestamp>]
         [--end-timestamp=<end-timestamp>]
-        [--valid-threshold-override=<valid-threshold-override>]
 """
 
 
@@ -44,7 +43,6 @@ ACCESS_KEY_ID = "--access-key-id"
 ACCESS_KEY_DATA = "--access-key-data"
 START_TIMESTAMP = "--start-timestamp"
 END_TIMESTAMP = "--end-timestamp"
-VALID_THRESHOLD_OVERRIDE = "--valid-threshold-override"
 
 
 def main(argv: OptionalType[List[str]] = None) -> None:
@@ -60,7 +58,6 @@ def main(argv: OptionalType[List[str]] = None) -> None:
             Optional(ACCESS_KEY_DATA): optional_string,
             Optional(START_TIMESTAMP): optional_string,
             Optional(END_TIMESTAMP): optional_string,
-            Optional(VALID_THRESHOLD_OVERRIDE): optional_string,
         }
     )
     arguments = s.validate(docopt(__doc__, argv))
