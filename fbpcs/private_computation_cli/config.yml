@@ -47,13 +47,6 @@ private_computation:
         region: TODO
         ### Toggle running the PCPreValidator
         # pc_pre_validator_enabled: false
-        ### Overrides for the passing validation thresholds
-        # data_validation_threshold_overrides:
-        #   id_: 0.6
-        #   event_timestamp: 0.7
-        #   conversion_timestamp: 0.7
-        #   value: 0.2
-        #   conversion_value: 0.2
 pid:
   dependency:
     PIDInstanceRepository:

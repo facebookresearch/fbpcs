@@ -6,7 +6,6 @@
 
 # pyre-strict
 
-import json
 import logging
 from typing import List, Optional
 
@@ -38,9 +37,8 @@ class InputDataValidationStageService(PrivateComputationStageService):
     """
     This InputDataValidation stage service validates input data files.
     Validation fails if the issues detected in the data file
-    do not pass the input_data_validation configuration minimum
-    valid thresholds. A failing validation stage will prevent the next
-    stage from running.
+    do not pass the input_data_validation. A failing validation stage
+    will prevent the next stage from running.
 
     It is implemented in a Cloud agnostic way.
     """
@@ -84,12 +82,6 @@ class InputDataValidationStageService(PrivateComputationStageService):
             "--cloud-provider=AWS",
             f"--region={region}",
         ]
-        threshold_overrides = (
-            self._pc_validator_config.data_validation_threshold_overrides
-        )
-        if threshold_overrides:
-            threshold_overrides_str = json.dumps(threshold_overrides)
-            cmd_args.append(f"--valid-threshold-override='{threshold_overrides_str}'")
 
         cmd_args_str = " ".join(cmd_args)
 
