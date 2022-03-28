@@ -14,6 +14,9 @@ from fbpcs.private_computation.service.dummy_stage_service import (
     DummyStageService,
 )
 from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
+from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
+    IdSpineCombinerStageService,
+)
 from fbpcs.private_computation.service.input_data_validation_stage_service import (
     InputDataValidationStageService,
 )
@@ -26,13 +29,11 @@ from fbpcs.private_computation.service.pcf2_attribution_stage_service import (
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
 )
-from fbpcs.private_computation.service.prepare_data_stage_service import (
-    PrepareDataStageService,
-)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
 )
+from fbpcs.private_computation.service.shard_stage_service import ShardStageService
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
     PrivateComputationStageFlowData,
@@ -45,7 +46,7 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
     It also provides methods to get information about the next or previous stage.
 
     NOTE:
-    1. This is enum contains the flow - ID MATCH -> PREPARE -> PCF2_ATTRIBUTION -> PCF2_AGGREGATION -> SHARD AGGREGATION.
+    1. This is enum contains the flow - ID MATCH -> ID_SPINE_COMBINER -> RESHARD -> PCF2_ATTRIBUTION -> PCF2_AGGREGATION -> SHARD AGGREGATION.
     2. The order in which the enum members appear is the order in which the stages are intended
     to run. The _order_ variable is used to ensure member order is consistent (class attribute, removed during class creation).
     An exception is raised at runtime if _order_ is inconsistent with the actual member order.
@@ -54,7 +55,7 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED INPUT_DATA_VALIDATION ID_MATCH ID_MATCH_POST_PROCESS PREPARE PCF2_ATTRIBUTION PCF2_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED INPUT_DATA_VALIDATION ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD PCF2_ATTRIBUTION PCF2_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -82,10 +83,16 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_FAILED,
         False,
     )
-    PREPARE = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.PREPARE_DATA_STARTED,
-        PrivateComputationInstanceStatus.PREPARE_DATA_COMPLETED,
-        PrivateComputationInstanceStatus.PREPARE_DATA_FAILED,
+    ID_SPINE_COMBINER = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_STARTED,
+        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_COMPLETED,
+        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED,
+        False,
+    )
+    RESHARD = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.RESHARD_STARTED,
+        PrivateComputationInstanceStatus.RESHARD_COMPLETED,
+        PrivateComputationInstanceStatus.RESHARD_FAILED,
         False,
     )
     PCF2_ATTRIBUTION = PrivateComputationStageFlowData(
@@ -142,11 +149,15 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
             return PostProcessingStageService(
                 args.storage_svc, args.pid_post_processing_handlers
             )
-        elif self is self.PREPARE:
-            return PrepareDataStageService(
+        elif self is self.ID_SPINE_COMBINER:
+            return IdSpineCombinerStageService(
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                update_status_to_complete=True,
+            )
+        elif self is self.RESHARD:
+            return ShardStageService(
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
             )
         elif self is self.PCF2_ATTRIBUTION:
             return PCF2AttributionStageService(
