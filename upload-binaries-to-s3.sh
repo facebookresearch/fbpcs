@@ -9,18 +9,19 @@ set -e
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <emp_games|data_processing|pid> <tag>
+Usage: $PROG_NAME <emp_games|data_processing|pid|validation> <tag>
 
 package:
   emp_games - extracts the binaries from fbpcs/emp-games docker image
   data_processing - extracts the binaries from fbpcs/data-processing docker image
   pid - extracts the binaries from private-id docker image
+  validation - extracts the binaries from the onedocker docker image
   tag: used to determine the subfolder/version in s3 for each binary
 EOF
   exit 1
 }
 
-PACKAGES="emp_games data_processing pid"
+PACKAGES="emp_games data_processing pid validation"
 PACKAGE=$1
 TAG=$2
 if [[ ! " $PACKAGES " =~ $PACKAGE ]] || [[ ! " $TAG " =~ $TAG ]]; then
@@ -38,6 +39,7 @@ pcf2_aggregation="$attribution_repo/pcf2_aggregation/${TAG}/pcf2_aggregation"
 shard_aggregator_package="$attribution_repo/shard-aggregator/${TAG}/shard-aggregator"
 data_processing_repo="s3://$one_docker_repo/data_processing"
 private_id_repo="s3://$one_docker_repo/pid"
+validation_repo="s3://$one_docker_repo/validation"
 
 if [ "$PACKAGE" = "emp_games" ]; then
 cd binaries_out || exit
@@ -66,4 +68,9 @@ aws s3 cp private-id-server "$private_id_repo/private-id-server/${TAG}/private-i
 aws s3 cp private-id-client "$private_id_repo/private-id-client/${TAG}/private-id-client"
 aws s3 cp private-id-multi-key-server "$private_id_repo/private-id-multi-key-server/${TAG}/private-id-multi-key-server"
 aws s3 cp private-id-multi-key-client "$private_id_repo/private-id-multi-key-client/${TAG}/private-id-multi-key-client"
+fi
+
+if [ "$PACKAGE" = "validation" ]; then
+cd binaries_out || exit
+aws s3 cp pc_pre_validation_cli "$validation_repo/pc_pre_validation_cli/${TAG}/pc_pre_validation_cli"
 fi

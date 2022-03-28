@@ -15,13 +15,14 @@ package:
   emp_games - extracts the binaries from fbpcs/emp-games docker image
   data_processing - extracts the binaries from fbpcs/data-processing docker image
   pid - extracts the binaries from private-id docker image
+  validation - extracts the binaries from the onedocker docker image
 -t TAG: uses the image with the given tag (default: latest)
 -d DOCKER_IMAGE_NAME: defines the image name to extract from
 EOF
   exit 1
 }
 
-PACKAGES="emp_games data_processing pid"
+PACKAGES="emp_games data_processing pid validation"
 PACKAGE=$1
 if [[ ! " $PACKAGES " =~ $PACKAGE ]]; then
    usage
@@ -50,6 +51,7 @@ if [ -z "$DOCKER_IMAGE_NAME" ]; then
     emp_games) DOCKER_IMAGE_NAME="fbpcs/emp-games";;
     data_processing) DOCKER_IMAGE_NAME="fbpcs/data-processing";;
     pid) DOCKER_IMAGE_NAME="fbpcs/onedocker";;
+    validation) DOCKER_IMAGE_NAME="fbpcs/onedocker";;
   esac
 fi
 DOCKER_IMAGE_PATH="${DOCKER_IMAGE_NAME}:${TAG}"
@@ -86,5 +88,11 @@ docker cp temp_container:/usr/local/bin/private-id-server "$SCRIPT_DIR/binaries_
 docker cp temp_container:/usr/local/bin/private-id-client "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/private-id-multi-key-server "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/private-id-multi-key-client "$SCRIPT_DIR/binaries_out/."
+docker rm -f temp_container
+fi
+
+if [ "$PACKAGE" = "validation" ]; then
+docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
+docker cp temp_container:/usr/local/bin/pc_pre_validation_cli "$SCRIPT_DIR/binaries_out/."
 docker rm -f temp_container
 fi

@@ -35,6 +35,7 @@ binary_names=(
     'data_processing/pid_preparer'
     'data_processing/lift_id_combiner'
     'data_processing/attribution_id_combiner'
+    'validation/pc_pre_validation_cli'
 )
 
 s3_path="s3://one-docker-repository-prod"
