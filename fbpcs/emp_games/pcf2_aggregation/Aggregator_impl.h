@@ -196,9 +196,9 @@ class MeasurementAggregator : public Aggregator<schedulerId> {
         << "ORAM startIndex must be less than size of array";
     CHECK_LE(endIndex, touchpointConversionResults.size())
         << "ORAM endIndex must be at most size of array";
-    for (size_t i = startIndex; i < endIndex; ++i) {
+    for (size_t index = startIndex; index < endIndex; ++index) {
       for (auto& touchpointConversionResult :
-           touchpointConversionResults.at(i)) {
+           touchpointConversionResults.at(index)) {
         const auto& touchpoint =
             touchpointConversionResult.measurementTouchpointMetadata;
         const auto& conversion =
