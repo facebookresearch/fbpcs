@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+import os
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
@@ -112,3 +113,24 @@ class TestBinaryFileValidator(TestCase):
 
         self.assertEqual(report, expected_report)
         self.assertEqual(storage_service_mock.file_exists.call_count, 1)
+
+    @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
+    @patch.dict(os.environ, {"ONEDOCKER_REPOSITORY_PATH": "LOCAL"}, clear=True)
+    def test_run_validations_skip_validation_if_repo_envvar_is_set(
+        self, storage_service_mock: Mock
+    ) -> None:
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=BINARY_FILE_VALIDATOR_NAME,
+            message="Completed binary accessibility validation successfuly",
+        )
+        storage_service_mock.__init__(return_value=storage_service_mock)
+        storage_service_mock.file_exists.return_value = True
+
+        validator = BinaryFileValidator(
+            TEST_REGION, TEST_BINARY_REPO, TEST_BINARY_PATHS
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+        self.assertEqual(storage_service_mock.file_exists.call_count, 0)

@@ -78,3 +78,5 @@ BINARY_PATHS = [
     "private_attribution/shard-aggregator/latest/shard-aggregator",
     "private_lift/lift/latest/lift",
 ]
+
+ONEDOCKER_REPOSITORY_PATH = "ONEDOCKER_REPOSITORY_PATH"
