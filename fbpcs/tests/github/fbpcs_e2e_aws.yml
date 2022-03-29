@@ -26,6 +26,7 @@ private_computation:
         constructor:
           tmp_directory: /tmp
           binary_version: latest
+          repository_path: LOCAL
     OneDockerServiceConfig:
       constructor:
         task_definition: fbpcs-github-cicd:4#fbpcs-github-cicd
