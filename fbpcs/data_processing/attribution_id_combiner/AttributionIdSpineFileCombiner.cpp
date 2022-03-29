@@ -25,7 +25,7 @@
 #include "../id_combiner/DataValidation.h"
 #include "../id_combiner/GroupBy.h"
 #include "../id_combiner/IdInsert.h"
-#include "../id_combiner/IdSwap.h"
+#include "../id_combiner/IdSwapMultiKey.h"
 #include "../id_combiner/SortIds.h"
 
 #include "AttributionIdSpineCombinerOptions.h"
@@ -62,12 +62,8 @@ void attributionIdSpineFileCombiner(
   auto& aggregatedCols = isPublisherDataset ? publisherCols : partnerCols;
   std::vector<int32_t> colPaddingSize(aggregatedCols.size(), kPaddingSize);
 
-  std::stringstream idMappedOutFile;
   std::stringstream idSwapOutFile;
-  idSwap(dataFile, spineIdFile, idMappedOutFile);
-  spineIdFile.clear();
-  spineIdFile.seekg(0);
-  idInsert(idMappedOutFile, spineIdFile, idSwapOutFile);
+  idSwapMultiKey(dataFile, spineIdFile, idSwapOutFile, FLAGS_max_id_column_cnt);
 
   std::stringstream groupByOutFile;
   std::stringstream groupByUnsortedOutFile;
