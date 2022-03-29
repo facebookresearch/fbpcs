@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+import os
 from typing import Optional, Dict, List
 
 from fbpcp.error.pcp import PcpError
@@ -12,6 +13,7 @@ from fbpcs.pc_pre_validation.constants import (
     BINARY_REPOSITORY,
     BINARY_PATHS,
     BINARY_FILE_VALIDATOR_NAME,
+    ONEDOCKER_REPOSITORY_PATH,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.validation_report import ValidationReport
@@ -38,19 +40,23 @@ class BinaryFileValidator(Validator):
 
     def __validate__(self) -> ValidationReport:
         details: Dict[str, str] = {}
-        for path in self._binary_paths:
-            binary_full_path = f"{self._binary_repository}/{path}"
-            try:
-                if not self._storage_service.file_exists(binary_full_path):
-                    details[binary_full_path] = "binary does not exist"
-            except PcpError as pcp_error:
-                # s3 throws the following error when an access is denied,
-                #    An error occurred (403) when calling the HeadObject operation: Forbidden
-                if "Forbidden" in str(pcp_error):
-                    details[binary_full_path] = str(pcp_error)
-                else:
-                    # rethrow unexpected error so validation runner will skip this validation with a WARNING message
-                    raise pcp_error
+        if not os.getenv(ONEDOCKER_REPOSITORY_PATH):
+            # Skip s3 binary check if ONEDOCKER_REPOSITORY_PATH envvar is set
+            #   This is to unblock fbpcs-github-cicd tests because it uses local binaries
+            #   and do not have s3 permissions to the s3 binaries
+            for path in self._binary_paths:
+                binary_full_path = f"{self._binary_repository}/{path}"
+                try:
+                    if not self._storage_service.file_exists(binary_full_path):
+                        details[binary_full_path] = "binary does not exist"
+                except PcpError as pcp_error:
+                    # s3 throws the following error when an access is denied,
+                    #    An error occurred (403) when calling the HeadObject operation: Forbidden
+                    if "Forbidden" in str(pcp_error):
+                        details[binary_full_path] = str(pcp_error)
+                    else:
+                        # rethrow unexpected error so validation runner will skip this validation with a WARNING message
+                        raise pcp_error
 
         if details:
             return ValidationReport(
