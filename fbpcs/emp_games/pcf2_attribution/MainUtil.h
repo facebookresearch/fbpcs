@@ -62,9 +62,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     int16_t port,
     std::string attributionRules,
     std::vector<std::string>& inputFilenames,
-    std::vector<std::string>& outputFilenames,
-    bool useTls,
-    std::string tlsDir) {
+    std::vector<std::string>& outputFilenames) {
   // aggregate scheduler statistics across apps
   common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
 
@@ -85,7 +83,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY, partyInfos, useTls, tlsDir);
+        PARTY, partyInfos, false, "");
 
     // Each AttributionApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
@@ -119,9 +117,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
             port,
             attributionRules,
             inputFilenames,
-            outputFilenames,
-            useTls,
-            tlsDir);
+            outputFilenames);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -138,9 +134,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     int16_t concurrency,
     std::string serverIp,
     int16_t port,
-    std::string attributionRules,
-    bool useTls,
-    std::string tlsDir) {
+    std::string attributionRules) {
   // use only as many threads as the number of files
   auto numThreads = std::min((int)inputFilenames.size(), (int)concurrency);
 
@@ -155,9 +149,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
       port,
       attributionRules,
       inputFilenames,
-      outputFilenames,
-      useTls,
-      tlsDir);
+      outputFilenames);
 }
 
 } // namespace pcf2_attribution

@@ -48,6 +48,25 @@ class CalculatorApp : public fbpcf::EmpApp<
             useXorEncryption ? fbpcf::Visibility::Xor
                              : fbpcf::Visibility::Public) {}
 
+  CalculatorApp(
+      const fbpcf::Party party,
+      const std::string& serverIp,
+      const uint16_t port,
+      const std::filesystem::path& inputPath,
+      const std::string& outputPath,
+      const bool useXorEncryption,
+      bool useTls,
+      const std::string& tlsDir_)
+      : fbpcf::EmpApp<
+            CalculatorGame<emp::NetIO>,
+            CalculatorGameConfig,
+            std::string>{party, serverIp, port, useTls, tlsDir_},
+        inputPath_(inputPath),
+        outputPath_(outputPath),
+        visibility_(
+            useXorEncryption ? fbpcf::Visibility::Xor
+                             : fbpcf::Visibility::Public) {}
+
   void run() override;
 
  protected:

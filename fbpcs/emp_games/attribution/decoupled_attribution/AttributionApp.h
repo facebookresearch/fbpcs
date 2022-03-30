@@ -51,6 +51,20 @@ class AttributionApp
       const uint16_t& port,
       const std::string& attributionRules,
       const std::string& inputPath,
+      const std::string& outputPath)
+      : fbpcf::EmpApp<
+            AttributionGame<MY_ROLE, OUTPUT_VISIBILITY, emp::NetIO>,
+            AttributionInputMetrics,
+            AttributionOutputMetrics>{static_cast<fbpcf::Party>(MY_ROLE), serverIp, port},
+        attributionRules_{attributionRules},
+        inputPath_{inputPath},
+        outputPath_{outputPath} {}
+
+  AttributionApp(
+      const std::string& serverIp,
+      const uint16_t& port,
+      const std::string& attributionRules,
+      const std::string& inputPath,
       const std::string& outputPath,
       const bool useTls,
       const std::string& tlsDir)

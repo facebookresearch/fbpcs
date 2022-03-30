@@ -79,9 +79,7 @@ int main(int argc, char* argv[]) {
                 FLAGS_server_ip,
                 FLAGS_port,
                 FLAGS_aggregators,
-                concurrency,
-                FLAGS_use_tls,
-                FLAGS_tls_dir);
+                concurrency);
       } else {
         aggregation::private_aggregation::
             startPrivateAggregationApp<emp::ALICE, fbpcf::Visibility::Public>(
@@ -91,9 +89,7 @@ int main(int argc, char* argv[]) {
                 FLAGS_server_ip,
                 FLAGS_port,
                 FLAGS_aggregators,
-                concurrency,
-                FLAGS_use_tls,
-                FLAGS_tls_dir);
+                concurrency);
       }
 
     } else if (FLAGS_party == static_cast<int>(fbpcf::Party::Bob)) {
@@ -108,9 +104,7 @@ int main(int argc, char* argv[]) {
                 FLAGS_server_ip,
                 FLAGS_port,
                 FLAGS_aggregators,
-                concurrency,
-                FLAGS_use_tls,
-                FLAGS_tls_dir);
+                concurrency);
       } else {
         aggregation::private_aggregation::
             startPrivateAggregationApp<emp::BOB, fbpcf::Visibility::Public>(
@@ -120,9 +114,7 @@ int main(int argc, char* argv[]) {
                 FLAGS_server_ip,
                 FLAGS_port,
                 FLAGS_aggregators,
-                concurrency,
-                FLAGS_use_tls,
-                FLAGS_tls_dir);
+                concurrency);
       }
 
     } else {

@@ -61,14 +61,6 @@ DEFINE_int32(
     0,
     "0 for plaintext input, 1 for partner XOR encrypted input (used for Consortium MPC), 2 for both publisher and partner XOR encrypted input (used with PS3I)");
 DEFINE_bool(
-    use_tls,
-    false,
-    "Whether to use TLS when communicating with the other party.");
-DEFINE_string(
-    tls_dir,
-    "",
-    "If using TLS, the directory that has the certificate, private key, and passphrase.");
-DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");

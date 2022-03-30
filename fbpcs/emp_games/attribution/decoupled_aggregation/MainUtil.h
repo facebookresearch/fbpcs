@@ -58,9 +58,7 @@ inline void startPrivateAggregationApp(
     std::string serverIp,
     int16_t port,
     std::string aggregationFormat,
-    int16_t concurrency,
-    bool useTls,
-    std::string tlsDir) {
+    int16_t concurrency) {
   XLOG(INFO) << "Calling private aggregation App";
   std::vector<std::unique_ptr<aggregation::private_aggregation::
                                   AggregationApp<PARTY, OUTPUT_VISIBILITY>>>
@@ -78,9 +76,7 @@ inline void startPrivateAggregationApp(
             aggregationFormat,
             inputSecretShareFilePaths.at(i),
             inputClearTextFilePaths.at(i),
-            outputFilePaths.at(i),
-            useTls,
-            tlsDir));
+            outputFilePaths.at(i)));
   }
 
   fbpcf::MpcAppExecutor<aggregation::private_aggregation::

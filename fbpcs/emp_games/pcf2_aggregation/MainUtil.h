@@ -55,9 +55,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
     std::string aggregationFormats,
     std::vector<std::string>& inputSecretShareFilenames,
     std::vector<std::string>& inputClearTextFilenames,
-    std::vector<std::string>& outputFilenames,
-    bool useTls,
-    std::string tlsDir) {
+    std::vector<std::string>& outputFilenames) {
   // aggregate scheduler statistics across apps
   common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
 
@@ -78,7 +76,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY, partyInfos, useTls, tlsDir);
+        PARTY, partyInfos, false, "");
 
     // Each AggregationApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
@@ -114,9 +112,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
                 aggregationFormats,
                 inputSecretShareFilenames,
                 inputClearTextFilenames,
-                outputFilenames,
-                useTls,
-                tlsDir);
+                outputFilenames);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -136,9 +132,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFiles(
     int16_t concurrency,
     std::string serverIp,
     int16_t port,
-    std::string aggregationFormats,
-    bool useTls,
-    std::string tlsDir) {
+    std::string aggregationFormats) {
   // use only as many threads as the number of files
   auto numThreads =
       std::min((int)inputSecretShareFilenames.size(), (int)concurrency);
@@ -154,9 +148,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFiles(
       aggregationFormats,
       inputSecretShareFilenames,
       inputClearTextFilenames,
-      outputFilenames,
-      useTls,
-      tlsDir);
+      outputFilenames);
 }
 
 } // namespace pcf2_aggregation
