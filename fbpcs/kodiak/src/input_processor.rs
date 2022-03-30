@@ -41,7 +41,6 @@ impl<C: ColumnMetadata> InputProcessor<C> {
         row
     }
 
-
     fn to_header(&self, tokens: Vec<&str>) -> Vec<Option<C>> {
         tokens
             .into_iter()
