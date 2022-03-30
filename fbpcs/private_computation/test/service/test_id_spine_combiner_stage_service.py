@@ -53,25 +53,6 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
         ) as mock_combine:
             # call id_spine_combiner
             await self.stage_svc.run_async(private_computation_instance)
-
-            binary_name = OneDockerBinaryNames.LIFT_ID_SPINE_COMBINER.value
-            binary_config = self.onedocker_binary_config_map[binary_name]
-            args = IdSpineCombinerService.build_args(
-                spine_path=private_computation_instance.pid_stage_output_spine_path,
-                data_path=private_computation_instance.pid_stage_output_data_path,
-                output_path=private_computation_instance.data_processing_output_path
-                + "_combine",
-                num_shards=self.test_num_containers,
-                tmp_directory=binary_config.tmp_directory,
-            )
-            # pyre-fixme[20]: Argument `self` expected.
-            IdSpineCombinerService.start_containers(
-                cmd_args_list=args,
-                onedocker_svc=self.onedocker_service,
-                binary_version=binary_config.binary_version,
-                binary_name=binary_name,
-                wait_for_containers_to_finish=True,
-            )
             mock_combine.assert_called()
 
     def create_sample_instance(self) -> PrivateComputationInstance:
