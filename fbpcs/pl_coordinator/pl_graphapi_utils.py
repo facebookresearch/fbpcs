@@ -96,18 +96,13 @@ class PLGraphAPIClient:
     def create_pa_instance(
         self,
         dataset_id: str,
-        start_date: str,
-        end_date: str,
+        timestamp: int,
         attribution_rule: str,
         num_containers: int,
-        result_type: str,
     ) -> requests.Response:
         params = self.params.copy()
         params["attribution_rule"] = attribution_rule
-        params["start_date"] = start_date
-        params["end_date"] = end_date
-        params["num_containers"] = num_containers
-        params["result_type"] = result_type
+        params["timestamp"] = timestamp
         r = requests.post(f"{URL}/{dataset_id}/instance", params=params)
         self._check_err(r, "creating fb pa instance")
         return r
