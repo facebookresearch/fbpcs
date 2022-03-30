@@ -64,9 +64,7 @@ inline void startAttributionAppsForShardedFiles(
     int16_t concurrency,
     std::string serverIp,
     int16_t port,
-    std::string attributionRules,
-    bool useTls,
-    std::string tlsDir) {
+    std::string attributionRules) {
   std::vector<std::unique_ptr<aggregation::private_attribution::
                                   AttributionApp<PARTY, OUTPUT_VISIBILITY>>>
       attributionApps;
@@ -79,9 +77,7 @@ inline void startAttributionAppsForShardedFiles(
             port + i,
             attributionRules,
             inputFilenames.at(i),
-            outputFilenames.at(i),
-            useTls,
-            tlsDir));
+            outputFilenames.at(i)));
   }
 
   fbpcf::MpcAppExecutor<aggregation::private_attribution::

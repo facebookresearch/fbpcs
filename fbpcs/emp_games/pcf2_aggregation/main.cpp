@@ -94,9 +94,7 @@ int main(int argc, char* argv[]) {
               concurrency,
               FLAGS_server_ip,
               FLAGS_port,
-              FLAGS_aggregators,
-              FLAGS_use_tls,
-              FLAGS_tls_dir);
+              FLAGS_aggregators);
     } else if (FLAGS_party == common::PARTNER) {
       XLOG(INFO)
           << "Starting private aggregation as Partner, will wait for Publisher...";
@@ -111,9 +109,7 @@ int main(int argc, char* argv[]) {
               concurrency,
               FLAGS_server_ip,
               FLAGS_port,
-              FLAGS_aggregators,
-              FLAGS_use_tls,
-              FLAGS_tls_dir);
+              FLAGS_aggregators);
 
     } else {
       XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);

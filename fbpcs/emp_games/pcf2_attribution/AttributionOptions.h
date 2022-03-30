@@ -25,6 +25,4 @@ DECLARE_bool(use_postfix);
 DECLARE_int32(max_num_touchpoints);
 DECLARE_int32(max_num_conversions);
 DECLARE_int32(input_encryption);
-DECLARE_bool(use_tls);
-DECLARE_string(tls_dir);
 DECLARE_bool(log_cost);

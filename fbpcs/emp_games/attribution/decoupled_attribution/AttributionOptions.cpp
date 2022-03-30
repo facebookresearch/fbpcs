@@ -55,11 +55,3 @@ DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");
-DEFINE_bool(
-    use_tls,
-    false,
-    "Whether to use TLS when communicating with the other party.");
-DEFINE_string(
-    tls_dir,
-    "",
-    "If using TLS, the directory that has the certificate, private key, and passphrase.");
