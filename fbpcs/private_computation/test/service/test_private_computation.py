@@ -43,7 +43,8 @@ from fbpcs.private_computation.service.errors import (
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
     NUM_NEW_SHARDS_PER_FILE,
-    DEFAULT_K_ANONYMITY_THRESHOLD,
+    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+    DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_PID_PROTOCOL,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
@@ -64,6 +65,7 @@ from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_f
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
+from parameterized import parameterized
 
 
 def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
@@ -164,13 +166,17 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.test_concurrency = 1
         self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
+    # pyre-ignore Undefined attribute [16]: Module parameterized.parameterized has no attribute expand.
+    @parameterized.expand(
+        [[PrivateComputationGameType.LIFT], [PrivateComputationGameType.ATTRIBUTION]]
+    )
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
-    def test_create_instance(self) -> None:
+    def test_create_instance(self, test_game_type) -> None:
         test_role = PrivateComputationRole.PUBLISHER
         self.private_computation_service.create_instance(
             instance_id=self.test_private_computation_id,
             role=test_role,
-            game_type=self.test_game_type,
+            game_type=test_game_type,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
             num_pid_containers=self.test_num_containers,
@@ -190,6 +196,15 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(test_role, args.role)
         self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
         self.assertEqual(1, args.creation_ts)
+
+        if test_game_type is PrivateComputationGameType.LIFT:
+            self.assertEqual(
+                DEFAULT_K_ANONYMITY_THRESHOLD_PL, args.k_anonymity_threshold
+            )
+        else:
+            self.assertEqual(
+                DEFAULT_K_ANONYMITY_THRESHOLD_PA, args.k_anonymity_threshold
+            )
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
@@ -773,7 +788,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             game_type=PrivateComputationGameType.LIFT,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
-            k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD,
+            k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,
             hmac_key=self.test_hmac_key,
         )
 
