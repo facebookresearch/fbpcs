@@ -174,21 +174,45 @@ TEST_F(LiftIdSpineFileCombinerTest, ParseFailure) {
 // As this is publisher data the opp_flag flag needs to be created in the
 // program itself
 TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePublisher) {
+  // FLAGS_sort_strategy is "sort" by default
+  // So testing keep_original will require over write it.
+  FLAGS_sort_strategy = "keep_original";
   std::vector<std::string> dataInput = {
       "id_,opportunity_timestamp,test_flag",
       "123,100,1",
       "456,150,0",
       "789,200,0"};
   std::vector<std::string> spineInput = {
-      "AAAA,123", "BBBB,", "CCCC,456", "DDDD,789", "EEEE,", "FFFF,"};
+      "FFFF,", "EEEE,", "DDDD,789", "CCCC,456", "BBBB,", "AAAA,123"};
   std::vector<std::string> expectedOutput = {
       "id_,opportunity_timestamp,opportunity,test_flag",
-      "AAAA,100,1,1",
-      "BBBB,0,0,0",
-      "CCCC,150,1,0",
-      "DDDD,200,1,0",
+      "FFFF,0,0,0",
       "EEEE,0,0,0",
-      "FFFF,0,0,0"};
+      "DDDD,200,1,0",
+      "CCCC,150,1,0",
+      "BBBB,0,0,0",
+      "AAAA,100,1,1"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+TEST_F(LiftIdSpineFileCombinerTest, ValidSortedSpinePublisher) {
+  std::vector<std::string> dataInput = {
+      "id_,opportunity_timestamp,test_flag",
+      "aaa,100,1",
+      "bbb,150,0",
+      "ccc,200,0"};
+  std::vector<std::string> spineInput = {
+      "1,aaa", "2,", "3,bbb", "10,ccc", "100,", "123,"};
+  // We tread id_ column as a string
+  // so the sort will based on lexicographical order.
+  std::vector<std::string> expectedOutput = {
+      "id_,opportunity_timestamp,opportunity,test_flag",
+      "1,100,1,1",
+      "10,200,1,0",
+      "100,0,0,0",
+      "123,0,0,0",
+      "2,0,0,0",
+      "3,150,1,0"};
   runTest(dataInput, spineInput, expectedOutput);
 }
 
@@ -203,12 +227,14 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartner) {
       "222,375,300",
       "333,400,400"};
   std::vector<std::string> spineInput = {
-      "AAAA,123", "BBBB,111", "CCCC,", "DDDD,", "EEEE,222", "FFFF,333"};
+      "1,123", "2,", "10,111", "DDDD,", "EEEE,222", "FFFF,333"};
+  // We tread id_ column as a string
+  // so the sort will based on lexicographical order.
   std::vector<std::string> expectedOutput = {
       "id_,event_timestamps,values",
-      "AAAA,[0,0,0,125],[0,0,0,100]",
-      "BBBB,[0,0,0,200],[0,0,0,200]",
-      "CCCC,[0,0,0,0],[0,0,0,0]",
+      "1,[0,0,0,125],[0,0,0,100]",
+      "10,[0,0,0,200],[0,0,0,200]",
+      "2,[0,0,0,0],[0,0,0,0]",
       "DDDD,[0,0,0,0],[0,0,0,0]",
       "EEEE,[0,0,0,375],[0,0,0,300]",
       "FFFF,[0,0,0,400],[0,0,0,400]"};

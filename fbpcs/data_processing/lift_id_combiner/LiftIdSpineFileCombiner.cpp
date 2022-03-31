@@ -153,6 +153,18 @@ void LiftIdSpineFileCombiner::combineFile() {
 
     *tmpFile << sortingOutFile.rdbuf();
   } else if (isPublisherDataset) {
+    // There is no grouping for publisher side,
+    // so we can do ID sorting directly.
+    std::stringstream sortedOutFile;
+    if (FLAGS_sort_strategy == "sort") {
+      pid::combiner::sortIds(idSwapOutFile, sortedOutFile);
+    } else if (FLAGS_sort_strategy == "keep_original") {
+      sortedOutFile << idSwapOutFile.rdbuf();
+    } else {
+      XLOG(FATAL) << "Invalid sort strategy '" << FLAGS_sort_strategy
+                  << "'. Expected 'sort' or 'keep_original'.";
+    }
+
     // We need to get the timestamp index *before* we add the new column
     // Otherwise, we'll get a std::out_of_range exception
     auto timestampIndex =
@@ -164,8 +176,8 @@ void LiftIdSpineFileCombiner::combineFile() {
     // add opportunity value.
     // if timestamp is 0, opportunity is 0
     // if timestamp is not 0, opportunity is 1
-    getline(idSwapOutFile, line); // skip header
-    while (getline(idSwapOutFile, line)) {
+    getline(sortedOutFile, line); // skip header
+    while (getline(sortedOutFile, line)) {
       std::vector<std::string> row;
       folly::split(",", line, row);
       if (row.at(timestampIndex) == "0") {
