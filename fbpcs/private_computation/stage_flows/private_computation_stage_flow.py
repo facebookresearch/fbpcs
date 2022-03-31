@@ -141,7 +141,9 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
             return DummyStageService()
         elif self is self.INPUT_DATA_VALIDATION:
             return InputDataValidationStageService(
-                args.pc_validator_config, args.onedocker_svc
+                args.pc_validator_config,
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
             )
         elif self is self.PID_SHARD:
             return PIDStageService(

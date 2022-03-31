@@ -7,10 +7,11 @@
 # pyre-strict
 
 import logging
-from typing import List, Optional
+from typing import DefaultDict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import (
     PCValidatorConfig,
@@ -24,6 +25,9 @@ from fbpcs.private_computation.entity.private_computation_status import (
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
+)
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
 )
 from fbpcs.private_computation.service.utils import (
     get_pc_status_from_stage_state,
@@ -44,12 +48,17 @@ class InputDataValidationStageService(PrivateComputationStageService):
     """
 
     def __init__(
-        self, pc_validator_config: PCValidatorConfig, onedocker_svc: OneDockerService
+        self,
+        pc_validator_config: PCValidatorConfig,
+        onedocker_svc: OneDockerService,
+        onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._failed_status: PrivateComputationInstanceStatus = (
             PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
         )
+
+        self._onedocker_binary_config_map = onedocker_binary_config_map
         self._pc_validator_config: PCValidatorConfig = pc_validator_config
         self._onedocker_svc = onedocker_svc
 
@@ -77,27 +86,33 @@ class InputDataValidationStageService(PrivateComputationStageService):
         self, pc_instance: PrivateComputationInstance
     ) -> None:
         region = self._pc_validator_config.region
-        cmd_args = [
-            f"--input-file-path={pc_instance.input_path}",
-            "--cloud-provider=AWS",
-            f"--region={region}",
-        ]
-
-        cmd_args_str = " ".join(cmd_args)
-
-        container_instance = self._onedocker_svc.start_container(
-            package_name=OneDockerBinaryNames.PC_PRE_VALIDATION.value,
-            timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
-            cmd_args=cmd_args_str,
+        cmd_args = " ".join(
+            [
+                f"--input-file-path={pc_instance.input_path}",
+                "--cloud-provider=AWS",
+                f"--region={region}",
+            ]
         )
+
+        binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
+        binary_config = self._onedocker_binary_config_map[binary_name]
+
+        container_instances = await RunBinaryBaseService().start_containers(
+            [cmd_args],
+            self._onedocker_svc,
+            binary_config.binary_version,
+            binary_name,
+            timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
+        )
+
         stage_state = StageStateInstance(
             pc_instance.instance_id,
             pc_instance.current_stage.name,
-            containers=[container_instance],
+            containers=container_instances,
         )
         pc_instance.instances.append(stage_state)
         self._logger.info(
-            f"[PCPreValidation] - Started container instance_id: {container_instance.instance_id} status: {container_instance.status}"
+            f"[PCPreValidation] - Started container instance_id: {container_instances[0].instance_id} status: {container_instances[0].status}"
         )
 
     def get_status(

@@ -4,12 +4,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
+from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch, MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import (
     PCValidatorConfig,
@@ -24,6 +25,9 @@ from fbpcs.private_computation.entity.private_computation_status import (
 )
 from fbpcs.private_computation.service.input_data_validation_stage_service import (
     InputDataValidationStageService,
+)
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
 )
 
 
@@ -43,16 +47,27 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             output_dir="789",
         )
 
+        self.onedocker_binary_config_map = defaultdict(
+            lambda: OneDockerBinaryConfig(
+                tmp_directory="/test_tmp_directory/",
+                binary_version="latest",
+                repository_path="test_path/",
+            )
+        )
+
+    @patch.object(RunBinaryBaseService, "start_containers")
     @patch(
         "fbpcs.private_computation.service.input_data_validation_stage_service.StageStateInstance"
     )
     async def test_run_async_when_there_are_no_issues_running_onedocker_service(
-        self, mock_stage_state_instance
+        self, mock_stage_state_instance, mock_run_binary_base_service_start_containers
     ) -> None:
         pc_instance = self._pc_instance
         mock_container_instance = MagicMock()
         mock_onedocker_svc = MagicMock()
-        mock_onedocker_svc.start_container.side_effect = [mock_container_instance]
+        mock_run_binary_base_service_start_containers.return_value = [
+            mock_container_instance
+        ]
         region = "us-west-1"
         expected_cmd_args = " ".join(
             [
@@ -66,16 +81,19 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             pc_pre_validator_enabled=True,
         )
         stage_service = InputDataValidationStageService(
-            pc_validator_config, mock_onedocker_svc
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
         await stage_service.run_async(pc_instance)
 
-        mock_onedocker_svc.start_container.assert_called_with(
-            package_name=OneDockerBinaryNames.PC_PRE_VALIDATION.value,
+        mock_run_binary_base_service_start_containers.assert_called_with(
+            [expected_cmd_args],
+            mock_onedocker_svc,
+            "latest",
+            OneDockerBinaryNames.PC_PRE_VALIDATION.value,
             timeout=1200,
-            cmd_args=expected_cmd_args,
         )
+
         mock_stage_state_instance.assert_called_with(
             self._pc_instance.instance_id,
             self._pc_instance.current_stage.name,
@@ -99,7 +117,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             pc_pre_validator_enabled=False,
         )
         stage_service = InputDataValidationStageService(
-            pc_validator_config, mock_onedocker_svc
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
         await stage_service.run_async(pc_instance)
@@ -126,7 +144,9 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             pc_pre_validator_enabled=True,
         )
         stage_service = InputDataValidationStageService(
-            pc_validator_config, mock_onedocker_svc
+            pc_validator_config,
+            mock_onedocker_svc,
+            self.onedocker_binary_config_map,
         )
 
         await stage_service.run_async(pc_instance)
@@ -153,20 +173,21 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         )
 
         stage_service = InputDataValidationStageService(
-            pc_validator_config, mock_onedocker_svc
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
         mock_get_pc_status_from_stage_state.side_effect = [expected_status]
         status = stage_service.get_status(pc_instance)
 
         self.assertEqual(status, expected_status)
 
+    @patch.object(RunBinaryBaseService, "start_containers")
     async def test_run_async_it_can_raise_an_exception(
-        self,
+        self, mock_run_binary_base_service_start_containers
     ) -> None:
         pc_instance = self._pc_instance
         mock_onedocker_svc = MagicMock()
         exception_message = "Unexpected exception.."
-        mock_onedocker_svc.start_container.side_effect = [
+        mock_run_binary_base_service_start_containers.side_effect = [
             RuntimeError(exception_message)
         ]
         pc_validator_config = PCValidatorConfig(
@@ -174,7 +195,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             pc_pre_validator_enabled=True,
         )
         stage_service = InputDataValidationStageService(
-            pc_validator_config, mock_onedocker_svc
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
         with self.assertRaisesRegex(RuntimeError, exception_message):
@@ -214,7 +235,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         mock_get_pc_status_from_stage_state.side_effect = [expected_status]
 
         stage_service = InputDataValidationStageService(
-            pc_validator_config, onedocker_svc_mock
+            pc_validator_config, onedocker_svc_mock, self.onedocker_binary_config_map
         )
         stage_service._logger = logger_mock
         status = stage_service.get_status(pc_instance)
