@@ -15,10 +15,12 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     python3.8 \
+    python3-dev \
     python3-pip \
     sudo \
     apt-transport-https \
     ca-certificates \
+    gcc \
     gnupg \
     unzip
 
@@ -28,6 +30,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
     && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
     && apt-get update -y && apt-get install google-cloud-sdk -y
+
+##########################################
+# Install pip packages
+##########################################
+RUN pip3 install fbpcp==0.2.6
 
 ##########################################
 # Install Terraform
