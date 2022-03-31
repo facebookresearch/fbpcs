@@ -4,7 +4,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# Usage:Run attribution different stages: create_instance, id_match, prepare_compute_input, compute_attribution, aggregate_shards
+# Usage:Run attribution different stages: create_instance, id_match, id_spine_combiner, reshard, compute_attribution, aggregate_shards
+# Note: Each run_next call will get the next stage from stage flow order
+# the latest stage flow order please refer to : fbcode/fbpcs/private_computation/stage_flows/private_computation_decoupled_stage_flow.py
 
 set -e
 
@@ -46,7 +48,7 @@ case "$stage" in
             --aggregation_type="$ATTRIBUTION_TYPE"
             ;;
     # Stages without passing IP addresses
-    prepare_compute_input | pid_metric_export | data_validation )
+    id_spine_combiner | reshard | pid_metric_export | data_validation )
         echo "Attribution Publisher $stage starts"
         $docker_command run_next "$ATTRIBUTION_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
