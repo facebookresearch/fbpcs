@@ -154,7 +154,7 @@ class PrivateComputationInstance(InstanceBase):
 
     # this is used by Private ID protocol to indicate whether we should
     # enable 'use-row-numbers' argument.
-    pid_use_row_numbers: bool = False
+    pid_use_row_numbers: bool = True
 
     creation_ts: int = 0
     end_ts: int = 0

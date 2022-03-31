@@ -134,7 +134,7 @@ class PrivateComputationService:
         stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
         result_visibility: ResultVisibility = ResultVisibility.PUBLIC,
         tier: Optional[str] = None,
-        pid_use_row_numbers: bool = False,
+        pid_use_row_numbers: bool = True,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
