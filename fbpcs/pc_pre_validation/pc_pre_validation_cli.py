@@ -20,6 +20,7 @@ Usage:
         [--access-key-data=<access-key-data>]
         [--start-timestamp=<start-timestamp>]
         [--end-timestamp=<end-timestamp>]
+        [--binary-version=<binary-version>]
 """
 
 
@@ -43,6 +44,7 @@ ACCESS_KEY_ID = "--access-key-id"
 ACCESS_KEY_DATA = "--access-key-data"
 START_TIMESTAMP = "--start-timestamp"
 END_TIMESTAMP = "--end-timestamp"
+BINARY_VERSION = "--binary-version"
 
 
 def main(argv: OptionalType[List[str]] = None) -> None:
@@ -58,6 +60,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
             Optional(ACCESS_KEY_DATA): optional_string,
             Optional(START_TIMESTAMP): optional_string,
             Optional(END_TIMESTAMP): optional_string,
+            Optional(BINARY_VERSION): optional_string,
         }
     )
     arguments = s.validate(docopt(__doc__, argv))
@@ -83,6 +86,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
                 region=arguments[REGION],
                 access_key_id=arguments[ACCESS_KEY_ID],
                 access_key_data=arguments[ACCESS_KEY_DATA],
+                binary_version=arguments[BINARY_VERSION],
             ),
         ),
     ]
