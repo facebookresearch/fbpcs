@@ -79,3 +79,8 @@ class PCSContainerService(ContainerService):
 
     def get_current_instances_count(self) -> int:
         return self.inner_container_service.get_current_instances_count()
+
+    def validate_container_definition(self, container_definition: str) -> None:
+        return self.inner_container_service.validate_container_definition(
+            container_definition
+        )
