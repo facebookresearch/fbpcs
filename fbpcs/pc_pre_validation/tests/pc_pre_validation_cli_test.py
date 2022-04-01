@@ -52,7 +52,10 @@ class TestPCPreValidationCLI(TestCase):
             access_key_data=None,
         )
         binary_file_validator_mock.assert_called_with(
-            region=expected_region, access_key_id=None, access_key_data=None
+            region=expected_region,
+            access_key_id=None,
+            access_key_data=None,
+            binary_version=None,
         )
         run_validators_mock.assert_called_with(
             [input_data_validator_mock(), binary_file_validator_mock()]
@@ -80,6 +83,7 @@ class TestPCPreValidationCLI(TestCase):
         expected_end_timestamp = "1640000000"
         expected_access_key_id = "access_key_id2"
         expected_access_key_data = "access_key_data3"
+        expected_binary_version = "binary_version"
         argv = [
             f"--input-file-path={expected_input_file_path}",
             f"--cloud-provider={cloud_provider_str}",
@@ -88,6 +92,7 @@ class TestPCPreValidationCLI(TestCase):
             f"--end-timestamp={expected_end_timestamp}",
             f"--access-key-id={expected_access_key_id}",
             f"--access-key-data={expected_access_key_data}",
+            f"--binary-version={expected_binary_version}",
         ]
 
         validation_cli.main(argv)
@@ -105,6 +110,7 @@ class TestPCPreValidationCLI(TestCase):
             region=expected_region,
             access_key_id=expected_access_key_id,
             access_key_data=expected_access_key_data,
+            binary_version=expected_binary_version,
         )
         run_validators_mock.assert_called_with(
             [input_data_validator_mock(), binary_file_validator_mock()]
