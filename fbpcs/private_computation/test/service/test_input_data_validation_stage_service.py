@@ -74,6 +74,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
                 f"--input-file-path={self._pc_instance.input_path}",
                 "--cloud-provider=AWS",
                 f"--region={region}",
+                "--binary-version=latest",
             ]
         )
         pc_validator_config = PCValidatorConfig(
