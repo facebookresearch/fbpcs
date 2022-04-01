@@ -9,6 +9,8 @@
 import re
 from typing import Dict, List, Pattern
 
+from fbpcs.pc_pre_validation.binary_path import BinaryInfo
+
 INPUT_DATA_VALIDATOR_NAME = "Input Data Validator"
 BINARY_FILE_VALIDATOR_NAME = "Binary File Validator"
 
@@ -61,22 +63,24 @@ VALIDATION_REGEXES: Dict[str, Pattern[str]] = {
 
 VALID_LINE_ENDING_REGEX: Pattern[str] = re.compile(r".*(\S|\S\n)$")
 
-BINARY_REPOSITORY = "https://one-docker-repository-prod.s3.us-west-2.amazonaws.com"
-BINARY_PATHS = [
-    "data_processing/attribution_id_combiner/latest/attribution_id_combiner",
-    "data_processing/lift_id_combiner/latest/lift_id_combiner",
-    "data_processing/pid_preparer/latest/pid_preparer",
-    "data_processing/sharder_hashed_for_pid/latest/sharder_hashed_for_pid",
-    "pid/private-id-client/latest/cross-psi-client",
-    "pid/private-id-client/latest/cross-psi-xor-client",
-    "pid/private-id-client/latest/private-id-client",
-    "pid/private-id-server/latest/cross-psi-server",
-    "pid/private-id-server/latest/cross-psi-xor-server",
-    "pid/private-id-server/latest/private-id-server",
-    "private_attribution/compute/latest/compute",
-    "private_attribution/decoupled_aggregation/latest/decoupled_aggregation",
-    "private_attribution/shard-aggregator/latest/shard-aggregator",
-    "private_lift/lift/latest/lift",
+DEFAULT_BINARY_REPOSITORY = (
+    "https://one-docker-repository-prod.s3.us-west-2.amazonaws.com/"
+)
+DEFAULT_BINARY_VERSION = "latest"
+BINARY_INFOS: List[BinaryInfo] = [
+    BinaryInfo("data_processing/attribution_id_combiner"),
+    BinaryInfo("data_processing/lift_id_combiner"),
+    BinaryInfo("data_processing/pid_preparer"),
+    BinaryInfo("data_processing/sharder_hashed_for_pid"),
+    BinaryInfo("pid/private-id-client", "cross-psi-client"),
+    BinaryInfo("pid/private-id-client", "cross-psi-xor-client"),
+    BinaryInfo("pid/private-id-client"),
+    BinaryInfo("pid/private-id-server", "cross-psi-server"),
+    BinaryInfo("pid/private-id-server", "cross-psi-xor-server"),
+    BinaryInfo("pid/private-id-server"),
+    BinaryInfo("private_attribution/compute"),
+    BinaryInfo("private_attribution/decoupled_aggregation"),
+    BinaryInfo("private_attribution/shard-aggregator"),
+    BinaryInfo("private_lift/lift"),
 ]
-
 ONEDOCKER_REPOSITORY_PATH = "ONEDOCKER_REPOSITORY_PATH"
