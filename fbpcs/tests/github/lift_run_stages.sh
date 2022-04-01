@@ -4,7 +4,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# Usage: Run Lift different stages: create_instance, id_match, prepare_compute_input, compute_metrics, aggregate_shards
+# Usage: Run Lift different stages: create_instance, id_match, id_spine_combiner, reshard, compute_metrics, aggregate_shards
+# Note: Each run_next call will get the next stage from stage flow order
+# the latest stage flow order please refer to : fbcode/fbpcs/private_computation/stage_flows/private_computation_stage_flow.py
 
 set -e
 
@@ -40,7 +42,7 @@ case "$stage" in
             --concurrency="$LIFT_CONCURRENCY"
             ;;
     # stages donot need IP exchange
-    prepare_compute_input | pid_shard | pid_prepare | pid_metric_export | data_validation )
+    id_spine_combiner | reshard | pid_shard | pid_prepare | pid_metric_export | data_validation )
         echo "Lift Publisher $stage starts"
         $docker_command run_next "$LIFT_PUBLISHER_NAME" \
             --config="$DOCKER_CLOUD_CONFIG_FILE"
