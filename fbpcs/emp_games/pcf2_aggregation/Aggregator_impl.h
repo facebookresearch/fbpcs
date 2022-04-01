@@ -136,7 +136,7 @@ class MeasurementAggregator : public Aggregator<schedulerId> {
         auto isAttributed = !hasAttributedTouchpoint &
             attributionResults.at(atIndex).isAttributed;
 
-        hasAttributedTouchpoint = hasAttributedTouchpoint || isAttributed;
+        hasAttributedTouchpoint = hasAttributedTouchpoint | isAttributed;
 
         attributedAdId =
             attributedAdId.mux(isAttributed, privateTpmArray.at(tpIndex).adId);

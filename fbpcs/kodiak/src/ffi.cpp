@@ -28,7 +28,7 @@ std::unique_ptr<CppMPCBool> mpc_bool_and(
 std::unique_ptr<CppMPCBool> mpc_bool_or(
     const CppMPCBool& a,
     const CppMPCBool& b) {
-  return std::make_unique<CppMPCBool>(a || b);
+  return std::make_unique<CppMPCBool>(a | b);
 }
 std::unique_ptr<CppMPCBool> mpc_bool_xor(
     const CppMPCBool& a,
