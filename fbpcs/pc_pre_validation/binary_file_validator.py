@@ -13,9 +13,11 @@ from fbpcs.pc_pre_validation.binary_path import BinaryInfo, S3BinaryPath
 from fbpcs.pc_pre_validation.constants import (
     DEFAULT_BINARY_REPOSITORY,
     DEFAULT_BINARY_VERSION,
+    DEFAULT_EXE_FOLDER,
     BINARY_INFOS,
     BINARY_FILE_VALIDATOR_NAME,
     ONEDOCKER_REPOSITORY_PATH,
+    ONEDOCKER_EXE_PATH,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.validation_report import ValidationReport
@@ -36,6 +38,7 @@ class BinaryFileValidator(Validator):
         self._binary_infos = binary_infos
         self._binary_version: str = binary_version or DEFAULT_BINARY_VERSION
         self._repo_path: str = self._get_repo_path()
+        self._exe_folder: str = self._get_exe_folder()
 
     @property
     def name(self) -> str:
@@ -59,6 +62,15 @@ class BinaryFileValidator(Validator):
         """
         repo_path = os.getenv(ONEDOCKER_REPOSITORY_PATH)
         return repo_path or DEFAULT_BINARY_REPOSITORY
+
+    def _get_exe_folder(self) -> str:
+        """Get the folder of local binaries
+
+        Returns:
+            Return ONEDOCKER_EXE_PATH variable if set, return DEFAULT_EXE_FOLDER otherwise.
+        """
+        exe_folder = os.getenv(ONEDOCKER_EXE_PATH)
+        return exe_folder or DEFAULT_EXE_FOLDER
 
     def _validate_local_binaries(self) -> Dict[str, str]:
         """Validate the existence of local binaries

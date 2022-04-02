@@ -67,6 +67,7 @@ DEFAULT_BINARY_REPOSITORY = (
     "https://one-docker-repository-prod.s3.us-west-2.amazonaws.com/"
 )
 DEFAULT_BINARY_VERSION = "latest"
+DEFAULT_EXE_FOLDER = "/root/onedocker/package/"
 BINARY_INFOS: List[BinaryInfo] = [
     BinaryInfo("data_processing/attribution_id_combiner"),
     BinaryInfo("data_processing/lift_id_combiner"),
@@ -83,3 +84,4 @@ BINARY_INFOS: List[BinaryInfo] = [
     BinaryInfo("private_lift/lift"),
 ]
 ONEDOCKER_REPOSITORY_PATH = "ONEDOCKER_REPOSITORY_PATH"
+ONEDOCKER_EXE_PATH = "ONEDOCKER_EXE_PATH"

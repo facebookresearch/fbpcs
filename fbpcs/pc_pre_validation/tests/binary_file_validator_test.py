@@ -15,7 +15,9 @@ from fbpcs.pc_pre_validation.constants import (
     BINARY_FILE_VALIDATOR_NAME,
     DEFAULT_BINARY_REPOSITORY,
     DEFAULT_BINARY_VERSION,
+    DEFAULT_EXE_FOLDER,
     ONEDOCKER_REPOSITORY_PATH,
+    ONEDOCKER_EXE_PATH,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.validation_report import ValidationReport
@@ -207,3 +209,14 @@ class TestBinaryFileValidator(TestCase):
     def test_get_binary_repo_non_default(self, storage_service_mock: Mock) -> None:
         validator = BinaryFileValidator(TEST_REGION, TEST_BINARY_INFOS)
         self.assertEqual("non-default", validator._get_repo_path())
+
+    @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
+    def test_get_exe_folder_default(self, storage_service_mock: Mock) -> None:
+        validator = BinaryFileValidator(TEST_REGION, TEST_BINARY_INFOS)
+        self.assertEqual(DEFAULT_EXE_FOLDER, validator._get_exe_folder())
+
+    @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
+    @patch.dict(os.environ, {ONEDOCKER_EXE_PATH: "/non-default/folder/"}, clear=True)
+    def test_get_exe_folder_non_default(self, storage_service_mock: Mock) -> None:
+        validator = BinaryFileValidator(TEST_REGION, TEST_BINARY_INFOS)
+        self.assertEqual("/non-default/folder/", validator._get_exe_folder())
