@@ -9,9 +9,11 @@ from typing import Optional, Dict, List
 
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.storage_s3 import S3StorageService
+from fbpcs.pc_pre_validation.binary_path import BinaryInfo, S3BinaryPath
 from fbpcs.pc_pre_validation.constants import (
-    BINARY_REPOSITORY,
-    BINARY_PATHS,
+    DEFAULT_BINARY_REPOSITORY,
+    DEFAULT_BINARY_VERSION,
+    BINARY_INFOS,
     BINARY_FILE_VALIDATOR_NAME,
     ONEDOCKER_REPOSITORY_PATH,
 )
@@ -24,50 +26,87 @@ class BinaryFileValidator(Validator):
     def __init__(
         self,
         region: str,
-        binary_repository: str = BINARY_REPOSITORY,
-        binary_paths: List[str] = BINARY_PATHS,
+        binary_infos: List[BinaryInfo] = BINARY_INFOS,
+        binary_version: Optional[str] = None,
         access_key_id: Optional[str] = None,
         access_key_data: Optional[str] = None,
     ) -> None:
         self._storage_service = S3StorageService(region, access_key_id, access_key_data)
         self._name: str = BINARY_FILE_VALIDATOR_NAME
-        self._binary_repository = binary_repository
-        self._binary_paths = binary_paths
+        self._binary_infos = binary_infos
+        self._binary_version: str = binary_version or DEFAULT_BINARY_VERSION
+        self._repo_path: str = self._get_repo_path()
 
     @property
     def name(self) -> str:
         return self._name
 
     def __validate__(self) -> ValidationReport:
-        details: Dict[str, str] = {}
-        if not os.getenv(ONEDOCKER_REPOSITORY_PATH):
-            # Skip s3 binary check if ONEDOCKER_REPOSITORY_PATH envvar is set
-            #   This is to unblock fbpcs-github-cicd tests because it uses local binaries
-            #   and do not have s3 permissions to the s3 binaries
-            for path in self._binary_paths:
-                binary_full_path = f"{self._binary_repository}/{path}"
-                try:
-                    if not self._storage_service.file_exists(binary_full_path):
-                        details[binary_full_path] = "binary does not exist"
-                except PcpError as pcp_error:
-                    # s3 throws the following error when an access is denied,
-                    #    An error occurred (403) when calling the HeadObject operation: Forbidden
-                    if "Forbidden" in str(pcp_error):
-                        details[binary_full_path] = str(pcp_error)
-                    else:
-                        # rethrow unexpected error so validation runner will skip this validation with a WARNING message
-                        raise pcp_error
+        repo_path = self._get_repo_path()
 
+        if repo_path.upper() == "LOCAL":
+            details = self._validate_local_binaries()
+        else:
+            details = self._validate_s3_binaries()
+
+        return self._format_validation_report(details)
+
+    def _get_repo_path(self) -> str:
+        """Get binary repository path
+
+        Returns:
+            Return ONEDOCKER_REPOSITORY_PATH variable if set, return DEFAULT_BINARY_REPOSITORY otherwise.
+        """
+        repo_path = os.getenv(ONEDOCKER_REPOSITORY_PATH)
+        return repo_path or DEFAULT_BINARY_REPOSITORY
+
+    def _validate_local_binaries(self) -> Dict[str, str]:
+        """Validate the existence of local binaries
+        Returns:
+            A dictionary, representing the names of inaccessible binaries and the error reasons.
+        """
+        return {}
+
+    def _validate_s3_binaries(self) -> Dict[str, str]:
+        """Validate the existence of s3 binaries
+
+        Returns:
+            A dictionary, representing the names of inaccessible binaries and the error reasons.
+        """
+        details: Dict[str, str] = {}
+
+        for binary_info in self._binary_infos:
+            s3_binary_path: str = str(
+                S3BinaryPath(self._repo_path, binary_info, self._binary_version)
+            )
+            try:
+                if not self._storage_service.file_exists(s3_binary_path):
+                    details[s3_binary_path] = "binary does not exist"
+            except PcpError as pcp_error:
+                # s3 throws the following error when an access is denied,
+                #    An error occurred (403) when calling the HeadObject operation: Forbidden
+                if "Forbidden" in str(pcp_error):
+                    details[s3_binary_path] = str(pcp_error)
+                else:
+                    # rethrow unexpected error so validation runner will skip this validation with a WARNING message
+                    raise pcp_error
+        return details
+
+    def _format_validation_report(self, details: Dict[str, str]) -> ValidationReport:
+        """Create a validation report.
+
+        Returns: a validation report, with detailed error reasons.
+        """
         if details:
             return ValidationReport(
                 validation_result=ValidationResult.FAILED,
                 validator_name=self.name,
-                message="You don't have permission to access some private computation softwares. Please contact your representative at Meta",
+                message=f"You don't have permission to access some private computation software (Repo path: {self._repo_path}, software_version: {self._binary_version}). Please contact your representative at Meta",
                 details=details,
             )
         else:
             return ValidationReport(
                 validation_result=ValidationResult.SUCCESS,
                 validator_name=self.name,
-                message="Completed binary accessibility validation successfuly",
+                message=f"Completed binary accessibility validation successfully (Repo path: {self._repo_path}, software_version: {self._binary_version}).",
             )
