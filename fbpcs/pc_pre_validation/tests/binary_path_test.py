@@ -5,9 +5,14 @@
 
 from unittest import TestCase
 
-from fbpcs.pc_pre_validation.binary_path import BinaryInfo, S3BinaryPath
+from fbpcs.pc_pre_validation.binary_path import (
+    LocalBinaryPath,
+    BinaryInfo,
+    S3BinaryPath,
+)
 
 TEST_REPO = "https://test-bucket.us-west-2.amazonaws.com/"
+TEST_EXEC_FOLDER = "/root/test-path/"
 
 
 class TestBinaryPath(TestCase):
@@ -19,9 +24,9 @@ class TestBinaryPath(TestCase):
                 "expected": f"{TEST_REPO}data_processing/attribution_id_combiner/latest/attribution_id_combiner",
             },
             {
-                "binary_info": BinaryInfo("pid/private-id-client", "cross-psi-client"),
+                "binary_info": BinaryInfo("pcf2_aggregation", "pcf2_aggregation"),
                 "version": "latest",
-                "expected": f"{TEST_REPO}pid/private-id-client/latest/cross-psi-client",
+                "expected": f"{TEST_REPO}pcf2_aggregation/latest/pcf2_aggregation",
             },
             {
                 "binary_info": BinaryInfo("data_processing/attribution_id_combiner"),
@@ -34,3 +39,24 @@ class TestBinaryPath(TestCase):
             # pyre-ignore
             s3_path = S3BinaryPath(TEST_REPO, case["binary_info"], case["version"])
             self.assertEquals(case["expected"], str(s3_path))
+
+    def test_local_package_path(self) -> None:
+        test_cases = [
+            {
+                "binary_info": BinaryInfo("data_processing/attribution_id_combiner"),
+                "expected": f"{TEST_EXEC_FOLDER}attribution_id_combiner",
+            },
+            {
+                "binary_info": BinaryInfo("pcf2_aggregation", "pcf2_aggregation"),
+                "expected": f"{TEST_EXEC_FOLDER}pcf2_aggregation",
+            },
+            {
+                "binary_info": BinaryInfo("data_processing/attribution_id_combiner"),
+                "expected": f"{TEST_EXEC_FOLDER}attribution_id_combiner",
+            },
+        ]
+
+        for case in test_cases:
+            # pyre-ignore
+            local_path = LocalBinaryPath(TEST_EXEC_FOLDER, case["binary_info"])
+            self.assertEquals(case["expected"], str(local_path))

@@ -38,3 +38,16 @@ class S3BinaryPath(BinaryPath):
 
     def _stringify(self) -> str:
         return f"{self.repo_path}{self.package}/{self.version}/{self.binary}"
+
+
+class LocalBinaryPath(BinaryPath):
+    def __init__(
+        self,
+        exe_folder: str,
+        binary_info: BinaryInfo,
+    ) -> None:
+        self.exe_folder: str = exe_folder
+        self.binary: str = binary_info.binary or binary_info.package.rsplit("/")[-1]
+
+    def _stringify(self) -> str:
+        return f"{self.exe_folder}{self.binary}"
