@@ -32,11 +32,11 @@ TEST_BINARY_INFOS = [
 
 class TestBinaryFileValidator(TestCase):
     @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
-    def test_run_validations_success(self, storage_service_mock: Mock) -> None:
+    def test_run_s3_validations_success(self, storage_service_mock: Mock) -> None:
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
-            message=f"Completed binary accessibility validation successfully (Repo path: {DEFAULT_BINARY_REPOSITORY}, software_version: {DEFAULT_BINARY_VERSION}).",
+            message=f"Completed binary accessibility validation successfully (Repo path: {DEFAULT_BINARY_REPOSITORY}, software version: {DEFAULT_BINARY_VERSION}).",
         )
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.file_exists.return_value = True
@@ -57,11 +57,13 @@ class TestBinaryFileValidator(TestCase):
         )
 
     @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
-    def test_run_validations_binary_not_exist(self, storage_service_mock: Mock) -> None:
+    def test_run_s3_validations_binary_not_exist(
+        self, storage_service_mock: Mock
+    ) -> None:
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
-            message=f"You don't have permission to access some private computation software (Repo path: {DEFAULT_BINARY_REPOSITORY}, software_version: {DEFAULT_BINARY_VERSION}). Please contact your representative at Meta",
+            message=f"You don't have permission to access some private computation software (Repo path: {DEFAULT_BINARY_REPOSITORY}, software version: {DEFAULT_BINARY_VERSION}). Please contact your representative at Meta",
             details={
                 f"{DEFAULT_BINARY_REPOSITORY}package/1/latest/1": "binary does not exist"
             },
@@ -78,13 +80,13 @@ class TestBinaryFileValidator(TestCase):
         )
 
     @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
-    def test_run_validations_binary_access_denied(
+    def test_run_s3_validations_binary_access_denied(
         self, storage_service_mock: Mock
     ) -> None:
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
-            message=f"You don't have permission to access some private computation software (Repo path: {DEFAULT_BINARY_REPOSITORY}, software_version: {DEFAULT_BINARY_VERSION}). Please contact your representative at Meta",
+            message=f"You don't have permission to access some private computation software (Repo path: {DEFAULT_BINARY_REPOSITORY}, software version: {DEFAULT_BINARY_VERSION}). Please contact your representative at Meta",
             details={
                 f"{DEFAULT_BINARY_REPOSITORY}package/3/latest/binary": "An error occurred (403) when calling the HeadObject operation: Forbidden"
             },
@@ -108,7 +110,9 @@ class TestBinaryFileValidator(TestCase):
         )
 
     @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
-    def test_run_validations_unexpected_error(self, storage_service_mock: Mock) -> None:
+    def test_run_s3_validations_unexpected_error(
+        self, storage_service_mock: Mock
+    ) -> None:
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
@@ -124,34 +128,56 @@ class TestBinaryFileValidator(TestCase):
         self.assertEqual(report, expected_report)
         self.assertEqual(storage_service_mock.file_exists.call_count, 1)
 
+    @patch("os.path.exists")
     @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
     @patch.dict(os.environ, {ONEDOCKER_REPOSITORY_PATH: "LOCAL"}, clear=True)
-    def test_run_validations_if_repo_envvar_is_local(
-        self, storage_service_mock: Mock
+    def test_run_local_validations_success(
+        self, storage_service_mock: Mock, mock_file_exists: Mock
     ) -> None:
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
-            message="Completed binary accessibility validation successfully (Repo path: LOCAL, software_version: latest).",
+            message=f"Completed binary accessibility validation successfully (Repo path: LOCAL, binary folder: {DEFAULT_EXE_FOLDER}).",
         )
-        storage_service_mock.__init__(return_value=storage_service_mock)
-        storage_service_mock.file_exists.return_value = True
+        mock_file_exists.return_value = True
 
         validator = BinaryFileValidator(TEST_REGION, TEST_BINARY_INFOS)
         report = validator.validate()
 
         self.assertEqual(report, expected_report)
-        self.assertEqual(storage_service_mock.file_exists.call_count, 0)
+        self.assertEqual(mock_file_exists.call_count, len(TEST_BINARY_INFOS))
+
+    @patch("os.path.exists")
+    @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
+    @patch.dict(os.environ, {ONEDOCKER_REPOSITORY_PATH: "LOCAL"}, clear=True)
+    def test_run_local_validations_binary_not_exist(
+        self, storage_service_mock: Mock, mock_file_exists: Mock
+    ) -> None:
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=BINARY_FILE_VALIDATOR_NAME,
+            message=f"You don't have permission to access some private computation software (Repo path: LOCAL, binary folder: {DEFAULT_EXE_FOLDER}). Please contact your representative at Meta",
+            details={f"{DEFAULT_EXE_FOLDER}1": "binary does not exist"},
+        )
+        mock_file_exists.side_effect = [False, True, True]
+
+        validator = BinaryFileValidator(TEST_REGION, TEST_BINARY_INFOS)
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+        self.assertEqual(mock_file_exists.call_count, len(TEST_BINARY_INFOS))
 
     @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
     @patch.dict(
         os.environ, {ONEDOCKER_REPOSITORY_PATH: "https://test-repo.com/"}, clear=True
     )
-    def test_run_validations_non_default_repo(self, storage_service_mock: Mock) -> None:
+    def test_run_s3_validations_non_default_repo(
+        self, storage_service_mock: Mock
+    ) -> None:
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
-            message=f"Completed binary accessibility validation successfully (Repo path: https://test-repo.com/, software_version: {DEFAULT_BINARY_VERSION}).",
+            message=f"Completed binary accessibility validation successfully (Repo path: https://test-repo.com/, software version: {DEFAULT_BINARY_VERSION}).",
         )
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.file_exists.return_value = True
@@ -172,14 +198,14 @@ class TestBinaryFileValidator(TestCase):
         )
 
     @patch("fbpcs.pc_pre_validation.binary_file_validator.S3StorageService")
-    def test_run_validations_non_default_version_tag(
+    def test_run_s3_validations_non_default_version_tag(
         self, storage_service_mock: Mock
     ) -> None:
         binary_version = "canary"
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=BINARY_FILE_VALIDATOR_NAME,
-            message=f"Completed binary accessibility validation successfully (Repo path: {DEFAULT_BINARY_REPOSITORY}, software_version: {binary_version}).",
+            message=f"Completed binary accessibility validation successfully (Repo path: {DEFAULT_BINARY_REPOSITORY}, software version: {binary_version}).",
         )
         storage_service_mock.__init__(return_value=storage_service_mock)
         storage_service_mock.file_exists.return_value = True

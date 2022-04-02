@@ -9,7 +9,11 @@ from typing import Optional, Dict, List
 
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.storage_s3 import S3StorageService
-from fbpcs.pc_pre_validation.binary_path import BinaryInfo, S3BinaryPath
+from fbpcs.pc_pre_validation.binary_path import (
+    BinaryInfo,
+    S3BinaryPath,
+    LocalBinaryPath,
+)
 from fbpcs.pc_pre_validation.constants import (
     DEFAULT_BINARY_REPOSITORY,
     DEFAULT_BINARY_VERSION,
@@ -77,7 +81,13 @@ class BinaryFileValidator(Validator):
         Returns:
             A dictionary, representing the names of inaccessible binaries and the error reasons.
         """
-        return {}
+        details: Dict[str, str] = {}
+
+        for binary_info in self._binary_infos:
+            local_binary_path: str = str(LocalBinaryPath(self._exe_folder, binary_info))
+            if not os.path.exists(local_binary_path):
+                details[local_binary_path] = "binary does not exist"
+        return details
 
     def _validate_s3_binaries(self) -> Dict[str, str]:
         """Validate the existence of s3 binaries
@@ -109,16 +119,23 @@ class BinaryFileValidator(Validator):
 
         Returns: a validation report, with detailed error reasons.
         """
+        if self._get_repo_path().upper() == "LOCAL":
+            repo_info_msg = (
+                f"Repo path: {self._repo_path}, binary folder: {self._exe_folder}"
+            )
+        else:
+            repo_info_msg = f"Repo path: {self._repo_path}, software version: {self._binary_version}"
+
         if details:
             return ValidationReport(
                 validation_result=ValidationResult.FAILED,
                 validator_name=self.name,
-                message=f"You don't have permission to access some private computation software (Repo path: {self._repo_path}, software_version: {self._binary_version}). Please contact your representative at Meta",
+                message=f"You don't have permission to access some private computation software ({repo_info_msg}). Please contact your representative at Meta",
                 details=details,
             )
         else:
             return ValidationReport(
                 validation_result=ValidationResult.SUCCESS,
                 validator_name=self.name,
-                message=f"Completed binary accessibility validation successfully (Repo path: {self._repo_path}, software_version: {self._binary_version}).",
+                message=f"Completed binary accessibility validation successfully ({repo_info_msg}).",
             )
