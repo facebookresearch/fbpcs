@@ -93,6 +93,9 @@ def run_attribution(
     else:
         dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
 
+    # Compute the argument after the timestamp has been input
+    dt_arg = datetime.timestamp(dt)
+
     # Verify that input has matching dataset info:
     # a. attribution rule
     # b. timestamp
@@ -123,11 +126,10 @@ def run_attribution(
         ):
             instance_id = inst["id"]
             break
-
     if instance_id is None:
         instance_id = _create_new_instance(
             dataset_id,
-            int(timestamp),
+            int(dt_arg),
             attribution_rule_val,
             client,
             logger,
