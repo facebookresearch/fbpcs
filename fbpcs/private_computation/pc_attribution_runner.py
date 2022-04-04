@@ -55,10 +55,9 @@ STATUS = "status"
 """
 The input to this function will be the input path, the dataset_id as well as the following params to choose
 a specific dataset range to create and run a PA instance on
-1) start_date - start date of the FB Opportunity data
-2) end_date - end date of the FB Opportunity data
-3) attribution_rule - attribution rule for the selected data
-4) result_type - result type for the selected data
+1) timestamp - timestamp of the day(0AM) describing the data uploaded from the Meta side
+2) attribution_rule - attribution rule for the selected data
+3) result_type - result type for the selected data
 """
 
 
@@ -93,10 +92,7 @@ def run_attribution(
         dt = datetime.fromisoformat(timestamp)
     else:
         dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
-    print(dt)
-    return
 
-    dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
     # Verify that input has matching dataset info:
     # a. attribution rule
     # b. timestamp
@@ -119,7 +115,6 @@ def run_attribution(
     existing_instances = dataset_instance_data["data"]
     for inst in existing_instances:
         inst_time = dateutil.parser.parse(inst[TIMESTAMP])
-        print(inst[STATUS])
         if (
             inst[ATTRIBUTION_RULE] == attribution_rule_val
             and inst_time == dt
