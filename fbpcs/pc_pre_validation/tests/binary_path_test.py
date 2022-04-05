@@ -50,10 +50,6 @@ class TestBinaryPath(TestCase):
                 "binary_info": BinaryInfo("pcf2_aggregation", "pcf2_aggregation"),
                 "expected": f"{TEST_EXEC_FOLDER}pcf2_aggregation",
             },
-            {
-                "binary_info": BinaryInfo("data_processing/attribution_id_combiner"),
-                "expected": f"{TEST_EXEC_FOLDER}attribution_id_combiner",
-            },
         ]
 
         for case in test_cases:
