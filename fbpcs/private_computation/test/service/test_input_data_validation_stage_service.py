@@ -87,12 +87,14 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
 
         await stage_service.run_async(pc_instance)
 
+        env_vars = {"ONEDOCKER_REPOSITORY_PATH": "test_path/"}
         mock_run_binary_base_service_start_containers.assert_called_with(
             [expected_cmd_args],
             mock_onedocker_svc,
             "latest",
             OneDockerBinaryNames.PC_PRE_VALIDATION.value,
             timeout=1200,
+            env_vars=env_vars,
         )
 
         mock_stage_state_instance.assert_called_with(

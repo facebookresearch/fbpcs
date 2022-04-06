@@ -88,7 +88,6 @@ class InputDataValidationStageService(PrivateComputationStageService):
         region = self._pc_validator_config.region
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = self._onedocker_binary_config_map[binary_name]
-
         cmd_args = " ".join(
             [
                 f"--input-file-path={pc_instance.input_path}",
@@ -99,12 +98,14 @@ class InputDataValidationStageService(PrivateComputationStageService):
             ]
         )
 
+        env_vars = {"ONEDOCKER_REPOSITORY_PATH": binary_config.repository_path}
         container_instances = await RunBinaryBaseService().start_containers(
             [cmd_args],
             self._onedocker_svc,
             binary_config.binary_version,
             binary_name,
             timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
+            env_vars=env_vars,
         )
 
         stage_state = StageStateInstance(
