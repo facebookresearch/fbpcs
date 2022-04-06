@@ -369,3 +369,60 @@ TEST_F(LiftIdSpineFileCombinerTest, VerifySortByTime) {
   FLAGS_multi_conversion_limit = 4;
   runTest(dataInput, spineInput, expectedOutput);
 }
+
+// Verify that LiftIdSpineMultiConversionInput sorts values pairwise by time
+// and stores them in a sorted manner
+TEST_F(LiftIdSpineFileCombinerTest, MultiKeyWithMaxOne) {
+  std::vector<std::string> dataInput = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      ",123,,127,104",
+      ",123,456,126,103",
+      "123,456,789,125,102",
+  };
+  std::vector<std::string> spineInput = {"AAAA,123"};
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values",
+      "AAAA,[125,126,127,128],[102,103,104,105]",
+  };
+  FLAGS_multi_conversion_limit = 4;
+  FLAGS_max_id_column_cnt = 1;
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+TEST_F(LiftIdSpineFileCombinerTest, MultiKeyWithMaxTwo) {
+  std::vector<std::string> dataInput = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      ",456,789,126,103",
+      ",,789,127,104",
+      ",,789,125,102",
+  };
+  std::vector<std::string> spineInput = {"AAAA,123,456", "BBBB,789", "CCCC,NA"};
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values",
+      "AAAA,[0,126,128],[0,103,105]",
+      "BBBB,[0,125,127],[0,102,104]",
+      "CCCC,[0,0,0],[0,0,0]"};
+  FLAGS_multi_conversion_limit = 3;
+  FLAGS_max_id_column_cnt = 2;
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+TEST_F(LiftIdSpineFileCombinerTest, MultiKeyWithMaxThree) {
+  std::vector<std::string> dataInput = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      ",456,789,126,103",
+      ",,789,127,104",
+      ",,789,125,102",
+  };
+  std::vector<std::string> spineInput = {"AAAA,123,456,789", "BBBB,NA"};
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values",
+      "AAAA,[125,126,127,128],[102,103,104,105]",
+      "BBBB,[0,0,0,0],[0,0,0,0]"};
+  FLAGS_multi_conversion_limit = 4;
+  FLAGS_max_id_column_cnt = 3;
+  runTest(dataInput, spineInput, expectedOutput);
+}

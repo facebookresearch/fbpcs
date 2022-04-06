@@ -10,6 +10,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_prepare_stage import PIDPrepareStage
@@ -36,6 +37,7 @@ class PIDStageMapper:
         instance_repository: PIDInstanceRepository,
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
+        protocol: PIDProtocol,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         server_ips: Optional[List[str]] = None,
         use_row_numbers: bool = False,
@@ -49,6 +51,7 @@ class PIDStageMapper:
                 onedocker_binary_config_map[
                     OneDockerBinaryNames.SHARDER_HASHED_FOR_PID.value
                 ],
+                protocol,
             )
         elif stage is UnionPIDStage.PUBLISHER_PREPARE:
             return PIDPrepareStage(
@@ -59,6 +62,7 @@ class PIDStageMapper:
                 onedocker_binary_config_map[
                     OneDockerBinaryNames.UNION_PID_PREPARER.value
                 ],
+                protocol,
             )
         elif stage is UnionPIDStage.PUBLISHER_RUN_PID:
             return PIDProtocolRunStage(
@@ -66,7 +70,12 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config_map[OneDockerBinaryNames.PID_SERVER.value],
+                onedocker_binary_config_map[
+                    OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
+                    if protocol == PIDProtocol.MULTIKEY_PID
+                    else OneDockerBinaryNames.PID_SERVER.value
+                ],
+                protocol,
                 server_ips,
             )
         elif stage is UnionPIDStage.ADV_SHARD:
@@ -78,6 +87,7 @@ class PIDStageMapper:
                 onedocker_binary_config_map[
                     OneDockerBinaryNames.SHARDER_HASHED_FOR_PID.value
                 ],
+                protocol,
             )
         elif stage is UnionPIDStage.ADV_PREPARE:
             return PIDPrepareStage(
@@ -88,6 +98,7 @@ class PIDStageMapper:
                 onedocker_binary_config_map[
                     OneDockerBinaryNames.UNION_PID_PREPARER.value
                 ],
+                protocol,
             )
         elif stage is UnionPIDStage.ADV_RUN_PID:
             return PIDProtocolRunStage(
@@ -95,7 +106,12 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config_map[OneDockerBinaryNames.PID_CLIENT.value],
+                onedocker_binary_config_map[
+                    OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
+                    if protocol == PIDProtocol.MULTIKEY_PID
+                    else OneDockerBinaryNames.PID_CLIENT.value
+                ],
+                protocol,
                 server_ips,
             )
         else:

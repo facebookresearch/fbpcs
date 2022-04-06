@@ -133,4 +133,199 @@ TEST(UnionPIDDataPreparerTest, RowCountTest) {
   validateRowCounts(rowCountExpected, outpath);
 }
 
+TEST(UnionPIDDataPreparerTest, ColumnCountTest) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,aaa,bbb",
+      "123,456,789,abc,def",
+      "111,,,aaa,bbb",
+      "999,888,,aaa,bbb",
+      ",777,,aaa,bbb",
+      ",666,555,aaa,bbb"};
+  std::string expected{"123,456\n111\n999,888\n777\n666,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, DuplicateHandlingTest) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,aaa,bbb",
+      "123,456,789,abc,def",
+      "123,,,aaa,bbb",
+      "999,888,,aaa,bbb",
+      ",456,,aaa,bbb",
+      "666,777,888,aaa,bbb"};
+  std::string expected{"123,456,789\n999,888\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxOne) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,170,0",
+      "789,,555,180,0",
+      ",,789,190,0"};
+  std::string expected{"123\n456\n789\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 1};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxTwo) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,170,0",
+      "789,,555,180,0",
+      ",,789,190,0"};
+  std::string expected{"123,111\n456,333\n789,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxThree) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,200,0",
+      "789,555,,200,0",
+      ",789,,200,0"};
+  std::string expected{"123,111,999\n456,333,777\n789,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxFour) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,200,0",
+      "789,555,,200,0",
+      ",,789,200,0"};
+  std::string expected{"123,111,999\n456,333,777\n789,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 4};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, LiftIdSpineInputValidationWithMaxTwo) {
+  std::vector<std::string> lines = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      ",456,789,126,103",
+      ",,789,127,104",
+      ",,789,125,102",
+  };
+  std::string expected{"123,456\n789\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, LiftIdSpineInputValidationWithMaxThree) {
+  std::vector<std::string> lines = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      ",456,789,126,103",
+      ",,789,127,104",
+      ",,789,125,102",
+  };
+  std::string expected{"123,456,789\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, AttributionIdSpineInputValidationWithMaxTwo) {
+  std::vector<std::string> lines = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,fn2,2,300,0,4",
+      ",phone2,,1,200,1,3",
+      ",phone3,fn3,2,500,0,6",
+      ",,fn3,1,400,0,5"};
+  std::string expected{"email1,phone1\nphone2,fn2\nphone3,fn3\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, AttributionIdSpineInputValidationWithMaxThree) {
+  std::vector<std::string> lines = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,fn2,2,300,0,4",
+      ",phone2,,1,200,1,3",
+      ",phone3,fn3,2,500,0,6",
+      ",,fn3,1,400,0,5"};
+  std::string expected{"email1,phone1,fn1\nphone2,fn2\nphone3,fn3\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
 } // namespace measurement::pid

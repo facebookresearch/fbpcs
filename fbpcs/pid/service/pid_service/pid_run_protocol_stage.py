@@ -12,15 +12,15 @@ from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.pid.entity.pid_instance import PIDStageStatus
+from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
-
 
 IP_ADDRS_COORD_OBJECT = "pid_ip_addrs"
 SLEEP_UPDATE_SECONDS = 10
@@ -35,6 +35,7 @@ class PIDProtocolRunStage(PIDStage):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config: OneDockerBinaryConfig,
+        protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         server_ips: Optional[List[str]] = None,
     ) -> None:
         super().__init__(
@@ -43,6 +44,7 @@ class PIDProtocolRunStage(PIDStage):
             storage_svc=storage_svc,
             onedocker_svc=onedocker_svc,
             onedocker_binary_config=onedocker_binary_config,
+            protocol=protocol,
             is_joint_stage=True,
         )
 
@@ -86,8 +88,11 @@ class PIDProtocolRunStage(PIDStage):
             # Run publisher commands in container
             self.logger.info("Publisher spinning up containers")
             try:
+                binary = OneDockerBinaryNames.PID_SERVER.value
+                if self.protocol == PIDProtocol.MULTIKEY_PID:
+                    binary = OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
                 pending_containers = self.onedocker_svc.start_containers(
-                    package_name=OneDockerBinaryNames.PID_SERVER.value,
+                    package_name=binary,
                     version=self.onedocker_binary_config.binary_version,
                     cmd_args_list=self._gen_command_args_list(
                         input_path=input_paths[0],
@@ -147,8 +152,11 @@ class PIDProtocolRunStage(PIDStage):
             # Run partner commands in container
             self.logger.info("Partner spinning up containers")
             try:
+                binary = OneDockerBinaryNames.PID_CLIENT.value
+                if self.protocol == PIDProtocol.MULTIKEY_PID:
+                    binary = OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
                 pending_containers = self.onedocker_svc.start_containers(
-                    package_name=OneDockerBinaryNames.PID_CLIENT.value,
+                    package_name=binary,
                     version=self.onedocker_binary_config.binary_version,
                     cmd_args_list=self._gen_command_args_list(
                         input_path=input_paths[0],

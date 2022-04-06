@@ -37,7 +37,6 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             pid_svc_mock,
             publisher_stage=UnionPIDStage.PUBLISHER_SHARD,
             partner_stage=UnionPIDStage.ADV_SHARD,
-            protocol=PIDProtocol.UNION_PID,
         )
 
         self.assertEqual(len(pc_instance.instances), 0)
@@ -70,7 +69,6 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             pid_svc_mock,
             publisher_stage=UnionPIDStage.PUBLISHER_PREPARE,
             partner_stage=UnionPIDStage.ADV_PREPARE,
-            protocol=PIDProtocol.UNION_PID,
         )
 
         self.assertEqual(len(pc_instance.instances), 0)
@@ -108,7 +106,6 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             pid_svc_mock,
             publisher_stage=UnionPIDStage.PUBLISHER_RUN_PID,
             partner_stage=UnionPIDStage.ADV_RUN_PID,
-            protocol=PIDProtocol.UNION_PID,
         )
 
         self.assertEqual(len(pc_instance.instances), 0)

@@ -10,9 +10,12 @@ from typing import Optional
 from fbpcs.data_processing.pid_preparer.union_pid_preparer_cpp import (
     CppUnionPIDDataPreparerService,
 )
-from fbpcs.pid.entity.pid_instance import PIDStageStatus
+from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT,
+)
 
 
 class PIDPrepareStage(PIDStage):
@@ -78,12 +81,16 @@ class PIDPrepareStage(PIDStage):
             env_vars = {
                 "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
             }
+            max_column_count = 1
+            if self.protocol == PIDProtocol.MULTIKEY_PID:
+                max_column_count = DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT
             coro = preparer.prepare_on_container_async(
                 input_path=next_input_path,
                 output_path=next_output_path,
                 onedocker_svc=self.onedocker_svc,
                 binary_version=self.onedocker_binary_config.binary_version,
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
+                max_column_count=max_column_count,
                 wait_for_container=wait_for_containers,
                 container_timeout=container_timeout,
                 env_vars=env_vars,

@@ -30,7 +30,7 @@ from fbpcs.data_processing.service.sharding_service import ShardType, ShardingSe
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.pid.entity.pid_instance import PIDInstance
+from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDInstance
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -41,6 +41,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.service.constants import (
+    DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT,
     DEFAULT_LOG_COST_TO_S3,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
 )
@@ -250,6 +251,9 @@ async def start_combiner_service(
         stage_data.service,
     )
 
+    max_id_column_count = 1
+    if private_computation_instance.pid_protocol == PIDProtocol.MULTIKEY_PID:
+        max_id_column_count = DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT
     args = combiner_service.build_args(
         spine_path=private_computation_instance.pid_stage_output_spine_path,
         data_path=private_computation_instance.pid_stage_output_data_path,
@@ -258,6 +262,7 @@ async def start_combiner_service(
         if private_computation_instance.is_validating
         else private_computation_instance.num_pid_containers,
         tmp_directory=binary_config.tmp_directory,
+        max_id_column_cnt=max_id_column_count,
         run_name=run_name,
         padding_size=padding_size,
         log_cost=log_cost,

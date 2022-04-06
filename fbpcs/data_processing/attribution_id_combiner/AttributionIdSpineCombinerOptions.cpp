@@ -29,3 +29,4 @@ DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");
+DEFINE_int32(max_id_column_cnt, 1, "Maximum number of id columns to use as id");
