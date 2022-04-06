@@ -51,7 +51,6 @@ class PIDStageService(PrivateComputationStageService):
         pid_svc: PIDService,
         publisher_stage: UnionPIDStage,
         partner_stage: UnionPIDStage,
-        protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         is_validating: bool = False,
         synthetic_shard_path: Optional[str] = None,
         container_timeout: Optional[int] = None,
@@ -59,7 +58,6 @@ class PIDStageService(PrivateComputationStageService):
         self._pid_svc = pid_svc
         self._publisher_stage = publisher_stage
         self._partner_stage = partner_stage
-        self._protocol = protocol
         self._is_validating = is_validating
         self._synthetic_shard_path = synthetic_shard_path
         self._container_timeout = container_timeout
@@ -95,7 +93,7 @@ class PIDStageService(PrivateComputationStageService):
             )
             pid_instance = self._pid_svc.create_instance(
                 instance_id=pid_instance_id,
-                protocol=self._protocol,
+                protocol=pc_instance.pid_protocol,
                 pid_role=self._map_private_computation_role_to_pid_role(
                     pc_instance.role
                 ),

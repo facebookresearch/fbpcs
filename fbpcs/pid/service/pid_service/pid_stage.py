@@ -14,10 +14,11 @@ from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerIn
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pid.entity.pid_instance import PIDInstanceStatus, PIDStageStatus
+from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDInstanceStatus, PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 
 
 class PIDStage(abc.ABC):
@@ -28,6 +29,7 @@ class PIDStage(abc.ABC):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config: OneDockerBinaryConfig,
+        protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         is_joint_stage: bool = False,
     ) -> None:
         self.stage_type = stage
@@ -37,6 +39,7 @@ class PIDStage(abc.ABC):
         self.instance_repository = instance_repository
         self.logger: logging.Logger = logging.getLogger(__name__)
         self.is_joint_stage = is_joint_stage
+        self.protocol = protocol
 
     @abc.abstractmethod
     async def run(
