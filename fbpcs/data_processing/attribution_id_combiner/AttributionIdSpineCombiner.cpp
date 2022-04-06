@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
              << ", spine_path: " << FLAGS_spine_path
              << ", output_path: " << FLAGS_output_path
              << ", tmp_directory: " << FLAGS_tmp_directory
-             << ", sorting_strategy: " << FLAGS_sort_strategy;
+             << ", sorting_strategy: " << FLAGS_sort_strategy
+             << ", max_id_column_cnt: " << FLAGS_max_id_column_cnt;
 
   auto dataInStreamPtr = fbpcf::io::getInputStream(FLAGS_data_path);
   auto spineInStreamPtr = fbpcf::io::getInputStream(FLAGS_spine_path);

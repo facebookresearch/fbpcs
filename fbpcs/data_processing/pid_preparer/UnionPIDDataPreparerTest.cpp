@@ -284,4 +284,48 @@ TEST(UnionPIDDataPreparerTest, LiftIdSpineInputValidationWithMaxThree) {
   preparer.prepare();
   validateFileContents(expected, outpath);
 }
+
+TEST(UnionPIDDataPreparerTest, AttributionIdSpineInputValidationWithMaxTwo) {
+  std::vector<std::string> lines = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,fn2,2,300,0,4",
+      ",phone2,,1,200,1,3",
+      ",phone3,fn3,2,500,0,6",
+      ",,fn3,1,400,0,5"};
+  std::string expected{"email1,phone1\nphone2,fn2\nphone3,fn3\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, AttributionIdSpineInputValidationWithMaxThree) {
+  std::vector<std::string> lines = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,fn2,2,300,0,4",
+      ",phone2,,1,200,1,3",
+      ",phone3,fn3,2,500,0,6",
+      ",,fn3,1,400,0,5"};
+  std::string expected{"email1,phone1,fn1\nphone2,fn2\nphone3,fn3\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
 } // namespace measurement::pid
