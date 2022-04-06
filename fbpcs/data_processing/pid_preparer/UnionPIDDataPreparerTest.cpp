@@ -169,4 +169,119 @@ TEST(UnionPIDDataPreparerTest, DuplicateHandlingTest) {
   validateFileContents(expected, outpath);
 }
 
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxOne) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,170,0",
+      "789,,555,180,0",
+      ",,789,190,0"};
+  std::string expected{"123\n456\n789\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 1};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxTwo) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,170,0",
+      "789,,555,180,0",
+      ",,789,190,0"};
+  std::string expected{"123,111\n456,333\n789,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxThree) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,200,0",
+      "789,555,,200,0",
+      ",789,,200,0"};
+  std::string expected{"123,111,999\n456,333,777\n789,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, IdSwapInputValidationWithMaxFour) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,opportunity_timestamp,test_flag",
+      "123,111,999,100,1",
+      "123,222,888,120,1",
+      "456,333,777,150,0",
+      "456,333,777,160,1",
+      "789,333,666,200,0",
+      "789,555,,200,0",
+      ",,789,200,0"};
+  std::string expected{"123,111,999\n456,333,777\n789,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 4};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, LiftIdSpineInputValidationWithMaxTwo) {
+  std::vector<std::string> lines = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      ",456,789,126,103",
+      ",,789,127,104",
+      ",,789,125,102",
+  };
+  std::string expected{"123,456\n789\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, LiftIdSpineInputValidationWithMaxThree) {
+  std::vector<std::string> lines = {
+      "id_,id_2,id_3,event_timestamp,value",
+      "123,456,789,128,105",
+      ",456,789,126,103",
+      ",,789,127,104",
+      ",,789,125,102",
+  };
+  std::string expected{"123,456,789\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
 } // namespace measurement::pid
