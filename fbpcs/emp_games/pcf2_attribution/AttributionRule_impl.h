@@ -231,7 +231,7 @@ inline const AttributionRule<schedulerId, usingBatch, inputEncryption>
           auto touchWithinOneDay = conv.ts <= thresholds.at(0);
           auto clickWithinTwentyEightDays = conv.ts <= thresholds.at(1);
 
-          return validConv & (touchWithinOneDay || clickWithinTwentyEightDays);
+          return validConv & (touchWithinOneDay | clickWithinTwentyEightDays);
         },
         /* computeThresholdsPlaintext */
         [](const Touchpoint<usingBatch>& tp)
@@ -428,7 +428,7 @@ inline const AttributionRule<schedulerId, usingBatch, inputEncryption>
           auto touchWithinOneDay = conv.ts <= thresholds.at(2);
 
           return validConv &
-              ((clickAfterOneDay & clickWithinSevenDays) || touchWithinOneDay);
+              ((clickAfterOneDay & clickWithinSevenDays) | touchWithinOneDay);
         },
         /* computeThresholdsPlaintext */
         [](const Touchpoint<usingBatch>& tp)

@@ -258,7 +258,7 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
 
       auto isAttributed = isTouchpointAttributable & !hasAttributedTouchpoint;
 
-      hasAttributedTouchpoint = isAttributed || hasAttributedTouchpoint;
+      hasAttributedTouchpoint = isAttributed | hasAttributedTouchpoint;
 
       if constexpr (usingBatch) {
         OMNISCIENT_ONLY_XLOGF(
