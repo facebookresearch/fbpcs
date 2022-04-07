@@ -17,6 +17,7 @@ namespace aggregation::private_attribution {
 
 struct Conversion {
   int64_t ts;
+  int64_t targetId = -1;
 
   // privatelyShareArrayFrom support
   friend bool operator==(const Conversion& a, const Conversion& b) {

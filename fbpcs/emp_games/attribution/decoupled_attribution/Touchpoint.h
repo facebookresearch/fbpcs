@@ -21,6 +21,7 @@ struct Touchpoint {
   int64_t id;
   bool isClick;
   int64_t ts;
+  int64_t targetId = -1;
 
   // privatelyShareArrayFrom support
   friend bool operator==(const Touchpoint& a, const Touchpoint& b) {

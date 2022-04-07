@@ -55,6 +55,7 @@ static const std::vector<Touchpoint> parseTouchpoints(
     const std::vector<std::string>& parts) {
   std::vector<int64_t> timestamps;
   std::vector<int64_t> isClicks;
+  std::vector<int64_t> targetIds;
   for (std::vector<std::string>::size_type i = 0; i < header.size(); ++i) {
     auto column = header[i];
     auto value = parts[i];
@@ -62,11 +63,18 @@ static const std::vector<Touchpoint> parseTouchpoints(
       timestamps = getInnerArray(value);
     } else if (column == "is_click") {
       isClicks = getInnerArray(value);
+    } else if (column == "target_ids") {
+      targetIds = getInnerArray(value);
     }
   }
 
   CHECK_EQ(timestamps.size(), isClicks.size())
       << "timestamps arrays and is_click arrays are not the same length.";
+
+  if (!targetIds.empty()) {
+    CHECK_EQ(timestamps.size(), targetIds.size())
+        << "timestamps arrays and targetIds arrays are not the same length.";
+  }
   CHECK_LE(timestamps.size(), FLAGS_max_num_touchpoints)
       << "Number of touchpoints exceeds the maximum allowed value.";
 
@@ -86,10 +94,13 @@ static const std::vector<Touchpoint> parseTouchpoints(
 
   std::vector<Touchpoint> tps;
   for (std::vector<int64_t>::size_type i = 0; i < timestamps.size(); i++) {
+    auto targetId = targetIds.empty() ? -1 : targetIds.at(i);
+
     tps.push_back(Touchpoint{
         /* id */ unique_ids.at(i),
         /* isClick */ isClicks.at(i) == 1,
-        /* ts */ timestamps.at(i)});
+        /* ts */ timestamps.at(i),
+        /* targetId */ targetId});
   }
   // The input received by attribution game from data processing is sorted by
   // rows, but in each row the internal columns are not sorted. Thus sorting the
@@ -103,6 +114,7 @@ static const std::vector<Conversion> parseConversions(
     const std::vector<std::string>& header,
     const std::vector<std::string>& parts) {
   std::vector<int64_t> convTimestamps;
+  std::vector<int64_t> targetIds;
 
   for (std::vector<std::string>::size_type i = 0; i < header.size(); ++i) {
     auto column = header[i];
@@ -110,15 +122,24 @@ static const std::vector<Conversion> parseConversions(
 
     if (column == "conversion_timestamps") {
       convTimestamps = getInnerArray(value);
+    } else if (column == "target_ids") {
+      targetIds = getInnerArray(value);
     }
   }
-
+  if (!targetIds.empty()) {
+    CHECK_EQ(convTimestamps.size(), targetIds.size())
+        << "convTimestamps arrays and targetIds arrays are not the same length.";
+  }
   CHECK_LE(convTimestamps.size(), FLAGS_max_num_conversions)
       << "Number of conversions exceeds the maximum allowed value.";
 
   std::vector<Conversion> convs;
   for (std::vector<int64_t>::size_type i = 0; i < convTimestamps.size(); i++) {
-    convs.push_back(Conversion{/* ts */ convTimestamps.at(i)});
+    auto targetId = targetIds.empty() ? -1 : targetIds.at(i);
+
+    convs.push_back(Conversion{
+        /* ts */ convTimestamps.at(i),
+        /* targetId */ targetId});
   }
   // Sorting conversions based on timestamp.
   std::sort(convs.begin(), convs.end());
