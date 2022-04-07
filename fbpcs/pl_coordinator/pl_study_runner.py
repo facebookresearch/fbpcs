@@ -70,70 +70,17 @@ def run_study(
 ) -> None:
 
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
-
-    err_msgs = []
-    # verify that input is valid.
-    # Deny if
-    #   a. objective_ids have duplicate
-    #   b. input_paths have duplicate
-    #   c. their lengths don't match
-    if _has_duplicates(objective_ids):
-        err_msgs.append("objective_ids have duplicates")
-    if _has_duplicates(input_paths):
-        err_msgs.append("input_paths have duplicates")
-    if len(objective_ids) != len(input_paths):
-        err_msgs.append(
-            "Number of objective_ids and number of input_paths don't match."
-        )
-    if err_msgs:
-        raise ValueError(_join_err_msgs(err_msgs))
+    _validate_input(objective_ids, input_paths)
 
     # obtain study information
     client = PLGraphAPIClient(config["graphapi"]["access_token"], logger)
     study_data = _get_study_data(study_id, client)
 
     # Verify study can run private lift:
-    # Deny if study is
-    #   a. not LIFT
-    #   b. has not started yet
-    #   c. finished more than 90 days
-    #
-    # This logic should be in sync with the logic here https://fburl.com/diffusion/qyjl89qn
-    current_time = int(time.time())
-    if study_data[TYPE] != LIFT:
-        err_msgs.append(f"Expected study type: {LIFT}. Study type: {study_data[TYPE]}.")
-    study_start_time = _date_to_timestamp(study_data[START_TIME])
-    if study_start_time > current_time:
-        err_msgs.append(
-            f"Study must have started. Study start time: {study_start_time}. Current time: {current_time}."
-        )
-    observation_end_time = _date_to_timestamp(study_data[OBSERVATION_END_TIME])
-    if observation_end_time + STUDY_EXPIRE_TIME < current_time:
-        err_msgs.append("Cannot run for study that finished more than 90 days ago.")
-    if err_msgs:
-        raise PLStudyValidationException(_join_err_msgs(err_msgs))
+    _verify_study_type(study_data)
 
-    # verify study has mpc objectives
-    mpc_objectives = list(
-        map(
-            lambda obj: obj["id"],
-            list(
-                filter(
-                    lambda obj: obj["type"] == MPC_CONVERSION,
-                    study_data["objectives"]["data"],
-                )
-            ),
-        )
-    )
-    if not mpc_objectives:
-        raise PLStudyValidationException(f"Study {study_id} has no MPC objectives")
-
-    # verify input objs are MPC objs of this study.
-    for obj_id in objective_ids:
-        if obj_id not in mpc_objectives:
-            raise ValueError(
-                f"Objective id {obj_id} invalid. Valid MPC objective ids for study {study_id}: {','.join(mpc_objectives)}"
-            )
+    # verify mpc objectives
+    _verify_mpc_objs(study_data, objective_ids)
 
     # verify study opp_data_information is non-empty
     if OPP_DATA_INFORMATION not in study_data:
@@ -213,6 +160,74 @@ def run_study(
         sys.exit(1)
     else:
         sys.exit(0)
+
+
+def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
+    err_msgs = []
+    # verify that input is valid.
+    # Deny if
+    #   a. objective_ids have duplicate
+    #   b. input_paths have duplicate
+    #   c. their lengths don't match
+    if _has_duplicates(objective_ids):
+        err_msgs.append("objective_ids have duplicates")
+    if _has_duplicates(input_paths):
+        err_msgs.append("input_paths have duplicates")
+    if len(objective_ids) != len(input_paths):
+        err_msgs.append(
+            "Number of objective_ids and number of input_paths don't match."
+        )
+    if err_msgs:
+        raise PLStudyValidationException(_join_err_msgs(err_msgs))
+
+
+def _verify_study_type(study_data: Dict[str, Any]) -> None:
+    # Deny if study is
+    #   a. not LIFT
+    #   b. has not started yet
+    #   c. finished more than 90 days
+    #
+    # This logic should be in sync with the logic here https://fburl.com/diffusion/qyjl89qn
+    err_msgs = []
+    current_time = int(time.time())
+    if study_data[TYPE] != LIFT:
+        err_msgs.append(f"Expected study type: {LIFT}. Study type: {study_data[TYPE]}.")
+    study_start_time = _date_to_timestamp(study_data[START_TIME])
+    if study_start_time > current_time:
+        err_msgs.append(
+            f"Study must have started. Study start time: {study_start_time}. Current time: {current_time}."
+        )
+    observation_end_time = _date_to_timestamp(study_data[OBSERVATION_END_TIME])
+    if observation_end_time + STUDY_EXPIRE_TIME < current_time:
+        err_msgs.append("Cannot run for study that finished more than 90 days ago.")
+    if err_msgs:
+        raise PLStudyValidationException(_join_err_msgs(err_msgs))
+
+
+def _verify_mpc_objs(study_data: Dict[str, Any], objective_ids: List[str]) -> None:
+    # verify study has mpc objectives
+    mpc_objectives = list(
+        map(
+            lambda obj: obj["id"],
+            list(
+                filter(
+                    lambda obj: obj["type"] == MPC_CONVERSION,
+                    study_data["objectives"]["data"],
+                )
+            ),
+        )
+    )
+    if not mpc_objectives:
+        raise PLStudyValidationException(
+            f"Study {study_data['id']} has no MPC objectives"
+        )
+
+    # verify input objs are MPC objs of this study.
+    for obj_id in objective_ids:
+        if obj_id not in mpc_objectives:
+            raise ValueError(
+                f"Objective id {obj_id} invalid. Valid MPC objective ids for study {study_data['id']}: {','.join(mpc_objectives)}"
+            )
 
 
 def _get_study_data(study_id: str, client: PLGraphAPIClient) -> Any:
