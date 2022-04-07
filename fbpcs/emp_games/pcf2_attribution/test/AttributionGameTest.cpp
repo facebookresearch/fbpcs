@@ -363,7 +363,6 @@ AttributionOutputMetrics computeAttributionsWithScheduler(
     AttributionInputMetrics<usingBatch, inputEncryption> inputData,
     std::reference_wrapper<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
-    // TODO T101868337 - Use a scheduler factory here
     fbpcf::SchedulerCreator schedulerCreator) {
   auto scheduler = schedulerCreator(myId, factory);
   auto game = std::make_unique<
