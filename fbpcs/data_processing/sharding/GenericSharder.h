@@ -9,8 +9,8 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
-
 namespace data_processing::sharder {
 namespace detail {
 /**
@@ -120,6 +120,10 @@ class GenericSharder {
     return logEveryN_;
   }
 
+  void logRowsToShard(std::size_t shard) {
+    rowsInShard[shard]++;
+  }
+
   /**
    * Run the sharder.
    */
@@ -153,5 +157,6 @@ class GenericSharder {
   std::string inputPath_;
   std::vector<std::string> outputPaths_;
   int32_t logEveryN_;
+  std::unordered_map<std::size_t, int> rowsInShard;
 };
 } // namespace data_processing::sharder

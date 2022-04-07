@@ -125,6 +125,7 @@ void GenericSharder::shard() {
     }
     // We need to make sure we clean up the tmpfiles now
     std::remove(tmpFileSrc.c_str());
+    XLOG(INFO, fmt::format("Shard {} has {} rows", i, rowsInShard[i]));
   }
   XLOG(INFO) << "All file writes successful";
 }
@@ -135,6 +136,7 @@ void GenericSharder::shardLine(
   auto commaPos = line.find_first_of(",");
   auto id = line.substr(0, commaPos);
   auto shard = getShardFor(id, outFiles.size());
+  logRowsToShard(shard);
   *outFiles.at(shard) << line << "\n";
 }
 } // namespace data_processing::sharder

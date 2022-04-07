@@ -57,18 +57,21 @@ void HashBasedSharder::shardLine(
   auto commaPos = line.find_first_of(",");
   auto id = line.substr(0, commaPos);
   auto numShards = outFiles.size();
+  std::size_t shard;
   if (hmacKey_.empty()) {
     // Assumption: the string is *already* an HMAC hashed value
     // If hmacBase64Key is empty, the hashing already happened upstream.
     // This means we can reinterpret the id as a base64-encoded string.
-    auto shard = getShardFor(id, numShards);
+    shard = getShardFor(id, numShards);
     *outFiles.at(shard) << line << "\n";
   } else {
     auto base64SaltedId =
         private_lift::hash_slinging_salter::base64SaltedHashFromBase64Key(
             id, hmacKey_);
-    auto shard = getShardFor(base64SaltedId, numShards);
+    shard = getShardFor(base64SaltedId, numShards);
+
     *outFiles.at(shard) << base64SaltedId << line.substr(commaPos) << "\n";
   }
+  logRowsToShard(shard);
 }
 } // namespace data_processing::sharder
