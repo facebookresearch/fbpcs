@@ -43,7 +43,8 @@ from fbpcs.private_computation.service.errors import (
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
     NUM_NEW_SHARDS_PER_FILE,
-    DEFAULT_K_ANONYMITY_THRESHOLD,
+    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+    DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_PID_PROTOCOL,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
@@ -167,29 +168,39 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance(self) -> None:
         test_role = PrivateComputationRole.PUBLISHER
-        self.private_computation_service.create_instance(
-            instance_id=self.test_private_computation_id,
-            role=test_role,
-            game_type=self.test_game_type,
-            input_path=self.test_input_path,
-            output_dir=self.test_output_dir,
-            num_pid_containers=self.test_num_containers,
-            num_mpc_containers=self.test_num_containers,
-            concurrency=self.test_concurrency,
-            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
-            hmac_key=self.test_hmac_key,
-        )
-        # check instance_repository.create is called with the correct arguments
-        # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
-        self.private_computation_service.instance_repository.create.assert_called()
-        # pyre-fixme[16]: Callable `create` has no attribute `call_args`.
-        args = self.private_computation_service.instance_repository.create.call_args[0][
-            0
-        ]
-        self.assertEqual(self.test_private_computation_id, args.instance_id)
-        self.assertEqual(test_role, args.role)
-        self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
-        self.assertEqual(1, args.creation_ts)
+        for test_game_type, expected_k_anon in (
+            (PrivateComputationGameType.LIFT, DEFAULT_K_ANONYMITY_THRESHOLD_PL),
+            (PrivateComputationGameType.ATTRIBUTION, DEFAULT_K_ANONYMITY_THRESHOLD_PA),
+        ):
+            with self.subTest(
+                test_game_type=test_game_type, expected_k_anon=expected_k_anon
+            ):
+                self.private_computation_service.create_instance(
+                    instance_id=self.test_private_computation_id,
+                    role=test_role,
+                    game_type=test_game_type,
+                    input_path=self.test_input_path,
+                    output_dir=self.test_output_dir,
+                    num_pid_containers=self.test_num_containers,
+                    num_mpc_containers=self.test_num_containers,
+                    concurrency=self.test_concurrency,
+                    num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+                    hmac_key=self.test_hmac_key,
+                )
+                # check instance_repository.create is called with the correct arguments
+                # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
+                self.private_computation_service.instance_repository.create.assert_called()
+                # pyre-fixme[16]: Callable `create` has no attribute `call_args`.
+                args = self.private_computation_service.instance_repository.create.call_args[
+                    0
+                ][
+                    0
+                ]
+                self.assertEqual(self.test_private_computation_id, args.instance_id)
+                self.assertEqual(test_role, args.role)
+                self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
+                self.assertEqual(1, args.creation_ts)
+                self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
@@ -773,7 +784,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             game_type=PrivateComputationGameType.LIFT,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
-            k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD,
+            k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,
             hmac_key=self.test_hmac_key,
         )
 

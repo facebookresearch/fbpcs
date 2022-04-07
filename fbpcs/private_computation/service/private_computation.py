@@ -40,7 +40,8 @@ from fbpcs.private_computation.service.constants import (
     NUM_NEW_SHARDS_PER_FILE,
     DEFAULT_CONCURRENCY,
     DEFAULT_HMAC_KEY,
-    DEFAULT_K_ANONYMITY_THRESHOLD,
+    DEFAULT_K_ANONYMITY_THRESHOLD_PA,
+    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
     DEFAULT_PID_PROTOCOL,
     LIFT_DEFAULT_PADDING_SIZE,
     ATTRIBUTION_DEFAULT_PADDING_SIZE,
@@ -168,7 +169,10 @@ class PrivateComputationService:
             ),
             concurrency=concurrency or DEFAULT_CONCURRENCY,
             k_anonymity_threshold=unwrap_or_default(
-                optional=k_anonymity_threshold, default=DEFAULT_K_ANONYMITY_THRESHOLD
+                optional=k_anonymity_threshold,
+                default=DEFAULT_K_ANONYMITY_THRESHOLD_PA
+                if game_type is PrivateComputationGameType.ATTRIBUTION
+                else DEFAULT_K_ANONYMITY_THRESHOLD_PL,
             ),
             _stage_flow_cls_name=unwrap_or_default(
                 optional=stage_flow_cls,
