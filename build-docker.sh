@@ -97,5 +97,6 @@ for P in $PACKAGE; do
     --build-arg os_release="${OS_RELEASE}" \
     --build-arg fbpcf_image="${FBPCF_IMAGE}" \
     --compress \
+    --platform linux/amd64 \
     -t "${IMAGE_PREFIX}${DOCKER_PACKAGE}:${TAG}" -f "docker/${P}/Dockerfile${DOCKER_EXTENSION}" .
 done
