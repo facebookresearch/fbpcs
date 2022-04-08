@@ -89,12 +89,13 @@ def run_attribution(
     # Validate if input is datetime or timestamp
     is_date_format = _iso_date_validator(timestamp)
     if is_date_format:
-        dt = datetime.fromisoformat(timestamp)
+        mod_dt = timestamp + " 00:00:00+00:00"
+        dt = datetime.fromisoformat(mod_dt)
     else:
         dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
 
     # Compute the argument after the timestamp has been input
-    dt_arg = datetime.timestamp(dt)
+    dt_arg = int(datetime.timestamp(dt))
 
     # Verify that input has matching dataset info:
     # a. attribution rule
@@ -112,12 +113,12 @@ def run_attribution(
             break
     if len(matched_data) == 0:
         raise ValueError("No dataset matching to the information provided")
-
     # Step 2: Validate what instances need to be created vs what already exist
     dataset_instance_data = _get_existing_pa_instances(client, dataset_id)
     existing_instances = dataset_instance_data["data"]
     for inst in existing_instances:
         inst_time = dateutil.parser.parse(inst[TIMESTAMP])
+
         if (
             inst[ATTRIBUTION_RULE] == attribution_rule_val
             and inst_time == dt
