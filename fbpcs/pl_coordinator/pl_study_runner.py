@@ -73,7 +73,7 @@ def run_study(
     _validate_input(objective_ids, input_paths)
 
     # obtain study information
-    client = PLGraphAPIClient(config["graphapi"]["access_token"], logger)
+    client = PLGraphAPIClient(config, logger)
     study_data = _get_study_data(study_id, client)
 
     # Verify study can run private lift:

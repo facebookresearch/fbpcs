@@ -78,7 +78,7 @@ def run_attribution(
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
-    client = PLGraphAPIClient(config["graphapi"]["access_token"], logger)
+    client = PLGraphAPIClient(config, logger)
     datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
     datasets = datasets_info[DATASETS_INFORMATION]
     matched_data = {}
@@ -185,7 +185,7 @@ def _create_new_instance(
 def get_attribution_dataset_info(
     config: Dict[str, Any], dataset_id: str, logger: logging.Logger
 ) -> str:
-    client = PLGraphAPIClient(config["graphapi"]["access_token"], logger)
+    client = PLGraphAPIClient(config, logger)
 
     return json.loads(
         client.get_attribution_dataset_info(
