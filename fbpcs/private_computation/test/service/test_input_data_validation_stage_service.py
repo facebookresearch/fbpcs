@@ -164,7 +164,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
     )
     def test_get_status_returns_the_stage_status_from_stage_state(
         self, mock_get_pc_status_from_stage_state
-    ):
+    ) -> None:
         pc_instance = self._pc_instance
         expected_status = (
             PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
@@ -209,7 +209,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
     )
     async def test_get_status_logs_a_helpful_error_when_the_validation_fails(
         self, mock_get_pc_status_from_stage_state
-    ):
+    ) -> None:
         pc_instance = self._pc_instance
         task_id = "test-task-id-123"
         cluster_name = "test-cluster-name"
@@ -223,6 +223,9 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             containers=[container_instance],
         )
         unioned_pc_instances = [stage_state_instance]
+        # pyre-fixme[8]: Attribute has type `List[Union[StageStateInstance,
+        #  PCSMPCInstance, PIDInstance, PostProcessingInstance]]`; used as
+        #  `List[StageStateInstance]`.
         pc_instance.instances = unioned_pc_instances
         expected_status = PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
         onedocker_svc_mock = MagicMock()

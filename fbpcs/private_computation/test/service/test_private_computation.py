@@ -790,7 +790,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
 
 class TestTransformFilePath(unittest.TestCase):
-    def test_virtual_hosted_format(self):
+    def test_virtual_hosted_format(self) -> None:
 
         test_cases = [
             "https://bucket-name.s3.Region.amazonaws.com/key-name",
@@ -806,7 +806,7 @@ class TestTransformFilePath(unittest.TestCase):
         for x, y in zip(test_cases, expected_results):
             self.assertEqual(transform_file_path(x), y)
 
-    def test_s3_format(self):
+    def test_s3_format(self) -> None:
 
         test_cases = [
             "S3://bucket-name/key-name",
@@ -822,7 +822,7 @@ class TestTransformFilePath(unittest.TestCase):
         for x, y in zip(test_cases, expected_results):
             self.assertEqual(transform_file_path(x, "Region"), y)
 
-    def test_path_format(self):
+    def test_path_format(self) -> None:
 
         test_cases = [
             "https://s3.Region.amazonaws.com/bucket-name/key-name",
@@ -836,7 +836,7 @@ class TestTransformFilePath(unittest.TestCase):
         for x, y in zip(test_cases, expected_results):
             self.assertEqual(transform_file_path(x), y)
 
-    def test_bad_inputs(self):
+    def test_bad_inputs(self) -> None:
 
         test_cases = [
             "",
