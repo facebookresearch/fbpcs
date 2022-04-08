@@ -89,7 +89,7 @@ def run_study(
         raise ValueError(_join_err_msgs(err_msgs))
 
     # obtain study information
-    client = PLGraphAPIClient(config["graphapi"]["access_token"], logger)
+    client = PLGraphAPIClient(config, logger)
     study_data = _get_study_data(study_id, client)
 
     # Verify study can run private lift:

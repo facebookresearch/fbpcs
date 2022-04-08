@@ -76,7 +76,7 @@ def run_instance(
     num_tries = num_tries if num_tries is not None else MAX_TRIES
     if num_tries < MIN_TRIES or num_tries > MAX_TRIES:
         raise ValueError(f"num_tries must be between {MIN_TRIES} and {MAX_TRIES}.")
-    client = PLGraphAPIClient(config["graphapi"]["access_token"], logger)
+    client = PLGraphAPIClient(config, logger)
     instance_runner = PLInstanceRunner(
         config,
         instance_id,

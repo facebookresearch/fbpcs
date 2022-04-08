@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
 
 
 class OneCommandRunnerBaseException(Exception):
@@ -17,6 +18,18 @@ class OneCommandRunnerBaseException(Exception):
 # TODO(T114624787): [BE][PCS] rename PLInstanceCalculationException to PCInstanceCalculationException
 class PLInstanceCalculationException(OneCommandRunnerBaseException, RuntimeError):
     pass
+
+
+class GraphAPITokenNotFound(OneCommandRunnerBaseException, RuntimeError):
+    @classmethod
+    def make_error(cls) -> "GraphAPITokenNotFound":
+        return cls(
+            msg="Graph API token was not provided to private computation script.",
+            cause="Graph API token not found in config.yml file or"
+            f" {FBPCS_GRAPH_API_TOKEN} environment variable",
+            remediation="Put Graph API token in config.yml file or run"
+            f" export {FBPCS_GRAPH_API_TOKEN}=YOUR_TOKEN in your terminal",
+        )
 
 
 class IncompatibleStageError(OneCommandRunnerBaseException, RuntimeError):

@@ -6,12 +6,17 @@
 
 import json
 import logging
-from typing import List, Dict
+import os
+from typing import Any, List, Dict
 
 import requests
+from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
+from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
+from fbpcs.utils.config_yaml.exceptions import ConfigYamlBaseException
 
 URL = "https://graph.facebook.com/v13.0"
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
@@ -70,10 +75,42 @@ class PLGraphAPIClient:
     __init__ contains info about all the api end points used by Private Lift
     """
 
-    def __init__(self, access_token: str, logger: logging.Logger) -> None:
-        self.access_token = access_token
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger) -> None:
         self.logger = logger
+        self.access_token = self._get_graph_api_token(config)
         self.params = {"access_token": self.access_token}
+
+    def _get_graph_api_token(self, config: Dict[str, Any]) -> str:
+        f"""Get graph API token from config.yml or the {FBPCS_GRAPH_API_TOKEN} env var
+
+        Arguments:
+            config: dictionary representation of config.yml file
+
+        Returns:
+            the graph api token
+
+        Raises:
+            GraphAPITokenNotFound: graph api token not in config.yml and not in env var
+        """
+        try:
+            if not isinstance(config, ConfigYamlDict):
+                config = ConfigYamlDict.from_dict(config)
+            self.logger.info("attempting to read graph api token from config.yml file")
+            token = config["graphapi"]["access_token"]
+            self.logger.info("successfuly read graph api token from config.yml file")
+        except ConfigYamlBaseException:
+            self.logger.info(
+                f"attempting to read graph api token from {FBPCS_GRAPH_API_TOKEN} env var"
+            )
+            token = os.getenv(FBPCS_GRAPH_API_TOKEN)
+            if not token:
+                no_token_exception = GraphAPITokenNotFound.make_error()
+                self.logger.exception(no_token_exception)
+                raise no_token_exception from None
+            self.logger.info(
+                f"successfully read graph api token from {FBPCS_GRAPH_API_TOKEN} env var"
+            )
+        return token
 
     def get_instance(self, instance_id: str) -> requests.Response:
         r = requests.get(
