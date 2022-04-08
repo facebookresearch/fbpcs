@@ -223,6 +223,7 @@ class PIDProtocolRunStage(PIDStage):
                 self._gen_command_args(
                     input_path=self.get_sharded_filepath(input_path, i),
                     output_path=self.get_sharded_filepath(output_path, i),
+                    metric_path=self.get_metrics_filepath(output_path, i),
                     port=port,
                     server_hostname=None,
                     use_row_numbers=use_row_numbers,
@@ -237,6 +238,7 @@ class PIDProtocolRunStage(PIDStage):
         port: int,
         server_hostname: Optional[str] = None,
         use_row_numbers: bool = False,
+        metric_path: Optional[str] = None,
     ) -> str:
         if server_hostname:
             return " ".join(
@@ -244,6 +246,7 @@ class PIDProtocolRunStage(PIDStage):
                     f"--company {server_hostname}:{port}",
                     f"--input {input_path}",
                     f"--output {output_path}",
+                    f"--metric-path {metric_path}" if metric_path is not None else "",
                     "--no-tls",
                     "--use-row-numbers" if use_row_numbers else "",
                 ]
@@ -254,6 +257,7 @@ class PIDProtocolRunStage(PIDStage):
                     f"--host 0.0.0.0:{port}",
                     f"--input {input_path}",
                     f"--output {output_path}",
+                    f"--metric-path {metric_path}" if metric_path is not None else "",
                     "--no-tls",
                     "--use-row-numbers" if use_row_numbers else "",
                 ]

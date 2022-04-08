@@ -94,6 +94,19 @@ class PIDStage(abc.ABC):
         """
         return f"{path}_{shard}"
 
+    @staticmethod
+    def get_metrics_filepath(path: str, shard: int) -> str:
+        """
+        Although this function is incredibly simple, it's important that we
+        centralize one definition for how sharded metrics files should look. This will
+        ensure that we remain consistent in how we "expect" sharded metrics filepaths
+        to be stored and will prevent any erroneous mistakes if one service
+        gets changed in the future to change the filepath in the future. There
+        are no software guarantees here, but it should hint to the developer
+        that there's some special function to use to log PID metrics.
+        """
+        return PIDStage.get_sharded_filepath(path, shard) + "_metrics"  # noqa
+
     def files_exist(self, paths: List[str]) -> bool:
         """
         Check if a list of filepaths exist. These are checked from the given
