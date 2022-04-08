@@ -7,7 +7,7 @@
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Type, Optional, Dict, Any
 
 import dateutil.parser
@@ -21,9 +21,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     AttributionRule,
     AggregationType,
     PrivateComputationGameType,
-)
-from fbpcs.private_computation.entity.private_computation_status import (
-    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -40,8 +37,6 @@ class LoggerAdapter(logging.LoggerAdapter):
 
 
 # dataset information fields
-AD_OBJECT_ID = "ad_object_id"
-TARGET_OBJECT_TYPE = "target_object_type"
 DATASETS_INFORMATION = "datasets_information"
 INSTANCES = "instances"
 NUM_SHARDS = "num_shards"
@@ -51,6 +46,13 @@ NUM_CONTAINERS = "num_containers"
 TIMESTAMP = "timestamp"
 ATTRIBUTION_RULE = "attribution_rule"
 STATUS = "status"
+CREATED_TIME = "created_time"
+
+TERMINAL_STATUSES = [
+    "POST_PROCESSING_HANDLERS_COMPLETED",
+    "RESULT_READY",
+    "INSTANCE_FAILURE",
+]
 
 """
 The input to this function will be the input path, the dataset_id as well as the following params to choose
@@ -114,19 +116,25 @@ def run_attribution(
     if len(matched_data) == 0:
         raise ValueError("No dataset matching to the information provided")
     # Step 2: Validate what instances need to be created vs what already exist
+    # Conditions for retry:
+    # 1. Not in a terminal status
+    # 2. Instance has been created > 1d ago
     dataset_instance_data = _get_existing_pa_instances(client, dataset_id)
     existing_instances = dataset_instance_data["data"]
     for inst in existing_instances:
         inst_time = dateutil.parser.parse(inst[TIMESTAMP])
-
+        creation_time = dateutil.parser.parse(inst[CREATED_TIME])
+        exp_time = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        expired = exp_time > creation_time
         if (
             inst[ATTRIBUTION_RULE] == attribution_rule_val
             and inst_time == dt
-            and inst[STATUS]
-            != PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED
+            and inst[STATUS] not in TERMINAL_STATUSES
+            and not expired
         ):
             instance_id = inst["id"]
             break
+
     if instance_id is None:
         instance_id = _create_new_instance(
             dataset_id,
@@ -135,7 +143,6 @@ def run_attribution(
             client,
             logger,
         )
-
     instance_data = _get_pa_instance_info(client, instance_id, logger)
     num_pid_containers = instance_data[NUM_CONTAINERS]
     num_mpc_containers = instance_data[NUM_SHARDS]
@@ -190,7 +197,7 @@ def get_attribution_dataset_info(
     return json.loads(
         client.get_attribution_dataset_info(
             dataset_id,
-            [AD_OBJECT_ID, TARGET_OBJECT_TYPE, DATASETS_INFORMATION],
+            [DATASETS_INFORMATION],
         ).text
     )
 
@@ -217,7 +224,7 @@ def _get_attribution_dataset_info(
     return json.loads(
         client.get_attribution_dataset_info(
             dataset_id,
-            [AD_OBJECT_ID, TARGET_OBJECT_TYPE, DATASETS_INFORMATION],
+            [DATASETS_INFORMATION],
         ).text
     )
 
