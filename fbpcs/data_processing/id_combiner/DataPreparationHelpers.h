@@ -41,6 +41,10 @@ size_t headerIndex(
     const std::vector<std::string>& header,
     const std::string& columnName);
 
+std::vector<int32_t> headerIndices(
+    const std::vector<std::string>& header,
+    const std::string& columnPrefix);
+
 std::vector<std::string> splitList(const std::string& s);
 
 // From https://stackoverflow.com/questions/17074324/

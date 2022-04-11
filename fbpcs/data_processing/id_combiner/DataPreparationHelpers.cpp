@@ -8,6 +8,7 @@
 #include "DataPreparationHelpers.h"
 
 #include <folly/logging/xlog.h>
+#include <cstdint>
 #include <filesystem>
 #include <iomanip>
 #include <istream>
@@ -101,6 +102,23 @@ size_t headerIndex(
     throw std::out_of_range{ss.str()};
   }
   return std::distance(header.begin(), idIter);
+}
+
+std::vector<int32_t> headerIndices(
+    const std::vector<std::string>& header,
+    const std::string& columnPrefix) {
+  std::vector<int32_t> indices;
+  auto idIter = header.begin();
+
+  // find indices of columns with its column name start with columnPrefix
+  while (
+      (idIter = std::find_if(idIter, header.end(), [&](std::string const& c) {
+         return c.rfind(columnPrefix) == 0;
+       })) != header.end()) {
+    indices.push_back(std::distance(header.begin(), idIter));
+    idIter++;
+  }
+  return indices;
 }
 
 std::string vectorToStringWithReplacement(
