@@ -193,3 +193,125 @@ TEST_F(AttributionIdSpineFileCombinerTest, TestPublisherPaddingLimit) {
 
   runTest(dataInput, spineInput, expectedOutput);
 }
+
+TEST_F(AttributionIdSpineFileCombinerTest, TestMultiKeyWithMaxOne) {
+  FLAGS_padding_size = 4;
+  std::vector<std::string> dataInput = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,,1,200,1,3",
+      ",phone2,fn2,2,300,0,4",
+      ",,fn3,1,400,0,5",
+      ",phone3,fn3,2,500,0,6"};
+  std::vector<std::string> spineInput = {
+      "AAAA,email1",
+      "BBBB,phone2",
+      "CCCC,fn3",
+      "DDDD,NA",
+      "EEEE,",
+      "FFFF,phone3"};
+  std::vector<std::string> expectedOutput = {
+      "id_,ad_ids,timestamps,is_click,campaign_metadata",
+      "AAAA,[1,2,3,4],[100,200,300,400],[1,1,1,1],[1,2,3,4]",
+      "BBBB,[0,0,1,2],[0,0,200,300],[0,0,1,0],[0,0,3,4]",
+      "CCCC,[0,0,0,1],[0,0,0,400],[0,0,0,0],[0,0,0,5]",
+      "DDDD,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "EEEE,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "FFFF,[0,0,0,2],[0,0,0,500],[0,0,0,0],[0,0,0,6]"};
+
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+TEST_F(AttributionIdSpineFileCombinerTest, TestMultiKeyWithMaxTwo) {
+  FLAGS_padding_size = 5;
+  std::vector<std::string> dataInput = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,fn2,2,300,0,4",
+      ",phone2,,1,200,1,3",
+      ",phone3,fn3,2,500,0,6",
+      ",,fn3,1,400,0,5"};
+  std::vector<std::string> spineInput = {
+      "AAAA,email1,phone1",
+      "DDDD,phone2,fn2",
+      "FFFF,phone3,fn3",
+      "HHHH,NA",
+      "IIII,"};
+  std::vector<std::string> expectedOutput = {
+      "id_,ad_ids,timestamps,is_click,campaign_metadata",
+      "AAAA,[4,1,2,3,5],[400,100,200,300,500],[1,1,1,1,1],[4,1,2,3,5]",
+      "DDDD,[0,0,0,2,1],[0,0,0,300,200],[0,0,0,0,1],[0,0,0,4,3]",
+      "FFFF,[0,0,0,2,1],[0,0,0,500,400],[0,0,0,0,0],[0,0,0,6,5]",
+      "HHHH,[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]",
+      "IIII,[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]"};
+  FLAGS_max_id_column_cnt = 2;
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+TEST_F(AttributionIdSpineFileCombinerTest, TestMultiKeyWithMaxThree) {
+  FLAGS_padding_size = 5;
+  std::vector<std::string> dataInput = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,fn2,2,300,0,4",
+      ",phone2,,1,200,1,3",
+      ",phone3,fn3,2,500,0,6",
+      ",,fn3,1,400,0,5"};
+  std::vector<std::string> spineInput = {
+      "AAAA,email1,phone1,fn1",
+      "DDDD,phone2,fn2",
+      "FFFF,phone3,fn3",
+      "HHHH,NA",
+      "IIII,"};
+  std::vector<std::string> expectedOutput = {
+      "id_,ad_ids,timestamps,is_click,campaign_metadata",
+      "AAAA,[4,1,2,3,5],[400,100,200,300,500],[1,1,1,1,1],[4,1,2,3,5]",
+      "DDDD,[0,0,0,2,1],[0,0,0,300,200],[0,0,0,0,1],[0,0,0,4,3]",
+      "FFFF,[0,0,0,2,1],[0,0,0,500,400],[0,0,0,0,0],[0,0,0,6,5]",
+      "HHHH,[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]",
+      "IIII,[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]"};
+  FLAGS_max_id_column_cnt = 3;
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+TEST_F(AttributionIdSpineFileCombinerTest, TestMultiKeyWithMaxFour) {
+  FLAGS_padding_size = 5;
+  std::vector<std::string> dataInput = {
+      "id_email,id_phone,id_fn,ad_id,timestamp,is_click,campaign_metadata",
+      "email1,phone1,fn1,4,400,1,4",
+      "email1,,,1,100,1,1",
+      "email1,phone1,,2,200,1,2",
+      "email1,,fn1,3,300,1,3",
+      "email1,phone1,fn1,5,500,1,5",
+      ",phone2,fn2,2,300,0,4",
+      ",phone2,,1,200,1,3",
+      ",phone3,fn3,2,500,0,6",
+      ",,fn3,1,400,0,5"};
+  std::vector<std::string> spineInput = {
+      "AAAA,email1,phone1,fn1",
+      "DDDD,phone2,fn2",
+      "FFFF,phone3,fn3",
+      "HHHH,NA",
+      "IIII,"};
+  std::vector<std::string> expectedOutput = {
+      "id_,ad_ids,timestamps,is_click,campaign_metadata",
+      "AAAA,[4,1,2,3,5],[400,100,200,300,500],[1,1,1,1,1],[4,1,2,3,5]",
+      "DDDD,[0,0,0,2,1],[0,0,0,300,200],[0,0,0,0,1],[0,0,0,4,3]",
+      "FFFF,[0,0,0,2,1],[0,0,0,500,400],[0,0,0,0,0],[0,0,0,6,5]",
+      "HHHH,[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]",
+      "IIII,[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]"};
+  FLAGS_max_id_column_cnt = 4;
+  runTest(dataInput, spineInput, expectedOutput);
+}

@@ -17,3 +17,4 @@ DECLARE_string(tmp_directory);
 DECLARE_string(run_name);
 DECLARE_string(sort_strategy);
 DECLARE_bool(log_cost);
+DECLARE_int32(max_id_column_cnt);
