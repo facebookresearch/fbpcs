@@ -76,7 +76,6 @@ resource "aws_glue_crawler" "mpc_events_crawler" {
     exclusions = [
       "processing-failed**",
       "${var.data_upload_key_path}/**",
-      "${var.events_data_upload_s3_key}/**",
       "${var.query_results_key_path}/**"
     ]
   }

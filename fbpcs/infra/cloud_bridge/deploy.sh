@@ -151,7 +151,6 @@ undeploy_aws_resources() {
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip" \
         -var "data_upload_key_path=$data_upload_key_path" \
-        -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
         -var "query_results_key_path=$query_results_key_path"
     echo "########################Deletion completed########################"
 
@@ -291,7 +290,6 @@ deploy_aws_resources() {
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip" \
         -var "data_upload_key_path=$data_upload_key_path" \
-        -var "events_data_upload_s3_key=$events_data_upload_s3_key" \
         -var "query_results_key_path=$query_results_key_path"
     echo "######################## Deploy Data Ingestion Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
@@ -404,7 +402,6 @@ policy_name="fb-pc-policy${tag_postfix}"
 database_name="mpc-events-db${tag_postfix}"
 table_name=${s3_bucket_data_pipeline//-/_}
 data_upload_key_path="semi-automated-data-ingestion"
-events_data_upload_s3_key="events-data-validation"
 query_results_key_path="query-results"
 
 if "$undeploy"
