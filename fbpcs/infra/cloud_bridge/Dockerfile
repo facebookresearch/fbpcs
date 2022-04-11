@@ -58,7 +58,6 @@ COPY aws_terraform_template /terraform_deployment/terraform_scripts
 COPY data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
 COPY semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
 COPY config.yml /terraform_deployment/config
-COPY data_validation /terraform_deployment/terraform_scripts/data_validation
 COPY cli.py /terraform_deployment
 COPY deployment_helper /terraform_deployment/deployment_helper
 # #########################################

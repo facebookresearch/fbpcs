@@ -33,11 +33,6 @@ variable "data_upload_key_path" {
   default     = "semi-automated-data-ingestion"
 }
 
-variable "events_data_upload_s3_key" {
-  description = "the object key where manually preprocessed event CSVs will be uploaded"
-  default     = "events-data-validation"
-}
-
 variable "query_results_key_path" {
   description = "the object key where Athena query results are stored"
   default     = "query-results"
