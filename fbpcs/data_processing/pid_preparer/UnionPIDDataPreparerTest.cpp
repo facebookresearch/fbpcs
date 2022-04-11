@@ -133,4 +133,40 @@ TEST(UnionPIDDataPreparerTest, RowCountTest) {
   validateRowCounts(rowCountExpected, outpath);
 }
 
+TEST(UnionPIDDataPreparerTest, ColumnCountTest) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,aaa,bbb",
+      "123,456,789,abc,def",
+      "111,,,aaa,bbb",
+      "999,888,,aaa,bbb",
+      ",777,,aaa,bbb",
+      ",666,555,aaa,bbb"};
+  std::string expected{"123,456\n111\n999,888\n777\n666,555\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 2};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
+TEST(UnionPIDDataPreparerTest, DuplicateHandlingTest) {
+  std::vector<std::string> lines = {
+      "id_,id_1,id_2,aaa,bbb",
+      "123,456,789,abc,def",
+      "123,,,aaa,bbb",
+      "999,888,,aaa,bbb",
+      ",456,,aaa,bbb",
+      "666,777,888,aaa,bbb"};
+  std::string expected{"123,456,789\n999,888\n"};
+  std::filesystem::path inpath{tmpnam(nullptr)};
+  std::filesystem::path outpath{tmpnam(nullptr)};
+  writeLinesToFile(inpath, lines);
+
+  UnionPIDDataPreparer preparer{inpath, outpath, "/tmp/", 3};
+  preparer.prepare();
+  validateFileContents(expected, outpath);
+}
+
 } // namespace measurement::pid

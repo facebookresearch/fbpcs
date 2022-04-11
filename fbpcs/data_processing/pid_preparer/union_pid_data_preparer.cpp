@@ -22,6 +22,7 @@ DEFINE_string(
     tmp_directory,
     "/tmp/",
     "Directory where temporary files should be saved before final write");
+DEFINE_int32(max_column_cnt, 1, "Number of columns to write");
 DEFINE_int32(log_every_n, 1'000'000, "How frequently to log updates");
 
 int main(int argc, char** argv) {
@@ -31,7 +32,11 @@ int main(int argc, char** argv) {
 
   std::filesystem::path tmpDirectory{FLAGS_tmp_directory};
   measurement::pid::UnionPIDDataPreparer preparer{
-      FLAGS_input_path, FLAGS_output_path, tmpDirectory, FLAGS_log_every_n};
+      FLAGS_input_path,
+      FLAGS_output_path,
+      tmpDirectory,
+      FLAGS_max_column_cnt,
+      FLAGS_log_every_n};
 
   preparer.prepare();
   return 0;

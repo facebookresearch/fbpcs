@@ -8,6 +8,7 @@
 #include "UnionPIDDataPreparer.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -21,6 +22,7 @@
 
 #include <re2/re2.h>
 
+#include <folly/String.h>
 #include "folly/Random.h"
 #include "folly/logging/xlog.h"
 
@@ -33,43 +35,7 @@
 
 namespace measurement::pid {
 
-// The `split` function internally uses RE2 which relies on consuming patterns.
-// This pattern indicates it will get all the non commas in a capture group.
-// The ,? at the end means there may not be a comma in the line at all.
-static const std::string kCommaSplitRegex = "([^,]+),?";
-static const std::string kIdColumnName = "id_";
-
-template <typename T>
-static std::string vectorToString(const std::vector<T>& vec) {
-  std::stringstream buf;
-  buf << "[";
-  bool first = true;
-  for (const auto& col : vec) {
-    if (!first) {
-      buf << ", ";
-    }
-    buf << col;
-    first = false;
-  }
-  buf << "]";
-  return buf.str();
-}
-
-std::vector<std::string> UnionPIDDataPreparer::split(
-    std::string& str,
-    const std::string& delim) const {
-  // Preprocessing step: Remove spaces if any
-  str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
-  std::vector<std::string> tokens;
-  re2::RE2 rgx{delim};
-  re2::StringPiece input{str}; // Wrap a StringPiece around it
-
-  std::string token;
-  while (RE2::Consume(&input, rgx, &token)) {
-    tokens.push_back(token);
-  }
-  return tokens;
-}
+static const std::string kIdColumnPrefix = "id_";
 
 UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   UnionPIDDataPreparerResults res;
@@ -86,22 +52,38 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   auto tmpFile = std::make_unique<std::ofstream>(tmpFilename);
 
   std::string line;
+  std::vector<std::string> header;
 
   getline(inStream, line);
-  auto header = split(line, kCommaSplitRegex);
-  auto idIter = std::find(header.begin(), header.end(), kIdColumnName);
-  if (idIter == header.end()) {
+  line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
+  folly::split(",", line, header);
+
+  auto idIter = header.begin();
+  std::vector<std::int64_t> idColumnIndices;
+
+  // find indices of columns with its column name start with kIdColumnPrefix
+  auto hasIdColumnPrefix = [&](std::string const& c) {
+    return c.rfind(kIdColumnPrefix) == 0;
+  };
+  while ((idIter = std::find_if(idIter, header.end(), hasIdColumnPrefix)) !=
+         header.end()) {
+    idColumnIndices.push_back(std::distance(header.begin(), idIter));
+    idIter++;
+  }
+  if (0 == idColumnIndices.size()) {
     // note: it's not *essential* to clean up tmpfile here, but it will
     // pollute our test directory otherwise, which is just somewhat annoying.
     std::remove(tmpFilename.c_str());
-    XLOG(FATAL) << kIdColumnName << " column missing from input header\n"
-                << "Header: " << vectorToString(header);
+    XLOG(FATAL) << kIdColumnPrefix
+                << " prefixed-column missing from input header"
+                << "Header: [" << folly::join(",", header) << "]";
   }
 
-  auto idColumnIdx = std::distance(header.begin(), idIter);
   std::unordered_set<std::string> seenIds;
   while (getline(inStream, line)) {
-    auto cols = split(line, kCommaSplitRegex);
+    std::vector<std::string> cols;
+    line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
+    folly::split(",", line, cols);
     auto rowSize = cols.size();
     auto headerSize = header.size();
 
@@ -113,16 +95,39 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
                   << res.linesProcessed << '\n'
                   << "Header has size " << headerSize << " while row has size "
                   << rowSize << '\n'
-                  << "Header: " << vectorToString(header) << '\n'
-                  << "Row   : " << vectorToString(cols);
+                  << "Header: [" << folly::join(",", header) << "]\n"
+                  << "Row   : [" << folly::join(",", header) << "]";
     }
 
-    auto id = cols.at(idColumnIdx);
-    if (seenIds.find(id) == seenIds.end()) {
-      *tmpFile << id << '\n';
-      seenIds.insert(id);
-    } else {
-      ++res.duplicateIdCount;
+    // Stores non-null id values in vector ids.
+    // Duplicate ids are not allowed. If we find duplicates, we skip this row.
+    bool isDuplicateRow = false;
+    std::vector<std::string> ids;
+    for (std::int64_t idColumnIdx : idColumnIndices) {
+      auto id = cols.at(idColumnIdx);
+      if (id == "") {
+        continue;
+      }
+      if (seenIds.find(id) != seenIds.end()) {
+        isDuplicateRow = true;
+        ++res.duplicateIdCount;
+        break;
+      }
+      ids.push_back(id);
+      if (ids.size() == maxColumnCnt_) {
+        break;
+      }
+    }
+
+    // skip if number of ids == 0 or identifiers is already present in other row
+    if (ids.size() > 0 && !isDuplicateRow) {
+      // only when row is not skipped we put ids into seenIds
+      for (auto id : ids) {
+        seenIds.insert(id);
+      }
+
+      // join all the ids with delimiter ","
+      *tmpFile << folly::join(",", ids) << '\n';
     }
 
     ++res.linesProcessed;
