@@ -28,6 +28,8 @@ class OneDockerBinaryNames(Enum):
     CROSS_PSI_CLIENT = "pid/cross-psi-client"
     CROSS_PSI_COR_SERVER = "pid/cross-psi-xor-server"
     CROSS_PSI_COR_CLIENT = "pid/cross-psi-xor-client"
+    PID_MULTI_KEY_CLIENT = "pid/private-id-multi-key-client"
+    PID_MULTI_KEY_SERVER = "pid/private-id-multi-key-server"
 
     LIFT_COMPUTE = "private_lift/lift"
 
