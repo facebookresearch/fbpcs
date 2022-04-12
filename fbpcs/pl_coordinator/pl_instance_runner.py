@@ -24,7 +24,8 @@ from fbpcs.pl_coordinator.constants import (
     CANCEL_STAGE_TIMEOUT,
 )
 from fbpcs.pl_coordinator.exceptions import (
-    PLInstanceCalculationException,
+    PCInstanceCalculationException,
+    PCStudyValidationException,
     IncompatibleStageError,
 )
 from fbpcs.pl_coordinator.pc_partner_instance import PrivateComputationPartnerInstance
@@ -75,7 +76,10 @@ def run_instance(
 ) -> None:
     num_tries = num_tries if num_tries is not None else MAX_TRIES
     if num_tries < MIN_TRIES or num_tries > MAX_TRIES:
-        raise ValueError(f"num_tries must be between {MIN_TRIES} and {MAX_TRIES}.")
+        raise PCStudyValidationException(
+            "Number of retries not allowed",
+            f"num_tries must be between {MIN_TRIES} and {MAX_TRIES}.",
+        )
     client = PLGraphAPIClient(config, logger)
     instance_runner = PLInstanceRunner(
         config,
@@ -110,16 +114,19 @@ def run_instances(
     dry_run: Optional[bool] = False,
 ) -> None:
     if len(instance_ids) is not len(input_paths):
-        raise ValueError(
-            "Number of instances and number of input paths must be the same"
+        raise PCStudyValidationException(
+            f"# instances: {len(instance_ids)} != # input paths: {len(input_paths)}",
+            "Number of instances and number of input paths must be the same",
         )
     if len(input_paths) is not len(num_shards_list):
-        raise ValueError(
-            "Number of input paths and number of num_shards must be the same"
+        raise PCStudyValidationException(
+            f"# input paths: {len(input_paths)} != # shards: {len(num_shards_list)}",
+            "Number of input paths and number of num_shards must be the same",
         )
     if not MIN_NUM_INSTANCES <= len(instance_ids) <= MAX_NUM_INSTANCES:
-        raise ValueError(
-            f"Number of instances must be between {MIN_NUM_INSTANCES} and {MAX_NUM_INSTANCES}"
+        raise PCStudyValidationException(
+            "Number of instances not allowed",
+            f"Number of instances must be between {MIN_NUM_INSTANCES} and {MAX_NUM_INSTANCES}",
         )
     processes = list(
         map(
@@ -256,7 +263,7 @@ class PLInstanceRunner:
             else:
                 self.logger.info(f"Valid stage found: {valid_stage}")
                 return valid_stage
-        raise PLInstanceCalculationException(
+        raise PCInstanceCalculationException(
             "Timeout error",
             f"Waiting for valid stage timed out after {timeout}s.",
             "Try running again",
@@ -353,13 +360,13 @@ class PLInstanceRunner:
                     # only cancel once
                     cancel_time += POLL_INTERVAL
                 else:
-                    raise PLInstanceCalculationException(
+                    raise PCInstanceCalculationException(
                         f"Stage {stage.name} failed.",
                         f"Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.",
                         "Try running again",
                     )
             sleep(POLL_INTERVAL)
-        raise PLInstanceCalculationException(
+        raise PCInstanceCalculationException(
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.",
             "unknown",
             "Try running again",

@@ -16,6 +16,7 @@ from typing import Type
 from fbpcs.pl_coordinator.constants import (
     MAX_NUM_INSTANCES,
 )
+from fbpcs.pl_coordinator.exceptions import PCStudyValidationException
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     PLGraphAPIClient,
     GraphAPIGenericException,
@@ -54,10 +55,6 @@ STUDY_EXPIRE_TIME: int = 90 * SEC_IN_DAY
 CREATE_INSTANCE_TRIES = 3
 
 
-class PLStudyValidationException(RuntimeError):
-    pass
-
-
 def run_study(
     config: Dict[str, Any],
     study_id: str,
@@ -84,8 +81,9 @@ def run_study(
 
     # verify study opp_data_information is non-empty
     if OPP_DATA_INFORMATION not in study_data:
-        raise PLStudyValidationException(
-            f"Study {study_id} has no opportunity datasets."
+        raise PCStudyValidationException(
+            f"Study {study_id} has no opportunity datasets.",
+            f"Check {study_id} study data to include {OPP_DATA_INFORMATION}",
         )
 
     ## Step 2. Preparation. Find which cell-obj pairs should have new instances created for and which should use existing
@@ -178,7 +176,10 @@ def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
             "Number of objective_ids and number of input_paths don't match."
         )
     if err_msgs:
-        raise PLStudyValidationException(_join_err_msgs(err_msgs))
+        raise PCStudyValidationException(
+            _join_err_msgs(err_msgs),
+            "ensure objective_ids,input_paths have no duplicate and should be same 1-1 mapping",
+        )
 
 
 def _verify_study_type(study_data: Dict[str, Any]) -> None:
@@ -201,7 +202,10 @@ def _verify_study_type(study_data: Dict[str, Any]) -> None:
     if observation_end_time + STUDY_EXPIRE_TIME < current_time:
         err_msgs.append("Cannot run for study that finished more than 90 days ago.")
     if err_msgs:
-        raise PLStudyValidationException(_join_err_msgs(err_msgs))
+        raise PCStudyValidationException(
+            _join_err_msgs(err_msgs),
+            f"ensure {study_data['id']} study is LIFT, must have started, finished less than 90 days ago.",
+        )
 
 
 def _verify_mpc_objs(study_data: Dict[str, Any], objective_ids: List[str]) -> None:
@@ -218,15 +222,17 @@ def _verify_mpc_objs(study_data: Dict[str, Any], objective_ids: List[str]) -> No
         )
     )
     if not mpc_objectives:
-        raise PLStudyValidationException(
-            f"Study {study_data['id']} has no MPC objectives"
+        raise PCStudyValidationException(
+            f"Study {study_data['id']} has no MPC objectives",
+            "check study data that need to have MPC objectives",
         )
 
     # verify input objs are MPC objs of this study.
     for obj_id in objective_ids:
         if obj_id not in mpc_objectives:
-            raise ValueError(
-                f"Objective id {obj_id} invalid. Valid MPC objective ids for study {study_data['id']}: {','.join(mpc_objectives)}"
+            raise PCStudyValidationException(
+                f"Objective id {obj_id} invalid. Valid MPC objective ids for study {study_data['id']}: {','.join(mpc_objectives)}",
+                "input objs are MPC objs of this study.",
             )
 
 
@@ -394,7 +400,7 @@ def _has_duplicates(str_list: List[str]) -> bool:
 
 def _join_err_msgs(err_msgs: List[str]) -> str:
     err_msgs = list(map(lambda msg: "Error: " + msg, err_msgs))
-    return "\n" + "\n".join(err_msgs)
+    return "\n".join(err_msgs)
 
 
 def _print_json(msg: str, data: Dict[str, Any], logger: logging.Logger) -> None:

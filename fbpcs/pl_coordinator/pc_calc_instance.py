@@ -16,7 +16,7 @@ from fbpcs.pl_coordinator.constants import (
     POLL_INTERVAL,
     OPERATION_REQUEST_TIMEOUT,
 )
-from fbpcs.pl_coordinator.exceptions import PLInstanceCalculationException
+from fbpcs.pl_coordinator.exceptions import PCInstanceCalculationException
 from fbpcs.pl_coordinator.pl_graphapi_utils import GRAPHAPI_INSTANCE_STATUSES
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
@@ -75,7 +75,7 @@ class PrivateComputationCalcInstance:
                     )
                     return
                 sleep(POLL_INTERVAL)
-            raise PLInstanceCalculationException(
+            raise PCInstanceCalculationException(
                 "Timeout",
                 f"Poll {self.role} status timed out after {timeout}s expecting valid status.",
                 "Try running again",
@@ -103,13 +103,13 @@ class PrivateComputationCalcInstance:
                 fail_status,
                 PrivateComputationInstanceStatus.TIMEOUT,
             ]:
-                raise PLInstanceCalculationException(
+                raise PCInstanceCalculationException(
                     f"{self.role} failed with status {self.status}. Expecting status {status}.",
                     "unknown",
                     "Try running again",
                 )
             sleep(POLL_INTERVAL)
-        raise PLInstanceCalculationException(
+        raise PCInstanceCalculationException(
             "Timeout",
             f"Poll {self.role} status timed out after {timeout}s expecting status: {status}.",
             "Try running again",
