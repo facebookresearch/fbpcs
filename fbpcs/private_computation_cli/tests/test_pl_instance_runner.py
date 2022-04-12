@@ -15,7 +15,7 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import (
 )
 from fbpcs.pl_coordinator.pl_instance_runner import (
     PLInstanceRunner,
-    PLInstanceCalculationException,
+    PCInstanceCalculationException,
     IncompatibleStageError,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -280,7 +280,7 @@ class TestPlInstanceRunner(TestCase):
 
                 runner = self._get_runner(type(stage))
                 if not result:
-                    with self.assertRaises(PLInstanceCalculationException):
+                    with self.assertRaises(PCInstanceCalculationException):
                         runner.publisher.wait_stage_start(stage)
                 else:
                     runner.publisher.wait_stage_start(stage)
@@ -312,7 +312,7 @@ class TestPlInstanceRunner(TestCase):
 
                 runner = self._get_runner(type(stage))
                 if not result:
-                    with self.assertRaises(PLInstanceCalculationException):
+                    with self.assertRaises(PCInstanceCalculationException):
                         runner.wait_stage_complete(stage)
                 else:
                     runner.wait_stage_complete(stage)

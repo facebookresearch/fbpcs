@@ -15,8 +15,16 @@ class OneCommandRunnerBaseException(Exception):
         )
 
 
-# TODO(T114624787): [BE][PCS] rename PLInstanceCalculationException to PCInstanceCalculationException
-class PLInstanceCalculationException(OneCommandRunnerBaseException, RuntimeError):
+class PCStudyValidationException(OneCommandRunnerBaseException, RuntimeError):
+    def __init__(self, cause: str, remediation: str) -> None:
+        super().__init__(
+            msg="PCStudyValidationException",
+            cause=cause,
+            remediation=remediation,
+        )
+
+
+class PCInstanceCalculationException(OneCommandRunnerBaseException, RuntimeError):
     pass
 
 
