@@ -144,8 +144,8 @@ def run_attribution(
             logger,
         )
     instance_data = _get_pa_instance_info(client, instance_id, logger)
-    num_pid_containers = instance_data[NUM_CONTAINERS]
-    num_mpc_containers = instance_data[NUM_SHARDS]
+    num_pid_containers = instance_data[NUM_SHARDS]
+    num_mpc_containers = instance_data[NUM_CONTAINERS]
 
     ## Step 3. Run Instances. Run maximum number of instances in parallel
     logger.info(f"Start running instance {instance_id}.")
