@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from fbpcs.pid.entity.pid_instance import UnionPIDStage
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -19,13 +20,13 @@ from fbpcs.private_computation.service.decoupled_attribution_stage_service impor
 from fbpcs.private_computation.service.dummy_stage_service import (
     DummyStageService,
 )
-from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
 from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
     IdSpineCombinerStageService,
 )
 from fbpcs.private_computation.service.input_data_validation_stage_service import (
     InputDataValidationStageService,
 )
+from fbpcs.private_computation.service.pid_stage_service import PIDStageService
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
 )
@@ -56,7 +57,7 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED INPUT_DATA_VALIDATION ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED INPUT_DATA_VALIDATION PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -70,6 +71,18 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_STARTED,
         PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED,
         PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
+        False,
+    )
+    PID_SHARD = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PID_SHARD_STARTED,
+        PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
+        PrivateComputationInstanceStatus.PID_SHARD_FAILED,
+        False,
+    )
+    PID_PREPARE = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PID_PREPARE_STARTED,
+        PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
+        PrivateComputationInstanceStatus.PID_PREPARE_FAILED,
         False,
     )
     ID_MATCH = PrivateComputationStageFlowData(
@@ -144,9 +157,23 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
             )
-        elif self is self.ID_MATCH:
-            return IdMatchStageService(
+        elif self is self.PID_SHARD:
+            return PIDStageService(
                 args.pid_svc,
+                UnionPIDStage.PUBLISHER_SHARD,
+                UnionPIDStage.ADV_SHARD,
+            )
+        elif self is self.PID_PREPARE:
+            return PIDStageService(
+                args.pid_svc,
+                UnionPIDStage.PUBLISHER_PREPARE,
+                UnionPIDStage.ADV_PREPARE,
+            )
+        elif self is self.ID_MATCH:
+            return PIDStageService(
+                args.pid_svc,
+                UnionPIDStage.PUBLISHER_RUN_PID,
+                UnionPIDStage.ADV_RUN_PID,
             )
         elif self is self.ID_MATCH_POST_PROCESS:
             return PostProcessingStageService(
