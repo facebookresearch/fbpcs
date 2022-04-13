@@ -142,12 +142,16 @@ class PIDDispatcher(Dispatcher):
             raise PIDStageFailureError(f"{stage} already has status STARTED")
 
         self._update_instance_status(PIDInstanceStatus.STARTED, stage)
+        try:
+            res = await stage.run(
+                self.stage_inputs[stage],
+                wait_for_containers=wait_for_containers,
+                container_timeout=container_timeout,
+            )
+        except BaseException as e:
+            self.logger.info(f"{stage}: failed with exception {e}")
+            res = PIDStageStatus.FAILED
 
-        res = await stage.run(
-            self.stage_inputs[stage],
-            wait_for_containers=wait_for_containers,
-            container_timeout=container_timeout,
-        )
         self.logger.info(f"{stage}: {res}")
         if res is PIDStageStatus.FAILED:
             self._update_instance_status(PIDInstanceStatus.FAILED, stage)
