@@ -26,6 +26,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
         output_path: str,
         num_shards: int,
         tmp_directory: str,
+        max_id_column_cnt: int = 1,
         sort_strategy: str = DEFAULT_SORT_STRATEGY,
         # TODO T106159008: padding_size and run_name are only temporarily optional
         # because Lift does not use them. It should and will be required to use them.
@@ -48,6 +49,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
                 data_path=next_data_path,
                 output_path=next_output_path,
                 tmp_directory=tmp_directory,
+                max_id_column_cnt=max_id_column_cnt,
                 padding_size=padding_size,
                 run_name=run_name,
                 sort_strategy=sort_strategy,
