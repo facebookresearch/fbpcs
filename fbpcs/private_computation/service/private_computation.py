@@ -17,6 +17,7 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -120,6 +121,7 @@ class PrivateComputationService:
         output_dir: str,
         num_pid_containers: int,
         num_mpc_containers: int,
+        pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         concurrency: Optional[int] = None,
         attribution_rule: Optional[AttributionRule] = None,
         aggregation_type: Optional[AggregationType] = None,
@@ -153,6 +155,7 @@ class PrivateComputationService:
             synthetic_shard_path=synthetic_shard_path,
             num_pid_containers=num_pid_containers,
             num_mpc_containers=num_mpc_containers,
+            pid_protocol=pid_protocol,
             attribution_rule=attribution_rule,
             aggregation_type=aggregation_type,
             input_path=input_path,
