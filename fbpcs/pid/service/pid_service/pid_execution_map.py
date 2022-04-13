@@ -40,6 +40,31 @@ UnionPIDAdvertiserFlow = PIDFlow(
     },
 )
 
+MultiKeyPIDPublisherFlow = PIDFlow(
+    name="multikey_pid_publisher",
+    base_flow="multikey_pid",
+    extra_args={},
+    flow={
+        UnionPIDStage.PUBLISHER_SHARD: [
+            UnionPIDStage.PUBLISHER_PREPARE,
+        ],
+        UnionPIDStage.PUBLISHER_PREPARE: [UnionPIDStage.PUBLISHER_RUN_PID],
+        UnionPIDStage.PUBLISHER_RUN_PID: [],
+    },
+)
+
+MultiKeyPIDAdvertiserFlow = PIDFlow(
+    name="multikey_pid_advertiser",
+    base_flow="multikey_pid",
+    extra_args={},
+    flow={
+        UnionPIDStage.ADV_SHARD: [
+            UnionPIDStage.ADV_PREPARE,
+        ],
+        UnionPIDStage.ADV_PREPARE: [UnionPIDStage.ADV_RUN_PID],
+        UnionPIDStage.ADV_RUN_PID: [],
+    },
+)
 
 # For now the only options supported are the union pid with publisher and partner roles
 PIDDispatcherFlowMap: Dict[PIDExecutionFlowLookupKey, PIDFlow] = {
@@ -49,6 +74,12 @@ PIDDispatcherFlowMap: Dict[PIDExecutionFlowLookupKey, PIDFlow] = {
     PIDExecutionFlowLookupKey(
         PIDRole.PARTNER, PIDProtocol.UNION_PID
     ): UnionPIDAdvertiserFlow,
+    PIDExecutionFlowLookupKey(
+        PIDRole.PUBLISHER, PIDProtocol.MULTIKEY_PID
+    ): MultiKeyPIDPublisherFlow,
+    PIDExecutionFlowLookupKey(
+        PIDRole.PARTNER, PIDProtocol.MULTIKEY_PID
+    ): MultiKeyPIDAdvertiserFlow,
 }
 
 
