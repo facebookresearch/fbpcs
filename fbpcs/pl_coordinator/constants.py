@@ -32,6 +32,6 @@ RETRY_INTERVAL = 60
 MIN_NUM_INSTANCES = 1
 MAX_NUM_INSTANCES = 5
 PROCESS_WAIT = 1  # interval between starting processes.
-INSTANCE_SLA = 14400  # 2 hr instance sla, 2 tries per stage, total 4 hrs.
+INSTANCE_SLA = 57600  # 8 hr instance sla, 2 tries per stage, total 16 hrs.
 
 FBPCS_GRAPH_API_TOKEN = "FBPCS_GRAPH_API_TOKEN"
