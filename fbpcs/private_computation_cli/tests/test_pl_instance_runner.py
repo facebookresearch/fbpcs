@@ -51,6 +51,7 @@ class TestPlInstanceRunner(TestCase):
         self.mock_graph_api_client = mock_graph_api_client
         self.mock_logger = mock_logger
         self.num_shards = 2
+        self.num_tries = 2
         self.instance_id = "123"
 
     @patch(
@@ -356,6 +357,51 @@ class TestPlInstanceRunner(TestCase):
         self.mock_graph_api_client.invoke_operation.assert_not_called()
         self.assertEqual(stage.completed_status, runner.publisher.status)
 
+    @patch("fbpcs.pl_coordinator.pl_instance_runner.PLInstanceRunner.run_stage")
+    @patch("fbpcs.pl_coordinator.pl_instance_runner.sleep")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
+    def test_run_retries(self, mock_get_instance, mock_sleep, mock_run_stage) -> None:
+
+        subtest_data = [
+            (
+                "ID_MATCH_STARTED",
+                PrivateComputationStageFlow.ID_MATCH.started_status,
+                PrivateComputationStageFlow.ID_MATCH.is_retryable,
+            ),
+            (
+                "CREATED",
+                PrivateComputationStageFlow.INPUT_DATA_VALIDATION.started_status,
+                PrivateComputationStageFlow.INPUT_DATA_VALIDATION.is_retryable,
+            ),
+        ]
+        for (
+            publisher_status,
+            partner_status,
+            is_retryable,
+        ) in subtest_data:
+            with self.subTest(
+                publisher_status=publisher_status,
+                partner_status=partner_status,
+                is_retryable=is_retryable,
+            ):
+                self.mock_graph_api_client.get_instance.return_value = (
+                    self._get_graph_api_output(publisher_status)
+                )
+                mock_get_instance.return_value = self._get_pc_instance(partner_status)
+                mock_run_stage.call_count = 0
+                mock_run_stage.side_effect = PCInstanceCalculationException(
+                    "force eception", "", ""
+                )
+
+                runner = self._get_runner(PrivateComputationStageFlow)
+                with self.assertRaises(PCInstanceCalculationException):
+                    runner.run()
+
+                if is_retryable:
+                    self.assertEqual(mock_run_stage.call_count, self.num_tries)
+                else:
+                    self.assertEqual(mock_run_stage.call_count, 1)
+
     def _get_runner(
         self, stage_flow: Type[PrivateComputationBaseStageFlow]
     ) -> PLInstanceRunner:
@@ -370,7 +416,7 @@ class TestPlInstanceRunner(TestCase):
             num_pid_containers=self.num_shards,
             logger=self.mock_logger,
             client=self.mock_graph_api_client,
-            num_tries=2,
+            num_tries=self.num_tries,
             dry_run=False,
             stage_flow=stage_flow,
         )

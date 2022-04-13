@@ -31,6 +31,7 @@ C = TypeVar("C", bound="PrivateComputationBaseStageFlow")
 class PrivateComputationStageFlowData(StageFlowData[PrivateComputationInstanceStatus]):
     is_joint_stage: bool
     timeout: int = 3600
+    is_retryable: bool = True
 
 
 class PrivateComputationBaseStageFlow(StageFlow):
@@ -42,6 +43,7 @@ class PrivateComputationBaseStageFlow(StageFlow):
         self.completed_status: PrivateComputationInstanceStatus = data.completed_status
         self.is_joint_stage: bool = data.is_joint_stage
         self.timeout: int = data.timeout
+        self.is_retryable: bool = data.is_retryable
 
     @classmethod
     def cls_name_to_cls(cls: Type[C], name: str) -> Type[C]:
