@@ -21,6 +21,7 @@ from fbpcs.common.service.pcs_container_service import PCSContainerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
@@ -37,6 +38,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
@@ -76,6 +78,13 @@ def create_instance(
 
     binary_config = pc_service.onedocker_binary_config_map["default"]
     tier = binary_config.binary_version if binary_config else None
+    pid_protocol = DEFAULT_PID_PROTOCOL
+    if (
+        num_pid_containers == 1
+        and "multikey_enabled" in config["pid"].keys()
+        and config["pid"]["multikey_enabled"]
+    ):
+        pid_protocol = PIDProtocol.MULTIKEY_PID
 
     instance = pc_service.create_instance(
         instance_id=instance_id,
@@ -85,6 +94,7 @@ def create_instance(
         output_dir=output_dir,
         num_pid_containers=num_pid_containers,
         num_mpc_containers=num_mpc_containers,
+        pid_protocol=pid_protocol,
         concurrency=concurrency,
         attribution_rule=attribution_rule,
         aggregation_type=aggregation_type,
