@@ -30,6 +30,7 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstanceStatus,
 )
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
 from fbpcs.post_processing_handler.post_processing_instance import (
@@ -41,6 +42,7 @@ from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 
 
 class PrivateComputationRole(Enum):
@@ -119,6 +121,7 @@ class PrivateComputationInstance(InstanceBase):
     output_dir: str
     num_pid_containers: int
     num_mpc_containers: int
+    pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL
 
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = None
