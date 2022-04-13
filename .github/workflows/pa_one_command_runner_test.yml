@@ -1,0 +1,54 @@
+name: PA One command runner test
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset_id:
+        description: Attribution Dataset id
+        required: true
+        default: 1127612294482487
+      input_path:
+        description: S3 path to synthetic attribution data
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_input.csv
+      tag:
+        description: Version tag to use
+        required: true
+        default: rc
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
+
+env:
+  FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
+  FBPCS_IMAGE_NAME: coordinator
+  FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_GRAPH_API_TOKEN }}
+
+jobs:
+  ### Private Attribution E2E tests
+
+  pa_test:
+    name: Private Attribution E2E Tests
+    runs-on: self-hosted
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash}}
+
+      - name: One Command runner
+        run: |
+          ./fbpcs/scripts/run_fbpcs.sh run_attribution \
+          --dataset_id=${{ github.event.inputs.dataset_id}} \
+          --attribution_rule="last_click_1d" \
+          --input_path=${{ github.event.inputs.input_path}} \
+          --aggregation_type="measurement" \
+          --concurrency=4 \
+          --num_files_per_mpc_container=4 \
+          --config= ./fbpcs/tests/github/config_one_command_runner_test.yml \
+          --timestamp="1646870400"
