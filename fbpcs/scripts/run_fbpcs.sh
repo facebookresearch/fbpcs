@@ -48,7 +48,7 @@ https://<s3_conversion_data_file_path_for_objective_2> \
 function main() {
   check_dependencies
   parse_args "$@"
-  run_fbpcs
+  run_fbpcs || retry_run_fbpcs
 }
 
 function check_dependencies() {
@@ -135,11 +135,6 @@ function parse_args() {
     shift
   done
 
-  if [[ -n "$FBPCS_GRAPH_API_TOKEN" ]]; then
-    echo "Overriding graph api token with FBPCS_GRAPH_API_TOKEN env variable."
-    replace_config_var access_token "$FBPCS_GRAPH_API_TOKEN" "$real_config_path"
-  fi
-
   docker_image="${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${tag}"
 }
 
@@ -153,6 +148,30 @@ function run_fbpcs() {
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
     -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
     "${docker_image}" "${docker_cmd[@]}"
+}
+
+retry_run_fbpcs() {
+  exit_code="$?"
+  case $exit_code in
+    65)
+      tag="rc"
+      ;;
+    66)
+      tag="canary"
+      ;;
+    67)
+      tag="latest"
+      ;;
+    *)
+      exit $exit_code
+      ;;
+  esac
+
+  echo "Overriding docker version tag and config.yml binary tag with $tag"
+  docker_image="${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${tag}"
+  replace_config_var binary_version "$tag" "$real_config_path"
+
+  run_fbpcs
 }
 
 main "$@"
