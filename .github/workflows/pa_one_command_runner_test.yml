@@ -11,6 +11,10 @@ on:
         description: S3 path to synthetic attribution data
         required: true
         default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_input.csv
+      expected_result_path:
+        description: S3 path to expected results from synthetic run
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click.json
       tag:
         description: Version tag to use
         required: true
@@ -53,5 +57,17 @@ jobs:
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           --timestamp="1646870400" \
           --k_anonymity_threshold=0 \
+          -- \
+          --version=${{ github.event.inputs.tag }}
+      - name: Validate Results
+        # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
+        # the fbpcs_instances directory is where instances are written to (feature of run_fbpcs.sh)
+        # the config.yml specifies that /fbpcs_instances is the instance repo, which is the source of the "/{}"
+        run: |
+          find fbpcs_instances -regex 'fbpcs_instances/[0-9]+' | xargs -I {} ./fbpcs/scripts/run_fbpcs.sh \
+          validate \
+          "/{}" \
+          --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
+          --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }}
