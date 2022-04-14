@@ -286,6 +286,10 @@ class PLInstanceRunner:
                 self.publisher.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
                 valid_stage = self.wait_valid_stage(WAIT_VALID_STAGE_TIMEOUT)
                 if valid_stage is not None:
+                    # disable retries by MAX_TRIES+1 to prevent retries if stage is not retryable
+                    if not valid_stage.is_retryable:
+                        tries = MAX_TRIES + 1
+
                     self.run_stage(valid_stage)
                     # run the next stage
                     if not self.dry_run:
