@@ -18,6 +18,7 @@ from fbpcs.pl_coordinator.constants import (
 from fbpcs.pl_coordinator.exceptions import PCStudyValidationException
 from fbpcs.pl_coordinator.exceptions import (
     sys_exit_after,
+    IncorrectVersionError,
     OneCommandRunnerBaseException,
 )
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
@@ -28,6 +29,7 @@ from fbpcs.pl_coordinator.pl_graphapi_utils import (
 from fbpcs.pl_coordinator.pl_instance_runner import (
     run_instances,
 )
+from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
@@ -35,6 +37,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
+    get_tier,
     get_instance,
 )
 
@@ -114,6 +117,9 @@ def run_study(
         instances_input_path,
         logger,
     )
+
+    # check that the version in config.yml is same as from graph api
+    _check_versions(cell_obj_instance, config, client)
 
     ## Step 3. Run Instances. Run maximum number of instances in parallel
 
@@ -393,6 +399,39 @@ def _instance_to_input_path(
                     "num_shards": data["num_shards"],
                 }
     return instance_input_path
+
+
+def _check_versions(
+    cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
+    config: Dict[str, Any],
+    client: PLGraphAPIClient,
+) -> None:
+    """Checks that the publisher version (graph api) and the partner version (config.yml) are the same
+
+    Arguments:
+        cell_obj_instances: theoretically is dict mapping cell->obj->instance.
+        config: The dict representation of a config.yml file
+        client: Interface for submitting graph API requests
+
+    Raises:
+        IncorrectVersionError: the publisher and partner are running with different versions
+    """
+
+    config_tier = get_tier(config)
+
+    for cell_id in cell_obj_instances:
+        for objective_id in cell_obj_instances[cell_id]:
+            instance_data = cell_obj_instances[cell_id][objective_id]
+            instance_id = instance_data["instance_id"]
+            # if there is no tier for some reason (e.g. old study?), let's just assume
+            # the tier is correct
+            tier_str = json.loads(client.get_instance(instance_id).text).get("tier")
+            if tier_str:
+                expected_tier = PCSTier.from_str(tier_str)
+                if expected_tier is not config_tier:
+                    raise IncorrectVersionError.make_error(
+                        instance_id, expected_tier, config_tier
+                    )
 
 
 def _date_to_timestamp(time_str: str) -> int:
