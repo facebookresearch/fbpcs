@@ -6,10 +6,36 @@
 
 # pyre-strict
 
+import functools
+import logging
+import sys
 from enum import Enum
 
 from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
+
+# decorators are a serious pain to add typing for, so I'm not going to bother...
+# pyre-ignore
+def sys_exit_after(func):
+    """
+    Catch exceptions and exit with the proper exit codes
+    """
+
+    @functools.wraps(func)
+    # pyre-ignore
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except OneCommandRunnerBaseException as e:
+            logging.exception(e)
+            sys.exit(e.exit_code.value)
+        except Exception as e:
+            logging.exception(e)
+            sys.exit(OneCommandRunnerExitCode.ERROR.value)
+        else:
+            sys.exit(OneCommandRunnerExitCode.SUCCESS.value)
+
+    return wrapped
 
 
 class OneCommandRunnerExitCode(Enum):
