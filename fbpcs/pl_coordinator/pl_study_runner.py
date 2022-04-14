@@ -8,7 +8,6 @@
 import calendar
 import json
 import logging
-import sys
 import time
 from typing import Any, Dict, List, Optional
 from typing import Type
@@ -17,6 +16,10 @@ from fbpcs.pl_coordinator.constants import (
     MAX_NUM_INSTANCES,
 )
 from fbpcs.pl_coordinator.exceptions import PCStudyValidationException
+from fbpcs.pl_coordinator.exceptions import (
+    sys_exit_after,
+    OneCommandRunnerBaseException,
+)
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     PLGraphAPIClient,
     GraphAPIGenericException,
@@ -55,6 +58,10 @@ STUDY_EXPIRE_TIME: int = 90 * SEC_IN_DAY
 CREATE_INSTANCE_TRIES = 3
 
 
+# TODO(T116497329): don't use unstructured entities in pl_study_runner.py
+
+
+@sys_exit_after
 def run_study(
     config: Dict[str, Any],
     study_id: str,
@@ -145,19 +152,16 @@ def run_study(
         logger,
     )
 
-    try:
-        for instance_id in all_instance_ids:
-            if (
-                get_instance(config, instance_id, logger).status
-                is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
-            ):
-                logger.error(f"{instance_id=} FAILED.")
-                sys.exit(1)
-    except Exception as e:
-        logger.exception(e)
-        sys.exit(1)
-    else:
-        sys.exit(0)
+    for instance_id in all_instance_ids:
+        if (
+            get_instance(config, instance_id, logger).status
+            is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
+        ):
+            raise OneCommandRunnerBaseException(
+                f"{instance_id=} FAILED.",
+                "Status is not aggregation completed",
+                "Check logs for more information",
+            )
 
 
 def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
@@ -313,6 +317,7 @@ def _get_cell_obj_instance(
                 "id"
             ]
             cell_obj_instance[cell_id][objective_id][STATUS] = status.value
+
     return cell_obj_instance
 
 
