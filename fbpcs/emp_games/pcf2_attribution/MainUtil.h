@@ -59,7 +59,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     int startFileIndex,
     int remainingThreads,
     std::string serverIp,
-    int16_t port,
+    int port,
     std::string attributionRules,
     std::vector<std::string>& inputFilenames,
     std::vector<std::string>& outputFilenames) {
@@ -133,7 +133,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     std::vector<std::string>& outputFilenames,
     int16_t concurrency,
     std::string serverIp,
-    int16_t port,
+    int port,
     std::string attributionRules) {
   // use only as many threads as the number of files
   auto numThreads = std::min((int)inputFilenames.size(), (int)concurrency);

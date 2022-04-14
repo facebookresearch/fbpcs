@@ -51,7 +51,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
     int remainingThreads,
     int numThreads,
     std::string serverIp,
-    int16_t port,
+    int port,
     std::string aggregationFormats,
     std::vector<std::string>& inputSecretShareFilenames,
     std::vector<std::string>& inputClearTextFilenames,
@@ -131,7 +131,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFiles(
     std::vector<std::string>& outputFilenames,
     int16_t concurrency,
     std::string serverIp,
-    int16_t port,
+    int port,
     std::string aggregationFormats) {
   // use only as many threads as the number of files
   auto numThreads =
