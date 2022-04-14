@@ -21,6 +21,7 @@
 #include <folly/logging/xlog.h>
 
 #include "fbpcs/data_processing/hash_slinging_salter/HashSlingingSalter.hpp"
+#include "folly/String.h"
 
 namespace data_processing::sharder {
 namespace detail {
@@ -53,25 +54,41 @@ std::size_t HashBasedSharder::getShardFor(
 
 void HashBasedSharder::shardLine(
     std::string line,
-    const std::vector<std::unique_ptr<std::ofstream>>& outFiles) {
-  auto commaPos = line.find_first_of(",");
-  auto id = line.substr(0, commaPos);
+    const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+    const std::vector<int32_t>& idColumnIndices) {
+  std::vector<std::string> cols;
+  folly::split(",", line, cols);
+
+  std::string id = "";
+  for (auto idColumnIdx : idColumnIndices) {
+    if (idColumnIdx >= cols.size()) {
+      XLOG_EVERY_MS(INFO, 5000)
+          << "Discrepancy with header:" << line << " does not have "
+          << idColumnIdx << "th column.\n";
+      return;
+    }
+    auto& col = cols.at(idColumnIdx);
+    if (!col.empty()) {
+      if (!hmacKey_.empty()) {
+        // If hmacBase64Key is empty, the hashing already happened upstream.
+        // This means we can reinterpret the id as a base64-encoded string.
+        // Otherwise, hash all the id columns.
+        col = private_lift::hash_slinging_salter::base64SaltedHashFromBase64Key(
+            col, hmacKey_);
+      }
+      if (id.empty()) {
+        id = col;
+      }
+    }
+  }
+  if (id.empty()) {
+    XLOG_EVERY_MS(INFO, 5000) << "All the id values are empty in this row";
+    return;
+  }
   auto numShards = outFiles.size();
   std::size_t shard;
-  if (hmacKey_.empty()) {
-    // Assumption: the string is *already* an HMAC hashed value
-    // If hmacBase64Key is empty, the hashing already happened upstream.
-    // This means we can reinterpret the id as a base64-encoded string.
-    shard = getShardFor(id, numShards);
-    *outFiles.at(shard) << line << "\n";
-  } else {
-    auto base64SaltedId =
-        private_lift::hash_slinging_salter::base64SaltedHashFromBase64Key(
-            id, hmacKey_);
-    shard = getShardFor(base64SaltedId, numShards);
-
-    *outFiles.at(shard) << base64SaltedId << line.substr(commaPos) << "\n";
-  }
+  shard = getShardFor(id, numShards);
+  *outFiles.at(shard) << folly::join(",", cols) << "\n";
   logRowsToShard(shard);
 }
 } // namespace data_processing::sharder

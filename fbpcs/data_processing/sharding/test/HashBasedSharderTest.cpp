@@ -75,7 +75,8 @@ TEST(HashBasedSharderTest, TestShardLineNoHmacKey) {
   streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(1)));
 
   HashBasedSharder sharder{"unused", outputPaths, 123, ""};
-  sharder.shardLine(line, streams);
+  std::vector<int32_t> idColumnIndices{0};
+  sharder.shardLine(line, streams, idColumnIndices);
 
   // We can just reset the underlying unique_ptr to flush the writes to disk
   streams.at(0).reset();
@@ -104,7 +105,8 @@ TEST(HashBasedSharderTest, TestShardLineWithHmacKey) {
 
   std::string hmacKey = "abcd1234";
   HashBasedSharder sharder{"unused", outputPaths, 123, hmacKey};
-  sharder.shardLine(line, streams);
+  std::vector<int32_t> idColumnIndices{0};
+  sharder.shardLine(line, streams, idColumnIndices);
 
   // We can just reset the underlying unique_ptr to flush the writes to disk
   streams.at(0).reset();
@@ -114,6 +116,37 @@ TEST(HashBasedSharderTest, TestShardLineWithHmacKey) {
   std::vector<std::string> expected0{};
   std::vector<std::string> expected1{
       "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,1,2,3"};
+
+  data_processing::test_utils::expectFileRowsEqual(
+      outputPaths.at(0), expected0);
+  data_processing::test_utils::expectFileRowsEqual(
+      outputPaths.at(1), expected1);
+}
+
+TEST(HashBasedSharderTest, TestShardMultiKeyLineWithHmacKey) {
+  std::string line = "abcd,defg,1,2,3";
+  std::vector<std::unique_ptr<std::ofstream>> streams;
+  auto randStart = folly::Random::secureRand64();
+  std::vector<std::string> outputPaths{
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
+  };
+  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(0)));
+  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(1)));
+
+  std::string hmacKey = "abcd1234";
+  HashBasedSharder sharder{"unused", outputPaths, 123, hmacKey};
+  std::vector<int32_t> idColumnIndices{0, 1};
+  sharder.shardLine(line, streams, idColumnIndices);
+
+  // We can just reset the underlying unique_ptr to flush the writes to disk
+  streams.at(0).reset();
+  streams.at(1).reset();
+
+  // We didn't write headers, so we expect to *just* have the written line
+  std::vector<std::string> expected0{};
+  std::vector<std::string> expected1{
+      "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,1,2,3"};
 
   data_processing::test_utils::expectFileRowsEqual(
       outputPaths.at(0), expected0);
@@ -198,4 +231,45 @@ TEST(HashBasedSharderTest, TestShardWithHmacKey) {
   data_processing::test_utils::expectFileRowsEqual(
       outputPaths.at(1), expected1);
 }
+
+TEST(HashBasedSharderTest, TestShardMultiKeyWithHmacKey) {
+  std::vector<std::string> rows{
+      "id_email,id_phone,a,b,c",
+      "abcd,,1,2,3",
+      "abcd,hijk,4,5,6",
+      ",defg,7,8,9",
+      ",,0,0,0",
+  };
+  std::string hmacKey = "abcd1234";
+
+  std::string inputPath = "/tmp/HashBasedSharderTestShardInput" +
+      std::to_string(folly::Random::secureRand64());
+  data_processing::test_utils::writeVecToFile(rows, inputPath);
+  // TODO: Would be great to mock out inputstream/outputstream stuff
+  auto randStart = folly::Random::secureRand64();
+  std::vector<std::string> outputPaths{
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
+      "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
+  };
+  HashBasedSharder sharder{inputPath, outputPaths, 123, hmacKey};
+  sharder.shard();
+
+  // HMAC was applied offline, which is how we got these expected lines
+  // HMAC_SHA256(CAST(id AS VARBINARY), FROM_BASE64(hmacKey)) in Presto is a
+  // good way to generate more of these given our I/O specification.
+  std::vector<std::string> expected0{
+      "id_email,id_phone,a,b,c",
+      ",bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // ,defg line
+  };
+  std::vector<std::string> expected1{
+      "id_email,id_phone,a,b,c",
+      "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,,1,2,3", // abcd, line
+      "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,ZGCVov/c63+N2Swslf6pY6pWsNzS1IkXKVi+lmAD6yU=,4,5,6", // abcd,hijk line
+  };
+  data_processing::test_utils::expectFileRowsEqual(
+      outputPaths.at(0), expected0);
+  data_processing::test_utils::expectFileRowsEqual(
+      outputPaths.at(1), expected1);
+}
+
 } // namespace data_processing::sharder

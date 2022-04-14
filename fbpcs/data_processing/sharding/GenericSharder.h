@@ -151,7 +151,8 @@ class GenericSharder {
    */
   virtual void shardLine(
       std::string line,
-      const std::vector<std::unique_ptr<std::ofstream>>& outFiles);
+      const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+      const std::vector<int32_t>& idColumnIndices);
 
  private:
   std::string inputPath_;
