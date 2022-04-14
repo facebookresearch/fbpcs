@@ -102,7 +102,8 @@ class HashBasedSharder final : public GenericSharder {
    */
   void shardLine(
       std::string line,
-      const std::vector<std::unique_ptr<std::ofstream>>& outFiles) final;
+      const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+      const std::vector<int32_t>& idColumnIndices) final;
 
  private:
   std::string hmacKey_;

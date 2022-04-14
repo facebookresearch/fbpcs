@@ -32,7 +32,8 @@ class GenericSharderTest final : public GenericSharder {
 
   void shardLine(
       std::string line,
-      const std::vector<std::unique_ptr<std::ofstream>>& /* unused */) final {
+      const std::vector<std::unique_ptr<std::ofstream>>& /* unused */,
+      const std::vector<int32_t>& /* unused */) final {
     linesCalledWith_.push_back(line);
   }
 

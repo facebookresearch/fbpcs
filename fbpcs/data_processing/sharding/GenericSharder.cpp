@@ -23,6 +23,7 @@
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
 #include "fbpcs/data_processing/common/Logging.h"
 #include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
+#include "folly/String.h"
 
 namespace data_processing::sharder {
 namespace detail {
@@ -33,7 +34,13 @@ void stripQuotes(std::string& s) {
 void dos2Unix(std::string& s) {
   s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
 }
+
+void strRemoveBlanks(std::string& str) {
+  str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+}
 } // namespace detail
+
+static const std::string kIdColumnPrefix = "id_";
 
 std::vector<std::string> GenericSharder::genOutputPaths(
     const std::string& outputBasePath,
@@ -78,6 +85,27 @@ void GenericSharder::shard() {
   getline(inStream, line);
   detail::stripQuotes(line);
   detail::dos2Unix(line);
+  detail::strRemoveBlanks(line);
+
+  std::vector<std::string> header;
+  folly::split(",", line, header);
+
+  // find indices of columns with its column name start with kIdColumnPrefix
+  std::vector<int32_t> idColumnIndices;
+  for (int idx = 0; idx < header.size(); idx++) {
+    if (header[idx].compare(0, kIdColumnPrefix.length(), kIdColumnPrefix) ==
+        0) {
+      idColumnIndices.push_back(idx);
+    }
+  }
+  if (0 == idColumnIndices.size()) {
+    // note: it's not *essential* to clean up tmpfile here, but it will
+    // pollute our test directory otherwise, which is just somewhat annoying.
+    XLOG(FATAL) << kIdColumnPrefix
+                << " prefixed-column missing from input header"
+                << "Header: [" << folly::join(",", header) << "]";
+  }
+
   for (const auto& tmpFile : tmpFiles) {
     *tmpFile << line << "\n";
   }
@@ -88,7 +116,8 @@ void GenericSharder::shard() {
   while (getline(inStream, line)) {
     detail::stripQuotes(line);
     detail::dos2Unix(line);
-    shardLine(std::move(line), tmpFiles);
+    detail::strRemoveBlanks(line);
+    shardLine(std::move(line), tmpFiles, idColumnIndices);
     ++lineIdx;
     if (lineIdx % getLogRate() == 0) {
       XLOG(INFO) << "Processed line "
@@ -132,9 +161,28 @@ void GenericSharder::shard() {
 
 void GenericSharder::shardLine(
     std::string line,
-    const std::vector<std::unique_ptr<std::ofstream>>& outFiles) {
-  auto commaPos = line.find_first_of(",");
-  auto id = line.substr(0, commaPos);
+    const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+    const std::vector<int32_t>& idColumnIndices) {
+  std::vector<std::string> cols;
+  folly::split(",", line, cols);
+
+  std::string id = "";
+  for (auto idColumnIdx : idColumnIndices) {
+    if (idColumnIdx >= cols.size()) {
+      XLOG_EVERY_MS(INFO, 5000)
+          << "Discrepancy with header:" << line << " does not have "
+          << idColumnIdx << "th column.\n";
+      return;
+    }
+    id = cols.at(idColumnIdx);
+    if (!id.empty()) {
+      break;
+    }
+  }
+  if (id.empty()) {
+    XLOG_EVERY_MS(INFO, 5000) << "All the id values are empty in this row";
+    return;
+  }
   auto shard = getShardFor(id, outFiles.size());
   logRowsToShard(shard);
   *outFiles.at(shard) << line << "\n";
