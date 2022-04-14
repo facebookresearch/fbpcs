@@ -27,6 +27,7 @@ from fbpcs.post_processing_handler.post_processing_handler import PostProcessing
 from fbpcs.private_computation.entity.pc_validator_config import (
     PCValidatorConfig,
 )
+from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -324,6 +325,24 @@ def print_log_urls(
 
     for stage, log_url in log_urls.items():
         print(f"[{stage}]: {log_url}")
+
+
+def get_tier(config: Dict[str, Any]) -> PCSTier:
+    """Grab binary version from config.yml dict and convert to PCSTier
+
+    Arguments:
+        config: config.yml dict representation (assumed to be full representation)
+
+    Returns:
+        The PCSTier associated with the binary version
+    """
+
+    onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
+        config["private_computation"]["dependency"]["OneDockerBinaryConfig"]
+    )
+    binary_config = onedocker_binary_config_map["default"]
+    tier_str = binary_config.binary_version
+    return PCSTier.from_str(tier_str)
 
 
 def _build_container_service(config: Dict[str, Any]) -> PCSContainerService:
