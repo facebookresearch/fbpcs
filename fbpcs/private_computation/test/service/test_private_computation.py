@@ -795,12 +795,14 @@ class TestTransformFilePath(unittest.TestCase):
         test_cases = [
             "https://bucket-name.s3.Region.amazonaws.com/key-name",
             "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
-            "https://s3-S3-amazonaws-com-name.s3.Region.amazonaws.com/us-west-s3S3amazoncom/-name",  # contrived, 'worst' case example
+            "https://s3-s3-amazonaws-com-name.s3.Region.amazonaws.com/us-west-s3S3amazoncom/-name",  # contrived, 'worst' case example
+            "https://bucket-name-more-dashes.s3.us-east-1.amazonaws.com/Capital!(/LETTERS/06/12/976e100-75ig-4fjfjfcee-aaaa3l-f36a9e258.csv",
         ]
         expected_results = [
             "https://bucket-name.s3.Region.amazonaws.com/key-name",
             "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
-            "https://s3-S3-amazonaws-com-name.s3.Region.amazonaws.com/us-west-s3S3amazoncom/-name",
+            "https://s3-s3-amazonaws-com-name.s3.Region.amazonaws.com/us-west-s3S3amazoncom/-name",
+            "https://bucket-name-more-dashes.s3.us-east-1.amazonaws.com/Capital!(/LETTERS/06/12/976e100-75ig-4fjfjfcee-aaaa3l-f36a9e258.csv",
         ]
 
         for x, y in zip(test_cases, expected_results):
@@ -812,11 +814,13 @@ class TestTransformFilePath(unittest.TestCase):
             "S3://bucket-name/key-name",
             "s3://bucket-name/key-name",
             "s3://fbpcs-github-e2e/lift/results/partner_expected_result.json",
+            "s3://fbpcs-github-e2e/lift/results/Uppercase!(/partner_expected_result.json",
         ]
         expected_results = [
             "https://bucket-name.s3.Region.amazonaws.com/key-name",
             "https://bucket-name.s3.Region.amazonaws.com/key-name",
             "https://fbpcs-github-e2e.s3.Region.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://fbpcs-github-e2e.s3.Region.amazonaws.com/lift/results/Uppercase!(/partner_expected_result.json",
         ]
 
         for x, y in zip(test_cases, expected_results):
@@ -827,10 +831,12 @@ class TestTransformFilePath(unittest.TestCase):
         test_cases = [
             "https://s3.Region.amazonaws.com/bucket-name/key-name",
             "https://s3.us-west-2.amazonaws.com/fbpcs-github-e2e/lift/results/partner_expected_result.json",
+            "https://s3.us-west-2.amazonaws.com/fbpcs-github-e2e/lift/results/Uppercase!(/partner_expected_result.json",
         ]
         expected_results = [
             "https://bucket-name.s3.Region.amazonaws.com/key-name",
             "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/Uppercase!(/partner_expected_result.json",
         ]
 
         for x, y in zip(test_cases, expected_results):

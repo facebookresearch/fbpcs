@@ -428,9 +428,12 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
         ValueError:
     """
 
+    # TODO(T117264664): [BE][PCS] put other regex pieces in variables
+    key_pattern = "."
+
     # Check if it matches the path style access format, https://s3.Region.amazonaws.com/bucket-name/key-name
     if re.search(
-        r"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/[a-z0-9.-]+/[a-z0-9.-/]+",
+        rf"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/[a-z0-9.-]+/{key_pattern}+",
         file_path,
     ):
 
@@ -464,7 +467,7 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
         file_path = f"https://{bucket}.s3.{aws_region}.amazonaws.com/{key}"
 
     # Check if it matches the s3 style access format, s3://bucket-name/key-name
-    if re.search(r"[sS]3://[a-z0-9.-]+/[a-z0-9.-/]+", file_path):
+    if re.search(rf"[sS]3://[a-z0-9.-]+/{key_pattern}+", file_path):
 
         if aws_region is not None:
 
@@ -488,7 +491,7 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
             raise ValueError("Cannot be parsed to expected virtual-hosted-file format")
 
     if re.search(
-        r"https://[a-zA-Z0-9.-]+\.s3\.[a-zA-Z0-9.-]+\.amazonaws.com/[a-z0-9.-/]+",
+        rf"https://[a-z0-9.-]+\.s3\.[a-zA-Z0-9.-]+\.amazonaws.com/{key_pattern}+",
         file_path,
     ):
         return file_path
