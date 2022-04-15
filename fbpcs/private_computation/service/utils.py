@@ -214,6 +214,7 @@ async def start_combiner_service(
     combine_output_path: str,
     log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
     wait_for_containers: bool = False,
+    max_id_column_count: int = 1,
 ) -> List[ContainerInstance]:
     """Run combiner service and return those container instances
 
@@ -258,6 +259,7 @@ async def start_combiner_service(
         if private_computation_instance.is_validating
         else private_computation_instance.num_pid_containers,
         tmp_directory=binary_config.tmp_directory,
+        max_id_column_cnt=max_id_column_count,
         run_name=run_name,
         padding_size=padding_size,
         log_cost=log_cost,
