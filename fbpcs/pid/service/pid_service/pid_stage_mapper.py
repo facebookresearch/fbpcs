@@ -70,7 +70,12 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config_map[OneDockerBinaryNames.PID_SERVER.value],
+                onedocker_binary_config_map[
+                    OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
+                    if protocol == PIDProtocol.MULTIKEY_PID
+                    else OneDockerBinaryNames.PID_SERVER.value
+                ],
+                protocol,
                 server_ips,
             )
         elif stage is UnionPIDStage.ADV_SHARD:
@@ -101,7 +106,12 @@ class PIDStageMapper:
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config_map[OneDockerBinaryNames.PID_CLIENT.value],
+                onedocker_binary_config_map[
+                    OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
+                    if protocol == PIDProtocol.MULTIKEY_PID
+                    else OneDockerBinaryNames.PID_CLIENT.value
+                ],
+                protocol,
                 server_ips,
             )
         else:
