@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from fbpcs.pid.entity.pid_instance import UnionPIDStage
+from fbpcs.pid.service.pid_service.utils import get_max_id_column_cnt
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -184,6 +185,7 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
             return IdSpineCombinerStageService(
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
+                max_id_column_count=get_max_id_column_cnt(args.pid_svc.protocol),
             )
         elif self is self.RESHARD:
             return ShardStageService(

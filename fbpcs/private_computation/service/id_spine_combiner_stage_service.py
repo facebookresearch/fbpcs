@@ -43,10 +43,12 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
+        max_id_column_count: int = 1,
     ) -> None:
         self._onedocker_svc = onedocker_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._log_cost_to_s3 = log_cost_to_s3
+        self._max_id_column_count = max_id_column_count
         self._logger: logging.Logger = logging.getLogger(__name__)
 
     async def run_async(
@@ -77,6 +79,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             self._onedocker_binary_config_map,
             combine_output_path,
             log_cost_to_s3=self._log_cost_to_s3,
+            max_id_column_count=self._max_id_column_count,
         )
         self._logger.info("Finished running CombinerService")
 
