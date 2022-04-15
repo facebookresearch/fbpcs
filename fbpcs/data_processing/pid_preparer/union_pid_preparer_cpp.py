@@ -94,6 +94,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         output_path: str,
         onedocker_svc: OneDockerService,
         binary_version: str,
+        max_column_count: int = 1,
         tmp_directory: str = "/tmp/",
         container_timeout: Optional[int] = None,
         wait_for_container: bool = True,
@@ -106,6 +107,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 onedocker_svc,
                 binary_version,
                 tmp_directory,
+                max_column_count,
                 container_timeout,
                 wait_for_container,
                 env_vars,
@@ -120,6 +122,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         onedocker_svc: OneDockerService,
         binary_version: str,
         tmp_directory: str = "/tmp/",
+        max_column_count: int = 1,
         container_timeout: Optional[int] = None,
         wait_for_container: bool = True,
         env_vars: Optional[Dict[str, str]] = None,
@@ -133,6 +136,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 f"--input_path={input_path}",
                 f"--output_path={output_path}",
                 f"--tmp_directory={tmp_directory}",
+                f"--max_column_cnt={max_column_count}",
             ]
         )
 

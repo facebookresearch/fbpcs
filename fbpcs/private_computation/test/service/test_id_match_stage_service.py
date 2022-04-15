@@ -52,7 +52,6 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
 
         stage_svc = IdMatchStageService(
             pid_svc_mock,
-            protocol=PIDProtocol.UNION_PID,
         )
         await stage_svc.run_async(pc_instance)
         self.assertIsInstance(pc_instance.instances[0], PIDInstance)

@@ -67,6 +67,7 @@ class PIDDispatcher(Dispatcher):
                 instance_repository=self.instance_repository,
                 storage_svc=storage_svc,
                 onedocker_svc=onedocker_svc,
+                protocol=protocol,
                 onedocker_binary_config_map=onedocker_binary_config_map,
                 server_ips=server_ips,
             )

@@ -33,7 +33,6 @@ class IdMatchStageService(PrivateComputationStageService):
 
     Private attributes:
         _pid_svc: Creates PID instances and runs PID SHARD, PID PREPARE, and PID RUN
-        _protocol: An enum consumed by PIDService to determine which protocol to use, e.g. UNION_PID.
         _is_validating: if a test shard is injected to do run time correctness validation
         _synthetic_shard_path: path to the test shard to be injected if _is_validating
     """
@@ -41,12 +40,10 @@ class IdMatchStageService(PrivateComputationStageService):
     def __init__(
         self,
         pid_svc: PIDService,
-        protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         is_validating: bool = False,
         synthetic_shard_path: Optional[str] = None,
     ) -> None:
         self._pid_svc = pid_svc
-        self._protocol = protocol
         self._is_validating = is_validating
         self._synthetic_shard_path = synthetic_shard_path
 
@@ -74,7 +71,6 @@ class IdMatchStageService(PrivateComputationStageService):
         pid_instance_id = pc_instance.instance_id + "_id_match" + retry_counter_str
         pid_instance = self._pid_svc.create_instance(
             instance_id=pid_instance_id,
-            protocol=self._protocol,
             pid_role=self._map_private_computation_role_to_pid_role(pc_instance.role),
             num_shards=pc_instance.num_pid_containers,
             input_path=pc_instance.input_path,

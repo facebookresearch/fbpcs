@@ -13,6 +13,7 @@ from fbpcs.data_processing.pid_preparer.union_pid_preparer_cpp import (
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
+from fbpcs.pid.service.pid_service.utils import get_max_id_column_cnt
 
 
 class PIDPrepareStage(PIDStage):
@@ -84,6 +85,7 @@ class PIDPrepareStage(PIDStage):
                 onedocker_svc=self.onedocker_svc,
                 binary_version=self.onedocker_binary_config.binary_version,
                 tmp_directory=self.onedocker_binary_config.tmp_directory,
+                max_column_count=get_max_id_column_cnt(self.protocol),
                 wait_for_container=wait_for_containers,
                 container_timeout=container_timeout,
                 env_vars=env_vars,

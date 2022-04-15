@@ -23,6 +23,7 @@ from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_dispatcher import PIDDispatcher
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 
 
 class PIDService:
@@ -34,6 +35,7 @@ class PIDService:
         storage_svc: StorageService,
         instance_repository: PIDInstanceRepository,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
+        pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
     ) -> None:
         """Constructor of PIDService
         Keyword arguments:
@@ -45,12 +47,12 @@ class PIDService:
         self.storage_svc = storage_svc
         self.instance_repository = instance_repository
         self.onedocker_binary_config_map = onedocker_binary_config_map
+        self.protocol = pid_protocol
         self.logger: logging.Logger = logging.getLogger(__name__)
 
     def create_instance(
         self,
         instance_id: str,
-        protocol: PIDProtocol,
         pid_role: PIDRole,
         num_shards: int,
         input_path: str,
@@ -65,7 +67,7 @@ class PIDService:
         self.logger.info(f"Creating PID instance: {instance_id}")
         instance = PIDInstance(
             instance_id=instance_id,
-            protocol=protocol,
+            protocol=self.protocol,
             pid_role=pid_role,
             num_shards=num_shards,
             input_path=input_path,
