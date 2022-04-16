@@ -65,12 +65,16 @@ class PIDStageMapper:
                 protocol,
             )
         elif stage is UnionPIDStage.PUBLISHER_RUN_PID:
+            binary_name = OneDockerBinaryNames.PID_SERVER.value
+            if protocol == PIDProtocol.MULTIKEY_PID:
+                binary_name = OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
             return PIDProtocolRunStage(
                 stage,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config_map[OneDockerBinaryNames.PID_SERVER.value],
+                onedocker_binary_config_map[binary_name],
+                protocol,
                 server_ips,
             )
         elif stage is UnionPIDStage.ADV_SHARD:
@@ -96,12 +100,16 @@ class PIDStageMapper:
                 protocol,
             )
         elif stage is UnionPIDStage.ADV_RUN_PID:
+            binary_name = OneDockerBinaryNames.PID_CLIENT.value
+            if protocol == PIDProtocol.MULTIKEY_PID:
+                binary_name = OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
             return PIDProtocolRunStage(
                 stage,
                 instance_repository,
                 storage_svc,
                 onedocker_svc,
-                onedocker_binary_config_map[OneDockerBinaryNames.PID_CLIENT.value],
+                onedocker_binary_config_map[binary_name],
+                protocol,
                 server_ips,
             )
         else:

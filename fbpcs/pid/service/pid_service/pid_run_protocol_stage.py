@@ -12,11 +12,12 @@ from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.pid.entity.pid_instance import PIDStageStatus
+from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
@@ -35,6 +36,7 @@ class PIDProtocolRunStage(PIDStage):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config: OneDockerBinaryConfig,
+        protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         server_ips: Optional[List[str]] = None,
     ) -> None:
         super().__init__(
@@ -43,6 +45,7 @@ class PIDProtocolRunStage(PIDStage):
             storage_svc=storage_svc,
             onedocker_svc=onedocker_svc,
             onedocker_binary_config=onedocker_binary_config,
+            protocol=protocol,
             is_joint_stage=True,
         )
 
@@ -86,14 +89,21 @@ class PIDProtocolRunStage(PIDStage):
             # Run publisher commands in container
             self.logger.info("Publisher spinning up containers")
             try:
+                binary = OneDockerBinaryNames.PID_SERVER.value
+                if self.protocol == PIDProtocol.MULTIKEY_PID:
+                    binary = OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
                 pending_containers = self.onedocker_svc.start_containers(
-                    package_name=OneDockerBinaryNames.PID_SERVER.value,
+                    package_name=binary,
                     version=self.onedocker_binary_config.binary_version,
                     cmd_args_list=self._gen_command_args_list(
                         input_path=input_paths[0],
                         output_path=output_paths[0],
                         num_shards=num_shards,
-                        use_row_numbers=stage_input.pid_use_row_numbers,
+                        use_row_numbers=stage_input.pid_use_row_numbers
+                        and (self.protocol != PIDProtocol.MULTIKEY_PID),
+                        enable_metric_logging=(
+                            self.protocol == PIDProtocol.MULTIKEY_PID
+                        ),
                     ),
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
@@ -147,15 +157,22 @@ class PIDProtocolRunStage(PIDStage):
             # Run partner commands in container
             self.logger.info("Partner spinning up containers")
             try:
+                binary = OneDockerBinaryNames.PID_CLIENT.value
+                if self.protocol == PIDProtocol.MULTIKEY_PID:
+                    binary = OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
                 pending_containers = self.onedocker_svc.start_containers(
-                    package_name=OneDockerBinaryNames.PID_CLIENT.value,
+                    package_name=binary,
                     version=self.onedocker_binary_config.binary_version,
                     cmd_args_list=self._gen_command_args_list(
                         input_path=input_paths[0],
                         output_path=output_paths[0],
                         num_shards=num_shards,
                         server_hostnames=hostnames,
-                        use_row_numbers=stage_input.pid_use_row_numbers,
+                        use_row_numbers=stage_input.pid_use_row_numbers
+                        and (self.protocol != PIDProtocol.MULTIKEY_PID),
+                        enable_metric_logging=(
+                            self.protocol == PIDProtocol.MULTIKEY_PID
+                        ),
                     ),
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
@@ -200,6 +217,7 @@ class PIDProtocolRunStage(PIDStage):
         use_row_numbers: bool,
         server_hostnames: Optional[List[str]] = None,
         port: int = 15200,
+        enable_metric_logging: bool = False,
     ) -> List[str]:
         # partner
         if server_hostnames:
@@ -223,7 +241,9 @@ class PIDProtocolRunStage(PIDStage):
                 self._gen_command_args(
                     input_path=self.get_sharded_filepath(input_path, i),
                     output_path=self.get_sharded_filepath(output_path, i),
-                    metric_path=self.get_metrics_filepath(output_path, i),
+                    metric_path=self.get_metrics_filepath(output_path, i)
+                    if not enable_metric_logging
+                    else None,
                     port=port,
                     server_hostname=None,
                     use_row_numbers=use_row_numbers,
