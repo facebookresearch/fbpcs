@@ -15,6 +15,11 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
 )
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.pid.service.pid_service.utils import (
+    get_max_id_column_cnt,
+    get_pid_protocol_from_num_shards,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationInstance,
@@ -43,12 +48,12 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
-        max_id_column_count: int = 1,
+        pid_svc: Optional[PIDService] = None,
     ) -> None:
         self._onedocker_svc = onedocker_svc
+        self._pid_svc = pid_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._log_cost_to_s3 = log_cost_to_s3
-        self._max_id_column_count = max_id_column_count
         self._logger: logging.Logger = logging.getLogger(__name__)
 
     async def run_async(
@@ -71,6 +76,11 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
 
         self._logger.info(f"[{self}] Starting id spine combiner service")
 
+        pid_protocol = get_pid_protocol_from_num_shards(
+            pc_instance.num_pid_containers,
+            False if self._pid_svc is None else self._pid_svc.multikey_enabled,
+        )
+
         # TODO: we will write log_cost_to_s3 to the instance, so this function interface
         #   will get simplified
         container_instances = await start_combiner_service(
@@ -79,7 +89,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             self._onedocker_binary_config_map,
             combine_output_path,
             log_cost_to_s3=self._log_cost_to_s3,
-            max_id_column_count=self._max_id_column_count,
+            max_id_column_count=get_max_id_column_cnt(pid_protocol),
         )
         self._logger.info("Finished running CombinerService")
 

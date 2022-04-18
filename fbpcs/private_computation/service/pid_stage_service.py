@@ -10,7 +10,6 @@ from typing import List, Optional
 
 from fbpcs.pid.entity.pid_instance import (
     PIDInstance,
-    PIDProtocol,
     PIDRole,
     UnionPIDStage,
     PIDStageStatus,
@@ -24,9 +23,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
-)
-from fbpcs.private_computation.service.constants import (
-    DEFAULT_PID_PROTOCOL,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,

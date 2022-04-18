@@ -55,7 +55,6 @@ class TestPIDService(unittest.TestCase):
             mock_s3_storage_service,
             mock_instance_repo,
             onedocker_binary_config_map={"default": mock_onedocker_binary_config},
-            pid_protocol=TEST_PROTOCOL,
         )
 
     def test_create_instance(self):

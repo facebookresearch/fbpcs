@@ -41,7 +41,9 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
-from fbpcs.private_computation.service.utils import get_log_urls
+from fbpcs.private_computation.service.utils import (
+    get_log_urls,
+)
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
@@ -447,11 +449,15 @@ def _build_pid_service(
         pidinstance_repository_config, PIDInstanceRepository
     )
 
+    multikey_enabled = False
+    if "multikey_enabled" in pid_config.keys() and pid_config["multikey_enabled"]:
+        multikey_enabled = True
     return PIDService(
         onedocker_service,
         storage_service,
         repository_service,
         onedocker_binary_config_map,
+        multikey_enabled,
     )
 
 
