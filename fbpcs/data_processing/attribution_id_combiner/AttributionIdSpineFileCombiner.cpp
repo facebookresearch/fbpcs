@@ -36,10 +36,11 @@ void attributionIdSpineFileCombiner(
     std::ostream& outFile) {
   XLOG(INFO) << "Started.";
   const int32_t kPaddingSize = FLAGS_padding_size;
-  const std::vector<std::string> publisherCols = {
-      "ad_id", "timestamp", "is_click", "campaign_metadata"};
-  const std::vector<std::string> partnerCols = {
-      "conversion_timestamp", "conversion_value", "conversion_metadata"};
+  std::vector<std::string> publisherCols = {"ad_id", "timestamp", "is_click"};
+  std::vector<std::string> partnerCols = {
+      "conversion_timestamp", "conversion_value"};
+  std::vector<std::string> shareOptionalCols = {
+      "target_id", "action_type", "campaign_metadata", "conversion_metadata"};
 
   // Inspect the headers and verify if this is the publisher or partner dataset
   std::string headerLine;
@@ -59,6 +60,13 @@ void attributionIdSpineFileCombiner(
   }
 
   auto& aggregatedCols = isPublisherDataset ? publisherCols : partnerCols;
+  // Adding optional columns to aggregatedCols if available
+  for (auto& colName : shareOptionalCols) {
+    auto iter = std::find(header.begin(), header.end(), colName);
+    if (iter != header.end()) {
+      aggregatedCols.emplace_back(colName);
+    }
+  }
   std::vector<int32_t> colPaddingSize(aggregatedCols.size(), kPaddingSize);
 
   std::stringstream idSwapOutFile;
