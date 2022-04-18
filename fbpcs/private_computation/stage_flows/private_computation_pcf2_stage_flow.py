@@ -183,6 +183,7 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
             return IdSpineCombinerStageService(
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
+                pid_svc=args.pid_svc,
             )
         elif self is self.RESHARD:
             return ShardStageService(
