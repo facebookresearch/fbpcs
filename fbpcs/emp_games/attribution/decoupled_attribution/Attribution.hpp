@@ -87,7 +87,7 @@ const std::vector<AttributionRule> shareAttributionRules(
 /**
  * Computes the ad attributions for the given id.
  */
-const std::vector<PrivateAttribution> computeAttributionsForId(
+inline const std::vector<PrivateAttribution> computeAttributionsForId(
     const int64_t id,
     const std::vector<PrivateTouchpoint>& touchpoints,
     const std::vector<PrivateConversion>& conversions,
