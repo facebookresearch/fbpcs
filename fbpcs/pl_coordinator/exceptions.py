@@ -13,6 +13,7 @@ from enum import Enum
 
 from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
+from termcolor import colored
 
 # decorators are a serious pain to add typing for, so I'm not going to bother...
 # pyre-ignore
@@ -74,9 +75,12 @@ class OneCommandRunnerBaseException(Exception):
             "\n".join(
                 (
                     msg,
-                    f"Cause: {cause}",
-                    f"Remediation: {remediation}",
-                    f"Exit code: {exit_code} ({exit_code.value})",
+                    colored(f"Cause: {cause}", "red", attrs=["bold"]),
+                    colored(
+                        f"Remediation: {remediation}",
+                        "yellow",
+                        attrs=["bold"],
+                    ),
                 )
             )
         )
