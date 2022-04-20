@@ -15,6 +15,7 @@
 #include "folly/logging/xlog.h"
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
+#include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
@@ -34,7 +35,8 @@ static void runGame(
     const std::string& aggregationFormat,
     const std::filesystem::path& inputSecretSharePath,
     const std::filesystem::path& inputClearTextPath,
-    const std::string& outputPath) {
+    const std::string& outputPath,
+    bool useTls) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -43,7 +45,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, false, "");
+      PARTY, partyInfos, useTls, std::filesystem::temp_directory_path());
 
   AggregationApp<PARTY, schedulerId>(
       inputEncryption,
@@ -75,7 +77,8 @@ inline void testCorrectnessAggregationAppHelper(
     std::vector<std::string> inputSecretSharePathBob,
     std::vector<std::string> inputClearTextPathBob,
     std::vector<std::string> outputPathBob,
-    std::vector<std::string> expectedOutputFilePaths) {
+    std::vector<std::string> expectedOutputFilePaths,
+    bool useTls) {
   auto futureAlice = std::async(
       runGame<common::PUBLISHER, 2 * id, outputVisibility, inputEncryption>,
       serverIpAlice,
@@ -83,7 +86,8 @@ inline void testCorrectnessAggregationAppHelper(
       aggregationFormat,
       inputSecretSharePathAlice.at(id),
       inputClearTextPathAlice.at(id),
-      outputPathAlice.at(id));
+      outputPathAlice.at(id),
+      useTls);
   auto futureBob = std::async(
       runGame<common::PARTNER, 2 * id + 1, outputVisibility, inputEncryption>,
       serverIpBob,
@@ -91,7 +95,8 @@ inline void testCorrectnessAggregationAppHelper(
       "",
       inputSecretSharePathBob.at(id),
       inputClearTextPathBob.at(id),
-      outputPathBob.at(id));
+      outputPathBob.at(id),
+      useTls);
 
   futureAlice.get();
   futureBob.get();
@@ -129,15 +134,18 @@ inline void testCorrectnessAggregationAppHelper(
           inputSecretSharePathBob,
           inputClearTextPathBob,
           outputPathBob,
-          expectedOutputFilePaths);
+          expectedOutputFilePaths,
+          useTls);
     }
   }
 }
 
-class AggregationAppTest
-    : public ::testing::TestWithParam<std::tuple<int, common::Visibility>> {
+class AggregationAppTest : public ::testing::TestWithParam<
+                               std::tuple<int, common::Visibility, bool>> {
  protected:
   void SetUp() override {
+    fbpcf::engine::communication::setUpTlsFiles(
+        std::filesystem::temp_directory_path());
     port_ = 5000 + folly::Random::rand32() % 1000;
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
@@ -182,10 +190,12 @@ class AggregationAppTest
   void TearDown() override {
     std::filesystem::remove(outputPathAlice_);
     std::filesystem::remove(outputPathBob_);
+    fbpcf::engine::communication::deleteTlsFiles(
+        std::filesystem::temp_directory_path());
   }
 
   template <int id, common::Visibility visibility>
-  void testCorrectnessAggregationAppWrapper() {
+  void testCorrectnessAggregationAppWrapper(bool useTls) {
     testCorrectnessAggregationAppHelper<
         id,
         visibility,
@@ -203,7 +213,8 @@ class AggregationAppTest
         inputSecretShareFilePathsBob_,
         inputClearTextFilePathsBob_,
         outputFilePathsBob_,
-        expectedOutputFilePaths_);
+        expectedOutputFilePaths_,
+        useTls);
   }
 
   std::string serverIpAlice_;
@@ -223,7 +234,7 @@ class AggregationAppTest
 };
 
 TEST_P(AggregationAppTest, TestCorrectness) {
-  auto [id, visibility] = GetParam();
+  auto [id, visibility, useTls] = GetParam();
 
   switch (id) {
     case 0:
@@ -231,10 +242,11 @@ TEST_P(AggregationAppTest, TestCorrectness) {
         case common::Visibility::Publisher:
           testCorrectnessAggregationAppWrapper<
               0,
-              common::Visibility::Publisher>();
+              common::Visibility::Publisher>(useTls);
           break;
         case common::Visibility::Xor:
-          testCorrectnessAggregationAppWrapper<0, common::Visibility::Xor>();
+          testCorrectnessAggregationAppWrapper<0, common::Visibility::Xor>(
+              useTls);
           break;
       }
       break;
@@ -251,13 +263,16 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(0),
         ::testing::Values(
             common::Visibility::Publisher,
-            common::Visibility::Xor)),
+            common::Visibility::Xor),
+        ::testing::Bool()),
 
     [](const testing::TestParamInfo<AggregationAppTest::ParamType>& info) {
       auto id = std::to_string(std::get<0>(info.param));
       auto visibility = common::getVisibilityString(std::get<1>(info.param));
+      auto tls = std::get<2>(info.param) ? "True" : "False";
 
-      std::string name = "ID_" + id + "_Visibility_" + visibility;
+      std::string name =
+          "ID_" + id + "_Visibility_" + visibility + "_TLS_" + tls;
       return name;
     });
 

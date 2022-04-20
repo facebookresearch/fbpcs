@@ -15,6 +15,7 @@
 #include "folly/logging/xlog.h"
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
+#include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/pcf2_attribution/test/AttributionTestUtils.h"
@@ -31,7 +32,8 @@ static void runGame(
     const uint16_t port,
     const std::string& attributionRules,
     const std::filesystem::path& inputPath,
-    const std::string& outputPath) {
+    const std::string& outputPath,
+    bool useTls) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -40,7 +42,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, false, "");
+      PARTY, partyInfos, useTls, std::filesystem::temp_directory_path());
 
   AttributionApp<PARTY, schedulerId, usingBatch, inputEncryption>(
       std::move(communicationAgentFactory),
@@ -62,21 +64,24 @@ inline void testCorrectnessAttributionAppHelper(
     int16_t portBob,
     std::vector<std::string> inputPathBob,
     std::vector<std::string> outputPathBob,
-    std::vector<std::string> expectedOutputFilenames) {
+    std::vector<std::string> expectedOutputFilenames,
+    bool useTls) {
   auto futureAlice = std::async(
       runGame<common::PUBLISHER, 2 * id, usingBatch, inputEncryption>,
       serverIpAlice,
       portAlice + 100 * id,
       attributionRule.at(id),
       inputPathAlice.at(id),
-      outputPathAlice.at(id));
+      outputPathAlice.at(id),
+      useTls);
   auto futureBob = std::async(
       runGame<common::PARTNER, 2 * id + 1, usingBatch, inputEncryption>,
       serverIpBob,
       portBob + 100 * id,
       "",
       inputPathBob.at(id),
-      outputPathBob.at(id));
+      outputPathBob.at(id),
+      useTls);
 
   futureAlice.wait();
   futureBob.wait();
@@ -92,9 +97,12 @@ inline void testCorrectnessAttributionAppHelper(
 }
 
 class AttributionAppTest
-    : public ::testing::TestWithParam<std::tuple<int, bool>> {
+    : public ::testing::TestWithParam<
+          std::tuple<int, bool, bool>> { // id, usingBatch, useTls
  protected:
   void SetUp() override {
+    fbpcf::engine::communication::setUpTlsFiles(
+        std::filesystem::temp_directory_path());
     port_ = 5000 + folly::Random::rand32() % 1000;
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
@@ -126,10 +134,12 @@ class AttributionAppTest
   void TearDown() override {
     std::filesystem::remove(outputPathAlice_);
     std::filesystem::remove(outputPathBob_);
+    fbpcf::engine::communication::deleteTlsFiles(
+        std::filesystem::temp_directory_path());
   }
 
   template <int id, bool usingBatch>
-  void testCorrectnessAttributionAppWrapper() {
+  void testCorrectnessAttributionAppWrapper(bool useTls) {
     testCorrectnessAttributionAppHelper<
         id,
         usingBatch,
@@ -143,7 +153,8 @@ class AttributionAppTest
         port_,
         inputFilenamesBob_,
         outputFilenamesBob_,
-        expectedOutputFilenames_);
+        expectedOutputFilenames_,
+        useTls);
   }
 
   std::string serverIpAlice_;
@@ -160,35 +171,35 @@ class AttributionAppTest
 };
 
 TEST_P(AttributionAppTest, TestCorrectness) {
-  auto [id, usingBatch] = GetParam();
+  auto [id, usingBatch, useTls] = GetParam();
 
   switch (id) {
     case 0:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<0, true>();
+        testCorrectnessAttributionAppWrapper<0, true>(useTls);
       } else {
-        testCorrectnessAttributionAppWrapper<0, false>();
+        testCorrectnessAttributionAppWrapper<0, false>(useTls);
       }
       break;
     case 1:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<1, true>();
+        testCorrectnessAttributionAppWrapper<1, true>(useTls);
       } else {
-        testCorrectnessAttributionAppWrapper<1, false>();
+        testCorrectnessAttributionAppWrapper<1, false>(useTls);
       }
       break;
     case 2:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<2, true>();
+        testCorrectnessAttributionAppWrapper<2, true>(useTls);
       } else {
-        testCorrectnessAttributionAppWrapper<2, false>();
+        testCorrectnessAttributionAppWrapper<2, false>(useTls);
       }
       break;
     case 3:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<3, true>();
+        testCorrectnessAttributionAppWrapper<3, true>(useTls);
       } else {
-        testCorrectnessAttributionAppWrapper<3, false>();
+        testCorrectnessAttributionAppWrapper<3, false>(useTls);
       }
       break;
     default:
@@ -203,13 +214,17 @@ INSTANTIATE_TEST_SUITE_P(
     // the first parameter is an ID that is used to index into an
     // array for attribution rules and input/output file names.
     // See the class above for how the ID is used.
-    ::testing::Combine(::testing::Values(0, 1, 2, 3), ::testing::Bool()),
+    ::testing::Combine(
+        ::testing::Values(0, 1, 2, 3),
+        ::testing::Bool(),
+        ::testing::Bool()),
 
     [](const testing::TestParamInfo<AttributionAppTest::ParamType>& info) {
       auto id = std::to_string(std::get<0>(info.param));
       auto batch = std::get<1>(info.param) ? "True" : "False";
+      auto tls = std::get<2>(info.param) ? "True" : "False";
 
-      std::string name = "ID_" + id + "_Batch_" + batch;
+      std::string name = "ID_" + id + "_Batch_" + batch + "_TLS_" + tls;
       return name;
     });
 
