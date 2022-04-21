@@ -36,7 +36,8 @@ static void runGame(
     const std::filesystem::path& inputSecretSharePath,
     const std::filesystem::path& inputClearTextPath,
     const std::string& outputPath,
-    bool useTls) {
+    bool useTls,
+    const std::string& tlsDir) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -45,7 +46,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, std::filesystem::temp_directory_path());
+      PARTY, partyInfos, useTls, tlsDir);
 
   AggregationApp<PARTY, schedulerId>(
       inputEncryption,
@@ -78,7 +79,8 @@ inline void testCorrectnessAggregationAppHelper(
     std::vector<std::string> inputClearTextPathBob,
     std::vector<std::string> outputPathBob,
     std::vector<std::string> expectedOutputFilePaths,
-    bool useTls) {
+    bool useTls,
+    std::string& tlsDir) {
   auto futureAlice = std::async(
       runGame<common::PUBLISHER, 2 * id, outputVisibility, inputEncryption>,
       serverIpAlice,
@@ -87,7 +89,8 @@ inline void testCorrectnessAggregationAppHelper(
       inputSecretSharePathAlice.at(id),
       inputClearTextPathAlice.at(id),
       outputPathAlice.at(id),
-      useTls);
+      useTls,
+      tlsDir);
   auto futureBob = std::async(
       runGame<common::PARTNER, 2 * id + 1, outputVisibility, inputEncryption>,
       serverIpBob,
@@ -96,7 +99,8 @@ inline void testCorrectnessAggregationAppHelper(
       inputSecretSharePathBob.at(id),
       inputClearTextPathBob.at(id),
       outputPathBob.at(id),
-      useTls);
+      useTls,
+      tlsDir);
 
   futureAlice.get();
   futureBob.get();
@@ -135,7 +139,8 @@ inline void testCorrectnessAggregationAppHelper(
           inputClearTextPathBob,
           outputPathBob,
           expectedOutputFilePaths,
-          useTls);
+          useTls,
+          tlsDir);
     }
   }
 }
@@ -144,8 +149,7 @@ class AggregationAppTest : public ::testing::TestWithParam<
                                std::tuple<int, common::Visibility, bool>> {
  protected:
   void SetUp() override {
-    fbpcf::engine::communication::setUpTlsFiles(
-        std::filesystem::temp_directory_path());
+    tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
     port_ = 5000 + folly::Random::rand32() % 1000;
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
@@ -190,8 +194,7 @@ class AggregationAppTest : public ::testing::TestWithParam<
   void TearDown() override {
     std::filesystem::remove(outputPathAlice_);
     std::filesystem::remove(outputPathBob_);
-    fbpcf::engine::communication::deleteTlsFiles(
-        std::filesystem::temp_directory_path());
+    fbpcf::engine::communication::deleteTlsFiles(tlsDir_);
   }
 
   template <int id, common::Visibility visibility>
@@ -214,7 +217,8 @@ class AggregationAppTest : public ::testing::TestWithParam<
         inputClearTextFilePathsBob_,
         outputFilePathsBob_,
         expectedOutputFilePaths_,
-        useTls);
+        useTls,
+        tlsDir_);
   }
 
   std::string serverIpAlice_;
@@ -231,6 +235,7 @@ class AggregationAppTest : public ::testing::TestWithParam<
   std::vector<std::string> outputFilePathsAlice_;
   std::vector<std::string> outputFilePathsBob_;
   std::vector<std::string> expectedOutputFilePaths_;
+  std::string tlsDir_;
 };
 
 TEST_P(AggregationAppTest, TestCorrectness) {
