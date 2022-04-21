@@ -156,6 +156,30 @@ class PIDService:
         # Return refreshed instance
         return self.update_instance(instance_id)
 
+    def stop_instance(self, instance_id: str) -> PIDInstance:
+        self.logger.info(f"Stopping PID Instance: {instance_id}")
+        instance = self.instance_repository.read(instance_id)
+        if instance.current_stage is None:
+            self.logger.info(
+                f"Have no current stage to stop PID Instance: {instance_id}"
+            )
+            return instance
+
+        containers = instance.stages_containers.get(instance.current_stage, None)
+        if containers:
+            container_ids = [instance.instance_id for instance in containers]
+            errors = self.onedocker_svc.stop_containers(container_ids)
+            error_msg = list(filter(lambda _: _[1], zip(container_ids, errors)))
+            if error_msg:
+                self.logger.error(
+                    f"We encountered errors when stopping containers: {error_msg}"
+                )
+
+        instance.status = PIDInstanceStatus.CANCELED
+        self.instance_repository.update(instance)
+        self.logger.info(f"PID instance {instance_id} has been successfully canceled.")
+        return instance
+
     def get_instance(self, instance_id: str) -> PIDInstance:
         self.logger.info(f"Getting PID instance: {instance_id}")
         return self.instance_repository.read(instance_id)
@@ -164,7 +188,11 @@ class PIDService:
         self.logger.info(f"Updating PID Instance: {instance_id}")
         instance = self.instance_repository.read(instance_id)
 
-        if instance.status in [PIDInstanceStatus.COMPLETED, PIDInstanceStatus.FAILED]:
+        if instance.status in [
+            PIDInstanceStatus.COMPLETED,
+            PIDInstanceStatus.FAILED,
+            PIDInstanceStatus.CANCELED,
+        ]:
             return instance
 
         for stage, status in instance.stages_status.copy().items():
