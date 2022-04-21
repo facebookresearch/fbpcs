@@ -225,6 +225,30 @@ class TestPIDService(unittest.TestCase):
             sample_pid_instance, self.pid_service.get_instance(TEST_INSTANCE_ID)
         )
 
+    def test_stop_instance(self):
+        sample_pid_instance = self._get_sample_pid_instance()
+        sample_pid_instance.current_stage = UnionPIDStage.ADV_RUN_PID
+        sample_pid_instance.stages_containers[UnionPIDStage.ADV_RUN_PID] = [
+            self._create_container(i, ContainerInstanceStatus.STARTED) for i in range(2)
+        ]
+        self.pid_service.instance_repository.read = MagicMock(
+            return_value=sample_pid_instance
+        )
+        self.pid_service.onedocker_svc.stop_containers = MagicMock(return_value=[None])
+        canceled_instance = self.pid_service.stop_instance(TEST_INSTANCE_ID)
+        self.pid_service.onedocker_svc.stop_containers.assert_called_with(
+            [
+                "arn:aws:ecs:region:account_id:task/container_id_0",
+                "arn:aws:ecs:region:account_id:task/container_id_1",
+            ]
+        )
+        expected_pid_instance = sample_pid_instance
+        expected_pid_instance.status = PIDInstanceStatus.CANCELED
+        self.assertEqual(expected_pid_instance, canceled_instance)
+        self.pid_service.instance_repository.update.assert_called_with(
+            expected_pid_instance
+        )
+
     def _get_sample_pid_instance(self) -> PIDInstance:
         return PIDInstance(
             instance_id=TEST_INSTANCE_ID,

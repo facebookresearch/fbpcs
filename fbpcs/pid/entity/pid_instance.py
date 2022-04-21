@@ -50,6 +50,7 @@ class PIDInstanceStatus(Enum):
     STARTED = "STARTED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    CANCELED = "CANCELED"
 
 
 @dataclass
