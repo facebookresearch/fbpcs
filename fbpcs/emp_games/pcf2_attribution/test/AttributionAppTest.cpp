@@ -33,7 +33,8 @@ static void runGame(
     const std::string& attributionRules,
     const std::filesystem::path& inputPath,
     const std::string& outputPath,
-    bool useTls) {
+    bool useTls,
+    const std::string& tlsDir) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -42,7 +43,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, std::filesystem::temp_directory_path());
+      PARTY, partyInfos, useTls, tlsDir);
 
   AttributionApp<PARTY, schedulerId, usingBatch, inputEncryption>(
       std::move(communicationAgentFactory),
@@ -65,7 +66,8 @@ inline void testCorrectnessAttributionAppHelper(
     std::vector<std::string> inputPathBob,
     std::vector<std::string> outputPathBob,
     std::vector<std::string> expectedOutputFilenames,
-    bool useTls) {
+    bool useTls,
+    std::string& tlsDir) {
   auto futureAlice = std::async(
       runGame<common::PUBLISHER, 2 * id, usingBatch, inputEncryption>,
       serverIpAlice,
@@ -73,7 +75,8 @@ inline void testCorrectnessAttributionAppHelper(
       attributionRule.at(id),
       inputPathAlice.at(id),
       outputPathAlice.at(id),
-      useTls);
+      useTls,
+      tlsDir);
   auto futureBob = std::async(
       runGame<common::PARTNER, 2 * id + 1, usingBatch, inputEncryption>,
       serverIpBob,
@@ -81,7 +84,8 @@ inline void testCorrectnessAttributionAppHelper(
       "",
       inputPathBob.at(id),
       outputPathBob.at(id),
-      useTls);
+      useTls,
+      tlsDir);
 
   futureAlice.wait();
   futureBob.wait();
@@ -101,8 +105,7 @@ class AttributionAppTest
           std::tuple<int, bool, bool>> { // id, usingBatch, useTls
  protected:
   void SetUp() override {
-    fbpcf::engine::communication::setUpTlsFiles(
-        std::filesystem::temp_directory_path());
+    tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
     port_ = 5000 + folly::Random::rand32() % 1000;
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
@@ -134,8 +137,7 @@ class AttributionAppTest
   void TearDown() override {
     std::filesystem::remove(outputPathAlice_);
     std::filesystem::remove(outputPathBob_);
-    fbpcf::engine::communication::deleteTlsFiles(
-        std::filesystem::temp_directory_path());
+    fbpcf::engine::communication::deleteTlsFiles(tlsDir_);
   }
 
   template <int id, bool usingBatch>
@@ -154,7 +156,8 @@ class AttributionAppTest
         inputFilenamesBob_,
         outputFilenamesBob_,
         expectedOutputFilenames_,
-        useTls);
+        useTls,
+        tlsDir_);
   }
 
   std::string serverIpAlice_;
@@ -168,6 +171,7 @@ class AttributionAppTest
   std::vector<std::string> outputFilenamesAlice_;
   std::vector<std::string> outputFilenamesBob_;
   std::vector<std::string> expectedOutputFilenames_;
+  std::string tlsDir_;
 };
 
 TEST_P(AttributionAppTest, TestCorrectness) {
