@@ -106,19 +106,19 @@ log_streaming_data() {
 validateDeploymentResources () {
     local region=$1
     local pce_id=$2
-    local successMessage="Your PCE environments are set up correctly."
     echo "##### validating through PCE validator starts"
-    local pceValidatorOutput=$(python3 -m pce.validator --region="$region" --key-id="$AWS_ACCESS_KEY_ID" --key-data="$AWS_SECRET_ACCESS_KEY" --pce-id="$pce_id" 2>&1)
+    local pceValidatorOutput=$(python3 -m pce.validator --region="$region" --key-id="$AWS_ACCESS_KEY_ID" --key-data="$AWS_SECRET_ACCESS_KEY" --pce-id="$pce_id" --skip-step="vpc_peering" 2>&1)
+    local pceValidatorExitCode=$?
     echo "$pceValidatorOutput"
-    if echo "$pceValidatorOutput" | grep -q "$successMessage"
+    echo "$pceValidatorExitCode"
+
+    if [ $pceValidatorExitCode -ne 0 ]
     then
-        echo "PCE validation successful";
-        log_streaming_data "PCE validation successful"
-    else
         echo "PCE validator found some issue..please analyze further to debug the issue"
-        log_streaming_data "validator found some issue..please analyze logs further to debug the issue"
-        # TODO, once T111250475 is implemneted grep based on exit code
-        # exit 1
+        log_streaming_data "validator might have found some issue..please analyze the logs further to debug the issue"
+    else
+        log_streaming_data "PCE validation successful"
+        log_streaming_data "Action: Please contact META representative to accept the VPC peering request using META's AWS account"
     fi
     echo "##### validating through PCE validator end"
 }
