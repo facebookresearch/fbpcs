@@ -152,7 +152,9 @@ class PrivateComputationService:
             is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
             num_pid_containers=num_pid_containers,
-            num_mpc_containers=num_mpc_containers,
+            num_mpc_containers=self._get_number_of_mpc_containers(
+                game_type, num_pid_containers, num_mpc_containers
+            ),
             attribution_rule=attribution_rule,
             aggregation_type=aggregation_type,
             input_path=input_path,
@@ -187,6 +189,23 @@ class PrivateComputationService:
 
         self.instance_repository.create(instance)
         return instance
+
+    def _get_number_of_mpc_containers(
+        self,
+        game_type: PrivateComputationGameType,
+        num_pid_containers: int,
+        num_mpc_containers: int,
+    ) -> int:
+        # short-term plan of T117906435
+        # tl;dr for PL, nums of pid/mpc containers is coupled and decided by SVs
+        # https://www.internalfb.com/intern/sv/PRIVATE_LIFT_MAX_ROWS_PER_SHARD/
+        # we need to revisit it to decouple mpc/pid containers for PL
+        # by returning both values separately through graph API
+        return (
+            5 * num_pid_containers
+            if game_type is PrivateComputationGameType.LIFT
+            else num_mpc_containers
+        )
 
     # TODO T88759390: make an async version of this function
     def get_instance(self, instance_id: str) -> PrivateComputationInstance:
