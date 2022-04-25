@@ -18,6 +18,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+## 2022-04-25
+### Added
+  - Added the Apr-25-22 version of `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`
+  - Added the Apr-25-22 version of `Private Computation: Business pre-check questions`
+  - Added the Apr-25-22 version of `Private Computation: AWS pre-check questions`
+  - Added the Apr-25-22 version of `Private Computationt: Guide to answering AWS pre-check questions`
 
 ## 2022-02-03
 ### Added
