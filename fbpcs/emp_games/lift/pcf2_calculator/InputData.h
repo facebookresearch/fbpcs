@@ -35,6 +35,8 @@ class InputData {
       int64_t epoch = 0,
       int32_t numConversionsPerUser = INT32_MAX);
 
+  InputData() {}
+
   // Create a bitmask for the given groupId
   // Note that although the return value is a vector of int64_t, the real
   // values are just 0/1
