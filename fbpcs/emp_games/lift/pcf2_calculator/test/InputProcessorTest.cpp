@@ -92,4 +92,21 @@ TEST_F(InputProcessorTest, testNumRows) {
   EXPECT_EQ(publisherInputProcessor_.getNumRows(), 33);
   EXPECT_EQ(partnerInputProcessor_.getNumRows(), 33);
 }
+
+TEST_F(InputProcessorTest, testReach) {
+  auto future0 = std::async([&] {
+    return publisherInputProcessor_.getTestReach().openToParty(0).getValue();
+  });
+  auto future1 = std::async([&] {
+    return partnerInputProcessor_.getTestReach().openToParty(0).getValue();
+  });
+  auto testReach0 = future0.get();
+  auto testReach1 = future1.get();
+
+  std::vector<bool> expectTestReach = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0};
+  EXPECT_EQ(testReach0, expectTestReach);
+}
+
 } // namespace private_lift

@@ -121,6 +121,27 @@ std::vector<uint64_t> privatelyShareIntArrayFrom(
 }
 
 /**
+ * Privately share array of type T from sender, with secret batch output type O
+ * and input size. If the input has a different size, resize it accordingly and
+ * fill up additional entries with paddingValue.
+ */
+template <int sender, typename T, typename O>
+O privatelyShareArrayWithPaddingFrom(
+    const std::vector<T>& inputArray,
+    size_t size,
+    T paddingValue) {
+  std::vector<T> paddedInput;
+  for (size_t i = 0; i < size; ++i) {
+    if (i < inputArray.size()) {
+      paddedInput.push_back(inputArray.at(i));
+    } else {
+      paddedInput.push_back(paddingValue);
+    }
+  }
+  return O{paddedInput, sender};
+}
+
+/**
  * Convert a vector to a string, used for debug logging.
  */
 template <typename T>

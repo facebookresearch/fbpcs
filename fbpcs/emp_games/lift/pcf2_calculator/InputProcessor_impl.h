@@ -27,4 +27,22 @@ void InputProcessor<schedulerId>::validateNumRowsStep() {
     exit(1);
   }
 }
+
+template <int schedulerId>
+void InputProcessor<schedulerId>::privatelyShareTestReachStep() {
+  XLOG(INFO) << "Share reach";
+  std::vector<bool> testReach;
+  for (size_t i = 0; i < inputData_.getNumImpressions().size(); ++i) {
+    // A reach occurs when the number of impressions is nonzero, and we only
+    // compute this for the test population.
+    testReach.push_back(
+        inputData_.getTestPopulation().at(i) &
+        (inputData_.getNumImpressions().at(i) > 0));
+  }
+  testReach_ = common::privatelyShareArrayWithPaddingFrom<
+      common::PUBLISHER,
+      bool,
+      SecBit<schedulerId>>(testReach, numRows_, 0);
+}
+
 } // namespace private_lift
