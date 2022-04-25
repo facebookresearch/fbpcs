@@ -23,6 +23,7 @@ class PCEConfig:
     onedocker_task_definition: str
     partner_name: Optional[str] = None
     cloud_provider: CloudProvider = CloudProvider.AWS
+    cloud_account_id: Optional[str] = None
 
     def __str__(self) -> str:
         # pyre-ignore
