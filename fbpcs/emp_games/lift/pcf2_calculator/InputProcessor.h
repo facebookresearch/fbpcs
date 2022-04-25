@@ -11,6 +11,7 @@
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/Constants.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/InputData.h"
 
 namespace private_lift {
@@ -26,6 +27,7 @@ class InputProcessor {
         numRows_{inputData.getNumRows()},
         numConversionsPerUser_{numConversionsPerUser} {
     validateNumRowsStep();
+    privatelyShareTestReachStep();
   }
 
   InputProcessor() {}
@@ -34,14 +36,23 @@ class InputProcessor {
     return numRows_;
   }
 
+  const SecBit<schedulerId> getTestReach() const {
+    return testReach_;
+  }
+
  private:
   // Make sure input files have the same size
   void validateNumRowsStep();
+
+  // Privately share test reach (nonzero impressions)
+  void privatelyShareTestReachStep();
 
   int32_t myRole_;
   InputData inputData_;
   int64_t numRows_;
   int32_t numConversionsPerUser_;
+
+  SecBit<schedulerId> testReach_;
 };
 
 } // namespace private_lift
