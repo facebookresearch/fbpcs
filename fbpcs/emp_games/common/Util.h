@@ -83,35 +83,40 @@ std::vector<std::vector<O>> privatelyShareArrays(
 }
 
 /**
- * Helper method to share array of integers, with input width number of bits,
- * from sender to receiver.
+ * Share integer, with width number of bits, from sender to receiver. The
+ * integer is revealed in plaintext to the receiver.
+ */
+template <int schedulerId, size_t width, int sender, int receiver>
+uint64_t shareIntFrom(const int myRole, uint64_t input) {
+  // Sender shares input
+  typename fbpcf::frontend::MpcGame<
+      schedulerId>::template SecUnsignedInt<width, false>
+      secInput{input, sender};
+  // Reveal to receiver
+  uint64_t output = secInput.openToParty(receiver).getValue();
+  return (myRole == sender) ? input : output;
+}
+
+/**
+ * Share array of integers, with width number of bits, from sender to
+ * receiver.
  */
 template <int schedulerId, size_t width, int sender, int receiver>
 std::vector<uint64_t> privatelyShareIntArrayFrom(
     const int myRole,
     std::vector<uint64_t>& inputArray) {
-  using SecInt = typename fbpcf::frontend::MpcGame<
-      schedulerId>::template SecUnsignedInt<width, false>;
-
-  // Sender shares size of input
-  SecInt sharedSize(inputArray.size(), sender);
-  auto receiverSize = sharedSize.openToParty(receiver).getValue();
+  // Share array size
+  auto arraySize = shareIntFrom<schedulerId, width, sender, receiver>(
+      myRole, inputArray.size());
   if (myRole == receiver) {
-    inputArray.resize(receiverSize);
+    inputArray.resize(arraySize);
   }
-
-  // Sender shares input
-  std::vector<SecInt> sharedArray;
-  for (auto inputVal : inputArray) {
-    sharedArray.push_back(SecInt(inputVal, sender));
-  }
-
   // Reveal to receiver
   std::vector<uint64_t> outputArray;
-  for (auto sharedVal : sharedArray) {
-    outputArray.push_back(sharedVal.openToParty(receiver).getValue());
+  for (auto inputVal : inputArray) {
+    outputArray.push_back(
+        shareIntFrom<schedulerId, width, sender, receiver>(myRole, inputVal));
   }
-
   return (myRole == sender) ? inputArray : outputArray;
 }
 
