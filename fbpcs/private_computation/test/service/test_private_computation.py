@@ -8,6 +8,7 @@ import logging
 import time
 import unittest
 from collections import defaultdict
+from datetime import timedelta, timezone, datetime
 from typing import List, Optional, Tuple
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
@@ -201,6 +202,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
                 self.assertEqual(1, args.creation_ts)
                 self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
+
+                yesterday_date = datetime.now(tz=timezone.utc) - timedelta(days=1)
+                yesterday_timestamp = datetime.timestamp(yesterday_date)
+                self.assertEqual(
+                    int(yesterday_timestamp),
+                    args.post_processing_data.dataset_timestamp,
+                )
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
