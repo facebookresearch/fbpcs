@@ -38,6 +38,7 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -103,6 +104,7 @@ class PrivateComputationInstance(InstanceBase):
                         at the same time maintaining privacy. It is currently only used when game_type=attribution
                         because the lift id spine combiner uses a hard-coded value of 25.
                         TODO T104391012: pass padding size to lift id spine combiner.
+        post_processing_data: fields to be sent to the post processing tier.
 
     Private attributes:
         _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
@@ -155,6 +157,8 @@ class PrivateComputationInstance(InstanceBase):
     # this is used by Private ID protocol to indicate whether we should
     # enable 'use-row-numbers' argument.
     pid_use_row_numbers: bool = True
+
+    post_processing_data: Optional[PostProcessingData] = None
 
     creation_ts: int = 0
     end_ts: int = 0

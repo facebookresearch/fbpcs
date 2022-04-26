@@ -9,7 +9,7 @@
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import timedelta, datetime, timezone
 from typing import DefaultDict, Dict, List, Optional, Type, TypeVar
 
 from fbpcp.entity.mpc_instance import MPCInstance
@@ -24,6 +24,7 @@ from fbpcs.private_computation.entity.pc_validator_config import (
     PCValidatorConfig,
 )
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -136,8 +137,18 @@ class PrivateComputationService:
         result_visibility: ResultVisibility = ResultVisibility.PUBLIC,
         tier: Optional[str] = None,
         pid_use_row_numbers: bool = True,
+        post_processing_data_optional: Optional[PostProcessingData] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
+
+        # For Private Attribution daily recurrent runs, we would need dataset_timestamp of data used for computation.
+        # Assigning a default value of day before the computation for dataset_timestamp.
+        yesterday_date = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        yesterday_timestamp = datetime.timestamp(yesterday_date)
+
+        post_processing_data = post_processing_data_optional or PostProcessingData(
+            dataset_timestamp=int(yesterday_timestamp)
+        )
 
         instance = PrivateComputationInstance(
             instance_id=instance_id,
@@ -185,6 +196,7 @@ class PrivateComputationService:
             result_visibility=result_visibility,
             tier=tier,
             pid_use_row_numbers=pid_use_row_numbers,
+            post_processing_data=post_processing_data,
         )
 
         self.instance_repository.create(instance)
