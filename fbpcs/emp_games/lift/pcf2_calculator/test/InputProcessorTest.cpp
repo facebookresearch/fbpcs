@@ -93,6 +93,62 @@ TEST_F(InputProcessorTest, testNumRows) {
   EXPECT_EQ(partnerInputProcessor_.getNumRows(), 33);
 }
 
+template <int schedulerId>
+std::vector<std::vector<int64_t>> revealPurchaseValues(
+    InputProcessor<schedulerId> inputProcessor) {
+  std::vector<std::vector<int64_t>> purchaseValues;
+  for (size_t i = 0; i < inputProcessor.getPurchaseValues().size(); ++i) {
+    purchaseValues.push_back(std::move(
+        inputProcessor.getPurchaseValues().at(i).openToParty(0).getValue()));
+  }
+  return purchaseValues;
+}
+
+TEST_F(InputProcessorTest, testPurchaseValues) {
+  auto future0 = std::async(revealPurchaseValues<0>, publisherInputProcessor_);
+  auto future1 = std::async(revealPurchaseValues<1>, partnerInputProcessor_);
+  auto purchaseValues0 = future0.get();
+  auto purchaseValues1 = future1.get();
+  std::vector<std::vector<int64_t>> expectPurchaseValues = {
+      {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,  0,  10, 10, 10, 10, 10,
+       10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 10, 10, 10, 0,  0,  0},
+      {0,  0,  0,  20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,  20,  20, 20,
+       20, 20, 20, 20, 0,  0,  0,  50, 50, 50, 20, 20, 20, -50, -50, -50}};
+  EXPECT_EQ(purchaseValues0, expectPurchaseValues);
+}
+
+template <int schedulerId>
+std::vector<std::vector<int64_t>> revealPurchaseValueSquared(
+    InputProcessor<schedulerId> inputProcessor) {
+  std::vector<std::vector<int64_t>> purchaseValueSquared;
+  for (size_t i = 0; i < inputProcessor.getPurchaseValueSquared().size(); ++i) {
+    purchaseValueSquared.push_back(
+        std::move(inputProcessor.getPurchaseValueSquared()
+                      .at(i)
+                      .openToParty(0)
+                      .getValue()));
+  }
+  return purchaseValueSquared;
+}
+
+TEST_F(InputProcessorTest, testPurchaseValueSquared) {
+  auto future0 =
+      std::async(revealPurchaseValueSquared<0>, publisherInputProcessor_);
+  auto future1 =
+      std::async(revealPurchaseValueSquared<1>, partnerInputProcessor_);
+  auto purchaseValueSquared0 = future0.get();
+  auto purchaseValueSquared1 = future1.get();
+  // squared sum of purchase value in each row
+  std::vector<std::vector<int64_t>> expectPurchaseValueSquared = {
+      {0,   0,   0,    400,  400,  400, 400, 400, 400,  400,  400,
+       400, 900, 900,  900,  900,  900, 900, 900, 900,  900,  0,
+       0,   0,   2500, 2500, 2500, 900, 900, 900, 2500, 2500, 2500},
+      {0,   0,   0,    400,  400,  400, 400, 400, 400,  400,  400,
+       400, 400, 400,  400,  400,  400, 400, 400, 400,  400,  0,
+       0,   0,   2500, 2500, 2500, 400, 400, 400, 2500, 2500, 2500}};
+  EXPECT_EQ(purchaseValueSquared0, expectPurchaseValueSquared);
+}
+
 TEST_F(InputProcessorTest, testReach) {
   auto future0 = std::async([&] {
     return publisherInputProcessor_.getTestReach().openToParty(0).getValue();

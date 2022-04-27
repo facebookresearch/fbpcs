@@ -142,6 +142,54 @@ O privatelyShareArrayWithPaddingFrom(
 }
 
 /**
+ * Convert input arrays of dimension numRows by numCols to its transpose, of
+ * dimension numCols by numRows. If the input has a different size, resize the
+ * output accordingly and fill up additional entries with paddingValue.
+ **/
+template <typename T>
+std::vector<std::vector<T>> transposeArraysWithPadding(
+    const std::vector<std::vector<T>>& inputArrays,
+    size_t numRows,
+    size_t numCols,
+    T paddingValue) {
+  std::vector<std::vector<T>> outputArrays;
+  for (size_t i = 0; i < numCols; ++i) {
+    std::vector<T> outputArray;
+    for (size_t j = 0; j < numRows; ++j) {
+      if (inputArrays.size() > j && inputArrays.at(j).size() > i) {
+        outputArray.push_back(inputArrays.at(j).at(i));
+      } else {
+        outputArray.push_back(paddingValue);
+      }
+    }
+    outputArrays.push_back(std::move(outputArray));
+  }
+  return outputArrays;
+}
+
+/**
+ * Privately share tranposed array of arrays of type T from sender, with batch
+ * output type O. The input arrays have dimension numRows by numCols, and are
+ * first tranposed before sharing. If the input has a different size, resize the
+ * transposed arrays accordingly and fill up additional entries with
+ * paddingValue.
+ */
+template <int sender, typename T, typename O>
+std::vector<O> privatelyShareTransposedArraysWithPaddingFrom(
+    const std::vector<std::vector<T>>& inputArrays,
+    size_t numRows,
+    size_t numCols,
+    T paddingValue) {
+  auto transposedInputArrays = transposeArraysWithPadding<T>(
+      inputArrays, numRows, numCols, paddingValue);
+  std::vector<O> output;
+  for (auto& transposedInputArray : transposedInputArrays) {
+    output.push_back(O{transposedInputArray, sender});
+  }
+  return output;
+}
+
+/**
  * Convert a vector to a string, used for debug logging.
  */
 template <typename T>
