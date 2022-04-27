@@ -27,6 +27,7 @@ class InputProcessor {
         numRows_{inputData.getNumRows()},
         numConversionsPerUser_{numConversionsPerUser} {
     validateNumRowsStep();
+    privatelySharePurchaseValuesStep();
     privatelyShareTestReachStep();
   }
 
@@ -34,6 +35,15 @@ class InputProcessor {
 
   int64_t getNumRows() const {
     return numRows_;
+  }
+
+  const std::vector<SecValue<schedulerId>> getPurchaseValues() const {
+    return purchaseValues_;
+  }
+
+  const std::vector<SecValueSquared<schedulerId>> getPurchaseValueSquared()
+      const {
+    return purchaseValueSquared_;
   }
 
   const SecBit<schedulerId> getTestReach() const {
@@ -44,6 +54,9 @@ class InputProcessor {
   // Make sure input files have the same size
   void validateNumRowsStep();
 
+  // Privately share purchase values and purchase values squared
+  void privatelySharePurchaseValuesStep();
+
   // Privately share test reach (nonzero impressions)
   void privatelyShareTestReachStep();
 
@@ -52,6 +65,8 @@ class InputProcessor {
   int64_t numRows_;
   int32_t numConversionsPerUser_;
 
+  std::vector<SecValue<schedulerId>> purchaseValues_;
+  std::vector<SecValueSquared<schedulerId>> purchaseValueSquared_;
   SecBit<schedulerId> testReach_;
 };
 
