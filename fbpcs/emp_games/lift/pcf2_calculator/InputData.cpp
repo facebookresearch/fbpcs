@@ -45,7 +45,7 @@ InputData::InputData(
 
 void InputData::setTimestamps(
     std::string& str,
-    std::vector<std::vector<int64_t>>& timestampArrays) {
+    std::vector<std::vector<uint32_t>>& timestampArrays) {
   timestampArrays.emplace_back();
   // Strip the brackets [] before splitting into individual timestamp values
   auto innerString = str.substr(1, str.size() - 1);
@@ -66,7 +66,7 @@ void InputData::setTimestamps(
       LOG(FATAL) << "Timestamp " << parsed << " is before epoch " << epoch_
                  << ", which is unexpected.";
     }
-    timestampArrays.back().push_back(parsed - epoch_);
+    timestampArrays.back().push_back(parsed < epoch_ ? 0 : parsed - epoch_);
   }
 }
 
@@ -193,7 +193,7 @@ void InputData::addFromCSV(
         LOG(FATAL) << "Timestamp " << parsed << " is before epoch " << epoch_
                    << ", which is unexpected.";
       }
-      opportunityTimestamps_.push_back(parsed - epoch_);
+      opportunityTimestamps_.push_back(parsed < epoch_ ? 0 : parsed - epoch_);
     } else if (column == "num_impressions") {
       numImpressions_.push_back(parsed);
     } else if (column == "num_clicks") {
@@ -212,7 +212,7 @@ void InputData::addFromCSV(
         value = "[" + value + "]";
         setTimestamps(value, purchaseTimestampArrays_);
       } else {
-        purchaseTimestamps_.push_back(parsed - epoch_);
+        purchaseTimestamps_.push_back(parsed < epoch_ ? 0 : parsed - epoch_);
       }
     } else if (column == "event_timestamps") {
       setTimestamps(value, purchaseTimestampArrays_);

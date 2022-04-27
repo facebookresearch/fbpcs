@@ -93,6 +93,124 @@ TEST_F(InputProcessorTest, testNumRows) {
   EXPECT_EQ(partnerInputProcessor_.getNumRows(), 33);
 }
 
+TEST_F(InputProcessorTest, testOpportunityTimestamps) {
+  auto future0 = std::async([&] {
+    return publisherInputProcessor_.getOpportunityTimestamps()
+        .openToParty(0)
+        .getValue();
+  });
+  auto future1 = std::async([&] {
+    return partnerInputProcessor_.getOpportunityTimestamps()
+        .openToParty(0)
+        .getValue();
+  });
+  auto opportunityTimestamps0 = future0.get();
+  auto opportunityTimestamps1 = future1.get();
+  std::vector<uint64_t> expectOpportunityTimestamps = {
+      0,   0,   0,   100, 100, 100, 100, 100, 100, 100, 100,
+      100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+      100, 100, 0,   100, 100, 100, 100, 100, 100, 100, 100};
+  EXPECT_EQ(opportunityTimestamps0, expectOpportunityTimestamps);
+}
+
+TEST_F(InputProcessorTest, testIsValidOpportunityTimestamp) {
+  auto future0 = std::async([&] {
+    return publisherInputProcessor_.getIsValidOpportunityTimestamp()
+        .openToParty(0)
+        .getValue();
+  });
+  auto future1 = std::async([&] {
+    return partnerInputProcessor_.getIsValidOpportunityTimestamp()
+        .openToParty(0)
+        .getValue();
+  });
+  auto isValidOpportunityTimestamp0 = future0.get();
+  auto isValidOpportunityTimestamp1 = future1.get();
+  std::vector<bool> expectIsValidOpportunityTimestamp = {
+      0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1,
+      1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1};
+  EXPECT_EQ(isValidOpportunityTimestamp0, expectIsValidOpportunityTimestamp);
+}
+
+template <int schedulerId>
+std::vector<std::vector<uint64_t>> revealPurchaseTimestamps(
+    InputProcessor<schedulerId> inputProcessor) {
+  std::vector<std::vector<uint64_t>> purchaseTimestamps;
+  for (size_t i = 0; i < inputProcessor.getPurchaseTimestamps().size(); ++i) {
+    purchaseTimestamps.push_back(
+        std::move(inputProcessor.getPurchaseTimestamps()
+                      .at(i)
+                      .openToParty(0)
+                      .getValue()));
+  }
+  return purchaseTimestamps;
+}
+
+TEST_F(InputProcessorTest, testPurchaseTimestamps) {
+  auto future0 =
+      std::async(revealPurchaseTimestamps<0>, publisherInputProcessor_);
+  auto future1 =
+      std::async(revealPurchaseTimestamps<1>, partnerInputProcessor_);
+  auto purchaseTimestamps0 = future0.get();
+  auto purchaseTimestamps1 = future1.get();
+  std::vector<std::vector<uint64_t>> expectPurchaseTimestamps = {
+      {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  150, 150, 150, 50, 50,
+       50, 30, 30, 30, 0, 0, 0, 0, 0, 0, 150, 50, 30,  0,   0,   0},
+      {100, 100, 100, 50,  50,  50,  100, 100, 100, 90,  90,
+       90,  200, 200, 200, 150, 150, 150, 50,  50,  50,  0,
+       0,   0,   100, 50,  150, 200, 150, 50,  200, 200, 200}};
+  EXPECT_EQ(purchaseTimestamps0, expectPurchaseTimestamps);
+}
+
+template <int schedulerId>
+std::vector<std::vector<uint64_t>> revealThresholdTimestamps(
+    InputProcessor<schedulerId> inputProcessor) {
+  std::vector<std::vector<uint64_t>> thresholdTimestamps;
+  for (size_t i = 0; i < inputProcessor.getThresholdTimestamps().size(); ++i) {
+    thresholdTimestamps.push_back(
+        std::move(inputProcessor.getThresholdTimestamps()
+                      .at(i)
+                      .openToParty(0)
+                      .getValue()));
+  }
+  return thresholdTimestamps;
+}
+
+TEST_F(InputProcessorTest, testThresholdTimestamps) {
+  auto future0 =
+      std::async(revealThresholdTimestamps<0>, publisherInputProcessor_);
+  auto future1 =
+      std::async(revealThresholdTimestamps<1>, partnerInputProcessor_);
+  auto thresholdTimestamps0 = future0.get();
+  auto thresholdTimestamps1 = future1.get();
+  std::vector<std::vector<uint64_t>> expectThresholdTimestamps = {
+      {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  160, 160, 160, 60, 60,
+       60, 40, 40, 40, 0, 0, 0, 0, 0, 0, 160, 60, 40,  0,   0,   0},
+      {110, 110, 110, 60,  60,  60,  110, 110, 110, 100, 100,
+       100, 210, 210, 210, 160, 160, 160, 60,  60,  60,  0,
+       0,   0,   110, 60,  160, 210, 160, 60,  210, 210, 210}};
+  EXPECT_EQ(thresholdTimestamps0, expectThresholdTimestamps);
+}
+
+TEST_F(InputProcessorTest, testAnyValidPurchaseTimestamp) {
+  auto future0 = std::async([&] {
+    return publisherInputProcessor_.getAnyValidPurchaseTimestamp()
+        .openToParty(0)
+        .getValue();
+  });
+  auto future1 = std::async([&] {
+    return partnerInputProcessor_.getAnyValidPurchaseTimestamp()
+        .openToParty(0)
+        .getValue();
+  });
+  auto anyValidPurchaseTimestamp0 = future0.get();
+  auto anyValidPurchaseTimestamp1 = future1.get();
+  std::vector<bool> expectAnyValidPurchaseTimestamp = {
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  EXPECT_EQ(anyValidPurchaseTimestamp0, expectAnyValidPurchaseTimestamp);
+}
+
 template <int schedulerId>
 std::vector<std::vector<int64_t>> revealPurchaseValues(
     InputProcessor<schedulerId> inputProcessor) {

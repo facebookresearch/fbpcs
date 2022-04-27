@@ -27,6 +27,7 @@ class InputProcessor {
         numRows_{inputData.getNumRows()},
         numConversionsPerUser_{numConversionsPerUser} {
     validateNumRowsStep();
+    privatelyShareTimestampsStep();
     privatelySharePurchaseValuesStep();
     privatelyShareTestReachStep();
   }
@@ -35,6 +36,26 @@ class InputProcessor {
 
   int64_t getNumRows() const {
     return numRows_;
+  }
+
+  const SecTimestamp<schedulerId> getOpportunityTimestamps() const {
+    return opportunityTimestamps_;
+  }
+
+  const SecBit<schedulerId> getIsValidOpportunityTimestamp() const {
+    return isValidOpportunityTimestamp_;
+  }
+
+  const std::vector<SecTimestamp<schedulerId>> getPurchaseTimestamps() const {
+    return purchaseTimestamps_;
+  }
+
+  const std::vector<SecTimestamp<schedulerId>> getThresholdTimestamps() const {
+    return thresholdTimestamps_;
+  }
+
+  const SecBit<schedulerId> getAnyValidPurchaseTimestamp() const {
+    return anyValidPurchaseTimestamp_;
   }
 
   const std::vector<SecValue<schedulerId>> getPurchaseValues() const {
@@ -54,6 +75,9 @@ class InputProcessor {
   // Make sure input files have the same size
   void validateNumRowsStep();
 
+  // Privately share timestamps
+  void privatelyShareTimestampsStep();
+
   // Privately share purchase values and purchase values squared
   void privatelySharePurchaseValuesStep();
 
@@ -65,6 +89,11 @@ class InputProcessor {
   int64_t numRows_;
   int32_t numConversionsPerUser_;
 
+  SecTimestamp<schedulerId> opportunityTimestamps_;
+  SecBit<schedulerId> isValidOpportunityTimestamp_;
+  std::vector<SecTimestamp<schedulerId>> purchaseTimestamps_;
+  std::vector<SecTimestamp<schedulerId>> thresholdTimestamps_;
+  SecBit<schedulerId> anyValidPurchaseTimestamp_;
   std::vector<SecValue<schedulerId>> purchaseValues_;
   std::vector<SecValueSquared<schedulerId>> purchaseValueSquared_;
   SecBit<schedulerId> testReach_;

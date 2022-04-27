@@ -50,7 +50,7 @@ class InputData {
     return controlPopulation_;
   }
 
-  const std::vector<int64_t>& getOpportunityTimestamps() const {
+  const std::vector<uint32_t>& getOpportunityTimestamps() const {
     return opportunityTimestamps_;
   }
 
@@ -66,16 +66,16 @@ class InputData {
     return totalSpend_;
   }
 
-  const std::vector<std::vector<int64_t>>& getOpportunityTimestampArrays()
+  const std::vector<std::vector<uint32_t>>& getOpportunityTimestampArrays()
       const {
     return opportunityTimestampArrays_;
   }
 
-  const std::vector<int64_t>& getPurchaseTimestamps() const {
+  const std::vector<uint32_t>& getPurchaseTimestamps() const {
     return purchaseTimestamps_;
   }
 
-  const std::vector<std::vector<int64_t>>& getPurchaseTimestampArrays() const {
+  const std::vector<std::vector<uint32_t>>& getPurchaseTimestampArrays() const {
     return purchaseTimestampArrays_;
   }
 
@@ -147,7 +147,7 @@ class InputData {
    */
   void setTimestamps(
       std::string& str,
-      std::vector<std::vector<int64_t>>& timestampArrays);
+      std::vector<std::vector<uint32_t>>& timestampArrays);
 
   /*
    * Append values from str to valueArrays and add to totalValue.
@@ -172,16 +172,16 @@ class InputData {
   int64_t epoch_;
   std::vector<int64_t> testPopulation_;
   std::vector<int64_t> controlPopulation_;
-  std::vector<int64_t> opportunityTimestamps_;
+  std::vector<uint32_t> opportunityTimestamps_;
   std::vector<int64_t> numImpressions_;
   std::vector<int64_t> numClicks_;
   std::vector<int64_t> totalSpend_;
-  std::vector<int64_t> purchaseTimestamps_;
+  std::vector<uint32_t> purchaseTimestamps_;
   std::vector<int64_t> purchaseValues_;
   std::vector<int64_t> purchaseValuesSquared_;
   std::vector<int64_t> groupIds_;
-  std::vector<std::vector<int64_t>> opportunityTimestampArrays_;
-  std::vector<std::vector<int64_t>> purchaseTimestampArrays_;
+  std::vector<std::vector<uint32_t>> opportunityTimestampArrays_;
+  std::vector<std::vector<uint32_t>> purchaseTimestampArrays_;
   std::vector<std::vector<int64_t>> purchaseValueArrays_;
   std::vector<std::vector<int64_t>> purchaseValueSquaredArrays_;
 

@@ -48,11 +48,10 @@ TEST_F(InputDataTest, TestInputDataPublisher) {
   std::vector<int64_t> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
                                                   0, 0, 1, 0, 0, 1, 1, 0, 1, 1};
   // opportunity_timestamp - epoch
-  std::vector<int64_t> expectOpportunityTimestamps = {
-      53699630,    53699601,    -1546300800, -1546300800, -1546300800,
-      53699661,    53699252,    53700031,    53699730,    53700172,
-      -1546300800, -1546300800, 53699306,    53700140,    53699240,
-      53699397,    53699415,    53700127,    53699760,    53699598};
+  std::vector<uint32_t> expectOpportunityTimestamps = {
+      53699630, 53699601, 0,        0,        0,        53699661, 53699252,
+      53700031, 53699730, 53700172, 0,        0,        53699306, 53700140,
+      53699240, 53699397, 53699415, 53700127, 53699760, 53699598};
   auto resTestPopulation = inputData.getTestPopulation();
   auto resControlPopulation = inputData.getControlPopulation();
   auto resOpportunityTimestamps = inputData.getOpportunityTimestamps();
@@ -73,11 +72,10 @@ TEST_F(InputDataTest, TestInputDataPublisherOppColLast) {
   std::vector<int64_t> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
                                                   0, 0, 1, 0, 0, 1, 1, 0, 1, 1};
   // opportunity_timestamp - epoch
-  std::vector<int64_t> expectOpportunityTimestamps = {
-      53699630,    53699601,    -1546300800, -1546300800, -1546300800,
-      53699661,    53699252,    53700031,    53699730,    53700172,
-      -1546300800, -1546300800, 53699306,    53700140,    53699240,
-      53699397,    53699415,    53700127,    53699760,    53699598};
+  std::vector<uint32_t> expectOpportunityTimestamps = {
+      53699630, 53699601, 0,        0,        0,        53699661, 53699252,
+      53700031, 53699730, 53700172, 0,        0,        53699306, 53700140,
+      53699240, 53699397, 53699415, 53700127, 53699760, 53699598};
   auto resTestPopulation = inputData.getTestPopulation();
   auto resControlPopulation = inputData.getControlPopulation();
   auto resOpportunityTimestamps = inputData.getOpportunityTimestamps();
@@ -93,27 +91,27 @@ TEST_F(InputDataTest, TestInputDataPartner) {
       InputData::LiftGranularityType::Conversion,
       1546300800, /* epoch */
       4 /* num_conversions_per_user */};
-  std::vector<std::vector<int64_t>> expectGetPurchaseTimestampArrays = {
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, 53699530, 53699794},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, 53699428},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, 53699222, 53699836, 53699923},
+  std::vector<std::vector<uint32_t>> expectGetPurchaseTimestampArrays = {
+      {0, 0, 0, 0},
+      {0, 0, 53699530, 53699794},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 53699428},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 53699222, 53699836, 53699923},
       {53699839, 53699868, 53700039, 53700058},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800},
-      {-1546300800, -1546300800, -1546300800, -1546300800}};
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0}};
   std::vector<std::vector<int64_t>> expectPurchaseValueArrays = {
       {0, 0, 0, 0},  {0, 0, 71, 71}, {0, 0, 0, 0},    {0, 0, 0, 0},
       {0, 0, 0, 25}, {0, 0, 0, 0},   {0, 0, 0, 0},    {0, 0, 0, 0},
@@ -139,7 +137,7 @@ TEST_F(InputDataTest, TestInputDataPartnerConverterLift) {
       InputData::LiftGranularityType::Converter,
       0, /* epoch */
       1 /* num_conversions_per_user */};
-  std::vector<std::vector<int64_t>> expectGetPurchaseTimestamps = {
+  std::vector<std::vector<uint32_t>> expectGetPurchaseTimestamps = {
       {0},          {1600000594}, {0}, {0}, {1600000228}, {0}, {0},
       {0},          {0},          {0}, {0}, {0},          {0}, {0},
       {1600000723}, {1600000858}, {0}, {0}, {0},          {0}};
