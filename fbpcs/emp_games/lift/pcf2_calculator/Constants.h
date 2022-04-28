@@ -11,6 +11,7 @@
 
 namespace private_lift {
 
+const size_t numConvSquaredWidth = 32;
 const size_t valueWidth = 32;
 const size_t valueSquaredWidth = 64;
 const size_t timeStampWidth = 32;
@@ -46,5 +47,13 @@ using PubTimestamp = typename fbpcf::frontend::MpcGame<
 template <int schedulerId, bool usingBatch = true>
 using SecTimestamp = typename fbpcf::frontend::MpcGame<
     schedulerId>::template SecUnsignedInt<timeStampWidth, usingBatch>;
+
+template <int schedulerId, bool usingBatch = true>
+using PubNumConvSquared = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template PubUnsignedInt<numConvSquaredWidth, usingBatch>;
+
+template <int schedulerId, bool usingBatch = true>
+using SecNumConvSquared = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template SecUnsignedInt<numConvSquaredWidth, usingBatch>;
 
 } // namespace private_lift
