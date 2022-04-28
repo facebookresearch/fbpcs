@@ -78,4 +78,13 @@ void Attributor<schedulerId>::calculateNumConvSquaredAndConverters() {
   converters_ = eventArray.at(firstIndex);
 }
 
+template <int schedulerId>
+void Attributor<schedulerId>::calculateMatch() {
+  XLOG(INFO) << "Calculate match";
+  // a valid test/control match is when a person with an opportunity made
+  // ANY nonzero conversion.
+  match_ = inputProcessor_.getAnyValidPurchaseTimestamp() &
+      inputProcessor_.getIsValidOpportunityTimestamp();
+}
+
 } // namespace private_lift
