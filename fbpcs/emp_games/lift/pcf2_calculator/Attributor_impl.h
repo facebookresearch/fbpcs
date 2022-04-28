@@ -98,4 +98,28 @@ void Attributor<schedulerId>::calculateReachedConversions() {
   }
 }
 
+template <int schedulerId>
+void Attributor<schedulerId>::calculateValues() {
+  XLOG(INFO) << "Calculate values";
+  if (events_.size() != inputProcessor_.getPurchaseValues().size()) {
+    XLOG(FATAL)
+        << "Numbers of event bits and/or purchase values are inconsistent.";
+  }
+  auto zero = PubValue<schedulerId>(std::vector<int64_t>(numRows_, 0));
+  for (size_t i = 0; i < events_.size(); ++i) {
+    // The value is the purchase value if there is a valid event, otherwise it
+    // is zero
+    values_.push_back(std::move(
+        zero.mux(events_.at(i), inputProcessor_.getPurchaseValues().at(i))));
+  }
+
+  XLOG(INFO) << "Calculate reached values";
+  // A reached value is the value when there is a reach, otherwise it is zero.
+  // This is only calculated for the test population.
+  for (const auto& value : values_) {
+    reachedValues_.push_back(
+        std::move(zero.mux(inputProcessor_.getTestReach(), value)));
+  }
+}
+
 } // namespace private_lift
