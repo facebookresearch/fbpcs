@@ -143,4 +143,18 @@ TEST_F(AttributorTest, testNumConvSquared) {
   EXPECT_EQ(numConvSquared0, expectNumConvSquared);
 }
 
+TEST_F(AttributorTest, testMatch) {
+  auto future0 = std::async([&] {
+    return publisherAttributor_->getMatch().openToParty(0).getValue();
+  });
+  auto future1 = std::async(
+      [&] { return partnerAttributor_->getMatch().openToParty(0).getValue(); });
+  auto match0 = future0.get();
+  auto match1 = future1.get();
+  std::vector<bool> expectMatch = {0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1,
+                                   1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0,
+                                   0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1};
+  EXPECT_EQ(match0, expectMatch);
+}
+
 } // namespace private_lift
