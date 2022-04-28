@@ -22,10 +22,19 @@ void Attributor<schedulerId>::calculateEvents() {
 }
 
 template <int schedulerId>
-void Attributor<schedulerId>::calculateNumConvSquaredAndConverters() {
-  XLOG(INFO) << "Calculate numConvSquared & converters";
+void Attributor<
+    schedulerId>::calculateNumConvSquaredAndValueSquaredAndConverters() {
+  XLOG(INFO) << "Calculate numConvSquared & valueSquared & converters";
+  if (events_.size() != inputProcessor_.getPurchaseValueSquared().size()) {
+    XLOG(FATAL)
+        << "Numbers of event bits and purchase values squared are inconsistent.";
+  }
   // We find the first valid event using a binary tree approach. The number of
-  // conversions is the remaining number of elements in the array.
+  // conversions is the remaining number of elements in the array. The value
+  // squared is the squared sum of the values for valid events in each row.
+  // These sums are already precomputed, so it suffices to check for the first
+  // valid event and use the sum corresponding to the position in the row.
+
   // We first construct new arrays to store the intermediate results
   std::vector<SecNumConvSquared<schedulerId>> numConvSquaredArray;
   for (size_t i = 0; i < events_.size(); ++i) {
@@ -39,6 +48,13 @@ void Attributor<schedulerId>::calculateNumConvSquaredAndConverters() {
   SecNumConvSquared<schedulerId> zero{
       std::vector<uint32_t>(numRows_, 0), common::PUBLISHER};
   numConvSquaredArray.push_back(zero);
+
+  std::vector<SecValueSquared<schedulerId>> valueSquaredArray =
+      inputProcessor_.getPurchaseValueSquared();
+  // The value squared is zero if there are no valid events
+  SecValueSquared<schedulerId> zeroValueSquared{
+      std::vector<int64_t>(numRows_, 0), common::PUBLISHER};
+  valueSquaredArray.push_back(zeroValueSquared);
 
   std::vector<SecBit<schedulerId>> eventArray = events_;
   SecBit<schedulerId> zeroBit{
@@ -56,6 +72,10 @@ void Attributor<schedulerId>::calculateNumConvSquaredAndConverters() {
         numConvSquaredArray[i + stepSize] =
             numConvSquaredArray.at(i + stepSize)
                 .mux(eventArray.at(i), numConvSquaredArray.at(i));
+        // The same logic applies for the valueSquared
+        valueSquaredArray[i + stepSize] =
+            valueSquaredArray.at(i + stepSize)
+                .mux(eventArray.at(i), valueSquaredArray.at(i));
         // Update the events for the next level
         eventArray[i + stepSize] =
             eventArray.at(i + stepSize) | eventArray.at(i);
@@ -66,6 +86,8 @@ void Attributor<schedulerId>::calculateNumConvSquaredAndConverters() {
         numConvSquaredArray[previousIndex] = numConvSquaredArray.at(i).mux(
             eventArray.at(previousIndex),
             numConvSquaredArray.at(previousIndex));
+        valueSquaredArray[previousIndex] = valueSquaredArray.at(i).mux(
+            eventArray.at(previousIndex), valueSquaredArray.at(previousIndex));
         eventArray[previousIndex] =
             eventArray.at(previousIndex) | eventArray.at(i);
       }
@@ -73,6 +95,7 @@ void Attributor<schedulerId>::calculateNumConvSquaredAndConverters() {
     firstIndex += stepSize;
     stepSize = stepSize << 1;
   }
+  valueSquared_ = valueSquaredArray.at(firstIndex);
   numConvSquared_ = numConvSquaredArray.at(firstIndex);
   // A converter occurs when a row contains any valid event
   converters_ = eventArray.at(firstIndex);
