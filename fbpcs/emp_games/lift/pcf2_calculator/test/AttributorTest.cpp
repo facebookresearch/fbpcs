@@ -182,4 +182,52 @@ TEST_F(AttributorTest, testReachedConversions) {
   EXPECT_EQ(reachedConversions0, expectReachedConversions);
 }
 
+template <int schedulerId>
+std::vector<std::vector<int64_t>> revealValues(
+    std::unique_ptr<Attributor<schedulerId>> attributor) {
+  std::vector<std::vector<int64_t>> output;
+  for (const auto& value : attributor->getValues()) {
+    output.push_back(std::move(value.openToParty(0).getValue()));
+  }
+  return output;
+}
+
+TEST_F(AttributorTest, testValues) {
+  auto future0 = std::async(revealValues<0>, std::move(publisherAttributor_));
+  auto future1 = std::async(revealValues<1>, std::move(partnerAttributor_));
+  auto values0 = future0.get();
+  auto values1 = future1.get();
+  std::vector<std::vector<int64_t>> expectValues = {
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 10, 10, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0,  0,  0},
+      {0,  0, 0, 0, 0, 0, 0, 20, 20, 0,  0,  0,  0, 20, 20,  0,  20,
+       20, 0, 0, 0, 0, 0, 0, 0,  0,  50, 20, 20, 0, 0,  -50, -50}};
+  EXPECT_EQ(values0, expectValues);
+}
+
+template <int schedulerId>
+std::vector<std::vector<int64_t>> revealReachedValues(
+    std::unique_ptr<Attributor<schedulerId>> attributor) {
+  std::vector<std::vector<int64_t>> output;
+  for (const auto& values : attributor->getReachedValues()) {
+    output.push_back(std::move(values.openToParty(0).getValue()));
+  }
+  return output;
+}
+
+TEST_F(AttributorTest, testReachedValues) {
+  auto future0 =
+      std::async(revealReachedValues<0>, std::move(publisherAttributor_));
+  auto future1 =
+      std::async(revealReachedValues<1>, std::move(partnerAttributor_));
+  auto values0 = future0.get();
+  auto values1 = future1.get();
+  std::vector<std::vector<int64_t>> expectReachedValues = {
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 20, 20, 0, 0, 0, 0}};
+  EXPECT_EQ(values0, expectReachedValues);
+}
+
 } // namespace private_lift
