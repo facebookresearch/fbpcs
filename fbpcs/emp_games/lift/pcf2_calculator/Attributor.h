@@ -23,6 +23,7 @@ class Attributor {
     calculateEvents();
     calculateNumConvSquaredAndConverters();
     calculateMatch();
+    calculateReachedConversions();
   }
 
   const std::vector<SecBit<schedulerId>> getEvents() const {
@@ -41,6 +42,10 @@ class Attributor {
     return match_;
   }
 
+  const std::vector<SecBit<schedulerId>> getReachedConversions() const {
+    return reachedConversions_;
+  }
+
  private:
   // Test/Control events: validPurchase (oppTs < purchaseTs + 10)
   void calculateEvents();
@@ -53,6 +58,9 @@ class Attributor {
   // timestamp
   void calculateMatch();
 
+  // Test reached conversions: valid event & reach (number of impressions > 0)
+  void calculateReachedConversions();
+
   int32_t myRole_;
   InputProcessor<schedulerId> inputProcessor_;
   int64_t numRows_;
@@ -61,6 +69,7 @@ class Attributor {
   SecBit<schedulerId> converters_;
   SecNumConvSquared<schedulerId> numConvSquared_;
   SecBit<schedulerId> match_;
+  std::vector<SecBit<schedulerId>> reachedConversions_;
 };
 
 } // namespace private_lift
