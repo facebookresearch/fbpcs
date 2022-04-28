@@ -11,6 +11,7 @@
 
 namespace private_lift {
 
+const size_t groupWidth = 6; // at most 32 cohorts
 const size_t numConvSquaredWidth = 32;
 const size_t valueWidth = 32;
 const size_t valueSquaredWidth = 64;
@@ -23,6 +24,14 @@ using PubBit =
 template <int schedulerId, bool usingBatch = true>
 using SecBit =
     typename fbpcf::frontend::MpcGame<schedulerId>::template SecBit<usingBatch>;
+
+template <int schedulerId, bool usingBatch = true>
+using PubGroup = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template PubUnsignedInt<groupWidth, usingBatch>;
+
+template <int schedulerId, bool usingBatch = true>
+using SecGroup = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template SecUnsignedInt<groupWidth, usingBatch>;
 
 template <int schedulerId, bool usingBatch = true>
 using PubValue = typename fbpcf::frontend::MpcGame<

@@ -204,7 +204,7 @@ void InputData::addFromCSV(
       // Work-in-progress: we currently support cohort_id *or* feature columns
       groupIds_.push_back(parsed);
       // We use parsed + 1 because cohorts are zero-indexed
-      numGroups_ = std::max(numGroups_, parsed + 1);
+      numGroups_ = std::max(numGroups_, static_cast<uint32_t>(parsed + 1));
     } else if (column == "event_timestamp") {
       // When event_timestamp column presents (in standard Converter Lift
       // input), parse it as arrays of size 1.

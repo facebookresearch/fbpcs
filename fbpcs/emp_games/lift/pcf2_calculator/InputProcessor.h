@@ -27,6 +27,8 @@ class InputProcessor {
         numRows_{inputData.getNumRows()},
         numConversionsPerUser_{numConversionsPerUser} {
     validateNumRowsStep();
+    privatelySharePopulationStep();
+    privatelyShareCohortsStep();
     privatelyShareTimestampsStep();
     privatelySharePurchaseValuesStep();
     privatelyShareTestReachStep();
@@ -36,6 +38,14 @@ class InputProcessor {
 
   int64_t getNumRows() const {
     return numRows_;
+  }
+
+  uint32_t getNumPartnerCohorts() const {
+    return numPartnerCohorts_;
+  }
+
+  const std::vector<std::vector<bool>> getCohortIndexShares() const {
+    return cohortIndexShares_;
   }
 
   const SecTimestamp<schedulerId> getOpportunityTimestamps() const {
@@ -75,6 +85,12 @@ class InputProcessor {
   // Make sure input files have the same size
   void validateNumRowsStep();
 
+  // Privately share popoulation
+  void privatelySharePopulationStep();
+
+  // Privately share number of cohorts and index shares of cohort group ids.
+  void privatelyShareCohortsStep();
+
   // Privately share timestamps
   void privatelyShareTimestampsStep();
 
@@ -88,6 +104,7 @@ class InputProcessor {
   InputData inputData_;
   int64_t numRows_;
   int32_t numConversionsPerUser_;
+  uint32_t numPartnerCohorts_;
 
   SecTimestamp<schedulerId> opportunityTimestamps_;
   SecBit<schedulerId> isValidOpportunityTimestamp_;
@@ -97,6 +114,10 @@ class InputProcessor {
   std::vector<SecValue<schedulerId>> purchaseValues_;
   std::vector<SecValueSquared<schedulerId>> purchaseValueSquared_;
   SecBit<schedulerId> testReach_;
+
+  SecBit<schedulerId> controlPopulation_;
+  SecGroup<schedulerId> cohortGroupIds_;
+  std::vector<std::vector<bool>> cohortIndexShares_;
 };
 
 } // namespace private_lift
