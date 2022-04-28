@@ -90,6 +90,29 @@ void InputProcessor<schedulerId>::privatelyShareCohortsStep() {
 }
 
 template <int schedulerId>
+void InputProcessor<schedulerId>::privatelyShareTestCohortsStep() {
+  // We only compute the reach metrics for the test population, hence we also
+  // contruct cohort index shares for just the test population. To differentiate
+  // the cohort group ids for the test/control population, we set the test group
+  // ids as the original group ids, and the control group ids as
+  // numPartnerCohorts_ (or 1 if there are no cohorts).
+  std::vector<uint32_t> controlGroupIds(
+      numRows_, std::max(uint32_t(1), numPartnerCohorts_));
+  auto secControlGroupIds = common::privatelyShareArrayWithPaddingFrom<
+      common::PARTNER,
+      uint32_t,
+      SecGroup<schedulerId>>(controlGroupIds, numRows_, 1);
+  // We now set the group ids depending on whether each row is a test or
+  // control
+  auto groupIds = cohortGroupIds_.mux(controlPopulation_, secControlGroupIds);
+  testCohortIndexShares_ = groupIds.extractIntShare().getBooleanShares();
+  // Resize to width needed for the number of groups
+  size_t testCohortWidth =
+      std::ceil(std::log2(std::max(uint32_t(2), numPartnerCohorts_ + 1)));
+  testCohortIndexShares_.resize(testCohortWidth);
+}
+
+template <int schedulerId>
 void InputProcessor<schedulerId>::privatelyShareTimestampsStep() {
   // TODO: We're using 32 bits for timestamps along with an offset setting the
   // epoch to 2019-01-01. This will break in the year 2087.

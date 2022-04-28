@@ -112,6 +112,18 @@ TEST_F(InputProcessorTest, testCohortIndexShares) {
   EXPECT_EQ(publisherShares, expectCohortIndexShares);
 }
 
+TEST_F(InputProcessorTest, testTestCohortIndexShares) {
+  auto publisherShares = publisherInputProcessor_.getTestCohortIndexShares();
+  auto partnerShares = partnerInputProcessor_.getTestCohortIndexShares();
+  // 0 1 3 0 0 3 1 1 3 1 1 3 0 1 3 0 0 3 0 0 3 0 0 3 0 0 2 2 0 0 2 2 3
+  std::vector<std::vector<bool>> expectTestCohortIndexShares = {
+      {0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0,
+       1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+      {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+       1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1}};
+  EXPECT_EQ(publisherShares, expectTestCohortIndexShares);
+}
+
 TEST_F(InputProcessorTest, testOpportunityTimestamps) {
   auto future0 = std::async([&] {
     return publisherInputProcessor_.getOpportunityTimestamps()

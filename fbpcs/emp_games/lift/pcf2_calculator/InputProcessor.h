@@ -29,6 +29,7 @@ class InputProcessor {
     validateNumRowsStep();
     privatelySharePopulationStep();
     privatelyShareCohortsStep();
+    privatelyShareTestCohortsStep();
     privatelyShareTimestampsStep();
     privatelySharePurchaseValuesStep();
     privatelyShareTestReachStep();
@@ -46,6 +47,10 @@ class InputProcessor {
 
   const std::vector<std::vector<bool>> getCohortIndexShares() const {
     return cohortIndexShares_;
+  }
+
+  const std::vector<std::vector<bool>> getTestCohortIndexShares() const {
+    return testCohortIndexShares_;
   }
 
   const SecTimestamp<schedulerId> getOpportunityTimestamps() const {
@@ -91,6 +96,9 @@ class InputProcessor {
   // Privately share number of cohorts and index shares of cohort group ids.
   void privatelyShareCohortsStep();
 
+  // Privately share cohort group ids for the test population only.
+  void privatelyShareTestCohortsStep();
+
   // Privately share timestamps
   void privatelyShareTimestampsStep();
 
@@ -118,6 +126,7 @@ class InputProcessor {
   SecBit<schedulerId> controlPopulation_;
   SecGroup<schedulerId> cohortGroupIds_;
   std::vector<std::vector<bool>> cohortIndexShares_;
+  std::vector<std::vector<bool>> testCohortIndexShares_;
 };
 
 } // namespace private_lift
