@@ -230,4 +230,19 @@ TEST_F(AttributorTest, testReachedValues) {
   EXPECT_EQ(values0, expectReachedValues);
 }
 
+TEST_F(AttributorTest, testValueSquared) {
+  auto future0 = std::async([&] {
+    return publisherAttributor_->getValueSquared().openToParty(0).getValue();
+  });
+  auto future1 = std::async([&] {
+    return partnerAttributor_->getValueSquared().openToParty(0).getValue();
+  });
+  auto values0 = future0.get();
+  auto values1 = future1.get();
+  std::vector<int64_t> expectValueSquared = {
+      0,   0, 0, 0, 0, 0, 0, 400, 400, 0,    0,   0,   0, 900, 900,  0,   400,
+      400, 0, 0, 0, 0, 0, 0, 0,   0,   2500, 900, 400, 0, 0,   2500, 2500};
+  EXPECT_EQ(values0, expectValueSquared);
+}
+
 } // namespace private_lift
