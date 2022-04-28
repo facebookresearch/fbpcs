@@ -29,6 +29,67 @@ void InputProcessor<schedulerId>::validateNumRowsStep() {
 }
 
 template <int schedulerId>
+void InputProcessor<schedulerId>::privatelySharePopulationStep() {
+  XLOG(INFO) << "Share control population";
+  controlPopulation_ = common::privatelyShareArrayWithPaddingFrom<
+      common::PUBLISHER,
+      bool,
+      SecBit<schedulerId>>(inputData_.getControlPopulation(), numRows_, 0);
+}
+
+template <int schedulerId>
+void InputProcessor<schedulerId>::privatelyShareCohortsStep() {
+  // TODO: We shouldn't be using MPC for this, it should just be shared over
+  // a normal network socket as part of the protocol setup
+  XLOG(INFO) << "Set up number of partner groups";
+  if (inputData_.getNumGroups() >
+      (1
+       << (groupWidth - 1))) { // subtract one because we multiply the number of
+    // groups by 2 for the test/control populations
+    XLOG(ERR) << "The input has " << inputData_.getNumGroups()
+              << " groups but we only support " << (1 << groupWidth)
+              << " groups.";
+    exit(1);
+  }
+  numPartnerCohorts_ = common::
+      shareIntFrom<schedulerId, groupWidth, common::PARTNER, common::PUBLISHER>(
+          myRole_, inputData_.getNumGroups());
+  XLOG(INFO) << "Will be computing metrics for " << numPartnerCohorts_
+             << " partner cohorts";
+
+  // We compute the metrics for both test/control populations and cohorts. To
+  // differentiate the cohort group ids for the test/control population, we set
+  // the test group ids as the original group ids, and the control group ids as
+  // the original group ids plus numPartnerCohorts_. If there are no partner
+  // cohorts, the original group ids are all zero, and we set the control group
+  // ids to be 1 to differentiate them from the test group ids.
+  cohortGroupIds_ = common::privatelyShareArrayWithPaddingFrom<
+      common::PARTNER,
+      uint32_t,
+      SecGroup<schedulerId>>(inputData_.getGroupIds(), numRows_, 0);
+  std::vector<uint32_t> controlGroupIds;
+  if (numPartnerCohorts_ > 0) {
+    for (auto groupId : inputData_.getGroupIds()) {
+      controlGroupIds.push_back(groupId + numPartnerCohorts_);
+    }
+  }
+  // We set the padding value for the control group ids to be 1, so that if
+  // there are no cohorts, the control group ids are all 1.
+  auto secControlGroupIds = common::privatelyShareArrayWithPaddingFrom<
+      common::PARTNER,
+      uint32_t,
+      SecGroup<schedulerId>>(controlGroupIds, numRows_, 1);
+  // We now set the group ids depending on whether each row is a test or
+  // control
+  auto groupIds = cohortGroupIds_.mux(controlPopulation_, secControlGroupIds);
+  cohortIndexShares_ = groupIds.extractIntShare().getBooleanShares();
+  // Resize to width needed for the number of groups
+  size_t cohortWidth =
+      std::ceil(std::log2(std::max(uint32_t(2), 2 * numPartnerCohorts_)));
+  cohortIndexShares_.resize(cohortWidth);
+}
+
+template <int schedulerId>
 void InputProcessor<schedulerId>::privatelyShareTimestampsStep() {
   // TODO: We're using 32 bits for timestamps along with an offset setting the
   // epoch to 2019-01-01. This will break in the year 2087.

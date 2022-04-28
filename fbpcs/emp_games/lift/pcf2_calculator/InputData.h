@@ -42,11 +42,11 @@ class InputData {
   // values are just 0/1
   std::vector<int64_t> bitmaskFor(int64_t groupId) const;
 
-  const std::vector<int64_t>& getTestPopulation() const {
+  const std::vector<bool>& getTestPopulation() const {
     return testPopulation_;
   }
 
-  const std::vector<int64_t>& getControlPopulation() const {
+  const std::vector<bool>& getControlPopulation() const {
     return controlPopulation_;
   }
 
@@ -96,7 +96,7 @@ class InputData {
     return purchaseValueSquaredArrays_;
   }
 
-  const std::vector<int64_t>& getGroupIds() const {
+  const std::vector<uint32_t>& getGroupIds() const {
     return groupIds_;
   }
 
@@ -170,8 +170,8 @@ class InputData {
   LiftMPCType liftMpcType_;
   LiftGranularityType liftGranularityType_;
   int64_t epoch_;
-  std::vector<int64_t> testPopulation_;
-  std::vector<int64_t> controlPopulation_;
+  std::vector<bool> testPopulation_;
+  std::vector<bool> controlPopulation_;
   std::vector<uint32_t> opportunityTimestamps_;
   std::vector<int64_t> numImpressions_;
   std::vector<int64_t> numClicks_;
@@ -179,7 +179,7 @@ class InputData {
   std::vector<uint32_t> purchaseTimestamps_;
   std::vector<int64_t> purchaseValues_;
   std::vector<int64_t> purchaseValuesSquared_;
-  std::vector<int64_t> groupIds_;
+  std::vector<uint32_t> groupIds_;
   std::vector<std::vector<uint32_t>> opportunityTimestampArrays_;
   std::vector<std::vector<uint32_t>> purchaseTimestampArrays_;
   std::vector<std::vector<int64_t>> purchaseValueArrays_;
@@ -190,7 +190,7 @@ class InputData {
   std::map<std::vector<std::string>, int64_t> featuresToGroupId_;
   int64_t totalValue_ = 0;
   int64_t totalValueSquared_ = 0;
-  int64_t numGroups_ = 0;
+  uint32_t numGroups_ = 0;
   int32_t numConversionsPerUser_;
 
   bool firstLineParsedAlready_ = false;

@@ -93,6 +93,25 @@ TEST_F(InputProcessorTest, testNumRows) {
   EXPECT_EQ(partnerInputProcessor_.getNumRows(), 33);
 }
 
+TEST_F(InputProcessorTest, testNumPartnerCohorts) {
+  EXPECT_EQ(publisherInputProcessor_.getNumPartnerCohorts(), 3);
+  EXPECT_EQ(partnerInputProcessor_.getNumPartnerCohorts(), 3);
+}
+
+TEST_F(InputProcessorTest, testCohortIndexShares) {
+  auto publisherShares = publisherInputProcessor_.getCohortIndexShares();
+  auto partnerShares = partnerInputProcessor_.getCohortIndexShares();
+  // 0 1 3 0 0 4 1 1 3 1 1 3 0 1 4 0 0 3 0 0 3 0 0 3 0 0 2 2 0 0 2 2 5
+  std::vector<std::vector<bool>> expectCohortIndexShares = {
+      {0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0,
+       1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+      {0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
+       1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0},
+      {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
+  EXPECT_EQ(publisherShares, expectCohortIndexShares);
+}
+
 TEST_F(InputProcessorTest, testOpportunityTimestamps) {
   auto future0 = std::async([&] {
     return publisherInputProcessor_.getOpportunityTimestamps()

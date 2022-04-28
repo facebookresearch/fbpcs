@@ -43,10 +43,10 @@ TEST_F(InputDataTest, TestInputDataPublisher) {
       InputData::LiftGranularityType::Conversion,
       1546300800,
       4};
-  std::vector<int64_t> expectTestPopulation = {0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
-                                               0, 0, 0, 1, 1, 0, 0, 1, 0, 0};
-  std::vector<int64_t> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-                                                  0, 0, 1, 0, 0, 1, 1, 0, 1, 1};
+  std::vector<bool> expectTestPopulation = {0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
+                                            0, 0, 0, 1, 1, 0, 0, 1, 0, 0};
+  std::vector<bool> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+                                               0, 0, 1, 0, 0, 1, 1, 0, 1, 1};
   // opportunity_timestamp - epoch
   std::vector<uint32_t> expectOpportunityTimestamps = {
       53699630, 53699601, 0,        0,        0,        53699661, 53699252,
@@ -67,10 +67,10 @@ TEST_F(InputDataTest, TestInputDataPublisherOppColLast) {
       InputData::LiftGranularityType::Conversion,
       1546300800,
       4};
-  std::vector<int64_t> expectTestPopulation = {0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
-                                               0, 0, 0, 1, 1, 0, 0, 1, 0, 0};
-  std::vector<int64_t> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-                                                  0, 0, 1, 0, 0, 1, 1, 0, 1, 1};
+  std::vector<bool> expectTestPopulation = {0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
+                                            0, 0, 0, 1, 1, 0, 0, 1, 0, 0};
+  std::vector<bool> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+                                               0, 0, 1, 0, 0, 1, 1, 0, 1, 1};
   // opportunity_timestamp - epoch
   std::vector<uint32_t> expectOpportunityTimestamps = {
       53699630, 53699601, 0,        0,        0,        53699661, 53699252,
@@ -119,8 +119,8 @@ TEST_F(InputDataTest, TestInputDataPartner) {
       {0, 0, 0, 0},  {0, 0, 0, 0},   {0, 47, 57, 51}, {63, 69, 21, 24},
       {0, 0, 0, 0},  {0, 0, 0, 0},   {0, 0, 0, 0},    {0, 0, 0, 0},
   };
-  std::vector<int64_t> expectCohortIds = {0, 1, 0, 0, 2, 0, 0, 0, 0, 0,
-                                          0, 0, 0, 0, 1, 2, 0, 0, 0, 0};
+  std::vector<uint32_t> expectCohortIds = {0, 1, 0, 0, 2, 0, 0, 0, 0, 0,
+                                           0, 0, 0, 0, 1, 2, 0, 0, 0, 0};
   auto resPurchaseTimestampArrays = inputData.getPurchaseTimestampArrays();
   auto resPurchaseValueArrays = inputData.getPurchaseValueArrays();
   EXPECT_EQ(expectGetPurchaseTimestampArrays, resPurchaseTimestampArrays);
