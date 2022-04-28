@@ -21,7 +21,7 @@ class Attributor {
         inputProcessor_{inputProcessor},
         numRows_{inputProcessor.getNumRows()} {
     calculateEvents();
-    calculateNumConvSquaredAndConverters();
+    calculateNumConvSquaredAndValueSquaredAndConverters();
     calculateMatch();
     calculateReachedConversions();
     calculateValues();
@@ -55,13 +55,18 @@ class Attributor {
     return reachedValues_;
   }
 
+  const SecValueSquared<schedulerId> getValueSquared() const {
+    return valueSquared_;
+  }
+
  private:
   // Test/Control events: validPurchase (oppTs < purchaseTs + 10)
   void calculateEvents();
 
   // Test/Control numConvSquared: number of valid events squared
   // Test/Control converters: any valid event
-  void calculateNumConvSquaredAndConverters();
+  // Test/Control value squared: sum(valid event ? purchaseValue : 0)^2
+  void calculateNumConvSquaredAndValueSquaredAndConverters();
 
   // Test/control match: valid opportunity timestamp & any valid purchase
   // timestamp
@@ -85,6 +90,7 @@ class Attributor {
   std::vector<SecBit<schedulerId>> reachedConversions_;
   std::vector<SecValue<schedulerId>> values_;
   std::vector<SecValue<schedulerId>> reachedValues_;
+  SecValueSquared<schedulerId> valueSquared_;
 };
 
 } // namespace private_lift
