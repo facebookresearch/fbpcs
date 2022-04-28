@@ -113,4 +113,34 @@ TEST_F(AttributorTest, testEvents) {
   EXPECT_EQ(events0, expectEvents);
 }
 
+TEST_F(AttributorTest, testConverters) {
+  auto future0 = std::async([&] {
+    return publisherAttributor_->getConverters().openToParty(0).getValue();
+  });
+  auto future1 = std::async([&] {
+    return partnerAttributor_->getConverters().openToParty(0).getValue();
+  });
+  auto converters0 = future0.get();
+  auto converters1 = future1.get();
+  std::vector<bool> expectConverters = {0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0,
+                                        0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0,
+                                        0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1};
+  EXPECT_EQ(converters0, expectConverters);
+}
+
+TEST_F(AttributorTest, testNumConvSquared) {
+  auto future0 = std::async([&] {
+    return publisherAttributor_->getNumConvSquared().openToParty(0).getValue();
+  });
+  auto future1 = std::async([&] {
+    return partnerAttributor_->getNumConvSquared().openToParty(0).getValue();
+  });
+  auto numConvSquared0 = future0.get();
+  auto numConvSquared1 = future1.get();
+  std::vector<uint64_t> expectNumConvSquared = {
+      0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 4, 4, 0, 1,
+      1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 0, 0, 1, 1};
+  EXPECT_EQ(numConvSquared0, expectNumConvSquared);
+}
+
 } // namespace private_lift
