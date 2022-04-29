@@ -87,4 +87,15 @@ void Attributor<schedulerId>::calculateMatch() {
       inputProcessor_.getIsValidOpportunityTimestamp();
 }
 
+template <int schedulerId>
+void Attributor<schedulerId>::calculateReachedConversions() {
+  XLOG(INFO) << "Calculate reached conversions";
+  for (const auto& event : events_) {
+    // A reached conversion is when there is a reach (number of impressions > 0)
+    // and a valid event, and this is only calculated for the test population
+    reachedConversions_.push_back(
+        std::move(event & inputProcessor_.getTestReach()));
+  }
+}
+
 } // namespace private_lift

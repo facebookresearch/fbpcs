@@ -157,4 +157,29 @@ TEST_F(AttributorTest, testMatch) {
   EXPECT_EQ(match0, expectMatch);
 }
 
+template <int schedulerId>
+std::vector<std::vector<bool>> revealReachedConversions(
+    std::unique_ptr<Attributor<schedulerId>> attributor) {
+  std::vector<std::vector<bool>> output;
+  for (const auto& reachedConversions : attributor->getReachedConversions()) {
+    output.push_back(std::move(reachedConversions.openToParty(0).getValue()));
+  }
+  return output;
+}
+
+TEST_F(AttributorTest, testReachedConversions) {
+  auto future0 =
+      std::async(revealReachedConversions<0>, std::move(publisherAttributor_));
+  auto future1 =
+      std::async(revealReachedConversions<1>, std::move(partnerAttributor_));
+  auto reachedConversions0 = future0.get();
+  auto reachedConversions1 = future1.get();
+  std::vector<std::vector<bool>> expectReachedConversions = {
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0}};
+  EXPECT_EQ(reachedConversions0, expectReachedConversions);
+}
+
 } // namespace private_lift
