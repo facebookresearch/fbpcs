@@ -171,7 +171,7 @@ jobs:
         working-directory: ./fbpcs/tests/github/
 
       - name: Check Status
-        timeout-minutes: 15
+        timeout-minutes: 5
         run: |
           ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
         working-directory: ./fbpcs/tests/github/
@@ -182,7 +182,7 @@ jobs:
         working-directory: ./fbpcs/tests/github/
 
       - name: Check Status
-        timeout-minutes: 15
+        timeout-minutes: 5
         run: |
           ./check_status.sh ${{ env.PL_CONTAINER_NAME }} lift
         working-directory: ./fbpcs/tests/github/
