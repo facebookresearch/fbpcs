@@ -26,6 +26,10 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
     const std::vector<std::string>& parts) {
   std::vector<uint64_t> timestamps;
   std::vector<bool> isClicks;
+  std::vector<uint64_t> targetId;
+  std::vector<uint16_t> actionType;
+  bool targetIdPresent = false;
+  bool actionTypePresent = false;
 
   for (auto i = 0; i < header.size(); ++i) {
     auto column = header[i];
@@ -44,6 +48,12 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
       } else {
         isClicks = common::getInnerArray<bool>(value);
       }
+    } else if (column == "target_id") {
+      targetIdPresent = true;
+      targetId = common::getInnerArray<uint64_t>(value);
+    } else if (column == "action_type") {
+      actionTypePresent = true;
+      actionType = common::getInnerArray<uint16_t>(value);
     }
   }
 
@@ -51,6 +61,25 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
       << "timestamps arrays and is_click arrays are not the same length.";
   CHECK_LE(timestamps.size(), FLAGS_max_num_touchpoints)
       << "Number of touchpoints exceeds the maximum allowed value.";
+
+  if (timestamps.size() != 0) {
+    if (targetIdPresent) {
+      CHECK_EQ(timestamps.size(), targetId.size())
+          << "timestamps arrays and target_id arrays are not the same length.";
+    } else {
+      for (auto i = 0; i < timestamps.size(); i++) {
+        targetId.push_back(0);
+      }
+    }
+    if (actionTypePresent) {
+      CHECK_EQ(timestamps.size(), actionType.size())
+          << "timestamps arrays and action_type arrays are not the same length.";
+    } else {
+      for (auto i = 0; i < timestamps.size(); i++) {
+        actionType.push_back(0);
+      }
+    }
+  }
 
   std::vector<int64_t> unique_ids;
   for (auto i = 0; i < timestamps.size(); ++i) {
@@ -67,7 +96,9 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
     tps.push_back(ParsedTouchpoint{
         /* id */ unique_ids.at(i),
         /* isClick */ isClicks.at(i) == 1,
-        /* ts */ timestamps.at(i)});
+        /* ts */ timestamps.at(i),
+        /* targetId */ targetId.at(i),
+        /* actionType */ actionType.at(i)});
   }
 
   // The input received by attribution game from data processing is sorted by
@@ -82,7 +113,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   // Add padding at the end of the input data for publisher; partner data
   // consists only of padded data
   for (auto i = tps.size(); i < FLAGS_max_num_touchpoints; ++i) {
-    tps.push_back(ParsedTouchpoint{-1, false, 0});
+    tps.push_back(ParsedTouchpoint{-1, false, 0, 0, 0});
   }
   return tps;
 }
@@ -94,6 +125,10 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
     const std::vector<std::string>& header,
     const std::vector<std::string>& parts) {
   std::vector<uint64_t> convTimestamps;
+  std::vector<uint64_t> targetId;
+  std::vector<uint16_t> actionType;
+  bool targetIdPresent = false;
+  bool actionTypePresent = false;
 
   for (auto i = 0; i < header.size(); ++i) {
     auto column = header[i];
@@ -101,15 +136,43 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
 
     if (column == "conversion_timestamps") {
       convTimestamps = common::getInnerArray<uint64_t>(value);
+    } else if (column == "target_id") {
+      targetIdPresent = true;
+      targetId = common::getInnerArray<uint64_t>(value);
+    } else if (column == "action_type") {
+      actionTypePresent = true;
+      actionType = common::getInnerArray<uint16_t>(value);
     }
   }
 
   CHECK_LE(convTimestamps.size(), FLAGS_max_num_conversions)
       << "Number of conversions exceeds the maximum allowed value.";
 
+  if (convTimestamps.size() != 0) {
+    if (targetIdPresent) {
+      CHECK_EQ(convTimestamps.size(), targetId.size())
+          << "Conversion timestamps arrays and target_id arrays are not the same length.";
+    } else {
+      for (auto i = 0; i < convTimestamps.size(); i++) {
+        targetId.push_back(0);
+      }
+    }
+    if (actionTypePresent) {
+      CHECK_EQ(convTimestamps.size(), actionType.size())
+          << "Conversion timestamps arrays and action_type arrays are not the same length.";
+    } else {
+      for (auto i = 0; i < convTimestamps.size(); i++) {
+        actionType.push_back(0);
+      }
+    }
+  }
+
   std::vector<ParsedConversion> convs;
   for (auto i = 0; i < convTimestamps.size(); ++i) {
-    convs.push_back(ParsedConversion{convTimestamps.at(i)});
+    convs.push_back(ParsedConversion{
+        /* ts */ convTimestamps.at(i),
+        /* targetId */ targetId.at(i),
+        /* actionType*/ actionType.at(i)});
   }
 
   // Sorting conversions based on timestamp. If the input is encrypted, this has
@@ -122,7 +185,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
   // consists only of padded data
   for (auto i = convs.size(); i < FLAGS_max_num_conversions; ++i) {
     // Add padding
-    convs.push_back(ParsedConversion{0});
+    convs.push_back(ParsedConversion{0, 0, 0});
   }
   return convs;
 }

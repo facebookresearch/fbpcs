@@ -32,6 +32,12 @@ inline const std::string LAST_CLICK_2_7D = "last_click_2_7d";
 inline const std::string LAST_TOUCH_2_7D = "last_touch_2_7d";
 
 /*
+  ADDITIONAL INPUT COLUMNS
+*/
+inline const std::string TARGET_ID = "targetid";
+inline const std::string TARGET_ID_ACTION_TYPE = "targetid_actiontype";
+
+/*
   AGGREGATOR NAMES
 */
 inline const std::string MEASUREMENT = "measurement";

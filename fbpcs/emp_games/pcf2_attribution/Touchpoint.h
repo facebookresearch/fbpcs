@@ -17,6 +17,8 @@ struct Touchpoint {
   ConditionalVector<int64_t, usingBatch> id;
   ConditionalVector<bool, usingBatch> isClick;
   ConditionalVector<uint64_t, usingBatch> ts;
+  ConditionalVector<uint64_t, usingBatch> targetId;
+  ConditionalVector<uint16_t, usingBatch> actionType;
 };
 
 template <bool usingBatch>
@@ -29,9 +31,13 @@ template <
 struct PrivateTouchpoint {
   ConditionalVector<int64_t, usingBatch> id;
   SecTimestamp<schedulerId, usingBatch> ts;
+  ConditionalVector<uint64_t, usingBatch> targetId;
+  ConditionalVector<uint16_t, usingBatch> actionType;
 
   explicit PrivateTouchpoint(const Touchpoint<usingBatch>& touchpoint)
-      : id{touchpoint.id} {
+      : id{touchpoint.id},
+        targetId{touchpoint.targetId},
+        actionType{touchpoint.actionType} {
     if constexpr (inputEncryption == common::InputEncryption::Xor) {
       typename SecTimestamp<schedulerId, usingBatch>::ExtractedInt extractedTs(
           touchpoint.ts);
@@ -68,6 +74,8 @@ struct ParsedTouchpoint {
   int64_t id;
   bool isClick;
   uint64_t ts;
+  uint64_t targetId;
+  uint16_t actionType;
 
   /**
    * If both are clicks, or both are views, the earliest one comes first.

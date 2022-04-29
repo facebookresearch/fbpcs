@@ -15,6 +15,8 @@ namespace pcf2_attribution {
 template <bool usingBatch>
 struct Conversion {
   ConditionalVector<uint64_t, usingBatch> ts;
+  ConditionalVector<uint64_t, usingBatch> targetId;
+  ConditionalVector<uint16_t, usingBatch> actionType;
 };
 
 template <bool usingBatch>
@@ -26,8 +28,11 @@ template <
     common::InputEncryption inputEncryption>
 struct PrivateConversion {
   SecTimestamp<schedulerId, usingBatch> ts;
+  ConditionalVector<uint64_t, usingBatch> targetId;
+  ConditionalVector<uint16_t, usingBatch> actionType;
 
-  explicit PrivateConversion(const Conversion<usingBatch>& conversion) {
+  explicit PrivateConversion(const Conversion<usingBatch>& conversion)
+      : targetId{conversion.targetId}, actionType{conversion.actionType} {
     if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
       ts =
           SecTimestamp<schedulerId, usingBatch>(conversion.ts, common::PARTNER);
@@ -42,6 +47,8 @@ struct PrivateConversion {
 // Used for parsing conversions from input CSV files
 struct ParsedConversion {
   uint64_t ts;
+  uint64_t targetId;
+  uint16_t actionType;
 
   bool operator<(const ParsedConversion& conv) const {
     return (ts < conv.ts);
