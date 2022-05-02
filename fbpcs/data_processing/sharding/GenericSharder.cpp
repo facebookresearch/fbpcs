@@ -8,6 +8,7 @@
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
 
 #include <algorithm>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -18,6 +19,7 @@
 
 #include <fbpcf/io/FileManagerUtil.h>
 #include <folly/Random.h>
+#include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/logging/xlog.h>
 
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
@@ -129,6 +131,11 @@ void GenericSharder::shard() {
              << private_lift::logging::formatNumber(lineIdx) << " lines.";
 
   XLOG(INFO) << "Now copying files to final output path...";
+
+  auto executor =
+      std::make_unique<folly::CPUThreadPoolExecutor>(THREAD_POOL_SIZE);
+  std::vector<std::exception_ptr> errorStorage(numShards, nullptr);
+
   for (auto i = 0; i < numShards; ++i) {
     auto outputDst = getOutputPaths().at(i);
     auto tmpFileSrc = tmpFilenames.at(i);
@@ -140,23 +147,28 @@ void GenericSharder::shard() {
     // Reset underlying unique_ptr to ensure buffer gets flushed
     tmpFiles.at(i).reset();
 
-    XLOG(INFO) << "Writing " << tmpFileSrc << " -> " << outputDst;
-    auto outputType = fbpcf::io::getFileType(outputDst);
-    if (outputType == fbpcf::io::FileType::S3) {
-      private_lift::s3_utils::uploadToS3(tmpFileSrc, outputDst);
-    } else if (outputType == fbpcf::io::FileType::Local) {
-      std::filesystem::copy(
-          tmpFileSrc,
-          outputDst,
-          std::filesystem::copy_options::overwrite_existing);
-    } else {
-      throw std::runtime_error{"Unsupported output destination"};
-    }
-    // We need to make sure we clean up the tmpfiles now
-    std::remove(tmpFileSrc.c_str());
+    executor->add([this, outputDst, tmpFileSrc, &errorStorage, i] {
+      copySingleFileToDestination(outputDst, tmpFileSrc, errorStorage, i);
+    });
     XLOG(INFO, fmt::format("Shard {} has {} rows", i, rowsInShard[i]));
   }
-  XLOG(INFO) << "All file writes successful";
+  executor->join();
+
+  // check for errors from worker threads
+  auto numFailedTasks = 0;
+  std::exception_ptr exceptionToThrow = nullptr;
+  for (int i = 0; i < numShards; i++) {
+    if (errorStorage.at(i) != nullptr) {
+      numFailedTasks++;
+      exceptionToThrow = errorStorage.at(i);
+    }
+  }
+  if (numFailedTasks == 0) {
+    XLOG(INFO) << "All file writes successful";
+  } else {
+    XLOG(INFO) << "There was a failure on " << numFailedTasks << " threads.";
+    std::rethrow_exception(exceptionToThrow);
+  }
 }
 
 void GenericSharder::shardLine(
@@ -186,5 +198,37 @@ void GenericSharder::shardLine(
   auto shard = getShardFor(id, outFiles.size());
   logRowsToShard(shard);
   *outFiles.at(shard) << line << "\n";
+}
+
+void GenericSharder::copySingleFileToDestination(
+    std::string outputDst,
+    std::string tmpFileSrc,
+    std::vector<std::exception_ptr>& errorStorage,
+    int i) {
+  try {
+    copySingleFileToDestinationImpl(outputDst, tmpFileSrc);
+  } catch (...) {
+    errorStorage.at(i) = std::current_exception();
+  }
+}
+
+void GenericSharder::copySingleFileToDestinationImpl(
+    std::string outputDst,
+    std::string tmpFileSrc) {
+  XLOG(INFO) << "Writing " << tmpFileSrc << " -> " << outputDst;
+  auto outputType = fbpcf::io::getFileType(outputDst);
+  if (outputType == fbpcf::io::FileType::S3) {
+    private_lift::s3_utils::uploadToS3(tmpFileSrc, outputDst);
+  } else if (outputType == fbpcf::io::FileType::Local) {
+    std::filesystem::copy(
+        tmpFileSrc,
+        outputDst,
+        std::filesystem::copy_options::overwrite_existing);
+  } else {
+    throw std::runtime_error{"Unsupported output destination"};
+  }
+
+  // We need to make sure we clean up the tmpfiles now
+  std::remove(tmpFileSrc.c_str());
 }
 } // namespace data_processing::sharder
