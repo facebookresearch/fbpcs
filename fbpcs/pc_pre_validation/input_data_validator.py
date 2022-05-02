@@ -26,6 +26,7 @@ from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
+    INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     PA_FIELDS,
     PL_FIELDS,
     VALID_LINE_ENDING_REGEX,
@@ -70,7 +71,24 @@ class InputDataValidator(Validator):
     def __validate__(self) -> ValidationReport:
         rows_processed_count = 0
         validation_issues = InputDataValidationIssues()
+
         try:
+            file_size = self._get_file_size()
+            if file_size > INPUT_DATA_MAX_FILE_SIZE_IN_BYTES:
+                max_size_mb = int(INPUT_DATA_MAX_FILE_SIZE_IN_BYTES / (1024 * 1024))
+                warning_message = " ".join(
+                    [
+                        f"WARNING: File: {self._input_file_path} is too large to download.",
+                        f"The maximum file size is {max_size_mb} MB.",
+                        "Skipped input_data validation.",
+                    ]
+                )
+                return self._format_validation_report(
+                    warning_message,
+                    rows_processed_count,
+                    validation_issues,
+                )
+
             self._download_input_file()
             header_row = ""
             with open(self._local_file_path) as local_file:
@@ -105,6 +123,14 @@ class InputDataValidator(Validator):
             rows_processed_count,
             validation_issues,
         )
+
+    def _get_file_size(self) -> int:
+        try:
+            return self._storage_service.get_file_size(self._input_file_path)
+        except Exception as e:
+            raise InputDataValidationException(
+                f"Failed to get the input file size. Please check the file path and its permission.\n\t{e}"
+            )
 
     def _download_input_file(self) -> None:
         try:
