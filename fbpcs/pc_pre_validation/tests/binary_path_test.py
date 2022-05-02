@@ -38,7 +38,7 @@ class TestBinaryPath(TestCase):
         for case in test_cases:
             # pyre-ignore
             s3_path = S3BinaryPath(TEST_REPO, case["binary_info"], case["version"])
-            self.assertEquals(case["expected"], str(s3_path))
+            self.assertEqual(case["expected"], str(s3_path))
 
     def test_local_package_path(self) -> None:
         test_cases = [
@@ -55,4 +55,4 @@ class TestBinaryPath(TestCase):
         for case in test_cases:
             # pyre-ignore
             local_path = LocalBinaryPath(TEST_EXEC_FOLDER, case["binary_info"])
-            self.assertEquals(case["expected"], str(local_path))
+            self.assertEqual(case["expected"], str(local_path))

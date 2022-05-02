@@ -13,6 +13,7 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 
 from fbpcs.pc_pre_validation.constants import (
+    INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_VALIDATOR_NAME,
     INPUT_DATA_TMP_FILE_PATH,
     PA_FIELDS,
@@ -25,6 +26,7 @@ from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 # Name the file randomly in order to avoid failures when the tests run concurrently
 TEST_FILENAME = f"test-input-data-validation-{random.randint(0, 1000000)}.csv"
+TEST_FILE_SIZE = 1234
 TEST_CLOUD_PROVIDER: CloudProvider = CloudProvider.AWS
 TEST_INPUT_FILE_PATH = f"s3://test-bucket/{TEST_FILENAME}"
 TEST_REGION = "us-west-2"
@@ -34,6 +36,14 @@ TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAM
 
 class TestInputDataValidator(TestCase):
     def setUp(self) -> None:
+        patched_storage_service = patch(
+            "fbpcs.pc_pre_validation.input_data_validator.S3StorageService"
+        )
+        self.addCleanup(patched_storage_service.stop)
+        storage_service_mock = patched_storage_service.start()
+        storage_service_mock.__init__(return_value=storage_service_mock)
+        self.storage_service_mock = storage_service_mock
+        storage_service_mock.get_file_size.return_value = TEST_FILE_SIZE
         with open(TEST_TEMP_FILEPATH, "a") as file:
             file.write("")
 
@@ -44,14 +54,11 @@ class TestInputDataValidator(TestCase):
         with open(TEST_TEMP_FILEPATH, "wb") as tmp_csv_file:
             tmp_csv_file.writelines(lines)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
-    def test_initializing_the_validation_runner_fields(
-        self, mock_storage_service: Mock
-    ) -> None:
+    def test_initializing_the_validation_runner_fields(self) -> None:
         access_key_id = "id1"
         access_key_data = "data2"
         constructed_storage_service = MagicMock()
-        mock_storage_service.__init__(return_value=constructed_storage_service)
+        self.storage_service_mock.__init__(return_value=constructed_storage_service)
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH,
@@ -61,15 +68,14 @@ class TestInputDataValidator(TestCase):
             access_key_data,
         )
 
-        mock_storage_service.assert_called_with(
+        self.storage_service_mock.assert_called_with(
             TEST_REGION, access_key_id, access_key_data
         )
         self.assertEqual(validator._storage_service, constructed_storage_service)
         self.assertEqual(validator._input_file_path, TEST_INPUT_FILE_PATH)
         self.assertEqual(validator._cloud_provider, TEST_CLOUD_PROVIDER)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
-    def test_run_validations_copy_failure(self, storage_service_mock: Mock) -> None:
+    def test_run_validations_copy_failure(self) -> None:
         exception_message = "failed to copy"
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
@@ -79,8 +85,7 @@ class TestInputDataValidator(TestCase):
                 "rows_processed_count": 0,
             },
         )
-        storage_service_mock.__init__(return_value=storage_service_mock)
-        storage_service_mock.copy.side_effect = Exception(exception_message)
+        self.storage_service_mock.copy.side_effect = Exception(exception_message)
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
@@ -89,11 +94,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_run_validations_success_for_pl_fields(
-        self, time_mock: Mock, _storage_service_mock: Mock
-    ) -> None:
+    def test_run_validations_success_for_pl_fields(self, time_mock: Mock) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
             b"id_,value,event_timestamp\n",
@@ -118,11 +120,8 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_run_validations_success_for_pa_fields(
-        self, time_mock: Mock, _storage_service_mock: Mock
-    ) -> None:
+    def test_run_validations_success_for_pa_fields(self, time_mock: Mock) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         cloud_provider = CloudProvider.AWS
         lines = [
@@ -154,10 +153,9 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_errors_when_input_data_fields_not_found(
-        self, time_mock: Mock, _storage_service_mock: Mock
+        self, time_mock: Mock
     ) -> None:
         exception_message = f"Failed to parse the header row. The header row fields must be either: {PL_FIELDS} or: {PA_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
@@ -183,10 +181,9 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_errors_when_there_is_no_header_row(
-        self, time_mock: Mock, _storage_service_mock: Mock
+        self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         expected_report = ValidationReport(
@@ -205,10 +202,9 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_errors_when_the_line_ending_is_unsupported(
-        self, time_mock: Mock, _storage_service_mock: Mock
+        self, time_mock: Mock
     ) -> None:
         exception_message = "Detected an unexpected line ending. The only supported line ending is '\\n'"
         time_mock.time.return_value = TEST_TIMESTAMP
@@ -234,10 +230,9 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pl_when_row_values_are_empty(
-        self, time_mock: Mock, _storage_service_mock: Mock
+        self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
@@ -280,10 +275,9 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pa_when_row_values_are_empty(
-        self, time_mock: Mock, _storage_service_mock: Mock
+        self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
@@ -326,10 +320,9 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pl_when_row_values_are_not_valid(
-        self, time_mock: Mock, _storage_service_mock: Mock
+        self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
@@ -372,10 +365,9 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pa_when_row_values_are_not_valid(
-        self, time_mock: Mock, _storage_service_mock: Mock
+        self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
@@ -417,7 +409,6 @@ class TestInputDataValidator(TestCase):
         report = validator.validate()
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.S3StorageService")
     @patch(
         "fbpcs.pc_pre_validation.input_data_validator.InputDataValidationIssues.count_empty_field"
     )
@@ -426,7 +417,6 @@ class TestInputDataValidator(TestCase):
         self,
         time_mock: Mock,
         count_empty_field_mock: Mock,
-        _storage_service_mock: Mock,
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         expected_exception_message = "bug in the logic"
@@ -447,3 +437,58 @@ class TestInputDataValidator(TestCase):
             report.message,
             f"WARNING: {INPUT_DATA_VALIDATOR_NAME} threw an unexpected error: {expected_exception_message}",
         )
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_it_skips_input_data_processing_when_the_file_is_too_large(
+        self, time_mock: Mock
+    ) -> None:
+        file_size = 3567123432
+        time_mock.time.return_value = TEST_TIMESTAMP
+        self.storage_service_mock.get_file_size.return_value = file_size
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=" ".join(
+                [
+                    f"WARNING: File: {TEST_INPUT_FILE_PATH} is too large to download.",
+                    f"The maximum file size is {int(INPUT_DATA_MAX_FILE_SIZE_IN_BYTES / (1024 * 1024))} MB.",
+                    "Skipped input_data validation. completed validation successfully",
+                ]
+            ),
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.storage_service_mock.get_file_size.assert_called_with(TEST_INPUT_FILE_PATH)
+        self.storage_service_mock.copy.assert_not_called()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_validation_fails_when_fetching_the_file_size_errors(
+        self, time_mock: Mock
+    ) -> None:
+        exception_message = "failed to get the file size"
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: Failed to get the input file size. Please check the file path and its permission.\n\t{exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+        self.storage_service_mock.get_file_size.side_effect = Exception(
+            exception_message
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)

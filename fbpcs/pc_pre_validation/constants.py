@@ -15,6 +15,8 @@ INPUT_DATA_VALIDATOR_NAME = "Input Data Validator"
 BINARY_FILE_VALIDATOR_NAME = "Binary File Validator"
 
 INPUT_DATA_TMP_FILE_PATH = "/tmp"
+# 3GB
+INPUT_DATA_MAX_FILE_SIZE_IN_BYTES: int = 3 * 1024 * 1024 * 1024
 
 ID_FIELD = "id_"
 CONVERSION_VALUE_FIELD = "conversion_value"
