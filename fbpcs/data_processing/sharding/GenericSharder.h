@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <exception>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -28,6 +29,8 @@ void stripQuotes(std::string& s);
  */
 void dos2Unix(std::string& s);
 } // namespace detail
+
+constexpr int THREAD_POOL_SIZE = 20;
 
 /**
  * A class which can shard data from one file into many sub-files.
@@ -159,5 +162,15 @@ class GenericSharder {
   std::vector<std::string> outputPaths_;
   int32_t logEveryN_;
   std::unordered_map<std::size_t, int> rowsInShard;
+
+  void copySingleFileToDestination(
+      std::string outputDst,
+      std::string tmpFileSrc,
+      std::vector<std::exception_ptr>& errorStorage,
+      int i);
+
+  void copySingleFileToDestinationImpl(
+      std::string outputDst,
+      std::string tmpFileSrc);
 };
 } // namespace data_processing::sharder
