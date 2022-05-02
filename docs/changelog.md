@@ -18,6 +18,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+
+## 2022-05-02
+### Added
+  - Changed `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`: current version of May-02-22
+
 ## 2022-04-25
 ### Added
   - Added the Apr-25-22 version of `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`
