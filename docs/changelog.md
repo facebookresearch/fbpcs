@@ -19,6 +19,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Removed
 
 
+
+## 2022-05-03
+### Added
+  - Added `Redeploying with Development UI - Data Migration Process Instructions`: current version of May-03-22
 ## 2022-05-02
 ### Added
   - Changed `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`: current version of May-02-22
