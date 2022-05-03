@@ -63,6 +63,9 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
     PrivateComputationDecoupledStageFlow,
 )
+from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
+    PrivateComputationMRStageFlow,
+)
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
@@ -209,6 +212,49 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     int(yesterday_timestamp),
                     args.post_processing_data.dataset_timestamp,
                 )
+
+    @mock.patch("time.time", new=mock.MagicMock(return_value=1))
+    def test_create_instance_mr_workflow(self) -> None:
+        test_role = PrivateComputationRole.PUBLISHER
+        for test_game_type, expected_k_anon in (
+            (PrivateComputationGameType.LIFT, DEFAULT_K_ANONYMITY_THRESHOLD_PL),
+            (PrivateComputationGameType.ATTRIBUTION, DEFAULT_K_ANONYMITY_THRESHOLD_PA),
+        ):
+            with self.subTest(
+                test_game_type=test_game_type, expected_k_anon=expected_k_anon
+            ):
+                instance = self.private_computation_service.create_instance(
+                    instance_id=self.test_private_computation_id,
+                    role=test_role,
+                    game_type=test_game_type,
+                    input_path=self.test_input_path,
+                    output_dir=self.test_output_dir,
+                    num_pid_containers=self.test_num_containers,
+                    num_mpc_containers=self.test_num_containers,
+                    concurrency=self.test_concurrency,
+                    num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+                    hmac_key=self.test_hmac_key,
+                    stage_flow_cls=PrivateComputationMRStageFlow,
+                )
+                # check instance_repository.create is called with the correct arguments
+                # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
+                self.private_computation_service.instance_repository.create.assert_called()
+                # pyre-fixme[16]: Callable `create` has no attribute `call_args`.
+                args = self.private_computation_service.instance_repository.create.call_args[
+                    0
+                ][
+                    0
+                ]
+                self.assertEqual(
+                    instance.get_flow_cls_name,
+                    "PrivateComputationMRStageFlow",
+                )
+
+                self.assertEqual(self.test_private_computation_id, args.instance_id)
+                self.assertEqual(test_role, args.role)
+                self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
+                self.assertEqual(1, args.creation_ts)
+                self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
