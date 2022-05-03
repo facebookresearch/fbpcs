@@ -402,6 +402,57 @@ class TestPlInstanceRunner(TestCase):
                 else:
                     self.assertEqual(mock_run_stage.call_count, 1)
 
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.update_input_path")
+    @patch("fbpcs.pl_coordinator.pl_instance_runner.PLInstanceRunner.run_stage")
+    @patch("fbpcs.pl_coordinator.pl_instance_runner.sleep")
+    @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")
+    def test_partner_input_overwrite(
+        self, mock_get_instance, mock_sleep, mock_run_stage, mock_update_input_path
+    ) -> None:
+
+        subtest_data = [
+            (
+                "CREATED",
+                PrivateComputationStageFlow.CREATED.completed_status,
+                True,
+            ),
+            (
+                "CREATED",
+                PrivateComputationStageFlow.INPUT_DATA_VALIDATION.failed_status,
+                True,
+            ),
+            (
+                "CREATED",
+                PrivateComputationStageFlow.ID_MATCH.started_status,
+                False,
+            ),
+        ]
+        for (
+            publisher_status,
+            partner_status,
+            need_override,
+        ) in subtest_data:
+            with self.subTest(
+                publisher_status=publisher_status,
+                partner_status=partner_status,
+                need_override=need_override,
+            ):
+                self.mock_graph_api_client.get_instance.return_value = (
+                    self._get_graph_api_output(publisher_status)
+                )
+                old_pc_instance = self._get_pc_instance(partner_status)
+                old_pc_instance.input_path = "need_to_be_updated"
+                mock_get_instance.return_value = old_pc_instance
+                if need_override:
+                    self._get_runner(PrivateComputationStageFlow)
+                    mock_update_input_path.assert_called_with(
+                        {}, "123", "fake_input_path", self.mock_logger
+                    )
+                else:
+                    # should have exception raised to warn partner
+                    with self.assertRaises(PCInstanceCalculationException):
+                        self._get_runner(PrivateComputationStageFlow)
+
     def _get_runner(
         self, stage_flow: Type[PrivateComputationBaseStageFlow]
     ) -> PLInstanceRunner:
@@ -447,7 +498,7 @@ class TestPlInstanceRunner(TestCase):
             num_mpc_containers=self.num_shards,
             num_files_per_mpc_container=40,
             game_type=PrivateComputationGameType.LIFT,
-            input_path="456",
+            input_path="fake_input_path",
             output_dir="789",
         )
 

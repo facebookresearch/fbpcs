@@ -192,6 +192,22 @@ def run_stage(
     logger.info(instance)
 
 
+def update_input_path(
+    config: Dict[str, Any], instance_id: str, input_path: str, logger: logging.Logger
+) -> PrivateComputationInstance:
+    """
+    Update input path by given instance_id, currently only support partner instance override.
+    """
+    pc_service = _build_private_computation_service(
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
+    )
+    return pc_service.update_input_path(instance_id, input_path)
+
+
 def get_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
@@ -212,6 +228,7 @@ def get_instance(
     instance = pc_service.get_instance(instance_id)
     if instance.current_stage.is_started_status(instance.status):
         instance = pc_service.update_instance(instance_id)
+
     return instance
 
 

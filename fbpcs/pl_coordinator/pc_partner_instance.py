@@ -11,13 +11,15 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from fbpcs.pl_coordinator.constants import WAIT_VALID_STATUS_TIMEOUT
+from fbpcs.pl_coordinator.exceptions import PCInstanceCalculationException
 from fbpcs.pl_coordinator.pc_calc_instance import PrivateComputationCalcInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
+    PrivateComputationGameType,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
+    PrivateComputationInstance,
+    AggregationType,
+    AttributionRule,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
@@ -31,6 +33,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     cancel_current_stage,
     create_instance,
+    update_input_path,
     get_instance,
     run_stage,
 )
@@ -60,13 +63,14 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
         self.config: Dict[str, Any] = config
         self.input_path: str = input_path
         self.output_dir: str = self.get_output_dir_from_input_path(input_path)
+        # try to get instance from instance repo, if not, create a new instance
+        self.status: PrivateComputationInstanceStatus
+        pc_instance: PrivateComputationInstance
         try:
-            self.status: PrivateComputationInstanceStatus = get_instance(
-                self.config, self.instance_id, self.logger
-            ).status
+            pc_instance = get_instance(self.config, self.instance_id, self.logger)
         except RuntimeError:
             self.logger.info(f"Creating new partner instance {self.instance_id}")
-            self.status = create_instance(
+            pc_instance = create_instance(
                 config=self.config,
                 instance_id=self.instance_id,
                 role=PrivateComputationRole.PARTNER,
@@ -81,8 +85,34 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
                 concurrency=concurrency,
                 num_files_per_mpc_container=num_files_per_mpc_container,
                 k_anonymity_threshold=k_anonymity_threshold,
-            ).status
+            )
+
+        self.status = pc_instance.status
+        if self._need_override_input_path(pc_instance):
+            update_input_path(
+                self.config, self.instance_id, self.input_path, self.logger
+            )
+
         self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
+
+    def _need_override_input_path(self, instance: PrivateComputationInstance) -> bool:
+        """
+        we check partner stage status to see if it's able to override input
+        """
+        if self.input_path == instance.input_path:
+            return False
+
+        if self.status in (
+            PrivateComputationInstanceStatus.CREATED,
+            PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
+        ):
+            return True
+        else:
+            raise PCInstanceCalculationException(
+                f"Unable to override input path {self.input_path} to exisiting instance input path {instance.input_path}",
+                f"input path can't be updated as the current status is too late to override {self.status}",
+                "Please wait 24 hours for the instance to expire or contact your representative at meta for assistance",
+            )
 
     def update_instance(self) -> None:
         self.status = get_instance(self.config, self.instance_id, self.logger).status

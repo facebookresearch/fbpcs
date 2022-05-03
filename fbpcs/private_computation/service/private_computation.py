@@ -223,6 +223,19 @@ class PrivateComputationService:
     def get_instance(self, instance_id: str) -> PrivateComputationInstance:
         return self.instance_repository.read(instance_id=instance_id)
 
+    def update_input_path(
+        self, instance_id: str, input_path: str
+    ) -> PrivateComputationInstance:
+        """
+        override input path only allow partner side
+        """
+        pc_instance = self.get_instance(instance_id)
+        if pc_instance.role is PrivateComputationRole.PARTNER:
+            pc_instance.input_path = input_path
+            self.instance_repository.update(pc_instance)
+
+        return pc_instance
+
     # TODO T88759390: make an async version of this function
     def update_instance(self, instance_id: str) -> PrivateComputationInstance:
         private_computation_instance = self.instance_repository.read(instance_id)
