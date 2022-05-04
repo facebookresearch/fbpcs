@@ -773,6 +773,62 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             private_computation_instance.status,
         )
 
+    def test_cancel_current_stage_pid(self) -> None:
+        test_pid_id = self.test_private_computation_id + "_id_match"
+        test_input_path = "pid_in"
+        test_output_path = "pid_out"
+        # create one PID instance to be put into PrivateComputationInstance
+        # at the beginning of the cancel_current_stage function
+        pid_instance = PIDInstance(
+            instance_id=test_pid_id,
+            protocol=DEFAULT_PID_PROTOCOL,
+            pid_role=PIDRole.PARTNER,
+            num_shards=self.test_num_containers,
+            input_path=test_input_path,
+            output_path=test_output_path,
+            status=PIDInstanceStatus.STARTED,
+        )
+        private_computation_instance = self.create_sample_instance(
+            status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+            role=PrivateComputationRole.PARTNER,
+            instances=[pid_instance],
+        )
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=private_computation_instance
+        )
+
+        # prepare the PID instance that's returned from pid_service.stop_instance()
+        pid_instance_canceled = PIDInstance(
+            instance_id=test_pid_id,
+            protocol=DEFAULT_PID_PROTOCOL,
+            pid_role=PIDRole.PARTNER,
+            num_shards=self.test_num_containers,
+            input_path=test_input_path,
+            output_path=test_output_path,
+            status=PIDInstanceStatus.CANCELED,
+            stages_status={UnionPIDStage.ADV_RUN_PID: PIDStageStatus.FAILED},
+            current_stage=UnionPIDStage.ADV_RUN_PID,
+        )
+        self.private_computation_service.pid_svc.stop_instance = MagicMock(
+            return_value=pid_instance_canceled
+        )
+        self.private_computation_service.pid_svc.instance_repository.read = MagicMock(
+            return_value=pid_instance_canceled
+        )
+
+        # call cancel, expect no exception
+        private_computation_instance = (
+            self.private_computation_service.cancel_current_stage(
+                instance_id=self.test_private_computation_id,
+            )
+        )
+
+        # assert the pc instance returned has the correct status
+        self.assertEqual(
+            PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+            private_computation_instance.status,
+        )
+
     def create_sample_instance(
         self,
         status: PrivateComputationInstanceStatus,

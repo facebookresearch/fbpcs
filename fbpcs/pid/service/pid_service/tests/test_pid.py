@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import copy
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -228,6 +229,9 @@ class TestPIDService(unittest.TestCase):
     def test_stop_instance(self):
         sample_pid_instance = self._get_sample_pid_instance()
         sample_pid_instance.current_stage = UnionPIDStage.ADV_RUN_PID
+        sample_pid_instance.stages_status = {
+            UnionPIDStage.ADV_RUN_PID: PIDStageStatus.STARTED,
+        }
         sample_pid_instance.stages_containers[UnionPIDStage.ADV_RUN_PID] = [
             self._create_container(i, ContainerInstanceStatus.STARTED) for i in range(2)
         ]
@@ -242,8 +246,11 @@ class TestPIDService(unittest.TestCase):
                 "arn:aws:ecs:region:account_id:task/container_id_1",
             ]
         )
-        expected_pid_instance = sample_pid_instance
+        expected_pid_instance = copy.deepcopy(sample_pid_instance)
         expected_pid_instance.status = PIDInstanceStatus.CANCELED
+        expected_pid_instance.stages_status[
+            UnionPIDStage.ADV_RUN_PID
+        ] = PIDStageStatus.FAILED
         self.assertEqual(expected_pid_instance, canceled_instance)
         self.pid_service.instance_repository.update.assert_called_with(
             expected_pid_instance
