@@ -14,6 +14,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 ##########################################
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    kubectl \
     python3.8 \
     python3-dev \
     python3-pip \
@@ -56,8 +57,10 @@ RUN curl -SL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terra
 RUN mkdir /terraform_deployment
 COPY fbpcs/infra/pce/gcp_terraform_template /terraform_deployment/terraform_scripts
 COPY fbpcs/infra/publisher/gcp/deploy.sh /terraform_deployment
+COPY fbpcs/infra/publisher/gcp/deploy-workload-identity.sh /terraform_deployment
 COPY fbpcs/infra/publisher/gcp/util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
+RUN chmod +x /terraform_deployment/deploy-workload-identity.sh
 RUN chmod +x /terraform_deployment/util.sh
 CMD ["/bin/bash"]
 WORKDIR /terraform_deployment
