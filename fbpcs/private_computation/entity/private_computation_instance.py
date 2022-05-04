@@ -125,7 +125,7 @@ class PrivateComputationInstance(InstanceBase):
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = None
     tier: Optional[str] = None
-
+    mr_paths: Optional[List[str]] = None
     retry_counter: int = 0
 
     # this field is deprecated

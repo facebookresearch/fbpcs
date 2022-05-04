@@ -66,6 +66,9 @@ GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     "RESHARD_COMPLETED": PrivateComputationInstanceStatus.RESHARD_COMPLETED,
     "RESHARD_FAILED": PrivateComputationInstanceStatus.RESHARD_FAILED,
     "TIMEOUT": PrivateComputationInstanceStatus.TIMEOUT,
+    "PID_MR_STARTED": PrivateComputationInstanceStatus.PID_MR_STARTED,
+    "PID_MR_COMPLETED": PrivateComputationInstanceStatus.PID_MR_COMPLETED,
+    "PID_MR_FAILED": PrivateComputationInstanceStatus.PID_MR_FAILED,
 }
 
 
