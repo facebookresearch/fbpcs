@@ -138,6 +138,7 @@ class PrivateComputationService:
         tier: Optional[str] = None,
         pid_use_row_numbers: bool = True,
         post_processing_data_optional: Optional[PostProcessingData] = None,
+        mr_paths: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
