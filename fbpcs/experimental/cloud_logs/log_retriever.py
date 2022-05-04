@@ -80,7 +80,13 @@ class LogRetriever:
         Raises:
             IndexError: if container_name is not well-formed
         """
-        container_name = cluster_name.replace("-cluster", "-container")
+        container_name = cluster_name.replace("-cluster", "-container").replace(
+            # This log group doesn't exist in the experiment platform aws account.
+            # Replace it with a 32 digit string to trick subsequent string replacement
+            # into thinking it was deployed with PCE Service. Improvise. Adapt. Overcome
+            "mpc-aem-exp-platform-publisher",
+            "0" * 32,
+        )
         container_name_parts = container_name.split("-")
 
         # If the name does not have a 32 bit random string inside, return directly
