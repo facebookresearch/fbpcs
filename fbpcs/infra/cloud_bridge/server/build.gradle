@@ -23,6 +23,8 @@ dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-web'
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
   implementation 'com.amazonaws:aws-java-sdk-sts'
+  implementation 'com.amazonaws:aws-java-sdk-ec2'
+  implementation 'com.amazonaws:aws-java-sdk-servicequotas'
   implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.+')
 }
 test {
