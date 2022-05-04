@@ -8,11 +8,24 @@
 # Helper functions
 ##########################################
 
+verify_gcp_connectivity() {
+    local bucket_name=$1
+
+    communication_error=$(gsutil ls gs://"${bucket_name}" |& grep -c 'CommunicationError')
+
+    if [ "${communication_error}" != 0 ]; then
+        echo "Connection to GCS is not available"
+        exit 1
+    fi
+}
+
 verify_object_existence() {
     local bucket_name=$1
     local key_name=$2
 
-    missing=$("gsutil ls gs://${bucket_name}/${key_name} |& grep -c CommandException")
+    verify_gcp_connectivity "${bucket_name}"
+
+    missing=$(gsutil ls gs://"${bucket_name}"/"${key_name}" |& grep -c 'CommandException')
 
     if [ "${missing}" == 1 ]; then
         echo "The file $key_name does not exist. Exiting..."
@@ -26,7 +39,9 @@ verify_object_existence() {
 check_bucket_exists() {
     local bucket_name=$1
 
-    missing=$(gsutil ls gs://"${bucket_name}" |& grep -c BucketNotFound)
+    verify_gcp_connectivity "${bucket_name}"
+
+    missing=$(gsutil ls gs://"${bucket_name}" |& grep -c 'BucketNotFound')
 
     if [ "${missing}" == 1 ]; then
         false
@@ -38,13 +53,18 @@ check_bucket_exists() {
 create_gcs_bucket() {
     local bucket_name=$1
     local region=$2
+
+    verify_gcp_connectivity "${bucket_name}"
+
     gsutil mb -l "$region" "gs://$bucket_name"
 }
 
 verify_gcs_bucket_access () {
     local bucket_name=$1
 
-    no_access=$(gsutil ls gs://"${bucket_name}" |& grep -c AccessDeniedException)
+    verify_gcp_connectivity "${bucket_name}"
+
+    no_access=$(gsutil ls gs://"${bucket_name}" |& grep -c 'AccessDeniedException')
 
     if [ "${no_access}" == 1 ]; then
         false
@@ -56,6 +76,9 @@ verify_gcs_bucket_access () {
 verify_or_create_bucket() {
     local bucket_name=$1
     local region=$2
+
+    verify_gcp_connectivity "${bucket_name}"
+
     echo "########################Create storage buckets if they don't exist ########################"
 
     if ! check_bucket_exists "$bucket_name";
