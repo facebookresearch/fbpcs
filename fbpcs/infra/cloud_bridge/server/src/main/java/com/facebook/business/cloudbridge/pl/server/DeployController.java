@@ -7,12 +7,6 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
@@ -44,6 +38,7 @@ public class DeployController {
   private DeploymentRunner runner;
   private Semaphore singleProvisioningLock = new Semaphore(1);
   private LogStreamer logStreamer = new LogStreamer();
+  private Validator validator = new Validator();
 
   @PostMapping(
       path = "/v1/deployment",
@@ -59,30 +54,18 @@ public class DeployController {
       consumes = "application/json",
       produces = "application/json")
   public APIReturn deploymentDelete(@RequestBody DeploymentParams deployment) {
-    logger.info("Received undeployment request: " + deployment.toString());
+    logger.info("Received un-deployment request: " + deployment.toString());
     return runDeployment(false, deployment);
   }
 
   private APIReturn runDeployment(boolean shouldDeploy, DeploymentParams deployment) {
     try {
       deployment.validate();
-      String accountId = getAccountIDUsingAccessKey(deployment);
-      // TODO separate them to a pre-validation library
-
-      if (accountId == null) {
-        logger.error("Invalid credentials received");
-        return new APIReturn(APIReturn.Status.STATUS_FAIL, "invalid credentials");
+      Validator.ValidatorResult preValidationResult = validator.validate(deployment);
+      if (!preValidationResult.isSuccessful) {
+        return new APIReturn(APIReturn.Status.STATUS_FAIL, preValidationResult.message);
       }
-      if (!accountId.equals(deployment.accountId)) {
-        logger.error(
-            "Invalid credentials received vs provided, received: "
-                + deployment.accountId
-                + " provided: "
-                + accountId);
-        return new APIReturn(
-            APIReturn.Status.STATUS_FAIL, "Account id doesn't match with credentials provided");
-      }
-    } catch (InvalidDeploymentArgumentException ex) {
+    } catch (final Exception ex) {
       return new APIReturn(APIReturn.Status.STATUS_FAIL, ex.getMessage());
     }
     logger.info("  Validated input");
@@ -112,26 +95,6 @@ public class DeployController {
       return new APIReturn(APIReturn.Status.STATUS_ERROR, ex.getMessage());
     } finally {
       logger.info("  Deployment request finalized");
-    }
-  }
-
-  private String getAccountIDUsingAccessKey(DeploymentParams deployment) {
-    AWSSecurityTokenService stsService =
-        AWSSecurityTokenServiceClientBuilder.standard()
-            .withCredentials(
-                new AWSStaticCredentialsProvider(
-                    new BasicAWSCredentials(
-                        deployment.awsAccessKeyId, deployment.awsSecretAccessKey)))
-            .withRegion(deployment.region)
-            .build();
-    try {
-      GetCallerIdentityResult callerIdentity =
-          stsService.getCallerIdentity(new GetCallerIdentityRequest());
-      logger.info("account info: " + callerIdentity.getAccount());
-      return callerIdentity.getAccount();
-    } catch (final Exception e) {
-      logger.error("Got exception while verifying credentials " + e.getMessage());
-      return null;
     }
   }
 
@@ -200,7 +163,6 @@ public class DeployController {
       logger.debug(
           "  Could not compress logs. Message: " + e.getMessage() + "\n" + e.getStackTrace());
     }
-
     logger.info("Logs request finalized");
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add("Content-Type", "application/octet-stream");
