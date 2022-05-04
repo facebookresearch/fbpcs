@@ -11,6 +11,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Type, Optional, Dict, Any
 
 import dateutil.parser
+import pytz
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     PLGraphAPIClient,
 )
@@ -87,12 +88,11 @@ def run_attribution(
     attribution_rule_str = attribution_rule.name
     attribution_rule_val = attribution_rule.value
     instance_id = None
-
+    pacific_timezone = pytz.timezone("US/Pacific")
     # Validate if input is datetime or timestamp
     is_date_format = _iso_date_validator(timestamp)
     if is_date_format:
-        mod_dt = timestamp + " 00:00:00+00:00"
-        dt = datetime.fromisoformat(mod_dt)
+        dt = pacific_timezone.localize(datetime.strptime(timestamp, "%Y-%m-%d"))
     else:
         dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
 
