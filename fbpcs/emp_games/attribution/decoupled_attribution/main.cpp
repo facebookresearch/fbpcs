@@ -111,10 +111,13 @@ int main(int argc, char* argv[]) {
   XLOG(INFO, cost.getEstimatedCostString());
 
   if (FLAGS_log_cost) {
-    auto run_name = (FLAGS_run_name != "") ? FLAGS_run_name : "temp_run_name";
+    bool run_name_specified = FLAGS_run_name != "";
+    auto run_name = run_name_specified ? FLAGS_run_name : "temp_run_name";
+
     auto party = (FLAGS_party == static_cast<int>(fbpcf::Party::Alice))
         ? "Publisher"
         : "Partner";
+
     folly::dynamic extra_info = folly::dynamic::object(
         "publisher_input_basepath",
         (std::strcmp(party, "Publisher") == 0) ? FLAGS_input_base_path : "")(
@@ -127,13 +130,15 @@ int main(int argc, char* argv[]) {
         "num_files",
         FLAGS_num_files)("file_start_index", FLAGS_file_start_index)("concurrency", FLAGS_concurrency)("use_xor_encryption", FLAGS_use_xor_encryption);
 
-    XLOGF(
-        INFO,
-        "{}",
-        cost.writeToS3(
-            party,
-            run_name,
-            cost.getEstimatedCostDynamic(run_name, party, extra_info)));
+    folly::dynamic costDict =
+        cost.getEstimatedCostDynamic(run_name, party, extra_info);
+
+    auto objectName = run_name_specified
+        ? run_name
+        : folly::to<std::string>(
+              FLAGS_run_name, '_', costDict["timestamp"].asString());
+
+    XLOGF(INFO, "{}", cost.writeToS3(party, objectName, costDict));
   }
 
   return 0;

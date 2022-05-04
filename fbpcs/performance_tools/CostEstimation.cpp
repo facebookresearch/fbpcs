@@ -7,7 +7,6 @@
 
 #include "fbpcs/performance_tools/CostEstimation.h"
 #include <fbpcf/io/FileManagerUtil.h>
-#include <fbpcs/performance_tools/CostEstimation.h>
 #include <folly/dynamic.h>
 #include <folly/json.h>
 #include <folly/logging/xlog.h>
@@ -190,29 +189,23 @@ void CostEstimation::end() {
 
 std::string CostEstimation::writeToS3(
     std::string party,
-    std::string run_name,
+    std::string objectName,
     folly::dynamic costDynamic) {
   std::string s3FullPath = folly::to<std::string>(
       "https://", s3Bucket_, ".s3.us-west-2.amazonaws.com/", s3Path_, "/");
-  std::string filePath = folly::to<std::string>(
-      s3FullPath,
-      run_name,
-      "_",
-      party,
-      "_",
-      costDynamic["timestamp"].asString(),
-      ".json");
+  std::string filePath =
+      folly::to<std::string>(s3FullPath, objectName, "_", party, ".json");
 
   return _writeToS3(filePath, costDynamic);
 }
 
 std::string CostEstimation::writeToS3(
-    std::string run_name,
+    std::string objectName,
     folly::dynamic costDynamic) {
   std::string s3FullPath = folly::to<std::string>(
       "https://", s3Bucket_, ".s3.us-west-2.amazonaws.com/", s3Path_, "/");
-  std::string filePath = folly::to<std::string>(
-      s3FullPath, run_name, "_", costDynamic["timestamp"].asString(), ".json");
+  std::string filePath =
+      folly::to<std::string>(s3FullPath, objectName, ".json");
 
   return _writeToS3(filePath, costDynamic);
 }
@@ -222,6 +215,7 @@ std::string CostEstimation::_writeToS3(
     folly::dynamic costDynamic) {
   std::string costData = folly::toPrettyJson(costDynamic);
   try {
+    XLOG(INFO) << "Writing cost file to s3: " << filePath;
     fbpcf::io::write(filePath, costData);
   } catch (const std::exception& e) {
     XLOG(WARN) << "Error: Exception writing cost in S3.\n\terror msg: "
