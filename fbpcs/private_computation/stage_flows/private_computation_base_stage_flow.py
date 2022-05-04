@@ -8,7 +8,7 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Type, TypeVar, TYPE_CHECKING
+from typing import Type, TypeVar, TYPE_CHECKING, Optional
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
         PrivateComputationStageService,
         PrivateComputationStageServiceArgs,
     )
+from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.stage_flow.stage_flow import StageFlow, StageFlowData
 
 C = TypeVar("C", bound="PrivateComputationBaseStageFlow")
@@ -32,6 +33,8 @@ class PrivateComputationStageFlowData(StageFlowData[PrivateComputationInstanceSt
     is_joint_stage: bool
     timeout: int = 3600
     is_retryable: bool = True
+    does_stage_write_to_s3: bool = False
+    binary_name: Optional[GameNames] = None
 
 
 class PrivateComputationBaseStageFlow(StageFlow):

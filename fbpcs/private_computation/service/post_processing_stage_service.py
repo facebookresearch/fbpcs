@@ -27,6 +27,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
+    PrivateComputationStageServiceArgs,
     PrivateComputationStageService,
 )
 
@@ -133,7 +134,10 @@ class PostProcessingStageService(PrivateComputationStageService):
             handler_name
         ] = PostProcessingHandlerStatus.STARTED
         try:
-            await handler.run(self._storage_svc, private_computation_instance)
+            await handler.run(
+                self._storage_svc,
+                private_computation_instance,
+            )
             self._logger.info(f"Completed post processing handler: {handler_name=}")
             post_processing_instance.handler_statuses[
                 handler_name
