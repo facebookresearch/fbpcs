@@ -143,6 +143,7 @@ def run_attribution(
             dataset_id,
             int(dt_arg),
             attribution_rule_val,
+            stage_flow,
             client,
             logger,
         )
@@ -175,6 +176,7 @@ def _create_new_instance(
     dataset_id: str,
     timestamp: int,
     attribution_rule: str,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
     client: PLGraphAPIClient,
     logger: logging.Logger,
 ) -> str:
@@ -184,6 +186,7 @@ def _create_new_instance(
             timestamp,
             attribution_rule,
             2,
+            stage_flow,
         ).text
     )["id"]
     logger.info(
