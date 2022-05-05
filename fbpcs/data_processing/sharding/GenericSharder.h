@@ -31,6 +31,7 @@ void dos2Unix(std::string& s);
 } // namespace detail
 
 constexpr int THREAD_POOL_SIZE = 20;
+constexpr size_t BUFFER_SIZE = 1073741824; // 2^30
 
 /**
  * A class which can shard data from one file into many sub-files.

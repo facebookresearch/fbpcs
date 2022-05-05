@@ -6,6 +6,7 @@
  */
 
 #include <gflags/gflags.h>
+#include <signal.h>
 
 #include <fbpcf/aws/AwsSdk.h>
 #include <folly/init/Init.h>
@@ -36,6 +37,8 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
 
   data_processing::sharder::runShard(
       FLAGS_input_filename,

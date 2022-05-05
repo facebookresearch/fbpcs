@@ -9,6 +9,7 @@
 
 #include <fbpcf/aws/AwsSdk.h>
 #include <folly/init/Init.h>
+#include <signal.h>
 
 #include "fbpcs/data_processing/sharding/Sharding.h"
 
@@ -40,6 +41,8 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
 
   data_processing::sharder::runShardPid(
       FLAGS_input_filename,
