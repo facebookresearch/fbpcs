@@ -161,6 +161,8 @@ undeploy_aws_resources() {
         check_s3_object_exist "$s3_bucket_for_storage" "tfstate/glue_etl$tag_postfix.tfstate" "$aws_account_id"
         echo "Semi automated data_pipeline tfstate file exists. Continue..."
         cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
+        # lambda_trigger.py needs to be copied here in case a deploy was not previously run in the container
+        cp template/lambda_trigger.py .
         terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
