@@ -24,9 +24,17 @@ void Aggregator<schedulerId>::initOram() {
             Intp<false, valueWidth>,
             groupWidth,
             schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
+    cohortSignedWriteOnlyOramFactory_ =
+        fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
+            Intp<true, valueWidth>,
+            groupWidth,
+            schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
   } else {
     cohortUnsignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
         getSecureLinearOramFactory<Intp<false, valueWidth>, schedulerId>(
+            isPublisher, 0, 1, *communicationAgentFactory_);
+    cohortSignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
+        getSecureLinearOramFactory<Intp<true, valueWidth>, schedulerId>(
             isPublisher, 0, 1, *communicationAgentFactory_);
   }
 }
@@ -115,6 +123,29 @@ void Aggregator<schedulerId>::sumMatch() {
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     cohortMetrics_[i].testMatchCount = std::get<1>(cohortOutput).at(i);
     cohortMetrics_[i].controlMatchCount = std::get<2>(cohortOutput).at(i);
+  }
+}
+
+template <int schedulerId>
+void Aggregator<schedulerId>::sumValues() {
+  XLOG(INFO) << "Aggregate values";
+  // Aggregate across test/control and cohorts
+  std::vector<std::vector<std::vector<bool>>> valueSharesArray;
+  for (auto input : attributor_->getValues()) {
+    auto valueShares = input.extractIntShare().getBooleanShares();
+    valueSharesArray.push_back(std::move(valueShares));
+  }
+  auto oram = cohortSignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto aggregationOutput = aggregate<true, valueWidth, true>(
+      cohortIndexShares_, valueSharesArray, numCohortGroups_, std::move(oram));
+
+  // Extract metrics
+  auto cohortOutput = revealCohortOutput(aggregationOutput);
+  metrics_.testValue = std::get<0>(cohortOutput).at(0);
+  metrics_.controlValue = std::get<0>(cohortOutput).at(1);
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    cohortMetrics_[i].testValue = std::get<1>(cohortOutput).at(i);
+    cohortMetrics_[i].controlValue = std::get<2>(cohortOutput).at(i);
   }
 }
 
