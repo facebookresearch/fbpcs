@@ -56,6 +56,8 @@ class Aggregator {
         testCohortIndexShares_{inputProcessor.getTestCohortIndexShares()} {
     initOram();
     sumEvents();
+    sumConverters();
+    sumMatch();
   }
 
   const OutputMetricsData getMetrics() const {
@@ -71,6 +73,10 @@ class Aggregator {
   void initOram();
 
   void sumEvents();
+
+  void sumConverters();
+
+  void sumMatch();
 
   // Run ORAM aggregation on input. The template parameter useVector indicates
   // whether the input consists of a vector of inputs or a single input.
