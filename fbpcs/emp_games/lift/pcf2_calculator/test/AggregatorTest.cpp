@@ -150,4 +150,18 @@ TEST_F(AggregatorTest, testMatchCount) {
   EXPECT_EQ(cohort[2].controlMatchCount, 1);
 }
 
+TEST_F(AggregatorTest, testValues) {
+  auto test = publisherAggregator_->getMetrics().testValue;
+  auto control = publisherAggregator_->getMetrics().controlValue;
+  EXPECT_EQ(test, 120);
+  EXPECT_EQ(control, 20);
+  auto cohort = publisherAggregator_->getCohortMetrics();
+  EXPECT_EQ(cohort[0].testValue, 40);
+  EXPECT_EQ(cohort[1].testValue, 50);
+  EXPECT_EQ(cohort[2].testValue, 30);
+  EXPECT_EQ(cohort[0].controlValue, 40);
+  EXPECT_EQ(cohort[1].controlValue, 30);
+  EXPECT_EQ(cohort[2].controlValue, -50);
+}
+
 } // namespace private_lift
