@@ -60,6 +60,7 @@ class Aggregator {
     sumNumConvSquared();
     sumMatch();
     sumValues();
+    sumValueSquared();
   }
 
   const OutputMetricsData getMetrics() const {
@@ -83,6 +84,8 @@ class Aggregator {
   void sumMatch();
 
   void sumValues();
+
+  void sumValueSquared();
 
   // Run ORAM aggregation on input. The template parameter useVector indicates
   // whether the input consists of a vector of inputs or a single input.
@@ -124,6 +127,9 @@ class Aggregator {
   std::unique_ptr<
       fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<true, valueWidth>>>
       cohortSignedWriteOnlyOramFactory_;
+  std::unique_ptr<fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<
+      Intp<false, valueSquaredWidth>>>
+      valueSquaredWriteOnlyOramFactory_;
 
   std::vector<std::vector<bool>> cohortIndexShares_;
   std::vector<std::vector<bool>> testCohortIndexShares_;
