@@ -78,6 +78,26 @@ void Aggregator<schedulerId>::sumConverters() {
 }
 
 template <int schedulerId>
+void Aggregator<schedulerId>::sumNumConvSquared() {
+  XLOG(INFO) << "Aggregate numConvSquared";
+  // Aggregate across test/control and cohorts
+  auto valueShares =
+      attributor_->getNumConvSquared().extractIntShare().getBooleanShares();
+  auto oram = cohortUnsignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto aggregationOutput = aggregate<false, valueWidth, false>(
+      cohortIndexShares_, valueShares, numCohortGroups_, std::move(oram));
+
+  // Extract metrics
+  auto cohortOutput = revealCohortOutput(aggregationOutput);
+  metrics_.testNumConvSquared = std::get<0>(cohortOutput).at(0);
+  metrics_.controlNumConvSquared = std::get<0>(cohortOutput).at(1);
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    cohortMetrics_[i].testNumConvSquared = std::get<1>(cohortOutput).at(i);
+    cohortMetrics_[i].controlNumConvSquared = std::get<2>(cohortOutput).at(i);
+  }
+}
+
+template <int schedulerId>
 void Aggregator<schedulerId>::sumMatch() {
   XLOG(INFO) << "Aggregate matchCount";
   // Aggregate across test/control and cohorts

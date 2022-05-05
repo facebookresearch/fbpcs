@@ -122,6 +122,20 @@ TEST_F(AggregatorTest, testConverters) {
   EXPECT_EQ(cohort[2].controlConverters, 1);
 }
 
+TEST_F(AggregatorTest, testNumConvSquared) {
+  auto test = publisherAggregator_->getMetrics().testNumConvSquared;
+  EXPECT_EQ(test, 13);
+  auto control = publisherAggregator_->getMetrics().controlNumConvSquared;
+  EXPECT_EQ(control, 7);
+  auto cohort = publisherAggregator_->getCohortMetrics();
+  EXPECT_EQ(cohort[0].testNumConvSquared, 2);
+  EXPECT_EQ(cohort[1].testNumConvSquared, 5);
+  EXPECT_EQ(cohort[2].testNumConvSquared, 6);
+  EXPECT_EQ(cohort[0].controlNumConvSquared, 2);
+  EXPECT_EQ(cohort[1].controlNumConvSquared, 4);
+  EXPECT_EQ(cohort[2].controlNumConvSquared, 1);
+}
+
 TEST_F(AggregatorTest, testMatchCount) {
   auto test = publisherAggregator_->getMetrics().testMatchCount;
   auto control = publisherAggregator_->getMetrics().controlMatchCount;
