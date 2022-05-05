@@ -57,6 +57,48 @@ void Aggregator<schedulerId>::sumEvents() {
 }
 
 template <int schedulerId>
+void Aggregator<schedulerId>::sumConverters() {
+  XLOG(INFO) << "Aggregate converters";
+  // Aggregate across test/control and cohorts
+  std::vector<std::vector<bool>> valueShares(
+      valueWidth, std::vector<bool>(numRows_, 0));
+  valueShares[0] = attributor_->getConverters().extractBit().getValue();
+  auto oram = cohortUnsignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto aggregationOutput = aggregate<false, valueWidth, false>(
+      cohortIndexShares_, valueShares, numCohortGroups_, std::move(oram));
+
+  // Extract metrics
+  auto cohortOutput = revealCohortOutput(aggregationOutput);
+  metrics_.testConverters = std::get<0>(cohortOutput).at(0);
+  metrics_.controlConverters = std::get<0>(cohortOutput).at(1);
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    cohortMetrics_[i].testConverters = std::get<1>(cohortOutput).at(i);
+    cohortMetrics_[i].controlConverters = std::get<2>(cohortOutput).at(i);
+  }
+}
+
+template <int schedulerId>
+void Aggregator<schedulerId>::sumMatch() {
+  XLOG(INFO) << "Aggregate matchCount";
+  // Aggregate across test/control and cohorts
+  std::vector<std::vector<bool>> valueShares(
+      valueWidth, std::vector<bool>(numRows_, 0));
+  valueShares[0] = attributor_->getMatch().extractBit().getValue();
+  auto oram = cohortUnsignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto aggregationOutput = aggregate<false, valueWidth, false>(
+      cohortIndexShares_, valueShares, numCohortGroups_, std::move(oram));
+
+  // Extract metrics
+  auto cohortOutput = revealCohortOutput(aggregationOutput);
+  metrics_.testMatchCount = std::get<0>(cohortOutput).at(0);
+  metrics_.controlMatchCount = std::get<0>(cohortOutput).at(1);
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    cohortMetrics_[i].testMatchCount = std::get<1>(cohortOutput).at(i);
+    cohortMetrics_[i].controlMatchCount = std::get<2>(cohortOutput).at(i);
+  }
+}
+
+template <int schedulerId>
 template <bool isSigned, int8_t width, bool useVector>
 std::vector<SecInt<schedulerId, isSigned, width>>
 Aggregator<schedulerId>::aggregate(
