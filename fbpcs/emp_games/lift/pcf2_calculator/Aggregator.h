@@ -57,6 +57,7 @@ class Aggregator {
     initOram();
     sumEvents();
     sumConverters();
+    sumNumConvSquared();
     sumMatch();
   }
 
@@ -75,6 +76,8 @@ class Aggregator {
   void sumEvents();
 
   void sumConverters();
+
+  void sumNumConvSquared();
 
   void sumMatch();
 
