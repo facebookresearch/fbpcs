@@ -21,6 +21,8 @@
 #include <folly/Random.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/logging/xlog.h>
+#include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileReader.h"
 
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
 #include "fbpcs/data_processing/common/Logging.h"
@@ -57,8 +59,9 @@ std::vector<std::string> GenericSharder::genOutputPaths(
 
 void GenericSharder::shard() {
   std::size_t numShards = getOutputPaths().size();
-  auto inStreamPtr = fbpcf::io::getInputStream(getInputPath());
-  auto& inStream = inStreamPtr->get();
+  auto reader = fbpcf::io::FileReader(getInputPath());
+  auto bufferedReader =
+      std::make_unique<fbpcf::io::BufferedReader>(reader, BUFFER_SIZE);
 
   std::filesystem::path tmpDirectory{"/tmp"};
   std::vector<std::string> tmpFilenames;
@@ -83,8 +86,7 @@ void GenericSharder::shard() {
   }
 
   // First get the header and put it in all the output files
-  std::string line;
-  getline(inStream, line);
+  std::string line = bufferedReader->readLine();
   detail::stripQuotes(line);
   detail::dos2Unix(line);
   detail::strRemoveBlanks(line);
@@ -115,7 +117,8 @@ void GenericSharder::shard() {
 
   // Read lines and send to appropriate outFile repeatedly
   uint64_t lineIdx = 0;
-  while (getline(inStream, line)) {
+  while (!bufferedReader->eof()) {
+    line = bufferedReader->readLine();
     detail::stripQuotes(line);
     detail::dos2Unix(line);
     detail::strRemoveBlanks(line);
@@ -135,6 +138,8 @@ void GenericSharder::shard() {
   auto executor =
       std::make_unique<folly::CPUThreadPoolExecutor>(THREAD_POOL_SIZE);
   std::vector<std::exception_ptr> errorStorage(numShards, nullptr);
+
+  bufferedReader->close();
 
   for (auto i = 0; i < numShards; ++i) {
     auto outputDst = getOutputPaths().at(i);
