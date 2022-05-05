@@ -19,8 +19,20 @@
 
 namespace private_lift {
 
+template <typename T, bool useVector>
+using ConditionalVector =
+    typename std::conditional<useVector, std::vector<T>, T>::type;
+
 template <bool isSigned, int8_t width>
 using Intp = typename fbpcf::mpc_std_lib::util::Intp<isSigned, width>;
+
+template <bool isSigned, int8_t width>
+using NativeIntp =
+    typename fbpcf::mpc_std_lib::util::Intp<isSigned, width>::NativeType;
+
+template <int schedulerId, bool isSigned, int8_t width>
+using SecInt =
+    typename fbpcf::frontend::Int<isSigned, width, true, schedulerId, false>;
 
 template <int schedulerId>
 class Aggregator {
@@ -43,6 +55,7 @@ class Aggregator {
         cohortIndexShares_{inputProcessor.getCohortIndexShares()},
         testCohortIndexShares_{inputProcessor.getTestCohortIndexShares()} {
     initOram();
+    sumEvents();
   }
 
   const OutputMetricsData getMetrics() const {
@@ -56,6 +69,30 @@ class Aggregator {
 
  private:
   void initOram();
+
+  void sumEvents();
+
+  // Run ORAM aggregation on input. The template parameter useVector indicates
+  // whether the input consists of a vector of inputs or a single input.
+  template <bool isSigned, int8_t width, bool useVector>
+  std::vector<SecInt<schedulerId, isSigned, width>> aggregate(
+      const std::vector<std::vector<bool>>& indexShares,
+      ConditionalVector<std::vector<std::vector<bool>>, useVector>& valueShares,
+      size_t oramSize,
+      std::unique_ptr<
+          fbpcf::mpc_std_lib::oram::IWriteOnlyOram<Intp<isSigned, width>>> oram)
+      const;
+
+  // Reveal cohort output from aggregation output as a tuple consisting of the
+  // test/control metrics, the test cohort metrics, and the control cohort
+  // metrics.
+  template <bool isSigned, int8_t width>
+  std::tuple<
+      std::vector<NativeIntp<isSigned, width>>,
+      std::vector<NativeIntp<isSigned, width>>,
+      std::vector<NativeIntp<isSigned, width>>>
+  revealCohortOutput(std::vector<SecInt<schedulerId, isSigned, width>>
+                         aggregationOutput) const;
 
   int32_t myRole_;
   InputProcessor<schedulerId> inputProcessor_;

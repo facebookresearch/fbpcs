@@ -94,4 +94,18 @@ class AggregatorTest : public ::testing::Test {
   }
 };
 
+TEST_F(AggregatorTest, testEvents) {
+  auto test = publisherAggregator_->getMetrics().testEvents;
+  auto control = publisherAggregator_->getMetrics().controlEvents;
+  EXPECT_EQ(test, 9);
+  EXPECT_EQ(control, 5);
+  auto cohort = publisherAggregator_->getCohortMetrics();
+  EXPECT_EQ(cohort[0].testEvents, 2);
+  EXPECT_EQ(cohort[1].testEvents, 3);
+  EXPECT_EQ(cohort[2].testEvents, 4);
+  EXPECT_EQ(cohort[0].controlEvents, 2);
+  EXPECT_EQ(cohort[1].controlEvents, 2);
+  EXPECT_EQ(cohort[2].controlEvents, 1);
+}
+
 } // namespace private_lift
