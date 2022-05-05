@@ -303,6 +303,8 @@ deploy_aws_resources() {
         log_streaming_data "configuring semi-automated data ingestion pipeline from CAPI-G to s3"
         # configure semi-automated data ingestion pipeline, if true
         cd /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
+        # copy the lambda_trigger.py template to the local directory
+        cp template/lambda_trigger.py .
         echo "Updating trigger function configurations..."
         sed -i "s/glueJobName = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"/glueJobName = \"glue-ETL$tag_postfix\"/g" lambda_trigger.py
         sed -i "s~s3_write_path = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"~s3_write_path = \"$app_data_input_bucket_id\"~g" lambda_trigger.py
