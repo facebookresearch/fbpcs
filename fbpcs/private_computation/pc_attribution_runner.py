@@ -26,6 +26,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
+    PrivateComputationPCF2StageFlow,
+)
 
 
 class LoggerAdapter(logging.LoggerAdapter):
