@@ -228,7 +228,6 @@ def get_instance(
     instance = pc_service.get_instance(instance_id)
     if instance.current_stage.is_started_status(instance.status):
         instance = pc_service.update_instance(instance_id)
-
     return instance
 
 
