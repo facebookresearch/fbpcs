@@ -69,6 +69,18 @@ void Aggregator<schedulerId>::initOram() {
 }
 
 template <int schedulerId>
+std::string Aggregator<schedulerId>::toJson() const {
+  GroupedLiftMetrics groupedLiftMetrics;
+  groupedLiftMetrics.metrics = metrics_.toLiftMetrics();
+  std::transform(
+      cohortMetrics_.begin(),
+      cohortMetrics_.end(),
+      std::back_inserter(groupedLiftMetrics.cohortMetrics),
+      [](auto const& p) { return p.second.toLiftMetrics(); });
+  return groupedLiftMetrics.toJson();
+}
+
+template <int schedulerId>
 void Aggregator<schedulerId>::sumEvents() {
   XLOG(INFO) << "Aggregate events";
   // Aggregate across test/control and cohorts
