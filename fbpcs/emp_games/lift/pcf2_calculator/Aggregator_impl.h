@@ -15,6 +15,7 @@ void Aggregator<schedulerId>::initOram() {
   // Initialize ORAM
   bool isPublisher = (myRole_ == common::PUBLISHER);
   numCohortGroups_ = std::max(2 * numPartnerCohorts_, uint32_t(2));
+  numTestCohortGroups_ = std::max(numPartnerCohorts_ + 1, uint32_t(2));
 
   if (numCohortGroups_ > 4) {
     // If the ORAM size is larger than 4, linear ORAM is less efficient
@@ -43,6 +44,26 @@ void Aggregator<schedulerId>::initOram() {
             isPublisher, 0, 1, *communicationAgentFactory_);
     valueSquaredWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
         getSecureLinearOramFactory<Intp<false, valueSquaredWidth>, schedulerId>(
+            isPublisher, 0, 1, *communicationAgentFactory_);
+  }
+
+  if (numTestCohortGroups_ > 4) {
+    testCohortUnsignedWriteOnlyOramFactory_ =
+        fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
+            Intp<false, valueWidth>,
+            groupWidth,
+            schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
+    testCohortSignedWriteOnlyOramFactory_ =
+        fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
+            Intp<true, valueWidth>,
+            groupWidth,
+            schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
+  } else {
+    testCohortUnsignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
+        getSecureLinearOramFactory<Intp<false, valueWidth>, schedulerId>(
+            isPublisher, 0, 1, *communicationAgentFactory_);
+    testCohortSignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
+        getSecureLinearOramFactory<Intp<true, valueWidth>, schedulerId>(
             isPublisher, 0, 1, *communicationAgentFactory_);
   }
 }
@@ -135,6 +156,33 @@ void Aggregator<schedulerId>::sumMatch() {
 }
 
 template <int schedulerId>
+void Aggregator<schedulerId>::sumReachedConversions() {
+  XLOG(INFO) << "Aggregate reachedConversions";
+  // Aggregate across test/control and cohorts
+  std::vector<std::vector<std::vector<bool>>> valueSharesArray;
+  for (auto events : attributor_->getReachedConversions()) {
+    std::vector<std::vector<bool>> valueShares(
+        valueWidth, std::vector<bool>(numRows_, 0));
+    valueShares[0] = events.extractBit().getValue();
+    valueSharesArray.push_back(std::move(valueShares));
+  }
+  auto oram =
+      testCohortUnsignedWriteOnlyOramFactory_->create(numTestCohortGroups_);
+  auto aggregationOutput = aggregate<false, valueWidth, true>(
+      testCohortIndexShares_,
+      valueSharesArray,
+      numTestCohortGroups_,
+      std::move(oram));
+
+  // Extract metrics
+  auto cohortOutput = revealTestCohortOutput(aggregationOutput);
+  metrics_.reachedConversions = std::get<0>(cohortOutput);
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    cohortMetrics_[i].reachedConversions = std::get<1>(cohortOutput).at(i);
+  }
+}
+
+template <int schedulerId>
 void Aggregator<schedulerId>::sumValues() {
   XLOG(INFO) << "Aggregate values";
   // Aggregate across test/control and cohorts
@@ -154,6 +202,31 @@ void Aggregator<schedulerId>::sumValues() {
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     cohortMetrics_[i].testValue = std::get<1>(cohortOutput).at(i);
     cohortMetrics_[i].controlValue = std::get<2>(cohortOutput).at(i);
+  }
+}
+
+template <int schedulerId>
+void Aggregator<schedulerId>::sumReachedValues() {
+  XLOG(INFO) << "Aggregate reachedValues";
+  // Aggregate across test/control and cohorts
+  std::vector<std::vector<std::vector<bool>>> valueSharesArray;
+  for (auto input : attributor_->getReachedValues()) {
+    auto valueShares = input.extractIntShare().getBooleanShares();
+    valueSharesArray.push_back(std::move(valueShares));
+  }
+  auto oram =
+      testCohortSignedWriteOnlyOramFactory_->create(numTestCohortGroups_);
+  auto aggregationOutput = aggregate<true, valueWidth, true>(
+      testCohortIndexShares_,
+      valueSharesArray,
+      numTestCohortGroups_,
+      std::move(oram));
+
+  // Extract metrics
+  auto cohortOutput = revealTestCohortOutput(aggregationOutput);
+  metrics_.reachedValue = std::get<0>(cohortOutput);
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    cohortMetrics_[i].reachedValue = std::get<1>(cohortOutput).at(i);
   }
 }
 
@@ -244,6 +317,30 @@ Aggregator<schedulerId>::revealCohortOutput(
   testControlOutput.push_back(control.extractIntShare().getValue());
   return std::make_tuple(
       testControlOutput, testCohortOutput, controlCohortOutput);
+}
+
+template <int schedulerId>
+template <bool isSigned, int8_t width>
+std::tuple<
+    NativeIntp<isSigned, width>,
+    std::vector<NativeIntp<isSigned, width>>>
+Aggregator<schedulerId>::revealTestCohortOutput(
+    std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput) const {
+  // Extract metrics
+  std::vector<NativeIntp<isSigned, width>> testCohortOutput;
+  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+    testCohortOutput.push_back(
+        aggregationOutput.at(i).extractIntShare().getValue());
+  }
+
+  // Initialize test metrics for the case where there are no partner cohorts
+  auto test = aggregationOutput.at(0);
+  for (size_t i = 1; i < numPartnerCohorts_; ++i) {
+    // Compute test metrics by summing by cohort metrics
+    test = test + aggregationOutput.at(i);
+  }
+
+  return std::make_tuple(test.extractIntShare().getValue(), testCohortOutput);
 }
 
 } // namespace private_lift

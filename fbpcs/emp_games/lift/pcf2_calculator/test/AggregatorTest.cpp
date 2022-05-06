@@ -150,6 +150,16 @@ TEST_F(AggregatorTest, testMatchCount) {
   EXPECT_EQ(cohort[2].controlMatchCount, 1);
 }
 
+TEST_F(AggregatorTest, testReachedConversions) {
+  auto reachedConversions =
+      publisherAggregator_->getMetrics().reachedConversions;
+  EXPECT_EQ(reachedConversions, 4);
+  auto cohort = publisherAggregator_->getCohortMetrics();
+  EXPECT_EQ(cohort[0].reachedConversions, 1);
+  EXPECT_EQ(cohort[1].reachedConversions, 0);
+  EXPECT_EQ(cohort[2].reachedConversions, 3);
+}
+
 TEST_F(AggregatorTest, testValues) {
   auto test = publisherAggregator_->getMetrics().testValue;
   auto control = publisherAggregator_->getMetrics().controlValue;
@@ -162,6 +172,15 @@ TEST_F(AggregatorTest, testValues) {
   EXPECT_EQ(cohort[0].controlValue, 40);
   EXPECT_EQ(cohort[1].controlValue, 30);
   EXPECT_EQ(cohort[2].controlValue, -50);
+}
+
+TEST_F(AggregatorTest, testReachedValues) {
+  auto test = publisherAggregator_->getMetrics().reachedValue;
+  EXPECT_EQ(test, 100);
+  auto cohort = publisherAggregator_->getCohortMetrics();
+  EXPECT_EQ(cohort[0].reachedValue, 20);
+  EXPECT_EQ(cohort[1].reachedValue, 0);
+  EXPECT_EQ(cohort[2].reachedValue, 80);
 }
 
 TEST_F(AggregatorTest, testValueSquared) {
