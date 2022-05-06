@@ -23,6 +23,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.pre_validation_util import get_cmd_args
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -88,15 +89,7 @@ class InputDataValidationStageService(PrivateComputationStageService):
         region = self._pc_validator_config.region
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = self._onedocker_binary_config_map[binary_name]
-        cmd_args = " ".join(
-            [
-                f"--input-file-path={pc_instance.input_path}",
-                "--cloud-provider=AWS",
-                f"--region={region}",
-                # pc_pre_validation assumes all other binaries runs on the same version tag as its own
-                f"--binary-version={binary_config.binary_version}",
-            ]
-        )
+        cmd_args = get_cmd_args(pc_instance.input_path, region, binary_config)
 
         env_vars = {"ONEDOCKER_REPOSITORY_PATH": binary_config.repository_path}
         container_instances = await RunBinaryBaseService().start_containers(
