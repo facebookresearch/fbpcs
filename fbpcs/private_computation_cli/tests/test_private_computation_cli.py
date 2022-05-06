@@ -12,6 +12,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from fbpcs.private_computation_cli import private_computation_cli as pc_cli
+from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
 
 class TestPrivateComputationCli(TestCase):
@@ -289,6 +290,27 @@ class TestPrivateComputationCli(TestCase):
         )
         pc_cli.main(argv)
         run_study_mock.assert_called_once()
+
+    @patch("fbpcs.private_computation_cli.private_computation_cli.pre_validate")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.logging.getLogger")
+    def test_pre_validate(self, getLoggerMock, pre_validate_mock) -> None:
+        getLoggerMock.return_value = getLoggerMock
+        expected_config = ConfigYamlDict.from_file(self.temp_filename)
+        argv = [
+            "pre_validate",
+            "12345",
+            f"--config={self.temp_filename}",
+            "--objective_ids=12,34,56,78,90",
+            f"--input_paths={','.join(self.temp_files_paths)}",
+        ]
+
+        pc_cli.main(argv)
+
+        pre_validate_mock.assert_called_once_with(
+            config=expected_config,
+            input_paths=self.temp_files_paths,
+            logger=getLoggerMock,
+        )
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.cancel_current_stage")
     def test_cancel_current_stage(self, cancel_stage_mock) -> None:

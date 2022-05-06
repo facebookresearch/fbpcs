@@ -21,6 +21,7 @@ Usage:
     pc-cli run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
+    pc-cli pre_validate <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
     pc-cli print_log_urls <instance_id> --config=<config_file> [options]
@@ -53,6 +54,7 @@ from fbpcs.private_computation.pc_attribution_runner import (
     get_attribution_dataset_info,
     run_attribution,
 )
+from fbpcs.private_computation.service.pre_validate_service import pre_validate
 from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -124,6 +126,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "run_instance": bool,
             "run_instances": bool,
             "run_study": bool,
+            "pre_validate": bool,
             "run_attribution": bool,
             "cancel_current_stage": bool,
             "print_instance": bool,
@@ -341,6 +344,12 @@ def main(argv: Optional[List[str]] = None) -> None:
             get_attribution_dataset_info(
                 config=config, dataset_id=arguments["--dataset_id"], logger=logger
             )
+        )
+    elif arguments["pre_validate"]:
+        pre_validate(
+            config=config,
+            input_paths=arguments["--input_paths"],
+            logger=logger,
         )
 
 
