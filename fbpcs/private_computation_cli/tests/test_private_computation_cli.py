@@ -110,6 +110,23 @@ class TestPrivateComputationCli(TestCase):
             pc_cli.main(argv)
             create_mock.assert_called_once()
 
+    @patch("fbpcs.private_computation_cli.private_computation_cli.run_attribution")
+    def test_run_attribution(self, create_mock) -> None:
+        argv = [
+            "run_attribution",
+            "--dataset_id=43423422232",
+            "--attribution_rule=last_click_1d",
+            f"--input_path={self.temp_files_paths[0]}",
+            "--aggregation_type=measurement",
+            "--concurrency=4",
+            "--num_files_per_mpc_container=4",
+            f"--config={self.temp_filename}",
+            "--timestamp=1646870400",
+            "--k_anonymity_threshold=0",
+        ]
+        pc_cli.main(argv)
+        create_mock.assert_called_once()
+
     @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
     def test_validate(self, validate_mock) -> None:
         argv = [
