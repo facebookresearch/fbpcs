@@ -176,6 +176,9 @@ class PIDService:
                 )
 
         instance.status = PIDInstanceStatus.CANCELED
+        if instance.current_stage in instance.stages_status:
+            instance.stages_status[instance.current_stage] = PIDStageStatus.FAILED
+
         self.instance_repository.update(instance)
         self.logger.info(f"PID instance {instance_id} has been successfully canceled.")
         return instance

@@ -17,6 +17,7 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -435,6 +436,8 @@ class PrivateComputationService:
         last_instance = private_computation_instance.instances[-1]
         if isinstance(last_instance, MPCInstance):
             self.mpc_svc.stop_instance(instance_id=last_instance.instance_id)
+        elif isinstance(last_instance, PIDInstance):
+            self.pid_svc.stop_instance(instance_id=last_instance.instance_id)
         else:
             self.logger.warning(
                 f"Canceling the current stage of instance {instance_id} is not supported yet."
