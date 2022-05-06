@@ -74,6 +74,8 @@ class Aggregator {
     return cohortMetrics_;
   }
 
+  std::string toJson() const;
+
  private:
   void initOram();
 
