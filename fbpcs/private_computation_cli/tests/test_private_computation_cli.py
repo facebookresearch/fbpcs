@@ -293,7 +293,9 @@ class TestPrivateComputationCli(TestCase):
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.PreValidateService")
     @patch("fbpcs.private_computation_cli.private_computation_cli.logging.getLogger")
-    def test_pre_validate(self, getLoggerMock, pre_validate_service_mock) -> None:
+    def test_pre_validate_with_pl_args(
+        self, getLoggerMock, pre_validate_service_mock
+    ) -> None:
         getLoggerMock.return_value = getLoggerMock
         expected_config = ConfigYamlDict.from_file(self.temp_filename)
         argv = [
@@ -301,6 +303,76 @@ class TestPrivateComputationCli(TestCase):
             "12345",
             f"--config={self.temp_filename}",
             "--objective_ids=12,34,56,78,90",
+            f"--input_paths={','.join(self.temp_files_paths)}",
+        ]
+
+        pc_cli.main(argv)
+
+        pre_validate_service_mock.pre_validate.assert_called_once_with(
+            config=expected_config,
+            input_paths=self.temp_files_paths,
+            logger=getLoggerMock,
+        )
+
+    @patch("fbpcs.private_computation_cli.private_computation_cli.PreValidateService")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.logging.getLogger")
+    def test_pre_validate_with_pa_args(
+        self, getLoggerMock, pre_validate_service_mock
+    ) -> None:
+        getLoggerMock.return_value = getLoggerMock
+        expected_config = ConfigYamlDict.from_file(self.temp_filename)
+        argv = [
+            "pre_validate",
+            f"--config={self.temp_filename}",
+            "--dataset_id=123",
+            f"--input_path={self.temp_files_paths[0]}",
+            "--timestamp=1651847976",
+            "--attribution_rule=last_click_1d",
+            "--aggregation_type=measurement",
+            "--concurrency=1",
+            "--num_files_per_mpc_container=1",
+            "--k_anonymity_threshold=10",
+        ]
+
+        pc_cli.main(argv)
+
+        pre_validate_service_mock.pre_validate.assert_called_once_with(
+            config=expected_config,
+            input_paths=[self.temp_files_paths[0]],
+            logger=getLoggerMock,
+        )
+
+    @patch("fbpcs.private_computation_cli.private_computation_cli.PreValidateService")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.logging.getLogger")
+    def test_pre_validate_with_minimal_input_path_args(
+        self, getLoggerMock, pre_validate_service_mock
+    ) -> None:
+        getLoggerMock.return_value = getLoggerMock
+        expected_config = ConfigYamlDict.from_file(self.temp_filename)
+        argv = [
+            "pre_validate",
+            f"--config={self.temp_filename}",
+            f"--input_path={self.temp_files_paths[0]}",
+        ]
+
+        pc_cli.main(argv)
+
+        pre_validate_service_mock.pre_validate.assert_called_once_with(
+            config=expected_config,
+            input_paths=[self.temp_files_paths[0]],
+            logger=getLoggerMock,
+        )
+
+    @patch("fbpcs.private_computation_cli.private_computation_cli.PreValidateService")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.logging.getLogger")
+    def test_pre_validate_with_minimal_input_paths_args(
+        self, getLoggerMock, pre_validate_service_mock
+    ) -> None:
+        getLoggerMock.return_value = getLoggerMock
+        expected_config = ConfigYamlDict.from_file(self.temp_filename)
+        argv = [
+            "pre_validate",
+            f"--config={self.temp_filename}",
             f"--input_paths={','.join(self.temp_files_paths)}",
         ]
 
