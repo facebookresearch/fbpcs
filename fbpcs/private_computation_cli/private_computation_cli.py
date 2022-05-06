@@ -25,7 +25,7 @@ Usage:
     pc-cli print_instance <instance_id> --config=<config_file> [options]
     pc-cli print_log_urls <instance_id> --config=<config_file> [options]
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
-    pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path>  --timestamp=<timestamp> --attribution_rule=<attribution_rule>  --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [options]
+    pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [--stage_flow=<stage_flow>][options]
 
 
 Options:
@@ -57,8 +57,8 @@ from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
-from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
-    PrivateComputationDecoupledStageFlow,
+from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
+    PrivateComputationPCF2StageFlow,
 )
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
@@ -301,7 +301,11 @@ def main(argv: Optional[List[str]] = None) -> None:
             dry_run=arguments["--dry_run"],
         )
     elif arguments["run_attribution"]:
-        stage_flow = PrivateComputationDecoupledStageFlow
+        stage_flow = (
+            arguments["--stage_flow"]
+            if arguments["--stage_flow"] is not None
+            else PrivateComputationPCF2StageFlow
+        )
         run_attribution(
             config=config,
             dataset_id=arguments["--dataset_id"],

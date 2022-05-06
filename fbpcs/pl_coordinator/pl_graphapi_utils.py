@@ -7,7 +7,7 @@
 import json
 import logging
 import os
-from typing import Any, List, Dict
+from typing import Type, Any, List, Dict
 
 import requests
 from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
@@ -17,6 +17,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 )
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 from fbpcs.utils.config_yaml.exceptions import ConfigYamlBaseException
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import PrivateComputationBaseStageFlow
 
 URL = "https://graph.facebook.com/v13.0"
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
@@ -140,10 +141,12 @@ class PLGraphAPIClient:
         timestamp: int,
         attribution_rule: str,
         num_containers: int,
+        stage_flow: Type[PrivateComputationBaseStageFlow],
     ) -> requests.Response:
         params = self.params.copy()
         params["attribution_rule"] = attribution_rule
         params["timestamp"] = timestamp
+        params["stage_flow"] = timestamp
         r = requests.post(f"{URL}/{dataset_id}/instance", params=params)
         self._check_err(r, "creating fb pa instance")
         return r
