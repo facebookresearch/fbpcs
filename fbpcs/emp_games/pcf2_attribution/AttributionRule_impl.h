@@ -523,6 +523,71 @@ template <
     int schedulerId,
     bool usingBatch,
     common::InputEncryption inputEncryption>
+inline const AttributionRule<schedulerId, usingBatch, inputEncryption>
+    LAST_CLICK_1D_TARGETID{
+        /* id */ 7,
+        /* name */ common::LAST_CLICK_1D_TARGETID,
+        /* isAttributable */
+        [](const PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>&
+               tp,
+           const PrivateConversion<schedulerId, usingBatch, inputEncryption>&
+               conv,
+           const std::vector<SecTimestamp<schedulerId, usingBatch>>& thresholds)
+            -> const SecBit<schedulerId, usingBatch> {
+          return (tp.targetId == conv.targetId) &
+              (tp.actionType == conv.actionType) & (tp.ts < conv.ts) &
+              (conv.ts <= thresholds.at(0));
+        },
+        /* computeThresholdsPlaintext */
+        [](const Touchpoint<usingBatch>& tp)
+            -> const std::vector<SecTimestamp<schedulerId, usingBatch>> {
+          ConditionalVector<uint32_t, usingBatch> thresholdOneDayClick;
+          if constexpr (usingBatch) {
+            for (size_t i = 0; i < tp.ts.size(); ++i) {
+              bool isValidClick = tp.isClick.at(i) & (tp.ts.at(i) > 0);
+              uint32_t thresholdOneDay = tp.ts.at(i) + kSecondsInOneDay;
+              thresholdOneDayClick.push_back(
+                  isValidClick ? thresholdOneDay : 0);
+            }
+          } else {
+            bool isValidClick = tp.isClick & (tp.ts > 0);
+            uint32_t thresholdOneDay = tp.ts + kSecondsInOneDay;
+            thresholdOneDayClick = isValidClick ? thresholdOneDay : 0;
+          }
+          return std::vector<SecTimestamp<schedulerId, usingBatch>>{
+              SecTimestamp<schedulerId, usingBatch>(
+                  thresholdOneDayClick, common::PUBLISHER)};
+        },
+        /* computeThresholdsPrivate */
+        [](const PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>&
+               privateTp,
+           const PrivateIsClick<schedulerId, usingBatch, inputEncryption>&
+               privateIsClick,
+           size_t batchSize)
+            -> const std::vector<SecTimestamp<schedulerId, usingBatch>> {
+          PubTimestamp<schedulerId, usingBatch> zero;
+          PubTimestamp<schedulerId, usingBatch> secondsInOneDay;
+          if constexpr (usingBatch) {
+            zero = PubTimestamp<schedulerId, usingBatch>(
+                std::vector<uint32_t>(batchSize, 0));
+            secondsInOneDay = PubTimestamp<schedulerId, usingBatch>(
+                std::vector<uint32_t>(batchSize, kSecondsInOneDay));
+          } else {
+            zero = PubTimestamp<schedulerId, usingBatch>(uint32_t(0));
+            secondsInOneDay =
+                PubTimestamp<schedulerId, usingBatch>(kSecondsInOneDay);
+          }
+          auto isValidClick = privateIsClick.isClick & (zero < privateTp.ts);
+          auto thresholdOneDay = privateTp.ts + secondsInOneDay;
+          auto thresholdOneDayClick = zero.mux(isValidClick, thresholdOneDay);
+          return std::vector<SecTimestamp<schedulerId, usingBatch>>{
+              thresholdOneDayClick};
+        }};
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
 inline const std::vector<
     AttributionRule<schedulerId, usingBatch, inputEncryption>>
     SUPPORTED_ATTRIBUTION_RULES{
@@ -531,7 +596,8 @@ inline const std::vector<
         LAST_TOUCH_CT1D_IMP1D<schedulerId, usingBatch, inputEncryption>,
         LAST_TOUCH_CT28D_IMP1D<schedulerId, usingBatch, inputEncryption>,
         LAST_CLICK_2_7D<schedulerId, usingBatch, inputEncryption>,
-        LAST_TOUCH_2_7D<schedulerId, usingBatch, inputEncryption>};
+        LAST_TOUCH_2_7D<schedulerId, usingBatch, inputEncryption>,
+        LAST_CLICK_1D_TARGETID<schedulerId, usingBatch, inputEncryption>};
 
 template <
     int schedulerId,

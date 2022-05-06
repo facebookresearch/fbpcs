@@ -30,6 +30,7 @@ inline const std::string LAST_CLICK_28D = "last_click_28d";
 inline const std::string LAST_TOUCH_28D = "last_touch_28d";
 inline const std::string LAST_CLICK_2_7D = "last_click_2_7d";
 inline const std::string LAST_TOUCH_2_7D = "last_touch_2_7d";
+inline const std::string LAST_CLICK_1D_TARGETID = "last_click_1d_targetid";
 
 /*
   ADDITIONAL INPUT COLUMNS
