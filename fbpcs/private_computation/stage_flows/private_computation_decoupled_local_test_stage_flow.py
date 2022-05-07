@@ -7,6 +7,7 @@
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.aggregate_shards_stage_service import (
     AggregateShardsStageService,
 )
@@ -75,18 +76,24 @@ class PrivateComputationDecoupledLocalTestStageFlow(PrivateComputationBaseStageF
         PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_COMPLETED,
         PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_FAILED,
         True,
+        does_stage_write_to_s3=True,
+        binary_name=GameNames.DECOUPLED_ATTRIBUTION,
     )
     DECOUPLED_AGGREGATION = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_STARTED,
         PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_COMPLETED,
         PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_FAILED,
         True,
+        does_stage_write_to_s3=True,
+        binary_name=GameNames.DECOUPLED_AGGREGATION,
     )
     AGGREGATE = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         True,
+        does_stage_write_to_s3=True,
+        binary_name=GameNames.SHARD_AGGREGATOR,
     )
 
     def get_stage_service(

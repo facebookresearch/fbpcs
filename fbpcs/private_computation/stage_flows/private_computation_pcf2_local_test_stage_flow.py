@@ -7,6 +7,7 @@
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.aggregate_shards_stage_service import (
     AggregateShardsStageService,
 )
@@ -77,18 +78,24 @@ class PrivateComputationPCF2LocalTestStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_COMPLETED,
         PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_FAILED,
         True,
+        does_stage_write_to_s3=True,
+        binary_name=GameNames.PCF2_ATTRIBUTION,
     )
     PCF2_AGGREGATION = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.PCF2_AGGREGATION_STARTED,
         PrivateComputationInstanceStatus.PCF2_AGGREGATION_COMPLETED,
         PrivateComputationInstanceStatus.PCF2_AGGREGATION_FAILED,
         True,
+        does_stage_write_to_s3=True,
+        binary_name=GameNames.PCF2_AGGREGATION,
     )
     AGGREGATE = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         True,
+        does_stage_write_to_s3=True,
+        binary_name=GameNames.SHARD_AGGREGATOR,
     )
 
     def get_stage_service(

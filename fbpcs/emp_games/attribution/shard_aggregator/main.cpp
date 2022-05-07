@@ -95,7 +95,9 @@ int main(int argc, char* argv[]) {
   cost.end();
   XLOG(INFO) << cost.getEstimatedCostString();
   if (FLAGS_log_cost) {
-    auto run_name = (FLAGS_run_name != "") ? FLAGS_run_name : "temp_run_name";
+    bool run_name_specified = FLAGS_run_name != "";
+    auto run_name = run_name_specified ? FLAGS_run_name : "temp_run_name";
+
     auto party_str = (FLAGS_party == static_cast<int>(fbpcf::Party::Alice))
         ? "Publisher"
         : "Partner";
@@ -108,13 +110,15 @@ int main(int argc, char* argv[]) {
         "output_path",
         FLAGS_output_path)("num_shards", FLAGS_num_shards)("first_shard_index", FLAGS_first_shard_index)("metrics_format_type", FLAGS_metrics_format_type)("threshold", FLAGS_threshold);
 
-    XLOGF(
-        INFO,
-        "{}",
-        cost.writeToS3(
-            party_str,
-            run_name,
-            cost.getEstimatedCostDynamic(run_name, party_str, extra_info)));
+    folly::dynamic costDict =
+        cost.getEstimatedCostDynamic(run_name, party_str, extra_info);
+
+    auto objectName = run_name_specified
+        ? run_name
+        : folly::to<std::string>(
+              FLAGS_run_name, '_', costDict["timestamp"].asString());
+
+    XLOGF(INFO, "{}", cost.writeToS3(party_str, objectName, costDict));
   }
 
   return 0;
