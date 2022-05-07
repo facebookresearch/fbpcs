@@ -54,7 +54,7 @@ from fbpcs.private_computation.pc_attribution_runner import (
     get_attribution_dataset_info,
     run_attribution,
 )
-from fbpcs.private_computation.service.pre_validate_service import pre_validate
+from fbpcs.private_computation.service.pre_validate_service import PreValidateService
 from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -346,7 +346,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             )
         )
     elif arguments["pre_validate"]:
-        pre_validate(
+        PreValidateService.pre_validate(
             config=config,
             input_paths=arguments["--input_paths"],
             logger=logger,

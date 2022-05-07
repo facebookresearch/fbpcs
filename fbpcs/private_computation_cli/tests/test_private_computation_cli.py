@@ -291,9 +291,9 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         run_study_mock.assert_called_once()
 
-    @patch("fbpcs.private_computation_cli.private_computation_cli.pre_validate")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.PreValidateService")
     @patch("fbpcs.private_computation_cli.private_computation_cli.logging.getLogger")
-    def test_pre_validate(self, getLoggerMock, pre_validate_mock) -> None:
+    def test_pre_validate(self, getLoggerMock, pre_validate_service_mock) -> None:
         getLoggerMock.return_value = getLoggerMock
         expected_config = ConfigYamlDict.from_file(self.temp_filename)
         argv = [
@@ -306,7 +306,7 @@ class TestPrivateComputationCli(TestCase):
 
         pc_cli.main(argv)
 
-        pre_validate_mock.assert_called_once_with(
+        pre_validate_service_mock.pre_validate.assert_called_once_with(
             config=expected_config,
             input_paths=self.temp_files_paths,
             logger=getLoggerMock,
