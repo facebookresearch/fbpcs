@@ -59,7 +59,9 @@ class Aggregator {
     sumConverters();
     sumNumConvSquared();
     sumMatch();
+    sumReachedConversions();
     sumValues();
+    sumReachedValues();
     sumValueSquared();
   }
 
@@ -83,7 +85,11 @@ class Aggregator {
 
   void sumMatch();
 
+  void sumReachedConversions();
+
   void sumValues();
+
+  void sumReachedValues();
 
   void sumValueSquared();
 
@@ -109,6 +115,15 @@ class Aggregator {
   revealCohortOutput(std::vector<SecInt<schedulerId, isSigned, width>>
                          aggregationOutput) const;
 
+  // Reveal cohort output from aggregation output as a tuple consisting of the
+  // test metrics and the test cohort metrics.
+  template <bool isSigned, int8_t width>
+  std::tuple<
+      NativeIntp<isSigned, width>,
+      std::vector<NativeIntp<isSigned, width>>>
+  revealTestCohortOutput(std::vector<SecInt<schedulerId, isSigned, width>>
+                             aggregationOutput) const;
+
   int32_t myRole_;
   InputProcessor<schedulerId> inputProcessor_;
   std::unique_ptr<Attributor<schedulerId>> attributor_;
@@ -127,6 +142,12 @@ class Aggregator {
   std::unique_ptr<
       fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<true, valueWidth>>>
       cohortSignedWriteOnlyOramFactory_;
+  std::unique_ptr<
+      fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<false, valueWidth>>>
+      testCohortUnsignedWriteOnlyOramFactory_;
+  std::unique_ptr<
+      fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<true, valueWidth>>>
+      testCohortSignedWriteOnlyOramFactory_;
   std::unique_ptr<fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<
       Intp<false, valueSquaredWidth>>>
       valueSquaredWriteOnlyOramFactory_;
