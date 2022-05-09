@@ -109,7 +109,8 @@ def transform_many_paths(paths_to_check: Union[str, Iterable[str]]) -> List[str]
     """
     if isinstance(paths_to_check, str):
         paths_to_check = paths_to_check.split(",")
-    paths = [transform_path(path) for path in paths_to_check]
+
+    paths = [transform_path(path) for path in paths_to_check if path]
     return paths
 
 
