@@ -22,6 +22,8 @@
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorGame.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/test/common/GenFakeData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftCalculator.h"
 
 namespace private_lift {
 
@@ -57,6 +59,22 @@ class CalculatorGameTestFixture
   }
 
  protected:
+  std::string publisherInputFilename_;
+  std::string partnerInputFilename_;
+
+  void SetUp() override {
+    std::string tempDir = std::filesystem::temp_directory_path();
+    publisherInputFilename_ = folly::sformat(
+        "{}/publisher_{}.csv", tempDir, folly::Random::secureRand64());
+    partnerInputFilename_ = folly::sformat(
+        "{}/partner_{}.csv", tempDir, folly::Random::secureRand64());
+  }
+
+  void TearDown() override {
+    std::filesystem::remove(publisherInputFilename_);
+    std::filesystem::remove(partnerInputFilename_);
+  }
+
   GroupedLiftMetrics runGameWithScheduler(
       fbpcf::SchedulerCreator schedulerCreator,
       CalculatorGameConfig publisherConfig,
@@ -107,6 +125,57 @@ TEST_P(CalculatorGameTestFixture, TestCorrectness) {
   // Read expected output from file
   auto expectedRes =
       GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputFilename));
+
+  EXPECT_EQ(expectedRes, res);
+}
+
+TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
+  // Generate test input files with random data
+  int numConversionsPerUser = 25;
+  GenFakeData testDataGenerator;
+  LiftFakeDataParams params;
+  params.setNumRows(15)
+      .setOpportunityRate(0.5)
+      .setTestRate(0.5)
+      .setPurchaseRate(0.5)
+      .setIncrementalityRate(0.0)
+      .setEpoch(1546300800);
+  testDataGenerator.genFakePublisherInputFile(publisherInputFilename_, params);
+  params.setNumConversions(numConversionsPerUser).setOmitValuesColumn(false);
+  testDataGenerator.genFakePartnerInputFile(partnerInputFilename_, params);
+  CalculatorGameConfig publisherConfig =
+      CalculatorGameTestFixture::getInputData(
+          publisherInputFilename_, numConversionsPerUser);
+  CalculatorGameConfig partnerConfig = CalculatorGameTestFixture::getInputData(
+      partnerInputFilename_, numConversionsPerUser);
+
+  // Run calculator game with test input
+  const bool unsafe = true;
+  auto schedulerType = GetParam();
+  fbpcf::SchedulerCreator schedulerCreator =
+      fbpcf::getSchedulerCreator<unsafe>(schedulerType);
+  auto res = runGameWithScheduler(
+      schedulerCreator, std::move(publisherConfig), std::move(partnerConfig));
+
+  // Calculate expected results with simple lift calculator
+  LiftCalculator liftCalculator;
+  std::ifstream inFilePublisher{publisherInputFilename_};
+  std::ifstream inFilePartner{partnerInputFilename_};
+  int32_t tsOffset = 10;
+  std::string linePublisher;
+  std::string linePartner;
+  getline(inFilePublisher, linePublisher);
+  getline(inFilePartner, linePartner);
+  auto headerPublisher =
+      private_measurement::csv::splitByComma(linePublisher, false);
+  auto headerPartner =
+      private_measurement::csv::splitByComma(linePartner, false);
+  std::unordered_map<std::string, int> colNameToIndex =
+      liftCalculator.mapColToIndex(headerPublisher, headerPartner);
+  OutputMetricsData computedResult = liftCalculator.compute(
+      inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
+  GroupedLiftMetrics expectedRes;
+  expectedRes.metrics = computedResult.toLiftMetrics();
 
   EXPECT_EQ(expectedRes, res);
 }
