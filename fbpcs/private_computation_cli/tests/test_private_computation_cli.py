@@ -276,7 +276,7 @@ class TestPrivateComputationCli(TestCase):
             "12345",
             f"--config={self.temp_filename}",
             "--objective_ids=12,34,56,78,90",
-            f"--input_paths={','.join(self.temp_files_paths)}",
+            f"--input_paths={','.join(self.temp_files_paths)},",
         ]
         pc_cli.main(argv)
         run_study_mock.assert_called_once()

@@ -490,7 +490,10 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
             file_path = f"https://{bucket}.s3.{aws_region}.amazonaws.com/{key}"
 
         else:
-            raise ValueError("Cannot be parsed to expected virtual-hosted-file format")
+            raise ValueError(
+                "Cannot be parsed to expected virtual-hosted-file format "
+                f"Please check your input path that aws_region need to be specified: [{file_path}]"
+            )
 
     if re.search(
         rf"https://[a-z0-9.-]+\.s3\.[a-zA-Z0-9.-]+\.amazonaws.com/{key_pattern}+",
@@ -499,5 +502,6 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
         return file_path
     else:
         raise ValueError(
-            "Error transforming into expected virtual-hosted format. Bad input?"
+            "Error transforming into expected virtual-hosted format. Bad input? "
+            f"Please check your input path: [{file_path}]"
         )
