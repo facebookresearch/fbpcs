@@ -25,7 +25,8 @@ class LiftCalculator {
       std::ifstream& inFilePublisher,
       std::ifstream& inFilePartner,
       std::unordered_map<std::string, int32_t>& colNameToIndex,
-      int32_t tsOffset) const;
+      int32_t tsOffset,
+      bool useAdvancedLift = true) const;
 
  private:
   // Parse input string with format [111,222,333,...]
