@@ -27,7 +27,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   std::vector<uint64_t> timestamps;
   std::vector<bool> isClicks;
   std::vector<uint64_t> targetId;
-  std::vector<uint16_t> actionType;
+  std::vector<uint64_t> actionType;
   bool targetIdPresent = false;
   bool actionTypePresent = false;
 
@@ -53,7 +53,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
       targetId = common::getInnerArray<uint64_t>(value);
     } else if (column == "action_type") {
       actionTypePresent = true;
-      actionType = common::getInnerArray<uint16_t>(value);
+      actionType = common::getInnerArray<uint64_t>(value);
     }
   }
 
@@ -126,7 +126,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
     const std::vector<std::string>& parts) {
   std::vector<uint64_t> convTimestamps;
   std::vector<uint64_t> targetId;
-  std::vector<uint16_t> actionType;
+  std::vector<uint64_t> actionType;
   bool targetIdPresent = false;
   bool actionTypePresent = false;
 
@@ -141,7 +141,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
       targetId = common::getInnerArray<uint64_t>(value);
     } else if (column == "action_type") {
       actionTypePresent = true;
-      actionType = common::getInnerArray<uint16_t>(value);
+      actionType = common::getInnerArray<uint64_t>(value);
     }
   }
 
@@ -206,8 +206,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
     std::vector<std::vector<uint64_t>> targetIds(
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint16_t>> actionTypes(
-        FLAGS_max_num_touchpoints, std::vector<uint16_t>{});
+    std::vector<std::vector<uint64_t>> actionTypes(
+        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
 
     // The touchpoints are parsed row by row, whereas the batches are across
     // rows.
@@ -258,8 +258,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         FLAGS_max_num_conversions, std::vector<uint64_t>{});
     std::vector<std::vector<uint64_t>> targetIds(
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint16_t>> actionTypes(
-        FLAGS_max_num_touchpoints, std::vector<uint16_t>{});
+    std::vector<std::vector<uint64_t>> actionTypes(
+        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
 
     // The conversions are parsed row by row, whereas the batches are across
     // rows.
