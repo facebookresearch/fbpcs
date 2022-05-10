@@ -138,7 +138,9 @@ int main(int argc, char* argv[]) {
       schedulerStatistics.receivedNetwork);
 
   if (FLAGS_log_cost) {
-    auto run_name = (FLAGS_run_name != "") ? FLAGS_run_name : "temp_run_name";
+    bool run_name_specified = FLAGS_run_name != "";
+    auto run_name = run_name_specified ? FLAGS_run_name : "temp_run_name";
+
     std::string party =
         (FLAGS_party == common::PUBLISHER) ? "Publisher" : "Partner";
 
@@ -152,13 +154,15 @@ int main(int argc, char* argv[]) {
         FLAGS_use_xor_encryption,
         schedulerStatistics);
 
-    XLOGF(
-        INFO,
-        "{}",
-        cost.writeToS3(
-            party,
-            run_name,
-            cost.getEstimatedCostDynamic(run_name, party, extra_info)));
+    folly::dynamic costDict =
+        cost.getEstimatedCostDynamic(run_name, party, extra_info);
+
+    auto objectName = run_name_specified
+        ? run_name
+        : folly::to<std::string>(
+              FLAGS_run_name, '_', costDict["timestamp"].asString());
+
+    XLOGF(INFO, "{}", cost.writeToS3(party, objectName, costDict));
   }
 
   return 0;
