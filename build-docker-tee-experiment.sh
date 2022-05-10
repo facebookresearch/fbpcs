@@ -65,8 +65,8 @@ else
   fi
 fi
 
-DOCKER_PACKAGE="tee_experiment"
-printf "\nBuilding tee_experiment %s docker image...\n" "${OS_VARIANT}"
+DOCKER_PACKAGE="tee-experiment"
+printf "\nBuilding %s %s docker image...\n" "${DOCKER_PACKAGE}" "${OS_VARIANT}"
 docker build  \
   --build-arg tag="${TAG}" \
   --build-arg os_release="${OS_RELEASE}" \

@@ -14,7 +14,7 @@ include("perf_tools.cmake")
 
 # plain_text_lift_calculator
 add_executable(
-  plain_text_calculator
+  plain_text_lift_calculator
   "fbpcs/emp_games/lift/calculator/test/main.cpp"
   "fbpcs/emp_games/lift/calculator/test/common/LiftCalculator.h"
   "fbpcs/emp_games/lift/calculator/test/common/LiftCalculator.cpp"
