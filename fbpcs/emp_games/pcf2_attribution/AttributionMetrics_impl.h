@@ -136,10 +136,10 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
 
     if (column == "conversion_timestamps") {
       convTimestamps = common::getInnerArray<uint64_t>(value);
-    } else if (column == "target_id") {
+    } else if (column == "conversion_target_id") {
       targetIdPresent = true;
       targetId = common::getInnerArray<uint64_t>(value);
-    } else if (column == "action_type") {
+    } else if (column == "conversion_action_type") {
       actionTypePresent = true;
       actionType = common::getInnerArray<uint64_t>(value);
     }

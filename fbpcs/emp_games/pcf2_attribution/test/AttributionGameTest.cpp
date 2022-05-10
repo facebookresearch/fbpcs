@@ -539,7 +539,8 @@ INSTANTIATE_TEST_SUITE_P(
             common::LAST_CLICK_1D,
             common::LAST_TOUCH_1D,
             common::LAST_CLICK_2_7D,
-            common::LAST_TOUCH_2_7D)),
+            common::LAST_TOUCH_2_7D,
+            common::LAST_CLICK_1D_TARGETID)),
 
     [](const testing::TestParamInfo<AttributionGameTestFixture::ParamType>&
            info) {
