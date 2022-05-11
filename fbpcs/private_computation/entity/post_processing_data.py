@@ -5,7 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from dataclasses import dataclass
+from dataclasses import field, dataclass
+from typing import Set
 
 from dataclasses_json import dataclass_json
 
@@ -23,6 +24,7 @@ class PostProcessingData:
 
     # TODO : Add breakdown key to PostProcessingData.
     dataset_timestamp: int = 0
+    s3_cost_export_output_paths: Set[str] = field(default_factory=set)
 
     def __str__(self) -> str:
         # pyre-ignore
