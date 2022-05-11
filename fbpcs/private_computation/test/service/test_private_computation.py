@@ -66,6 +66,9 @@ from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow imp
 from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
     PrivateComputationPCF2StageFlow,
 )
+from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
+    PrivateComputationMRStageFlow,
+)
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
