@@ -55,6 +55,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument({"name": "threshold", "required": True}),
             OneDockerArgument({"name": "first_shard_index", "required": False}),
             OneDockerArgument({"name": "log_cost", "required": False}),
+            OneDockerArgument({"name": "run_name", "required": False}),
         ],
     },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
@@ -70,6 +71,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument({"name": "use_xor_encryption", "required": True}),
             OneDockerArgument({"name": "use_postfix", "required": True}),
             OneDockerArgument({"name": "log_cost", "required": False}),
+            OneDockerArgument({"name": "run_name", "required": False}),
         ],
     },
     GameNames.DECOUPLED_AGGREGATION.value: {
@@ -88,6 +90,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument({"name": "use_xor_encryption", "required": True}),
             OneDockerArgument({"name": "use_postfix", "required": True}),
             OneDockerArgument({"name": "log_cost", "required": False}),
+            OneDockerArgument({"name": "run_name", "required": False}),
         ],
     },
     GameNames.PCF2_ATTRIBUTION.value: {
@@ -103,6 +106,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument({"name": "use_xor_encryption", "required": True}),
             OneDockerArgument({"name": "use_postfix", "required": True}),
             OneDockerArgument({"name": "log_cost", "required": False}),
+            OneDockerArgument({"name": "run_name", "required": False}),
         ],
     },
     GameNames.PCF2_AGGREGATION.value: {
@@ -121,6 +125,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument({"name": "use_xor_encryption", "required": True}),
             OneDockerArgument({"name": "use_postfix", "required": True}),
             OneDockerArgument({"name": "log_cost", "required": False}),
+            OneDockerArgument({"name": "run_name", "required": False}),
         ],
     },
 }

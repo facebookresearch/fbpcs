@@ -154,16 +154,25 @@ class PCF2AttributionStageService(PrivateComputationStageService):
         attribution_rule = checked_cast(
             AttributionRule, private_computation_instance.attribution_rule
         )
+        if self._log_cost_to_s3:
+            run_name = (
+                private_computation_instance.instance_id
+                + "_"
+                + GameNames.PCF2_ATTRIBUTION.value
+            )
+            if private_computation_instance.post_processing_data:
+                private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
+                    f"att-logs/{run_name}_{private_computation_instance.role.value.title()}.json"
+                )
+        else:
+            run_name = ""
+
         common_game_args = {
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.pcf2_attribution_stage_output_base_path,
             "num_files": private_computation_instance.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
-            "run_name": private_computation_instance.instance_id
-            + "_"
-            + GameNames.PCF2_ATTRIBUTION.value
-            if self._log_cost_to_s3
-            else "",
+            "run_name": run_name,
             "max_num_touchpoints": private_computation_instance.padding_size,
             "max_num_conversions": private_computation_instance.padding_size,
             "log_cost": self._log_cost_to_s3,

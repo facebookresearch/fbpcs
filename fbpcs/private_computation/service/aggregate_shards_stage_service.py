@@ -107,6 +107,16 @@ class AggregateShardsStageService(PrivateComputationStageService):
         else:
             input_stage_path = pc_instance.compute_stage_output_base_path
 
+        if self._log_cost_to_s3:
+            run_name = pc_instance.instance_id
+
+            if pc_instance.post_processing_data:
+                pc_instance.post_processing_data.s3_cost_export_output_paths.add(
+                    f"sa-logs/{run_name}_{pc_instance.role.value.title()}.json",
+                )
+        else:
+            run_name = ""
+
         if self._is_validating:
             # num_containers_real_data is the number of containers processing real data
             # synthetic data is processed by a dedicated extra container, and this container is always the last container,
@@ -130,7 +140,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "output_path": pc_instance.shard_aggregate_stage_output_path,
                     "first_shard_index": 0,
                     "threshold": pc_instance.k_anonymity_threshold,
-                    "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
+                    "run_name": run_name,
                     "log_cost": self._log_cost_to_s3,
                 },
                 {
@@ -141,7 +151,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     + "_synthetic_data_shards",
                     "first_shard_index": synthetic_data_shard_start_index,
                     "threshold": pc_instance.k_anonymity_threshold,
-                    "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
+                    "run_name": run_name,
                     "log_cost": self._log_cost_to_s3,
                 },
             ]
@@ -173,7 +183,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                     "num_shards": num_shards,
                     "output_path": pc_instance.shard_aggregate_stage_output_path,
                     "threshold": pc_instance.k_anonymity_threshold,
-                    "run_name": pc_instance.instance_id if self._log_cost_to_s3 else "",
+                    "run_name": run_name,
                     "log_cost": self._log_cost_to_s3,
                 },
             ]

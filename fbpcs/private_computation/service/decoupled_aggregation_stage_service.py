@@ -149,6 +149,16 @@ class AggregationStageService(PrivateComputationStageService):
         attribution_rule = checked_cast(
             AttributionRule, private_computation_instance.attribution_rule
         )
+
+        if self._log_cost_to_s3:
+            run_name = private_computation_instance.instance_id
+            if private_computation_instance.post_processing_data:
+                private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
+                    f"agg-logs/{run_name}_{private_computation_instance.role.value.title()}.json",
+                )
+        else:
+            run_name = ""
+
         common_game_args = {
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.decoupled_aggregation_stage_output_base_path,
@@ -159,9 +169,7 @@ class AggregationStageService(PrivateComputationStageService):
             "input_base_path_secret_share": private_computation_instance.decoupled_attribution_stage_output_base_path,
             "use_xor_encryption": True,
             "use_postfix": True,
-            "run_name": private_computation_instance.instance_id
-            if self._log_cost_to_s3
-            else "",
+            "run_name": run_name,
             "max_num_touchpoints": private_computation_instance.padding_size,
             "max_num_conversions": private_computation_instance.padding_size,
             "log_cost": self._log_cost_to_s3,
