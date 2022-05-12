@@ -139,6 +139,63 @@ TEST_F(AttributionIdSpineFileCombinerTest, TestPartnerPadding) {
   runTest(dataInput, spineInput, expectedOutput);
 }
 
+// test basic padding for target_id and action_type
+TEST_F(AttributionIdSpineFileCombinerTest, TestPublisherTargetIdBasic) {
+  std::vector<std::string> dataInput = {
+      "id_,ad_id,timestamp,is_click,campaign_metadata,target_id,action_type",
+      "id_1,1,100,1,1,54321,4",
+      "id_1,2,200,1,2,12345,4",
+      "id_2,1,200,1,3,12345,4",
+      "id_3,2,300,0,4,54321,4",
+      "id_4,1,400,0,5,54321,",
+      "id_4,2,500,0,6,,4"};
+  std::vector<std::string> spineInput = {
+      "AAAA,id_1", "BBBB,id_2", "CCCC,", "DDDD,", "EEEE,id_3", "FFFF,id_4"};
+  std::vector<std::string> expectedOutput = {
+      "id_,ad_ids,timestamps,is_click,campaign_metadata,target_id,action_type",
+      "AAAA,[0,0,1,2],[0,0,100,200],[0,0,1,1],[0,0,1,2],[0,0,54321,12345],[0,0,4,4]",
+      "BBBB,[0,0,0,1],[0,0,0,200],[0,0,0,1],[0,0,0,3],[0,0,0,12345],[0,0,0,4]",
+      "CCCC,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "DDDD,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "EEEE,[0,0,0,2],[0,0,0,300],[0,0,0,0],[0,0,0,4],[0,0,0,54321],[0,0,0,4]",
+      "FFFF,[0,0,1,2],[0,0,400,500],[0,0,0,0],[0,0,5,6],[0,0,54321,0],[0,0,0,4]"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+// test validation header with \r\n as new line include target_id
+TEST_F(AttributionIdSpineFileCombinerTest, TestTargetIdHeaderValidation) {
+  std::vector<std::string> dataInput = {
+      "id_,conversion_timestamp,conversion_value,conversion_metadata,conversion_target_id,conversion_action_type\r\nid_1,100,100,1,,4"};
+  std::vector<std::string> spineInput = {"AAAA,id_1"};
+  std::vector<std::string> expectedOutput = {
+      "id_,conversion_timestamps,conversion_values,conversion_metadata,conversion_target_id,conversion_action_type",
+      "AAAA,[0,0,0,100],[0,0,0,100],[0,0,0,1],[0,0,0,0],[0,0,0,4]"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+// test basic padding for conversion_target_id and conversion_action_type
+TEST_F(AttributionIdSpineFileCombinerTest, TestPartnerTargetIdBasic) {
+  std::vector<std::string> dataInput = {
+      "id_,conversion_timestamp,conversion_value,conversion_metadata,conversion_target_id,conversion_action_type",
+      "id_1,100,100,1,222222,4",
+      "id_1,200,50,2,,",
+      "id_2,200,10,3,11111,3",
+      "id_3,300,20,4,111,",
+      "id_4,400,0,5,0,0",
+      "id_4,500,25,6,12345,23"};
+  std::vector<std::string> spineInput = {
+      "AAAA,id_1", "BBBB,id_2", "CCCC,", "DDDD,", "EEEE,id_3", "FFFF,id_4"};
+  std::vector<std::string> expectedOutput = {
+      "id_,conversion_timestamps,conversion_values,conversion_metadata,conversion_target_id,conversion_action_type",
+      "AAAA,[0,0,100,200],[0,0,100,50],[0,0,1,2],[0,0,222222,0],[0,0,4,0]",
+      "BBBB,[0,0,0,200],[0,0,0,10],[0,0,0,3],[0,0,0,11111],[0,0,0,3]",
+      "CCCC,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "DDDD,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "EEEE,[0,0,0,300],[0,0,0,20],[0,0,0,4],[0,0,0,111],[0,0,0,0]",
+      "FFFF,[0,0,400,500],[0,0,0,25],[0,0,5,6],[0,0,0,12345],[0,0,0,23]"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
 TEST_F(AttributionIdSpineFileCombinerTest, TestPartnerPaddingLimit) {
   FLAGS_padding_size = 4;
   std::vector<std::string> dataInput = {
