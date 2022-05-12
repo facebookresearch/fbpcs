@@ -12,6 +12,8 @@ from typing import Any, Dict, Tuple
 from typing import Optional, Generic, Type, TypeVar
 
 from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
+from termcolor import colored
+
 
 # C  -> Class
 C = TypeVar("C", bound="StageFlow")
@@ -144,8 +146,13 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
         """Used to pretty print stage flows, e.g. stage1 -> [**stage2**] -> stage3"""
         names = self.__class__._member_names_.copy()
         pos = names.index(self.name)
-
-        names[pos] = f"[**{self.name}**]"
+        names[pos] = colored(
+            f"[**{self.name}**]",
+            "green",
+            attrs=[
+                "bold",
+            ],
+        )
         return " -> ".join(names)
 
     @classmethod
