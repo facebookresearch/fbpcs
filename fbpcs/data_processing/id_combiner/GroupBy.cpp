@@ -66,6 +66,12 @@ void groupBy(
                   << "Header: " << line << '\n'
                   << "Row   : " << row << '\n';
     }
+    // convert empty to default value 0
+    for (auto& col_member : cols) {
+      if (col_member.empty()) {
+        col_member = "0";
+      }
+    }
     auto rowId = cols.at(groupByColumnIndex);
     if (hasBeenTraversed.count(rowId) == 0) {
       hasBeenTraversed.insert(rowId);
