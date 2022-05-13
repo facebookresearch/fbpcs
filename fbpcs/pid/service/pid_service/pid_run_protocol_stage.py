@@ -90,7 +90,7 @@ class PIDProtocolRunStage(PIDStage):
             self.logger.info("Publisher spinning up containers")
             try:
                 binary = OneDockerBinaryNames.PID_SERVER.value
-                if self.protocol == PIDProtocol.MULTIKEY_PID:
+                if self.protocol == PIDProtocol.UNION_PID_MULTIKEY:
                     binary = OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
                 pending_containers = self.onedocker_svc.start_containers(
                     package_name=binary,
@@ -100,9 +100,9 @@ class PIDProtocolRunStage(PIDStage):
                         output_path=output_paths[0],
                         num_shards=num_shards,
                         use_row_numbers=stage_input.pid_use_row_numbers
-                        and (self.protocol != PIDProtocol.MULTIKEY_PID),
+                        and (self.protocol != PIDProtocol.UNION_PID_MULTIKEY),
                         enable_metric_logging=(
-                            self.protocol == PIDProtocol.MULTIKEY_PID
+                            self.protocol == PIDProtocol.UNION_PID_MULTIKEY
                         ),
                     ),
                     env_vars=self._gen_env_vars(),
@@ -158,7 +158,7 @@ class PIDProtocolRunStage(PIDStage):
             self.logger.info("Partner spinning up containers")
             try:
                 binary = OneDockerBinaryNames.PID_CLIENT.value
-                if self.protocol == PIDProtocol.MULTIKEY_PID:
+                if self.protocol == PIDProtocol.UNION_PID_MULTIKEY:
                     binary = OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
                 pending_containers = self.onedocker_svc.start_containers(
                     package_name=binary,
@@ -169,9 +169,9 @@ class PIDProtocolRunStage(PIDStage):
                         num_shards=num_shards,
                         server_hostnames=hostnames,
                         use_row_numbers=stage_input.pid_use_row_numbers
-                        and (self.protocol != PIDProtocol.MULTIKEY_PID),
+                        and (self.protocol != PIDProtocol.UNION_PID_MULTIKEY),
                         enable_metric_logging=(
-                            self.protocol == PIDProtocol.MULTIKEY_PID
+                            self.protocol == PIDProtocol.UNION_PID_MULTIKEY
                         ),
                     ),
                     env_vars=self._gen_env_vars(),

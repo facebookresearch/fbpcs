@@ -41,7 +41,7 @@ class PIDStageStatus(Enum):
 class PIDProtocol(IntEnum):
     UNION_PID = 0
     PS3I_M_TO_M = 1
-    MULTIKEY_PID = 2
+    UNION_PID_MULTIKEY = 2
 
 
 class PIDInstanceStatus(Enum):
