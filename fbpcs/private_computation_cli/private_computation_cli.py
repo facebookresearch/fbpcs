@@ -198,7 +198,13 @@ def main(argv: Optional[List[str]] = None) -> None:
     log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
     instance_id = arguments["<instance_id>"]
 
-    logging.basicConfig(filename=log_path, level=logging.INFO)
+    # if log_path specified, logging using FileHandler, or console StreamHandler
+    log_handler = logging.FileHandler(log_path) if log_path else logging.StreamHandler()
+    logging.basicConfig(
+        level=logging.INFO,
+        handlers=[log_handler],
+        format="%(asctime)sZ %(levelname)s t:%(threadName)s n:%(name)s ! %(message)s",
+    )
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
 
