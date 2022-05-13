@@ -35,7 +35,8 @@ class AwsCloud(CloudBaseClass):
         )
         self.aws_region = aws_region or os.environ.get("AWS_REGION")
         self.cloudwatch_client = None
-        self.logger: logging.Logger = logging.getLogger(logger_name)
+        self.s3_client = None
+        self.log: logging.Logger = logging.getLogger(logger_name)
 
         try:
             sts = boto3.client(
@@ -49,6 +50,12 @@ class AwsCloud(CloudBaseClass):
                 aws_secret_access_key=self.aws_secret_access_key,
                 region_name=self.aws_region,
             )
+            self.s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=self.aws_access_key_id,
+                aws_secret_access_key=self.aws_secret_access_key,
+            )
+
         except NoCredentialsError as error:
             self.log.error(
                 f"Error occurred in validating access and secret keys of the aws account.\n"
