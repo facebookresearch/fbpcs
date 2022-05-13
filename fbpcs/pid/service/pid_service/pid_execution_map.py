@@ -63,10 +63,10 @@ PIDDispatcherFlowMap: Dict[PIDExecutionFlowLookupKey, PIDFlow] = {
         PIDRole.PARTNER, PIDProtocol.UNION_PID
     ): UnionPIDAdvertiserFlow,
     PIDExecutionFlowLookupKey(
-        PIDRole.PUBLISHER, PIDProtocol.MULTIKEY_PID
+        PIDRole.PUBLISHER, PIDProtocol.UNION_PID_MULTIKEY
     ): MultiKeyPIDPublisherFlow,
     PIDExecutionFlowLookupKey(
-        PIDRole.PARTNER, PIDProtocol.MULTIKEY_PID
+        PIDRole.PARTNER, PIDProtocol.UNION_PID_MULTIKEY
     ): MultiKeyPIDAdvertiserFlow,
 }
 
