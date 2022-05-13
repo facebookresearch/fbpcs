@@ -5,14 +5,16 @@
 
 # pyre-strict
 
-
+import os
+import sys
+import threading
 from typing import List, Dict
 
 from botocore.exceptions import ClientError
 from cloud.aws_cloud import AwsCloud
 
 
-class AWSContainerLogs(AwsCloud):
+class AwsContainerLogs(AwsCloud):
     """
     Fetches container logs from the cloudwatch
     """
@@ -21,6 +23,7 @@ class AWSContainerLogs(AwsCloud):
     LOG_STREAM = "{}/{}/{}"
     ARN_PARSE_LENGTH = 6
     S3_LOGGING_FOLDER = "logging"
+    LOCAL_FILE_LOCATION = "/tmp/{}"
 
     def __init__(
         self,
@@ -38,7 +41,7 @@ class AWSContainerLogs(AwsCloud):
 
     def get_cloudwatch_logs(
         self, log_group_name: str, log_stream_name: str, container_arn: str = None
-    ) -> List[str]:
+    ) -> List[Dict]:
         """
         Fetches cloudwatch logs from the AWS account for a given log group and log stream
         Args:
@@ -304,6 +307,17 @@ class AWSContainerLogs(AwsCloud):
 
         return "Contents" in response
 
+    def _get_s3_folder_path(self, tag_name: str, container_id: str) -> str:
+        """
+        Return path of S3 folder
+        Args:
+            tag_name (str): Tag name passed to download the logs
+            container_id (str): DOwnload logs for container ID
+        Returns:
+            str
+        """
+        return f"{self.S3_LOGGING_FOLDER}/{tag_name}/{container_id}"
+
     def download_logs(self, s3_bucket_name: str, container_arn: str) -> None:
         """
         Umbrella function to call other functions for end to end functionality
@@ -342,14 +356,13 @@ class AWSContainerLogs(AwsCloud):
             )
 
         # create folder with tag_name passed
-        tag_name_folder = self.tag_name
         if not self.ensure_folder_exists(
             bucket_name=s3_bucket_name,
-            folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name_folder}/",
+            folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
         ):
             self.create_s3_folder(
                 bucket_name=s3_bucket_name,
-                folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name_folder}/",
+                folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
             )
 
         # fetch logs
@@ -363,6 +376,7 @@ class AWSContainerLogs(AwsCloud):
         log_stream_name = self.LOG_STREAM.format(
             service_name, container_name, container_id
         )
+        s3_folder_path = self._get_s3_folder_path(self.tag_name, container_id)
 
         if not self._verify_log_group(log_group_name=log_group_name):
             raise Exception(f"Couldn't find log group {log_group_name} in AWS account.")
@@ -374,8 +388,14 @@ class AWSContainerLogs(AwsCloud):
                 f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
             )
 
-        self.get_cloudwatch_logs(
+        message_events = self.get_cloudwatch_logs(
             log_group_name=log_group_name,
             log_stream_name=log_stream_name,
             container_arn=container_arn,
+        )
+
+        self.s3_client.put_object(
+            Body="\n".join(str(event) for event in message_events).encode("utf-8"),
+            Bucket=s3_bucket_name,
+            Key=s3_folder_path,
         )
