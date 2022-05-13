@@ -196,6 +196,34 @@ TEST_F(AttributionIdSpineFileCombinerTest, TestPartnerTargetIdBasic) {
   runTest(dataInput, spineInput, expectedOutput);
 }
 
+// test missing either conversion_target_id or conversion_action_type
+TEST_F(AttributionIdSpineFileCombinerTest, TestPartnerHeaderPadding) {
+  FLAGS_padding_size = 2;
+  std::vector<std::string> dataInput = {
+      "id_,conversion_timestamp,conversion_value,conversion_metadata,conversion_action_type",
+      "id_1,100,100,1,4"};
+  std::vector<std::string> spineInput = {"AAAA,id_1"};
+  std::vector<std::string> expectedOutput = {
+      "id_,conversion_timestamps,conversion_values,conversion_metadata,conversion_action_type",
+      "AAAA,[0,100],[0,100],[0,1],[0,4]"};
+  ASSERT_DEATH(
+      runTest(dataInput, spineInput, expectedOutput),
+      ".*conversion_target_id.*");
+}
+
+// test missing either target_id or action_type
+TEST_F(AttributionIdSpineFileCombinerTest, TestPublisherHeaderPadding) {
+  std::vector<std::string> dataInput = {
+      "id_,ad_id,timestamp,is_click,campaign_metadata,target_id",
+      "id_1,1,100,1,1,54321,4",
+      "id_1,2,200,1,2,12345,4"};
+  std::vector<std::string> spineInput = {"AAAA,id_1"};
+  std::vector<std::string> expectedOutput = {
+      "id_,ad_ids,timestamps,is_click,campaign_metadata,target_id",
+      "AAAA,[0,0,1,2],[0,0,100,200],[0,0,1,1],[0,0,1,2],[0,0,54321,12345]"};
+  ASSERT_DEATH(runTest(dataInput, spineInput, expectedOutput), ".*target_id.*");
+}
+
 TEST_F(AttributionIdSpineFileCombinerTest, TestPartnerPaddingLimit) {
   FLAGS_padding_size = 4;
   std::vector<std::string> dataInput = {

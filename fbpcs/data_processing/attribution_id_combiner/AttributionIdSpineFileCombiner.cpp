@@ -72,6 +72,30 @@ void attributionIdSpineFileCombiner(
       aggregatedCols.emplace_back(colName);
     }
   }
+
+  // target_id and action_type columns should both or neither exist
+  if (isPublisherDataset) {
+    bool containsTargetId = verifyHeaderContainsCols(header, {"target_id"});
+    bool containsActionType = verifyHeaderContainsCols(header, {"action_type"});
+    if (containsTargetId ^ containsActionType) {
+      XLOG(FATAL)
+          << "Invalid headers for publisher dataset. Header: <"
+          << vectorToString(header)
+          << ">. Should have both target_id and action_type or neither of them.";
+    }
+  } else if (isPartnerDataset) {
+    bool containsTargetId =
+        verifyHeaderContainsCols(header, {"conversion_target_id"});
+    bool containsActionType =
+        verifyHeaderContainsCols(header, {"conversion_action_type"});
+    if (containsTargetId ^ containsActionType) {
+      XLOG(FATAL)
+          << "Invalid headers for partner dataset. Header: <"
+          << vectorToString(header)
+          << ">. Should have both conversion_target_id and conversion_action_type or neither of them.";
+    }
+  }
+
   std::vector<int32_t> colPaddingSize(aggregatedCols.size(), kPaddingSize);
 
   std::stringstream idSwapOutFile;
