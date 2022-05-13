@@ -101,9 +101,7 @@ class PIDProtocolRunStage(PIDStage):
                         num_shards=num_shards,
                         use_row_numbers=stage_input.pid_use_row_numbers
                         and (self.protocol != PIDProtocol.UNION_PID_MULTIKEY),
-                        enable_metric_logging=(
-                            self.protocol == PIDProtocol.UNION_PID_MULTIKEY
-                        ),
+                        disable_metric_logging=False,
                     ),
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
@@ -170,9 +168,7 @@ class PIDProtocolRunStage(PIDStage):
                         server_hostnames=hostnames,
                         use_row_numbers=stage_input.pid_use_row_numbers
                         and (self.protocol != PIDProtocol.UNION_PID_MULTIKEY),
-                        enable_metric_logging=(
-                            self.protocol == PIDProtocol.UNION_PID_MULTIKEY
-                        ),
+                        disable_metric_logging=True,
                     ),
                     env_vars=self._gen_env_vars(),
                     timeout=timeout,
@@ -217,7 +213,7 @@ class PIDProtocolRunStage(PIDStage):
         use_row_numbers: bool,
         server_hostnames: Optional[List[str]] = None,
         port: int = 15200,
-        enable_metric_logging: bool = False,
+        disable_metric_logging: bool = False,
     ) -> List[str]:
         # partner
         if server_hostnames:
@@ -242,7 +238,7 @@ class PIDProtocolRunStage(PIDStage):
                     input_path=self.get_sharded_filepath(input_path, i),
                     output_path=self.get_sharded_filepath(output_path, i),
                     metric_path=self.get_metrics_filepath(output_path, i)
-                    if not enable_metric_logging
+                    if not disable_metric_logging
                     else None,
                     port=port,
                     server_hostname=None,
@@ -266,7 +262,9 @@ class PIDProtocolRunStage(PIDStage):
                     f"--company {server_hostname}:{port}",
                     f"--input {input_path}",
                     f"--output {output_path}",
-                    f"--metric-path {metric_path}" if metric_path is not None else "",
+                    f"--metric-path {metric_path}_test_mao"
+                    if metric_path is not None
+                    else "",
                     "--no-tls",
                     "--use-row-numbers" if use_row_numbers else "",
                 ]
@@ -277,7 +275,9 @@ class PIDProtocolRunStage(PIDStage):
                     f"--host 0.0.0.0:{port}",
                     f"--input {input_path}",
                     f"--output {output_path}",
-                    f"--metric-path {metric_path}" if metric_path is not None else "",
+                    f"--metric-path {metric_path}_test_mao"
+                    if metric_path is not None
+                    else "",
                     "--no-tls",
                     "--use-row-numbers" if use_row_numbers else "",
                 ]
