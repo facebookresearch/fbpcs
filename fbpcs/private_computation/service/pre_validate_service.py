@@ -61,7 +61,7 @@ class PreValidateService:
         )
 
         error_messages = []
-        cluster = onedocker_svc.container_svc.get_cluster()
+        cluster = onedocker_svc.get_cluster()
 
         for container in completed_containers:
             if container.status != ContainerInstanceStatus.COMPLETED:

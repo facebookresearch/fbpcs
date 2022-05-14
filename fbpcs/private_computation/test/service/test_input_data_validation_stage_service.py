@@ -229,9 +229,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         pc_instance.instances = unioned_pc_instances
         expected_status = PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
         onedocker_svc_mock = MagicMock()
-        container_svc_mock = MagicMock()
-        container_svc_mock.get_cluster.side_effect = [cluster_name]
-        onedocker_svc_mock.container_svc = container_svc_mock
+        onedocker_svc_mock.get_cluster.side_effect = [cluster_name]
         pc_validator_config = PCValidatorConfig(
             region=region,
             pc_pre_validator_enabled=True,

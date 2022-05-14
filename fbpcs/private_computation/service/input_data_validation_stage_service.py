@@ -137,7 +137,7 @@ class InputDataValidationStageService(PrivateComputationStageService):
 
             if instance_status == self._failed_status and task_id:
                 region = self._pc_validator_config.region
-                cluster = self._onedocker_svc.container_svc.get_cluster()
+                cluster = self._onedocker_svc.get_cluster()
                 failed_task_link = f"https://{region}.console.aws.amazon.com/ecs/home?region={region}#/clusters/{cluster}/tasks/{task_id}/details"
 
                 error_message = (
