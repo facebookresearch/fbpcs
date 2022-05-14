@@ -262,9 +262,7 @@ class PIDProtocolRunStage(PIDStage):
                     f"--company {server_hostname}:{port}",
                     f"--input {input_path}",
                     f"--output {output_path}",
-                    f"--metric-path {metric_path}_test_mao"
-                    if metric_path is not None
-                    else "",
+                    f"--metric-path {metric_path}" if metric_path is not None else "",
                     "--no-tls",
                     "--use-row-numbers" if use_row_numbers else "",
                 ]
@@ -275,9 +273,7 @@ class PIDProtocolRunStage(PIDStage):
                     f"--host 0.0.0.0:{port}",
                     f"--input {input_path}",
                     f"--output {output_path}",
-                    f"--metric-path {metric_path}_test_mao"
-                    if metric_path is not None
-                    else "",
+                    f"--metric-path {metric_path}" if metric_path is not None else "",
                     "--no-tls",
                     "--use-row-numbers" if use_row_numbers else "",
                 ]
