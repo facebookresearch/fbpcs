@@ -5,23 +5,23 @@
 
 # pyre-strict
 import os
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.pc_pre_validation.binary_path import (
     BinaryInfo,
-    S3BinaryPath,
     LocalBinaryPath,
+    S3BinaryPath,
 )
 from fbpcs.pc_pre_validation.constants import (
+    BINARY_FILE_VALIDATOR_NAME,
+    BINARY_INFOS,
     DEFAULT_BINARY_REPOSITORY,
     DEFAULT_BINARY_VERSION,
     DEFAULT_EXE_FOLDER,
-    BINARY_INFOS,
-    BINARY_FILE_VALIDATOR_NAME,
-    ONEDOCKER_REPOSITORY_PATH,
     ONEDOCKER_EXE_PATH,
+    ONEDOCKER_REPOSITORY_PATH,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.validation_report import ValidationReport

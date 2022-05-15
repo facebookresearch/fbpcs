@@ -8,7 +8,7 @@
 import os
 import sys
 import threading
-from typing import List, Dict
+from typing import Dict, List
 
 from botocore.exceptions import ClientError
 from cloud.aws_cloud import AwsCloud

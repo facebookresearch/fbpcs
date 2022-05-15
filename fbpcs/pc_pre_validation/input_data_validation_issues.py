@@ -9,10 +9,7 @@
 from collections import Counter
 from typing import Any, Dict
 
-from fbpcs.pc_pre_validation.constants import (
-    ALL_FIELDS,
-    REQUIRED_FIELDS,
-)
+from fbpcs.pc_pre_validation.constants import ALL_FIELDS, REQUIRED_FIELDS
 
 
 class InputDataValidationIssues:

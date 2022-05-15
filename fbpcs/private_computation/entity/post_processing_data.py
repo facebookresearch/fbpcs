@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from dataclasses import field, dataclass
+from dataclasses import dataclass, field
 from typing import Set
 
 from dataclasses_json import dataclass_json

@@ -10,8 +10,8 @@ from typing import Any, Dict, Type, TypeVar
 
 from fbpcp.util.reflect import get_class as fbpcp_get_class
 from fbpcs.utils.config_yaml.exceptions import (
-    ConfigYamlModuleImportError,
     ConfigYamlClassNotFoundError,
+    ConfigYamlModuleImportError,
     ConfigYamlValidationError,
     ConfigYamlWrongClassConfiguredError,
     ConfigYamlWrongConstructorError,

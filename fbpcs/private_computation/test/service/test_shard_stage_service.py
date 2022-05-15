@@ -13,17 +13,11 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstanceStatus,
-)
-from fbpcs.private_computation.service.constants import (
-    NUM_NEW_SHARDS_PER_FILE,
-)
-from fbpcs.private_computation.service.shard_stage_service import (
-    ShardStageService,
-)
+from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
+from fbpcs.private_computation.service.shard_stage_service import ShardStageService
 
 
 class TestShardStageService(IsolatedAsyncioTestCase):

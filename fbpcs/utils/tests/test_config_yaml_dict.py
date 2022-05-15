@@ -6,7 +6,7 @@
 
 import json
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 from fbpcs.utils.config_yaml.exceptions import ConfigYamlFileParsingError

@@ -11,9 +11,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.service.aggregate_shards_stage_service import (
     AggregateShardsStageService,
 )
-from fbpcs.private_computation.service.dummy_stage_service import (
-    DummyStageService,
-)
+from fbpcs.private_computation.service.dummy_stage_service import DummyStageService
 from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
     IdSpineCombinerStageService,
 )

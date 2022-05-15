@@ -18,14 +18,10 @@ from fbpcs.post_processing_handler.tests.dummy_handler import PostProcessingDumm
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstanceStatus,
-)
-from fbpcs.private_computation.service.constants import (
-    NUM_NEW_SHARDS_PER_FILE,
-)
+from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
 )

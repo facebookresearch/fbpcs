@@ -7,10 +7,7 @@
 from unittest import TestCase
 
 from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
-from fbpcs.stage_flow.test.dummy_stage_flow import (
-    DummyStageFlow,
-    DummyStageFlowStatus,
-)
+from fbpcs.stage_flow.test.dummy_stage_flow import DummyStageFlow, DummyStageFlowStatus
 
 
 class TestStageFlow(TestCase):

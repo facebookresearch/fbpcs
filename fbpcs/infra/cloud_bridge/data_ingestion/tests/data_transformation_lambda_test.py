@@ -7,7 +7,7 @@ import base64
 import json
 from unittest import TestCase
 
-from data_transformation_lambda import lambda_handler, _parse_client_user_agent
+from data_transformation_lambda import _parse_client_user_agent, lambda_handler
 
 
 class TestDataIngestion(TestCase):

@@ -13,8 +13,8 @@ from typing import Optional, Type
 
 from fbpcs.pl_coordinator.constants import (
     INVALID_STATUS_LIST,
-    POLL_INTERVAL,
     OPERATION_REQUEST_TIMEOUT,
+    POLL_INTERVAL,
 )
 from fbpcs.pl_coordinator.exceptions import PCInstanceCalculationException
 from fbpcs.pl_coordinator.pl_graphapi_utils import GRAPHAPI_INSTANCE_STATUSES

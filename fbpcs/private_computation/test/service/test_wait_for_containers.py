@@ -4,13 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from unittest import mock, IsolatedAsyncioTestCase
+from unittest import IsolatedAsyncioTestCase, mock
 from unittest.mock import patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcp.service.onedocker import (
-    OneDockerService,
-)
+from fbpcp.service.onedocker import OneDockerService
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )

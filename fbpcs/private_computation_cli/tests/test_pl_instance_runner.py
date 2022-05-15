@@ -5,28 +5,22 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
-from typing import Any, Optional, List, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type
 from unittest import TestCase
 from unittest.mock import patch, PropertyMock
 
 import requests
-from fbpcs.pl_coordinator.pl_graphapi_utils import (
-    GRAPHAPI_INSTANCE_STATUSES,
-)
+from fbpcs.pl_coordinator.pl_graphapi_utils import GRAPHAPI_INSTANCE_STATUSES
 from fbpcs.pl_coordinator.pl_instance_runner import (
-    PLInstanceRunner,
-    PCInstanceCalculationException,
     IncompatibleStageError,
+    PCInstanceCalculationException,
+    PLInstanceRunner,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
     PrivateComputationGameType,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_status import (

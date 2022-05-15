@@ -17,18 +17,14 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
-    PrivateComputationRole,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
-from fbpcs.private_computation.service.constants import (
-    NUM_NEW_SHARDS_PER_FILE,
-)
+from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 
 
 class TestComputeMetricsStageService(IsolatedAsyncioTestCase):

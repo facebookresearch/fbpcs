@@ -10,7 +10,7 @@ import contextlib
 import pathlib
 import tempfile
 from types import TracebackType
-from typing import Type, Optional
+from typing import Optional, Type
 
 from fbpcp.service.storage_s3 import S3StorageService
 

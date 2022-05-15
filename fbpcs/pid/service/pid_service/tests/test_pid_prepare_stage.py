@@ -6,8 +6,8 @@
 
 # pyre-strict
 import unittest
-from typing import Tuple, Dict
-from unittest.mock import MagicMock, patch, AsyncMock
+from typing import Dict, Tuple
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.data_processing.pid_preparer.union_pid_preparer_cpp import (

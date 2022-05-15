@@ -24,9 +24,7 @@ Usage:
 """
 
 
-from typing import List
-from typing import Optional as OptionalType
-from typing import cast
+from typing import cast, List, Optional as OptionalType
 
 from docopt import docopt
 from fbpcs.pc_pre_validation.binary_file_validator import BinaryFileValidator
@@ -35,7 +33,7 @@ from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
 from fbpcs.pc_pre_validation.validator import Validator
 from fbpcs.pc_pre_validation.validators_runner import run_validators
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
-from schema import Schema, Optional, Or, Use
+from schema import Optional, Or, Schema, Use
 
 INPUT_FILE_PATH = "--input-file-path"
 CLOUD_PROVIDER = "--cloud-provider"

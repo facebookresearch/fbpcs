@@ -7,7 +7,7 @@
 import json
 import logging
 import os
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
 import requests
 from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN

@@ -13,11 +13,11 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.entity.mpc_instance import MPCInstanceStatus, MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.pid.entity.pid_instance import (
-    PIDStageStatus,
     PIDInstance,
     PIDInstanceStatus,
     PIDProtocol,
     PIDRole,
+    PIDStageStatus,
 )
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.post_processing_handler.post_processing_handler import (

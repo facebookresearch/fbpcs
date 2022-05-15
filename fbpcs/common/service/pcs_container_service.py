@@ -6,7 +6,7 @@
 
 # pyre-strict
 
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.error.pcp import PcpError

@@ -10,11 +10,11 @@ import sys
 
 from thrift.protocol.TProtocol import TProtocolException
 from thrift.Thrift import (
-    TType,
-    TMessageType,
-    TFrozenDict,
-    TException,
     TApplicationException,
+    TException,
+    TFrozenDict,
+    TMessageType,
+    TType,
 )
 from thrift.transport import TTransport
 from thrift.TRecursive import fix_spec

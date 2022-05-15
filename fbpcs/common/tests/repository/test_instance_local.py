@@ -7,7 +7,7 @@
 import copy
 import unittest
 from pathlib import Path
-from unittest.mock import mock_open, MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus, MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance

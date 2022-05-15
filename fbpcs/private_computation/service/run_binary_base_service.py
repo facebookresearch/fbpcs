@@ -8,7 +8,7 @@
 
 import asyncio
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService

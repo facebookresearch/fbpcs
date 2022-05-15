@@ -13,10 +13,10 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.entity.pid_instance import (
-    PIDStageStatus,
     PIDInstance,
     PIDInstanceStatus,
     PIDRole,
+    PIDStageStatus,
 )
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository

@@ -6,7 +6,7 @@
 # pyre-strict
 
 import os
-from typing import List, IO
+from typing import IO, List
 
 
 def create_file(self, file_location: str, content: List) -> None:

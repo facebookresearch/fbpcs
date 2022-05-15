@@ -14,12 +14,12 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
 from fbpcs.private_computation.test.entity.generate_instance_json import (
-    LIFT_PID_PATH,
-    LIFT_MPC_PATH,
-    LIFT_PC_PATH,
-    gen_dummy_pid_instance,
     gen_dummy_mpc_instance,
     gen_dummy_pc_instance,
+    gen_dummy_pid_instance,
+    LIFT_MPC_PATH,
+    LIFT_PC_PATH,
+    LIFT_PID_PATH,
 )
 
 ERR_MSG: str = (

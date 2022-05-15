@@ -6,19 +6,22 @@
 
 import unittest
 from collections import defaultdict
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from fbpcp.service.container_aws import AWSContainerService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pcf.tests.async_utils import AsyncMock
-from fbpcs.pcf.tests.async_utils import to_sync
-from fbpcs.pid.entity.pid_instance import PIDInstance
-from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole, PIDStageStatus
+from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
+from fbpcs.pid.entity.pid_instance import (
+    PIDInstance,
+    PIDProtocol,
+    PIDRole,
+    PIDStageStatus,
+)
 from fbpcs.pid.entity.pid_stages import (
-    PIDStageFailureError,
     PIDFlowUnsupportedError,
+    PIDStageFailureError,
     UnionPIDStage,
 )
 from fbpcs.pid.service.coordination.file_coordination import FileCoordinationService

@@ -7,7 +7,7 @@
 
 import logging
 from collections import defaultdict
-from typing import Type, Any, DefaultDict, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional, Type
 
 from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.repository.mpc_game_repository import MPCGameRepository
@@ -24,16 +24,14 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
-from fbpcs.private_computation.entity.pc_validator_config import (
-    PCValidatorConfig,
-)
+from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
     PrivateComputationGameType,
-    PrivateComputationRole,
     PrivateComputationInstance,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -41,9 +39,7 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
-from fbpcs.private_computation.service.utils import (
-    get_log_urls,
-)
+from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )

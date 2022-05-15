@@ -6,15 +6,13 @@
 
 from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.private_computation.entity.pc_validator_config import (
-    PCValidatorConfig,
-)
+from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,

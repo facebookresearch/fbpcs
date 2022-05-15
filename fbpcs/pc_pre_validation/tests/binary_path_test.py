@@ -6,8 +6,8 @@
 from unittest import TestCase
 
 from fbpcs.pc_pre_validation.binary_path import (
-    LocalBinaryPath,
     BinaryInfo,
+    LocalBinaryPath,
     S3BinaryPath,
 )
 

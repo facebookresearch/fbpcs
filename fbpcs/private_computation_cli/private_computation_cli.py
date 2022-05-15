@@ -39,7 +39,7 @@ Options:
 import logging
 import os
 from pathlib import Path, PurePath
-from typing import List, Optional, Iterable, Union
+from typing import Iterable, List, Optional, Union
 
 import schema
 from docopt import docopt
@@ -48,8 +48,8 @@ from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
-    PrivateComputationRole,
     PrivateComputationGameType,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.pc_attribution_runner import (
     get_attribution_dataset_info,

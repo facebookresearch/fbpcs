@@ -16,9 +16,7 @@ from fbpcs.private_computation.service.decoupled_aggregation_stage_service impor
 from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
     AttributionStageService,
 )
-from fbpcs.private_computation.service.dummy_stage_service import (
-    DummyStageService,
-)
+from fbpcs.private_computation.service.dummy_stage_service import DummyStageService
 from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
     IdSpineCombinerStageService,
 )

@@ -7,15 +7,17 @@
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 
-from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
-from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDRole
+from fbpcs.pid.entity.pid_instance import (
+    PIDInstance,
+    PIDInstanceStatus,
+    PIDProtocol,
+    PIDRole,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
-    PrivateComputationRole,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.service.id_match_stage_service import IdMatchStageService
 

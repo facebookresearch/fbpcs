@@ -6,7 +6,7 @@
 # pyre-strict
 import json
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from dataclasses_json import dataclass_json
 from fbpcs.pc_pre_validation.enums import ValidationResult

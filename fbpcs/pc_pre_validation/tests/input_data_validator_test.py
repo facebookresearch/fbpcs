@@ -10,12 +10,12 @@ import random
 import time
 from typing import Iterable
 from unittest import TestCase
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
-    INPUT_DATA_VALIDATOR_NAME,
     INPUT_DATA_TMP_FILE_PATH,
+    INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
     PL_FIELDS,
 )

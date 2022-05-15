@@ -7,20 +7,16 @@
 
 import json
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Type, Optional, Dict, Any
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional, Type
 
 import dateutil.parser
 import pytz
-from fbpcs.pl_coordinator.pl_graphapi_utils import (
-    PLGraphAPIClient,
-)
-from fbpcs.pl_coordinator.pl_instance_runner import (
-    run_instance,
-)
+from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
+from fbpcs.pl_coordinator.pl_instance_runner import run_instance
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AttributionRule,
     AggregationType,
+    AttributionRule,
     PrivateComputationGameType,
 )
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (

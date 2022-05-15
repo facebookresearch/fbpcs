@@ -9,8 +9,7 @@ import os
 from string import Template
 
 import boto3
-from botocore.exceptions import ClientError
-from botocore.exceptions import NoCredentialsError
+from botocore.exceptions import ClientError, NoCredentialsError
 
 from .policy_params import PolicyParams
 

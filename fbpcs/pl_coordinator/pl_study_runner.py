@@ -9,26 +9,21 @@ import calendar
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
-from typing import Type
+from typing import Any, Dict, List, Optional, Type
 
-from fbpcs.pl_coordinator.constants import (
-    MAX_NUM_INSTANCES,
-)
-from fbpcs.pl_coordinator.exceptions import PCStudyValidationException
+from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
 from fbpcs.pl_coordinator.exceptions import (
-    sys_exit_after,
     IncorrectVersionError,
     OneCommandRunnerBaseException,
+    PCStudyValidationException,
+    sys_exit_after,
 )
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
-    PLGraphAPIClient,
-    GraphAPIGenericException,
     GRAPHAPI_INSTANCE_STATUSES,
+    GraphAPIGenericException,
+    PLGraphAPIClient,
 )
-from fbpcs.pl_coordinator.pl_instance_runner import (
-    run_instances,
-)
+from fbpcs.pl_coordinator.pl_instance_runner import run_instances
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
@@ -37,8 +32,8 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    get_tier,
     get_instance,
+    get_tier,
 )
 
 # study information fields

@@ -8,16 +8,14 @@
 
 
 import logging
-from typing import List, Optional, DefaultDict
+from typing import DefaultDict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
-from fbpcs.common.entity.stage_state_instance import (
-    StageStateInstance,
-)
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstanceStatus,
     PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,

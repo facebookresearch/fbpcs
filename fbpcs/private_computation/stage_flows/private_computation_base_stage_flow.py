@@ -8,7 +8,7 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Type, TypeVar, TYPE_CHECKING
+from typing import Type, TYPE_CHECKING, TypeVar
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,

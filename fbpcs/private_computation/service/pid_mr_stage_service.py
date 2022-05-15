@@ -9,13 +9,11 @@
 from typing import List, Optional
 
 from fbpcs.common.entity.stage_state_instance import (
-    StageStateInstanceStatus,
     StageStateInstance,
+    StageStateInstanceStatus,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (

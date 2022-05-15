@@ -15,15 +15,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstanceStatus,
-)
 from fbpcs.private_computation.repository.private_computation_game import GameNames
-from fbpcs.private_computation.service.constants import (
-    NUM_NEW_SHARDS_PER_FILE,
-)
+from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
     AttributionStageService,
 )

@@ -14,14 +14,10 @@ from fbpcs.pl_coordinator.constants import WAIT_VALID_STATUS_TIMEOUT
 from fbpcs.pl_coordinator.exceptions import PCInstanceCalculationException
 from fbpcs.pl_coordinator.pc_calc_instance import PrivateComputationCalcInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstance,
     AggregationType,
     AttributionRule,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationGameType,
+    PrivateComputationInstance,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -33,9 +29,9 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     cancel_current_stage,
     create_instance,
-    update_input_path,
     get_instance,
     run_stage,
+    update_input_path,
 )
 
 

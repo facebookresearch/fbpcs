@@ -8,12 +8,10 @@
 
 
 import logging
-from typing import List, Optional, DefaultDict
+from typing import DefaultDict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
-from fbpcs.common.entity.stage_state_instance import (
-    StageStateInstance,
-)
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.pid.service.pid_service.utils import (
@@ -21,8 +19,8 @@ from fbpcs.pid.service.pid_service.utils import (
     get_pid_protocol_from_num_shards,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstanceStatus,
     PrivateComputationInstance,
+    PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_stage_service import (

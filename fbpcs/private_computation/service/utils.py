@@ -12,21 +12,20 @@ import logging
 import math
 import re
 import warnings
-from typing import DefaultDict, Any, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
-from fbpcp.entity.mpc_instance import MPCInstance, MPCParty
-from fbpcp.entity.mpc_instance import MPCInstanceStatus
+from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
-    StageStateInstanceStatus,
     StageStateInstance,
+    StageStateInstanceStatus,
 )
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
-from fbpcs.data_processing.service.sharding_service import ShardType, ShardingService
+from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
@@ -36,13 +35,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.service.constants import (
-    DEFAULT_LOG_COST_TO_S3,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+    DEFAULT_LOG_COST_TO_S3,
 )
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,

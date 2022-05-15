@@ -8,15 +8,12 @@
 
 
 import logging
-from typing import DefaultDict
-from typing import List, Optional
+from typing import DefaultDict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3

@@ -20,13 +20,13 @@ Error handling:
 
 import csv
 import time
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.pc_pre_validation.constants import (
+    INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
-    INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     PA_FIELDS,
     PL_FIELDS,
     VALID_LINE_ENDING_REGEX,

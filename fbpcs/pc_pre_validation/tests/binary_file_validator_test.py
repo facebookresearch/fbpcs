@@ -6,7 +6,7 @@
 # pyre-strict
 import os
 from unittest import TestCase
-from unittest.mock import patch, call, Mock
+from unittest.mock import call, Mock, patch
 
 from fbpcp.error.pcp import PcpError
 from fbpcs.pc_pre_validation.binary_file_validator import BinaryFileValidator
@@ -16,8 +16,8 @@ from fbpcs.pc_pre_validation.constants import (
     DEFAULT_BINARY_REPOSITORY,
     DEFAULT_BINARY_VERSION,
     DEFAULT_EXE_FOLDER,
-    ONEDOCKER_REPOSITORY_PATH,
     ONEDOCKER_EXE_PATH,
+    ONEDOCKER_REPOSITORY_PATH,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.validation_report import ValidationReport

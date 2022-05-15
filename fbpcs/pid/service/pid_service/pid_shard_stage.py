@@ -8,7 +8,7 @@
 
 from typing import Optional
 
-from fbpcs.data_processing.service.sharding_service import ShardType, ShardingService
+from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput

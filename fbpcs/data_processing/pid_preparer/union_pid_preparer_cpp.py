@@ -15,7 +15,7 @@ import sys
 import tempfile
 from typing import Dict, Optional
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
 from fbpcs.data_processing.pid_preparer.preparer import UnionPIDDataPreparerService

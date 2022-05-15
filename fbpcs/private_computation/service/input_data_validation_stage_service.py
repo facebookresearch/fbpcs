@@ -13,9 +13,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.private_computation.entity.pc_validator_config import (
-    PCValidatorConfig,
-)
+from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationRole,
@@ -30,9 +28,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
-from fbpcs.private_computation.service.utils import (
-    get_pc_status_from_stage_state,
-)
+from fbpcs.private_computation.service.utils import get_pc_status_from_stage_state
 
 # 20 minutes
 PRE_VALIDATION_CHECKS_TIMEOUT: int = 1200

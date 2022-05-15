@@ -12,16 +12,14 @@ from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
+    AggregationType,
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
-    AggregationType,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
-from fbpcs.private_computation.service.constants import (
-    NUM_NEW_SHARDS_PER_FILE,
-)
+from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.decoupled_aggregation_stage_service import (
     AggregationStageService,
 )

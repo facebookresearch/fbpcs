@@ -8,8 +8,7 @@
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
 from functools import cached_property
-from typing import Any, Dict, Tuple
-from typing import Optional, Generic, Type, TypeVar
+from typing import Any, Dict, Generic, Optional, Tuple, Type, TypeVar
 
 from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
 from termcolor import colored

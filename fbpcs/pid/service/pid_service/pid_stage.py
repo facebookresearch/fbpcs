@@ -7,14 +7,13 @@
 import abc
 import logging
 import os
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDInstanceStatus, PIDStageStatus
+from fbpcs.pid.entity.pid_instance import PIDInstanceStatus, PIDProtocol, PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput

@@ -8,16 +8,16 @@ import copy
 import unittest
 from unittest.mock import MagicMock, patch
 
-from fbpcp.entity.container_instance import ContainerInstanceStatus, ContainerInstance
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import (
-    PIDStageStatus,
-    PIDInstanceStatus,
     PIDInstance,
+    PIDInstanceStatus,
     PIDProtocol,
     PIDRole,
+    PIDStageStatus,
 )
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid import PIDService

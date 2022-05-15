@@ -7,8 +7,8 @@
 # pyre-strict
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.service.constants import (
-    DEFAULT_PID_PROTOCOL,
     DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT,
+    DEFAULT_PID_PROTOCOL,
 )
 
 

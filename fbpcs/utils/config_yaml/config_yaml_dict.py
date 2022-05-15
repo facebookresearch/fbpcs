@@ -10,8 +10,8 @@ from typing import Any, Dict
 from fbpcp.util import yaml
 from fbpcs.utils.config_yaml.exceptions import (
     ConfigYamlFieldNotFoundError,
-    ConfigYamlValidationError,
     ConfigYamlFileParsingError,
+    ConfigYamlValidationError,
 )
 from yaml import YAMLError
 

@@ -8,7 +8,7 @@
 
 
 from enum import Enum
-from typing import List, TypedDict, Dict
+from typing import Dict, List, TypedDict
 
 from fbpcp.entity.mpc_game_config import MPCGameArgument, MPCGameConfig
 from fbpcp.repository.mpc_game_repository import MPCGameRepository

@@ -20,8 +20,7 @@ from meta.private_computation.ttypes import (
 )
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
-from thrift.transport import TSocket
-from thrift.transport import TTransport
+from thrift.transport import TSocket, TTransport
 
 
 global_logger = logging.getLogger()

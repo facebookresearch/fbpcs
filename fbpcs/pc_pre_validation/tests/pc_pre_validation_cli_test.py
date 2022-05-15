@@ -6,11 +6,9 @@
 # pyre-strict
 
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from fbpcs.pc_pre_validation import (
-    pc_pre_validation_cli as validation_cli,
-)
+from fbpcs.pc_pre_validation import pc_pre_validation_cli as validation_cli
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 

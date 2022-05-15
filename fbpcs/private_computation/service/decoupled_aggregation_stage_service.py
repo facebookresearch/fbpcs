@@ -16,11 +16,9 @@ from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationInstance,
-    AttributionRule,
     AggregationType,
-)
-from fbpcs.private_computation.entity.private_computation_instance import (
+    AttributionRule,
+    PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
@@ -32,8 +30,8 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.private_computation.service.utils import (
     create_and_start_mpc_instance,
-    map_private_computation_role_to_mpc_party,
     get_updated_pc_status_mpc_game,
+    map_private_computation_role_to_mpc_party,
 )
 
 

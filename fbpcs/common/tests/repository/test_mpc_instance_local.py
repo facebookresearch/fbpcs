@@ -7,12 +7,10 @@
 import copy
 import unittest
 from pathlib import Path
-from unittest.mock import mock_open, MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus, MPCParty
-from fbpcs.common.entity.pcs_mpc_instance import (
-    PCSMPCInstance,
-)
+from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.repository.mpc_instance_local import LocalMPCInstanceRepository
 
 TEST_BASE_DIR = Path("./")
