@@ -17,6 +17,7 @@ from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 
 class GameNames(Enum):
     LIFT = "lift"
+    PCF2_LIFT = "pcf2_lift"
     SHARD_AGGREGATOR = "shard_aggregator"
     DECOUPLED_ATTRIBUTION = "decoupled_attribution"
     DECOUPLED_AGGREGATION = "decoupled_aggregation"
@@ -37,6 +38,16 @@ class GameNamesValue(TypedDict):
 PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
     GameNames.LIFT.value: {
         "onedocker_package_name": OneDockerBinaryNames.LIFT_COMPUTE.value,
+        "arguments": [
+            OneDockerArgument({"name": "input_base_path", "required": True}),
+            OneDockerArgument({"name": "output_base_path", "required": True}),
+            OneDockerArgument({"name": "file_start_index", "required": False}),
+            OneDockerArgument({"name": "num_files", "required": True}),
+            OneDockerArgument({"name": "concurrency", "required": True}),
+        ],
+    },
+    GameNames.PCF2_LIFT.value: {
+        "onedocker_package_name": OneDockerBinaryNames.PCF2_LIFT.value,
         "arguments": [
             OneDockerArgument({"name": "input_base_path", "required": True}),
             OneDockerArgument({"name": "output_base_path", "required": True}),

@@ -210,6 +210,10 @@ class PrivateComputationInstance(InstanceBase):
         return self._get_stage_output_path("compute_stage", "json")
 
     @property
+    def pcf2_lift_stage_output_base_path(self) -> str:
+        return self._get_stage_output_path("pcf2_lift_stage", "json")
+
+    @property
     def decoupled_attribution_stage_output_base_path(self) -> str:
         return self._get_stage_output_path("decoupled_attribution_stage", "json")
 
