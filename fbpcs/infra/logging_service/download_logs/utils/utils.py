@@ -6,52 +6,35 @@
 # pyre-strict
 
 import os
-from typing import IO, List
+import shutil
 
 
-def create_file(self, file_location: str, content: List) -> None:
-    """
-    Create file in the file location with content.
-    Args:
-        file_location (str): Full path of the file location Eg: /tmp/xyz.txt
-        content (list): Content to be written in file
-    Returns:
-        None
-    """
-    if not content:
-        content = []
-    try:
-        # write to a file, if it already exists
-        with open(file_location, "w") as file_object:
-            self.write_to_file(file_object, content)
-    except FileNotFoundError:
-        # create a file if it doesn't exist and write to file
-        with open(file_location, "x") as file_object:
-            self.write_to_file(file_object, content)
+class Utils:
+    @staticmethod
+    def create_folder(folder_location) -> None:
+        """
+        Creates folder in the given path
+        Args:
+            folder_location (str): Path were folder will be created. Path includes new folder name.
+                                   Eg: If creating folder `test` in location `/tmp`, folder_location should be `/tmp/test`
+        Returns:
+            None
+        """
 
+        if not os.path.exists(folder_location):
+            os.makedirs(folder_location)
 
-@staticmethod
-def write_to_file(file_object: IO[bytes], contents: List) -> None:
-    """
-    Write content to the file.
-    Args:
-        file_object (IO): Object of file to read/write
-        contents (list): Content to be written in file
-    Returns:
-        None
-    """
-    for content in contents:
-        file_object.write(content)
-
-
-@staticmethod
-def remove_file(file_location: str) -> None:
-    """
-    Remove file from the given file path
-    Args:
-        file_location (str): Full path of the file location Eg: /tmp/xyz.txt
-    Returns:
-        None
-    """
-    if os.path.isfile(file_location):
-        os.remove(file_location)
+    @staticmethod
+    def compress_downloaded_logs(folder_location: str) -> None:
+        """
+        Compresses folder passed to the function in arguments
+        Args:
+            folder_location (str): Complete folder path Eg /tmp/folder1
+        """
+        if os.path.isdir(folder_location):
+            shutil.make_archive(f"{folder_location}_zipped", "zip", folder_location)
+        else:
+            raise Exception(
+                f"Couldn't find folder {folder_location}."
+                f"Please check if folder exists.\nAborting folder compression."
+            )
