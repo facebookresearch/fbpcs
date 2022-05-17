@@ -21,6 +21,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -145,7 +149,7 @@ public class DeployController {
   }
 
   @GetMapping(path = "/v1/deployment/logs")
-  public byte[] downloadDeploymentLogs() {
+  public ResponseEntity downloadDeploymentLogs() {
     logger.info("Received logs request");
     ByteArrayOutputStream bo = new ByteArrayOutputStream();
     try {
@@ -160,7 +164,10 @@ public class DeployController {
           "  Could not compress logs. Message: " + e.getMessage() + "\n" + e.getStackTrace());
     }
     logger.info("Logs request finalized");
-    return bo.toByteArray();
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    headers.add("Content-Type", "application/octet-stream");
+    headers.add("Content-Disposition", "attachment; filename=\"zipFile.zip\"");
+    return new ResponseEntity(bo.toByteArray(), headers, HttpStatus.OK);
   }
 
   private void compressIfExists(String fullFilePath, String zipName, ZipOutputStream zout) {
