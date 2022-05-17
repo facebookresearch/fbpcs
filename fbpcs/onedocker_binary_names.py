@@ -32,5 +32,6 @@ class OneDockerBinaryNames(Enum):
     PID_MULTI_KEY_SERVER = "pid/private-id-multi-key-server"
 
     LIFT_COMPUTE = "private_lift/lift"
+    PCF2_LIFT = "private_lift/pcf2_lift"
 
     PC_PRE_VALIDATION = "validation/pc_pre_validation_cli"
