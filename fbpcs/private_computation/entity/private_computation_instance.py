@@ -63,6 +63,7 @@ class AttributionRule(Enum):
     LAST_TOUCH_28D = "last_touch_28d"
     LAST_CLICK_2_7D = "last_click_2_7d"
     LAST_TOUCH_2_7D = "last_touch_2_7d"
+    LAST_CLICK_1D_TARGETID = "last_click_1d_targetid"
 
 
 class AggregationType(Enum):
