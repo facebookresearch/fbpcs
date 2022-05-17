@@ -9,6 +9,7 @@ package com.facebook.business.cloudbridge.pl.server;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeVpcsResult;
@@ -39,6 +40,14 @@ public class Validator {
   }
 
   private AWSStaticCredentialsProvider getCredentials(DeploymentParams deploymentParams) {
+    if (!deploymentParams.awsSessionToken.isEmpty()) {
+      return new AWSStaticCredentialsProvider(
+          new BasicSessionCredentials(
+              deploymentParams.awsAccessKeyId,
+              deploymentParams.awsSecretAccessKey,
+              deploymentParams.awsSessionToken));
+    }
+
     return new AWSStaticCredentialsProvider(
         new BasicAWSCredentials(
             deploymentParams.awsAccessKeyId, deploymentParams.awsSecretAccessKey));

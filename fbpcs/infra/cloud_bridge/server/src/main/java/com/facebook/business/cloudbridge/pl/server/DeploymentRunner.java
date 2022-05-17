@@ -121,6 +121,9 @@ public class DeploymentRunner extends Thread {
     environmentVariables = new HashMap<String, String>();
     environmentVariables.put("AWS_ACCESS_KEY_ID", deployment.awsAccessKeyId);
     environmentVariables.put("AWS_SECRET_ACCESS_KEY", deployment.awsSecretAccessKey);
+    if (!deployment.awsSessionToken.isEmpty()) {
+      environmentVariables.put("AWS_SESSION_TOKEN", deployment.awsSessionToken);
+    }
     environmentVariables.put("TF_LOG_STREAMING", Constants.DEPLOYMENT_STREAMING_LOG_FILE);
     if (deployment.logLevel != DeploymentParams.LogLevel.DISABLED) {
       if (deployment.logLevel == null) deployment.logLevel = DeploymentParams.LogLevel.DEBUG;
