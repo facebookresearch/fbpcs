@@ -26,7 +26,7 @@ public class DeploymentParams {
 
   public String awsAccessKeyId;
   public String awsSecretAccessKey;
-
+  public String awsSessionToken;
   private final Logger logger = LoggerFactory.getLogger(DeploymentParams.class);
 
   enum LogLevel {
