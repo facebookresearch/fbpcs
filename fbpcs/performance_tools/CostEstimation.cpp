@@ -218,9 +218,9 @@ std::string CostEstimation::_writeToS3(
     XLOG(INFO) << "Writing cost file to s3: " << filePath;
     fbpcf::io::write(filePath, costData);
   } catch (const std::exception& e) {
-    XLOG(WARN) << "Error: Exception writing cost in S3.\n\terror msg: "
+    XLOG(WARN) << "Warning: Exception writing cost in S3.\n\terror msg: "
                << e.what();
-    return "Failed to write " + filePath;
+    return "Failed to write " + filePath + ". Continuing execution.";
   }
   return "Successfully wrote cost info at : " + filePath;
 }
