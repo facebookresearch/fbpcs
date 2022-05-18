@@ -5,13 +5,12 @@
 
 # pyre-strict
 
-import os
-import sys
-import threading
+
 from typing import Dict, List
 
 from botocore.exceptions import ClientError
 from cloud.aws_cloud import AwsCloud
+from utils.utils import Utils
 
 
 class AwsContainerLogs(AwsCloud):
@@ -23,7 +22,7 @@ class AwsContainerLogs(AwsCloud):
     LOG_STREAM = "{}/{}/{}"
     ARN_PARSE_LENGTH = 6
     S3_LOGGING_FOLDER = "logging"
-    LOCAL_FILE_LOCATION = "/tmp/{}"
+    DEFAULT_DOWNLOAD_LOCATION = "/tmp"
 
     def __init__(
         self,
@@ -38,6 +37,7 @@ class AwsContainerLogs(AwsCloud):
             aws_region=aws_region,
         )
         self.tag_name = tag_name
+        self.utils = Utils()
 
     def get_cloudwatch_logs(
         self, log_group_name: str, log_stream_name: str, container_arn: str = None
@@ -68,6 +68,7 @@ class AwsContainerLogs(AwsCloud):
             message_events = response["events"]
 
             # Loop through to get the all the logs
+
             while True:
                 prev_token = response["nextForwardToken"]
                 response = self.cloudwatch_client.get_log_events(
@@ -287,40 +288,145 @@ class AwsContainerLogs(AwsCloud):
             Boolean
         """
 
+        response = self.get_s3_folder_contents(
+            bucket_name=bucket_name, folder_name=folder_name
+        )
+
+        return "Contents" in response
+
+    def get_s3_folder_contents(
+        self, bucket_name: str, folder_name: str, next_continuation_token: str = None
+    ) -> Dict:
+        """
+        Fetches folders in a given S3 bucket and folders information
+
+        Args:
+            bucket_name (string): Name of the s3 bucket where logs will be stored
+            folder_name (string): Name of folder for fetching the contents
+            NextContinuationToken (string): Token to get all the logs in case of pagination
+        Returns:
+            Dict
+        """
+
         response = {}
+        kwargs = {}
+
+        if next_continuation_token == "":
+            next_continuation_token = None
+
+        if next_continuation_token:
+            kwargs = {"ContinuationToken": next_continuation_token}
 
         try:
             response = self.s3_client.list_objects_v2(
-                Bucket=bucket_name, Prefix=folder_name
+                Bucket=bucket_name, Prefix=folder_name, **kwargs
             )
         except ClientError as error:
-            error_message = (
-                f"folder {folder_name} in S3 bucket {bucket_name} doesn't exist\n"
-                f"{error}\n"
-            )
+            error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
             if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
-                error_message = (
-                    f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n"
-                    f"{error}\n"
-                )
-            raise Exception(f"{error_message}")
+                error_message = f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n{error}"
+            raise Exception({error_message})
 
-        return "Contents" in response
+        return response
 
     def _get_s3_folder_path(self, tag_name: str, container_id: str) -> str:
         """
         Return path of S3 folder
         Args:
             tag_name (str): Tag name passed to download the logs
-            container_id (str): DOwnload logs for container ID
+            container_id (str): Download logs for container ID
         Returns:
             str
         """
         return f"{self.S3_LOGGING_FOLDER}/{tag_name}/{container_id}"
 
-    def download_logs(self, s3_bucket_name: str, container_arn: str) -> None:
+    def _get_files_to_download_logs(
+        self, s3_bucket_name: str, folder_to_download: str
+    ) -> List[str]:
         """
-        Umbrella function to call other functions for end to end functionality
+        Returns all the files to be downloaded in a folder in S3 bucket
+        Args:
+            s3_bucket_name (str): Name of the S3 bucket in AWS account
+            folder_to_download (str): Name of folder from which files should be downloaded from
+        Returns:
+            List
+        """
+
+        files_to_download = []
+        next_continuation_token = ""
+
+        # Loop over the contents in case of pagination
+        while next_continuation_token is not None:
+            response = self.get_s3_folder_contents(
+                bucket_name=s3_bucket_name,
+                folder_name=folder_to_download,
+                next_continuation_token=next_continuation_token,
+            )
+            contents = response.get("Contents", [])
+
+            # ignore the directory in lsit of files to be downloaded
+            for content in contents:
+                key = content.get("Key")
+                if key[-1] != "/":
+                    files_to_download.append(key)
+            next_continuation_token = response.get("NextContinuationToken")
+        return files_to_download
+
+    def download_logs(
+        self, s3_bucket_name: str, tag_name: str, local_download_dir=None
+    ) -> None:
+        """
+        Download logs from S3 to local
+        Args:
+            s3_bucket_name (str): Name of the S3 bucket in AWS account
+            tag_name (str): Unique name for downloaded logs
+            local_download_dir (str): Path where logs should be downloaded locally
+        Returns:
+            None
+        """
+
+        # If the local download directory is not set then set to default
+        if local_download_dir is None:
+            local_download_dir = self.DEFAULT_DOWNLOAD_LOCATION
+
+        s3_folders_contents = self.ensure_folder_exists(
+            bucket_name=s3_bucket_name,
+            folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
+        )
+        if not s3_folders_contents:
+            raise Exception(
+                f"Folder name {self.S3_LOGGING_FOLDER}/{tag_name} not found in bucket {s3_bucket_name}."
+                f"Please check if tag name {tag_name} and S3 bucket name {s3_bucket_name} are passed set correctly."
+            )
+
+        files_to_download = self._get_files_to_download_logs(
+            s3_bucket_name=s3_bucket_name,
+            folder_to_download=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
+        )
+
+        # check for download folder in local
+        local_path = f"{local_download_dir}/{tag_name}"
+
+        self.utils.create_folder(folder_location=local_path)
+
+        for file_to_download in files_to_download:
+            file_name = file_to_download.replace(
+                f"{self.S3_LOGGING_FOLDER}/{tag_name}/", ""
+            ).rstrip()
+            self.s3_client.download_file(
+                Bucket=s3_bucket_name,
+                Key=file_to_download,
+                Filename=f"{local_path}/{file_name}",
+            )
+
+        # compress downloaded logs
+        self.utils.compress_downloaded_logs(folder_location=local_path)
+
+    def upload_logs_to_s3_from_cloudwatch(
+        self, s3_bucket_name: str, container_arn: str
+    ) -> None:
+        """
+        Umbrella function to call other functions to upload the logs from cloudwatch to S3
 
         Folder structure
 
