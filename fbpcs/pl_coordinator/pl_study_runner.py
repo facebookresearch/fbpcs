@@ -176,6 +176,7 @@ def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
         err_msgs.append("objective_ids have duplicates")
     if _has_duplicates(input_paths):
         err_msgs.append("input_paths have duplicates")
+
     if len(objective_ids) != len(input_paths):
         err_msgs.append(
             "Number of objective_ids and number of input_paths don't match."
