@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-
 import os
 import random
 import time
@@ -13,6 +12,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, Mock, patch
 
 from fbpcs.pc_pre_validation.constants import (
+    ID_FIELD_PREFIX,
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
@@ -121,6 +121,39 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_success_for_multikey_pl_fields(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_madid,id_email,id_phone,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,dabcd/1234+WXYZ=,4abcd/1234+WXYZ=,100,1645157987\n",
+            b",abcd/1234+WXYZ=,abcd/1234+WXYZ=,100,1645157987\n",
+            b"abcd/1234+WXYZ=,,,100,1645157987\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some warnings.",
+            details={
+                "rows_processed_count": 3,
+                "validation_warnings": {
+                    "id_": {
+                        "empty_count": 3,
+                    },
+                },
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_success_for_pa_fields(self, time_mock: Mock) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
         cloud_provider = CloudProvider.AWS
@@ -154,13 +187,51 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_run_validations_errors_when_input_data_fields_not_found(
+    def test_run_validations_success_for_multikey_pa_fields(
         self, time_mock: Mock
     ) -> None:
-        exception_message = f"Failed to parse the header row. The header row fields must be either: {PL_FIELDS} or: {PA_FIELDS}"
+        time_mock.time.return_value = TEST_TIMESTAMP
+        cloud_provider = CloudProvider.AWS
+        lines = [
+            b"id_madid,id_email,id_phone,conversion_value,conversion_timestamp,conversion_metadata\n",
+            b"abcd/1234+WXYZ=,abcd/1234+WXYZ=,abcd/1234+WXYZ=,,1645157987,0\n",
+            b"abcd/1234+WXYZ=,,,,1645157987,0\n",
+            b",abcd/1234+WXYZ=,abcd/1234+WXYZ=,$20,1645157987,0\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some warnings.",
+            details={
+                "rows_processed_count": 3,
+                "validation_warnings": {
+                    "id_": {
+                        "empty_count": 3,
+                    },
+                    "conversion_value": {
+                        "empty_count": 2,
+                        "bad_format_count": 1,
+                    },
+                },
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_errors_when_pa_pl_data_fields_not_found(
+        self, time_mock: Mock
+    ) -> None:
+        exception_message = f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
-            b"bad,header,row\n",
+            b"id_,header,row\n",
             b"1,2,3\n",
             b"4,5,6\n",
         ]
@@ -178,7 +249,34 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
+        self.assertEqual(report, expected_report)
 
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_errors_when_pid_data_fields_not_found(
+        self, time_mock: Mock
+    ) -> None:
+        exception_message = f"Failed to parse the header row. The header row fields must have columns with prefix {ID_FIELD_PREFIX}"
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"noid_,conversion_value,conversion_timestamp,conversion_metadata\n",
+            b"abcd/1234+WXYZ=,,1645157987,0\n",
+            b"abcd/1234+WXYZ=,,1645157987,0\n",
+            b"abcd/1234+WXYZ=,$20,1645157987,0\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
@@ -245,7 +343,7 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,100,\n",
         ]
         self.write_lines_to_file(lines)
-        error_fields = "event_timestamp, id_"
+        error_fields = "event_timestamp"
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
@@ -253,9 +351,6 @@ class TestInputDataValidator(TestCase):
             details={
                 "rows_processed_count": 6,
                 "validation_errors": {
-                    "id_": {
-                        "empty_count": 1,
-                    },
                     "event_timestamp": {
                         "empty_count": 4,
                     },
@@ -263,6 +358,9 @@ class TestInputDataValidator(TestCase):
                 "validation_warnings": {
                     "value": {
                         "empty_count": 2,
+                    },
+                    "id_": {
+                        "empty_count": 1,
                     },
                 },
             },
@@ -272,7 +370,6 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
-
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
@@ -362,7 +459,36 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
         )
         report = validator.validate()
+        self.assertEqual(report, expected_report)
 
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_reports_for_pl_when_no_ids(self, time_mock: Mock) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_madid,id_email,value,event_timestamp\n",
+            b",,100,1645157987\n",
+            b",,100,1645157987\n",
+        ]
+        self.write_lines_to_file(lines)
+        error_fields = "id_"
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on '{error_fields}'.",
+            details={
+                "rows_processed_count": 2,
+                "validation_errors": {
+                    "id_": {
+                        "empty_count": 4,
+                    },
+                },
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
@@ -388,14 +514,16 @@ class TestInputDataValidator(TestCase):
                 "validation_errors": {
                     "id_": {
                         "bad_format_count": 2,
-                        "empty_count": 1,
                     },
                     "conversion_timestamp": {
                         "bad_format_count": 2,
                     },
                 },
                 "validation_warnings": {
-                    "conversion_metadata": {"bad_format_count": 1, "empty_count": 2},
+                    "id_": {
+                        "empty_count": 1,
+                    },
+                    "conversion_metadata": {"empty_count": 2, "bad_format_count": 1},
                     "conversion_value": {
                         "bad_format_count": 1,
                     },

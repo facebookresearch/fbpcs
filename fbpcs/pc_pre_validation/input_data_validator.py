@@ -24,6 +24,7 @@ from typing import Optional, Sequence
 
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.pc_pre_validation.constants import (
+    ID_FIELD_PREFIX,
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
@@ -58,6 +59,7 @@ class InputDataValidator(Validator):
         self._cloud_provider = cloud_provider
         self._storage_service = S3StorageService(region, access_key_id, access_key_data)
         self._name: str = INPUT_DATA_VALIDATOR_NAME
+        self._num_id_columns = 0
 
     @property
     def name(self) -> str:
@@ -95,6 +97,7 @@ class InputDataValidator(Validator):
                 csv_reader = csv.DictReader(local_file)
                 field_names = csv_reader.fieldnames or []
                 header_row = ",".join(field_names)
+                self._set_num_id_columns(field_names)
                 self._validate_header(field_names)
 
             with open(self._local_file_path, "rb") as local_file:
@@ -118,10 +121,26 @@ class InputDataValidator(Validator):
                 had_exception=True,
             )
 
+        validation_issues.set_max_issue_count_til_error(
+            {
+                ID_FIELD_PREFIX: {
+                    "empty_count": self._num_id_columns * rows_processed_count - 1,
+                },
+            }
+        )
+
         return self._format_validation_report(
             f"File: {self._input_file_path}",
             rows_processed_count,
             validation_issues,
+        )
+
+    def _set_num_id_columns(self, header_row: Sequence[str]) -> None:
+        if not header_row:
+            raise InputDataValidationException("The header row was empty.")
+
+        self._num_id_columns = len(
+            [col for col in header_row if col.startswith(ID_FIELD_PREFIX)]
         )
 
     def _get_file_size(self) -> int:
@@ -144,6 +163,8 @@ class InputDataValidator(Validator):
         if not header_row:
             raise InputDataValidationException("The header row was empty.")
 
+        match_id_fields = self._num_id_columns > 0
+
         match_pa_fields = len(set(PA_FIELDS).intersection(set(header_row))) == len(
             PA_FIELDS
         )
@@ -151,9 +172,14 @@ class InputDataValidator(Validator):
             PL_FIELDS
         )
 
+        if not match_id_fields:
+            raise InputDataValidationException(
+                f"Failed to parse the header row. The header row fields must have columns with prefix {ID_FIELD_PREFIX}"
+            )
+
         if not (match_pa_fields or match_pl_fields):
             raise InputDataValidationException(
-                f"Failed to parse the header row. The header row fields must be either: {PL_FIELDS} or: {PA_FIELDS}"
+                f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS}"
             )
 
     def _validate_line_ending(self, line: str) -> None:
@@ -165,6 +191,9 @@ class InputDataValidator(Validator):
     def _validate_row(
         self, validation_issues: InputDataValidationIssues, field: str, value: str
     ) -> None:
+        if field.startswith(ID_FIELD_PREFIX):
+            field = ID_FIELD_PREFIX
+
         if value.strip() == "":
             validation_issues.count_empty_field(field)
         elif field in VALIDATION_REGEXES and not VALIDATION_REGEXES[field].match(value):
