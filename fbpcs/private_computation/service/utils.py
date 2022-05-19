@@ -427,21 +427,23 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
         ValueError:
     """
 
-    # TODO(T117264664): [BE][PCS] put other regex pieces in variables
     key_pattern = "."
+    region_regex_pattern = "[a-zA-Z0-9.-]"
+    bucket_name_regex_pattern = "[a-z0-9.-]"
 
     # Check if it matches the path style access format, https://s3.Region.amazonaws.com/bucket-name/key-name
     if re.search(
-        rf"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/[a-z0-9.-]+/{key_pattern}+",
+        rf"https://[sS]3\.{region_regex_pattern}+\.amazonaws\.com/{bucket_name_regex_pattern}+/{key_pattern}+",
         file_path,
     ):
 
         # Extract Bucket, Key, and Region
         key_name_search = re.search(
-            r"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/[a-z0-9.-]+/", file_path
+            rf"https://[sS]3\.{region_regex_pattern}+\.amazonaws\.com/{bucket_name_regex_pattern}+/",
+            file_path,
         )
         bucket_name_search = re.search(
-            r"https://[sS]3\.[a-zA-Z0-9.-]+\.amazonaws\.com/", file_path
+            rf"https://[sS]3\.{region_regex_pattern}+\.amazonaws\.com/", file_path
         )
         region_start_search = re.search(r"https://[sS]3\.", file_path)
         region_end_search = re.search(r".amazonaws\.com/", file_path)
@@ -466,13 +468,15 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
         file_path = f"https://{bucket}.s3.{aws_region}.amazonaws.com/{key}"
 
     # Check if it matches the s3 style access format, s3://bucket-name/key-name
-    if re.search(rf"[sS]3://[a-z0-9.-]+/{key_pattern}+", file_path):
+    if re.search(rf"[sS]3://{bucket_name_regex_pattern}+/{key_pattern}+", file_path):
 
         if aws_region is not None:
 
             # Extract Bucket, Key
             bucket_name_search = re.search(r"[sS]3://", file_path)
-            key_name_search = re.search(r"[sS]3://[a-z0-9.-]+/", file_path)
+            key_name_search = re.search(
+                rf"[sS]3://{bucket_name_regex_pattern}+/", file_path
+            )
             bucket = ""
             key = ""
 
@@ -493,7 +497,7 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
             )
 
     if re.search(
-        rf"https://[a-z0-9.-]+\.s3\.[a-zA-Z0-9.-]+\.amazonaws.com/{key_pattern}+",
+        rf"https://{bucket_name_regex_pattern}+\.s3\.{region_regex_pattern}+\.amazonaws.com/{key_pattern}+",
         file_path,
     ):
         return file_path
