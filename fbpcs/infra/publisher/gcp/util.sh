@@ -11,9 +11,9 @@
 verify_gcp_connectivity() {
     local bucket_name=$1
 
-    communication_error=$(gsutil ls gs://"${bucket_name}" |& grep -c 'CommunicationError')
+    communication_error="$(gsutil ls gs://"${bucket_name}" |& grep -c 'CommunicationError')"
 
-    if [ "${communication_error}" != 0 ]; then
+    if [ "${communication_error}" != "0" ]; then
         echo "Connection to GCS is not available"
         exit 1
     fi
@@ -76,8 +76,6 @@ verify_gcs_bucket_access () {
 verify_or_create_bucket() {
     local bucket_name=$1
     local region=$2
-
-    verify_gcp_connectivity "${bucket_name}"
 
     echo "########################Create storage buckets if they don't exist ########################"
 

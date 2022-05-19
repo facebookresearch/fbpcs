@@ -4,12 +4,6 @@ locals {
   k8s_sa = kubernetes_service_account.k8s_sa.metadata[0].name
 }
 
-resource "google_project_iam_member" "project" {
-  project = var.project_id
-  role    = "roles/storage.admin"
-  member  = "serviceAccount:${google_service_account.gke_sa.email}"
-}
-
 resource "google_service_account" "gke_sa" {
   account_id   = local.gke_sa
   display_name = local.gke_sa
@@ -18,13 +12,13 @@ resource "google_service_account" "gke_sa" {
 
 resource "kubernetes_namespace" "k8s_ns" {
   metadata {
-    name = "onedocker"
+    name = "onedocker-${var.name_postfix}"
   }
 }
 
 resource "kubernetes_service_account" "k8s_sa" {
   metadata {
-    name      = "onedocker-k8s-sa"
+    name      = "onedocker-k8s-sa-${var.name_postfix}"
     namespace = local.k8s_ns
     annotations = {
       "iam.gke.io/gcp-service-account" : google_service_account.gke_sa.email
