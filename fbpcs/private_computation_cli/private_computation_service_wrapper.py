@@ -43,6 +43,7 @@ from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.service.workflow import WorkflowService
 from fbpcs.utils.config_yaml import reflect
 
 
@@ -367,6 +368,10 @@ def _build_storage_service(config: Dict[str, Any]) -> StorageService:
     return reflect.get_instance(config, StorageService)
 
 
+def _build_workflow_service(config: Dict[str, Any]) -> WorkflowService:
+    return reflect.get_instance(config, WorkflowService)
+
+
 def _build_onedocker_service(
     container_service: ContainerService,
     task_definition: str,
@@ -430,6 +435,12 @@ def _build_private_computation_service(
         container_service, onedocker_service_config.task_definition
     )
     storage_service = _build_storage_service(pc_config["dependency"]["StorageService"])
+    if "WorkflowService" in pc_config["dependency"]:
+        workflow_service = _build_workflow_service(
+            pc_config["dependency"]["WorkflowService"]
+        )
+    else:
+        workflow_service = None
     return PrivateComputationService(
         repository_service,
         storage_service,
@@ -447,6 +458,7 @@ def _build_private_computation_service(
         _parse_pc_validator_config(pc_config),
         _get_post_processing_handlers(pph_config),
         _get_post_processing_handlers(pid_pph_config),
+        workflow_svc=workflow_service,
     )
 
 

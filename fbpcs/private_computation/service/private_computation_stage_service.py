@@ -21,6 +21,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
+from fbpcs.service.workflow import WorkflowService
 
 
 @dataclass
@@ -38,6 +39,7 @@ class PrivateComputationStageServiceArgs:
     pid_post_processing_handlers: Dict[str, PostProcessingHandler]
     onedocker_svc: OneDockerService
     pc_validator_config: PCValidatorConfig
+    workflow_svc: Optional[WorkflowService]
 
 
 class PrivateComputationStageService(abc.ABC):
