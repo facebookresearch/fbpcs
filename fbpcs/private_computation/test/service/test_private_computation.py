@@ -58,11 +58,11 @@ from fbpcs.private_computation.service.utils import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
+    PrivateComputationDecoupledStageFlow,
+)
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
-)
-from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
-    PrivateComputationPCF2StageFlow,
 )
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
@@ -75,10 +75,10 @@ def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
         (PrivateComputationStageFlow.COMPUTE,),
         (PrivateComputationStageFlow.AGGREGATE,),
         (PrivateComputationStageFlow.POST_PROCESSING_HANDLERS,),
-        (PrivateComputationPCF2StageFlow.ID_MATCH,),
-        (PrivateComputationPCF2StageFlow.PCF2_ATTRIBUTION,),
-        (PrivateComputationPCF2StageFlow.PCF2_AGGREGATION,),
-        (PrivateComputationPCF2StageFlow.AGGREGATE,),
+        (PrivateComputationDecoupledStageFlow.ID_MATCH,),
+        (PrivateComputationDecoupledStageFlow.DECOUPLED_ATTRIBUTION,),
+        (PrivateComputationDecoupledStageFlow.DECOUPLED_AGGREGATION,),
+        (PrivateComputationDecoupledStageFlow.AGGREGATE,),
     ]
 
 
