@@ -63,6 +63,7 @@ from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow i
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
+from fbpcs.service.workflow import WorkflowService
 from fbpcs.utils.optional import unwrap_or_default
 
 T = TypeVar("T")
@@ -81,6 +82,7 @@ class PrivateComputationService:
         pc_validator_config: PCValidatorConfig,
         post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
         pid_post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
+        workflow_svc: Optional[WorkflowService] = None,
     ) -> None:
         """Constructor of PrivateComputationService
         instance_repository -- repository to CRUD PrivateComputationInstance
@@ -90,6 +92,7 @@ class PrivateComputationService:
         self.mpc_svc = mpc_svc
         self.pid_svc = pid_svc
         self.onedocker_svc = onedocker_svc
+        self.workflow_svc = workflow_svc
         self.onedocker_binary_config_map = onedocker_binary_config_map
         self.post_processing_handlers: Dict[str, PostProcessingHandler] = (
             post_processing_handlers or {}
@@ -107,6 +110,7 @@ class PrivateComputationService:
             self.pid_post_processing_handlers,
             self.onedocker_svc,
             self.pc_validator_config,
+            self.workflow_svc,
         )
         self.logger: logging.Logger = logging.getLogger(__name__)
 
