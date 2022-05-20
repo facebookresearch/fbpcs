@@ -37,7 +37,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 
 class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
     """
-    - Private Lift Stage Flow with PID_MR -
+    - Private Lift Stage Flow with UNION_PID_MR_MULTIKEY -
     This enum lists all of the supported stage types and maps to their possible statuses.
     It also provides methods to get information about the next or previous stage.
 
@@ -48,7 +48,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED INPUT_DATA_VALIDATION PID_MR ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED INPUT_DATA_VALIDATION UNION_PID_MR_MULTIKEY ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -64,7 +64,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
         False,
     )
-    PID_MR = PrivateComputationStageFlowData(
+    UNION_PID_MR_MULTIKEY = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.PID_MR_STARTED,
         PrivateComputationInstanceStatus.PID_MR_COMPLETED,
         PrivateComputationInstanceStatus.PID_MR_FAILED,
@@ -130,7 +130,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
             )
-        elif self is self.PID_MR:
+        elif self is self.UNION_PID_MR_MULTIKEY:
             return PIDMRStageService()
         elif self is self.ID_MATCH_POST_PROCESS:
             return PostProcessingStageService(
