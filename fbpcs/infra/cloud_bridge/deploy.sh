@@ -92,7 +92,7 @@ undeploy_aws_resources() {
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce$tag_postfix.tfstate" "$aws_account_id"
     echo "Related tfstate file exists. Continue..."
-    echo "######################## Initializing terraform working doirectory before deleting resources ########################"
+    echo "######################## Initializing terraform working directory before deleting resources ########################"
     cd /terraform_deployment/terraform_scripts/common/pce
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
@@ -112,7 +112,7 @@ undeploy_aws_resources() {
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/vpcpeering$tag_postfix.tfstate" "$aws_account_id"
     echo "Related tfstate file exists. Continue..."
-    echo "######################## Initializing terraform working doirectory before deleting resources ########################"
+    echo "######################## Initializing terraform working directory before deleting resources ########################"
     cd /terraform_deployment/terraform_scripts/partner/vpc_peering
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
@@ -134,12 +134,12 @@ undeploy_aws_resources() {
     echo "########################Deleting########################"
     log_streaming_data "starting to undeploy data ingestion resources "
     cd /terraform_deployment/terraform_scripts/data_ingestion
-    echo "######################## Initializing terraform working doirectory before deleting resources ########################"
+    echo "######################## Initializing terraform working directory before deleting resources ########################"
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_for_storage" \
         -backend-config "region=$region" \
         -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
-    echo "######################## Initializing terraform working doirectory completed ########################"
+    echo "######################## Initializing terraform working directory completed ########################"
     # Exclude the s3 bucket because it can not be deleted if it's not empty
     terraform state rm aws_s3_bucket.bucket || true
     echo "########################Deleting########################"
