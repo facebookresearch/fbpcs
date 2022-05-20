@@ -97,6 +97,7 @@ def create_instance(
         padding_size=padding_size,
         k_anonymity_threshold=k_anonymity_threshold,
         stage_flow_cls=stage_flow_cls,
+        pid_configs=config["pid"],
     )
 
     logger.info(instance)

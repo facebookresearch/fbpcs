@@ -17,6 +17,10 @@ from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
 class TestPrivateComputationCli(TestCase):
     def setUp(self) -> None:
+        self.stage_flow_list = [
+            "PrivateComputationLocalTestStageFlow",
+            "PrivateComputationMRStageFlow",
+        ]
         # We don't actually use the config, but we need to write a file so that
         # the yaml load won't blow up in `main`
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
@@ -106,6 +110,79 @@ class TestPrivateComputationCli(TestCase):
                     "--k_anonymity_threshold=666",
                     "--hmac_key=bigmac",
                     "--stage_flow=PrivateComputationLocalTestStageFlow",
+                ]
+            )
+            pc_cli.main(argv)
+            create_mock.assert_called_once()
+
+    @patch("fbpcs.private_computation_cli.private_computation_cli.create_instance")
+    def test_create_instance_withmr_stageflow(self, create_mock) -> None:
+        # Normally such *ultra-specific* test cases against a CLI would be an
+        # antipattern, but since this is our public interface, we want to be
+        # very careful before making that interface change.
+        # Create a temporary folder for testing
+        argv = [
+            "create_instance",
+            "instance123",
+            f"--config={self.temp_filename}",
+            "--role=PUBLISHER",
+            "--game_type=LIFT",
+            f"--input_path={self.temp_files_paths[0]}",
+            f"--output_dir={self.temp_dir_path}",
+            "--num_pid_containers=111",
+            "--num_mpc_containers=222",
+        ]
+        pc_cli.main(argv)
+        create_mock.assert_called_once()
+        create_mock.reset_mock()
+        argv.extend(
+            [
+                "--attribution_rule=last_click_1d",
+                "--aggregation_type=measurement",
+                "--concurrency=333",
+                "--num_files_per_mpc_container=444",
+                "--padding_size=555",
+                "--k_anonymity_threshold=666",
+                "--hmac_key=bigmac",
+                "--stage_flow=PrivateComputationMRStageFlow",
+            ]
+        )
+        pc_cli.main(argv)
+        create_mock.assert_called_once()
+        # Test with additional input paths of various formats
+        additional_input_paths = [
+            "https://bucket-name.s3.Region.amazonaws.com/key-name",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://fbpcs-github-e2e.s3.Region.amazonaws.com/lift/results/partner_expected_result.json",
+            "https://s3.Region.amazonaws.com/bucket-name/key-name",
+            "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json",
+        ]
+        for additional_input_path in additional_input_paths:
+            create_mock.reset_mock()
+            argv = [
+                "create_instance",
+                "instance123",
+                f"--config={self.temp_filename}",
+                "--role=PUBLISHER",
+                "--game_type=LIFT",
+                f"--input_path={additional_input_path}",
+                f"--output_dir={self.temp_dir_path}",
+                "--num_pid_containers=111",
+                "--num_mpc_containers=222",
+            ]
+            pc_cli.main(argv)
+            create_mock.assert_called_once()
+            create_mock.reset_mock()
+            argv.extend(
+                [
+                    "--attribution_rule=last_click_1d",
+                    "--aggregation_type=measurement",
+                    "--concurrency=333",
+                    "--num_files_per_mpc_container=444",
+                    "--padding_size=555",
+                    "--k_anonymity_threshold=666",
+                    "--hmac_key=bigmac",
+                    "--stage_flow=PrivateComputationMRStageFlow",
                 ]
             )
             pc_cli.main(argv)

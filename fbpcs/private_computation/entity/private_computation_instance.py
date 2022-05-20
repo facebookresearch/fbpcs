@@ -10,7 +10,7 @@ import os
 import time
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-from typing import List, Optional, TYPE_CHECKING, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from typing import Type
@@ -126,7 +126,7 @@ class PrivateComputationInstance(InstanceBase):
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = None
     tier: Optional[str] = None
-    mr_paths: Optional[List[str]] = None
+    pid_configs: Optional[Dict[str, Any]] = None
     retry_counter: int = 0
 
     # this field is deprecated
