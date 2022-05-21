@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import DefaultDict, Dict, List, Optional, Type, TypeVar
+from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar
 
 from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.service.mpc import MPCService
@@ -141,7 +141,7 @@ class PrivateComputationService:
         tier: Optional[str] = None,
         pid_use_row_numbers: bool = True,
         post_processing_data_optional: Optional[PostProcessingData] = None,
-        mr_paths: Optional[List[str]] = None,
+        pid_configs: Optional[Dict[str, Any]] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -201,6 +201,7 @@ class PrivateComputationService:
             tier=tier,
             pid_use_row_numbers=pid_use_row_numbers,
             post_processing_data=post_processing_data,
+            pid_configs=pid_configs,
         )
 
         self.instance_repository.create(instance)
