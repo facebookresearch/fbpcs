@@ -167,6 +167,7 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
             cluster="onedocker-cluster-name",
             region="us-west-2",
             onedocker_task_definition="arn:aws:ecs:us-west-2:000000000000:task/cluster-name/subnet",
+            cloud_account_id="test_account",
         ),
     )
 
