@@ -11,10 +11,11 @@
 # Import python modules
 import sys
 from datetime import datetime
+from ipaddress import ip_address, IPv4Address, IPv6Address
 
 from awsglue.context import GlueContext
 from awsglue.dynamicframe import DynamicFrame
-from awsglue.transforms import DropNullFields
+from awsglue.transforms import DropNullFields, Map
 
 # Import glue modules
 from awsglue.utils import getResolvedOptions
@@ -46,6 +47,30 @@ args = getResolvedOptions(sys.argv, ["JOB_NAME", "s3_read_path", "s3_write_path"
 
 s3_options = {"paths": ["s3://" + args["s3_read_path"]]}
 s3_write_path = "s3://" + args["s3_write_path"]
+
+#########################################
+### HELPER FUNCTIONS
+#########################################
+
+
+def _process_record(rec):
+    if not ("client_ip_address" in rec and rec["client_ip_address"]):
+        return rec
+    client_ip_address = rec["client_ip_address"]
+    processed_client_ip_address = ""
+    try:
+        ip = ip_address(client_ip_address)
+        if isinstance(ip, IPv4Address):
+            processed_client_ip_address = client_ip_address
+        elif isinstance(ip, IPv6Address):
+            processed_client_ip_address = client_ip_address[0:19]
+        rec["processed_client_ip_address"] = processed_client_ip_address
+        return rec
+    except ValueError:
+        rec["processed_client_ip_address"] = processed_client_ip_address
+        return rec
+
+
 #########################################
 ### EXTRACT (READ DATA)
 #########################################
@@ -62,8 +87,11 @@ dynamic_frame_read = glue_context.create_dynamic_frame.from_options(
     format_options={"withHeader": True},
 )  # format_options go by default
 
+# process columns
+mapped_dynamic_frame_read = Map.apply(frame=dynamic_frame_read, f=_process_record)
+
 # #Convert dynamic frame to data frame to use standard pyspark functions
-data_frame = dynamic_frame_read.toDF()
+data_frame = mapped_dynamic_frame_read.toDF()
 
 
 #########################################
@@ -77,6 +105,7 @@ expected_column_list = [
     "phone",
     "device_id",
     "client_ip_address",
+    "processed_client_ip_address",
     "client_user_agent",
     "click_id",
     "login_id",
@@ -123,6 +152,7 @@ augmented_df = (
             "phone",
             "device_id",
             "client_ip_address",
+            "processed_client_ip_address",
             "client_user_agent",
             "click_id",
             "login_id",
@@ -151,6 +181,7 @@ augmented_df = (
     .drop(col("phone"))
     .drop(col("device_id"))
     .drop(col("client_ip_address"))
+    .drop(col("processed_client_ip_address"))
     .drop(col("client_user_agent"))
     .drop(col("click_id"))
     .drop(col("login_id"))
