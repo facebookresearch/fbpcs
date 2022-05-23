@@ -8,6 +8,7 @@
 
 import abc
 from enum import Enum
+from typing import Dict, Optional
 
 
 class WorkflowStatus(Enum):
@@ -20,9 +21,16 @@ class WorkflowStatus(Enum):
 
 class WorkflowService(abc.ABC):
     @abc.abstractmethod
-    def start_workflow(self) -> str:
+    def start_workflow(
+        self,
+        workflow_conf: Dict[str, str],
+        run_id: str,
+        run_conf: Optional[Dict[str, str]] = None,
+    ) -> str:
         pass
 
     @abc.abstractmethod
-    def get_workflow_status(self) -> WorkflowStatus:
+    def get_workflow_status(
+        self, workflow_conf: Dict[str, str], run_id: str
+    ) -> WorkflowStatus:
         pass

@@ -19,15 +19,18 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
+from fbpcs.service.workflow import WorkflowService, WorkflowStatus
+
+PIDWorkflowConfigs = "PIDWorkflowConfigs"
+PIDRunConfigs = "PIDRunConfigs"
+PIDMR = "pid_mr"
 
 
 class PIDMRStageService(PrivateComputationStageService):
     """Handles business logic for the PID Mapreduce match stage."""
 
-    def __init__(
-        self,
-    ) -> None:
-        pass
+    def __init__(self, workflow_svc: WorkflowService) -> None:
+        self.workflow_svc = workflow_svc
 
     async def run_async(
         self,
@@ -47,7 +50,18 @@ class PIDMRStageService(PrivateComputationStageService):
             pc_instance.instance_id,
             pc_instance.current_stage.name,
         )
-
+        pid_configs = pc_instance.pid_configs
+        if (
+            pid_configs
+            and PIDMR in pid_configs
+            and PIDRunConfigs in pid_configs[PIDMR]
+            and PIDWorkflowConfigs in pid_configs[PIDMR]
+        ):
+            stage_state.instance_id = self.workflow_svc.start_workflow(
+                pid_configs[PIDMR][PIDWorkflowConfigs],
+                pc_instance.instance_id,
+                pid_configs[PIDMR][PIDRunConfigs],
+            )
         pc_instance.instances.append(stage_state)
         return pc_instance
 
@@ -73,15 +87,26 @@ class PIDMRStageService(PrivateComputationStageService):
                     f"The last instance type not StageStateInstance but {type(last_instance)}"
                 )
             stage_name = last_instance.stage_name
+            stage_id = last_instance.instance_id
             assert stage_name == pc_instance.current_stage.name
-
-            stage_state_instance_status = StageStateInstanceStatus.COMPLETED
+            pid_configs = pc_instance.pid_configs
+            stage_state_instance_status = WorkflowStatus.STARTED
+            if pid_configs:
+                stage_state_instance_status = self.workflow_svc.get_workflow_status(
+                    pid_configs[PIDMR][PIDWorkflowConfigs], stage_id
+                )
             current_stage = pc_instance.current_stage
-            if stage_state_instance_status is StageStateInstanceStatus.STARTED:
+            if stage_state_instance_status in [
+                WorkflowStatus.STARTED,
+                WorkflowStatus.CREATED,
+                WorkflowStatus.UNKNOWN,
+            ]:
                 status = current_stage.started_status
-            elif stage_state_instance_status is StageStateInstanceStatus.COMPLETED:
+            elif stage_state_instance_status is WorkflowStatus.COMPLETED:
                 status = current_stage.completed_status
-            elif stage_state_instance_status is StageStateInstanceStatus.FAILED:
+            elif stage_state_instance_status is WorkflowStatus.FAILED:
                 status = current_stage.failed_status
+            else:
+                raise ValueError("Unknow stage status")
 
         return status
