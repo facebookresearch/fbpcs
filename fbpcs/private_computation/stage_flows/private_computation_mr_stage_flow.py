@@ -131,7 +131,10 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
                 args.onedocker_binary_config_map,
             )
         elif self is self.UNION_PID_MR_MULTIKEY:
-            return PIDMRStageService()
+            if args.workflow_svc is None:
+                raise NotImplementedError("workflow_svc is None")
+
+            return PIDMRStageService(args.workflow_svc)
         elif self is self.ID_MATCH_POST_PROCESS:
             return PostProcessingStageService(
                 args.storage_svc, args.pid_post_processing_handlers
