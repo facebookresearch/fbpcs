@@ -11,6 +11,7 @@ import base64
 import json
 import os
 import re
+from ipaddress import ip_address, IPv4Address, IPv6Address
 from typing import Dict, List, Tuple
 
 # initiate
@@ -89,6 +90,7 @@ def lambda_handler(
         client_ip_address = row_data.get("user_data", dummy_dict).get(
             "client_ip_address"
         )
+        processed_client_ip_address = _process_client_ip_address(client_ip_address)
         client_user_agent = row_data.get("user_data", dummy_dict).get(
             "client_user_agent"
         )
@@ -154,6 +156,8 @@ def lambda_handler(
             user_data["phone"] = phone
         if client_ip_address:
             user_data["client_ip_address"] = client_ip_address
+        if processed_client_ip_address:
+            user_data["processed_client_ip_address"] = processed_client_ip_address
         if client_user_agent:
             user_data["client_user_agent"] = client_user_agent
         if click_id:
@@ -199,3 +203,18 @@ def _parse_client_user_agent(client_user_agent: str) -> Dict[str, str]:
                 break
 
     return parsed_fields
+
+
+# Process the client_ip_address field:
+# if it's ip v4, return it directly;
+# if it's ip v6, return the first 64 bits;
+# if it's invalid, return empty
+def _process_client_ip_address(client_ip_address: str) -> str:
+    try:
+        ip = ip_address(client_ip_address)
+        if isinstance(ip, IPv4Address):
+            return client_ip_address
+        elif isinstance(ip, IPv6Address):
+            return client_ip_address[0:19]
+    except ValueError:
+        return ""
