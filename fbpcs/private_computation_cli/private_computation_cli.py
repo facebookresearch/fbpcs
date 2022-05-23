@@ -38,6 +38,7 @@ Options:
 
 import logging
 import os
+import time
 from pathlib import Path, PurePath
 from typing import Iterable, List, Optional, Union
 
@@ -200,6 +201,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     # if log_path specified, logging using FileHandler, or console StreamHandler
     log_handler = logging.FileHandler(log_path) if log_path else logging.StreamHandler()
+    logging.Formatter.converter = time.gmtime
     logging.basicConfig(
         level=logging.INFO,
         handlers=[log_handler],
