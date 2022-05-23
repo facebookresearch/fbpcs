@@ -96,6 +96,7 @@ RUN ln -s decoupled_aggregation_calculator /home/pcs/onedocker/package/decoupled
 RUN ln -s pcf2_attribution_calculator /home/pcs/onedocker/package/pcf2_attribution
 RUN ln -s pcf2_aggregation_calculator /home/pcs/onedocker/package/pcf2_aggregation
 RUN ln -s lift_calculator /home/pcs/onedocker/package/lift
+RUN ln -s pcf2_lift_calculator /home/pcs/onedocker/package/pcf2_lift
 RUN ln -s shard_aggregator /home/pcs/onedocker/package/shard-aggregator
 
 WORKDIR /home/pcs

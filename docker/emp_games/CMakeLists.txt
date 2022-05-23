@@ -128,3 +128,19 @@ target_link_libraries(
   empgamecommon
   perftools)
 install(TARGETS pcf2_aggregation_calculator DESTINATION bin)
+
+# pcf2_lift
+file(GLOB pcf2_lift_calculator_src
+  "fbpcs/emp_games/lift/common/**.cpp"
+  "fbpcs/emp_games/lift/common/**.h"
+  "fbpcs/emp_games/lift/pcf2_calculator/**.cpp"
+  "fbpcs/emp_games/lift/pcf2_calculator/**.h")
+list(FILTER pcf2_lift_calculator_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  pcf2_lift_calculator
+  ${pcf2_lift_calculator_src})
+target_link_libraries(
+  pcf2_lift_calculator
+  empgamecommon
+  perftools)
+install(TARGETS pcf2_lift_calculator DESTINATION bin)
