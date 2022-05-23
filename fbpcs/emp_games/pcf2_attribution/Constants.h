@@ -13,7 +13,7 @@ namespace pcf2_attribution {
 
 const int kMaxConcurrency = 16;
 const size_t timeStampWidth = 32;
-const size_t targetIdWidth = 32;
+const size_t targetIdWidth = 64;
 const size_t actionTypeWidth = 16;
 
 template <int schedulerId, bool usingBatch = true>
