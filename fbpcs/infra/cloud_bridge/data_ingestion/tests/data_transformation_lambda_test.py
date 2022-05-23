@@ -7,7 +7,11 @@ import base64
 import json
 from unittest import TestCase
 
-from data_transformation_lambda import _parse_client_user_agent, lambda_handler
+from data_transformation_lambda import (
+    _parse_client_user_agent,
+    _process_client_ip_address,
+    lambda_handler,
+)
 
 
 class TestDataIngestion(TestCase):
@@ -211,6 +215,22 @@ class TestDataIngestion(TestCase):
         self.assertEqual(parsed["browser_name"], "Chrome Mobile")
         self.assertEqual(parsed["device_os"], "Android")
         self.assertEqual(parsed["device_os_version"], "11.0")
+
+    def test_process_ipv4_address(self):
+        ipv4_address = "192.162.0.1"
+        processed_ipv4_address = _process_client_ip_address(ipv4_address)
+        self.assertEqual(processed_ipv4_address, ipv4_address)
+
+    def test_process_ipv6_address(self):
+        ipv6_address = "2001:0db8:85a3:0000:0000:8a2e:0380:7334"
+        expected_processed_ipv6_address = "2001:0db8:85a3:0000"
+        processed_ipv6_address = _process_client_ip_address(ipv6_address)
+        self.assertEqual(processed_ipv6_address, expected_processed_ipv6_address)
+
+    def test_invalid_ip_address(self):
+        invalid_ip_address = "192.162.0."
+        processed_ip_address = _process_client_ip_address(invalid_ip_address)
+        self.assertEqual(processed_ip_address, "")
 
     def sample_event(self, event):
         sample_encoded_data = base64.b64encode(json.dumps(event).encode("utf-8"))
