@@ -25,12 +25,13 @@ from pyspark.context import SparkContext
 from pyspark.sql.functions import (
     col,
     dayofmonth,
+    format_string,
     from_unixtime,
     hour,
     lit,
     month,
     struct,
-    to_date,
+    to_timestamp,
     year,
 )
 from pyspark.sql.types import IntegerType
@@ -140,11 +141,11 @@ for column_name in expected_column_list:
 # create columns
 augmented_df = (
     data_frame.withColumn("unixtime", data_frame["timestamp"].cast(IntegerType()))
-    .withColumn("date_col", to_date(from_unixtime(col("unixtime"))))
+    .withColumn("date_col", to_timestamp(from_unixtime(col("unixtime"))))
     .withColumn("year", year(col("date_col")))
-    .withColumn("month", month(col("date_col")))
-    .withColumn("day", dayofmonth(col("date_col")))
-    .withColumn("hour", hour(col("date_col")))
+    .withColumn("month", format_string("%02d", month(col("date_col"))))
+    .withColumn("day", format_string("%02d", dayofmonth(col("date_col"))))
+    .withColumn("hour", format_string("%02d", hour(col("date_col"))))
     .withColumn(
         "user_data",
         struct(
