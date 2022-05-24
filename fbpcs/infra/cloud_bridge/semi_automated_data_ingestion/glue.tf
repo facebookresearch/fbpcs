@@ -57,7 +57,11 @@ resource "aws_glue_job" "glue_job" {
 
   command {
     script_location = "s3://${var.app_data_input_bucket_id}/${var.data_upload_key_path}/glue_ETL.py"
+    python_version  = "3"
   }
+
+  glue_version = 2.0
+
   execution_property {
     max_concurrent_runs = 10
   }
