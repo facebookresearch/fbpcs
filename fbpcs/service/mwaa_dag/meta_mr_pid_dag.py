@@ -127,9 +127,8 @@ stage1_checker = EmrStepSensor(
 
 sensor_stage2_key = S3KeySensor(
     task_id="s3_sensor_stage2_key",
-    bucket_name="{{ dag_run.conf['advExtOutputPath'].split('/')[2] }}",
-    bucket_key="{{ dag_run.conf['advExtOutputPath'] }}"
-    + "/step_1_meta_enc_kc_kp/_SUCCESS",
+    bucket_name="{{ dag_run.conf['advBucketName'] }}",
+    bucket_key="step_1_meta_enc_kc_kp/_SUCCESS",
 )
 
 SPARK_STEP_2 = [
@@ -189,9 +188,8 @@ stage2_checker = EmrStepSensor(
 
 sensor_stage3_key = S3KeySensor(
     task_id="s3_sensor_stage3_key",
-    bucket_name="{{ dag_run.conf['advExtOutputPath'].split('/')[2] }}",
-    bucket_key="{{ dag_run.conf['advExtOutputPath'] }}"
-    + "/step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS",
+    bucket_name="{{ dag_run.conf['advBucketName'] }}",
+    bucket_key="step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS",
 )
 
 SPARK_STEP_3 = [
@@ -250,15 +248,14 @@ stage3_checker = EmrStepSensor(
 
 delete_stage1_object = S3DeleteObjectsOperator(
     task_id="delete_stage1_object",
-    bucket="{{ dag_run.conf['metaExtOutputPath'].split('/')[2] }}",
-    keys="{{ dag_run.conf['metaExtOutputPath'] }}" + "/step_1_meta_enc_kc/_SUCCESS",
+    bucket="{{ dag_run.conf['metaBucketName'] }}",
+    keys="step_1_meta_enc_kc/_SUCCESS",
 )
 
 delete_stage2_object = S3DeleteObjectsOperator(
     task_id="delete_stage2_object",
-    bucket="{{ dag_run.conf['metaExtOutputPath'].split('/')[2] }}",
-    keys="{{ dag_run.conf['metaExtOutputPath'] }}"
-    + "/step_2_adv_unmatched_enc_kc_kp/_SUCCESS",
+    bucket="{{ dag_run.conf['metaBucketName'] }}",
+    keys="step_2_adv_unmatched_enc_kc_kp/_SUCCESS",
 )
 
 

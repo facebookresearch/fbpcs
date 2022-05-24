@@ -1,205 +1,273 @@
 {
-    "StartAt": "Create_A_Cluster",
-    "States": {
-      "Create_A_Cluster": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
-        "Parameters": {
-          "Name": "AdvWorkflowCluster",
-          "VisibleToAllUsers": true,
-          "ReleaseLabel": "emr-6.4.0",
-          "Applications": [{"Name": "Hadoop"}, {"Name": "Spark"}],
-          "ServiceRole": "EMR_DefaultRole",
-          "JobFlowRole": "EMR_EC2_DefaultRole",
-          "Instances": {
-            "KeepJobFlowAliveWhenNoSteps": true,
-            "InstanceFleets": [
-              {
-                "InstanceFleetType": "Master nodes",
-                "TargetOnDemandCapacity": 1,
-                "InstanceTypeConfigs": [
-                  {
-                    "InstanceType": "m5.4xlarge"
-                  }
-                ]
-              },
-              {
-                "InstanceFleetType": "Core instances",
-                "TargetOnDemandCapacity": 5,
-                "InstanceTypeConfigs": [
-                  {
-                    "InstanceType": "m5.4xlarge"
-                  }
-                ]
-              }
-            ]
+  "StartAt": "Create_A_Cluster",
+  "States": {
+    "Create_A_Cluster": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
+      "Parameters": {
+        "Name": "AdvWorkflowCluster",
+        "VisibleToAllUsers": true,
+        "ReleaseLabel": "emr-6.4.0",
+        "Applications": [
+          {
+            "Name": "Hadoop"
+          },
+          {
+            "Name": "Spark"
           }
-        },
-        "ResultPath": "$.CreateClusterResult",
-        "Next": "Enable_Termination_Protection"
-      },
-      "Enable_Termination_Protection": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::elasticmapreduce:setClusterTerminationProtection",
-        "Parameters": {
-          "ClusterId.$": "$.CreateClusterResult.ClusterId",
-          "TerminationProtected": true
-        },
-        "ResultPath": null,
-        "Next": "Delete_stage_two_object"
-      },
-      "Delete_stage_two_object": {
-        "Type": "Task",
-        "Parameters": {
-          "Bucket": "$.advExtOutputPath",
-          "Key": "/step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS"
-        },
-        "Resource": "arn:aws:states:::aws-sdk:s3:deleteObject",
-        "Next": "Wait_for_stage_one_ready"
-      },
-      "Wait_for_stage_one_ready": {
-        "Type": "Task",
-        "Parameters": {
-          "Bucket": "$.metaExtOutputPath",
-          "Key": "/step_1_meta_enc_kc/_SUCCESS"
-        },
-        "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
-        "Retry": [ {
-           "ErrorEquals": [ "States.ALL" ],
-           "IntervalSeconds": 30,
-           "MaxAttempts": 999,
-           "BackoffRate": 1.0
-        } ],
-        "Next": "Stage_One"
-      },
-      "Stage_One": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
-        "Parameters": {
-          "ClusterId.$": "$.ClusterId",
-          "Step": {
-            "Name": "The first stage",
-            "ActionOnFailure": "TERMINATE_JOB_FLOW",
-            "HadoopJarStep": {
-              "Jar": "command-runner.jar",
-              "Args": [
-                "spark-submit",
-                "--deploy-mode",
-                "cluster",
-                "--master",
-                "yarn",
-                "--jars",
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "--num-executors",
-                "15",
-                "--executor-cores",
-                "8",
-                "--executor-memory",
-                "30G",
-                "--conf",
-                "spark.driver.memory=40G",
-                "--conf",
-                "spark.sql.shuffle.partitions=30",
-                "--conf",
-                "spark.yarn.maxAppAttempts=1",
-                "--class",
-                "com.meta.mr.multikey.publisher.PartnerStageOne",
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "$.metaExtOutputPath",
-                "$.advExtOutputPath",
-                "$.advIntOutputPath",
-                "$.advInputPath"
+        ],
+        "ServiceRole": "EMR_DefaultRole",
+        "JobFlowRole": "EMR_EC2_PID_ADV",
+        "Instances": {
+          "KeepJobFlowAliveWhenNoSteps": true,
+          "InstanceFleets": [
+            {
+              "InstanceFleetType": "MASTER",
+              "TargetOnDemandCapacity": 1,
+              "InstanceTypeConfigs": [
+                {
+                  "InstanceType": "m5.4xlarge"
+                }
+              ]
+            },
+            {
+              "InstanceFleetType": "CORE",
+              "TargetOnDemandCapacity": 5,
+              "InstanceTypeConfigs": [
+                {
+                  "InstanceType": "m5.4xlarge"
+                }
               ]
             }
+          ]
+        }
+      },
+      "ResultPath": "$.CreateClusterResult",
+      "Next": "Enable_Termination_Protection"
+    },
+    "Enable_Termination_Protection": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:setClusterTerminationProtection",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.ClusterId",
+        "TerminationProtected": true
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Terminate_Cluster"
+        }
+      ],
+      "Next": "Delete_stage_two_object"
+    },
+    "Delete_stage_two_object": {
+      "Type": "Task",
+      "Parameters": {
+        "Bucket.$": "$.advBucketName",
+        "Key": "step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:s3:deleteObject",
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Wait_for_stage_one_ready"
+    },
+    "Wait_for_stage_one_ready": {
+      "Type": "Task",
+      "Parameters": {
+        "Bucket.$": "$.metaBucketName",
+        "Key": "step_1_meta_enc_kc/_SUCCESS"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
+      "ResultPath": null,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 999,
+          "BackoffRate": 1
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Stage_One"
+    },
+    "Stage_One": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.Cluster.Id",
+        "Step": {
+          "Name": "The first stage",
+          "ActionOnFailure": "TERMINATE_JOB_FLOW",
+          "HadoopJarStep": {
+            "Jar": "command-runner.jar",
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.partner.PartnerStageOne', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', $.metaExtOutputPath, $.advExtOutputPath, $.advIntOutputPath, $.advInputPath)"
           }
-        },
-        "ResultPath": null,
-        "Next": "Wait_for_stage_two_ready"
+        }
       },
-      "Wait_for_stage_two_ready": {
-        "Type": "Task",
-        "Parameters": {
-          "Bucket": "$.metaExtOutputPath",
-          "Key": "/step_2_adv_unmatched_enc_kc_kp/_SUCCESS"
-        },
-        "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
-        "Retry": [ {
-           "ErrorEquals": [ "States.ALL" ],
-           "IntervalSeconds": 30,
-           "MaxAttempts": 999,
-           "BackoffRate": 1.0
-        } ],
-        "Next": "Stage_Two"
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Wait_for_stage_two_ready"
+    },
+    "Wait_for_stage_two_ready": {
+      "Type": "Task",
+      "Parameters": {
+        "Bucket.$": "$.metaBucketName",
+        "Key": "step_2_adv_unmatched_enc_kc_kp/_SUCCESS"
       },
-      "Stage_Two": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
-        "Parameters": {
-          "ClusterId.$": "$.ClusterId",
-          "Step": {
-            "Name": "The second stage",
-            "ActionOnFailure": "TERMINATE_JOB_FLOW",
-            "HadoopJarStep": {
-              "Jar": "command-runner.jar",
-              "Args": [
-                "spark-submit",
-                "--deploy-mode",
-                "cluster",
-                "--master",
-                "yarn",
-                "--jars",
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "--num-executors",
-                "15",
-                "--executor-cores",
-                "8",
-                "--executor-memory",
-                "30G",
-                "--conf",
-                "spark.driver.memory=40G",
-                "--conf",
-                "spark.sql.shuffle.partitions=30",
-                "--conf",
-                "spark.yarn.maxAppAttempts=1",
-                "--class",
-                "com.meta.mr.multikey.publisher.PartnerStageTwo",
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "$.metaExtOutputPath",
-                "$.advExtOutputPath",
-                "$.advIntOutputPath"
-              ]
-            }
+      "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 999,
+          "BackoffRate": 1
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Stage_Two"
+    },
+    "Stage_Two": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.Cluster.Id",
+        "Step": {
+          "Name": "The second stage",
+          "ActionOnFailure": "TERMINATE_JOB_FLOW",
+          "HadoopJarStep": {
+            "Jar": "command-runner.jar",
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.partner.PartnerStageTwo', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', $.metaExtOutputPath, $.advExtOutputPath, $.advIntOutputPath)"
           }
-        },
-        "ResultPath": null,
-        "Next": "Delete_stage_one_object"
+        }
       },
-      "Delete_stage_one_object": {
-        "Type": "Task",
-        "Parameters": {
-          "Bucket": "$.advExtOutputPath",
-          "Key": "/step_1_meta_enc_kc_kp/_SUCCESS"
-        },
-        "Resource": "arn:aws:states:::aws-sdk:s3:deleteObject",
-        "Next": "Disable_Termination_Protection"
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Delete_stage_one_object"
+    },
+    "Delete_stage_one_object": {
+      "Type": "Task",
+      "Parameters": {
+        "Bucket.$": "$.advBucketName",
+        "Key": "step_1_meta_enc_kc_kp/_SUCCESS"
       },
-      "Disable_Termination_Protection": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::elasticmapreduce:setClusterTerminationProtection",
-        "Parameters": {
-          "ClusterId.$": "$.ClusterId",
-          "TerminationProtected": false
-        },
-        "ResultPath": null,
-        "Next": "Terminate_Cluster"
+      "Resource": "arn:aws:states:::aws-sdk:s3:deleteObject",
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Disable_Termination_Protection"
+    },
+    "Disable_Termination_Protection": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:setClusterTerminationProtection",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.Cluster.Id",
+        "TerminationProtected": false
       },
-      "Terminate_Cluster": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::elasticmapreduce:terminateCluster.sync",
-        "Parameters": {
-          "ClusterId.$": "$.ClusterId"
-        },
-        "End": true
-      }
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Terminate_Cluster"
+        }
+      ],
+      "Next": "Terminate_Cluster"
+    },
+    "Terminate_Cluster": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:terminateCluster.sync",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.Cluster.Id"
+      },
+      "End": true
+    },
+    "Error_Disable_Termination_Protection": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:setClusterTerminationProtection",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.Cluster.Id",
+        "TerminationProtected": false
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Terminate_Cluster"
+        }
+      ],
+      "Next": "Error_Terminate_Cluster"
+    },
+    "Error_Terminate_Cluster": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:terminateCluster.sync",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.Cluster.Id"
+      },
+      "Next": "Fail"
+    },
+    "Fail": {
+      "Type": "Fail"
     }
   }
+}
