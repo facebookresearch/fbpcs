@@ -25,13 +25,11 @@ namespace private_lift {
 class InputData {
  public:
   enum class LiftMPCType { SecretShare, Standard };
-  enum class LiftGranularityType { Conversion, Converter };
 
   // Constructor -- input is a path to a CSV along with the new epoch to use
   explicit InputData(
       std::string filepath,
       LiftMPCType liftMpcType,
-      LiftGranularityType liftGranularityType,
       int64_t epoch = 0,
       int32_t numConversionsPerUser = INT32_MAX);
 
@@ -125,10 +123,6 @@ class InputData {
     return numRows_;
   }
 
-  LiftGranularityType getLiftGranularityType() const {
-    return liftGranularityType_;
-  }
-
   // Helper function to determine if a header contains any feature columns
   bool anyFeatureColumns(const std::vector<std::string>& header);
 
@@ -168,7 +162,6 @@ class InputData {
       const std::vector<std::string>& parts);
 
   LiftMPCType liftMpcType_;
-  LiftGranularityType liftGranularityType_;
   int64_t epoch_;
   std::vector<bool> testPopulation_;
   std::vector<bool> controlPopulation_;

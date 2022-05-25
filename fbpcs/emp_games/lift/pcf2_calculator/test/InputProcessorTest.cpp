@@ -49,13 +49,11 @@ class InputProcessorTest : public ::testing::Test {
     auto publisherInputData = InputData(
         publisherInputFilename,
         InputData::LiftMPCType::Standard,
-        InputData::LiftGranularityType::Conversion,
         epoch,
         numConversionsPerUser);
     auto partnerInputData = InputData(
         partnerInputFilename,
         InputData::LiftMPCType::Standard,
-        InputData::LiftGranularityType::Conversion,
         epoch,
         numConversionsPerUser);
 
