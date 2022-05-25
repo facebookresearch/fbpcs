@@ -67,20 +67,27 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
     def test_get_game_args(self) -> None:
         # TODO: add game args test for attribution args
         private_computation_instance = self._create_pc_instance()
+        run_name = (
+            private_computation_instance.instance_id + "_" + GameNames.PCF2_LIFT.value
+            if self.stage_svc._log_cost_to_s3
+            else ""
+        )
+        common_game_args = {
+            "input_base_path": private_computation_instance.data_processing_output_path,
+            "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
+            "num_files": private_computation_instance.num_files_per_mpc_container,
+            "concurrency": private_computation_instance.concurrency,
+            "run_name": run_name,
+            "log_cost": True,
+        }
         test_game_args = [
             {
-                "input_base_path": private_computation_instance.data_processing_output_path,
-                "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
+                **common_game_args,
                 "file_start_index": 0,
-                "num_files": private_computation_instance.num_files_per_mpc_container,
-                "concurrency": private_computation_instance.concurrency,
             },
             {
-                "input_base_path": private_computation_instance.data_processing_output_path,
-                "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
+                **common_game_args,
                 "file_start_index": private_computation_instance.num_files_per_mpc_container,
-                "num_files": private_computation_instance.num_files_per_mpc_container,
-                "concurrency": private_computation_instance.concurrency,
             },
         ]
 

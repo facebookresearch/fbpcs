@@ -54,6 +54,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument({"name": "file_start_index", "required": False}),
             OneDockerArgument({"name": "num_files", "required": True}),
             OneDockerArgument({"name": "concurrency", "required": True}),
+            OneDockerArgument({"name": "log_cost", "required": False}),
+            OneDockerArgument({"name": "run_name", "required": False}),
         ],
     },
     GameNames.SHARD_AGGREGATOR.value: {
