@@ -60,7 +60,7 @@ resource "aws_glue_job" "glue_job" {
     python_version  = "3"
   }
 
-  glue_version = 2.0
+  glue_version = "2.0"
 
   execution_property {
     max_concurrent_runs = 10
