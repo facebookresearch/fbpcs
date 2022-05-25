@@ -25,11 +25,9 @@ static const std::string kFeaturePrefix = "feature_";
 InputData::InputData(
     std::string filepath,
     LiftMPCType liftMpcType,
-    LiftGranularityType liftGranularityType,
     int64_t epoch,
     int32_t numConversionsPerUser)
     : liftMpcType_{liftMpcType},
-      liftGranularityType_{liftGranularityType},
       epoch_{epoch},
       numConversionsPerUser_{numConversionsPerUser} {
   auto readLine = [&](const std::vector<std::string>& header,

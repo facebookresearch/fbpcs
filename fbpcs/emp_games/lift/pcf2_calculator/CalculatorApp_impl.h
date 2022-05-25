@@ -67,7 +67,6 @@ CalculatorGameConfig CalculatorApp<schedulerId>::getInputData(
   InputData inputData{
       inputPath,
       InputData::LiftMPCType::Standard,
-      InputData::LiftGranularityType::Conversion,
       epoch_,
       numConversionsPerUser_};
   CalculatorGameConfig config = {inputData, true, numConversionsPerUser_};

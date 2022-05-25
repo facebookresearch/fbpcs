@@ -51,7 +51,6 @@ class CalculatorGameTestFixture
     InputData inputData{
         inputPath,
         InputData::LiftMPCType::Standard,
-        InputData::LiftGranularityType::Conversion,
         epoch,
         numConversionsPerUser};
     CalculatorGameConfig config = {inputData, true, numConversionsPerUser};
