@@ -21,6 +21,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
@@ -149,12 +150,26 @@ class PCF2LiftStageService(PrivateComputationStageService):
         Returns:
             MPC game args to be used by onedocker
         """
+        if self._log_cost_to_s3:
+            run_name = (
+                private_computation_instance.instance_id
+                + "_"
+                + GameNames.PCF2_LIFT.value
+            )
+            if private_computation_instance.post_processing_data:
+                private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
+                    f"pl-logs/{run_name}_{private_computation_instance.role.value.title()}.json"
+                )
+        else:
+            run_name = ""
 
         common_compute_game_args = {
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
             "num_files": private_computation_instance.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
+            "run_name": run_name,
+            "log_cost": self._log_cost_to_s3,
         }
 
         game_args = []
