@@ -44,6 +44,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from termcolor import colored
 
 
 class LoggerAdapter(logging.LoggerAdapter):
@@ -302,9 +303,25 @@ class PLInstanceRunner:
                 sleep(RETRY_INTERVAL)
 
     def run_stage(self, stage: PrivateComputationBaseStageFlow) -> None:
-        self.logger.info(f"Running publisher-partner {stage.name}")
+        self.logger.info(
+            colored(
+                f"Running publisher-partner {stage.name}",
+                "green",
+                attrs=[
+                    "bold",
+                ],
+            )
+        )
         # call publisher <STAGE>
-        self.logger.info(f"Invoking publisher {stage.name}.")
+        self.logger.info(
+            colored(
+                f"Invoking publisher {stage.name}.",
+                "blue",
+                attrs=[
+                    "bold",
+                ],
+            )
+        )
         self.publisher.run_stage(stage)
         server_ips = None
         # if it's a joint stage, it means partner must wait for publisher to provide server ips.
@@ -315,7 +332,15 @@ class PLInstanceRunner:
             server_ips = self.publisher.server_ips
             if server_ips is None:
                 raise ValueError(f"{stage.name} requires server ips but got none.")
-        self.logger.info(f"Starting partner {stage.name}:")
+        self.logger.info(
+            colored(
+                f"Starting partner {stage.name}:",
+                "blue",
+                attrs=[
+                    "bold",
+                ],
+            )
+        )
         self.partner.run_stage(stage, server_ips)
         self.wait_stage_complete(stage)
 
@@ -337,7 +362,15 @@ class PLInstanceRunner:
                 self.publisher.status is complete_status
                 and self.partner.status is complete_status
             ):
-                self.logger.info(f"Stage {stage.name} is complete.")
+                self.logger.info(
+                    colored(
+                        f"Stage {stage.name} is complete.",
+                        "green",
+                        attrs=[
+                            "bold",
+                        ],
+                    )
+                )
                 return
             if (
                 self.publisher.status
