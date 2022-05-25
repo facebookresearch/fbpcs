@@ -15,6 +15,7 @@
 
 #include "fbpcf/aws/AwsSdk.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/MainUtil.h"
+#include "fbpcs/performance_tools/CostEstimation.h"
 
 DEFINE_int32(party, 1, "1 = publisher, 2 = partner");
 DEFINE_string(server_ip, "127.0.0.1", "Server's IP Address");
@@ -71,8 +72,20 @@ DEFINE_int32(
     concurrency,
     1,
     "max number of game(s) that will run concurrently?");
+DEFINE_string(
+    run_name,
+    "",
+    "A user given run name that will be used in s3 filename");
+DEFINE_bool(
+    log_cost,
+    false,
+    "Log cost info into cloud which will be used for dashboard");
 
 int main(int argc, char** argv) {
+  fbpcs::performance_tools::CostEstimation cost =
+      fbpcs::performance_tools::CostEstimation("lift", "pcf2");
+  cost.start();
+
   folly::init(&argc, &argv);
   fbpcf::AwsSdk::aquire();
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -147,6 +160,9 @@ int main(int argc, char** argv) {
     XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
   }
 
+  cost.end();
+  XLOG(INFO, cost.getEstimatedCostString());
+
   XLOGF(
       INFO,
       "Non-free gate count = {}, Free gate count = {}",
@@ -158,6 +174,32 @@ int main(int argc, char** argv) {
       "Sent network traffic = {}, Received network traffic = {}",
       schedulerStatistics.sentNetwork,
       schedulerStatistics.receivedNetwork);
+
+  if (FLAGS_log_cost) {
+    bool run_name_specified = FLAGS_run_name != "";
+    auto run_name = run_name_specified ? FLAGS_run_name : "temp_run_name";
+    auto party = (FLAGS_party == common::PUBLISHER) ? "Publisher" : "Partner";
+
+    folly::dynamic extra_info = common::getCostExtraInfo(
+        party,
+        FLAGS_input_base_path,
+        FLAGS_output_base_path,
+        FLAGS_num_files,
+        FLAGS_file_start_index,
+        FLAGS_concurrency,
+        FLAGS_use_xor_encryption,
+        schedulerStatistics);
+
+    folly::dynamic costDict =
+        cost.getEstimatedCostDynamic(run_name, party, extra_info);
+
+    auto objectName = run_name_specified
+        ? run_name
+        : folly::to<std::string>(
+              FLAGS_run_name, '_', costDict["timestamp"].asString());
+
+    XLOGF(INFO, "{}", cost.writeToS3(party, objectName, costDict));
+  }
 
   return 0;
 }
