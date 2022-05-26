@@ -222,3 +222,36 @@ input_validation () {
         exit 1
     fi
 }
+
+function getCrawlerStatus() {
+  local crawler_job_name=$1
+  local region_name=$2
+  crawler_status=$(aws glue get-crawler --name "$crawler_job_name" --region "$region_name" | jq -r '.Crawler.State')
+}
+
+function stopGlueCrawlerJob() {
+  local crawler_job_name=$1
+  local region_name=$2
+  local time_out=300
+
+  getCrawlerStatus "$crawler_job_name" "$region_name"
+  SECONDS=0
+  echo "Checking current Glue job state $crawler_status "
+
+  if [ "$crawler_status" == "RUNNING" ]; then
+    echo "Glue job is running, stopping the job...."
+    aws glue stop-crawler --name "$crawler_job_name" --region "$region_name"
+  fi
+
+  while [ "$crawler_status" = "STOPPING" ] || [ "$crawler_status" = "RUNNING" ]
+  do
+    echo "Glue job is stopping, please wait, duration: $SECONDS seconds..."
+    if [[ $SECONDS -gt $time_out ]]; then
+      echo "Glue job stopping time out with $SECONDS seconds"
+      return
+    fi
+    getCrawlerStatus "$crawler_job_name" "$region_name"
+    sleep 5
+  done
+  echo "The glue job is stopped"
+}

@@ -143,6 +143,8 @@ undeploy_aws_resources() {
     # Exclude the s3 bucket because it can not be deleted if it's not empty
     terraform state rm aws_s3_bucket.bucket || true
     echo "########################Deleting########################"
+    echo "########################Ensuring Glue job $glue_crawler_name is stopped########################"
+    stopGlueCrawlerJob "$glue_crawler_name" "$region"
     terraform destroy \
         -auto-approve \
         -var "region=$region" \
@@ -404,6 +406,7 @@ fi
 
 policy_name="fb-pc-policy${tag_postfix}"
 database_name="mpc-events-db${tag_postfix}"
+glue_crawler_name="mpc-events-crawler${tag_postfix}"
 table_name=${s3_bucket_data_pipeline//-/_}
 data_upload_key_path="semi-automated-data-ingestion"
 query_results_key_path="query-results"
