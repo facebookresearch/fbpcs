@@ -8,20 +8,23 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Type, TYPE_CHECKING, TypeVar
+from typing import Type, TypeVar
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+
+from fbpcs.private_computation.service.private_computation_stage_service import (
+    PrivateComputationStageService,
+    PrivateComputationStageServiceArgs,
+)
+
 from fbpcs.private_computation.stage_flows.exceptions import (
     PCStageFlowNotFoundException,
 )
 
-if TYPE_CHECKING:
-    from fbpcs.private_computation.service.private_computation_stage_service import (
-        PrivateComputationStageService,
-        PrivateComputationStageServiceArgs,
-    )
+from fbpcs.private_computation.stage_flows.stage_selector import StageSelector
+
 from fbpcs.stage_flow.stage_flow import StageFlow, StageFlowData
 
 C = TypeVar("C", bound="PrivateComputationBaseStageFlow")
@@ -90,3 +93,12 @@ class PrivateComputationBaseStageFlow(StageFlow):
         raise NotImplementedError(
             f"get_stage_service not implemented for {self.__class__}"
         )
+
+    def get_default_stage_service(
+        self,
+        args: PrivateComputationStageServiceArgs,
+    ) -> PrivateComputationStageService:
+        stage = StageSelector.get_stage_service(self, args)
+        if stage is None:
+            raise NotImplementedError(f"No stage service configured for {self}")
+        return stage
