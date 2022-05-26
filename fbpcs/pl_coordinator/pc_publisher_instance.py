@@ -12,7 +12,7 @@ from typing import List, Optional
 
 from fbpcs.pl_coordinator.constants import WAIT_VALID_STATUS_TIMEOUT
 from fbpcs.pl_coordinator.pc_calc_instance import PrivateComputationCalcInstance
-from fbpcs.pl_coordinator.pl_graphapi_utils import (
+from fbpcs.pl_coordinator.pc_graphapi_utils import (
     GRAPHAPI_INSTANCE_STATUSES,
     GraphAPIGenericException,
     PCGraphAPIClient,

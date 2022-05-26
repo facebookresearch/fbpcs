@@ -28,11 +28,11 @@ from fbpcs.pl_coordinator.exceptions import (
     PCInstanceCalculationException,
     PCStudyValidationException,
 )
+from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.pc_partner_instance import PrivateComputationPartnerInstance
 from fbpcs.pl_coordinator.pc_publisher_instance import (
     PrivateComputationPublisherInstance,
 )
-from fbpcs.pl_coordinator.pl_graphapi_utils import PCGraphAPIClient
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,

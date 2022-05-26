@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional, Type
 
 import dateutil.parser
 import pytz
-from fbpcs.pl_coordinator.pl_graphapi_utils import PCGraphAPIClient
+from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,

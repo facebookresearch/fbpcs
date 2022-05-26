@@ -18,7 +18,7 @@ from fbpcs.pl_coordinator.exceptions import (
     PCStudyValidationException,
     sys_exit_after,
 )
-from fbpcs.pl_coordinator.pl_graphapi_utils import (
+from fbpcs.pl_coordinator.pc_graphapi_utils import (
     GRAPHAPI_INSTANCE_STATUSES,
     GraphAPIGenericException,
     PCGraphAPIClient,

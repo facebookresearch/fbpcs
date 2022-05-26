@@ -17,7 +17,7 @@ from fbpcs.pl_coordinator.constants import (
     POLL_INTERVAL,
 )
 from fbpcs.pl_coordinator.exceptions import PCInstanceCalculationException
-from fbpcs.pl_coordinator.pl_graphapi_utils import GRAPHAPI_INSTANCE_STATUSES
+from fbpcs.pl_coordinator.pc_graphapi_utils import GRAPHAPI_INSTANCE_STATUSES
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
