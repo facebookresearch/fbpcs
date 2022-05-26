@@ -9,8 +9,8 @@ import logging
 import threading
 from typing import List
 
-from common.data_model import MetadataEntity
-from common.queue_manager import QueueManager
+from fbpcs.infra.logging_service.server.common.data_model import MetadataEntity
+from fbpcs.infra.logging_service.server.common.queue_manager import QueueManager
 
 
 # Metadata queue in memory
@@ -18,8 +18,8 @@ class MemoryQueueManager(QueueManager):
     def __init__(
         self,
     ) -> None:
-        self.logger = logging.getLogger()
-        self.queue = []
+        self.logger: logging.Logger = logging.getLogger()
+        self.queue: List[MetadataEntity] = []
         self.lock = threading.Lock()
 
     def add_metadata(

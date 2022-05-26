@@ -18,24 +18,20 @@ class Utils:
 
     @staticmethod
     def configure_logger(
-        logger,
         log_file: str,
     ) -> None:
-        logger.setLevel(logging.INFO)
-        logging.Formatter.converter = time.gmtime
-        formatter = logging.Formatter(
-            "%(asctime)sZ %(levelname)s p:%(processName)s t:%(threadName)s s:%(filename)s:%(lineno)s ~%(message)s"
-        )
-
-        log_handler = logging.StreamHandler(sys.stdout)
-        log_handler.setFormatter(formatter)
-        logger.addHandler(log_handler)
+        console_handler = logging.StreamHandler(sys.stdout)
 
         # Create the directory path if necessary
         dir_path = os.path.dirname(log_file)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
 
-        log_handler = logging.FileHandler(log_file)
-        log_handler.setFormatter(formatter)
-        logger.addHandler(log_handler)
+        file_handler = logging.FileHandler(log_file)
+
+        logging.Formatter.converter = time.gmtime
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)sZ %(levelname)s t:%(threadName)s n:%(name)s ! %(message)s",
+            handlers=[file_handler, console_handler],
+        )
