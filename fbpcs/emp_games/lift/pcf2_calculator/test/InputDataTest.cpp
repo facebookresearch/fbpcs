@@ -144,23 +144,6 @@ TEST_F(InputDataTest, TestInputDataPartnerConverterLift) {
   EXPECT_EQ(expectPurchaseValuesSquared, resPurchaseValuesSquared);
 }
 
-TEST_F(InputDataTest, TestAnyFeatureColumns) {
-  InputData inputData{
-      bobInputFilename_,
-      InputData::LiftMPCType::Standard,
-      1546300800, /* epoch */
-      4 /* num_conversions_per_user */};
-
-  std::vector<std::string> cols1{"a", "b", "c"};
-  EXPECT_FALSE(inputData.anyFeatureColumns(cols1));
-  std::vector<std::string> cols2{"a", "b", "c", "feature_aaa"};
-  EXPECT_TRUE(inputData.anyFeatureColumns(cols2));
-  std::vector<std::string> cols3{"feature_aaa", "a", "b", "c"};
-  EXPECT_TRUE(inputData.anyFeatureColumns(cols3));
-  std::vector<std::string> cols4{"feature_aaa", "a", "b", "c", "feature_bbb"};
-  EXPECT_TRUE(inputData.anyFeatureColumns(cols4));
-}
-
 TEST_F(InputDataTest, TestGetBitmaskFor) {
   InputData inputData{
       bobInputFilename_,
