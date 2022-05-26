@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
+
 import enum
 import os
 import pathlib
@@ -57,7 +59,7 @@ class ShardingService(RunBinaryBaseService):
     @staticmethod
     def get_binary_name(
         shard_type: ShardType,
-    ):
+    ) -> str:
         # TODO: Probably put exe in an env variable?
         # Try to align with existing paths
         if shard_type is ShardType.ROUND_ROBIN:
