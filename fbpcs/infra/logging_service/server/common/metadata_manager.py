@@ -9,9 +9,9 @@ import logging
 import threading
 import time
 
-from common.data_model import MetadataEntity
-from common.logging_client import LoggingClient
-from common.queue_manager import QueueManager
+from fbpcs.infra.logging_service.server.common.data_model import MetadataEntity
+from fbpcs.infra.logging_service.server.common.logging_client import LoggingClient
+from fbpcs.infra.logging_service.server.common.queue_manager import QueueManager
 
 
 # Manager for log metadata, e.g. uploading to backend.
@@ -19,8 +19,10 @@ class MetadataManager:
     SLEEP_INTERVAL_SECOND = 1
     UPLOAD_BATCH_SIZE = 5
 
-    def __init__(self, queue_manager: QueueManager, logging_client: LoggingClient):
-        self.logger = logging.getLogger()
+    def __init__(
+        self, queue_manager: QueueManager, logging_client: LoggingClient
+    ) -> None:
+        self.logger: logging.Logger = logging.getLogger()
         self.queue_manager = queue_manager
         self.logging_client = logging_client
         self._start_upload()

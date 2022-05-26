@@ -8,16 +8,16 @@
 import logging
 from typing import Dict
 
-from common.data_model import MetadataEntity
-from common.logging_client import LoggingClient
+from fbpcs.infra.logging_service.server.common.data_model import MetadataEntity
+from fbpcs.infra.logging_service.server.common.logging_client import LoggingClient
 
 
 # Client to connect to Meta backend (Graph API)
 class MetaLoggingClient(LoggingClient):
     def __init__(
         self,
-    ):
-        self.logger = logging.getLogger()
+    ) -> None:
+        self.logger: logging.Logger = logging.getLogger()
 
     def put_metadata(
         self,
