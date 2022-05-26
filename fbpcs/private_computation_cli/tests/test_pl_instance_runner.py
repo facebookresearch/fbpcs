@@ -36,7 +36,7 @@ from fbpcs.private_computation.stage_flows.private_computation_stage_flow import
 
 class TestPlInstanceRunner(TestCase):
     @patch("logging.Logger")
-    @patch("fbpcs.pl_coordinator.pl_graphapi_utils.PLGraphAPIClient")
+    @patch("fbpcs.pl_coordinator.pl_graphapi_utils.PCGraphAPIClient")
     def setUp(
         self,
         mock_graph_api_client,

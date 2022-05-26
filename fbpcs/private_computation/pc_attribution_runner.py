@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional, Type
 
 import dateutil.parser
 import pytz
-from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
+from fbpcs.pl_coordinator.pl_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
@@ -77,7 +77,7 @@ def run_attribution(
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
-    client = PLGraphAPIClient(config, logger)
+    client = PCGraphAPIClient(config, logger)
     datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
     datasets = datasets_info[DATASETS_INFORMATION]
     matched_data = {}
@@ -168,7 +168,7 @@ def _create_new_instance(
     dataset_id: str,
     timestamp: int,
     attribution_rule: str,
-    client: PLGraphAPIClient,
+    client: PCGraphAPIClient,
     logger: logging.Logger,
 ) -> str:
     instance_id = json.loads(
@@ -188,7 +188,7 @@ def _create_new_instance(
 def get_attribution_dataset_info(
     config: Dict[str, Any], dataset_id: str, logger: logging.Logger
 ) -> str:
-    client = PLGraphAPIClient(config, logger)
+    client = PCGraphAPIClient(config, logger)
 
     return json.loads(
         client.get_attribution_dataset_info(
@@ -199,7 +199,7 @@ def get_attribution_dataset_info(
 
 
 def _get_pa_instance_info(
-    client: PLGraphAPIClient, instance_id: str, logger: logging.Logger
+    client: PCGraphAPIClient, instance_id: str, logger: logging.Logger
 ) -> Any:
     return json.loads(client.get_instance(instance_id).text)
 
@@ -215,7 +215,7 @@ def _iso_date_validator(timestamp: str) -> Any:
 
 
 def _get_attribution_dataset_info(
-    client: PLGraphAPIClient, dataset_id: str, logger: logging.Logger
+    client: PCGraphAPIClient, dataset_id: str, logger: logging.Logger
 ) -> Any:
     return json.loads(
         client.get_attribution_dataset_info(
@@ -225,5 +225,5 @@ def _get_attribution_dataset_info(
     )
 
 
-def _get_existing_pa_instances(client: PLGraphAPIClient, dataset_id: str) -> Any:
+def _get_existing_pa_instances(client: PCGraphAPIClient, dataset_id: str) -> Any:
     return json.loads(client.get_existing_pa_instances(dataset_id).text)

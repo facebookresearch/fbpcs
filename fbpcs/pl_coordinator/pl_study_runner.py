@@ -21,7 +21,7 @@ from fbpcs.pl_coordinator.exceptions import (
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     GRAPHAPI_INSTANCE_STATUSES,
     GraphAPIGenericException,
-    PLGraphAPIClient,
+    PCGraphAPIClient,
 )
 from fbpcs.pl_coordinator.pl_instance_runner import run_instances
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
@@ -75,7 +75,7 @@ def run_study(
     _validate_input(objective_ids, input_paths)
 
     # obtain study information
-    client = PLGraphAPIClient(config, logger)
+    client = PCGraphAPIClient(config, logger)
     study_data = _get_study_data(study_id, client)
 
     # Verify study can run private lift:
@@ -242,7 +242,7 @@ def _verify_mpc_objs(study_data: Dict[str, Any], objective_ids: List[str]) -> No
             )
 
 
-def _get_study_data(study_id: str, client: PLGraphAPIClient) -> Any:
+def _get_study_data(study_id: str, client: PCGraphAPIClient) -> Any:
     return json.loads(
         client.get_study_data(
             study_id,
@@ -326,7 +326,7 @@ def _get_cell_obj_instance(
 def _create_new_instances(
     cell_obj_instances: Dict[str, Dict[str, Any]],
     study_id: str,
-    client: PLGraphAPIClient,
+    client: PCGraphAPIClient,
     logger: logging.Logger,
 ) -> None:
     for cell_id in cell_obj_instances:
@@ -344,7 +344,7 @@ def _create_new_instances(
 
 
 def _create_instance_retry(
-    client: PLGraphAPIClient,
+    client: PCGraphAPIClient,
     study_id: str,
     cell_id: str,
     objective_id: str,
@@ -400,7 +400,7 @@ def _instance_to_input_path(
 def _check_versions(
     cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
     config: Dict[str, Any],
-    client: PLGraphAPIClient,
+    client: PCGraphAPIClient,
 ) -> None:
     """Checks that the publisher version (graph api) and the partner version (config.yml) are the same
 

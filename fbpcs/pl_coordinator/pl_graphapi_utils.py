@@ -79,7 +79,7 @@ GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
 
 
 # TODO(T116610959): rename pl_graph_api_utils.py and its entities to PC equivalents
-class PLGraphAPIClient:
+class PCGraphAPIClient:
     """
     Private Lift Graph API related functions
     __init__ contains info about all the api end points used by Private Lift
