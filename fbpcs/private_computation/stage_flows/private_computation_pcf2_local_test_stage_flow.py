@@ -7,13 +7,6 @@
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-from fbpcs.private_computation.service.aggregate_shards_stage_service import (
-    AggregateShardsStageService,
-)
-from fbpcs.private_computation.service.dummy_stage_service import DummyStageService
-from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
-    IdSpineCombinerStageService,
-)
 from fbpcs.private_computation.service.pcf2_aggregation_stage_service import (
     PCF2AggregationStageService,
 )
@@ -24,7 +17,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
 )
-from fbpcs.private_computation.service.shard_stage_service import ShardStageService
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
     PrivateComputationStageFlowData,
@@ -104,20 +96,7 @@ class PrivateComputationPCF2LocalTestStageFlow(PrivateComputationBaseStageFlow):
         Raises:
             NotImplementedError: The subclass doesn't implement a stage service for a given StageFlow enum member
         """
-        if self is self.CREATED:
-            return DummyStageService()
-        elif self is self.ID_SPINE_COMBINER:
-            return IdSpineCombinerStageService(
-                args.onedocker_svc,
-                args.onedocker_binary_config_map,
-                pid_svc=args.pid_svc,
-            )
-        elif self is self.RESHARD:
-            return ShardStageService(
-                args.onedocker_svc,
-                args.onedocker_binary_config_map,
-            )
-        elif self is self.PCF2_ATTRIBUTION:
+        if self is self.PCF2_ATTRIBUTION:
             return PCF2AttributionStageService(
                 args.onedocker_binary_config_map,
                 args.mpc_svc,
@@ -127,10 +106,5 @@ class PrivateComputationPCF2LocalTestStageFlow(PrivateComputationBaseStageFlow):
                 args.onedocker_binary_config_map,
                 args.mpc_svc,
             )
-        elif self is self.AGGREGATE:
-            return AggregateShardsStageService(
-                args.onedocker_binary_config_map,
-                args.mpc_svc,
-            )
         else:
-            raise NotImplementedError(f"No stage service configured for {self}")
+            return self.get_default_stage_service(args)
