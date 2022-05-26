@@ -8,7 +8,7 @@
 import abc
 from typing import Dict
 
-from common.data_model import MetadataEntity
+from fbpcs.infra.logging_service.server.common.data_model import MetadataEntity
 
 
 # Client interface for putting and getting log metadata on remote backend.

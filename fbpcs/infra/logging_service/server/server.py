@@ -5,36 +5,58 @@
 
 # pyre-strict
 
+"""
+Logging Service server
+
+
+Usage:
+    logging_service_server.par [--ipv6] [options]
+
+Options:
+    -h --help                Show this help
+"""
+
 import logging
+import os
+import socket
+from types import ModuleType
 
-from common.logging_client import LoggingClient
-from common.memory_queue_manager import MemoryQueueManager
-from common.meta_logging_client import MetaLoggingClient
-from common.metadata_manager import MetadataManager
-from common.utils import Utils
-from meta.private_computation import LoggingService
-from meta.private_computation.ttypes import (
-    GetMetadataResponse,
-    ListMetadataResponse,
-    PutMetadataResponse,
+import schema
+import thriftpy2
+from docopt import docopt
+from fbpcs.infra.logging_service.server.common.logging_client import LoggingClient
+from fbpcs.infra.logging_service.server.common.memory_queue_manager import (
+    MemoryQueueManager,
 )
-from thrift.protocol import TBinaryProtocol
-from thrift.server import TServer
-from thrift.transport import TSocket, TTransport
+from fbpcs.infra.logging_service.server.common.meta_logging_client import (
+    MetaLoggingClient,
+)
+from fbpcs.infra.logging_service.server.common.metadata_manager import MetadataManager
+from fbpcs.infra.logging_service.server.common.utils import Utils
+from thriftpy2.protocol import TBinaryProtocolFactory
+from thriftpy2.server import TThreadedServer
+from thriftpy2.thrift import TProcessor
+from thriftpy2.transport import TBufferedTransportFactory, TServerSocket
 
 
-global_logger = logging.getLogger()
+# Socket timeout from client, in millisecond
+CLIENT_TIMEOUT_MS = 10000
 
 # Handler for the logging service API's
 class LoggingServiceHandler:
     def __init__(
-        self, metadata_manager: MetadataManager, logging_client: LoggingClient
-    ):
-        self.logger = logging.getLogger()
+        self,
+        metadata_manager: MetadataManager,
+        logging_client: LoggingClient,
+        logging_service_thrift: ModuleType,
+    ) -> None:
+        self.logger: logging.Logger = logging.getLogger(__name__)
         self.metadata_manager = metadata_manager
         self.logging_client = logging_client
+        self.logging_service_thrift = logging_service_thrift
 
-    def putMetadata(self, request):
+    # pyre-ignore
+    def putMetadata(self, request) -> object:
         """
         Each metadata entity will be queued in the metadata manager, and
         then uploaded to remote backend.
@@ -43,9 +65,12 @@ class LoggingServiceHandler:
         self.metadata_manager.put_metadata(
             request.partner_id, request.entity_key, request.entity_value
         )
-        return PutMetadataResponse()
+        res = self.logging_service_thrift.PutMetadataResponse()
+        self.logger.info(f"PutMetadataResponse: {res}")
+        return res
 
-    def getMetadata(self, request):
+    # pyre-ignore
+    def getMetadata(self, request) -> object:
         """
         Metadata will be directly retrieved from the remote backend.
         """
@@ -53,9 +78,12 @@ class LoggingServiceHandler:
         entity_value = self.logging_client.get_metadata(
             request.partner_id, request.entity_key
         )
-        return GetMetadataResponse(entity_value)
+        res = self.logging_service_thrift.GetMetadataResponse(entity_value)
+        self.logger.info(f"GetMetadataResponse: {res}")
+        return res
 
-    def listMetadata(self, request):
+    # pyre-ignore
+    def listMetadata(self, request) -> object:
         """
         Metadata will be directly retrieved from the remote backend.
         """
@@ -66,29 +94,64 @@ class LoggingServiceHandler:
             request.entity_key_end,
             request.result_limit,
         )
-        return ListMetadataResponse(key_values)
+        res = self.logging_service_thrift.ListMetadataResponse(key_values)
+        self.logger.info(f"ListMetadataResponse: {res}")
+        return res
 
 
 def main() -> None:
-    logger = global_logger
-    Utils.configure_logger(logger, "log/server.log")
+    Utils.configure_logger("log/server.log")
+    logger = logging.getLogger(__name__)
+
+    s = schema.Schema(
+        {
+            "--ipv6": schema.Or(None, schema.Use(bool)),
+            "--help": bool,
+        }
+    )
+
+    arguments = s.validate(docopt(__doc__))
+
+    current_script_dir = os.path.dirname(os.path.abspath(__file__))
+    thrift_path = os.path.join(current_script_dir, "thrift/logging_service.thrift")
+    logger.info(f"Loading the thrift definition from: {thrift_path};")
+    logging_service_thrift = thriftpy2.load(
+        thrift_path,
+        module_name="logging_service_thrift",
+    )
+
+    if arguments["--ipv6"]:
+        socket_family = socket.AF_INET6
+        any_host_interface = "::"
+        socket_family_name = "IPv6"
+    else:
+        socket_family = socket.AF_INET
+        any_host_interface = "0.0.0.0"
+        socket_family_name = "IPv4"
 
     queue_manager = MemoryQueueManager()
     logging_client = MetaLoggingClient()
     metadata_manager = MetadataManager(queue_manager, logging_client)
-    handler = LoggingServiceHandler(metadata_manager, logging_client)
-    processor = LoggingService.Processor(handler)
-    transport = TSocket.TServerSocket(None, port=Utils.get_server_port())
-    # transport = TSocket.TServerSocket("127.0.0.1", port=9090)
-    tfactory = TTransport.TBufferedTransportFactory()
-    pfactory = TBinaryProtocol.TBinaryProtocolFactory()
+    handler = LoggingServiceHandler(
+        metadata_manager, logging_client, logging_service_thrift
+    )
 
-    # https://github.com/apache/thrift/blob/master/lib/py/src/server/TServer.py
-    # Server with a fixed size pool of threads which service requests.
-    server = TServer.TThreadPoolServer(processor, transport, tfactory, pfactory)
-    server.setNumThreads(8)
+    proc = TProcessor(logging_service_thrift.LoggingService, handler)
+    server = TThreadedServer(
+        proc,
+        TServerSocket(
+            host=any_host_interface,
+            socket_family=socket_family,
+            port=Utils.get_server_port(),
+            client_timeout=CLIENT_TIMEOUT_MS,
+        ),
+        iprot_factory=TBinaryProtocolFactory(),
+        itrans_factory=TBufferedTransportFactory(),
+    )
 
-    logger.info("Starting the server...")
+    logger.info(
+        f"Starting the server at port={Utils.get_server_port()}, family={socket_family_name} ..."
+    )
     server.serve()
     logger.info("done.")
 
