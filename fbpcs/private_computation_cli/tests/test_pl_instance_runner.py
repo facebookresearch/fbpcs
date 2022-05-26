@@ -10,7 +10,7 @@ from unittest import TestCase
 from unittest.mock import patch, PropertyMock
 
 import requests
-from fbpcs.pl_coordinator.pl_graphapi_utils import GRAPHAPI_INSTANCE_STATUSES
+from fbpcs.pl_coordinator.pc_graphapi_utils import GRAPHAPI_INSTANCE_STATUSES
 from fbpcs.pl_coordinator.pl_instance_runner import (
     IncompatibleStageError,
     PCInstanceCalculationException,
@@ -36,7 +36,7 @@ from fbpcs.private_computation.stage_flows.private_computation_stage_flow import
 
 class TestPlInstanceRunner(TestCase):
     @patch("logging.Logger")
-    @patch("fbpcs.pl_coordinator.pl_graphapi_utils.PCGraphAPIClient")
+    @patch("fbpcs.pl_coordinator.pc_graphapi_utils.PCGraphAPIClient")
     def setUp(
         self,
         mock_graph_api_client,

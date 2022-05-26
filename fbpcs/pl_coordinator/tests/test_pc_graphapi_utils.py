@@ -8,14 +8,13 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
-from fbpcs.pl_coordinator.pl_graphapi_utils import (
+from fbpcs.pl_coordinator.pc_graphapi_utils import (
     FBPCS_GRAPH_API_TOKEN,
     PCGraphAPIClient,
 )
 
 
-# TODO(T116610959): rename pl_graph_api_utils.py and its entities to PC equivalents
-class TestPLGraphAPIUtils(TestCase):
+class TestPCGraphAPIUtils(TestCase):
     @patch("logging.Logger")
     def setUp(
         self,
