@@ -32,7 +32,7 @@ from fbpcs.pl_coordinator.pc_partner_instance import PrivateComputationPartnerIn
 from fbpcs.pl_coordinator.pc_publisher_instance import (
     PrivateComputationPublisherInstance,
 )
-from fbpcs.pl_coordinator.pl_graphapi_utils import PLGraphAPIClient
+from fbpcs.pl_coordinator.pl_graphapi_utils import PCGraphAPIClient
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -79,7 +79,7 @@ def run_instance(
             "Number of retries not allowed",
             f"num_tries must be between {MIN_TRIES} and {MAX_TRIES}.",
         )
-    client = PLGraphAPIClient(config, logger)
+    client = PCGraphAPIClient(config, logger)
     instance_runner = PLInstanceRunner(
         config,
         instance_id,
@@ -169,7 +169,7 @@ class PLInstanceRunner:
         num_mpc_containers: int,
         num_pid_containers: int,
         logger: logging.Logger,
-        client: PLGraphAPIClient,
+        client: PCGraphAPIClient,
         num_tries: int,
         game_type: PrivateComputationGameType,
         dry_run: Optional[bool],

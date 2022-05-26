@@ -15,7 +15,7 @@ from fbpcs.pl_coordinator.pc_calc_instance import PrivateComputationCalcInstance
 from fbpcs.pl_coordinator.pl_graphapi_utils import (
     GRAPHAPI_INSTANCE_STATUSES,
     GraphAPIGenericException,
-    PLGraphAPIClient,
+    PCGraphAPIClient,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
@@ -34,10 +34,10 @@ class PrivateComputationPublisherInstance(PrivateComputationCalcInstance):
     """
 
     def __init__(
-        self, instance_id: str, logger: logging.Logger, client: PLGraphAPIClient
+        self, instance_id: str, logger: logging.Logger, client: PCGraphAPIClient
     ) -> None:
         super().__init__(instance_id, logger, PrivateComputationRole.PUBLISHER)
-        self.client: PLGraphAPIClient = client
+        self.client: PCGraphAPIClient = client
         self.server_ips: Optional[List[str]] = None
         self.wait_valid_status(WAIT_VALID_STATUS_TIMEOUT)
 
