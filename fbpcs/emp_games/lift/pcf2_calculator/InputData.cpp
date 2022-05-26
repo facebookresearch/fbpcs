@@ -19,9 +19,6 @@
 
 namespace private_lift {
 
-// All feature columns must be prepended with the kFeaturePrefix
-static const std::string kFeaturePrefix = "feature_";
-
 InputData::InputData(
     std::string filepath,
     LiftMPCType liftMpcType,
@@ -113,35 +110,10 @@ void InputData::setValuesFields(std::string& str) {
   }
 }
 
-bool InputData::anyFeatureColumns(const std::vector<std::string>& header) {
-  for (const auto& column : header) {
-    if (column.rfind(kFeaturePrefix, 0) != std::string::npos) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void InputData::addFromCSV(
     const std::vector<std::string>& header,
     const std::vector<std::string>& parts) {
   std::vector<std::string> featureValues;
-
-  if (!firstLineParsedAlready_) {
-    for (const auto& col : header) {
-      // If the column starts with the feature prefix, push it to
-      // featureHeader_
-      if (col.rfind(kFeaturePrefix, 0) != std::string::npos) {
-        featureHeader_.push_back(col);
-      }
-    }
-    if (std::find(header.begin(), header.end(), "cohort_id") != header.end() &&
-        anyFeatureColumns(header)) {
-      LOG(FATAL)
-          << "Supplying both cohort_id and feature columns is not supported";
-    }
-    firstLineParsedAlready_ = true;
-  }
 
   // These bools + int64_t allow us to create separate vectors for testPop and
   // controlPop without enforcing an ordering between oppFlag and testFlag.
@@ -157,9 +129,7 @@ void InputData::addFromCSV(
     std::istringstream iss{value};
     // Array columns and features may be parsed differently
     if (!(column == "opportunity_timestamps" || column == "event_timestamps" ||
-          column == "values" ||
-          column == "id_" || // ID doesn't have to be parse-able to int64_t
-          column.rfind(kFeaturePrefix, 0) != std::string::npos)) {
+          column == "values" || column == "id_")) {
       iss >> parsed;
 
       if (iss.fail()) {
@@ -247,9 +217,6 @@ void InputData::addFromCSV(
         totalValue_ += parsed;
         purchaseValues_.push_back(parsed);
       }
-    } else if (column.rfind(kFeaturePrefix, 0) != std::string::npos) {
-      // This is a feature column
-      featureValues.push_back(value);
     } else if (column != "id_") { // Do nothing with the id_ column as Lift
                                   // games assume the ids are already matched
       // We shouldn't fail if there are extra columns in the input
@@ -263,19 +230,6 @@ void InputData::addFromCSV(
   if (!sawOppFlag) {
     testPopulation_.push_back(storedTestFlag);
     controlPopulation_.push_back(1 - storedTestFlag);
-  }
-
-  // Finally, check which feature groupId this row belongs to
-  // If we haven't seen this feature group before, denote that it corresponds
-  // to a new groupId
-  if (featureHeader_.size() > 0) {
-    if (featuresToGroupId_.find(featureValues) == featuresToGroupId_.end()) {
-      featuresToGroupId_[featureValues] = numGroups_;
-      groupIdToFeatures_[numGroups_] = featureValues;
-      ++numGroups_;
-    }
-    // Make a note of which group this row belongs to
-    groupIds_.push_back(featuresToGroupId_[featureValues]);
   }
 }
 
