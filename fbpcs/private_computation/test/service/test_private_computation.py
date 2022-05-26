@@ -36,9 +36,14 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     UnionedPCInstance,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
+from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
+    AttributionStageService,
+)
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
+from fbpcs.private_computation.service.pid_stage_service import PIDStageService
 from fbpcs.private_computation.service.private_computation import (
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
@@ -67,6 +72,8 @@ from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow imp
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
+from fbpcs.private_computation.stage_flows.stage_selector import StageSelector
+from fbpcs.private_computation.test.service.dummy_stage_flow import DummyStageFlow
 
 
 def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
@@ -815,6 +822,74 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             PrivateComputationInstanceStatus.COMPUTATION_FAILED,
             private_computation_instance.status,
+        )
+
+    def test_stage_selector(self) -> None:
+        """
+        Test for get_stage_service method in StageSelector class
+        """
+
+        args = self.private_computation_service.stage_service_args
+        actual_service = StageSelector.get_stage_service(
+            PrivateComputationStageFlow.ID_MATCH, args
+        )
+
+        self.assertIsInstance(actual_service, PIDStageService)
+        # We need this line so pyre knows
+        assert isinstance(actual_service, PIDStageService)
+        self.assertEqual(
+            actual_service._publisher_stage, UnionPIDStage.PUBLISHER_RUN_PID
+        )
+        self.assertEqual(actual_service._partner_stage, UnionPIDStage.ADV_RUN_PID)
+
+    def test_get_default_stage_service(self) -> None:
+        """
+        Test for get_default_stage_service method in stage flow classes
+        """
+        args = self.private_computation_service.stage_service_args
+
+        actual_service = PrivateComputationStageFlow.ID_MATCH.get_default_stage_service(
+            args
+        )
+
+        self.assertIsInstance(actual_service, PIDStageService)
+        # We need this line so pyre knows
+        assert isinstance(actual_service, PIDStageService)
+        self.assertEqual(
+            actual_service._publisher_stage, UnionPIDStage.PUBLISHER_RUN_PID
+        )
+        self.assertEqual(actual_service._partner_stage, UnionPIDStage.ADV_RUN_PID)
+
+    def test_get_default_stage_service_error(self) -> None:
+        """
+        Test for get_default_stage_service method in stage flow classes
+        """
+        args = self.private_computation_service.stage_service_args
+
+        with self.assertRaises(NotImplementedError):
+            DummyStageFlow.STAGE_1.get_default_stage_service(args)
+
+    def test_get_stage_service(self) -> None:
+        """
+        Test for get_stage_service method in stage flow classes
+        """
+        args = self.private_computation_service.stage_service_args
+        actual_service = PrivateComputationDecoupledStageFlow.DECOUPLED_ATTRIBUTION.get_stage_service(
+            args
+        )
+
+        self.assertIsInstance(actual_service, AttributionStageService)
+        # We need this line so pyre knows
+        assert isinstance(actual_service, AttributionStageService)
+
+        self.assertEqual(actual_service._mpc_service, args.mpc_svc)
+        self.assertEqual(
+            actual_service._log_cost_to_s3,
+            DEFAULT_LOG_COST_TO_S3,
+        )
+        self.assertEqual(
+            actual_service._onedocker_binary_config_map,
+            args.onedocker_binary_config_map,
         )
 
     def test_cancel_current_stage_pid(self) -> None:
