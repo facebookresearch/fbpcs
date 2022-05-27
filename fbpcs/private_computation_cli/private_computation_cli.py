@@ -61,8 +61,8 @@ from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
-from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
-    PrivateComputationDecoupledStageFlow,
+from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
+    PrivateComputationPCF2StageFlow,
 )
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
@@ -314,7 +314,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             dry_run=arguments["--dry_run"],
         )
     elif arguments["run_attribution"]:
-        stage_flow = PrivateComputationDecoupledStageFlow
+        stage_flow = PrivateComputationPCF2StageFlow
         run_attribution(
             config=config,
             dataset_id=arguments["--dataset_id"],

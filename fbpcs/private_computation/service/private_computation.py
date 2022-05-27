@@ -57,8 +57,8 @@ from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
-from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
-    PrivateComputationDecoupledStageFlow,
+from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
+    PrivateComputationPCF2StageFlow,
 )
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
@@ -193,7 +193,7 @@ class PrivateComputationService:
             ),
             _stage_flow_cls_name=unwrap_or_default(
                 optional=stage_flow_cls,
-                default=PrivateComputationDecoupledStageFlow
+                default=PrivateComputationPCF2StageFlow
                 if game_type is PrivateComputationGameType.ATTRIBUTION
                 else PrivateComputationStageFlow,
             ).get_cls_name(),
