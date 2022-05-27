@@ -37,11 +37,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
-from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
-    AttributionStageService,
-)
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
+)
+from fbpcs.private_computation.service.pcf2_attribution_stage_service import (
+    PCF2AttributionStageService,
 )
 from fbpcs.private_computation.service.pid_stage_service import PIDStageService
 from fbpcs.private_computation.service.private_computation import (
@@ -63,11 +63,11 @@ from fbpcs.private_computation.service.utils import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
-from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
-    PrivateComputationDecoupledStageFlow,
-)
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
+)
+from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
+    PrivateComputationPCF2StageFlow,
 )
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
@@ -82,10 +82,10 @@ def _get_valid_stages_data() -> List[Tuple[PrivateComputationBaseStageFlow]]:
         (PrivateComputationStageFlow.COMPUTE,),
         (PrivateComputationStageFlow.AGGREGATE,),
         (PrivateComputationStageFlow.POST_PROCESSING_HANDLERS,),
-        (PrivateComputationDecoupledStageFlow.ID_MATCH,),
-        (PrivateComputationDecoupledStageFlow.DECOUPLED_ATTRIBUTION,),
-        (PrivateComputationDecoupledStageFlow.DECOUPLED_AGGREGATION,),
-        (PrivateComputationDecoupledStageFlow.AGGREGATE,),
+        (PrivateComputationPCF2StageFlow.ID_MATCH,),
+        (PrivateComputationPCF2StageFlow.PCF2_ATTRIBUTION,),
+        (PrivateComputationPCF2StageFlow.PCF2_AGGREGATION,),
+        (PrivateComputationPCF2StageFlow.AGGREGATE,),
     ]
 
 
@@ -874,13 +874,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         Test for get_stage_service method in stage flow classes
         """
         args = self.private_computation_service.stage_service_args
-        actual_service = PrivateComputationDecoupledStageFlow.DECOUPLED_ATTRIBUTION.get_stage_service(
-            args
+        actual_service = (
+            PrivateComputationPCF2StageFlow.PCF2_ATTRIBUTION.get_stage_service(args)
         )
 
-        self.assertIsInstance(actual_service, AttributionStageService)
+        self.assertIsInstance(actual_service, PCF2AttributionStageService)
         # We need this line so pyre knows
-        assert isinstance(actual_service, AttributionStageService)
+        assert isinstance(actual_service, PCF2AttributionStageService)
 
         self.assertEqual(actual_service._mpc_service, args.mpc_svc)
         self.assertEqual(
