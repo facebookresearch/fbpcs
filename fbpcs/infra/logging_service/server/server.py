@@ -10,10 +10,12 @@ Logging Service server
 
 
 Usage:
-    logging_service_server.par [--ipv6] [options]
+    logging_service_server [options]
 
 Options:
-    -h --help                Show this help
+    --ipv6                  Server socket listens at IPv6/INET6 family instead of IPv4/INET family
+    --port=<port>           Port number to listen at. [default: 9090]
+    -h --help               Show this help
 """
 
 import logging
@@ -105,7 +107,8 @@ def main() -> None:
 
     s = schema.Schema(
         {
-            "--ipv6": schema.Or(None, schema.Use(bool)),
+            "--ipv6": bool,
+            "--port": schema.Use(int),
             "--help": bool,
         }
     )
@@ -129,6 +132,8 @@ def main() -> None:
         any_host_interface = "0.0.0.0"
         socket_family_name = "IPv4"
 
+    server_port = arguments["--port"]
+
     queue_manager = MemoryQueueManager()
     logging_client = MetaLoggingClient()
     metadata_manager = MetadataManager(queue_manager, logging_client)
@@ -142,7 +147,7 @@ def main() -> None:
         TServerSocket(
             host=any_host_interface,
             socket_family=socket_family,
-            port=Utils.get_server_port(),
+            port=server_port,
             client_timeout=CLIENT_TIMEOUT_MS,
         ),
         iprot_factory=TBinaryProtocolFactory(),
@@ -150,7 +155,7 @@ def main() -> None:
     )
 
     logger.info(
-        f"Starting the server at port={Utils.get_server_port()}, family={socket_family_name} ..."
+        f"Logging service server listens host={any_host_interface}[{socket_family_name}], port={server_port}."
     )
     server.serve()
     logger.info("done.")

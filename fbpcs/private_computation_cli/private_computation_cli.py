@@ -31,19 +31,25 @@ Usage:
 
 
 Options:
-    -h --help                Show this help
-    --log_path=<path>        Override the default path where logs are saved
-    --verbose                Set logging level to DEBUG
+    -h --help                       Show this help
+    --log_path=<path>               Override the default path where logs are saved
+    --logging_service=<host:port>   Server host and port for enabling the logging service client
+    --verbose                       Set logging level to DEBUG
 """
 
 import logging
 import os
+import re
+import sys
 import time
+from datetime import datetime
 from pathlib import Path, PurePath
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Tuple, Union
 
 import schema
 from docopt import docopt
+from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
+from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -115,6 +121,48 @@ def transform_many_paths(paths_to_check: Union[str, Iterable[str]]) -> List[str]
     return paths
 
 
+def put_log_metadata(
+    logging_service_client: ClientManager,
+    game_type: str,
+    launch_type: str,
+) -> None:
+    logger = logging.getLogger(__name__)
+    # timestamp is like "20220510T070725.116207Z"
+    ts = f"{datetime.utcnow().isoformat().replace('-', '').replace(':', '')}Z"
+    # mock data of instances and objectives. Also "partner1" ID below.
+    instance_objectives = {"instance1": "objective1", "instance2": "objective2"}
+    lift_run_info = LiftRunInfo(
+        "v1",
+        "LiftRunInfo",
+        ts,
+        game_type,
+        launch_type,
+        {"cell_id1": instance_objectives},
+    )
+    key = f"run/inf/{ts}/{game_type}/{launch_type}/"
+    result = logging_service_client.put_metadata(
+        "partner1",
+        key,
+        # pyre-ignore
+        lift_run_info.to_json(),
+    )
+    logger.info(f"logging_service_client.put_metadata: response: {result}.")
+
+
+def parse_host_port(
+    host_port: str,
+) -> Tuple[str, int]:
+    """
+    Parse the host and port in the input string, which is like "host.domain:9090".
+    Returns ("", 0) when the input string is empty or has invalid value.
+    """
+    host_port = host_port or ""
+    found = re.search("([^:]+):([0-9]+)", host_port)
+    if not found:
+        return ("", 0)
+    return (found.group(1), int(found.group(2)))
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     s = schema.Schema(
         {
@@ -179,6 +227,13 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--hmac_key": schema.Or(None, str),
             "--tries_per_stage": schema.Or(None, schema.Use(int)),
             "--dry_run": bool,
+            "--logging_service": schema.Or(
+                None,
+                schema.And(
+                    schema.Use(str),
+                    lambda arg: parse_host_port(arg)[1] > 0,
+                ),
+            ),
             "--log_path": schema.Or(None, schema.Use(Path)),
             "--stage_flow": schema.Or(
                 None,
@@ -196,23 +251,41 @@ def main(argv: Optional[List[str]] = None) -> None:
     config = ConfigYamlDict.from_file(arguments["--config"])
 
     log_path = arguments["--log_path"]
-    log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
     instance_id = arguments["<instance_id>"]
 
     # if log_path specified, logging using FileHandler, or console StreamHandler
     log_handler = logging.FileHandler(log_path) if log_path else logging.StreamHandler()
     logging.Formatter.converter = time.gmtime
     logging.basicConfig(
+        # Root log level must be INFO or up, to avoid logging debug data which might
+        # contain PII.
         level=logging.INFO,
         handlers=[log_handler],
         format="%(asctime)sZ %(levelname)s t:%(threadName)s n:%(name)s ! %(message)s",
     )
     logger = logging.getLogger(__name__)
+    log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
     logger.setLevel(log_level)
+    # Concatenate all arguments to a string, with every argument wrapped by quotes.
+    all_options = f"{sys.argv[1:]}"[1:-1].replace("', '", "' '")
+    # E.g. Command line: private_computation_cli 'create_instance' 'partner_15464380' '--config=/tmp/tmp21ari0i6/config_local.yml' ...
+    logging.info(f"Command line: {Path(__file__).stem} {all_options}")
+
+    # When the logging service argument is specified, its value is like "localhost:9090".
+    # When the argument is missing, logging service client will be disabled, i.e. no-op.
+    (logging_service_host, logging_service_port) = parse_host_port(
+        arguments["--logging_service"]
+    )
+    logger.info(
+        f"Client using logging service host: {logging_service_host}, port: {logging_service_port}."
+    )
+    logging_service_client = ClientManager(logging_service_host, logging_service_port)
 
     if arguments["create_instance"]:
         logger.info(f"Create instance: {instance_id}")
-
+        put_log_metadata(
+            logging_service_client, arguments["--game_type"], "create_instance"
+        )
         create_instance(
             config=config,
             instance_id=instance_id,
