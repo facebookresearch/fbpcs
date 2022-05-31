@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from fbpcp.entity.mpc_game_config import MPCGameArgument
 from fbpcs.private_computation.repository.private_computation_game import (
+    OneDockerArgument,
     PrivateComputationGameRepository,
 )
 
@@ -21,10 +22,10 @@ class TestPrivateComputationGameRepository(unittest.TestCase):
             "attribution_compute_dev": {
                 "onedocker_package_name": "private_attribution/compute-dev",
                 "arguments": [
-                    {"name": "aggregators", "required": True},
-                    {"name": "input_path", "required": True},
-                    {"name": "output_path", "required": True},
-                    {"name": "attribution_rules", "required": True},
+                    OneDockerArgument(name="aggregators", required=True),
+                    OneDockerArgument(name="input_path", required=True),
+                    OneDockerArgument(name="output_path", required=True),
+                    OneDockerArgument(name="attribution_rules", required=True),
                 ],
             },
         },
@@ -41,7 +42,7 @@ class TestPrivateComputationGameRepository(unittest.TestCase):
         attribution_game_config = self.game_repository.get_game(expected_game_name)
 
         expected_arguments: List[MPCGameArgument] = [
-            MPCGameArgument(name=argument["name"], required=argument["required"])
+            MPCGameArgument(name=argument.name, required=argument.required)
             for argument in game_config[expected_game_name]["arguments"]
         ]
         self.assertEqual(attribution_game_config.game_name, expected_game_name)

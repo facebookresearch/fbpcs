@@ -7,6 +7,7 @@
 # pyre-strict
 
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, TypedDict
 
@@ -25,7 +26,8 @@ class GameNames(Enum):
     PCF2_AGGREGATION = "pcf2_aggregation"
 
 
-class OneDockerArgument(TypedDict):
+@dataclass
+class OneDockerArgument:
     name: str
     required: bool
 
@@ -39,106 +41,102 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
     GameNames.LIFT.value: {
         "onedocker_package_name": OneDockerBinaryNames.LIFT_COMPUTE.value,
         "arguments": [
-            OneDockerArgument({"name": "input_base_path", "required": True}),
-            OneDockerArgument({"name": "output_base_path", "required": True}),
-            OneDockerArgument({"name": "file_start_index", "required": False}),
-            OneDockerArgument({"name": "num_files", "required": True}),
-            OneDockerArgument({"name": "concurrency", "required": True}),
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="output_base_path", required=True),
+            OneDockerArgument(name="file_start_index", required=False),
+            OneDockerArgument(name="num_files", required=True),
+            OneDockerArgument(name="concurrency", required=True),
         ],
     },
     GameNames.PCF2_LIFT.value: {
         "onedocker_package_name": OneDockerBinaryNames.PCF2_LIFT.value,
         "arguments": [
-            OneDockerArgument({"name": "input_base_path", "required": True}),
-            OneDockerArgument({"name": "output_base_path", "required": True}),
-            OneDockerArgument({"name": "file_start_index", "required": False}),
-            OneDockerArgument({"name": "num_files", "required": True}),
-            OneDockerArgument({"name": "concurrency", "required": True}),
-            OneDockerArgument({"name": "log_cost", "required": False}),
-            OneDockerArgument({"name": "run_name", "required": False}),
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="output_base_path", required=True),
+            OneDockerArgument(name="file_start_index", required=False),
+            OneDockerArgument(name="num_files", required=True),
+            OneDockerArgument(name="concurrency", required=True),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
         ],
     },
     GameNames.SHARD_AGGREGATOR.value: {
         "onedocker_package_name": OneDockerBinaryNames.SHARD_AGGREGATOR.value,
         "arguments": [
-            OneDockerArgument({"name": "input_base_path", "required": True}),
-            OneDockerArgument({"name": "num_shards", "required": True}),
-            OneDockerArgument({"name": "output_path", "required": True}),
-            OneDockerArgument({"name": "metrics_format_type", "required": True}),
-            OneDockerArgument({"name": "threshold", "required": True}),
-            OneDockerArgument({"name": "first_shard_index", "required": False}),
-            OneDockerArgument({"name": "log_cost", "required": False}),
-            OneDockerArgument({"name": "run_name", "required": False}),
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="num_shards", required=True),
+            OneDockerArgument(name="output_path", required=True),
+            OneDockerArgument(name="metrics_format_type", required=True),
+            OneDockerArgument(name="threshold", required=True),
+            OneDockerArgument(name="first_shard_index", required=False),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
         ],
     },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
         "onedocker_package_name": OneDockerBinaryNames.DECOUPLED_ATTRIBUTION.value,
         "arguments": [
-            OneDockerArgument({"name": "input_base_path", "required": True}),
-            OneDockerArgument({"name": "output_base_path", "required": True}),
-            OneDockerArgument({"name": "attribution_rules", "required": True}),
-            OneDockerArgument({"name": "aggregators", "required": False}),
-            OneDockerArgument({"name": "concurrency", "required": True}),
-            OneDockerArgument({"name": "num_files", "required": True}),
-            OneDockerArgument({"name": "file_start_index", "required": True}),
-            OneDockerArgument({"name": "use_xor_encryption", "required": True}),
-            OneDockerArgument({"name": "use_postfix", "required": True}),
-            OneDockerArgument({"name": "log_cost", "required": False}),
-            OneDockerArgument({"name": "run_name", "required": False}),
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="output_base_path", required=True),
+            OneDockerArgument(name="attribution_rules", required=True),
+            OneDockerArgument(name="aggregators", required=False),
+            OneDockerArgument(name="concurrency", required=True),
+            OneDockerArgument(name="num_files", required=True),
+            OneDockerArgument(name="file_start_index", required=True),
+            OneDockerArgument(name="use_xor_encryption", required=True),
+            OneDockerArgument(name="use_postfix", required=True),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
         ],
     },
     GameNames.DECOUPLED_AGGREGATION.value: {
         "onedocker_package_name": OneDockerBinaryNames.DECOUPLED_AGGREGATION.value,
         "arguments": [
-            OneDockerArgument({"name": "aggregators", "required": True}),
-            OneDockerArgument({"name": "input_base_path", "required": True}),
-            OneDockerArgument(
-                {"name": "input_base_path_secret_share", "required": True}
-            ),
-            OneDockerArgument({"name": "output_base_path", "required": True}),
-            OneDockerArgument({"name": "attribution_rules", "required": False}),
-            OneDockerArgument({"name": "concurrency", "required": True}),
-            OneDockerArgument({"name": "num_files", "required": True}),
-            OneDockerArgument({"name": "file_start_index", "required": True}),
-            OneDockerArgument({"name": "use_xor_encryption", "required": True}),
-            OneDockerArgument({"name": "use_postfix", "required": True}),
-            OneDockerArgument({"name": "log_cost", "required": False}),
-            OneDockerArgument({"name": "run_name", "required": False}),
+            OneDockerArgument(name="aggregators", required=True),
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="input_base_path_secret_share", required=True),
+            OneDockerArgument(name="output_base_path", required=True),
+            OneDockerArgument(name="attribution_rules", required=False),
+            OneDockerArgument(name="concurrency", required=True),
+            OneDockerArgument(name="num_files", required=True),
+            OneDockerArgument(name="file_start_index", required=True),
+            OneDockerArgument(name="use_xor_encryption", required=True),
+            OneDockerArgument(name="use_postfix", required=True),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
         ],
     },
     GameNames.PCF2_ATTRIBUTION.value: {
         "onedocker_package_name": OneDockerBinaryNames.PCF2_ATTRIBUTION.value,
         "arguments": [
-            OneDockerArgument({"name": "input_base_path", "required": True}),
-            OneDockerArgument({"name": "output_base_path", "required": True}),
-            OneDockerArgument({"name": "attribution_rules", "required": True}),
-            OneDockerArgument({"name": "aggregators", "required": False}),
-            OneDockerArgument({"name": "concurrency", "required": True}),
-            OneDockerArgument({"name": "num_files", "required": True}),
-            OneDockerArgument({"name": "file_start_index", "required": True}),
-            OneDockerArgument({"name": "use_xor_encryption", "required": True}),
-            OneDockerArgument({"name": "use_postfix", "required": True}),
-            OneDockerArgument({"name": "log_cost", "required": False}),
-            OneDockerArgument({"name": "run_name", "required": False}),
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="output_base_path", required=True),
+            OneDockerArgument(name="attribution_rules", required=True),
+            OneDockerArgument(name="aggregators", required=False),
+            OneDockerArgument(name="concurrency", required=True),
+            OneDockerArgument(name="num_files", required=True),
+            OneDockerArgument(name="file_start_index", required=True),
+            OneDockerArgument(name="use_xor_encryption", required=True),
+            OneDockerArgument(name="use_postfix", required=True),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
         ],
     },
     GameNames.PCF2_AGGREGATION.value: {
         "onedocker_package_name": OneDockerBinaryNames.PCF2_AGGREGATION.value,
         "arguments": [
-            OneDockerArgument({"name": "aggregators", "required": True}),
-            OneDockerArgument({"name": "input_base_path", "required": True}),
-            OneDockerArgument(
-                {"name": "input_base_path_secret_share", "required": True}
-            ),
-            OneDockerArgument({"name": "output_base_path", "required": True}),
-            OneDockerArgument({"name": "attribution_rules", "required": False}),
-            OneDockerArgument({"name": "concurrency", "required": True}),
-            OneDockerArgument({"name": "num_files", "required": True}),
-            OneDockerArgument({"name": "file_start_index", "required": True}),
-            OneDockerArgument({"name": "use_xor_encryption", "required": True}),
-            OneDockerArgument({"name": "use_postfix", "required": True}),
-            OneDockerArgument({"name": "log_cost", "required": False}),
-            OneDockerArgument({"name": "run_name", "required": False}),
+            OneDockerArgument(name="aggregators", required=True),
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="input_base_path_secret_share", required=True),
+            OneDockerArgument(name="output_base_path", required=True),
+            OneDockerArgument(name="attribution_rules", required=False),
+            OneDockerArgument(name="concurrency", required=True),
+            OneDockerArgument(name="num_files", required=True),
+            OneDockerArgument(name="file_start_index", required=True),
+            OneDockerArgument(name="use_xor_encryption", required=True),
+            OneDockerArgument(name="use_postfix", required=True),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
         ],
     },
 }
@@ -156,7 +154,7 @@ class PrivateComputationGameRepository(MPCGameRepository):
 
         game_config = self.private_computation_game_config[name]
         arguments: List[MPCGameArgument] = [
-            MPCGameArgument(name=argument["name"], required=argument["required"])
+            MPCGameArgument(name=argument.name, required=argument.required)
             for argument in game_config["arguments"]
         ]
 
