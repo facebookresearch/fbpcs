@@ -63,6 +63,8 @@ int main(int argc, char* argv[]) {
         FLAGS_use_postfix);
 
     int16_t concurrency = static_cast<int16_t>(FLAGS_concurrency);
+    CHECK_LE(concurrency, pcf2_aggregation::kMaxConcurrency)
+        << "Concurrency must be at most " << pcf2_aggregation::kMaxConcurrency;
 
     common::Visibility outputVisibility = FLAGS_use_xor_encryption
         ? common::Visibility::Xor
