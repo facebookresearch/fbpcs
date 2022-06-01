@@ -14,7 +14,7 @@ else
 CONTAINER_IMAGE:=$(DOCKER_REPOSITORY)/$(LOCAL_IMAGE)
 endif
 
-all: thrift-build image-build
+all: image-build
 
 thrift-build:
 	thrift -r --gen py -out . thrift/logging_service.thrift
