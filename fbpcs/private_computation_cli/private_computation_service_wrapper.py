@@ -45,6 +45,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 )
 from fbpcs.service.workflow import WorkflowService
 from fbpcs.utils.config_yaml import reflect
+from termcolor import colored
 
 
 def create_instance(
@@ -324,6 +325,22 @@ def print_instance(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> None:
     print(get_instance(config, instance_id, logger))
+
+
+def print_current_status(
+    config: Dict[str, Any], instance_id: str, logger: logging.Logger
+) -> None:
+    """
+    To print the current status with id instance_id.
+    """
+    instance = get_instance(config, instance_id, logger)
+    print(
+        colored(
+            f"[instance]: {instance_id} [current status]: {instance.status}",
+            "green",
+            attrs=["bold"],
+        )
+    )
 
 
 def print_log_urls(

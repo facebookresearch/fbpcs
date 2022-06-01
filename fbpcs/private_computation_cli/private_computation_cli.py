@@ -24,6 +24,7 @@ Usage:
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
+    pc-cli print_current_status <instance_id> --config=<config_file> [options]
     pc-cli print_log_urls <instance_id> --config=<config_file> [options]
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
     pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [options]
@@ -80,6 +81,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     get_mpc,
     get_pid,
     get_server_ips,
+    print_current_status,
     print_instance,
     print_log_urls,
     run_next,
@@ -181,6 +183,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "run_attribution": bool,
             "cancel_current_stage": bool,
             "print_instance": bool,
+            "print_current_status": bool,
             "print_log_urls": bool,
             "get_attribution_dataset_info": bool,
             "<instance_id>": schema.Or(None, str),
@@ -412,6 +415,13 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
     elif arguments["print_instance"]:
         print_instance(
+            config=config,
+            instance_id=instance_id,
+            logger=logger,
+        )
+    elif arguments["print_current_status"]:
+        print("print_current_status")
+        print_current_status(
             config=config,
             instance_id=instance_id,
             logger=logger,
