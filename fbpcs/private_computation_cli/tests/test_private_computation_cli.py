@@ -481,6 +481,16 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         print_instance_mock.assert_called_once()
 
+    @patch("fbpcs.private_computation_cli.private_computation_cli.print_current_status")
+    def test_print_current_status(self, print_current_status_mock) -> None:
+        argv = [
+            "print_current_status",
+            "instance123",
+            f"--config={self.temp_filename}",
+        ]
+        pc_cli.main(argv)
+        print_current_status_mock.assert_called_once()
+
     @patch("fbpcs.private_computation_cli.private_computation_cli.print_log_urls")
     def test_print_log_urls(self, print_log_urls_mock) -> None:
         argv = [
