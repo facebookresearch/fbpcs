@@ -44,24 +44,24 @@ class PIDRunProtocolBinaryService(RunBinaryBaseService):
 
         if metric_path is not None:
             cmd_ls.append(f"--metric-path {metric_path}")
-
+        # later will support TLS/Transport Layer Security
         cmd_ls.append("--no-tls")
-
+        # later will support use-rowk-number feature
         if use_row_numbers:
             cmd_ls.append("--use-row-numbers")
 
         return " ".join(cmd_ls)
 
     @staticmethod
-    def get_binary_name(protocol: PIDProtocol, pc_role: PrivateComputationRole):
-        if pc_role is PrivateComputationRole.PARTNER:
-            binary = OneDockerBinaryNames.PID_SERVER.value
+    def get_binary_name(protocol: PIDProtocol, pc_role: PrivateComputationRole) -> str:
+        if pc_role is PrivateComputationRole.PUBLISHER:
+            binary_name = OneDockerBinaryNames.PID_SERVER.value
             if protocol is PIDProtocol.UNION_PID_MULTIKEY:
-                binary = OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
-        elif pc_role is PrivateComputationRole.PUBLISHER:
-            binary = OneDockerBinaryNames.PID_CLIENT.value
+                binary_name = OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
+        elif pc_role is PrivateComputationRole.PARTNER:
+            binary_name = OneDockerBinaryNames.PID_CLIENT.value
             if protocol is PIDProtocol.UNION_PID_MULTIKEY:
-                binary = OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
+                binary_name = OneDockerBinaryNames.PID_MULTI_KEY_CLIENT.value
         else:
             raise ValueError(f"Unsupported PrivateComputationRole passed: {pc_role}")
-        return binary
+        return binary_name
