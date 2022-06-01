@@ -7,6 +7,7 @@
 # pyre-strict
 
 
+import asyncio
 import functools
 import logging
 import math
@@ -18,6 +19,7 @@ from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
@@ -508,3 +510,14 @@ def transform_file_path(file_path: str, aws_region: Optional[str] = None) -> str
             "Error transforming into expected virtual-hosted format. Bad input? "
             f"Please check your input path: [{file_path}]"
         )
+
+
+async def file_exists_async(
+    storage_svc: StorageService,
+    file_path: str,
+) -> bool:
+    """
+    Check if the file on the StorageService
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, storage_svc.file_exists, file_path)
