@@ -5,7 +5,7 @@
 
 import argparse
 
-from download_logs import AwsContainerLogs
+from fbpcs.infra.logging_service.download_logs.download_logs import AwsContainerLogs
 
 
 def main():
@@ -37,7 +37,9 @@ def main():
         )
 
 
-def aws_parser_arguments(aws_parser: argparse) -> argparse:
+def aws_parser_arguments(
+    aws_parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
     """
     Common arguments needed for AWS verification
     """
@@ -53,7 +55,7 @@ def aws_parser_arguments(aws_parser: argparse) -> argparse:
     return aws_parser
 
 
-def download_logs_parser_arguments(aws_parser: argparse):
+def download_logs_parser_arguments(aws_parser: argparse.ArgumentParser) -> None:
     """
     Arguments for downloading logs
     """
