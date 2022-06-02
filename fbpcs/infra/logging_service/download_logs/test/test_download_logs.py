@@ -113,7 +113,41 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_verify_log_group(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        aws_container_logs.cloudwatch_client.describe_log_groups.return_value = {
+            "logGroups": ["my_log_group"]
+        }
+        self.assertTrue(aws_container_logs._verify_log_group("my_log_group"))
+
+        aws_container_logs.cloudwatch_client.describe_log_groups.reset_mock()
+        aws_container_logs.cloudwatch_client.describe_log_groups.side_effect = (
+            ClientError(
+                error_response={"Error": {"Code": "InvalidParameterException"}},
+                operation_name="describe_log_groups",
+            )
+        )
+        with self.assertRaisesRegex(Exception, "Wrong parameters.*"):
+            aws_container_logs._verify_log_group("my_log_group")
+
+        aws_container_logs.cloudwatch_client.describe_log_groups.reset_mock()
+        aws_container_logs.cloudwatch_client.describe_log_groups.side_effect = (
+            ClientError(
+                error_response={"Error": {"Code": "ResourceNotFoundException"}},
+                operation_name="describe_log_groups",
+            )
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't find.*"):
+            aws_container_logs._verify_log_group("my_log_group")
+
+        aws_container_logs.cloudwatch_client.describe_log_groups.reset_mock()
+        aws_container_logs.cloudwatch_client.describe_log_groups.side_effect = (
+            ClientError(
+                error_response={"Error": {"Code": "SomethingElseHappenedException"}},
+                operation_name="describe_log_groups",
+            )
+        )
+        with self.assertRaisesRegex(Exception, "Unexpected error.*"):
+            aws_container_logs._verify_log_group("my_log_group")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_verify_log_stream(self, mock_boto3) -> None:

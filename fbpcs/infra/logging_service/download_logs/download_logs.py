@@ -187,6 +187,7 @@ class AwsContainerLogs(AwsCloud):
                 f"Error in getting container name and container ID: {error}"
             )
 
+        # TODO: Return dataclass object instead of list
         return [container_name, container_id]
 
     def _verify_log_group(self, log_group_name: str) -> bool:
@@ -222,6 +223,7 @@ class AwsContainerLogs(AwsCloud):
                     f"Unexpected error occurred in fetching log group name {log_group_name}.\n"
                     f"{error}\n"
                 )
+            # TODO: Raise more specific exception
             raise Exception(f"{error_message}")
 
         return len(response.get("logGroups", [])) == 1
