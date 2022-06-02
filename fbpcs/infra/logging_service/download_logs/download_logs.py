@@ -106,7 +106,7 @@ class AwsContainerLogs(AwsCloud):
                     f"Unexpected error occured in fetching the log event log group {log_group_name} and log stream {log_stream_name}\n"
                     f"{error}\n"
                 )
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(f"{error_message}")
 
         return messages
@@ -131,7 +131,7 @@ class AwsContainerLogs(AwsCloud):
             error_message = (
                 f"Failed to create folder {folder_name} in S3 bucket {bucket_name}\n"
             )
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(f"{error_message}")
 
     def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
@@ -184,7 +184,7 @@ class AwsContainerLogs(AwsCloud):
             error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
             if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
                 error_message = f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n{error}"
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception({error_message})
 
         return response
@@ -214,7 +214,7 @@ class AwsContainerLogs(AwsCloud):
             folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
         )
         if not s3_folders_contents:
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(
                 f"Folder name {self.S3_LOGGING_FOLDER}/{tag_name} not found in bucket {s3_bucket_name}."
                 f"Please check if tag name {tag_name} and S3 bucket name {s3_bucket_name} are passed set correctly."
@@ -226,7 +226,7 @@ class AwsContainerLogs(AwsCloud):
         )
 
         # check for download folder in local
-        # TODO: Use pathlib instead of creating paths ourselves
+        # TODO T122315644: Use pathlib instead of creating paths ourselves
         local_path = f"{local_download_dir}/{tag_name}"
 
         self.utils.create_folder(folder_location=local_path)
@@ -271,9 +271,9 @@ class AwsContainerLogs(AwsCloud):
             if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
                 error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
             else:
-                # TODO: This error message doesn't seem right
+                # TODO T122315973: This error message doesn't seem right
                 error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(f"{error_message}")
 
         # create logging folder
@@ -314,7 +314,7 @@ class AwsContainerLogs(AwsCloud):
         if not self._verify_log_stream(
             log_group_name=log_group_name, log_stream_name=log_stream_name
         ):
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(
                 f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
             )
@@ -343,7 +343,7 @@ class AwsContainerLogs(AwsCloud):
         service_name, container_name, container_id = None, None, None
 
         if container_arn is None:
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(
                 "Container arn is missing. Please check the arn of the container"
             )
@@ -359,10 +359,10 @@ class AwsContainerLogs(AwsCloud):
             task_id = container_arn_list[5]
             container_name, container_id = self._get_container_name_id(task_id=task_id)
         except IndexError as error:
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(f"Error in getting service name and task ID: {error}")
 
-        # TODO: Return dataclass object instead of list
+        # TODO T122316416: Return dataclass object instead of list
         return [service_name, container_name, container_id]
 
     def _parse_log_events(self, log_events: List[Dict[str, Any]]) -> List[str]:
@@ -402,12 +402,12 @@ class AwsContainerLogs(AwsCloud):
             container_name = task_id_list[1].replace("-cluster", "-container")
             container_id = task_id_list[2]
         except IndexError as error:
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(
                 f"Error in getting container name and container ID: {error}"
             )
 
-        # TODO: Return dataclass object instead of list
+        # TODO T122316416: Return dataclass object instead of list
         return [container_name, container_id]
 
     def _verify_log_group(self, log_group_name: str) -> bool:
@@ -443,7 +443,7 @@ class AwsContainerLogs(AwsCloud):
                     f"Unexpected error occurred in fetching log group name {log_group_name}.\n"
                     f"{error}\n"
                 )
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(f"{error_message}")
 
         return len(response.get("logGroups", [])) == 1
@@ -483,7 +483,7 @@ class AwsContainerLogs(AwsCloud):
                     f"Unexpected error occurred in finding log stream name {log_stream_name} in log grpup {log_group_name}\n"
                     f"{error}\n"
                 )
-            # TODO: Raise more specific exception
+            # TODO T122315363: Raise more specific exception
             raise Exception(f"{error_message}")
 
         return len(response.get("logStreams", [])) == 1
