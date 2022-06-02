@@ -106,6 +106,7 @@ class AwsContainerLogs(AwsCloud):
                     f"Unexpected error occured in fetching the log event log group {log_group_name} and log stream {log_stream_name}\n"
                     f"{error}\n"
                 )
+            # TODO: Raise more specific exception
             raise Exception(f"{error_message}")
 
         return messages
