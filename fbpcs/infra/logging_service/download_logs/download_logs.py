@@ -471,7 +471,9 @@ class AwsContainerLogs(AwsCloud):
             if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
                 error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
             else:
+                # TODO: This error message doesn't seem right
                 error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
+            # TODO: Raise more specific exception
             raise Exception(f"{error_message}")
 
         # create logging folder
