@@ -213,7 +213,34 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_s3_folder_contents(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        expected = {"ContinuationToken": "abc123", "Contents": ["a", "b", "c"]}
+        aws_container_logs.s3_client.list_objects_v2.return_value = expected
+        self.assertEqual(
+            expected, aws_container_logs.get_s3_folder_contents("bucket", "folder")
+        )
+
+        # Check that continuation token is set
+        aws_container_logs.s3_client.list_objects_v2.reset_mock()
+        aws_container_logs.s3_client.list_objects_v2.return_value = expected
+        self.assertEqual(
+            expected,
+            aws_container_logs.get_s3_folder_contents("bucket", "folder", "def678"),
+        )
+        aws_container_logs.s3_client.list_objects_v2.assert_called_once_with(
+            Bucket="bucket",
+            Prefix="folder",
+            ContinuationToken="def678",
+        )
+
+        # check exception cases
+        aws_container_logs.s3_client.list_objects_v2.reset_mock()
+        aws_container_logs.s3_client.list_objects_v2.side_effect = ClientError(
+            error_response={"Error": {"Code": "InvalidParameterException"}},
+            operation_name="list_objects_v2",
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't find folder.*"):
+            aws_container_logs.get_s3_folder_contents("bucket", "folder")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_s3_folder_path(self, mock_boto3) -> None:
