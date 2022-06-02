@@ -252,7 +252,10 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_s3_folder_path(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        aws_container_logs.S3_LOGGING_FOLDER = "aaa"
+        expected = "aaa/bbb/ccc"
+        self.assertEqual(expected, aws_container_logs._get_s3_folder_path("bbb", "ccc"))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_files_to_download_logs(self, mock_boto3) -> None:
