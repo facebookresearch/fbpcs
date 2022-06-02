@@ -7,11 +7,15 @@
 
 import logging
 import os
+from typing import Optional
 
 import boto3
+import botocore
 from botocore.exceptions import NoCredentialsError, NoRegionError
 
-from .cloud_baseclass import CloudBaseClass
+from fbpcs.infra.logging_service.download_logs.cloud.cloud_baseclass import (
+    CloudBaseClass,
+)
 
 # TODO: Convert this to factory
 class AwsCloud(CloudBaseClass):
@@ -21,39 +25,35 @@ class AwsCloud(CloudBaseClass):
 
     def __init__(
         self,
-        aws_access_key_id: str = None,
-        aws_secret_access_key: str = None,
-        aws_region: str = None,
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None,
+        aws_region: Optional[str] = None,
         logger_name: str = "logging_service",
-    ):
+    ) -> None:
 
-        self.aws_access_key_id = aws_access_key_id or os.environ.get(
-            "AWS_ACCESS_KEY_ID"
-        )
-        self.aws_secret_access_key = aws_secret_access_key or os.environ.get(
+        aws_access_key_id = aws_access_key_id or os.environ.get("AWS_ACCESS_KEY_ID")
+        aws_secret_access_key = aws_secret_access_key or os.environ.get(
             "AWS_SECRET_ACCESS_KEY"
         )
-        self.aws_region = aws_region or os.environ.get("AWS_REGION")
-        self.cloudwatch_client = None
-        self.s3_client = None
+        aws_region = aws_region or os.environ.get("AWS_REGION")
         self.log: logging.Logger = logging.getLogger(logger_name)
 
         try:
             sts = boto3.client(
                 "sts",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
             )
-            self.cloudwatch_client = boto3.client(
+            self.cloudwatch_client: botocore.client.BaseClient = boto3.client(
                 "logs",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
-                region_name=self.aws_region,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                region_name=aws_region,
             )
-            self.s3_client = boto3.client(
+            self.s3_client: botocore.client.BaseClient = boto3.client(
                 "s3",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
             )
 
         except NoCredentialsError as error:
