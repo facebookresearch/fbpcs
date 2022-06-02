@@ -191,7 +191,21 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_create_s3_folder(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        aws_container_logs.s3_client.put_object.return_value = {
+            "ResponseMetadata": {"HTTPStatusCode": 200}
+        }
+        self.assertIsNone(aws_container_logs.create_s3_folder("bucket", "folder"))
+        aws_container_logs.s3_client.put_object.assert_called_once_with(
+            Bucket="bucket", Key="folder"
+        )
+
+        aws_container_logs.s3_client.put_object.reset_mock()
+        aws_container_logs.s3_client.put_object.return_value = {
+            "ResponseMetadata": {"HTTPStatusCode": 403}
+        }
+        with self.assertRaisesRegex(Exception, "Failed to create.*"):
+            aws_container_logs.create_s3_folder("bucket", "folder")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_ensure_folder_exists(self, mock_boto3) -> None:
