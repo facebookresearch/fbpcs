@@ -414,6 +414,7 @@ class AwsContainerLogs(AwsCloud):
             folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
         )
         if not s3_folders_contents:
+            # TODO: Raise more specific exception
             raise Exception(
                 f"Folder name {self.S3_LOGGING_FOLDER}/{tag_name} not found in bucket {s3_bucket_name}."
                 f"Please check if tag name {tag_name} and S3 bucket name {s3_bucket_name} are passed set correctly."
@@ -425,6 +426,7 @@ class AwsContainerLogs(AwsCloud):
         )
 
         # check for download folder in local
+        # TODO: Use pathlib instead of creating paths ourselves
         local_path = f"{local_download_dir}/{tag_name}"
 
         self.utils.create_folder(folder_location=local_path)
