@@ -14,7 +14,6 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 
-DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 43200
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 
 DEFAULT_WAIT_FOR_CONTAINER_POLL = 5
