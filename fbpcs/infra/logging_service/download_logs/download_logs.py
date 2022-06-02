@@ -263,6 +263,7 @@ class AwsContainerLogs(AwsCloud):
                     f"Unexpected error occurred in finding log stream name {log_stream_name} in log grpup {log_group_name}\n"
                     f"{error}\n"
                 )
+            # TODO: Raise more specific exception
             raise Exception(f"{error_message}")
 
         return len(response.get("logStreams", [])) == 1
@@ -287,6 +288,7 @@ class AwsContainerLogs(AwsCloud):
             error_message = (
                 f"Failed to create folder {folder_name} in S3 bucket {bucket_name}\n"
             )
+            # TODO: Raise more specific exception
             raise Exception(f"{error_message}")
 
     def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
@@ -339,6 +341,7 @@ class AwsContainerLogs(AwsCloud):
             error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
             if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
                 error_message = f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n{error}"
+            # TODO: Raise more specific exception
             raise Exception({error_message})
 
         return response
@@ -507,6 +510,7 @@ class AwsContainerLogs(AwsCloud):
         if not self._verify_log_stream(
             log_group_name=log_group_name, log_stream_name=log_stream_name
         ):
+            # TODO: Raise more specific exception
             raise Exception(
                 f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
             )
