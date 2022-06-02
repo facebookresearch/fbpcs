@@ -259,7 +259,44 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_files_to_download_logs(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        expected = ["a", "b", "c"]
+        # Basic test
+        aws_container_logs.s3_client.list_objects_v2.side_effect = [
+            {
+                "Contents": [{"Key": "a"}, {"Key": "b"}, {"Key": "c"}],
+            }
+        ]
+        self.assertEqual(
+            expected, aws_container_logs._get_files_to_download_logs("bucket", "folder")
+        )
+
+        # Check with continuation tokens
+        aws_container_logs.s3_client.list_objects_v2.reset_mock()
+        aws_container_logs.s3_client.list_objects_v2.side_effect = [
+            {"NextContinuationToken": "abc123", "Contents": [{"Key": "a"}]},
+            {"NextContinuationToken": "abc456", "Contents": [{"Key": "b"}]},
+            {"Contents": [{"Key": "c"}]},
+        ]
+        self.assertEqual(
+            expected, aws_container_logs._get_files_to_download_logs("bucket", "folder")
+        )
+
+        # Ensure folders aren't included
+        aws_container_logs.s3_client.list_objects_v2.side_effect = [
+            {
+                "Contents": [
+                    {"Key": "f/"},
+                    {"Key": "a"},
+                    {"Key": "f2/"},
+                    {"Key": "b"},
+                    {"Key": "c"},
+                ],
+            }
+        ]
+        self.assertEqual(
+            expected, aws_container_logs._get_files_to_download_logs("bucket", "folder")
+        )
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_download_logs(self, mock_boto3) -> None:
