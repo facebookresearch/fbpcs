@@ -13,7 +13,24 @@ from fbpcs.infra.logging_service.download_logs.download_logs import AwsContainer
 class TestDownloadLogs(unittest.TestCase):
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_cloudwatch_logs(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        aws_container_logs.cloudwatch_client.get_log_events.side_effect = [
+            {"events": [{"message": "123"}], "nextForwardToken": "1"},
+            {"events": [{"message": "456"}], "nextForwardToken": "2"},
+            {"events": [{"message": "789"}], "nextForwardToken": "3"},
+            # Repeated event indicates no more data available
+            {"events": [{"message": "789"}], "nextForwardToken": "3"},
+        ]
+
+        expected = ["123", "456", "789"]
+        self.assertEqual(
+            expected,
+            aws_container_logs.get_cloudwatch_logs("foo", "bar"),
+        )
+        # NOTE: we don't want to get *too* specific with these asserts
+        # because we want to allow the internal details to change and
+        # still meet the API requirements
+        aws_container_logs.cloudwatch_client.get_log_events.assert_called()
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_parse_container_arn(self, mock_boto3) -> None:
