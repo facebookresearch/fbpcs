@@ -82,7 +82,13 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_parse_log_events(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        events = [
+            {"message": "hello", "code": 200, "other": "ignore"},
+            {"message": "world", "code": 200, "other": "ignore"},
+        ]
+        expected = ["hello", "world"]
+        self.assertEqual(expected, aws_container_logs._parse_log_events(events))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_container_name_id(self, mock_boto3) -> None:
