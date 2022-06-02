@@ -111,6 +111,226 @@ class AwsContainerLogs(AwsCloud):
 
         return messages
 
+    def create_s3_folder(self, bucket_name: str, folder_name: str) -> None:
+        """
+        Creates a folder (Key in boto3 terms) inside the s3 bucket
+        Args:
+            bucket_name (string): Name of the s3 bucket where logs will be stored
+            folder_name (string): Name of folder for which is to be created
+        Returns:
+            None
+        """
+
+        response = self.s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+
+        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+            self.log.info(
+                f"Successfully created folder {folder_name} in S3 bucket {bucket_name}"
+            )
+        else:
+            error_message = (
+                f"Failed to create folder {folder_name} in S3 bucket {bucket_name}\n"
+            )
+            # TODO: Raise more specific exception
+            raise Exception(f"{error_message}")
+
+    def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
+        """
+        Verify if the folder is present in s3 bucket
+        Args:
+            bucket_name (string): Name of the s3 bucket where logs will be stored
+            folder_name (string): Name of folder for which verification is needed
+        Returns:
+            Boolean
+        """
+
+        response = self.get_s3_folder_contents(
+            bucket_name=bucket_name, folder_name=folder_name
+        )
+
+        return "Contents" in response
+
+    def get_s3_folder_contents(
+        self,
+        bucket_name: str,
+        folder_name: str,
+        next_continuation_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Fetches folders in a given S3 bucket and folders information
+
+        Args:
+            bucket_name (string): Name of the s3 bucket where logs will be stored
+            folder_name (string): Name of folder for fetching the contents
+            NextContinuationToken (string): Token to get all the logs in case of pagination
+        Returns:
+            Dict
+        """
+
+        response = {}
+        kwargs = {}
+
+        if next_continuation_token == "":
+            next_continuation_token = None
+
+        if next_continuation_token:
+            kwargs = {"ContinuationToken": next_continuation_token}
+
+        try:
+            response = self.s3_client.list_objects_v2(
+                Bucket=bucket_name, Prefix=folder_name, **kwargs
+            )
+        except ClientError as error:
+            error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
+            if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
+                error_message = f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n{error}"
+            # TODO: Raise more specific exception
+            raise Exception({error_message})
+
+        return response
+
+    def download_logs(
+        self,
+        s3_bucket_name: str,
+        tag_name: str,
+        local_download_dir: Optional[str] = None,
+    ) -> None:
+        """
+        Download logs from S3 to local
+        Args:
+            s3_bucket_name (str): Name of the S3 bucket in AWS account
+            tag_name (str): Unique name for downloaded logs
+            local_download_dir (str): Path where logs should be downloaded locally
+        Returns:
+            None
+        """
+
+        # If the local download directory is not set then set to default
+        if local_download_dir is None:
+            local_download_dir = self.DEFAULT_DOWNLOAD_LOCATION
+
+        s3_folders_contents = self.ensure_folder_exists(
+            bucket_name=s3_bucket_name,
+            folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
+        )
+        if not s3_folders_contents:
+            # TODO: Raise more specific exception
+            raise Exception(
+                f"Folder name {self.S3_LOGGING_FOLDER}/{tag_name} not found in bucket {s3_bucket_name}."
+                f"Please check if tag name {tag_name} and S3 bucket name {s3_bucket_name} are passed set correctly."
+            )
+
+        files_to_download = self._get_files_to_download_logs(
+            s3_bucket_name=s3_bucket_name,
+            folder_to_download=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
+        )
+
+        # check for download folder in local
+        # TODO: Use pathlib instead of creating paths ourselves
+        local_path = f"{local_download_dir}/{tag_name}"
+
+        self.utils.create_folder(folder_location=local_path)
+
+        for file_to_download in files_to_download:
+            file_name = file_to_download.replace(
+                f"{self.S3_LOGGING_FOLDER}/{tag_name}/", ""
+            ).rstrip()
+            self.s3_client.download_file(
+                Bucket=s3_bucket_name,
+                Key=file_to_download,
+                Filename=f"{local_path}/{file_name}",
+            )
+
+        # compress downloaded logs
+        self.utils.compress_downloaded_logs(folder_location=local_path)
+
+    def upload_logs_to_s3_from_cloudwatch(
+        self, s3_bucket_name: str, container_arn: str
+    ) -> None:
+        """
+        Umbrella function to call other functions to upload the logs from cloudwatch to S3
+
+        Folder structure
+
+        [S3 Bucket]
+            -> [folder name "logging"]
+                -> [folder name in format {tag_name}]
+                    -> [exported logs from each container]
+
+        Args:
+            s3_bucket_name (string): Name of the s3 bucket where logs will be stored
+            container_arn (string): Container arn to get log group and log stream names
+        Returns:
+            None
+        """
+
+        # verify s3 bucket
+        try:
+            self.s3_client.head_bucket(Bucket=s3_bucket_name)
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
+                error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
+            else:
+                # TODO: This error message doesn't seem right
+                error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
+            # TODO: Raise more specific exception
+            raise Exception(f"{error_message}")
+
+        # create logging folder
+        if not self.ensure_folder_exists(
+            bucket_name=s3_bucket_name, folder_name=f"{self.S3_LOGGING_FOLDER}/"
+        ):
+            self.create_s3_folder(
+                bucket_name=s3_bucket_name,
+                folder_name=f"{self.S3_LOGGING_FOLDER}/",
+            )
+
+        # create folder with tag_name passed
+        if not self.ensure_folder_exists(
+            bucket_name=s3_bucket_name,
+            folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
+        ):
+            self.create_s3_folder(
+                bucket_name=s3_bucket_name,
+                folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
+            )
+
+        # fetch logs
+        self.log.info(
+            "Getting service name, container name and container ID from continer arn"
+        )
+        service_name, container_name, container_id = self._parse_container_arn(
+            container_arn=container_arn
+        )
+        log_group_name = self.LOG_GROUP.format(service_name, container_name)
+        log_stream_name = self.LOG_STREAM.format(
+            service_name, container_name, container_id
+        )
+        s3_folder_path = self._get_s3_folder_path(self.tag_name, container_id)
+
+        if not self._verify_log_group(log_group_name=log_group_name):
+            raise Exception(f"Couldn't find log group {log_group_name} in AWS account.")
+
+        if not self._verify_log_stream(
+            log_group_name=log_group_name, log_stream_name=log_stream_name
+        ):
+            # TODO: Raise more specific exception
+            raise Exception(
+                f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
+            )
+
+        message_events = self.get_cloudwatch_logs(
+            log_group_name=log_group_name,
+            log_stream_name=log_stream_name,
+            container_arn=container_arn,
+        )
+
+        self.s3_client.put_object(
+            Body="\n".join(str(event) for event in message_events).encode("utf-8"),
+            Bucket=s3_bucket_name,
+            Key=s3_folder_path,
+        )
+
     def _parse_container_arn(self, container_arn: Optional[str]) -> List[str]:
         """
         Parses container arn to get the container name and id needed to derive log name and log stream
@@ -268,84 +488,6 @@ class AwsContainerLogs(AwsCloud):
 
         return len(response.get("logStreams", [])) == 1
 
-    def create_s3_folder(self, bucket_name: str, folder_name: str) -> None:
-        """
-        Creates a folder (Key in boto3 terms) inside the s3 bucket
-        Args:
-            bucket_name (string): Name of the s3 bucket where logs will be stored
-            folder_name (string): Name of folder for which is to be created
-        Returns:
-            None
-        """
-
-        response = self.s3_client.put_object(Bucket=bucket_name, Key=folder_name)
-
-        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-            self.log.info(
-                f"Successfully created folder {folder_name} in S3 bucket {bucket_name}"
-            )
-        else:
-            error_message = (
-                f"Failed to create folder {folder_name} in S3 bucket {bucket_name}\n"
-            )
-            # TODO: Raise more specific exception
-            raise Exception(f"{error_message}")
-
-    def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
-        """
-        Verify if the folder is present in s3 bucket
-        Args:
-            bucket_name (string): Name of the s3 bucket where logs will be stored
-            folder_name (string): Name of folder for which verification is needed
-        Returns:
-            Boolean
-        """
-
-        response = self.get_s3_folder_contents(
-            bucket_name=bucket_name, folder_name=folder_name
-        )
-
-        return "Contents" in response
-
-    def get_s3_folder_contents(
-        self,
-        bucket_name: str,
-        folder_name: str,
-        next_continuation_token: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """
-        Fetches folders in a given S3 bucket and folders information
-
-        Args:
-            bucket_name (string): Name of the s3 bucket where logs will be stored
-            folder_name (string): Name of folder for fetching the contents
-            NextContinuationToken (string): Token to get all the logs in case of pagination
-        Returns:
-            Dict
-        """
-
-        response = {}
-        kwargs = {}
-
-        if next_continuation_token == "":
-            next_continuation_token = None
-
-        if next_continuation_token:
-            kwargs = {"ContinuationToken": next_continuation_token}
-
-        try:
-            response = self.s3_client.list_objects_v2(
-                Bucket=bucket_name, Prefix=folder_name, **kwargs
-            )
-        except ClientError as error:
-            error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
-            if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
-                error_message = f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n{error}"
-            # TODO: Raise more specific exception
-            raise Exception({error_message})
-
-        return response
-
     def _get_s3_folder_path(self, tag_name: str, container_id: str) -> str:
         """
         Return path of S3 folder
@@ -388,145 +530,3 @@ class AwsContainerLogs(AwsCloud):
                     files_to_download.append(key)
             next_continuation_token = response.get("NextContinuationToken")
         return files_to_download
-
-    def download_logs(
-        self,
-        s3_bucket_name: str,
-        tag_name: str,
-        local_download_dir: Optional[str] = None,
-    ) -> None:
-        """
-        Download logs from S3 to local
-        Args:
-            s3_bucket_name (str): Name of the S3 bucket in AWS account
-            tag_name (str): Unique name for downloaded logs
-            local_download_dir (str): Path where logs should be downloaded locally
-        Returns:
-            None
-        """
-
-        # If the local download directory is not set then set to default
-        if local_download_dir is None:
-            local_download_dir = self.DEFAULT_DOWNLOAD_LOCATION
-
-        s3_folders_contents = self.ensure_folder_exists(
-            bucket_name=s3_bucket_name,
-            folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
-        )
-        if not s3_folders_contents:
-            # TODO: Raise more specific exception
-            raise Exception(
-                f"Folder name {self.S3_LOGGING_FOLDER}/{tag_name} not found in bucket {s3_bucket_name}."
-                f"Please check if tag name {tag_name} and S3 bucket name {s3_bucket_name} are passed set correctly."
-            )
-
-        files_to_download = self._get_files_to_download_logs(
-            s3_bucket_name=s3_bucket_name,
-            folder_to_download=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
-        )
-
-        # check for download folder in local
-        # TODO: Use pathlib instead of creating paths ourselves
-        local_path = f"{local_download_dir}/{tag_name}"
-
-        self.utils.create_folder(folder_location=local_path)
-
-        for file_to_download in files_to_download:
-            file_name = file_to_download.replace(
-                f"{self.S3_LOGGING_FOLDER}/{tag_name}/", ""
-            ).rstrip()
-            self.s3_client.download_file(
-                Bucket=s3_bucket_name,
-                Key=file_to_download,
-                Filename=f"{local_path}/{file_name}",
-            )
-
-        # compress downloaded logs
-        self.utils.compress_downloaded_logs(folder_location=local_path)
-
-    def upload_logs_to_s3_from_cloudwatch(
-        self, s3_bucket_name: str, container_arn: str
-    ) -> None:
-        """
-        Umbrella function to call other functions to upload the logs from cloudwatch to S3
-
-        Folder structure
-
-        [S3 Bucket]
-            -> [folder name "logging"]
-                -> [folder name in format {tag_name}]
-                    -> [exported logs from each container]
-
-        Args:
-            s3_bucket_name (string): Name of the s3 bucket where logs will be stored
-            container_arn (string): Container arn to get log group and log stream names
-        Returns:
-            None
-        """
-
-        # verify s3 bucket
-        try:
-            self.s3_client.head_bucket(Bucket=s3_bucket_name)
-        except ClientError as error:
-            if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
-                error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
-            else:
-                # TODO: This error message doesn't seem right
-                error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
-            # TODO: Raise more specific exception
-            raise Exception(f"{error_message}")
-
-        # create logging folder
-        if not self.ensure_folder_exists(
-            bucket_name=s3_bucket_name, folder_name=f"{self.S3_LOGGING_FOLDER}/"
-        ):
-            self.create_s3_folder(
-                bucket_name=s3_bucket_name,
-                folder_name=f"{self.S3_LOGGING_FOLDER}/",
-            )
-
-        # create folder with tag_name passed
-        if not self.ensure_folder_exists(
-            bucket_name=s3_bucket_name,
-            folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
-        ):
-            self.create_s3_folder(
-                bucket_name=s3_bucket_name,
-                folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
-            )
-
-        # fetch logs
-        self.log.info(
-            "Getting service name, container name and container ID from continer arn"
-        )
-        service_name, container_name, container_id = self._parse_container_arn(
-            container_arn=container_arn
-        )
-        log_group_name = self.LOG_GROUP.format(service_name, container_name)
-        log_stream_name = self.LOG_STREAM.format(
-            service_name, container_name, container_id
-        )
-        s3_folder_path = self._get_s3_folder_path(self.tag_name, container_id)
-
-        if not self._verify_log_group(log_group_name=log_group_name):
-            raise Exception(f"Couldn't find log group {log_group_name} in AWS account.")
-
-        if not self._verify_log_stream(
-            log_group_name=log_group_name, log_stream_name=log_stream_name
-        ):
-            # TODO: Raise more specific exception
-            raise Exception(
-                f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
-            )
-
-        message_events = self.get_cloudwatch_logs(
-            log_group_name=log_group_name,
-            log_stream_name=log_stream_name,
-            container_arn=container_arn,
-        )
-
-        self.s3_client.put_object(
-            Body="\n".join(str(event) for event in message_events).encode("utf-8"),
-            Bucket=s3_bucket_name,
-            Key=s3_folder_path,
-        )
