@@ -111,7 +111,7 @@ class AwsContainerLogs(AwsCloud):
 
         return messages
 
-    def _parse_container_arn(self, container_arn: str) -> List[str]:
+    def _parse_container_arn(self, container_arn: Optional[str]) -> List[str]:
         """
         Parses container arn to get the container name and id needed to derive log name and log stream
         Example ARN looks like:
@@ -123,6 +123,7 @@ class AwsContainerLogs(AwsCloud):
         service_name, container_name, container_id = None, None, None
 
         if container_arn is None:
+            # TODO: Raise more specific exception
             raise Exception(
                 "Container arn is missing. Please check the arn of the container"
             )
@@ -138,8 +139,10 @@ class AwsContainerLogs(AwsCloud):
             task_id = container_arn_list[5]
             container_name, container_id = self._get_container_name_id(task_id=task_id)
         except IndexError as error:
+            # TODO: Raise more specific exception
             raise Exception(f"Error in getting service name and task ID: {error}")
 
+        # TODO: Return dataclass object instead of list
         return [service_name, container_name, container_id]
 
     def _parse_log_events(self, log_events: List[Dict[str, Any]]) -> List[str]:
