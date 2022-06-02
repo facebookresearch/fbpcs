@@ -7,6 +7,8 @@
 import unittest
 from unittest.mock import patch
 
+from botocore.exceptions import ClientError
+
 from fbpcs.infra.logging_service.download_logs.download_logs import AwsContainerLogs
 
 
@@ -31,6 +33,36 @@ class TestDownloadLogs(unittest.TestCase):
         # because we want to allow the internal details to change and
         # still meet the API requirements
         aws_container_logs.cloudwatch_client.get_log_events.assert_called()
+
+        ####################
+        # Test error cases #
+        ####################
+        aws_container_logs.cloudwatch_client.get_log_events.reset_mock()
+        aws_container_logs.cloudwatch_client.get_log_events.side_effect = ClientError(
+            error_response={"Error": {"Code": "InvalidParameterException"}},
+            operation_name="get_log_events",
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't fetch.*"):
+            aws_container_logs.get_cloudwatch_logs("foo", "bar")
+            aws_container_logs.cloudwatch_client.get_log_events.assert_called()
+
+        aws_container_logs.cloudwatch_client.get_log_events.reset_mock()
+        aws_container_logs.cloudwatch_client.get_log_events.side_effect = ClientError(
+            error_response={"Error": {"Code": "ResourceNotFoundException"}},
+            operation_name="get_log_events",
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't find.*"):
+            aws_container_logs.get_cloudwatch_logs("foo", "bar")
+            aws_container_logs.cloudwatch_client.get_log_events.assert_called()
+
+        aws_container_logs.cloudwatch_client.get_log_events.reset_mock()
+        aws_container_logs.cloudwatch_client.get_log_events.side_effect = ClientError(
+            error_response={"Error": {"Code": "SomethingElseHappenedException"}},
+            operation_name="get_log_events",
+        )
+        with self.assertRaisesRegex(Exception, "Unexpected error.*"):
+            aws_container_logs.get_cloudwatch_logs("foo", "bar")
+            aws_container_logs.cloudwatch_client.get_log_events.assert_called()
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_parse_container_arn(self, mock_boto3) -> None:
