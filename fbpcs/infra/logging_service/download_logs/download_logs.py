@@ -182,6 +182,7 @@ class AwsContainerLogs(AwsCloud):
             container_name = task_id_list[1].replace("-cluster", "-container")
             container_id = task_id_list[2]
         except IndexError as error:
+            # TODO: Raise more specific exception
             raise Exception(
                 f"Error in getting container name and container ID: {error}"
             )
