@@ -299,8 +299,47 @@ class TestDownloadLogs(unittest.TestCase):
         )
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_download_logs(self, mock_boto3) -> None:
-        pass
+    @patch("fbpcs.infra.logging_service.download_logs.download_logs.Utils")
+    def test_download_logs(self, mock_utils, mock_boto3) -> None:
+        aws_container_logs = AwsContainerLogs("my_tag")
+        aws_container_logs.s3_client.list_objects_v2.return_value = {
+            "Contents": [
+                {"Key": "f/"},
+                {"Key": "a"},
+                {"Key": "f2/"},
+                {"Key": "b"},
+                {"Key": "c"},
+            ],
+        }
+        expected_files_to_download = ["a", "b", "c"]
+
+        # no local_download_dir
+        expected_local_path = f"{aws_container_logs.DEFAULT_DOWNLOAD_LOCATION}/tag"
+        aws_container_logs.download_logs("bucket", "tag")
+        aws_container_logs.utils.create_folder.assert_called_once()
+        for f in expected_files_to_download:
+            aws_container_logs.s3_client.download_file.assert_any_call(
+                Bucket="bucket", Key=f, Filename=f"{expected_local_path}/{f}"
+            )
+
+        # override local_download_dir
+        aws_container_logs.s3_client.download_file.reset_mock()
+        aws_container_logs.utils.create_folder.reset_mock()
+        expected_local_path = "/tmp/tag"
+        aws_container_logs.download_logs("bucket", "tag", "/tmp")
+        aws_container_logs.utils.create_folder.assert_called_once()
+        for f in expected_files_to_download:
+            aws_container_logs.s3_client.download_file.assert_any_call(
+                Bucket="bucket", Key=f, Filename=f"{expected_local_path}/{f}"
+            )
+
+        # Make folder not exist
+        aws_container_logs.s3_client.download_file.reset_mock()
+        aws_container_logs.utils.create_folder.reset_mock()
+        aws_container_logs.s3_client.list_objects_v2.reset_mock()
+        aws_container_logs.s3_client.list_objects_v2.return_value = {}
+        with self.assertRaisesRegex(Exception, "Folder .* not found.*"):
+            aws_container_logs.download_logs("bucket", "tag")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_upload_logs_to_s3_from_cloudwatch(self, mock_boto3) -> None:
