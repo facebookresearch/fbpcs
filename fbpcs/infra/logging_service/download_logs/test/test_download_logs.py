@@ -4,8 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
+
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 
@@ -17,7 +19,7 @@ class TestDownloadLogs(unittest.TestCase):
     # Tests for public interface #
     ##############################
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_get_cloudwatch_logs(self, mock_boto3) -> None:
+    def test_get_cloudwatch_logs(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.cloudwatch_client.get_log_events.side_effect = [
             {"events": [{"message": "123"}], "nextForwardToken": "1"},
@@ -68,7 +70,7 @@ class TestDownloadLogs(unittest.TestCase):
             aws_container_logs.cloudwatch_client.get_log_events.assert_called()
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_create_s3_folder(self, mock_boto3) -> None:
+    def test_create_s3_folder(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.s3_client.put_object.return_value = {
             "ResponseMetadata": {"HTTPStatusCode": 200}
@@ -86,7 +88,7 @@ class TestDownloadLogs(unittest.TestCase):
             aws_container_logs.create_s3_folder("bucket", "folder")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_ensure_folder_exists(self, mock_boto3) -> None:
+    def test_ensure_folder_exists(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.s3_client.list_objects_v2.return_value = {
             "Contents": ["a", "b", "c"]
@@ -98,7 +100,7 @@ class TestDownloadLogs(unittest.TestCase):
         self.assertFalse(aws_container_logs.ensure_folder_exists("bucket", "folder"))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_get_s3_folder_contents(self, mock_boto3) -> None:
+    def test_get_s3_folder_contents(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         expected = {"ContinuationToken": "abc123", "Contents": ["a", "b", "c"]}
         aws_container_logs.s3_client.list_objects_v2.return_value = expected
@@ -130,7 +132,9 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     @patch("fbpcs.infra.logging_service.download_logs.download_logs.Utils")
-    def test_download_logs(self, mock_utils, mock_boto3) -> None:
+    def test_download_logs(
+        self, _mock_utils: MagicMock, _mock_boto3: MagicMock
+    ) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.s3_client.list_objects_v2.return_value = {
             "Contents": [
@@ -172,7 +176,7 @@ class TestDownloadLogs(unittest.TestCase):
             aws_container_logs.download_logs("bucket", "tag")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_upload_logs_to_s3_from_cloudwatch(self, mock_boto3) -> None:
+    def test_upload_logs_to_s3_from_cloudwatch(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.cloudwatch_client.get_log_events.side_effect = [
             {"events": [{"message": "123"}], "nextForwardToken": "1"},
@@ -294,7 +298,7 @@ class TestDownloadLogs(unittest.TestCase):
     # Tests for logically private methods #
     #######################################
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_parse_container_arn(self, mock_boto3) -> None:
+    def test_parse_container_arn(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         with self.assertRaisesRegex(Exception, "Container arn is missing.*"):
             aws_container_logs._parse_container_arn(None)
@@ -310,7 +314,7 @@ class TestDownloadLogs(unittest.TestCase):
         self.assertEqual(expected, aws_container_logs._parse_container_arn(normal_arn))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_parse_log_events(self, mock_boto3) -> None:
+    def test_parse_log_events(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         events = [
             {"message": "hello", "code": 200, "other": "ignore"},
@@ -320,7 +324,7 @@ class TestDownloadLogs(unittest.TestCase):
         self.assertEqual(expected, aws_container_logs._parse_log_events(events))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_get_container_name_id(self, mock_boto3) -> None:
+    def test_get_container_name_id(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         bad_task_id = "abc/123"
         with self.assertRaisesRegex(Exception, "Error in getting container name.*"):
@@ -341,7 +345,7 @@ class TestDownloadLogs(unittest.TestCase):
         )
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_verify_log_group(self, mock_boto3) -> None:
+    def test_verify_log_group(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.cloudwatch_client.describe_log_groups.return_value = {
             "logGroups": ["my_log_group"]
@@ -379,7 +383,7 @@ class TestDownloadLogs(unittest.TestCase):
             aws_container_logs._verify_log_group("my_log_group")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_verify_log_stream(self, mock_boto3) -> None:
+    def test_verify_log_stream(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.cloudwatch_client.describe_log_streams.return_value = {
             "logStreams": ["my_log_stream"]
@@ -419,14 +423,14 @@ class TestDownloadLogs(unittest.TestCase):
             aws_container_logs._verify_log_stream("my_log_group", "my_log_stream")
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_get_s3_folder_path(self, mock_boto3) -> None:
+    def test_get_s3_folder_path(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         aws_container_logs.S3_LOGGING_FOLDER = "aaa"
         expected = "aaa/bbb/ccc"
         self.assertEqual(expected, aws_container_logs._get_s3_folder_path("bbb", "ccc"))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
-    def test_get_files_to_download_logs(self, mock_boto3) -> None:
+    def test_get_files_to_download_logs(self, _mock_boto3: MagicMock) -> None:
         aws_container_logs = AwsContainerLogs("my_tag")
         expected = ["a", "b", "c"]
         # Basic test
