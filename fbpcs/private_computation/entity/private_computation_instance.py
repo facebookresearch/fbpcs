@@ -184,6 +184,16 @@ class PrivateComputationInstance(InstanceBase):
         return self._get_stage_output_path("pid_stage", "csv")
 
     @property
+    def pid_stage_output_prepare_path(self) -> str:
+        suffix = (
+            STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_PREPARE]
+            if self.role is PrivateComputationRole.PUBLISHER
+            else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_PREPARE]
+        )
+
+        return f"{self.pid_stage_output_base_path}{suffix}"
+
+    @property
     def pid_stage_output_spine_path(self) -> str:
         spine_path_suffix = (
             STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_RUN_PID]
