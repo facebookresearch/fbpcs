@@ -15,6 +15,12 @@ Types of changes
 
 ## [Unreleased]
 
+## [1.6.0] - 2022-06-02
+
+### Changed
+
+- Changes since last release: [Commits](https://github.com/facebookresearch/fbpcs/compare/v1.5.0...91b1b5821feb7b8b4d40203bce866aad65f9c422)
+
 ## [1.5.0] - 2022-04-06
 
 ### Added
