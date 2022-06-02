@@ -92,7 +92,24 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_container_name_id(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        bad_task_id = "abc/123"
+        with self.assertRaisesRegex(Exception, "Error in getting container name.*"):
+            aws_container_logs._get_container_name_id(bad_task_id)
+
+        # Simple test
+        normal_task_id = "task/container-name/abc123"
+        expected = ["container-name", "abc123"]
+        self.assertEqual(
+            expected, aws_container_logs._get_container_name_id(normal_task_id)
+        )
+
+        # Replace -cluster
+        cluster_task_id = "task/my-cluster/abc123"
+        expected = ["my-container", "abc123"]
+        self.assertEqual(
+            expected, aws_container_logs._get_container_name_id(cluster_task_id)
+        )
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_verify_log_group(self, mock_boto3) -> None:
