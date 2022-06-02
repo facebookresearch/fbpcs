@@ -23,6 +23,7 @@ class TestDataIngestion(TestCase):
                 "event_time": 1234,
                 "custom_data": {"currency": "usd", "value": 2},
                 "event_name": "Purchase",
+                "pc_test_event_code": "sample_test_event",
                 "user_data": {
                     "em": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111",
                     "madid": "bbbbbbbbbbbbbbbb2222222222222222",
@@ -52,6 +53,10 @@ class TestDataIngestion(TestCase):
             decoded_dict["data_source_id"], self.sample_record_data["pixelId"]
         )
         self.assertEqual(decoded_dict["timestamp"], server_side_event["event_time"])
+        self.assertEqual(
+            decoded_dict["pc_test_event_code"], server_side_event["pc_test_event_code"]
+        )
+
         self.assertEqual(
             decoded_dict["currency_type"], server_side_event["custom_data"]["currency"]
         )
