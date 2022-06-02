@@ -343,4 +343,119 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_upload_logs_to_s3_from_cloudwatch(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        aws_container_logs.cloudwatch_client.get_log_events.side_effect = [
+            {"events": [{"message": "123"}], "nextForwardToken": "1"},
+            {"events": [{"message": "456"}], "nextForwardToken": "2"},
+            {"events": [{"message": "789"}], "nextForwardToken": "3"},
+            # Repeated event indicates no more data available
+            {"events": [{"message": "789"}], "nextForwardToken": "3"},
+        ]
+
+        aws_container_logs.cloudwatch_client.describe_log_groups.return_value = {
+            "logGroups": ["my_log_group"]
+        }
+
+        aws_container_logs.cloudwatch_client.describe_log_streams.return_value = {
+            "logStreams": ["my_log_stream"]
+        }
+
+        aws_container_logs.s3_client.put_object.return_value = {
+            "ResponseMetadata": {"HTTPStatusCode": 200}
+        }
+
+        arn = (
+            "arn:aws:ecs:fake-region:123456789:task/fake-container-name/1234abcdef56789"
+        )
+        expected_key = f"{aws_container_logs.S3_LOGGING_FOLDER}/my_tag/1234abcdef56789"
+        expected_body = "123\n456\n789".encode("utf-8")
+
+        # folders already exist, no need to create
+        aws_container_logs.s3_client.list_objects_v2.return_value = {
+            "Contents": [
+                {"Key": "f/"},
+                {"Key": "a"},
+                {"Key": "f2/"},
+                {"Key": "b"},
+                {"Key": "c"},
+            ],
+        }
+        aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
+        aws_container_logs.s3_client.put_object.assert_called_once_with(
+            Body=expected_body, Bucket="bucket", Key=expected_key
+        )
+
+        # folders don't exist, create first
+        # TODO: Put this repeated code in a setUp block
+        aws_container_logs.cloudwatch_client.get_log_events.reset_mock()
+        aws_container_logs.cloudwatch_client.get_log_events.side_effect = [
+            {"events": [{"message": "123"}], "nextForwardToken": "1"},
+            {"events": [{"message": "456"}], "nextForwardToken": "2"},
+            {"events": [{"message": "789"}], "nextForwardToken": "3"},
+            # Repeated event indicates no more data available
+            {"events": [{"message": "789"}], "nextForwardToken": "3"},
+        ]
+        aws_container_logs.s3_client.list_objects_v2.reset_mock()
+        aws_container_logs.s3_client.list_objects_v2.return_value = {}
+        aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
+        aws_container_logs.s3_client.put_object.assert_any_call(
+            Bucket="bucket",
+            Key=f"{aws_container_logs.S3_LOGGING_FOLDER}/",
+        )
+        aws_container_logs.s3_client.put_object.assert_any_call(
+            Bucket="bucket",
+            Key=f"{aws_container_logs.S3_LOGGING_FOLDER}/my_tag/",
+        )
+        aws_container_logs.s3_client.put_object.assert_any_call(
+            Body=expected_body, Bucket="bucket", Key=expected_key
+        )
+
+        ###############
+        # Error cases #
+        ###############
+        # NoSuchBucket from head_bucket
+        aws_container_logs.s3_client.head_bucket.reset_mock()
+        aws_container_logs.s3_client.head_bucket.side_effect = ClientError(
+            error_response={"Error": {"Code": "NoSuchBucket"}},
+            operation_name="head_bucket",
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't find bucket.*"):
+            aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
+            aws_container_logs.s3_client.head_bucket.assert_called()
+
+        # Generic exception from head_bucket
+        aws_container_logs.s3_client.head_bucket.reset_mock()
+        aws_container_logs.s3_client.head_bucket.side_effect = ClientError(
+            error_response={"Error": {"Code": "SomethingElseHappenedException"}},
+            operation_name="head_bucket",
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't find the S3.*"):
+            aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
+            aws_container_logs.s3_client.head_bucket.assert_called()
+
+        # Can't verify log group
+        aws_container_logs.s3_client.head_bucket.reset_mock(side_effect=True)
+        aws_container_logs.cloudwatch_client.describe_log_groups.side_effect = (
+            ClientError(
+                error_response={"Error": {"Code": "InvalidParameterException"}},
+                operation_name="describe_log_groups",
+            )
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't find log group.*"):
+            aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
+
+        # Can't verify log stream
+        aws_container_logs.cloudwatch_client.describe_log_groups.reset_mock(
+            side_effect=True
+        )
+        aws_container_logs.cloudwatch_client.describe_log_groups.return_value = {
+            "logGroups": ["my_log_group"]
+        }
+        aws_container_logs.cloudwatch_client.describe_log_streams.side_effect = (
+            ClientError(
+                error_response={"Error": {"Code": "InvalidParameterException"}},
+                operation_name="describe_log_streams",
+            )
+        )
+        with self.assertRaisesRegex(Exception, "Couldn't find log stream.*"):
+            aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
