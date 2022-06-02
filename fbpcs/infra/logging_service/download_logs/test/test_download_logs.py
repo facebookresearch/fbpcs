@@ -66,7 +66,19 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_parse_container_arn(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        with self.assertRaisesRegex(Exception, "Container arn is missing.*"):
+            aws_container_logs._parse_container_arn(None)
+
+        bad_arn = "abc:123"
+        with self.assertRaisesRegex(Exception, "Error in getting service name.*"):
+            aws_container_logs._parse_container_arn(bad_arn)
+
+        normal_arn = (
+            "arn:aws:ecs:fake-region:123456789:task/fake-container-name/1234abcdef56789"
+        )
+        expected = ["ecs", "fake-container-name", "1234abcdef56789"]
+        self.assertEqual(expected, aws_container_logs._parse_container_arn(normal_arn))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_parse_log_events(self, mock_boto3) -> None:
