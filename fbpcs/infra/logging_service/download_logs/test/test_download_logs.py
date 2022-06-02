@@ -209,7 +209,15 @@ class TestDownloadLogs(unittest.TestCase):
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_ensure_folder_exists(self, mock_boto3) -> None:
-        pass
+        aws_container_logs = AwsContainerLogs("my_tag")
+        aws_container_logs.s3_client.list_objects_v2.return_value = {
+            "Contents": ["a", "b", "c"]
+        }
+        self.assertTrue(aws_container_logs.ensure_folder_exists("bucket", "folder"))
+
+        aws_container_logs.s3_client.list_objects_v2.reset_mock()
+        aws_container_logs.s3_client.list_objects_v2.return_value = {}
+        self.assertFalse(aws_container_logs.ensure_folder_exists("bucket", "folder"))
 
     @patch("fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3")
     def test_get_s3_folder_contents(self, mock_boto3) -> None:
