@@ -11,7 +11,7 @@ import shutil
 
 class Utils:
     @staticmethod
-    def create_folder(folder_location) -> None:
+    def create_folder(folder_location: str) -> None:
         """
         Creates folder in the given path
         Args:

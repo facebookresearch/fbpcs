@@ -6,11 +6,12 @@
 # pyre-strict
 
 
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 from botocore.exceptions import ClientError
-from cloud.aws_cloud import AwsCloud
-from utils.utils import Utils
+
+from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
+from fbpcs.infra.logging_service.download_logs.utils.utils import Utils
 
 
 class AwsContainerLogs(AwsCloud):
@@ -27,10 +28,10 @@ class AwsContainerLogs(AwsCloud):
     def __init__(
         self,
         tag_name: str,
-        aws_access_key_id: str = None,
-        aws_secret_access_key: str = None,
-        aws_region: str = None,
-    ):
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None,
+        aws_region: Optional[str] = None,
+    ) -> None:
         super().__init__(
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
@@ -40,8 +41,11 @@ class AwsContainerLogs(AwsCloud):
         self.utils = Utils()
 
     def get_cloudwatch_logs(
-        self, log_group_name: str, log_stream_name: str, container_arn: str = None
-    ) -> List[Dict]:
+        self,
+        log_group_name: str,
+        log_stream_name: str,
+        container_arn: Optional[str] = None,
+    ) -> List[str]:
         """
         Fetches cloudwatch logs from the AWS account for a given log group and log stream
         Args:
@@ -137,7 +141,7 @@ class AwsContainerLogs(AwsCloud):
 
         return [service_name, container_name, container_id]
 
-    def _parse_log_events(self, log_events: List[Dict]) -> List[str]:
+    def _parse_log_events(self, log_events: List[Dict[str, Any]]) -> List[str]:
         """
         AWS returns events metadata with other fields like logStreamName, timestamp etc.
         Following is the sample events returned:
@@ -153,7 +157,7 @@ class AwsContainerLogs(AwsCloud):
         Returns: list
         """
 
-        return [event.get("message") for event in log_events]
+        return [event["message"] for event in log_events]
 
     def _get_container_name_id(self, task_id: str) -> List[str]:
         """
@@ -295,8 +299,11 @@ class AwsContainerLogs(AwsCloud):
         return "Contents" in response
 
     def get_s3_folder_contents(
-        self, bucket_name: str, folder_name: str, next_continuation_token: str = None
-    ) -> Dict:
+        self,
+        bucket_name: str,
+        folder_name: str,
+        next_continuation_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Fetches folders in a given S3 bucket and folders information
 
@@ -373,7 +380,10 @@ class AwsContainerLogs(AwsCloud):
         return files_to_download
 
     def download_logs(
-        self, s3_bucket_name: str, tag_name: str, local_download_dir=None
+        self,
+        s3_bucket_name: str,
+        tag_name: str,
+        local_download_dir: Optional[str] = None,
     ) -> None:
         """
         Download logs from S3 to local
