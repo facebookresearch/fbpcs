@@ -7,13 +7,7 @@
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-from fbpcs.private_computation.service.compute_metrics_stage_service import (
-    ComputeMetricsStageService,
-)
 from fbpcs.private_computation.service.pid_mr_stage_service import PIDMRStageService
-from fbpcs.private_computation.service.post_processing_stage_service import (
-    PostProcessingStageService,
-)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
@@ -37,7 +31,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED INPUT_DATA_VALIDATION UNION_PID_MR_MULTIKEY ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD COMPUTE AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED INPUT_DATA_VALIDATION UNION_PID_MR_MULTIKEY"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -57,42 +51,6 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.PID_MR_STARTED,
         PrivateComputationInstanceStatus.PID_MR_COMPLETED,
         PrivateComputationInstanceStatus.PID_MR_FAILED,
-        False,
-    )
-    ID_MATCH_POST_PROCESS = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_STARTED,
-        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_COMPLETED,
-        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_FAILED,
-        False,
-    )
-    ID_SPINE_COMBINER = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_STARTED,
-        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_COMPLETED,
-        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED,
-        False,
-    )
-    RESHARD = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.RESHARD_STARTED,
-        PrivateComputationInstanceStatus.RESHARD_COMPLETED,
-        PrivateComputationInstanceStatus.RESHARD_FAILED,
-        False,
-    )
-    COMPUTE = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-        PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-        PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-        True,
-    )
-    AGGREGATE = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-        PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
-        PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-        True,
-    )
-    POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
-        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
-        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
         False,
     )
 
@@ -116,14 +74,17 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
                 raise NotImplementedError("workflow_svc is None")
 
             return PIDMRStageService(args.workflow_svc)
-        elif self is self.ID_MATCH_POST_PROCESS:
-            return PostProcessingStageService(
-                args.storage_svc, args.pid_post_processing_handlers
-            )
-        elif self is self.COMPUTE:
-            return ComputeMetricsStageService(
-                args.onedocker_binary_config_map,
-                args.mpc_svc,
-            )
+
+        # TODO (pnethagani): enable the other stages after test
+        # elif self is self.COMPUTE:
+        #     return ComputeMetricsStageService(
+        #         args.onedocker_binary_config_map,
+        #         args.mpc_svc,
+        #     )
+
+        # elif self is self.ID_MATCH_POST_PROCESS:
+        #     return PostProcessingStageService(
+        #         args.storage_svc, args.pid_post_processing_handlers
+        #     )
         else:
             return self.get_default_stage_service(args)

@@ -6,12 +6,10 @@
 
 # pyre-strict
 
+import logging
 from typing import List, Optional
 
-from fbpcs.common.entity.stage_state_instance import (
-    StageStateInstance,
-    StageStateInstanceStatus,
-)
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -31,6 +29,7 @@ class PIDMRStageService(PrivateComputationStageService):
 
     def __init__(self, workflow_svc: WorkflowService) -> None:
         self.workflow_svc = workflow_svc
+        self._logger: logging.Logger = logging.getLogger(__name__)
 
     async def run_async(
         self,
@@ -46,6 +45,7 @@ class PIDMRStageService(PrivateComputationStageService):
         Returns:
             An updated version of pc_instance
         """
+        self._logger.info(f"[{self}] Starting PID MR Stage Service")
         stage_state = StageStateInstance(
             pc_instance.instance_id,
             pc_instance.current_stage.name,
