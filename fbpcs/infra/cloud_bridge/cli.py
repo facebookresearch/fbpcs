@@ -54,6 +54,8 @@ def main():
     aws_attach_iam_policy_parser_arguments(aws_create_parser)
     aws_detach_iam_policy_parser_arguments(aws_destroy_parser)
 
+    delete_s3_buckets_arguments(aws_destroy_parser)
+
     cli_args = cli_parser.parse_args()
 
     if cli_args.platform == "aws":
@@ -195,6 +197,23 @@ def aws_detach_iam_policy_parser_arguments(aws_parser: argparse):
     )
     iam_policy_command_group.add_argument(
         "--iam_user_name", type=str, required=False, help="Detach policy from user"
+    )
+
+
+def delete_s3_buckets_arguments(aws_parser: argparse):
+    delete_s3_bucket_command_group = aws_parser.add_argument_group(
+        "s3_bucket", "Arguments to delete S3 buckets"
+    )
+
+    delete_s3_bucket_command_group.add_argument(
+        "--delete_s3_bucket", action="store_true", help="Deletes S3 bucket from AWS"
+    )
+
+    delete_s3_bucket_command_group.add_argument(
+        "--s3_bucket_names",
+        nargs="+",
+        required=False,
+        help="List buckets which needs to be deleted separated by space",
     )
 
 
