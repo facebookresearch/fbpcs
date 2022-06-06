@@ -1,0 +1,11 @@
+private_computation:
+  graphapi:
+    access_token: TODO
+  infra_config:
+    base_dir: TODO
+    region: TODO
+    cluster: TODO
+    subnets: TODO
+    tmp_directory: TODO
+    binary_version: TODO
+    task_definition: TODO
