@@ -8,6 +8,8 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
 
+from fbpcs.private_computation.entity.exceptions import CannotFindDependencyError
+
 from fbpcs.private_computation.entity.pc_infra_config_data import (
     PrivateComputationInfraConfigInfo,
 )
@@ -53,8 +55,24 @@ class PrivateComputationInfraConfig:
             yml_config["pid"] = pid
             yml_config["mpc"] = mpc
 
-            # TODO: add code for overrides config.yml
             # Partner can only override dependencies
+            if "overrides" in yml_config:
+                overrides = yml_config.pop("overrides")
+                # can handle more than 1 override
+                for dep_key, dep_value in overrides.items():
+                    if dep_key in yml_config["private_computation"]["dependency"]:
+                        yml_config["private_computation"]["dependency"][
+                            dep_key
+                        ] = dep_value
+
+                    elif dep_key in yml_config["pid"]["dependency"]:
+                        yml_config["pid"]["dependency"][dep_key] = dep_value
+
+                    elif dep_key in yml_config["mpc"]["dependency"]:
+                        yml_config["mpc"]["dependency"][dep_key] = dep_value
+
+                    else:
+                        raise CannotFindDependencyError(dep_key)
 
         return yml_config
 
@@ -101,8 +119,8 @@ class PrivateComputationInfraConfig:
 
         # add other dependencies
         dependencies = self._get_defaults()
-        for dp_key, dp_value in dependencies.items():
-            self._generate_dependency(pc, dp_key, dp_value)
+        for dep_key, dep_value in dependencies.items():
+            self._generate_dependency(pc, dep_key, dep_value)
 
         return pc
 
@@ -148,13 +166,13 @@ class PrivateComputationInfraConfig:
 
     def _generate_dependency(
         self,
-        dp_dict: Dict[str, Any],
-        dp_name: str,
-        dp_value: PrivateComputationInfraConfigInfo,
+        dep_dict: Dict[str, Any],
+        dep_name: str,
+        dep_value: PrivateComputationInfraConfigInfo,
     ) -> None:
-        constructor = self._generate_constructor(dp_value.value.args)
-        dp_dict["dependency"][dp_name] = {
-            "class": dp_value.value.cls_name,
+        constructor = self._generate_constructor(dep_value.value.args)
+        dep_dict["dependency"][dep_name] = {
+            "class": dep_value.value.cls_name,
             "constructor": constructor,
         }
 
