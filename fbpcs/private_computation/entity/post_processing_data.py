@@ -8,7 +8,8 @@
 from dataclasses import dataclass, field
 from typing import Set
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import config, dataclass_json
+from marshmallow import fields
 
 
 @dataclass_json
@@ -24,7 +25,9 @@ class PostProcessingData:
 
     # TODO : Add breakdown key to PostProcessingData.
     dataset_timestamp: int = 0
-    s3_cost_export_output_paths: Set[str] = field(default_factory=set)
+    s3_cost_export_output_paths: Set[str] = field(
+        default_factory=set, metadata=config(mm_field=fields.List(fields.String))
+    )
 
     def __str__(self) -> str:
         # pyre-ignore
