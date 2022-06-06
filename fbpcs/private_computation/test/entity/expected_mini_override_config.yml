@@ -1,0 +1,51 @@
+private_computation:
+  dependency:
+    PrivateComputationInstanceRepository:
+      class: fbpcs.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository
+      constructor:
+        base_dir: TODO
+    ContainerService:
+      class: my.custom.ContainerService
+      additional_arguments:
+        foo: bar
+        baz: quux
+    StorageService:
+      class: my.custom.StorageService
+      constructor:
+        # AWS region - ex. us-west-2
+        region: TODO
+    ValidationConfig:
+      is_validating: false
+      synthetic_shard_path:
+    OneDockerBinaryConfig:
+      default:
+        constructor:
+          tmp_directory: TODO
+          binary_version: TODO
+    OneDockerServiceConfig:
+      constructor:
+        task_definition: TODO
+    PCValidatorConfig:
+      class: fbpcs.private_computation.entity.pc_validator_config.PCValidatorConfig
+      constructor:
+        ### AWS region - ex. us-west-2
+        region: TODO
+pid:
+  dependency:
+    PIDInstanceRepository:
+      class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
+      constructor:
+        base_dir: TODO
+mpc:
+  dependency:
+    MPCGameService:
+      class: fbpcp.service.mpc_game.MPCGameService
+      dependency:
+        PrivateComputationGameRepository:
+          class: fbpcs.private_computation.repository.private_computation_game.PrivateComputationGameRepository
+    MPCInstanceRepository:
+      class: fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository
+      constructor:
+        base_dir: TODO
+graphapi:
+  access_token: TODO

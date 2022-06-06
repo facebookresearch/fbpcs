@@ -1,0 +1,22 @@
+private_computation:
+  graphapi:
+    access_token: TODO
+  infra_config:
+    base_dir: TODO
+    region: TODO
+    cluster: TODO
+    subnets: TODO
+    tmp_directory: TODO
+    binary_version: TODO
+    task_definition: TODO
+  overrides:
+    ContainerService:
+      class: my.custom.ContainerService
+      additional_arguments:
+        foo: bar
+        baz: quux
+    StorageService:
+      class: my.custom.StorageService
+      constructor:
+        # AWS region - ex. us-west-2
+        region: TODO
