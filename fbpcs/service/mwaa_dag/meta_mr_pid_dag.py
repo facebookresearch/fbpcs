@@ -10,9 +10,6 @@ from airflow.providers.amazon.aws.operators.emr_add_steps import EmrAddStepsOper
 from airflow.providers.amazon.aws.operators.emr_create_job_flow import (
     EmrCreateJobFlowOperator,
 )
-from airflow.providers.amazon.aws.operators.s3_delete_objects import (
-    S3DeleteObjectsOperator,
-)
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
 from airflow.providers.amazon.aws.sensors.s3_key import S3KeySensor
 
@@ -83,8 +80,7 @@ SPARK_STEP_1 = [
                 "--master",
                 "yarn",
                 "--jars",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
                 "--num-executors",
                 "15",
                 "--executor-cores",
@@ -99,11 +95,10 @@ SPARK_STEP_1 = [
                 "spark.yarn.maxAppAttempts=1",
                 "--class",
                 "com.meta.mr.multikey.publisher.PubStageOne",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "{{ dag_run.conf['metaExtOutputPath'] }}",
-                "{{ dag_run.conf['metaIntOutputPath'] }}",
-                "{{ dag_run.conf['metaInputPath'] }}",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
+                "s3://{{ dag_run.conf['metaBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
+                "{{ dag_run.conf['outputPath'] }}",
+                "{{ dag_run.conf['inputPath'] }}",
             ],
         },
     }
@@ -128,7 +123,7 @@ stage1_checker = EmrStepSensor(
 sensor_stage2_key = S3KeySensor(
     task_id="s3_sensor_stage2_key",
     bucket_name="{{ dag_run.conf['advBucketName'] }}",
-    bucket_key="step_1_meta_enc_kc_kp/_SUCCESS",
+    bucket_key="{{ dag_run.conf['instanceId'] }}/step_1_meta_enc_kc_kp/_SUCCESS",
 )
 
 SPARK_STEP_2 = [
@@ -144,8 +139,7 @@ SPARK_STEP_2 = [
                 "--master",
                 "yarn",
                 "--jars",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
                 "--num-executors",
                 "15",
                 "--executor-cores",
@@ -160,11 +154,10 @@ SPARK_STEP_2 = [
                 "spark.yarn.maxAppAttempts=1",
                 "--class",
                 "com.meta.mr.multikey.publisher.PubStageTwo",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "{{ dag_run.conf['metaExtOutputPath'] }}",
-                "{{ dag_run.conf['metaIntOutputPath'] }}",
-                "{{ dag_run.conf['advExtOutputPath'] }}",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
+                "s3://{{ dag_run.conf['metaBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
+                "{{ dag_run.conf['outputPath'] }}",
+                "s3://{{ dag_run.conf['advBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
             ],
         },
     }
@@ -189,7 +182,7 @@ stage2_checker = EmrStepSensor(
 sensor_stage3_key = S3KeySensor(
     task_id="s3_sensor_stage3_key",
     bucket_name="{{ dag_run.conf['advBucketName'] }}",
-    bucket_key="step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS",
+    bucket_key="{{ dag_run.conf['instanceId'] }}/step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS",
 )
 
 SPARK_STEP_3 = [
@@ -205,8 +198,7 @@ SPARK_STEP_3 = [
                 "--master",
                 "yarn",
                 "--jars",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
                 "--num-executors",
                 "15",
                 "--executor-cores",
@@ -221,10 +213,9 @@ SPARK_STEP_3 = [
                 "spark.yarn.maxAppAttempts=1",
                 "--class",
                 "com.meta.mr.multikey.publisher.PubStageThree",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "{{ dag_run.conf['metaIntOutputPath'] }}",
-                "{{ dag_run.conf['advExtOutputPath'] }}",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
+                "{{ dag_run.conf['outputPath'] }}",
+                "s3://{{ dag_run.conf['advBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
             ],
         },
     }
@@ -246,18 +237,6 @@ stage3_checker = EmrStepSensor(
     dag=dag,
 )
 
-delete_stage1_object = S3DeleteObjectsOperator(
-    task_id="delete_stage1_object",
-    bucket="{{ dag_run.conf['metaBucketName'] }}",
-    keys="step_1_meta_enc_kc/_SUCCESS",
-)
-
-delete_stage2_object = S3DeleteObjectsOperator(
-    task_id="delete_stage2_object",
-    bucket="{{ dag_run.conf['metaBucketName'] }}",
-    keys="step_2_adv_unmatched_enc_kc_kp/_SUCCESS",
-)
-
 
 (
     cluster_creator
@@ -269,6 +248,4 @@ delete_stage2_object = S3DeleteObjectsOperator(
     >> sensor_stage3_key
     >> stage3_adder
     >> stage3_checker
-    >> delete_stage1_object
-    >> delete_stage2_object
 )

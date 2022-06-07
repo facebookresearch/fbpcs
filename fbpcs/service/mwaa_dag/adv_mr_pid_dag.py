@@ -10,9 +10,6 @@ from airflow.providers.amazon.aws.operators.emr_add_steps import EmrAddStepsOper
 from airflow.providers.amazon.aws.operators.emr_create_job_flow import (
     EmrCreateJobFlowOperator,
 )
-from airflow.providers.amazon.aws.operators.s3_delete_objects import (
-    S3DeleteObjectsOperator,
-)
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
 from airflow.providers.amazon.aws.sensors.s3_key import S3KeySensor
 
@@ -70,16 +67,10 @@ cluster_creator = EmrCreateJobFlowOperator(
     dag=dag,
 )
 
-delete_stage2_object = S3DeleteObjectsOperator(
-    task_id="delete_stage2_object",
-    bucket="{{ dag_run.conf['advBucketName'] }}",
-    keys="step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS",
-)
-
 sensor_stage1_key = S3KeySensor(
     task_id="s3_sensor_stage1_key",
     bucket_name="{{ dag_run.conf['metaBucketName'] }}",
-    bucket_key="step_1_meta_enc_kc/_SUCCESS",
+    bucket_key="{{ dag_run.conf['instanceId'] }}/step_1_meta_enc_kc/_SUCCESS",
 )
 
 SPARK_STEP_1 = [
@@ -95,8 +86,7 @@ SPARK_STEP_1 = [
                 "--master",
                 "yarn",
                 "--jars",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
                 "--num-executors",
                 "15",
                 "--executor-cores",
@@ -111,12 +101,11 @@ SPARK_STEP_1 = [
                 "spark.yarn.maxAppAttempts=1",
                 "--class",
                 "com.meta.mr.multikey.partner.PartnerStageOne",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "{{ dag_run.conf['metaExtOutputPath'] }}",
-                "{{ dag_run.conf['advExtOutputPath'] }}",
-                "{{ dag_run.conf['advIntOutputPath'] }}",
-                "{{ dag_run.conf['advInputPath'] }}",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
+                "s3://{{ dag_run.conf['metaBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
+                "s3://{{ dag_run.conf['advBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
+                "{{ dag_run.conf['outputPath'] }}",
+                "{{ dag_run.conf['inputPath'] }}",
             ],
         },
     }
@@ -141,7 +130,7 @@ stage1_checker = EmrStepSensor(
 sensor_stage2_key = S3KeySensor(
     task_id="s3_sensor_stage2_key",
     bucket_name="{{ dag_run.conf['metaBucketName'] }}",
-    bucket_key="step_2_adv_unmatched_enc_kc_kp/_SUCCESS",
+    bucket_key="{{ dag_run.conf['instanceId'] }}/step_2_adv_unmatched_enc_kc_kp/_SUCCESS",
 )
 
 SPARK_STEP_2 = [
@@ -157,8 +146,7 @@ SPARK_STEP_2 = [
                 "--master",
                 "yarn",
                 "--jars",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
                 "--num-executors",
                 "15",
                 "--executor-cores",
@@ -173,11 +161,10 @@ SPARK_STEP_2 = [
                 "spark.yarn.maxAppAttempts=1",
                 "--class",
                 "com.meta.mr.multikey.publisher.PartnerStageTwo",
-                # TODO: update jar file path
-                "s3://justus-test-airflow/jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar",
-                "{{ dag_run.conf['metaExtOutputPath'] }}",
-                "{{ dag_run.conf['advExtOutputPath'] }}",
-                "{{ dag_run.conf['advIntOutputPath'] }}",
+                "{{ dag_run.conf['pidMrMultikeyJarPath'] }}",
+                "s3://{{ dag_run.conf['metaBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
+                "s3://{{ dag_run.conf['advBucketName'] }}/{{ dag_run.conf['instanceId'] }}",
+                "{{ dag_run.conf['outputPath'] }}",
             ],
         },
     }
@@ -199,21 +186,13 @@ stage2_checker = EmrStepSensor(
     dag=dag,
 )
 
-delete_stage1_object = S3DeleteObjectsOperator(
-    task_id="delete_stage1_object",
-    bucket="{{ dag_run.conf['advBucketName'] }}",
-    keys="step_1_meta_enc_kc_kp/_SUCCESS",
-)
-
 
 (
     cluster_creator
-    >> delete_stage2_object
     >> sensor_stage1_key
     >> stage1_adder
     >> stage1_checker
     >> sensor_stage2_key
     >> stage2_adder
     >> stage2_checker
-    >> delete_stage1_object
 )
