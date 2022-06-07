@@ -60,5 +60,8 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             stage_svc.get_status(pc_instance),
             PrivateComputationInstanceStatus.PID_MR_COMPLETED,
         )
+        self.assertEqual(
+            pc_instance.pid_mr_stage_output_data_path, "789/123_out_dir/pid_mr"
+        )
         self.assertEqual(pc_instance.instances[0].instance_id, "execution_arn")
         self.assertIsInstance(pc_instance.instances[0], StageStateInstance)
