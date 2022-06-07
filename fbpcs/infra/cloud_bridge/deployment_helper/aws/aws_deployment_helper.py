@@ -3,15 +3,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
+
 import json
 import logging
 import os
 from string import Template
+from typing import Any, Dict, List, Optional
 
 import boto3
+import botocore
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from .policy_params import PolicyParams
+from fbpcs.infra.cloud_bridge.deployment_helper.aws.policy_params import PolicyParams
 
 
 class AwsDeploymentHelper:
@@ -21,22 +25,19 @@ class AwsDeploymentHelper:
 
     def __init__(
         self,
-        access_key: str = None,
-        secret_key: str = None,
-        account_id: str = None,
-        region: str = None,
+        access_key: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        account_id: Optional[str] = None,
+        region: Optional[str] = None,
         log_path: str = "/tmp/pce_iam_user.log",
-        log_level: logging = logging.INFO,
-    ):
-        self.access_key = access_key or os.environ.get("ACCESS_KEY")
-        self.secret_key = secret_key or os.environ.get("SECRET_KEY")
-        self.account_id = account_id or os.environ.get("ACCOUNT_ID")
-        self.region = region or os.environ.get("AWS_REGION")
+        log_level: int = logging.INFO,
+    ) -> None:
+        self.access_key: Optional[str] = access_key or os.environ.get("ACCESS_KEY")
+        self.secret_key: Optional[str] = secret_key or os.environ.get("SECRET_KEY")
+        self.account_id: Optional[str] = account_id or os.environ.get("ACCOUNT_ID")
+        self.region: Optional[str] = region or os.environ.get("AWS_REGION")
         self.log_path = log_path
         self.log_level = log_level
-
-        self.log = None
-        self.iam = None
 
         # setup logging
         logging.basicConfig(
@@ -44,7 +45,7 @@ class AwsDeploymentHelper:
             level=self.log_level,
             format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
         )
-        self.log = logging.getLogger(__name__)
+        self.log: logging.Logger = logging.getLogger(__name__)
 
         # create clients for iam and sts
         if self.access_key and self.secret_key:
@@ -53,7 +54,7 @@ class AwsDeploymentHelper:
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
             )
-            self.iam = boto3.client(
+            self.iam: botocore.client.BaseClient = boto3.client(
                 "iam",
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
@@ -88,7 +89,7 @@ class AwsDeploymentHelper:
 
         self.iam = boto3.client("iam")
 
-    def create_user(self, user_name: str):
+    def create_user(self, user_name: str) -> None:
         self.log.info(f"Creating user {user_name}")
         try:
             self.iam.create_user(UserName=user_name)
@@ -104,7 +105,7 @@ class AwsDeploymentHelper:
                     f"Unexpected error occured in creation of user {user_name}"
                 )
 
-    def delete_user(self, user_name: str):
+    def delete_user(self, user_name: str) -> None:
         self.log.info(f"Deleting user {user_name}")
         try:
             self.iam.delete_user(UserName=user_name)
@@ -121,8 +122,11 @@ class AwsDeploymentHelper:
                 )
 
     def create_policy(
-        self, policy_name: str, policy_params: PolicyParams, user_name: str = None
-    ):
+        self,
+        policy_name: str,
+        policy_params: PolicyParams,
+        user_name: Optional[str] = None,
+    ) -> None:
         self.log.info(f"Adding policy {policy_name}")
 
         # directly reading the json file from iam_policies folder
@@ -150,7 +154,7 @@ class AwsDeploymentHelper:
                 else:
                     self.log.error(f"Unexpected error occurred in policy {policy_name}")
 
-    def delete_policy(self, policy_name: str):
+    def delete_policy(self, policy_name: str) -> None:
         self.log.info(f"Deleting policy {policy_name}")
         policy_arn = self.POLICY_ARN.format(self.account_id, policy_name)
         try:
@@ -162,7 +166,7 @@ class AwsDeploymentHelper:
             else:
                 self.log.error(f"Unexpected error occurred in deleting policy: {error}")
 
-    def attach_user_policy(self, policy_name: str, user_name: str):
+    def attach_user_policy(self, policy_name: str, user_name: str) -> None:
         self.log.info(f"Attaching policy {policy_name} to user {user_name}")
 
         current_policies = self.list_policies()
@@ -189,7 +193,7 @@ class AwsDeploymentHelper:
                 f"Failed to attach the policy {policy_arn} for user {user_name}: {error}"
             )
 
-    def detach_user_policy(self, policy_name: str, user_name: str):
+    def detach_user_policy(self, policy_name: str, user_name: str) -> None:
         self.log.info(f"Detaching policy {policy_name} from the user {user_name}")
 
         current_policies = self.list_policies()
@@ -216,7 +220,7 @@ class AwsDeploymentHelper:
                 f"Failed to detach policy {policy_arn} from user {user_name}: {error}"
             )
 
-    def list_policies(self):
+    def list_policies(self) -> List[str]:
         policy_name_list = []
         try:
             response = self.iam.list_policies().get("Policies", [])
@@ -226,7 +230,7 @@ class AwsDeploymentHelper:
             self.log.error(f"Failed to list policies: {error}")
         return policy_name_list
 
-    def list_users(self):
+    def list_users(self) -> List[str]:
         user_name_list = []
         try:
             response = self.iam.list_users().get("Users", [])
@@ -236,7 +240,7 @@ class AwsDeploymentHelper:
             self.log.error(f"Failed to list users: {error}")
         return user_name_list
 
-    def create_access_key(self, user_name: str):
+    def create_access_key(self, user_name: str) -> None:
         self.log.info(f"Creating access and secret keys for user {user_name}.")
         self.log.info("Access and secrect keys will not be printed in this log file.")
         try:
@@ -255,7 +259,7 @@ class AwsDeploymentHelper:
                 f"Error in generating access and secret for user {user_name}: {error}"
             )
 
-    def delete_access_key(self, user_name: str, access_key: str):
+    def delete_access_key(self, user_name: str, access_key: str) -> None:
         self.log.info(f"Deleting access and secret keys for user {user_name}.")
         try:
             self.iam.delete_access_key(UserName=user_name, AccessKeyId=access_key)
@@ -263,7 +267,7 @@ class AwsDeploymentHelper:
         except ClientError as error:
             self.log.error(f"Error in deleting access for user {user_name}: {error}")
 
-    def list_access_keys(self, user_name: str):
+    def list_access_keys(self, user_name: str) -> List[str]:
         access_key_list = []
         try:
             response = self.iam.list_access_keys(UserName=user_name)
@@ -277,7 +281,7 @@ class AwsDeploymentHelper:
 
     def read_json_file(
         self, file_name: str, policy_params: PolicyParams, read_mode: str = "r"
-    ):
+    ) -> Dict[str, Any]:
 
         # this can be replaced with a json file which is written in deploy.sh
         interpolation_data = {
@@ -299,7 +303,7 @@ class AwsDeploymentHelper:
             json_data = json.loads(template.substitute(interpolation_data))
         return json_data
 
-    def create_user_workflow(self, user_name: str):
+    def create_user_workflow(self, user_name: str) -> None:
 
         self.log.info(
             f"""Cli to create user is triggered. Following actions will be performed
@@ -315,7 +319,7 @@ class AwsDeploymentHelper:
         self.create_access_key(user_name=user_name)
         self.log.info("Creation operation completed.")
 
-    def delete_user_workflow(self, user_name: str):
+    def delete_user_workflow(self, user_name: str) -> None:
         self.log.info(
             f"""Cli to create user is triggered. Following actions will be performed
         1. User {user_name} will be deleted
