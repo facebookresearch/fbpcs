@@ -74,7 +74,7 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageOne', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', $.metaExtOutputPath, $.metaIntOutputPath, $.metaInputPath)"
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageOne', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), $.outputPath, $.inputPath)"
           }
         }
       },
@@ -94,7 +94,7 @@
       "Type": "Task",
       "Parameters": {
         "Bucket.$": "$.advBucketName",
-        "Key": "step_1_meta_enc_kc_kp/_SUCCESS"
+        "Key.$": "States.Format('{}/step_1_meta_enc_kc_kp/_SUCCESS', $.instanceId)"
       },
       "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
       "ResultPath": null,
@@ -129,7 +129,7 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageTwo', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', $.metaExtOutputPath, $.metaIntOutputPath, $.advExtOutputPath)"
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageTwo', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), $.outputPath, States.Format('s3://{}/{}', $.advBucketName, $.instanceId))"
           }
         }
       },
@@ -149,7 +149,7 @@
       "Type": "Task",
       "Parameters": {
         "Bucket.$": "$.advBucketName",
-        "Key": "step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS"
+        "Key.$": "States.Format('{}/step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS', $.instanceId)"
       },
       "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
       "ResultPath": null,
@@ -184,47 +184,10 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageThree', 's3://pid-mr-e2e-jars/mr-poc-1.0-SNAPSHOT-jar-with-dependencies.jar', $.metaIntOutputPath, $.advExtOutputPath)"
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageThree', $.pidMrMultikeyJarPath, $.outputPath, States.Format('s3://{}/{}', $.advBucketName, $.instanceId))"
           }
         }
       },
-      "ResultPath": null,
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.error",
-          "Next": "Error_Disable_Termination_Protection"
-        }
-      ],
-      "Next": "Delete_stage_one_object"
-    },
-    "Delete_stage_one_object": {
-      "Type": "Task",
-      "Parameters": {
-        "Bucket.$": "$.metaBucketName",
-        "Key": "step_1_meta_enc_kc/_SUCCESS"
-      },
-      "Resource": "arn:aws:states:::aws-sdk:s3:deleteObject",
-      "ResultPath": null,
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "Error_Disable_Termination_Protection"
-        }
-      ],
-      "Next": "Delete_stage_two_object"
-    },
-    "Delete_stage_two_object": {
-      "Type": "Task",
-      "Parameters": {
-        "Bucket.$": "$.metaBucketName",
-        "Key": "step_2_adv_unmatched_enc_kc_kp/_SUCCESS"
-      },
-      "Resource": "arn:aws:states:::aws-sdk:s3:deleteObject",
       "ResultPath": null,
       "Catch": [
         {
