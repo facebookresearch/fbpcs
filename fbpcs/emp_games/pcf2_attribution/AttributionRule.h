@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <stdexcept>
 
 #include <fmt/format.h>
@@ -25,9 +26,14 @@ template <
     bool usingBatch,
     common::InputEncryption inputEncryption>
 struct AttributionRule {
+  AttributionRule(std::uint64_t _id, std::string _name)
+      : id(_id), name(std::move(_name)) {}
+
+  virtual ~AttributionRule() = default;
+
   // Integer that should uniquely identify this attribution rule. Used
   // to synchronize between the publisher and partner
-  const uint64_t id;
+  const std::uint64_t id;
 
   // Human readable name for the this attribution rule. The publisher will
   // pass in a list of names, and the output json will be keyed by names
@@ -35,30 +41,29 @@ struct AttributionRule {
 
   // Should return true if the given touchpoint is eligible to be attributed
   // to the given conversion
-  const std::function<const SecBit<schedulerId, usingBatch>(
+  virtual SecBit<schedulerId, usingBatch> isAttributable(
       const PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>&,
       const PrivateConversion<schedulerId, usingBatch, inputEncryption>&,
-      const std::vector<SecTimestamp<schedulerId, usingBatch>>&)>
-      isAttributable;
+      const std::vector<SecTimestamp<schedulerId, usingBatch>>&) const = 0;
 
   // Compute touchpoint thresholds from plaintext touchpoints based on
   // attribution rule
-  const std::function<const std::vector<SecTimestamp<schedulerId, usingBatch>>(
-      const Touchpoint<usingBatch>&)>
-      computeThresholdsPlaintext;
+  virtual std::vector<SecTimestamp<schedulerId, usingBatch>>
+  computeThresholdsPlaintext(const Touchpoint<usingBatch>&) const = 0;
 
   // Compute touchpoint thresholds from private touchpoints based on attribution
   // rule
-  const std::function<const std::vector<SecTimestamp<schedulerId, usingBatch>>(
+  virtual std::vector<SecTimestamp<schedulerId, usingBatch>>
+  computeThresholdsPrivate(
       const PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>&,
       const PrivateIsClick<schedulerId, usingBatch, inputEncryption>&,
-      size_t batchSize)>
-      computeThresholdsPrivate;
+      size_t batchSize) const = 0;
 
   // Constructors for attribution rules, which can be found in
   // AttributionRule.cpp
-  static const AttributionRule fromNameOrThrow(const std::string& name);
-  static const AttributionRule fromIdOrThrow(int64_t id);
+  static std::shared_ptr<const AttributionRule> fromNameOrThrow(
+      const std::string& name);
+  static std::shared_ptr<const AttributionRule> fromIdOrThrow(std::int64_t id);
 };
 
 } // namespace pcf2_attribution

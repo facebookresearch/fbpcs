@@ -150,7 +150,8 @@ TEST(AttributionGameTest, TestShareAttributionRules) {
       common::LAST_CLICK_28D,
       common::LAST_TOUCH_28D,
       common::LAST_CLICK_2_7D,
-      common::LAST_TOUCH_2_7D};
+      common::LAST_TOUCH_2_7D,
+      common::LAST_CLICK_1D_TARGETID};
 
   AttributionGame<common::PUBLISHER, false, common::InputEncryption::Plaintext>
       game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
@@ -159,13 +160,14 @@ TEST(AttributionGameTest, TestShareAttributionRules) {
   auto attributionRules =
       game.shareAttributionRules(common::PUBLISHER, attributionRuleNames);
 
-  ASSERT_EQ(attributionRules.size(), 6);
-  EXPECT_EQ(attributionRules.at(0).name, common::LAST_CLICK_1D);
-  EXPECT_EQ(attributionRules.at(1).name, common::LAST_TOUCH_1D);
-  EXPECT_EQ(attributionRules.at(2).name, common::LAST_CLICK_28D);
-  EXPECT_EQ(attributionRules.at(3).name, common::LAST_TOUCH_28D);
-  EXPECT_EQ(attributionRules.at(4).name, common::LAST_CLICK_2_7D);
-  EXPECT_EQ(attributionRules.at(5).name, common::LAST_TOUCH_2_7D);
+  ASSERT_EQ(attributionRules.size(), 7);
+  EXPECT_EQ(attributionRules[0]->name, common::LAST_CLICK_1D);
+  EXPECT_EQ(attributionRules[1]->name, common::LAST_TOUCH_1D);
+  EXPECT_EQ(attributionRules[2]->name, common::LAST_CLICK_28D);
+  EXPECT_EQ(attributionRules[3]->name, common::LAST_TOUCH_28D);
+  EXPECT_EQ(attributionRules[4]->name, common::LAST_CLICK_2_7D);
+  EXPECT_EQ(attributionRules[5]->name, common::LAST_TOUCH_2_7D);
+  EXPECT_EQ(attributionRules[6]->name, common::LAST_CLICK_1D_TARGETID);
 }
 
 TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
@@ -217,7 +219,7 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
       fromNameOrThrow(common::LAST_CLICK_1D);
   auto thresholdsLastClick1D =
       game.privatelyShareThresholds(
-              touchpoints, privateTouchpoints, lastClick1D, 0)
+              touchpoints, privateTouchpoints, *lastClick1D, 0)
           .at(0);
   auto lastTouch1D = AttributionRule<
       common::PUBLISHER,
@@ -226,20 +228,20 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
       fromNameOrThrow(common::LAST_TOUCH_1D);
   auto thresholdsLastTouch1D =
       game.privatelyShareThresholds(
-              touchpoints, privateTouchpoints, lastTouch1D, 0)
+              touchpoints, privateTouchpoints, *lastTouch1D, 0)
           .at(0);
 
   auto computeAttributionLastClick1D = game.computeAttributionsHelper(
       privateTouchpoints.at(0),
       privateConversions.at(0),
-      lastClick1D,
+      *lastClick1D,
       thresholdsLastClick1D,
       1);
 
   auto computeAttributionLastTouch1D = game.computeAttributionsHelper(
       privateTouchpoints.at(0),
       privateConversions.at(0),
-      lastTouch1D,
+      *lastTouch1D,
       thresholdsLastTouch1D,
       1);
 
@@ -313,21 +315,21 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
       common::InputEncryption::Plaintext>::
       fromNameOrThrow(common::LAST_TOUCH_1D);
   auto thresholdsLastClick1D = game.privatelyShareThresholds(
-      touchpoints, privateTouchpoints, lastClick1D, 2);
+      touchpoints, privateTouchpoints, *lastClick1D, 2);
   auto thresholdsLastTouch1D = game.privatelyShareThresholds(
-      touchpoints, privateTouchpoints, lastTouch1D, 2);
+      touchpoints, privateTouchpoints, *lastTouch1D, 2);
 
   auto computeAttributionLastClick1D = game.computeAttributionsHelper(
       privateTouchpoints,
       privateConversions,
-      lastClick1D,
+      *lastClick1D,
       thresholdsLastClick1D,
       batchSize);
 
   auto computeAttributionLastTouch1D = game.computeAttributionsHelper(
       privateTouchpoints,
       privateConversions,
-      lastTouch1D,
+      *lastTouch1D,
       thresholdsLastTouch1D,
       batchSize);
 
