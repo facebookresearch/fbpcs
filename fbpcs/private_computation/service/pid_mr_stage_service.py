@@ -22,6 +22,9 @@ from fbpcs.service.workflow import WorkflowService, WorkflowStatus
 PIDWorkflowConfigs = "PIDWorkflowConfigs"
 PIDRunConfigs = "PIDRunConfigs"
 PIDMR = "pid_mr"
+INTPUT = "inputPath"
+OUTPUT = "outputPath"
+INSTANCE = "instanceId"
 
 
 class PIDMRStageService(PrivateComputationStageService):
@@ -57,6 +60,9 @@ class PIDMRStageService(PrivateComputationStageService):
             and PIDRunConfigs in pid_configs[PIDMR]
             and PIDWorkflowConfigs in pid_configs[PIDMR]
         ):
+            pid_configs[INTPUT] = pc_instance.input_path
+            pid_configs[OUTPUT] = pc_instance.pid_mr_stage_output_data_path
+            pid_configs[INSTANCE] = pc_instance.instance_id
             stage_state.instance_id = self.workflow_svc.start_workflow(
                 pid_configs[PIDMR][PIDWorkflowConfigs],
                 pc_instance.instance_id,

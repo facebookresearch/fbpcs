@@ -213,6 +213,14 @@ class PrivateComputationInstance(InstanceBase):
         return f"{self.pid_stage_output_base_path}{data_path_suffix}"
 
     @property
+    def pid_mr_stage_output_data_path(self) -> str:
+        return os.path.join(
+            self.output_dir,
+            f"{self.instance_id}_out_dir",
+            "pid_mr",
+        )
+
+    @property
     def data_processing_output_path(self) -> str:
         return self._get_stage_output_path("data_processing_stage", "csv")
 
