@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include <fbpcf/io/api/BufferedWriter.h>
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
 
 namespace data_processing::sharder {
@@ -102,7 +103,7 @@ class HashBasedSharder final : public GenericSharder {
    */
   void shardLine(
       std::string line,
-      const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+      const std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>>& outFiles,
       const std::vector<int32_t>& idColumnIndices) final;
 
  private:

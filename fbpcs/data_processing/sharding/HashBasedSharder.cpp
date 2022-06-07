@@ -54,7 +54,7 @@ std::size_t HashBasedSharder::getShardFor(
 
 void HashBasedSharder::shardLine(
     std::string line,
-    const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+    const std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>>& outFiles,
     const std::vector<int32_t>& idColumnIndices) {
   std::vector<std::string> cols;
   folly::split(",", line, cols);
@@ -88,7 +88,10 @@ void HashBasedSharder::shardLine(
   auto numShards = outFiles.size();
   std::size_t shard;
   shard = getShardFor(id, numShards);
-  *outFiles.at(shard) << folly::join(",", cols) << "\n";
+  std::string lineToWrite = folly::join(",", cols);
+  std::string newLine = "\n";
+  outFiles.at(shard)->writeString(lineToWrite);
+  outFiles.at(shard)->writeString(newLine);
   logRowsToShard(shard);
 }
 } // namespace data_processing::sharder

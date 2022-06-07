@@ -8,6 +8,7 @@
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -17,12 +18,15 @@
 #include <string>
 #include <vector>
 
+#include <fbpcf/aws/S3Util.h>
 #include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/BufferedReader.h>
+#include <fbpcf/io/api/BufferedWriter.h>
+#include <fbpcf/io/api/FileReader.h>
+#include <fbpcf/io/api/FileWriter.h>
 #include <folly/Random.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/logging/xlog.h>
-#include "fbpcf/io/api/BufferedReader.h"
-#include "fbpcf/io/api/FileReader.h"
 
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
 #include "fbpcs/data_processing/common/Logging.h"
@@ -46,6 +50,15 @@ void strRemoveBlanks(std::string& str) {
 
 static const std::string kIdColumnPrefix = "id_";
 
+/*
+  The chunk size for writing to cloud storage (currently
+  only AWS S3) must be greater than 5 MB, per the AWS
+  documentation. Otherwise multipart upload will fail.
+
+  The number below is 5 MB in bytes.
+*/
+static const uint64_t kBufferedWriterChunkSize = 5'242'880;
+
 std::vector<std::string> GenericSharder::genOutputPaths(
     const std::string& outputBasePath,
     std::size_t startIndex,
@@ -63,28 +76,16 @@ void GenericSharder::shard() {
   auto bufferedReader =
       std::make_unique<fbpcf::io::BufferedReader>(reader, BUFFER_SIZE);
 
-  std::filesystem::path tmpDirectory{"/tmp"};
-  std::vector<std::string> tmpFilenames;
-  std::vector<std::unique_ptr<std::ofstream>> tmpFiles;
+  std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>> outFiles(0);
 
-  auto filename = std::filesystem::path{
-      private_lift::filepath_helpers::getBaseFilename(getInputPath())};
-  auto stem = filename.stem().string();
-  auto extension = filename.extension().string();
-  // Get a random ID to avoid potential name collisions if multiple
-  // runs at the same time point to the same input file
-  auto randomId = std::to_string(folly::Random::secureRand64());
-
-  for (auto i = 0; i < numShards; ++i) {
-    std::stringstream tmpName;
-    tmpName << randomId << "_" << stem << "_" << i << extension;
-
-    auto tmpFilepath = tmpDirectory / tmpName.str();
-
-    tmpFilenames.push_back(tmpFilepath.string());
-    tmpFiles.push_back(std::make_unique<std::ofstream>(tmpFilepath));
+  for (std::size_t i = 0; i < numShards; ++i) {
+    auto fileWriter =
+        std::make_unique<fbpcf::io::FileWriter>(getOutputPaths().at(i));
+    auto bufferedWriter = std::make_unique<fbpcf::io::BufferedWriter>(
+        std::move(fileWriter), kBufferedWriterChunkSize);
+    outFiles.push_back(std::move(bufferedWriter));
+    XLOG(INFO) << "Created buffered writer for shard " << std::to_string(i);
   }
-
   // First get the header and put it in all the output files
   std::string line = bufferedReader->readLine();
   detail::stripQuotes(line);
@@ -110,8 +111,12 @@ void GenericSharder::shard() {
                 << "Header: [" << folly::join(",", header) << "]";
   }
 
-  for (const auto& tmpFile : tmpFiles) {
-    *tmpFile << line << "\n";
+  std::string newLine = "\n";
+  std::size_t i = 0;
+  for (const auto& outFile : outFiles) {
+    XLOG(INFO) << "Writing header to shard " << std::to_string(i++);
+    outFile->writeString(line);
+    outFile->writeString(newLine);
   }
   XLOG(INFO) << "Got header line: '" << line << "'";
 
@@ -122,7 +127,7 @@ void GenericSharder::shard() {
     detail::stripQuotes(line);
     detail::dos2Unix(line);
     detail::strRemoveBlanks(line);
-    shardLine(std::move(line), tmpFiles, idColumnIndices);
+    shardLine(std::move(line), outFiles, idColumnIndices);
     ++lineIdx;
     if (lineIdx % getLogRate() == 0) {
       XLOG(INFO) << "Processed line "
@@ -133,52 +138,19 @@ void GenericSharder::shard() {
   XLOG(INFO) << "Finished after processing "
              << private_lift::logging::formatNumber(lineIdx) << " lines.";
 
-  XLOG(INFO) << "Now copying files to final output path...";
-
-  auto executor =
-      std::make_unique<folly::CPUThreadPoolExecutor>(THREAD_POOL_SIZE);
-  std::vector<std::exception_ptr> errorStorage(numShards, nullptr);
-
   bufferedReader->close();
 
   for (auto i = 0; i < numShards; ++i) {
-    auto outputDst = getOutputPaths().at(i);
-    auto tmpFileSrc = tmpFilenames.at(i);
-
-    if (outputDst == tmpFileSrc) {
-      continue;
-    }
-
-    // Reset underlying unique_ptr to ensure buffer gets flushed
-    tmpFiles.at(i).reset();
-
-    executor->add([this, outputDst, tmpFileSrc, &errorStorage, i] {
-      copySingleFileToDestination(outputDst, tmpFileSrc, errorStorage, i);
-    });
+    outFiles.at(i)->close();
     XLOG(INFO, fmt::format("Shard {} has {} rows", i, rowsInShard[i]));
   }
-  executor->join();
 
-  // check for errors from worker threads
-  auto numFailedTasks = 0;
-  std::exception_ptr exceptionToThrow = nullptr;
-  for (int i = 0; i < numShards; i++) {
-    if (errorStorage.at(i) != nullptr) {
-      numFailedTasks++;
-      exceptionToThrow = errorStorage.at(i);
-    }
-  }
-  if (numFailedTasks == 0) {
-    XLOG(INFO) << "All file writes successful";
-  } else {
-    XLOG(INFO) << "There was a failure on " << numFailedTasks << " threads.";
-    std::rethrow_exception(exceptionToThrow);
-  }
+  XLOG(INFO) << "All file writes successful";
 }
 
 void GenericSharder::shardLine(
     std::string line,
-    const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+    const std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>>& outFiles,
     const std::vector<int32_t>& idColumnIndices) {
   std::vector<std::string> cols;
   folly::split(",", line, cols);
@@ -202,38 +174,8 @@ void GenericSharder::shardLine(
   }
   auto shard = getShardFor(id, outFiles.size());
   logRowsToShard(shard);
-  *outFiles.at(shard) << line << "\n";
-}
-
-void GenericSharder::copySingleFileToDestination(
-    std::string outputDst,
-    std::string tmpFileSrc,
-    std::vector<std::exception_ptr>& errorStorage,
-    int i) {
-  try {
-    copySingleFileToDestinationImpl(outputDst, tmpFileSrc);
-  } catch (...) {
-    errorStorage.at(i) = std::current_exception();
-  }
-}
-
-void GenericSharder::copySingleFileToDestinationImpl(
-    std::string outputDst,
-    std::string tmpFileSrc) {
-  XLOG(INFO) << "Writing " << tmpFileSrc << " -> " << outputDst;
-  auto outputType = fbpcf::io::getFileType(outputDst);
-  if (outputType == fbpcf::io::FileType::S3) {
-    private_lift::s3_utils::uploadToS3(tmpFileSrc, outputDst);
-  } else if (outputType == fbpcf::io::FileType::Local) {
-    std::filesystem::copy(
-        tmpFileSrc,
-        outputDst,
-        std::filesystem::copy_options::overwrite_existing);
-  } else {
-    throw std::runtime_error{"Unsupported output destination"};
-  }
-
-  // We need to make sure we clean up the tmpfiles now
-  std::remove(tmpFileSrc.c_str());
+  std::string newLine = "\n";
+  outFiles.at(shard)->writeString(line);
+  outFiles.at(shard)->writeString(newLine);
 }
 } // namespace data_processing::sharder
