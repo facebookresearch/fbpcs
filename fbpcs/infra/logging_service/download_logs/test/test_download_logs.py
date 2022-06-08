@@ -207,55 +207,15 @@ class TestDownloadLogs(unittest.TestCase):
             "ResponseMetadata": {"HTTPStatusCode": 200}
         }
 
-        arn = (
+        arn = [
             "arn:aws:ecs:fake-region:123456789:task/fake-container-name/1234abcdef56789"
-        )
+        ]
         expected_key = (
             f"{self.aws_container_logs.S3_LOGGING_FOLDER}/{self.tag}/1234abcdef56789"
         )
         expected_body = "123\n456\n789".encode("utf-8")
 
-        # folders already exist, no need to create
-        with self.subTest("folder_exists"):
-            self.aws_container_logs.s3_client.list_objects_v2.return_value = {
-                "Contents": [
-                    {"Key": "f/"},
-                    {"Key": "a"},
-                    {"Key": "f2/"},
-                    {"Key": "b"},
-                    {"Key": "c"},
-                ],
-            }
-            self.aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
-            self.aws_container_logs.s3_client.put_object.assert_called_once_with(
-                Body=expected_body, Bucket="bucket", Key=expected_key
-            )
-
-        # folders don't exist, create first
-        # TODO: Put this repeated code in a setUp block
-        with self.subTest("folder_not_exists"):
-            self.aws_container_logs.cloudwatch_client.get_log_events.reset_mock()
-            self.aws_container_logs.cloudwatch_client.get_log_events.side_effect = [
-                {"events": [{"message": "123"}], "nextForwardToken": "1"},
-                {"events": [{"message": "456"}], "nextForwardToken": "2"},
-                {"events": [{"message": "789"}], "nextForwardToken": "3"},
-                # Repeated event indicates no more data available
-                {"events": [{"message": "789"}], "nextForwardToken": "3"},
-            ]
-            self.aws_container_logs.s3_client.list_objects_v2.reset_mock()
-            self.aws_container_logs.s3_client.list_objects_v2.return_value = {}
-            self.aws_container_logs.upload_logs_to_s3_from_cloudwatch("bucket", arn)
-            self.aws_container_logs.s3_client.put_object.assert_any_call(
-                Bucket="bucket",
-                Key=f"{self.aws_container_logs.S3_LOGGING_FOLDER}/",
-            )
-            self.aws_container_logs.s3_client.put_object.assert_any_call(
-                Bucket="bucket",
-                Key=f"{self.aws_container_logs.S3_LOGGING_FOLDER}/{self.tag}/",
-            )
-            self.aws_container_logs.s3_client.put_object.assert_any_call(
-                Body=expected_body, Bucket="bucket", Key=expected_key
-            )
+        # TODO: add changes to test temp dir changes
 
         ###############
         # Error cases #

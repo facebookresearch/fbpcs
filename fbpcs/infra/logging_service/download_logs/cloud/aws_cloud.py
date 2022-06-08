@@ -27,6 +27,7 @@ class AwsCloud(CloudBaseClass):
         self,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
+        aws_session_token: Optional[str] = None,
         aws_region: Optional[str] = None,
         logger_name: str = "logging_service",
     ) -> None:
@@ -35,6 +36,7 @@ class AwsCloud(CloudBaseClass):
         aws_secret_access_key = aws_secret_access_key or os.environ.get(
             "AWS_SECRET_ACCESS_KEY"
         )
+        aws_session_token = aws_session_token or os.environ.get("AWS_SESSION_TOKEN")
         aws_region = aws_region or os.environ.get("AWS_REGION")
         self.log: logging.Logger = logging.getLogger(logger_name)
 
@@ -43,17 +45,21 @@ class AwsCloud(CloudBaseClass):
                 "sts",
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
             )
             self.cloudwatch_client: botocore.client.BaseClient = boto3.client(
                 "logs",
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
                 region_name=aws_region,
             )
             self.s3_client: botocore.client.BaseClient = boto3.client(
                 "s3",
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+                region_name=aws_region,
             )
 
         except NoCredentialsError as error:

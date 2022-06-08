@@ -5,6 +5,8 @@
 
 # pyre-strict
 
+import os
+import tempfile
 
 from typing import Any, Dict, List, Optional
 
@@ -12,6 +14,8 @@ from botocore.exceptions import ClientError
 
 from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
 from fbpcs.infra.logging_service.download_logs.utils.utils import Utils
+
+from tqdm import tqdm
 
 
 class AwsContainerLogs(AwsCloud):
@@ -24,6 +28,11 @@ class AwsContainerLogs(AwsCloud):
     ARN_PARSE_LENGTH = 6
     S3_LOGGING_FOLDER = "logging"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
+    LOCAL_FOLDER_LOCATION = "/tmp/{}"
+    LOCAL_ZIP_FOLDER_LOCATION = "{}.zip"
+    LOCAL_FILE_LOCATION = "{}/{}"
+    ZIPPED_FOLDER_NAME = "{}.zip"
+    DEFAULT_RETRIES_LIMIT = 3
 
     def __init__(
         self,
@@ -37,8 +46,8 @@ class AwsContainerLogs(AwsCloud):
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
-        self.tag_name = tag_name
         self.utils = Utils()
+        self.tag_name: str = tag_name
 
     def get_cloudwatch_logs(
         self,
@@ -189,6 +198,93 @@ class AwsContainerLogs(AwsCloud):
 
         return response
 
+    def _get_s3_folder_path(self, tag_name: str, container_id: str) -> str:
+        """
+        Return path of S3 folder
+        Args:
+            tag_name (str): Tag name passed to download the logs
+            container_id (str): Download logs for container ID
+        Returns:
+            str
+        """
+        return f"{self.S3_LOGGING_FOLDER}/{tag_name}/{container_id}"
+
+    def upload_file_to_s3(
+        self,
+        s3_bucket_name: str,
+        s3_file_path: str,
+        file_name: str,
+        retries: int = DEFAULT_RETRIES_LIMIT,
+    ) -> None:
+        """
+        Function to upload a file to S3 bucket
+        Args:
+            s3_bucket_name (str): Name of the s3 bucket where logs will be uploaded
+            s3_file_path (str): Name of folder in S3 bucket where logs will be uploaded
+            file_name (str): Full path of the file location Eg: /tmp/xyz.txt
+        Returns:
+            None
+        """
+
+        while True:
+            try:
+                self.log.info("Uploading log folder to AWS S3")
+                file_size = os.stat(file_name).st_size
+                with tqdm(
+                    total=file_size, unit="B", unit_scale=True, desc=file_name
+                ) as pbar:
+                    self.s3_client.upload_file(
+                        Filename=file_name,
+                        Bucket=s3_bucket_name,
+                        Key=s3_file_path,
+                        Callback=lambda bytes_transferred: pbar.update(
+                            bytes_transferred
+                        ),
+                    )
+                self.log.info("Uploaded log folder to AWS S3")
+                break
+            except ClientError as error:
+                retries -= 1
+                if retries <= 0:
+                    # TODO T122315363: Raise more specific exception
+                    raise Exception(
+                        f"Couldn't upload file {file_name} to bucket {s3_bucket_name}."
+                        f"Please check if right S3 bucket name and file path in S3 bucket {s3_file_path}."
+                        f"{error}"
+                    )
+
+    def _get_files_to_download_logs(
+        self, s3_bucket_name: str, folder_to_download: str
+    ) -> List[str]:
+        """
+        Returns all the files to be downloaded in a folder in S3 bucket
+        Args:
+            s3_bucket_name (str): Name of the S3 bucket in AWS account
+            folder_to_download (str): Name of folder from which files should be downloaded from
+        Returns:
+            List
+        """
+
+        files_to_download = []
+        next_continuation_token = ""
+
+        # Loop over the contents in case of pagination
+        while next_continuation_token is not None:
+            response = self.get_s3_folder_contents(
+                bucket_name=s3_bucket_name,
+                folder_name=folder_to_download,
+                next_continuation_token=next_continuation_token,
+            )
+            contents = response.get("Contents", [])
+
+            # ignore the directory in lsit of files to be downloaded
+            for content in contents:
+                key = content.get("Key")
+                if key[-1] != "/":
+                    files_to_download.append(key)
+            next_continuation_token = response.get("NextContinuationToken")
+        return files_to_download
+
     def download_logs(
         self,
         s3_bucket_name: str,
@@ -245,7 +341,7 @@ class AwsContainerLogs(AwsCloud):
         self.utils.compress_downloaded_logs(folder_location=local_path)
 
     def upload_logs_to_s3_from_cloudwatch(
-        self, s3_bucket_name: str, container_arn: str
+        self, s3_bucket_name: str, container_arn_list: List[str]
     ) -> None:
         """
         Umbrella function to call other functions to upload the logs from cloudwatch to S3
@@ -259,7 +355,7 @@ class AwsContainerLogs(AwsCloud):
 
         Args:
             s3_bucket_name (string): Name of the s3 bucket where logs will be stored
-            container_arn (string): Container arn to get log group and log stream names
+            container_arn_list (string): List of container arn to get log group and log stream names
         Returns:
             None
         """
@@ -285,51 +381,73 @@ class AwsContainerLogs(AwsCloud):
                 folder_name=f"{self.S3_LOGGING_FOLDER}/",
             )
 
-        # create folder with tag_name passed
-        if not self.ensure_folder_exists(
-            bucket_name=s3_bucket_name,
-            folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
-        ):
-            self.create_s3_folder(
-                bucket_name=s3_bucket_name,
-                folder_name=f"{self.S3_LOGGING_FOLDER}/{self.tag_name}/",
+        # creating temp directory to store logs locally
+        with tempfile.TemporaryDirectory(prefix=self.tag_name) as tempdir:
+            self.log.info(f"Created temperory directory to store logs {tempdir}")
+
+            # store logs in local
+            # local_folder_location = self.LOCAL_FOLDER_LOCATION.format(self.tag_name)
+            local_folder_location = f"{tempdir}/{self.tag_name}"
+            self.utils.create_folder(folder_location=local_folder_location)
+
+            for container_arn in container_arn_list:
+                # fetch logs
+                self.log.info(
+                    "Getting service name, container name and container ID from continer arn"
+                )
+                service_name, container_name, container_id = self._parse_container_arn(
+                    container_arn=container_arn
+                )
+
+                # T122923883 - for better formatting of the strings
+                log_group_name = self.LOG_GROUP.format(service_name, container_name)
+                log_stream_name = self.LOG_STREAM.format(
+                    service_name, container_name, container_id
+                )
+
+                if not self._verify_log_group(log_group_name=log_group_name):
+                    # TODO T122315363: Raise more specific exception
+                    raise Exception(
+                        f"Couldn't find log group {log_group_name} in AWS account."
+                    )
+
+                if not self._verify_log_stream(
+                    log_group_name=log_group_name, log_stream_name=log_stream_name
+                ):
+                    # TODO T122315363: Raise more specific exception
+                    raise Exception(
+                        f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
+                    )
+
+                message_events = self.get_cloudwatch_logs(
+                    log_group_name=log_group_name,
+                    log_stream_name=log_stream_name,
+                    container_arn=container_arn,
+                )
+
+                self.log.info(
+                    f"Creating file to store log locally in location {self.LOCAL_FILE_LOCATION.format(local_folder_location, container_id)}"
+                )
+
+                self.utils.create_file(
+                    file_location=self.LOCAL_FILE_LOCATION.format(
+                        local_folder_location, container_id
+                    ),
+                    content=message_events,
+                )
+
+            # compressing the folder before uploading it to S3
+            self.log.info("Compressing downloaded logs folder")
+            self.utils.compress_downloaded_logs(folder_location=local_folder_location)
+            self.log.info("Compressed download log folder.")
+
+            self.upload_file_to_s3(
+                s3_bucket_name=s3_bucket_name,
+                s3_file_path=f"{self.S3_LOGGING_FOLDER}/{self.ZIPPED_FOLDER_NAME.format(self.tag_name)}",
+                file_name=f"{self.LOCAL_ZIP_FOLDER_LOCATION.format(local_folder_location)}",
             )
 
-        # fetch logs
-        self.log.info(
-            "Getting service name, container name and container ID from continer arn"
-        )
-        service_name, container_name, container_id = self._parse_container_arn(
-            container_arn=container_arn
-        )
-        log_group_name = self.LOG_GROUP.format(service_name, container_name)
-        log_stream_name = self.LOG_STREAM.format(
-            service_name, container_name, container_id
-        )
-        s3_folder_path = self._get_s3_folder_path(self.tag_name, container_id)
-
-        if not self._verify_log_group(log_group_name=log_group_name):
-            raise Exception(f"Couldn't find log group {log_group_name} in AWS account.")
-
-        if not self._verify_log_stream(
-            log_group_name=log_group_name, log_stream_name=log_stream_name
-        ):
-            # TODO T122315363: Raise more specific exception
-            raise Exception(
-                f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
-            )
-
-        message_events = self.get_cloudwatch_logs(
-            log_group_name=log_group_name,
-            log_stream_name=log_stream_name,
-            container_arn=container_arn,
-        )
-
-        self.s3_client.put_object(
-            Body="\n".join(str(event) for event in message_events).encode("utf-8"),
-            Bucket=s3_bucket_name,
-            Key=s3_folder_path,
-        )
+            self.log.info("Removing logs locally.")
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> List[str]:
         """
@@ -487,46 +605,3 @@ class AwsContainerLogs(AwsCloud):
             raise Exception(f"{error_message}")
 
         return len(response.get("logStreams", [])) == 1
-
-    def _get_s3_folder_path(self, tag_name: str, container_id: str) -> str:
-        """
-        Return path of S3 folder
-        Args:
-            tag_name (str): Tag name passed to download the logs
-            container_id (str): Download logs for container ID
-        Returns:
-            str
-        """
-        return f"{self.S3_LOGGING_FOLDER}/{tag_name}/{container_id}"
-
-    def _get_files_to_download_logs(
-        self, s3_bucket_name: str, folder_to_download: str
-    ) -> List[str]:
-        """
-        Returns all the files to be downloaded in a folder in S3 bucket
-        Args:
-            s3_bucket_name (str): Name of the S3 bucket in AWS account
-            folder_to_download (str): Name of folder from which files should be downloaded from
-        Returns:
-            List
-        """
-
-        files_to_download = []
-        next_continuation_token = ""
-
-        # Loop over the contents in case of pagination
-        while next_continuation_token is not None:
-            response = self.get_s3_folder_contents(
-                bucket_name=s3_bucket_name,
-                folder_name=folder_to_download,
-                next_continuation_token=next_continuation_token,
-            )
-            contents = response.get("Contents", [])
-
-            # ignore the directory in lsit of files to be downloaded
-            for content in contents:
-                key = content.get("Key")
-                if key[-1] != "/":
-                    files_to_download.append(key)
-            next_continuation_token = response.get("NextContinuationToken")
-        return files_to_download

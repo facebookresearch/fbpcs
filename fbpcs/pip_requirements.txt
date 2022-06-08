@@ -9,3 +9,4 @@ termcolor==1.1.0
 thriftpy2==0.4.14
 pytz>=2022.1
 thrift>=0.16.0 # logging_service client requires this
+tqdm==4.64.0
