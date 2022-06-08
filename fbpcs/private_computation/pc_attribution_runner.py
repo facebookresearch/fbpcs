@@ -145,22 +145,23 @@ def run_attribution(
 
     ## Step 3. Run Instances. Run maximum number of instances in parallel
     logger.info(f"Start running instance {instance_id}.")
-    run_instance(
-        config,
-        instance_id,
-        input_path,
-        num_pid_containers,
-        num_mpc_containers,
-        stage_flow,
-        logger,
-        PrivateComputationGameType.ATTRIBUTION,
-        attribution_rule,
-        AggregationType.MEASUREMENT,
-        concurrency,
-        num_files_per_mpc_container,
-        k_anonymity_threshold,
-        num_tries,
-    )
+    instance_parameters = {
+        "config": config,
+        "instance_id": instance_id,
+        "input_path": input_path,
+        "num_mpc_containers": num_mpc_containers,
+        "num_pid_containers": num_pid_containers,
+        "stage_flow": stage_flow,
+        "logger": logger,
+        "game_type": PrivateComputationGameType.ATTRIBUTION,
+        "attribution_rule": attribution_rule,
+        "aggregation_type": AggregationType.MEASUREMENT,
+        "concurrency": concurrency,
+        "num_files_per_mpc_container": num_files_per_mpc_container,
+        "k_anonymity_threshold": k_anonymity_threshold,
+        "num_tries": num_tries,
+    }
+    run_instance(**instance_parameters)
     logger.info(f"Finished running instances {instance_id}.")
 
 

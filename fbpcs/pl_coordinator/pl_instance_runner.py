@@ -57,6 +57,7 @@ class LoggerAdapter(logging.LoggerAdapter):
 
 
 def run_instance(
+    *,
     config: Dict[str, Any],
     instance_id: str,
     input_path: str,
