@@ -9,9 +9,9 @@
 #include <string>
 #include <vector>
 
-#include <gtest/gtest.h>
-
+#include <fbpcf/io/api/BufferedWriter.h>
 #include <folly/Random.h>
+#include <gtest/gtest.h>
 
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
 #include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
@@ -32,7 +32,8 @@ class GenericSharderTest final : public GenericSharder {
 
   void shardLine(
       std::string line,
-      const std::vector<std::unique_ptr<std::ofstream>>& /* unused */,
+      const std::vector<
+          std::unique_ptr<fbpcf::io::BufferedWriter>>& /* unused */,
       const std::vector<int32_t>& /* unused */) final {
     linesCalledWith_.push_back(line);
   }

@@ -12,6 +12,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <fbpcf/io/api/BufferedWriter.h>
+
 namespace data_processing::sharder {
 namespace detail {
 /**
@@ -155,7 +158,7 @@ class GenericSharder {
    */
   virtual void shardLine(
       std::string line,
-      const std::vector<std::unique_ptr<std::ofstream>>& outFiles,
+      const std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>>& outFiles,
       const std::vector<int32_t>& idColumnIndices);
 
  private:
@@ -163,15 +166,5 @@ class GenericSharder {
   std::vector<std::string> outputPaths_;
   int32_t logEveryN_;
   std::unordered_map<std::size_t, int> rowsInShard;
-
-  void copySingleFileToDestination(
-      std::string outputDst,
-      std::string tmpFileSrc,
-      std::vector<std::exception_ptr>& errorStorage,
-      int i);
-
-  void copySingleFileToDestinationImpl(
-      std::string outputDst,
-      std::string tmpFileSrc);
 };
 } // namespace data_processing::sharder

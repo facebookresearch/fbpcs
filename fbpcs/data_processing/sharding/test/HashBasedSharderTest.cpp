@@ -8,9 +8,10 @@
 #include <string>
 #include <vector>
 
-#include <gtest/gtest.h>
-
+#include <fbpcf/io/api/BufferedWriter.h>
+#include <fbpcf/io/api/FileWriter.h>
 #include <folly/Random.h>
+#include <gtest/gtest.h>
 
 #include "fbpcs/data_processing/sharding/HashBasedSharder.h"
 #include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
@@ -65,22 +66,27 @@ TEST(HashBasedSharderTest, TestGetShardFor) {
 
 TEST(HashBasedSharderTest, TestShardLineNoHmacKey) {
   std::string line = "abcd,1,2,3";
-  std::vector<std::unique_ptr<std::ofstream>> streams;
+  std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>> streams(0);
   auto randStart = folly::Random::secureRand64();
   std::vector<std::string> outputPaths{
       "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
       "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
   };
-  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(0)));
-  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(1)));
+  auto fileWriter0 = std::make_unique<fbpcf::io::FileWriter>(outputPaths.at(0));
+  auto fileWriter1 = std::make_unique<fbpcf::io::FileWriter>(outputPaths.at(1));
+
+  streams.push_back(
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter0)));
+  streams.push_back(
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter1)));
 
   HashBasedSharder sharder{"unused", outputPaths, 123, ""};
   std::vector<int32_t> idColumnIndices{0};
   sharder.shardLine(line, streams, idColumnIndices);
 
   // We can just reset the underlying unique_ptr to flush the writes to disk
-  streams.at(0).reset();
-  streams.at(1).reset();
+  streams.at(0)->close();
+  streams.at(1)->close();
 
   // We didn't write headers, so we expect to *just* have the written line
   std::vector<std::string> expected0{"abcd,1,2,3"};
@@ -94,14 +100,19 @@ TEST(HashBasedSharderTest, TestShardLineNoHmacKey) {
 
 TEST(HashBasedSharderTest, TestShardLineWithHmacKey) {
   std::string line = "abcd,1,2,3";
-  std::vector<std::unique_ptr<std::ofstream>> streams;
+  std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>> streams(0);
   auto randStart = folly::Random::secureRand64();
   std::vector<std::string> outputPaths{
       "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
       "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
   };
-  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(0)));
-  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(1)));
+  auto fileWriter0 = std::make_unique<fbpcf::io::FileWriter>(outputPaths.at(0));
+  auto fileWriter1 = std::make_unique<fbpcf::io::FileWriter>(outputPaths.at(1));
+
+  streams.push_back(
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter0)));
+  streams.push_back(
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter1)));
 
   std::string hmacKey = "abcd1234";
   HashBasedSharder sharder{"unused", outputPaths, 123, hmacKey};
@@ -109,8 +120,8 @@ TEST(HashBasedSharderTest, TestShardLineWithHmacKey) {
   sharder.shardLine(line, streams, idColumnIndices);
 
   // We can just reset the underlying unique_ptr to flush the writes to disk
-  streams.at(0).reset();
-  streams.at(1).reset();
+  streams.at(0)->close();
+  streams.at(1)->close();
 
   // We didn't write headers, so we expect to *just* have the written line
   std::vector<std::string> expected0{};
@@ -125,14 +136,19 @@ TEST(HashBasedSharderTest, TestShardLineWithHmacKey) {
 
 TEST(HashBasedSharderTest, TestShardMultiKeyLineWithHmacKey) {
   std::string line = "abcd,defg,1,2,3";
-  std::vector<std::unique_ptr<std::ofstream>> streams;
+  std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>> streams(0);
   auto randStart = folly::Random::secureRand64();
   std::vector<std::string> outputPaths{
       "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart),
       "/tmp/HashBasedSharderTestShardOutput" + std::to_string(randStart + 1),
   };
-  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(0)));
-  streams.push_back(std::make_unique<std::ofstream>(outputPaths.at(1)));
+  auto fileWriter0 = std::make_unique<fbpcf::io::FileWriter>(outputPaths.at(0));
+  auto fileWriter1 = std::make_unique<fbpcf::io::FileWriter>(outputPaths.at(1));
+
+  streams.push_back(
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter0)));
+  streams.push_back(
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter1)));
 
   std::string hmacKey = "abcd1234";
   HashBasedSharder sharder{"unused", outputPaths, 123, hmacKey};
@@ -140,8 +156,8 @@ TEST(HashBasedSharderTest, TestShardMultiKeyLineWithHmacKey) {
   sharder.shardLine(line, streams, idColumnIndices);
 
   // We can just reset the underlying unique_ptr to flush the writes to disk
-  streams.at(0).reset();
-  streams.at(1).reset();
+  streams.at(0)->close();
+  streams.at(1)->close();
 
   // We didn't write headers, so we expect to *just* have the written line
   std::vector<std::string> expected0{};
