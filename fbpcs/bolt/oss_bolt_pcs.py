@@ -104,7 +104,9 @@ class BoltPCSClient(BoltClient):
         stage: PrivateComputationBaseStageFlow,
         server_ips: Optional[List[str]] = None,
     ) -> None:
-        pass
+        await self.pcs.run_stage_async(
+            instance_id=instance_id, stage=stage, server_ips=server_ips
+        )
 
     async def update_instance(self, instance_id: str) -> BoltState:
         raise NotImplementedError
