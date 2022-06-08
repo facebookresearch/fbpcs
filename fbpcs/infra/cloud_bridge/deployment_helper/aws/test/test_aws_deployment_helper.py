@@ -8,71 +8,70 @@
 
 import unittest
 from unittest.mock import patch
+import boto3
 
 from fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper import (
     AwsDeploymentHelper,
 )
-
-
 class TestAwsDeploymentHelper(unittest.TestCase):
     def setUp(self) -> None:
-        with patch(
-            "fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper.boto3"
-        ):
+        with patch("fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper.boto3"):
             self.aws_deployment_helper = AwsDeploymentHelper()
 
     def test_create_user(self) -> None:
-        # T122887119
         pass
 
     def test_delete_user(self) -> None:
-        # T122887147
         pass
 
     def test_create_policy(self) -> None:
-        # T122887174
         pass
 
     def test_delete_policy(self) -> None:
-        # T122887191
         pass
 
     def test_attach_user_policy(self) -> None:
-        # T122887198
         pass
 
     def test_detach_user_policy(self) -> None:
-        # T122887211
         pass
 
     def test_list_policies(self) -> None:
-        # T122887235
         pass
 
     def test_list_users(self) -> None:
-        # T122887247
         pass
 
     def test_create_access_key(self) -> None:
-        # T122887269
         pass
 
     def test_delete_access_key(self) -> None:
-        # T122887297
-        pass
+
+        # Basic test
+        with self.subTest("basic"):
+            self.aws_deployment_helper = AwsDeploymentHelper()
+            self.aws_deployment_helper.create_user('userA')
+            self.aws_deployment_helper.create_user_workflow('userA')
+            access_key_list = set(self.list_access_keys(user_name='userA'))
+            access_key_set = set(access_key_list)
+
+            for access_key in access_key_list:
+                self.delete_access_key(user_name='userA', access_key=access_key)
+                access_key_set.remove(access_key)
+                self.assertEqual(
+                    access_key_set,
+                    self.aws_deployment_helper.list_access_keys('userA')
+                )
+            self.delete_user(user_name='userA')
 
     def test_list_access_keys(self) -> None:
-        # T122887335
         pass
 
     def test_read_json_file(self) -> None:
-        # T122887357
         pass
 
     def test_create_user_workflow(self) -> None:
-        # T122887368
         pass
 
     def test_delete_user_workflow(self) -> None:
-        # T122887387
         pass
