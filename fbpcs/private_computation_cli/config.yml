@@ -17,6 +17,8 @@ private_computation:
         access_key_id: TODO
         # AWS access secret
         access_key_data: TODO
+        # AWS session token
+        # session_token: TODO
     StorageService:
       class: fbpcp.service.storage_s3.S3StorageService
       constructor:
@@ -26,6 +28,8 @@ private_computation:
         access_key_id: TODO
         # AWS access secret
         access_key_data: TODO
+        # AWS session token
+        # session_token: TODO
     ValidationConfig:
       is_validating: false
       synthetic_shard_path:
