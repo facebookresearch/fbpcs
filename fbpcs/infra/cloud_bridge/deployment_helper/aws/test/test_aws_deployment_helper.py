@@ -7,11 +7,19 @@
 # pyre-strict
 
 import unittest
+from unittest.mock import patch
+
+from fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper import (
+    AwsDeploymentHelper,
+)
 
 
 class TestAwsDeploymentHelper(unittest.TestCase):
     def setUp(self) -> None:
-        pass
+        with patch(
+            "fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper.boto3"
+        ):
+            self.aws_deployment_helper = AwsDeploymentHelper()
 
     def test_create_user(self) -> None:
         pass
