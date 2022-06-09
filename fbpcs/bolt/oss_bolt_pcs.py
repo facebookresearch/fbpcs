@@ -23,6 +23,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
     ResultVisibility,
 )
+from fbpcs.private_computation.service.errors import (
+    PrivateComputationServiceValidationError,
+)
 
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
@@ -123,4 +126,24 @@ class BoltPCSClient(BoltClient):
     async def validate_results(
         self, instance_id: str, expected_result_path: Optional[str] = None
     ) -> bool:
-        raise NotImplementedError
+        # No expected result path in production, so we just move on
+        if not expected_result_path:
+            self.logger.info(
+                "No expected result path was given, so result validation was skipped."
+            )
+            return True
+        else:
+            try:
+                self.pcs.validate_metrics(
+                    instance_id=instance_id, expected_result_path=expected_result_path
+                )
+            except PrivateComputationServiceValidationError:
+                self.logger.info(
+                    f"Validate results for instance {instance_id} are not as expected."
+                )
+                return False
+            else:
+                self.logger.info(
+                    f"Validate results for instance {instance_id} are as expected."
+                )
+                return True

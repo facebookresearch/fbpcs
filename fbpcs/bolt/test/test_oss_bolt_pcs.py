@@ -28,6 +28,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.errors import (
+    PrivateComputationServiceValidationError,
+)
 from fbpcs.private_computation.service.private_computation import (
     DEFAULT_PID_PROTOCOL,
     NUM_NEW_SHARDS_PER_FILE,
@@ -182,5 +185,21 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(["10.0.10.242"], return_state.server_ips)
 
-    async def test_validate_metrics(self) -> None:
-        pass
+    @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService.validate_metrics"
+    )
+    async def test_validate_results(self, mock_validate) -> None:
+        # Confirm that validate_results returns False when an exception is raised
+        mock_validate.side_effect = PrivateComputationServiceValidationError()
+        result = await self.bolt_pcs_client.validate_results(
+            self.test_instance_id, expected_result_path="test/path"
+        )
+        self.assertFalse(result)
+
+        # Confirm that validate_results returns True when private_computation.validate_metrics runs successfully
+        mock_validate.side_effect = None
+        mock_validate.return_value = None
+        result = await self.bolt_pcs_client.validate_results(
+            self.test_instance_id, expected_result_path="test/path"
+        )
+        self.assertTrue(result)
