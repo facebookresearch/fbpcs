@@ -198,17 +198,6 @@ class AwsContainerLogs(AwsCloud):
 
         return response
 
-    def _get_s3_folder_path(self, tag_name: str, container_id: str) -> str:
-        """
-        Return path of S3 folder
-        Args:
-            tag_name (str): Tag name passed to download the logs
-            container_id (str): Download logs for container ID
-        Returns:
-            str
-        """
-        return f"{self.S3_LOGGING_FOLDER}/{tag_name}/{container_id}"
-
     def upload_file_to_s3(
         self,
         s3_bucket_name: str,
@@ -252,93 +241,6 @@ class AwsContainerLogs(AwsCloud):
                         f"Please check if right S3 bucket name and file path in S3 bucket {s3_file_path}."
                         f"{error}"
                     )
-
-    def _get_files_to_download_logs(
-        self, s3_bucket_name: str, folder_to_download: str
-    ) -> List[str]:
-        """
-        Returns all the files to be downloaded in a folder in S3 bucket
-        Args:
-            s3_bucket_name (str): Name of the S3 bucket in AWS account
-            folder_to_download (str): Name of folder from which files should be downloaded from
-        Returns:
-            List
-        """
-
-        files_to_download = []
-        next_continuation_token = ""
-
-        # Loop over the contents in case of pagination
-        while next_continuation_token is not None:
-            response = self.get_s3_folder_contents(
-                bucket_name=s3_bucket_name,
-                folder_name=folder_to_download,
-                next_continuation_token=next_continuation_token,
-            )
-            contents = response.get("Contents", [])
-
-            # ignore the directory in lsit of files to be downloaded
-            for content in contents:
-                key = content.get("Key")
-                if key[-1] != "/":
-                    files_to_download.append(key)
-            next_continuation_token = response.get("NextContinuationToken")
-        return files_to_download
-
-    def download_logs(
-        self,
-        s3_bucket_name: str,
-        tag_name: str,
-        local_download_dir: Optional[str] = None,
-    ) -> None:
-        """
-        Download logs from S3 to local
-        Args:
-            s3_bucket_name (str): Name of the S3 bucket in AWS account
-            tag_name (str): Unique name for downloaded logs
-            local_download_dir (str): Path where logs should be downloaded locally
-        Returns:
-            None
-        """
-
-        # If the local download directory is not set then set to default
-        if local_download_dir is None:
-            local_download_dir = self.DEFAULT_DOWNLOAD_LOCATION
-
-        s3_folders_contents = self.ensure_folder_exists(
-            bucket_name=s3_bucket_name,
-            folder_name=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
-        )
-        if not s3_folders_contents:
-            # TODO T122315363: Raise more specific exception
-            raise Exception(
-                f"Folder name {self.S3_LOGGING_FOLDER}/{tag_name} not found in bucket {s3_bucket_name}."
-                f"Please check if tag name {tag_name} and S3 bucket name {s3_bucket_name} are passed set correctly."
-            )
-
-        files_to_download = self._get_files_to_download_logs(
-            s3_bucket_name=s3_bucket_name,
-            folder_to_download=f"{self.S3_LOGGING_FOLDER}/{tag_name}",
-        )
-
-        # check for download folder in local
-        # TODO T122315644: Use pathlib instead of creating paths ourselves
-        local_path = f"{local_download_dir}/{tag_name}"
-
-        self.utils.create_folder(folder_location=local_path)
-
-        for file_to_download in files_to_download:
-            file_name = file_to_download.replace(
-                f"{self.S3_LOGGING_FOLDER}/{tag_name}/", ""
-            ).rstrip()
-            self.s3_client.download_file(
-                Bucket=s3_bucket_name,
-                Key=file_to_download,
-                Filename=f"{local_path}/{file_name}",
-            )
-
-        # compress downloaded logs
-        self.utils.compress_downloaded_logs(folder_location=local_path)
 
     def upload_logs_to_s3_from_cloudwatch(
         self, s3_bucket_name: str, container_arn_list: List[str]
