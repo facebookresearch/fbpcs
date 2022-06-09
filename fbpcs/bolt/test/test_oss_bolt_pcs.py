@@ -4,10 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# pyre-strict
 
 import unittest
 from collections import defaultdict
+from unittest import mock
 from unittest.mock import patch
 
 from fbpcp.service.mpc import MPCService
@@ -17,13 +17,19 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
+from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
+    PrivateComputationInstance,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
+)
 from fbpcs.private_computation.service.private_computation import (
+    DEFAULT_PID_PROTOCOL,
     NUM_NEW_SHARDS_PER_FILE,
     PrivateComputationService,
 )
@@ -132,3 +138,49 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         )
         return_id = await self.bolt_pcs_client.create_instance(bolt_instance_args)
         self.assertEqual(return_id, self.test_instance_id)
+
+    @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService.update_instance"
+    )
+    async def test_update_instance(self, mock_update) -> None:
+        # mock pc update_instance to return a pc instance with specific test status and instances
+        test_pid_id = self.test_instance_id
+        test_pid_role = PIDRole.PUBLISHER
+        test_input_path = "pid_in"
+        test_output_path = "pid_out"
+        # create one PID instance to be put into PrivateComputationInstance
+        pid_instance = PIDInstance(
+            instance_id=test_pid_id,
+            protocol=DEFAULT_PID_PROTOCOL,
+            pid_role=test_pid_role,
+            num_shards=self.test_num_containers,
+            input_path=test_input_path,
+            output_path=test_output_path,
+            status=PIDInstanceStatus.STARTED,
+            server_ips=["10.0.10.242"],
+        )
+        test_instance = PrivateComputationInstance(
+            instance_id=self.test_instance_id,
+            role=self.test_role,
+            instances=[pid_instance],
+            status=PrivateComputationInstanceStatus.CREATED,
+            status_update_ts=0,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            game_type=self.test_game_type,
+            input_path=self.test_input_path,
+            output_dir=self.test_output_path,
+            num_pid_containers=self.test_num_containers,
+            num_mpc_containers=self.test_num_containers,
+        )
+        mock_update.return_value = test_instance
+        return_state = await self.bolt_pcs_client.update_instance(
+            instance_id=self.test_instance_id,
+        )
+        self.assertEqual(
+            return_state.pc_instance_status, PrivateComputationInstanceStatus.CREATED
+        )
+
+        self.assertEqual(["10.0.10.242"], return_state.server_ips)
+
+    async def test_validate_metrics(self) -> None:
+        pass
