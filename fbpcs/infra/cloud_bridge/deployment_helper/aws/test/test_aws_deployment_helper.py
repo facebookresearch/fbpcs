@@ -9,6 +9,8 @@
 import unittest
 from unittest.mock import patch
 
+from botocore.exceptions import ClientError
+
 from fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper import (
     AwsDeploymentHelper,
 )
@@ -47,7 +49,29 @@ class TestAwsDeploymentHelper(unittest.TestCase):
 
     def test_list_policies(self) -> None:
         # T122887235
-        pass
+        self.aws_deployment_helper.iam.list_policies.return_value = {
+            "Policies": [{"PolicyName": "A"}, {"PolicyName": "B"}, {"PolicyName": "C"}]
+        }
+
+        with self.subTest("basic"):
+            expected = ["A", "B", "C"]
+            self.assertEqual(expected, self.aws_deployment_helper.list_policies())
+
+        # Check client error
+        with self.subTest("list_policies.ClientError"):
+            self.aws_deployment_helper.iam.list_policies.reset_mock()
+            self.aws_deployment_helper.iam.list_policies.return_value = {
+                "Policies": [
+                    {"PolicyName": "A"},
+                    {"PolicyName": "B"},
+                    {"PolicyName": "C"},
+                ]
+            }
+            self.aws_deployment_helper.iam.list_policies.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="list_policies",
+            )
+            self.assertEqual([], self.aws_deployment_helper.list_policies())
 
     def test_list_users(self) -> None:
         # T122887247
