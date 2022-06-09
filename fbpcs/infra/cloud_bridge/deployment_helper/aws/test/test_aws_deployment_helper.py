@@ -37,7 +37,20 @@ class TestAwsDeploymentHelper(unittest.TestCase):
 
     def test_delete_policy(self) -> None:
         # T122887191
-        pass
+        self.aws_deployment_helper.iam.delete_policy.return_value = True
+
+        # Basic test case.
+        with self.subTest("basic"):
+            self.assertEqual(None, self.aws_deployment_helper.delete_policy("abc"))
+
+        # Check client error
+        with self.subTest("delete_policy.ClientError"):
+            self.aws_deployment_helper.iam.delete_policy.reset_mock()
+            self.aws_deployment_helper.iam.delete_policy.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="delete_policy",
+            )
+            self.assertEqual(None, self.aws_deployment_helper.delete_policy(""))
 
     def test_attach_user_policy(self) -> None:
         # T122887198
