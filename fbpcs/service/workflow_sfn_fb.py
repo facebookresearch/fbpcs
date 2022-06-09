@@ -14,13 +14,14 @@ from fbpcp.intern.gateway.aws_fb import FBAWSGateway
 from fbpcs.service.workflow_sfn import SfnWorkflowService
 
 
-class FBSfnWorkflowService(SfnWorkflowService, FBAWSGateway):
+class FBSfnWorkflowService(FBAWSGateway, SfnWorkflowService):
     def __init__(
         self,
         region: str,
         account: str,
         role: Optional[str] = None,
     ) -> None:
+        super().__init__(account=account, role=role, region=region)
         self.client: botocore.client.BaseClient = self.session_gen.get_client(
             "stepfunctions"
         )
