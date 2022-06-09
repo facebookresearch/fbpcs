@@ -6,6 +6,7 @@
 
 # pyre-strict
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
@@ -109,7 +110,15 @@ class BoltPCSClient(BoltClient):
         )
 
     async def update_instance(self, instance_id: str) -> BoltState:
-        raise NotImplementedError
+        loop = asyncio.get_running_loop()
+        pc_instance = await loop.run_in_executor(
+            None, self.pcs.update_instance, instance_id
+        )
+        state = BoltState(
+            pc_instance_status=pc_instance.status,
+            server_ips=pc_instance.server_ips,
+        )
+        return state
 
     async def validate_results(
         self, instance_id: str, expected_result_path: Optional[str] = None

@@ -23,7 +23,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 @dataclass
 class BoltState:
     pc_instance_status: PrivateComputationInstanceStatus
-    publisher_server_ips: Optional[List[str]] = None
+    server_ips: Optional[List[str]] = None
 
 
 class BoltClient(ABC):

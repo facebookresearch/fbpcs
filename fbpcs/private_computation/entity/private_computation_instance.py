@@ -300,3 +300,13 @@ class PrivateComputationInstance(InstanceBase):
             )
         if self.status is self.stage_flow.get_last_stage().completed_status:
             self.end_ts = int(time.time())
+
+    @property
+    def server_ips(self) -> List[str]:
+        server_ips_list = []
+        if not self.instances:
+            return server_ips_list
+        last_instance = self.instances[-1]
+        if isinstance(last_instance, (PIDInstance, PCSMPCInstance, StageStateInstance)):
+            server_ips_list = last_instance.server_ips or []
+        return server_ips_list

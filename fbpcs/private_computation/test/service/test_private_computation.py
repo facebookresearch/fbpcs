@@ -948,6 +948,33 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             private_computation_instance.status,
         )
 
+    def test_server_ips(self) -> None:
+        # empty case
+        empty_instance = self.create_sample_instance(
+            status=PrivateComputationInstanceStatus.CREATED
+        )
+        self.assertEqual(empty_instance.server_ips, [])
+
+        # non empty case
+        test_pid_id = self.test_private_computation_id
+        test_pid_role = PIDRole.PUBLISHER
+        test_input_path = "pid_in"
+        test_output_path = "pid_out"
+        pid_instance = PIDInstance(
+            instance_id=test_pid_id,
+            protocol=DEFAULT_PID_PROTOCOL,
+            pid_role=test_pid_role,
+            num_shards=self.test_num_containers,
+            input_path=test_input_path,
+            output_path=test_output_path,
+            status=PIDInstanceStatus.STARTED,
+            server_ips=["1.1.1.1"],
+        )
+        non_empty_instance = self.create_sample_instance(
+            status=PrivateComputationInstanceStatus.CREATED, instances=[pid_instance]
+        )
+        self.assertEqual(non_empty_instance.server_ips, ["1.1.1.1"])
+
     def create_sample_instance(
         self,
         status: PrivateComputationInstanceStatus,
