@@ -130,13 +130,15 @@ template <
     int schedulerId,
     bool usingBatch,
     common::InputEncryption inputEncryption>
-const std::vector<AttributionRule<schedulerId, usingBatch, inputEncryption>>
+std::vector<std::shared_ptr<
+    const AttributionRule<schedulerId, usingBatch, inputEncryption>>>
 AttributionGame<schedulerId, usingBatch, inputEncryption>::
     shareAttributionRules(
         const int myRole,
         const std::vector<std::string>& attributionRuleNames) {
   // Publisher converts attribution rule names to attribution rules and ids
-  std::vector<AttributionRule<schedulerId, usingBatch, inputEncryption>>
+  std::vector<std::shared_ptr<
+      const AttributionRule<schedulerId, usingBatch, inputEncryption>>>
       attributionRules;
   std::vector<uint64_t> attributionRuleIds;
   if (myRole == common::PUBLISHER) {
@@ -145,7 +147,7 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
           AttributionRule<schedulerId, usingBatch, inputEncryption>::
               fromNameOrThrow(attributionRuleName);
       attributionRules.push_back(attributionRule);
-      attributionRuleIds.push_back(attributionRule.id);
+      attributionRuleIds.push_back(attributionRule->id);
     }
   }
 
@@ -315,12 +317,12 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
   auto attributionRules =
       shareAttributionRules(myRole, inputData.getAttributionRules());
 
-  for (const auto attributionRule : attributionRules) {
-    XLOGF(INFO, "Computing attributions for rule {}", attributionRule.name);
+  for (const auto& attributionRule : attributionRules) {
+    XLOGF(INFO, "Computing attributions for rule {}", attributionRule->name);
 
     // Share touchpoint threshold information for computing attributions
     auto thresholdArrays = privatelyShareThresholds(
-        inputData.getTouchpointArrays(), tpArrays, attributionRule, numIds);
+        inputData.getTouchpointArrays(), tpArrays, *attributionRule, numIds);
     CHECK_EQ(thresholdArrays.size(), tpArrays.size())
         << "threshold arrays and touchpoint arrays are not the same length.";
 
@@ -328,14 +330,14 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
 
     if constexpr (usingBatch) {
       attributions = computeAttributionsHelper(
-          tpArrays, convArrays, attributionRule, thresholdArrays, numIds);
+          tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
     } else {
       // Compute row by row if not using batch
       for (size_t i = 0; i < numIds; ++i) {
         auto attributionRow = computeAttributionsHelper(
             tpArrays.at(i),
             convArrays.at(i),
-            attributionRule,
+            *attributionRule,
             thresholdArrays.at(i),
             numIds);
         attributions.push_back(std::move(attributionRow));
@@ -348,13 +350,15 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
     XLOGF(
         INFO,
         "Retrieving attribution results for rule {}.",
-        attributionRule.name);
+        attributionRule->name);
     attributionMetrics.formatToAttribution[attributionFormat] =
         attributionOutput.reveal();
-    out.ruleToMetrics[attributionRule.name] = attributionMetrics;
+    out.ruleToMetrics[attributionRule->name] = attributionMetrics;
 
     XLOGF(
-        INFO, "Done computing attributions for rule {}.", attributionRule.name);
+        INFO,
+        "Done computing attributions for rule {}.",
+        attributionRule->name);
   }
   return out;
 }

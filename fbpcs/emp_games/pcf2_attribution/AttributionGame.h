@@ -45,7 +45,8 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   /**
    * Publisher shares attribution rules with partner.
    */
-  const std::vector<AttributionRule<schedulerId, usingBatch, inputEncryption>>
+  std::vector<std::shared_ptr<
+      const AttributionRule<schedulerId, usingBatch, inputEncryption>>>
   shareAttributionRules(
       const int myRole,
       const std::vector<std::string>& attributionRuleNames);
