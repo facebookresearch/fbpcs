@@ -18,6 +18,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+
+## 2022-06-08
+### Changed
+  - Updated introduction page `PCS Partner Playbook - UI Version`(same as `PCS Partner Playbook - version approved for online publishing for non-NDA users`): current version of May-04-22
+  - Updated figures in semi-auto data ingestion instruction guide
+
+
 ## 2022-05-04
 ### Added
   - Added `PCS Partner Playbook - UI Version`: current version of May-04-22
