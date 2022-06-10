@@ -158,18 +158,6 @@ OutputMetricsData LiftCalculator::compute(
     eventTimestamps =
         parseArray(partsPartner.at(colNameToIndex.at("event_timestamps")));
 
-    // We can't initialize the convHistograms until we know how many events we
-    // will see. If we ever have a weird input where the rows have different
-    // lengths, doing this sort of "new max" will ensure this still works.
-    // Also remember to go one *past* the size to leave a bucket for 0 convs
-    if (useAdvancedLift) {
-      for (size_t i = out.testConvHistogram.size(); i <= eventTimestamps.size();
-           ++i) {
-        out.testConvHistogram.push_back(0);
-        out.controlConvHistogram.push_back(0);
-      }
-    }
-
     auto valuesIdx = colNameToIndex.find("values") != colNameToIndex.end()
         ? colNameToIndex.at("values")
         : -1;
@@ -217,9 +205,6 @@ OutputMetricsData LiftCalculator::compute(
         }
         out.testValueSquared += value_subsum * value_subsum;
         out.testNumConvSquared += convCount * convCount;
-        if (useAdvancedLift) {
-          ++out.testConvHistogram[convCount];
-        }
       } else {
         for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
@@ -245,9 +230,6 @@ OutputMetricsData LiftCalculator::compute(
         out.controlValue += value_subsum;
         out.controlValueSquared += value_subsum * value_subsum;
         out.controlNumConvSquared += convCount * convCount;
-        if (useAdvancedLift) {
-          ++out.controlConvHistogram[convCount];
-        }
       }
     }
   }
