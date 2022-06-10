@@ -7,7 +7,7 @@
 # pyre-strict
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 
@@ -22,6 +22,7 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             "fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper.boto3"
         ):
             self.aws_deployment_helper = AwsDeploymentHelper()
+            self.aws_deployment_helper.log = MagicMock()
 
     def test_create_user(self) -> None:
         # T122887119
@@ -32,8 +33,74 @@ class TestAwsDeploymentHelper(unittest.TestCase):
         pass
 
     def test_create_policy(self) -> None:
-        # T122887174
-        pass
+        test_policy_name = "TestIamPolicyName"
+        test_policy_params = {"test-key-1": "test-val-1"}
+        test_user_name = "test-user-name"
+        test_policy_json_data = {"test-key-2": "test-val-2"}
+        test_policy_json_data_string = '{"test-key-2": "test-val-2"}'
+        self.aws_deployment_helper.read_json_file = MagicMock()
+        self.aws_deployment_helper.read_json_file.return_value = test_policy_json_data
+        self.aws_deployment_helper.iam.create_policy.return_value = {}
+
+        # Test creation successful
+        with self.subTest("basic"):
+            # Test
+            self.aws_deployment_helper.create_policy(
+                test_policy_name, test_policy_params
+            )
+            # Assert
+            self.aws_deployment_helper.read_json_file.assert_called_once_with(
+                file_name="iam_policies/fb_pc_iam_policy.json",
+                policy_params=test_policy_params,
+            )
+            self.aws_deployment_helper.iam.create_policy.assert_called_once_with(
+                PolicyName=test_policy_name, PolicyDocument=test_policy_json_data_string
+            )
+
+        # Test creation failed with client errors
+        with self.subTest("client_error_EntityAlreadyExists"):
+            self.aws_deployment_helper.iam.create_policy.reset_mock()
+            self.aws_deployment_helper.iam.create_policy.side_effect = ClientError(
+                error_response={"Error": {"Code": "EntityAlreadyExists"}},
+                operation_name="create_policy",
+            )
+            # Test
+            self.aws_deployment_helper.create_policy(
+                test_policy_name, test_policy_params
+            )
+            # Assert
+            self.aws_deployment_helper.iam.create_policy.assert_called_once_with(
+                PolicyName=test_policy_name,
+                PolicyDocument=test_policy_json_data_string,
+            )
+            self.aws_deployment_helper.log.error.assert_called_once()
+
+        with self.subTest("client_error_without_username"):
+            self.aws_deployment_helper.log.error.reset_mock()
+            self.aws_deployment_helper.iam.create_policy.reset_mock()
+            self.aws_deployment_helper.iam.create_policy.side_effect = ClientError(
+                error_response={"Error": {"Code": "InvalidInput"}},
+                operation_name="create_policy",
+            )
+            # Test
+            self.aws_deployment_helper.create_policy(
+                test_policy_name, test_policy_params
+            )
+            # Assert
+            self.aws_deployment_helper.log.error.assert_called_once()
+        with self.subTest("client_error_with_username"):
+            self.aws_deployment_helper.log.error.reset_mock()
+            self.aws_deployment_helper.iam.create_policy.reset_mock()
+            self.aws_deployment_helper.iam.create_policy.side_effect = ClientError(
+                error_response={"Error": {"Code": "InvalidInput"}},
+                operation_name="create_policy",
+            )
+            # Test
+            self.aws_deployment_helper.create_policy(
+                test_policy_name, test_policy_params, test_user_name
+            )
+            # Assert
+            self.aws_deployment_helper.log.error.assert_called_once()
 
     def test_delete_policy(self) -> None:
         self.aws_deployment_helper.iam.delete_policy.return_value = True
