@@ -89,7 +89,24 @@ class TestAwsDeploymentHelper(unittest.TestCase):
 
     def test_delete_access_key(self) -> None:
         # T122887297
-        pass
+        with self.subTest("basic"):
+            self.assertIsNone(
+                self.aws_deployment_helper.delete_access_key("user", "key")
+            )
+            self.aws_deployment_helper.iam.delete_access_key.assert_called_once()
+
+        with self.subTest("delete_access_key.ClientError"):
+            self.aws_deployment_helper.iam.delete_access_key.reset_mock()
+            self.aws_deployment_helper.iam.delete_access_key.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="delete_access_key",
+            )
+            self.assertIsNone(
+                self.aws_deployment_helper.delete_access_key(
+                    "another_user", "another_key"
+                )
+            )
+            self.aws_deployment_helper.iam.delete_access_key.assert_called_once()
 
     def test_list_access_keys(self) -> None:
         # T122887335
