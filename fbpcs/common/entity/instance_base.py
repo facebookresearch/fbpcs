@@ -12,6 +12,7 @@ from functools import partial
 from typing import Any, Type, TypeVar
 
 from dataclasses_json import DataClassJsonMixin
+from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin
 from fbpcs.common.entity.exceptions import InstanceFrozenFieldError
 from fbpcs.common.entity.instance_base_config import (
     InstanceBaseMetadata,
@@ -27,7 +28,7 @@ immutable_field = partial(field, metadata=InstanceBaseMetadata.IMMUTABLE.value)
 
 
 @dataclass
-class InstanceBase(DataClassJsonMixin):
+class InstanceBase(DataClassJsonMixin, DataclassHookMixin):
     # this boolean will be set to True after an obj initialization
     initialized: bool = field(default=False, init=False)
 
@@ -56,14 +57,14 @@ class InstanceBase(DataClassJsonMixin):
             try:
                 self.__getattribute__(name)
             except AttributeError:
-                super().__setattr__(name, value)
+                DataclassHookMixin.__setattr__(self, name, value)
             else:
                 # if this field has been initialized and it is immutable
                 # pyre-fixme Undefined attribute [16]: InstanceBase has no attribute __dataclass_fields__
                 if self.__dataclass_fields__[name].metadata.get(IS_FROZEN_FIELD, False):
                     raise InstanceFrozenFieldError(name)
                 else:
-                    super().__setattr__(name, value)
+                    DataclassHookMixin.__setattr__(self, name, value)
         else:
             # if setattr is called during initialization
-            super().__setattr__(name, value)
+            DataclassHookMixin.__setattr__(self, name, value)
