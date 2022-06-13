@@ -9,7 +9,11 @@
 from abc import ABC
 from dataclasses import dataclass
 
-from typing import Optional
+from typing import Optional, Type
+
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
 
 
 @dataclass
@@ -28,3 +32,4 @@ class BoltJob:
     job_name: str
     publisher_bolt_args: BoltPlayerArgs
     partner_bolt_args: BoltPlayerArgs
+    stage_flow: Type[PrivateComputationBaseStageFlow]

@@ -6,11 +6,19 @@
 
 # pyre-strict
 
+import asyncio
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
+from fbpcs.bolt.constants import POLL_INTERVAL
+from fbpcs.bolt.exceptions import (
+    NoServerIpsException,
+    StageFailedException,
+    StageTimeoutException,
+)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -56,10 +64,109 @@ class BoltClient(ABC):
 
 
 class BoltRunner:
+    def __init__(
+        self, publisher_client: BoltClient, partner_client: BoltClient
+    ) -> None:
+        self.publisher_client = publisher_client
+        self.partner_client = partner_client
+
     async def run_async(
         self,
         jobs: List[BoltJob],
-        publisher_client: BoltClient,
-        partner_client: BoltClient,
+    ) -> List[bool]:
+        return list(await asyncio.gather(*[self.run_one(job=job) for job in jobs]))
+
+    async def run_one(self, job: BoltJob) -> bool:
+        try:
+            publisher_id = await self.publisher_client.create_instance(
+                instance_args=job.publisher_bolt_args.create_instance_args
+            )
+            partner_id = await self.partner_client.create_instance(
+                instance_args=job.partner_bolt_args.create_instance_args
+            )
+            for stage in list(job.stage_flow)[1:]:
+                await self.run_next_stage(
+                    publisher_id=publisher_id, partner_id=partner_id, stage=stage
+                )
+                await self.wait_stage_complete(
+                    publisher_id=publisher_id, partner_id=partner_id, stage=stage
+                )
+            publisher_success = await self.publisher_client.validate_results(
+                instance_id=publisher_id,
+                expected_result_path=job.partner_bolt_args.expected_result_path,
+            )
+            partner_success = await self.partner_client.validate_results(
+                instance_id=partner_id,
+                expected_result_path=job.partner_bolt_args.expected_result_path,
+            )
+            return publisher_success and partner_success
+        except Exception:
+            return False
+
+    async def run_next_stage(
+        self, publisher_id: str, partner_id: str, stage: PrivateComputationBaseStageFlow
     ) -> None:
-        pass
+        await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
+        server_ips = None
+        if stage.is_joint_stage:
+            server_ips = await self.get_server_ips_after_start(
+                instance_id=publisher_id, stage=stage, timeout=stage.timeout
+            )
+            if server_ips is None:
+                raise NoServerIpsException(
+                    f"{stage.name} requires server ips but got none."
+                )
+        await self.partner_client.run_stage(
+            instance_id=partner_id, stage=stage, server_ips=server_ips
+        )
+
+    async def get_server_ips_after_start(
+        self, instance_id: str, stage: PrivateComputationBaseStageFlow, timeout: int
+    ) -> Optional[List[str]]:
+        # Waits until stage has started status then updates stage and returns server ips
+        start_time = time()
+        while time() < start_time + timeout:
+            state = await self.publisher_client.update_instance(instance_id)
+            status = state.pc_instance_status
+            if status == stage.started_status:
+                return state.server_ips
+            if status == stage.failed_status:
+                raise StageFailedException(
+                    f"{instance_id} waiting for status {stage.started_status}, got {status} instead.",
+                )
+            await asyncio.sleep(POLL_INTERVAL)
+        raise StageTimeoutException(
+            f"Poll {instance_id} status timed out after {timeout}s expecting status {stage.started_status}."
+        )
+
+    async def wait_stage_complete(
+        self, publisher_id: str, partner_id: str, stage: PrivateComputationBaseStageFlow
+    ) -> None:
+        fail_status = stage.failed_status
+        complete_status = stage.completed_status
+        timeout = stage.timeout
+
+        start_time = time()
+        while time() < start_time + timeout:
+            publisher_state = await self.publisher_client.update_instance(
+                instance_id=publisher_id
+            )
+            partner_state = await self.partner_client.update_instance(
+                instance_id=partner_id
+            )
+            if (
+                publisher_state.pc_instance_status is complete_status
+                or partner_state.pc_instance_status is complete_status
+            ):
+                return
+            if (
+                publisher_state.pc_instance_status is fail_status
+                or partner_state.pc_instance_status is fail_status
+            ):
+                raise StageFailedException(
+                    f"Stage {stage.name} failed. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
+                )
+            await asyncio.sleep(POLL_INTERVAL)
+        raise StageTimeoutException(
+            f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
+        )
