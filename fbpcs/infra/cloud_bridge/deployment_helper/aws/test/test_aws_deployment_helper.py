@@ -42,7 +42,20 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             self.aws_deployment_helper.iam.create_user.was_called_once()
 
     def test_delete_user(self) -> None:
-        # T122887147
+        self.aws_deployment_helper.iam.delete_user.return_value = True
+
+        # Basic test case.
+        with self.subTest("basic"):
+            self.assertEqual(None, self.aws_deployment_helper.delete_user("user"))
+
+        # Check client error
+        with self.subTest("delete_user.ClientError"):
+            self.aws_deployment_helper.iam.delete_user.reset_mock()
+            self.aws_deployment_helper.iam.delete_user.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="delete_user",
+            )
+            self.assertEqual(None, self.aws_deployment_helper.delete_user(""))
         pass
 
     def test_create_policy(self) -> None:
