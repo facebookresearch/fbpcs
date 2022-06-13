@@ -210,8 +210,27 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             self.aws_deployment_helper.iam.delete_access_key.assert_called_once()
 
     def test_list_access_keys(self) -> None:
-        # T122887335
-        pass
+        self.aws_deployment_helper.iam.list_access_keys.return_value = {
+            "AccessKeyMetadata": [
+                {"AccessKeyId": "A"},
+                {"AccessKeyId": "B"},
+                {"AccessKeyId": "C"},
+            ]
+        }
+
+        with self.subTest("basic"):
+            expected = ["A", "B", "C"]
+            self.assertEqual(expected, self.aws_deployment_helper.list_access_keys(""))
+            self.aws_deployment_helper.iam.list_access_keys.assert_called_once()
+
+        with self.subTest("list_access_keys.ClientError"):
+            self.aws_deployment_helper.iam.list_access_keys.reset_mock()
+            self.aws_deployment_helper.iam.list_access_keys.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="list_access_keys",
+            )
+            self.assertEqual([], self.aws_deployment_helper.list_access_keys(""))
+            self.aws_deployment_helper.iam.list_access_keys.assert_called_once()
 
     def test_read_json_file(self) -> None:
         # T122887357
