@@ -136,7 +136,7 @@ def run_instances(
                     "config": config,
                     "instance_id": instance_id,
                     "input_path": input_path,
-                    "num_mpc_containers": num_shards,
+                    "num_mpc_containers": num_shards,  # Currently ignored due to D35852672.
                     "num_pid_containers": num_shards,
                     "stage_flow": stage_flow,
                     "logger": LoggerAdapter(logger=logger, prefix=instance_id),
