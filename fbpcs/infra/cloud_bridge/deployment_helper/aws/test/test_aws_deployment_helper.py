@@ -25,8 +25,21 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             self.aws_deployment_helper.log = MagicMock()
 
     def test_create_user(self) -> None:
-        # T122887119
-        pass
+        self.aws_deployment_helper.iam.create_user.return_value = True
+
+        with self.subTest("basic"):
+            self.assertIsNone(self.aws_deployment_helper.create_user("abc"))
+            self.aws_deployment_helper.iam.create_user.was_called_once()
+
+        # Check client error
+        with self.subTest("create_user.ClientError"):
+            self.aws_deployment_helper.iam.create_user.reset_mock()
+            self.aws_deployment_helper.iam.create_user.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="create_user",
+            )
+            self.assertIsNone(self.aws_deployment_helper.create_user(""))
+            self.aws_deployment_helper.iam.create_user.was_called_once()
 
     def test_delete_user(self) -> None:
         # T122887147
