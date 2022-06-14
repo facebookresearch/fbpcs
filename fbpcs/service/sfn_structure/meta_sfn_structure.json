@@ -26,16 +26,16 @@
               "TargetOnDemandCapacity": 1,
               "InstanceTypeConfigs": [
                 {
-                  "InstanceType": "m5.4xlarge"
+                  "InstanceType.$": "$.masterInstanceType"
                 }
               ]
             },
             {
               "InstanceFleetType": "CORE",
-              "TargetOnDemandCapacity": 5,
+              "TargetOnDemandCapacity.$": "$.coreTargetOnDemandCapacity",
               "InstanceTypeConfigs": [
                 {
-                  "InstanceType": "m5.4xlarge"
+                  "InstanceType.$": "$.coreInstanceType"
                 }
               ]
             }
@@ -74,7 +74,7 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageOne', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), $.outputPath, $.inputPath)"
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', States.Format('{}', $.numExecutors), '--executor-cores', States.Format('{}', $.executorCores), '--executor-memory', $.executorMemory, '--conf', States.Format('spark.driver.memory={}', $.driverMemory), '--conf', States.Format('spark.sql.shuffle.partitions={}', $.sqlShufflePartitions), '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageOne', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), $.outputPath, $.inputPath)"
           }
         }
       },
@@ -104,7 +104,7 @@
             "States.ALL"
           ],
           "IntervalSeconds": 30,
-          "MaxAttempts": 999,
+          "MaxAttempts": 180,
           "BackoffRate": 1
         }
       ],
@@ -129,7 +129,7 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageTwo', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), $.outputPath, States.Format('s3://{}/{}', $.advBucketName, $.instanceId))"
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', States.Format('{}', $.numExecutors), '--executor-cores', States.Format('{}', $.executorCores), '--executor-memory', $.executorMemory, '--conf', States.Format('spark.driver.memory={}', $.driverMemory), '--conf', States.Format('spark.sql.shuffle.partitions={}', $.sqlShufflePartitions), '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageTwo', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), $.outputPath, States.Format('s3://{}/{}', $.advBucketName, $.instanceId))"
           }
         }
       },
@@ -159,7 +159,7 @@
             "States.ALL"
           ],
           "IntervalSeconds": 30,
-          "MaxAttempts": 999,
+          "MaxAttempts": 360,
           "BackoffRate": 1
         }
       ],
@@ -184,7 +184,7 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', '15', '--executor-cores', '8', '--executor-memory', '30G', '--conf', 'spark.driver.memory=40G', '--conf', 'spark.sql.shuffle.partitions=30', '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageThree', $.pidMrMultikeyJarPath, $.outputPath, States.Format('s3://{}/{}', $.advBucketName, $.instanceId))"
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', States.Format('{}', $.numExecutors), '--executor-cores', States.Format('{}', $.executorCores), '--executor-memory', $.executorMemory, '--conf', States.Format('spark.driver.memory={}', $.driverMemory), '--conf', States.Format('spark.sql.shuffle.partitions={}', $.sqlShufflePartitions), '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.publisher.PubStageThree', $.pidMrMultikeyJarPath, $.outputPath, States.Format('s3://{}/{}', $.advBucketName, $.instanceId))"
           }
         }
       },
