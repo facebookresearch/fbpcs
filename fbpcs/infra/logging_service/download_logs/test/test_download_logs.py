@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 from botocore.exceptions import ClientError
 
 from fbpcs.infra.logging_service.download_logs.download_logs import AwsContainerLogs
+from fbpcs.infra.logging_service.download_logs.utils.utils import ContainerDetails
 
 
 class TestDownloadLogs(unittest.TestCase):
@@ -226,7 +227,11 @@ class TestDownloadLogs(unittest.TestCase):
 
         with self.subTest("normal_arn"):
             normal_arn = "arn:aws:ecs:fake-region:123456789:task/fake-container-name/1234abcdef56789"
-            expected = ["ecs", "fake-container-name", "1234abcdef56789"]
+            expected = ContainerDetails(
+                service_name="ecs",
+                container_name="fake-container-name",
+                container_id="1234abcdef56789",
+            )
             self.assertEqual(
                 expected, self.aws_container_logs._parse_container_arn(normal_arn)
             )
