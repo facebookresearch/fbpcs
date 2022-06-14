@@ -16,7 +16,7 @@ from fbpcs.private_computation.entity.pc_infra_config import (
 class TestPrivateComputationInfraConfig(unittest.TestCase):
     def setUp(self) -> None:
         # call Path.revolve() to make the path absolute
-        self.input_dir = Path(__file__).resolve().parent
+        self.input_dir = Path(__file__).resolve().parent / "test_resources" / "configs"
 
     def test_build_full_config(self) -> None:
         config_path = self.input_dir / "expected_mini_config.yml"
