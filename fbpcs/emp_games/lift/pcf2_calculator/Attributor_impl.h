@@ -63,7 +63,7 @@ void Attributor<
 
   int stepSize = 1; // we process the array elements in pairs with indices
                     // differing by stepSize
-  int firstIndex = 0; // first index at this level
+  auto firstIndex = 0ULL; // first index at this level
   while (firstIndex < eventArray.size() / 2) {
     for (size_t i = firstIndex; i < eventArray.size(); i += 2 * stepSize) {
       if (i + stepSize < eventArray.size()) {
