@@ -12,8 +12,10 @@ from typing import Any, Dict, Optional, Type
 
 import dateutil.parser
 import pytz
+from fbpcs.pl_coordinator.exceptions import IncorrectVersionError, sys_exit_after
 from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance
+from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -22,6 +24,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.private_computation_cli.private_computation_service_wrapper import get_tier
 
 
 class LoggerAdapter(logging.LoggerAdapter):
@@ -44,6 +47,7 @@ TIMESTAMP = "timestamp"
 ATTRIBUTION_RULE = "attribution_rule"
 STATUS = "status"
 CREATED_TIME = "created_time"
+TIER = "tier"
 
 TERMINAL_STATUSES = [
     "POST_PROCESSING_HANDLERS_COMPLETED",
@@ -60,6 +64,7 @@ a specific dataset range to create and run a PA instance on
 """
 
 
+@sys_exit_after
 def run_attribution(
     config: Dict[str, Any],
     dataset_id: str,
@@ -140,6 +145,7 @@ def run_attribution(
             logger,
         )
     instance_data = _get_pa_instance_info(client, instance_id, logger)
+    _check_version(instance_data, config)
     num_pid_containers = instance_data[NUM_SHARDS]
     num_mpc_containers = instance_data[NUM_CONTAINERS]
 
@@ -184,6 +190,34 @@ def _create_new_instance(
         f"Created instance {instance_id} for dataset {dataset_id} and attribution rule {attribution_rule}"
     )
     return instance_id
+
+
+def _check_version(
+    instance: Dict[str, Any],
+    config: Dict[str, Any],
+) -> None:
+    """Checks that the publisher version (graph api) and the partner version (config.yml) are the same
+
+    Arguments:
+        instances: theoretically is dict representing the PA instance fields.
+        config: The dict representation of a config.yml file
+
+    Raises:
+        IncorrectVersionError: the publisher and partner are running with different versions
+    """
+
+    instance_tier_str = instance.get(TIER)
+    # if there is no tier for some reason, let's just assume
+    # the tier is correct
+    if not instance_tier_str:
+        return
+
+    config_tier = get_tier(config)
+    expected_tier = PCSTier.from_str(instance_tier_str)
+    if expected_tier is not config_tier:
+        raise IncorrectVersionError.make_error(
+            instance["id"], expected_tier, config_tier
+        )
 
 
 def get_attribution_dataset_info(
