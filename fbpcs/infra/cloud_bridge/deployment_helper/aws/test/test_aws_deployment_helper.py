@@ -207,8 +207,24 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             self.aws_deployment_helper.iam.list_policies.assert_called_once()
 
     def test_list_users(self) -> None:
-        # T122887247
-        pass
+        self.aws_deployment_helper.iam.list_users.return_value = {
+            "Users": [{"UserName": "A"}, {"UserName": "B"}, {"UserName": "C"}]
+        }
+
+        with self.subTest("basic"):
+            expected = ["A", "B", "C"]
+            self.assertEqual(expected, self.aws_deployment_helper.list_users())
+            self.aws_deployment_helper.iam.list_users.assert_called_once()
+
+        # Check client error
+        with self.subTest("list_users.ClientError"):
+            self.aws_deployment_helper.iam.list_users.reset_mock()
+            self.aws_deployment_helper.iam.list_users.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="list_users",
+            )
+            self.assertEqual([], self.aws_deployment_helper.list_users())
+            self.aws_deployment_helper.iam.list_users.assert_called_once()
 
     def test_create_access_key(self) -> None:
         # T122887269
