@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 
-import asyncio
 import logging
 from typing import DefaultDict, List, Optional
 
@@ -30,7 +29,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
-    file_exists_async,
+    all_files_exist_on_cloud,
     get_pc_status_from_stage_state,
 )
 
@@ -114,7 +113,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         output_path = pc_instance.pid_stage_output_spine_path
         pc_role = pc_instance.role
         # make sure all input files are on the storage service before proceed
-        if not await self.all_files_exist_on_cloud(
+        if not await all_files_exist_on_cloud(
             input_path, num_shards, self._storage_svc
         ):
             raise ValueError("Input files for PID run protocol service are missing")
@@ -182,17 +181,3 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
                 f"Supplied {len(server_ips)} server_hostnames, but num_shards == {num_shards} (these should agree)"
             )
         return [f"http://{ip}" for ip in server_ips]
-
-    @classmethod
-    async def all_files_exist_on_cloud(
-        cls, input_path: str, num_shards: int, storage_svc: StorageService
-    ) -> bool:
-        input_paths = [
-            PIDStage.get_sharded_filepath(input_path, shard)
-            for shard in range(num_shards)
-        ]
-        # if all files exist on storage service, every element of file_exist_booleans should be True.
-        tasks = await asyncio.gather(
-            *[file_exists_async(storage_svc, path) for path in input_paths]
-        )
-        return sum(tasks) == num_shards
