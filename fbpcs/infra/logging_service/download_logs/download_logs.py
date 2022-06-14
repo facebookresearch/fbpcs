@@ -13,7 +13,10 @@ from typing import Any, Dict, List, Optional
 from botocore.exceptions import ClientError
 
 from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
-from fbpcs.infra.logging_service.download_logs.utils.utils import Utils
+from fbpcs.infra.logging_service.download_logs.utils.utils import (
+    ContainerDetails,
+    Utils,
+)
 
 from tqdm import tqdm
 
@@ -297,9 +300,12 @@ class AwsContainerLogs(AwsCloud):
                 self.log.info(
                     "Getting service name, container name and container ID from continer arn"
                 )
-                service_name, container_name, container_id = self._parse_container_arn(
+                container_details = self._parse_container_arn(
                     container_arn=container_arn
                 )
+                service_name = container_details.service_name
+                container_name = container_details.container_name
+                container_id = container_details.container_id
 
                 # T122923883 - for better formatting of the strings
                 log_group_name = self.LOG_GROUP.format(service_name, container_name)
@@ -351,7 +357,7 @@ class AwsContainerLogs(AwsCloud):
 
             self.log.info("Removing logs locally.")
 
-    def _parse_container_arn(self, container_arn: Optional[str]) -> List[str]:
+    def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:
         """
         Parses container arn to get the container name and id needed to derive log name and log stream
         Example ARN looks like:
@@ -382,8 +388,11 @@ class AwsContainerLogs(AwsCloud):
             # TODO T122315363: Raise more specific exception
             raise Exception(f"Error in getting service name and task ID: {error}")
 
-        # TODO T122316416: Return dataclass object instead of list
-        return [service_name, container_name, container_id]
+        return ContainerDetails(
+            service_name=service_name,
+            container_name=container_name,
+            container_id=container_id,
+        )
 
     def _parse_log_events(self, log_events: List[Dict[str, Any]]) -> List[str]:
         """

@@ -8,6 +8,8 @@
 import io
 import os
 import shutil
+
+from dataclasses import dataclass
 from typing import List
 
 
@@ -82,3 +84,10 @@ class Utils:
                 f"Couldn't find folder {folder_location}."
                 f"Please check if folder exists.\nAborting folder compression."
             )
+
+
+@dataclass
+class ContainerDetails:
+    service_name: str
+    container_name: str
+    container_id: str
