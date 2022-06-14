@@ -521,3 +521,16 @@ async def file_exists_async(
     """
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, storage_svc.file_exists, file_path)
+
+
+async def all_files_exist_on_cloud(
+    input_path: str, num_shards: int, storage_svc: StorageService
+) -> bool:
+    input_paths = [
+        PIDStage.get_sharded_filepath(input_path, shard) for shard in range(num_shards)
+    ]
+    # if all files exist on storage service, every element of file_exist_booleans should be True.
+    tasks = await asyncio.gather(
+        *[file_exists_async(storage_svc, path) for path in input_paths]
+    )
+    return sum(tasks) == num_shards
