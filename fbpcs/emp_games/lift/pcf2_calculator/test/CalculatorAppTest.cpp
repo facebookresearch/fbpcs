@@ -37,7 +37,8 @@ void runCalculatorApp(
     uint16_t port,
     std::string serverIp,
     std::string tlsDir,
-    bool useTls) {
+    bool useTls,
+    bool useXorEncryption) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -54,11 +55,15 @@ void runCalculatorApp(
       numConversionsPerUser,
       epoch,
       std::vector<std::string>{inputPath},
-      std::vector<std::string>{outputPath});
+      std::vector<std::string>{outputPath},
+      0,
+      1,
+      useXorEncryption);
   app->run();
 }
 
-class CalculatorAppTestFixture : public ::testing::TestWithParam<bool> {
+class CalculatorAppTestFixture
+    : public ::testing::TestWithParam<std::tuple<bool, bool>> {
  protected:
   std::string publisherInputPath_;
   std::string partnerInputPath_;
@@ -98,7 +103,8 @@ class CalculatorAppTestFixture : public ::testing::TestWithParam<bool> {
       const std::string& publisherOutputPath,
       const std::string& partnerOutputPath,
       const int numConversionsPerUser,
-      bool useTls) {
+      bool useTls,
+      bool useXorEncryption) {
     int epoch = 1546300800;
     auto future0 = std::async(
         runCalculatorApp<0>,
@@ -110,7 +116,8 @@ class CalculatorAppTestFixture : public ::testing::TestWithParam<bool> {
         port_,
         serverIp_,
         tlsDir_,
-        useTls);
+        useTls,
+        useXorEncryption);
 
     auto future1 = std::async(
         runCalculatorApp<1>,
@@ -122,7 +129,8 @@ class CalculatorAppTestFixture : public ::testing::TestWithParam<bool> {
         port_,
         serverIp_,
         tlsDir_,
-        useTls);
+        useTls,
+        useXorEncryption);
 
     future0.get();
     future1.get();
@@ -131,7 +139,7 @@ class CalculatorAppTestFixture : public ::testing::TestWithParam<bool> {
     auto partnerResult =
         GroupedLiftMetrics::fromJson(fbpcf::io::read(partnerOutputPath));
 
-    return publisherResult ^ partnerResult;
+    return useXorEncryption ? publisherResult ^ partnerResult : publisherResult;
   }
 };
 
@@ -145,7 +153,8 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
       baseDir + "../sample_input/partner_2_convs_unittest.csv";
   std::string expectedOutputPath =
       baseDir + "../sample_input/correctness_output.json";
-  bool useTls = GetParam();
+  bool useTls = std::get<0>(GetParam());
+  bool useXorEncryption = std::get<1>(GetParam());
 
   auto result = runTest(
       publisherInputPath,
@@ -153,7 +162,8 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
       publisherOutputPath_,
       partnerOutputPath_,
       numConversionsPerUser,
-      useTls);
+      useTls,
+      useXorEncryption);
 
   auto expectedResult =
       GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputPath));
@@ -177,14 +187,16 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
   testDataGenerator.genFakePartnerInputFile(partnerInputPath_, params);
 
   // Run calculator app with test input
-  bool useTls = GetParam();
+  bool useTls = std::get<0>(GetParam());
+  bool useXorEncryption = std::get<1>(GetParam());
   auto res = runTest(
       publisherInputPath_,
       partnerInputPath_,
       publisherOutputPath_,
       partnerOutputPath_,
       numConversionsPerUser,
-      useTls);
+      useTls,
+      useXorEncryption);
 
   // Calculate expected results with simple lift calculator
   LiftCalculator liftCalculator;
@@ -212,11 +224,12 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
 INSTANTIATE_TEST_SUITE_P(
     CalculatorAppTest,
     CalculatorAppTestFixture,
-    ::testing::Bool(),
+    ::testing::Combine(::testing::Bool(), ::testing::Bool()),
     [](const testing::TestParamInfo<CalculatorAppTestFixture::ParamType>&
            info) {
-      std::string tls = info.param ? "True" : "False";
-      std::string name = "TLS_" + tls;
+      std::string tls = std::get<0>(info.param) ? "True" : "False";
+      std::string useXorEncryption = std::get<1>(info.param) ? "True" : "False";
+      std::string name = "TLS_" + tls + "_XOR_" + useXorEncryption;
       return name;
     });
 

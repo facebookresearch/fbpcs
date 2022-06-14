@@ -68,7 +68,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
     std::vector<std::string>& inputFilepaths,
     std::vector<std::string>& outputFilepaths,
     int numConversionsPerUser,
-    int epoch) {
+    int epoch,
+    bool useXorEncryption) {
   // aggregate scheduler statistics across apps
   common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
 
@@ -101,7 +102,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
         inputFilepaths,
         outputFilepaths,
         startFileIndex,
-        numFiles);
+        numFiles,
+        useXorEncryption);
 
     auto future = std::async([&app]() {
       app->run();
@@ -122,7 +124,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
                 inputFilepaths,
                 outputFilepaths,
                 numConversionsPerUser,
-                epoch);
+                epoch,
+                useXorEncryption);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -140,7 +143,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFiles(
     std::string serverIp,
     int port,
     int numConversionsPerUser,
-    int epoch) {
+    int epoch,
+    bool useXorEncryption) {
   // use only as many threads as the number of files
   auto numThreads = std::min((int)inputFilepaths.size(), (int)concurrency);
 
@@ -153,7 +157,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFiles(
       inputFilepaths,
       outputFilepaths,
       numConversionsPerUser,
-      epoch);
+      epoch,
+      useXorEncryption);
 }
 
 } // namespace private_lift

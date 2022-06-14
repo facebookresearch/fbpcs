@@ -35,7 +35,8 @@ class CalculatorApp {
       const std::vector<std::string>& inputPaths,
       const std::vector<std::string>& outputPaths,
       const int startFileIndex = 0,
-      const int numFiles = 1)
+      const int numFiles = 1,
+      const bool useXorEncryption = true)
       : party_{party},
         communicationAgentFactory_{std::move(communicationAgentFactory)},
         numConversionsPerUser_(numConversionsPerUser),
@@ -43,7 +44,8 @@ class CalculatorApp {
         inputPaths_(inputPaths),
         outputPaths_(outputPaths),
         startFileIndex_(startFileIndex),
-        numFiles_(numFiles) {}
+        numFiles_(numFiles),
+        useXorEncryption_(useXorEncryption) {}
 
   void run();
 
@@ -56,6 +58,8 @@ class CalculatorApp {
 
   void putOutputData(const std::string& output, const std::string& outputPath);
 
+  std::unique_ptr<fbpcf::scheduler::IScheduler> createScheduler();
+
  private:
   int party_;
   std::unique_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
@@ -66,6 +70,7 @@ class CalculatorApp {
   std::vector<std::string> outputPaths_;
   int startFileIndex_;
   int numFiles_;
+  bool useXorEncryption_;
   common::SchedulerStatistics schedulerStatistics_;
 };
 
