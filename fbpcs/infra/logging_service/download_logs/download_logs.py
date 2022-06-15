@@ -51,6 +51,7 @@ class AwsContainerLogs(AwsCloud):
         )
         self.utils = Utils()
         self.tag_name: str = tag_name
+        self.containers_without_logs: List[str] = []
 
     def get_cloudwatch_logs(
         self,
@@ -313,36 +314,33 @@ class AwsContainerLogs(AwsCloud):
                     service_name, container_name, container_id
                 )
 
-                if not self._verify_log_group(log_group_name=log_group_name):
-                    # TODO T122315363: Raise more specific exception
-                    raise Exception(
-                        f"Couldn't find log group {log_group_name} in AWS account."
-                    )
-
-                if not self._verify_log_stream(
+                # Check if logs are missing for any containers
+                if not self._verify_log_group(
+                    log_group_name=log_group_name
+                ) or not self._verify_log_stream(
                     log_group_name=log_group_name, log_stream_name=log_stream_name
                 ):
-                    # TODO T122315363: Raise more specific exception
-                    raise Exception(
-                        f"Couldn't find log stream {log_stream_name} in log group {log_group_name}"
+                    self.containers_without_logs.append(container_arn)
+                else:
+                    message_events = self.get_cloudwatch_logs(
+                        log_group_name=log_group_name,
+                        log_stream_name=log_stream_name,
+                        container_arn=container_arn,
                     )
 
-                message_events = self.get_cloudwatch_logs(
-                    log_group_name=log_group_name,
-                    log_stream_name=log_stream_name,
-                    container_arn=container_arn,
-                )
+                    self.log.info(
+                        f"Creating file to store log locally in location {self.LOCAL_FILE_LOCATION.format(local_folder_location, container_id)}"
+                    )
 
-                self.log.info(
-                    f"Creating file to store log locally in location {self.LOCAL_FILE_LOCATION.format(local_folder_location, container_id)}"
-                )
+                    self.utils.create_file(
+                        file_location=self.LOCAL_FILE_LOCATION.format(
+                            local_folder_location, container_id
+                        ),
+                        content=message_events,
+                    )
 
-                self.utils.create_file(
-                    file_location=self.LOCAL_FILE_LOCATION.format(
-                        local_folder_location, container_id
-                    ),
-                    content=message_events,
-                )
+            # List all the containers with no cloudwatch logs
+            self.log_containers_without_logs()
 
             # compressing the folder before uploading it to S3
             self.log.info("Compressing downloaded logs folder")
@@ -516,3 +514,15 @@ class AwsContainerLogs(AwsCloud):
             raise Exception(f"{error_message}")
 
         return len(response.get("logStreams", [])) == 1
+
+    def log_containers_without_logs(self) -> None:
+        """
+        Lists containers with no logs in cloudwatch
+        """
+        if len(self.containers_without_logs) == 0:
+            self.log.info("Found logs for all the containers.")
+            return
+
+        self.log.error("Couldn't find logs for the following containers..")
+        for container in self.containers_without_logs:
+            self.log.error(f"Container ARN: {container}")
