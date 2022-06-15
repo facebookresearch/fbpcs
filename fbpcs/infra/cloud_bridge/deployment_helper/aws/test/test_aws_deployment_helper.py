@@ -227,8 +227,28 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             self.aws_deployment_helper.iam.list_users.assert_called_once()
 
     def test_create_access_key(self) -> None:
-        # T122887269
-        pass
+
+        self.aws_deployment_helper.iam.create_access_key.return_value = {
+            "AccessKey": {"AccessKeyId": 1, "SecretAccessKey": 2}
+        }
+
+        # Basic test case
+        with self.subTest("basic"):
+            self.assertIsNone(self.aws_deployment_helper.create_access_key("user1"))
+
+        self.aws_deployment_helper.iam.create_access_key.assert_called_once_with(
+            UserName="user1"
+        )
+
+        # Check client error
+        with self.subTest("create_access_key.ClientError"):
+            self.aws_deployment_helper.iam.create_access_key.reset_mock()
+            self.aws_deployment_helper.iam.create_access_key.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="create_access_key",
+            )
+            self.assertIsNone(self.aws_deployment_helper.create_access_key("user1"))
+            self.aws_deployment_helper.iam.create_access_key.assert_called_once()
 
     def test_delete_access_key(self) -> None:
         # T122887297
