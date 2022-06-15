@@ -422,6 +422,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
     def test_get_next_runnable_stage_completed_status(self) -> None:
         flow = PrivateComputationStageFlow
+        # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
         status = flow.ID_MATCH.previous_stage.completed_status
 
         instance = self.create_sample_instance(status)
@@ -467,6 +468,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ################# PREVIOUS STAGE COMPLETED OR RETRY #######################
             stage_svc = self._get_dummy_stage_svc()
             for status in (
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 stage.previous_stage.completed_status,
                 stage.failed_status,
             ):
@@ -579,6 +581,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ####################### PARTNER NO SERVER IPS ############################
             stage_svc = self._get_dummy_stage_svc()
             pl_instance = self.create_sample_instance(
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 status=stage.previous_stage.completed_status,
                 role=PrivateComputationRole.PARTNER,
             )
@@ -614,6 +617,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ######################### STAGE FAILS ####################################
             stage_svc = self._get_dummy_stage_svc()
             pl_instance = self.create_sample_instance(
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 status=stage.previous_stage.completed_status
             )
 

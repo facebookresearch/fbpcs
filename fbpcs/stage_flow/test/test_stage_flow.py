@@ -21,6 +21,7 @@ class TestStageFlow(TestCase):
         stage = DummyStageFlow.get_first_stage()
         self.assertEqual(DummyStageFlow.STAGE_1, stage)
         self.assertEqual(DummyStageFlow.STAGE_2, stage.next_stage)
+        # pyre-fixme[16]: Optional type has no attribute `next_stage`.
         self.assertEqual(DummyStageFlow.STAGE_3, stage.next_stage.next_stage)
         self.assertEqual(None, stage.next_stage.next_stage.next_stage)
 
@@ -28,6 +29,7 @@ class TestStageFlow(TestCase):
         stage = DummyStageFlow.get_last_stage()
         self.assertEqual(DummyStageFlow.STAGE_3, stage)
         self.assertEqual(DummyStageFlow.STAGE_2, stage.previous_stage)
+        # pyre-fixme[16]: Optional type has no attribute `previous_stage`.
         self.assertEqual(DummyStageFlow.STAGE_1, stage.previous_stage.previous_stage)
         self.assertEqual(None, stage.previous_stage.previous_stage.previous_stage)
 

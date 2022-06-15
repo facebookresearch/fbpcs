@@ -270,6 +270,7 @@ class TestPlInstanceRunner(TestCase):
                     self._get_graph_api_output(status) for status in statuses
                 )
                 mock_get_instance.return_value = self._get_pc_instance(
+                    # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                     stage.previous_stage.completed_status
                 )
 
@@ -329,6 +330,7 @@ class TestPlInstanceRunner(TestCase):
         )
 
         mock_get_instance.return_value = self._get_pc_instance(
+            # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
             stage.previous_stage.completed_status
         )
 
@@ -525,6 +527,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "ID_MATCH_STARTED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.ID_MATCH.previous_stage.completed_status,
                 PrivateComputationStageFlow.ID_MATCH,
                 True,
@@ -567,6 +570,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "COMPUTATION_STARTED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.COMPUTE.previous_stage.completed_status,
                 PrivateComputationStageFlow.COMPUTE,
                 True,
@@ -609,6 +613,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "AGGREGATION_STARTED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.AGGREGATE.previous_stage.completed_status,
                 PrivateComputationStageFlow.AGGREGATE,
                 True,
@@ -645,6 +650,7 @@ class TestPlInstanceRunner(TestCase):
             ####################### NON JOINT STAGE TEST #################################3
             (
                 "ID_MATCHING_POST_PROCESS_COMPLETED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.ID_SPINE_COMBINER.previous_stage.completed_status,
                 PrivateComputationStageFlow.ID_SPINE_COMBINER,
                 True,
@@ -730,6 +736,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "ID_MATCH_STARTED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.ID_MATCH.previous_stage.completed_status,
                 PrivateComputationStageFlow.ID_MATCH,
                 False,
@@ -758,6 +765,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "COMPUTATION_STARTED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.COMPUTE.previous_stage.completed_status,
                 PrivateComputationStageFlow.COMPUTE,
                 False,
@@ -800,6 +808,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "AGGREGATION_STARTED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.AGGREGATE.previous_stage.completed_status,
                 PrivateComputationStageFlow.AGGREGATE,
                 False,
@@ -829,6 +838,7 @@ class TestPlInstanceRunner(TestCase):
             ####################### NON JOINT STAGE TEST #################################3
             (
                 "ID_MATCHING_POST_PROCESS_COMPLETED",
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
                 PrivateComputationStageFlow.ID_SPINE_COMBINER.previous_stage.completed_status,
                 PrivateComputationStageFlow.ID_SPINE_COMBINER,
                 True,
