@@ -20,7 +20,7 @@
 
 #include <fbpcf/aws/S3Util.h>
 #include <fbpcf/io/FileManagerUtil.h>
-#include <fbpcf/io/api/BufferedReader.h>
+#include <fbpcf/io/api/BufferedReaderCopy.h>
 #include <fbpcf/io/api/BufferedWriter.h>
 #include <fbpcf/io/api/FileReader.h>
 #include <fbpcf/io/api/FileWriter.h>
@@ -74,7 +74,7 @@ void GenericSharder::shard() {
   std::size_t numShards = getOutputPaths().size();
   auto reader = fbpcf::io::FileReader(getInputPath());
   auto bufferedReader =
-      std::make_unique<fbpcf::io::BufferedReader>(reader, BUFFER_SIZE);
+      std::make_unique<fbpcf::io::BufferedReaderCopy>(reader, BUFFER_SIZE);
 
   std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>> outFiles(0);
 
