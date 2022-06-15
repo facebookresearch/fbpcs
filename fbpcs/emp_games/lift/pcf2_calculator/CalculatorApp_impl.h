@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <fbpcf/scheduler/SchedulerHelper.h>
 #include <vector>
 
 namespace private_lift {
@@ -13,8 +14,7 @@ template <int schedulerId>
 void CalculatorApp<schedulerId>::run() {
   // Run calculator game sequentially on numFiles files, starting from
   // startFileIndex
-  auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
-      party_, *communicationAgentFactory_);
+  auto scheduler = createScheduler();
   CalculatorGame<schedulerId> game{
       party_, std::move(scheduler), std::move(communicationAgentFactory_)};
 
@@ -79,5 +79,15 @@ void CalculatorApp<schedulerId>::putOutputData(
     const std::string& outputPath) {
   XLOG(INFO) << "putting out data...";
   fbpcf::io::write(outputPath, output);
+}
+
+template <int schedulerId>
+std::unique_ptr<fbpcf::scheduler::IScheduler>
+CalculatorApp<schedulerId>::createScheduler() {
+  return useXorEncryption_
+      ? fbpcf::scheduler::createLazySchedulerWithRealEngine(
+            party_, *communicationAgentFactory_)
+      : fbpcf::scheduler::createNetworkPlaintextScheduler<false>(
+            party_, *communicationAgentFactory_);
 }
 } // namespace private_lift

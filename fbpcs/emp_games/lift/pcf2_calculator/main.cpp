@@ -143,7 +143,8 @@ int main(int argc, char** argv) {
             FLAGS_server_ip,
             FLAGS_port,
             FLAGS_num_conversions_per_user,
-            FLAGS_epoch);
+            FLAGS_epoch,
+            FLAGS_use_xor_encryption);
   } else if (FLAGS_party == common::PARTNER) {
     XLOG(INFO)
         << "Starting Private Lift as Partner, will wait for Publisher...";
@@ -155,7 +156,8 @@ int main(int argc, char** argv) {
             FLAGS_server_ip,
             FLAGS_port,
             FLAGS_num_conversions_per_user,
-            FLAGS_epoch);
+            FLAGS_epoch,
+            FLAGS_use_xor_encryption);
   } else {
     XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
   }
