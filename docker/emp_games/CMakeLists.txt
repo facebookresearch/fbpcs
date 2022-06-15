@@ -3,14 +3,25 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-cmake_minimum_required(VERSION 3.10.1)
+cmake_minimum_required(VERSION 3.16)
 project(game)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
 include("common.cmake")
 include("perf_tools.cmake")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
+
+message(STATUS "Summary:")
+message(STATUS "  CMake version        : ${CMAKE_VERSION}")
+message(STATUS "  CMake command        : ${CMAKE_COMMAND}")
+message(STATUS "  System name          : ${CMAKE_SYSTEM_NAME}")
+message(STATUS "  C++ compiler         : ${CMAKE_CXX_COMPILER}")
+message(STATUS "  C++ compiler version : ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "  CXX flags            : ${CMAKE_CXX_FLAGS}")
 
 # lift
 add_executable(
