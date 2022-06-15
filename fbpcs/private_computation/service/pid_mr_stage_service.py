@@ -9,6 +9,8 @@
 import logging
 from typing import List, Optional
 
+from fbpcp.util.s3path import S3Path
+
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -25,6 +27,10 @@ PIDMR = "pid_mr"
 INTPUT = "inputPath"
 OUTPUT = "outputPath"
 INSTANCE = "instanceId"
+SPARK_CONFIGS = "sparkConfigs"
+S3URIFORMAT = "s3://{bucket}/{key}"
+PUB_PREFIX = "publisher_"
+PARTNER_PREFIX = "partner_"
 
 
 class PIDMRStageService(PrivateComputationStageService):
@@ -32,7 +38,6 @@ class PIDMRStageService(PrivateComputationStageService):
 
     def __init__(self, workflow_svc: WorkflowService) -> None:
         self.workflow_svc = workflow_svc
-        self._logger: logging.Logger = logging.getLogger(__name__)
 
     async def run_async(
         self,
@@ -48,25 +53,36 @@ class PIDMRStageService(PrivateComputationStageService):
         Returns:
             An updated version of pc_instance
         """
-        self._logger.info(f"[{self}] Starting PID MR Stage Service")
         stage_state = StageStateInstance(
             pc_instance.instance_id,
             pc_instance.current_stage.name,
         )
+        logging.info("Start PID MR Stage Service")
         pid_configs = pc_instance.pid_configs
         if (
             pid_configs
             and PIDMR in pid_configs
             and PIDRunConfigs in pid_configs[PIDMR]
             and PIDWorkflowConfigs in pid_configs[PIDMR]
+            and SPARK_CONFIGS in pid_configs[PIDMR]
         ):
-            pid_configs[INTPUT] = pc_instance.input_path
-            pid_configs[OUTPUT] = pc_instance.pid_mr_stage_output_data_path
-            pid_configs[INSTANCE] = pc_instance.instance_id
+            data_configs = {
+                INTPUT: self.get_s3uri_from_url(pc_instance.input_path),
+                OUTPUT: self.get_s3uri_from_url(
+                    pc_instance.pid_mr_stage_output_data_path
+                ),
+                INSTANCE: self.removePrefixForInstance(pc_instance.instance_id),
+            }
+            pid_overall_configs = {
+                **pid_configs[PIDMR][PIDRunConfigs],
+                **pid_configs[PIDMR][SPARK_CONFIGS],
+                **data_configs,
+            }
+
             stage_state.instance_id = self.workflow_svc.start_workflow(
                 pid_configs[PIDMR][PIDWorkflowConfigs],
                 pc_instance.instance_id,
-                pid_configs[PIDMR][PIDRunConfigs],
+                pid_overall_configs,
             )
         pc_instance.instances.append(stage_state)
         return pc_instance
@@ -116,3 +132,18 @@ class PIDMRStageService(PrivateComputationStageService):
                 raise ValueError("Unknow stage status")
 
         return status
+
+    def get_s3uri_from_url(self, path: str) -> str:
+        s3Path = S3Path(path)
+        return S3URIFORMAT.format(bucket=s3Path.bucket, key=s3Path.key)
+
+    # In experimentation platform we introduce prefixes for instance_id. MR requires a common instance_id for publisher and partner.
+    # Removing the prefixes temporarily. We will revisit this during production deployment.
+    def removePrefixForInstance(self, instance_id: str) -> str:
+        instance_id = instance_id[
+            instance_id.startswith(PUB_PREFIX) and len(PUB_PREFIX) :
+        ]
+        instance_id = instance_id[
+            instance_id.startswith(PARTNER_PREFIX) and len(PARTNER_PREFIX) :
+        ]
+        return instance_id
