@@ -71,6 +71,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="first_shard_index", required=False),
             OneDockerArgument(name="log_cost", required=False),
             OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="visibility", required=False),
         ],
     },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
