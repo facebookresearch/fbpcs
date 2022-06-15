@@ -8,7 +8,7 @@
 
 import abc
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 
 class WorkflowStatus(Enum):
@@ -25,7 +25,7 @@ class WorkflowService(abc.ABC):
         self,
         workflow_conf: Dict[str, str],
         run_id: str,
-        run_conf: Optional[Dict[str, str]] = None,
+        run_conf: Optional[Dict[str, Any]] = None,
     ) -> str:
         pass
 

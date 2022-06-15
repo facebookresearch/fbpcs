@@ -56,7 +56,7 @@ class MwaaWorkflowService(WorkflowService):
         self,
         workflow_conf: Dict[str, str],
         run_id: str,
-        run_conf: Optional[Dict[str, str]] = None,
+        run_conf: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Start workflow
         Keyword arguments:
