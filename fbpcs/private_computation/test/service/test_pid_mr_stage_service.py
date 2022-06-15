@@ -27,7 +27,7 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
     async def test_run_async(self, pid_mr_svc_mock) -> None:
 
         pc_instance = PrivateComputationInstance(
-            instance_id="123",
+            instance_id="publisher_123",
             role=PrivateComputationRole.PUBLISHER,
             instances=[],
             status=PrivateComputationInstanceStatus.PID_MR_STARTED,
@@ -36,12 +36,13 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
             game_type=PrivateComputationGameType.LIFT,
-            input_path="456",
-            output_dir="789",
+            input_path="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test_data/stress_test/input.csv",
+            output_dir="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output",
             pid_configs={
                 "pid_mr": {
                     "PIDWorkflowConfigs": {"state_machine_arn": "machine_arn"},
                     "PIDRunConfigs": {"conf": "conf1"},
+                    "sparkConfigs": {"conf-2": "conf2"},
                 }
             },
         )
@@ -61,7 +62,8 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             PrivateComputationInstanceStatus.PID_MR_COMPLETED,
         )
         self.assertEqual(
-            pc_instance.pid_mr_stage_output_data_path, "789/123_out_dir/pid_mr"
+            pc_instance.pid_mr_stage_output_data_path,
+            "https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output/publisher_123_out_dir/pid_mr",
         )
         self.assertEqual(pc_instance.instances[0].instance_id, "execution_arn")
         self.assertIsInstance(pc_instance.instances[0], StageStateInstance)
