@@ -350,3 +350,27 @@ class TestDownloadLogs(unittest.TestCase):
                 self.aws_container_logs._verify_log_stream(
                     "my_log_group", "my_log_stream"
                 )
+
+    def test_log_containers_without_logs(self) -> None:
+        with self.subTest("Basic"):
+            self.aws_container_logs.containers_without_logs = []
+            with self.assertLogs() as captured:
+                self.aws_container_logs.log_containers_without_logs()
+                self.assertEqual(len(captured.records), 1)
+                self.assertEqual(
+                    captured.records[0].getMessage(),
+                    "Found logs for all the containers.",
+                )
+        with self.subTest("ErrorLog"):
+            self.aws_container_logs.containers_without_logs = ["a"]
+            with self.assertLogs() as captured:
+                self.aws_container_logs.log_containers_without_logs()
+                self.assertEqual(len(captured.records), 2)
+                self.assertEqual(
+                    captured.records[0].getMessage(),
+                    "Couldn't find logs for the following containers..",
+                )
+                self.assertEqual(
+                    captured.records[1].getMessage(),
+                    "Container ARN: a",
+                )
