@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
+
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -69,6 +71,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
         Raises:
             NotImplementedError: The subclass doesn't implement a stage service for a given StageFlow enum member
         """
+        logging.info("Start MR stage flow")
         if self is self.UNION_PID_MR_MULTIKEY:
             if args.workflow_svc is None:
                 raise NotImplementedError("workflow_svc is None")
