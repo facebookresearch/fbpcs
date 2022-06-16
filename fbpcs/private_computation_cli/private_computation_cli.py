@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --stage_flow=<stage_flow>] [options]
+    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --stage_flow=<stage_flow> --result_visibility=<result_visibility>] [options]
     pc-cli validate <instance_id> --config=<config_file> --expected_result_path=<expected_result_path> [--aggregated_result_path=<aggregated_result_path>] [options]
     pc-cli run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
@@ -58,6 +58,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationRole,
+    ResultVisibility,
 )
 from fbpcs.private_computation.pc_attribution_runner import (
     get_attribution_dataset_info,
@@ -244,6 +245,10 @@ def main(argv: Optional[List[str]] = None) -> None:
                     lambda arg: PrivateComputationBaseStageFlow.cls_name_to_cls(arg)
                 ),
             ),
+            "--result_visibility": schema.Or(
+                None,
+                schema.Use(lambda arg: ResultVisibility[arg.upper()]),
+            ),
             "--stage": schema.Or(None, str),
             "--verbose": bool,
             "--help": bool,
@@ -307,6 +312,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             padding_size=arguments["--padding_size"],
             k_anonymity_threshold=arguments["--k_anonymity_threshold"],
             stage_flow_cls=arguments["--stage_flow"],
+            result_visibility=arguments["--result_visibility"],
         )
     elif arguments["run_next"]:
         logger.info(f"run_next instance: {instance_id}")

@@ -32,6 +32,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
+    ResultVisibility,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -66,6 +67,7 @@ def create_instance(
     padding_size: Optional[int] = None,
     k_anonymity_threshold: Optional[int] = None,
     stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
+    result_visibility: Optional[ResultVisibility] = None,
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
         config["private_computation"],
@@ -99,6 +101,7 @@ def create_instance(
         k_anonymity_threshold=k_anonymity_threshold,
         stage_flow_cls=stage_flow_cls,
         pid_configs=config["pid"],
+        result_visibility=result_visibility,
     )
 
     logger.info(instance)
