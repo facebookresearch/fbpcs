@@ -29,7 +29,10 @@ from fbpcs.common.entity.stage_state_instance import (
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.onedocker_binary_config import (
+    ONEDOCKER_REPOSITORY_PATH,
+    OneDockerBinaryConfig,
+)
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
@@ -263,7 +266,7 @@ async def start_combiner_service(
         padding_size=padding_size,
         log_cost=log_cost,
     )
-    env_vars = {"ONEDOCKER_REPOSITORY_PATH": binary_config.repository_path}
+    env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
     return await combiner_service.start_containers(
         cmd_args_list=args,
         onedocker_svc=onedocker_svc,
@@ -331,7 +334,7 @@ async def start_sharder_service(
         args_list.append(args_per_shard)
 
     binary_name = sharder.get_binary_name(ShardType.ROUND_ROBIN)
-    env_vars = {"ONEDOCKER_REPOSITORY_PATH": binary_config.repository_path}
+    env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
     return await sharder.start_containers(
         cmd_args_list=args_list,
         onedocker_svc=onedocker_svc,

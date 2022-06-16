@@ -11,7 +11,10 @@ from typing import DefaultDict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.onedocker_binary_config import (
+    ONEDOCKER_REPOSITORY_PATH,
+    OneDockerBinaryConfig,
+)
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -87,7 +90,7 @@ class InputDataValidationStageService(PrivateComputationStageService):
         binary_config = self._onedocker_binary_config_map[binary_name]
         cmd_args = get_cmd_args(pc_instance.input_path, region, binary_config)
 
-        env_vars = {"ONEDOCKER_REPOSITORY_PATH": binary_config.repository_path}
+        env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
         container_instances = await RunBinaryBaseService().start_containers(
             [cmd_args],
             self._onedocker_svc,

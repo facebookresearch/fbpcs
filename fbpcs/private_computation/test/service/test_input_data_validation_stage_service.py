@@ -10,7 +10,10 @@ from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.onedocker_binary_config import (
+    ONEDOCKER_REPOSITORY_PATH,
+    OneDockerBinaryConfig,
+)
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -85,7 +88,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
 
         await stage_service.run_async(pc_instance)
 
-        env_vars = {"ONEDOCKER_REPOSITORY_PATH": "test_path/"}
+        env_vars = {ONEDOCKER_REPOSITORY_PATH: "test_path/"}
         mock_run_binary_base_service_start_containers.assert_called_with(
             [expected_cmd_args],
             mock_onedocker_svc,
