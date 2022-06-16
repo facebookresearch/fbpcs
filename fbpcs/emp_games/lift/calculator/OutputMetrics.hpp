@@ -196,7 +196,7 @@ void OutputMetrics<MY_ROLE>::initNumGroups() {
         privatelyShareBitsFromPublisher<MY_ROLE>(inputData_.bitmaskFor(i), n_);
   }
 
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+  for (size_t i = 0; i < static_cast<std::size_t>(numPartnerCohorts_); ++i) {
     partnerBitmasks_[i] =
         privatelyShareBitsFromPartner<MY_ROLE>(inputData_.bitmaskFor(i), n_);
   }
@@ -484,7 +484,7 @@ std::vector<std::vector<emp::Bit>> OutputMetrics<MY_ROLE>::calculateEvents(
     }
   }
 
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+  for (size_t i = 0; i < static_cast<std::size_t>(numPartnerCohorts_); ++i) {
     const auto& mask = partnerBitmasks_.at(i);
     auto groupEventBits =
         private_measurement::secret_sharing::multiplyBitmask(eventArrays, mask);
@@ -580,7 +580,7 @@ void OutputMetrics<MY_ROLE>::calculateMatchCount(
     }
   }
 
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+  for (size_t i = 0; i < static_cast<std::size_t>(numPartnerCohorts_); ++i) {
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
         matchArrays, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -624,7 +624,7 @@ std::vector<emp::Bit> OutputMetrics<MY_ROLE>::calculateImpressions(
         reachArray, publisherBitmasks_.at(i));
   }
 
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+  for (size_t i = 0; i < static_cast<std::size_t>(numPartnerCohorts_); ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         impressionsArray, partnerBitmasks_.at(i));
     auto groupBits = private_measurement::secret_sharing::multiplyBitmask(
@@ -680,7 +680,7 @@ void OutputMetrics<MY_ROLE>::calculateReachedConversions(
     }
   }
 
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+  for (size_t i = 0; i < static_cast<std::size_t>(numPartnerCohorts_); ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         reachedConversions, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -762,7 +762,7 @@ void OutputMetrics<MY_ROLE>::calculateValue(
     }
   }
 
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+  for (size_t i = 0; i < static_cast<std::size_t>(numPartnerCohorts_); ++i) {
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         valueArrays, partnerBitmasks_.at(i));
     if (groupType == GroupType::TEST) {
@@ -828,7 +828,7 @@ void OutputMetrics<MY_ROLE>::calculateValueSquared(
       publisherBreakdowns_[i].controlValueSquared = sum(groupInts);
     }
   }
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
+  for (size_t i = 0; i < static_cast<std::size_t>(numPartnerCohorts_); ++i) {
     const auto& mask = partnerBitmasks_.at(i);
     auto groupInts = private_measurement::secret_sharing::multiplyBitmask(
         squaredValues, mask);

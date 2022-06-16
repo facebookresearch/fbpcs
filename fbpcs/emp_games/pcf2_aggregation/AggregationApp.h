@@ -29,9 +29,9 @@ class AggregationApp {
       const std::vector<std::string>& inputSecretShareFilePaths,
       const std::vector<std::string>& inputClearTextFilePaths,
       const std::vector<std::string>& outputFilePaths,
-      const int startFileIndex = 0,
-      const int numFiles = 1,
-      const int concurrency = 1)
+      std::int32_t startFileIndex = 0,
+      std::int32_t numFiles = 1,
+      int concurrency = 1)
       : inputEncryption_(inputEncryption),
         outputVisibility_(outputVisibility),
         communicationAgentFactory_(std::move(communicationAgentFactory)),
@@ -129,9 +129,9 @@ class AggregationApp {
   std::vector<std::string> inputSecretShareFilePaths_;
   std::vector<std::string> inputClearTextFilePaths_;
   std::vector<std::string> outputFilePaths_;
-  int startFileIndex_;
-  int numFiles_;
-  int concurrency_;
+  const std::int32_t startFileIndex_;
+  const std::int32_t numFiles_;
+  const int concurrency_;
   common::SchedulerStatistics schedulerStatistics_;
 };
 

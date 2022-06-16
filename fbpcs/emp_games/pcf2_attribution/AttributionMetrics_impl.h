@@ -92,7 +92,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
       << "This implementation currently only supports unique touchpoint ids per user.";
 
   std::vector<ParsedTouchpoint> tps;
-  for (auto i = 0; i < timestamps.size(); ++i) {
+  for (auto i = 0U; i < timestamps.size(); ++i) {
     tps.push_back(ParsedTouchpoint{
         /* id */ unique_ids.at(i),
         /* isClick */ isClicks.at(i) == 1,
@@ -112,7 +112,9 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
 
   // Add padding at the end of the input data for publisher; partner data
   // consists only of padded data
-  for (auto i = tps.size(); i < FLAGS_max_num_touchpoints; ++i) {
+  for (auto i = tps.size();
+       i < static_cast<std::size_t>(FLAGS_max_num_touchpoints);
+       ++i) {
     tps.push_back(ParsedTouchpoint{-1, false, 0, 0, 0});
   }
   return tps;
