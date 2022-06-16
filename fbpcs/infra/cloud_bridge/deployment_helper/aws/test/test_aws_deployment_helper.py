@@ -310,4 +310,11 @@ class TestAwsDeploymentHelper(unittest.TestCase):
 
     def test_delete_user_workflow(self) -> None:
         # T122887387
-        pass
+        self.aws_deployment_helper.iam.delete_user_workflow.return_value = True
+        self.assertEqual(None, self.aws_deployment_helper.delete_user_workflow("user1"))
+        self.aws_deployment_helper.iam.list_access_keys.assert_called_once_with(
+            UserName="user1"
+        )
+        self.aws_deployment_helper.iam.delete_user.assert_called_once_with(
+            UserName="user1"
+        )
