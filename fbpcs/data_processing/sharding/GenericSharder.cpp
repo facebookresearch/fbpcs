@@ -27,6 +27,7 @@
 #include <folly/Random.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/logging/xlog.h>
+#include <re2/re2.h>
 
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
 #include "fbpcs/data_processing/common/Logging.h"
@@ -37,6 +38,7 @@ namespace data_processing::sharder {
 namespace detail {
 void stripQuotes(std::string& s) {
   s.erase(std::remove(s.begin(), s.end(), '"'), s.end());
+  s.erase(std::remove(s.begin(), s.end(), '\''), s.end());
 }
 
 void dos2Unix(std::string& s) {
@@ -45,6 +47,17 @@ void dos2Unix(std::string& s) {
 
 void strRemoveBlanks(std::string& str) {
   str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+}
+
+void strReplaceNullColumnWithEmpty(std::string& str) {
+  std::string tmp = "";
+  re2::RE2 Regex("(^|,)(?i)null($|,)");
+  while (tmp != str) {
+    // in case there are overlapping matches, it would iterate to replace all
+    // the null columns. e.g. null,null,null --> ,null, --> ,,
+    tmp = str;
+    re2::RE2::Replace(&str, Regex, "\\1\\2");
+  }
 }
 } // namespace detail
 
@@ -127,6 +140,7 @@ void GenericSharder::shard() {
     detail::stripQuotes(line);
     detail::dos2Unix(line);
     detail::strRemoveBlanks(line);
+    detail::strReplaceNullColumnWithEmpty(line);
     shardLine(std::move(line), outFiles, idColumnIndices);
     ++lineIdx;
     if (lineIdx % getLogRate() == 0) {
