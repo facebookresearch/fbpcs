@@ -7,7 +7,10 @@
 from fbpcs.infra.pce_deployment_library.cloud_library.cloud_base.cloud_base import (
     CloudBase,
 )
+from fbpcs.infra.pce_deployment_library.cloud_library.defaults import CloudPlatforms
 
 
 class AWS(CloudBase):
-    pass
+    @classmethod
+    def cloud_type(cls) -> CloudPlatforms:
+        return CloudPlatforms.AWS

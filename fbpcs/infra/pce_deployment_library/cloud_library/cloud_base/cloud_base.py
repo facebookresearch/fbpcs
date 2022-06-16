@@ -5,8 +5,13 @@
 
 # pyre-strict
 
-from abc import ABC
+from abc import ABC, abstractmethod
+
+from fbpcs.infra.pce_deployment_library.cloud_library.defaults import CloudPlatforms
 
 
 class CloudBase(ABC):
-    pass
+    @classmethod
+    @abstractmethod
+    def cloud_type(cls) -> CloudPlatforms:
+        pass
