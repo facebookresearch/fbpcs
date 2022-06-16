@@ -9,6 +9,7 @@
 from typing import Optional
 
 from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
+from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
@@ -96,7 +97,7 @@ class PIDShardStage(PIDStage):
                 hmac_key=hmac_key,
             )
             env_vars = {
-                "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
+                ONEDOCKER_REPOSITORY_PATH: self.onedocker_binary_config.repository_path
             }
             binary_name = sharder.get_binary_name(ShardType.HASHED_FOR_PID)
             containers = await sharder.start_containers(

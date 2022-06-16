@@ -10,6 +10,7 @@ from typing import Optional
 from fbpcs.data_processing.pid_preparer.union_pid_preparer_cpp import (
     CppUnionPIDDataPreparerService,
 )
+from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
@@ -77,7 +78,7 @@ class PIDPrepareStage(PIDStage):
             next_input_path = self.get_sharded_filepath(input_path, shard)
             next_output_path = self.get_sharded_filepath(output_path, shard)
             env_vars = {
-                "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
+                ONEDOCKER_REPOSITORY_PATH: self.onedocker_binary_config.repository_path
             }
             coro = preparer.prepare_on_container_async(
                 input_path=next_input_path,

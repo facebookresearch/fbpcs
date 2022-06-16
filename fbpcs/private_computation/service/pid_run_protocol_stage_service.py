@@ -15,7 +15,10 @@ from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.onedocker_binary_config import (
+    ONEDOCKER_REPOSITORY_PATH,
+    OneDockerBinaryConfig,
+)
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.utils import get_pid_protocol_from_num_shards
@@ -141,9 +144,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         logging.info(f"{pc_role} spinning up containers")
         binary_name = pid_run_protocol_binary_service.get_binary_name(protocol, pc_role)
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
-        env_vars = {
-            "ONEDOCKER_REPOSITORY_PATH": onedocker_binary_config.repository_path
-        }
+        env_vars = {ONEDOCKER_REPOSITORY_PATH: onedocker_binary_config.repository_path}
         return await pid_run_protocol_binary_service.start_containers(
             cmd_args_list=args_list,
             onedocker_svc=self._onedocker_svc,
