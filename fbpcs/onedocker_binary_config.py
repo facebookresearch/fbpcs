@@ -10,6 +10,8 @@ from dataclasses import dataclass
 
 from dataclasses_json import dataclass_json
 
+ONEDOCKER_REPOSITORY_PATH = "ONEDOCKER_REPOSITORY_PATH"
+
 
 @dataclass_json
 @dataclass

@@ -14,7 +14,10 @@ from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.onedocker_binary_config import (
+    ONEDOCKER_REPOSITORY_PATH,
+    OneDockerBinaryConfig,
+)
 from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -93,7 +96,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
 
         binary_name = PIDRunProtocolBinaryService.get_binary_name(protocol, pc_role)
         binary_config = self.onedocker_binary_config_map[binary_name]
-        env_vars = {"ONEDOCKER_REPOSITORY_PATH": binary_config.repository_path}
+        env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
         args_str_expect = self.get_args_expect(pc_role, protocol, self.use_row_numbers)
         # test the start_containers is called with expected parameters
         self.mock_onedocker_svc.start_containers.assert_called_with(

@@ -10,7 +10,10 @@ from typing import Dict, List, Optional
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.onedocker_binary_config import (
+    ONEDOCKER_REPOSITORY_PATH,
+    OneDockerBinaryConfig,
+)
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDProtocol, PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
@@ -282,6 +285,6 @@ class PIDProtocolRunStage(PIDStage):
     def _gen_env_vars(self) -> Dict[str, str]:
         env_vars = {
             "RUST_LOG": "info",
-            "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path,
+            ONEDOCKER_REPOSITORY_PATH: self.onedocker_binary_config.repository_path,
         }
         return env_vars
