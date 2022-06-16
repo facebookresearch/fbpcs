@@ -137,7 +137,7 @@ class PrivateComputationService:
         padding_size: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
         stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
-        result_visibility: ResultVisibility = ResultVisibility.PUBLIC,
+        result_visibility: Optional[ResultVisibility] = None,
         tier: Optional[str] = None,
         pid_use_row_numbers: bool = True,
         post_processing_data_optional: Optional[PostProcessingData] = None,
@@ -197,7 +197,7 @@ class PrivateComputationService:
                 if game_type is PrivateComputationGameType.ATTRIBUTION
                 else PrivateComputationStageFlow,
             ).get_cls_name(),
-            result_visibility=result_visibility,
+            result_visibility=result_visibility or ResultVisibility.PUBLIC,
             tier=tier,
             pid_use_row_numbers=pid_use_row_numbers,
             post_processing_data=post_processing_data,

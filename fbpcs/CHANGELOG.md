@@ -18,6 +18,7 @@ Types of changes
 ### Changed
 - Use C++20 CMake options for C++ compiler.
 - set result visibility one docker arg
+- allow configuration of result visibility on PC-CLI create_instance endpoint
 
 ## [1.6.0] - 2022-06-02
 
