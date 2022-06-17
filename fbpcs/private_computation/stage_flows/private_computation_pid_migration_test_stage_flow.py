@@ -11,6 +11,9 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
+from fbpcs.private_computation.service.pid_prepare_stage_service import (
+    PIDPrepareStageService,
+)
 
 from fbpcs.private_computation.service.pid_run_protocol_stage_service import (
     PIDRunProtocolStageService,
@@ -129,6 +132,13 @@ class PrivateComputationPIDMigrationTestStageFlow(PrivateComputationBaseStageFlo
         """
         if self is self.ID_MATCH:
             return PIDRunProtocolStageService(
+                args.storage_svc,
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
+                args.pid_svc.multikey_enabled,
+            )
+        elif self is self.PID_PREPARE:
+            return PIDPrepareStageService(
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
