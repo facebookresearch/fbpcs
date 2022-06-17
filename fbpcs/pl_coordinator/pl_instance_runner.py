@@ -99,7 +99,7 @@ def run_instance(
         num_files_per_mpc_container,
         k_anonymity_threshold,
     )
-    logger.info(f"Running private lift for instance {instance_id}")
+    logger.info(f"Running private {game_type.name.lower()} for instance {instance_id}")
     instance_runner.run()
 
 
@@ -186,6 +186,7 @@ class PLInstanceRunner:
         self.publisher = PrivateComputationPublisherInstance(
             instance_id, logger, client
         )
+        self.game_type = game_type
         self.partner = PrivateComputationPartnerInstance(
             instance_id=instance_id,
             config=config,
@@ -279,7 +280,7 @@ class PLInstanceRunner:
             try:
                 if self.is_finished():
                     self.logger.info(
-                        f"Private Lift run completed for instance {self.instance_id}. View results at {self.partner.output_dir}"
+                        f"Private {self.game_type.name.title()} run completed for instance {self.instance_id}. View results at {self.partner.output_dir}"
                     )
                     return
                 # in case the publisher has a status of TIMEOUT
