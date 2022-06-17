@@ -124,6 +124,9 @@ TEST_P(CalculatorGameTestFixture, TestCorrectness) {
   // Read expected output from file
   auto expectedRes =
       GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputFilename));
+  expectedRes.publisherBreakdowns.clear();
+  res.publisherBreakdowns
+      .clear(); // we don't have publisher breakdown implemented.
 
   EXPECT_EQ(expectedRes, res);
 }
@@ -157,7 +160,7 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
       schedulerCreator, std::move(publisherConfig), std::move(partnerConfig));
 
   // Calculate expected results with simple lift calculator
-  LiftCalculator liftCalculator;
+  LiftCalculator liftCalculator(0, 0, 0);
   std::ifstream inFilePublisher{publisherInputFilename_};
   std::ifstream inFilePartner{partnerInputFilename_};
   int32_t tsOffset = 10;
@@ -171,12 +174,10 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
       private_measurement::csv::splitByComma(linePartner, false);
   std::unordered_map<std::string, int> colNameToIndex =
       liftCalculator.mapColToIndex(headerPublisher, headerPartner);
-  OutputMetricsData computedResult = liftCalculator.compute(
+  GroupedLiftMetrics expectedResult = liftCalculator.compute(
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
-  GroupedLiftMetrics expectedRes;
-  expectedRes.metrics = computedResult.toLiftMetrics();
 
-  EXPECT_EQ(expectedRes, res);
+  EXPECT_EQ(expectedResult, res);
 }
 
 // Test calculator game with different schedulers

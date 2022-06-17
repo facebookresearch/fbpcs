@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <cmath>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -168,6 +169,11 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
   auto expectedResult =
       GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputPath));
 
+  // In this test we are not worried about cohorts or publisher breakdowns yet.
+  // TODO: update this test once the breakdown aggregations are
+  // implemented.
+  result.publisherBreakdowns.clear();
+
   EXPECT_EQ(expectedResult, result);
 }
 
@@ -199,7 +205,7 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       useXorEncryption);
 
   // Calculate expected results with simple lift calculator
-  LiftCalculator liftCalculator;
+  LiftCalculator liftCalculator(0, 0, 0);
   std::ifstream inFilePublisher{publisherInputPath_};
   std::ifstream inFilePartner{partnerInputPath_};
   int32_t tsOffset = 10;
@@ -213,12 +219,14 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       private_measurement::csv::splitByComma(linePartner, false);
   std::unordered_map<std::string, int> colNameToIndex =
       liftCalculator.mapColToIndex(headerPublisher, headerPartner);
-  OutputMetricsData computedResult = liftCalculator.compute(
+  GroupedLiftMetrics expectedResult = liftCalculator.compute(
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
-  GroupedLiftMetrics expectedRes;
-  expectedRes.metrics = computedResult.toLiftMetrics();
 
-  EXPECT_EQ(expectedRes, res);
+  res.publisherBreakdowns.clear();
+  expectedResult.publisherBreakdowns.clear();
+  expectedResult.cohortMetrics.clear();
+
+  EXPECT_EQ(expectedResult, res);
 }
 
 INSTANTIATE_TEST_SUITE_P(

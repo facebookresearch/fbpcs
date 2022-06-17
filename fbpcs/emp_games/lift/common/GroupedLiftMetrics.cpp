@@ -15,6 +15,21 @@
 #include <fbpcf/common/VectorUtil.h>
 
 namespace private_lift {
+
+GroupedLiftMetrics::GroupedLiftMetrics() {
+  // TODO: Uncomment the following lines once the Cohort and Publisher breakdown
+  // are implemented as MPC application.
+  //   cohortMetrics.resize(kNumDefaultCohorts);
+  //   publisherBreakdowns.resize(kNumPublisherBreakdown);
+}
+
+GroupedLiftMetrics::GroupedLiftMetrics(
+    uint64_t numCohorts,
+    uint64_t numPublisheBreakdown) {
+  cohortMetrics.resize(numCohorts);
+  publisherBreakdowns.resize(numPublisheBreakdown);
+}
+
 bool GroupedLiftMetrics::operator==(
     const GroupedLiftMetrics& other) const noexcept {
   return metrics == other.metrics && cohortMetrics == other.cohortMetrics &&
