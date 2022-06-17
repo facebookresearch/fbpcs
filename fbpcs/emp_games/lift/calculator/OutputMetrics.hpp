@@ -6,7 +6,9 @@
  */
 
 #include <tuple>
+#include <unordered_map>
 
+#include "OutputMetricsData.h"
 #include "folly/logging/xlog.h"
 
 #include <fbpcf/mpc/EmpGame.h>
@@ -146,17 +148,42 @@ void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream& outfile) {
 template <int32_t MY_ROLE>
 std::string OutputMetrics<MY_ROLE>::toJson() const {
   GroupedLiftMetrics groupedLiftMetrics;
+
+  /*
+   * Rationale for getting max key instead of using umap.size():
+   *  If the dataset does not record a row for a given cohort_id,
+   *  we would get out of bound exception.
+   */
+  auto getMaxKey =
+      [](const std::unordered_map<int64_t, OutputMetricsData>& _map) {
+        int64_t max = 0;
+        for (auto kv : _map) {
+          max = kv.first > max ? kv.first : max;
+        }
+        return max;
+      };
+  if (cohortMetrics_.size() > 0) {
+    groupedLiftMetrics.cohortMetrics.resize(getMaxKey(cohortMetrics_) + 1);
+  } else {
+    groupedLiftMetrics.cohortMetrics.clear();
+  }
+  if (publisherBreakdowns_.size() > 0) {
+    groupedLiftMetrics.publisherBreakdowns.resize(
+        getMaxKey(publisherBreakdowns_) + 1);
+  } else {
+    groupedLiftMetrics.publisherBreakdowns.clear();
+  }
+  groupedLiftMetrics.reset();
+
   groupedLiftMetrics.metrics = metrics_.toLiftMetrics();
-  std::transform(
-      cohortMetrics_.begin(),
-      cohortMetrics_.end(),
-      std::back_inserter(groupedLiftMetrics.cohortMetrics),
-      [](auto const& p) { return p.second.toLiftMetrics(); });
-  std::transform(
-      publisherBreakdowns_.begin(),
-      publisherBreakdowns_.end(),
-      std::back_inserter(groupedLiftMetrics.publisherBreakdowns),
-      [](auto const& p) { return p.second.toLiftMetrics(); });
+  for (auto kv : cohortMetrics_) {
+    groupedLiftMetrics.cohortMetrics[kv.first] = kv.second.toLiftMetrics();
+  }
+  for (auto kv : publisherBreakdowns_) {
+    groupedLiftMetrics.publisherBreakdowns[kv.first] =
+        kv.second.toLiftMetrics();
+  }
+
   return groupedLiftMetrics.toJson();
 }
 

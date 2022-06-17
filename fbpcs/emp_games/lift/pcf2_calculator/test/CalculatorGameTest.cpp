@@ -176,7 +176,6 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
       liftCalculator.mapColToIndex(headerPublisher, headerPartner);
   GroupedLiftMetrics expectedResult = liftCalculator.compute(
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
-
   EXPECT_EQ(expectedResult, res);
 }
 
