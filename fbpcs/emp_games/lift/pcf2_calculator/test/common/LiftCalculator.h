@@ -70,6 +70,27 @@ class LiftCalculator {
     return out;
   }
 
+  void updateTestMetrics(
+      GroupedLiftMetrics& glm,
+      const uint64_t& opportunityTimestamp,
+      const std::vector<uint64_t>& eventTimestamps,
+      const uint64_t cohortId,
+      const uint64_t breakdownId,
+      const uint64_t tsOffset,
+      const uint64_t numImpressions,
+      const int64_t valuesIdx,
+      const std::vector<int64_t>& values) const;
+
+  void updateControlMetrics(
+      GroupedLiftMetrics& glm,
+      const uint64_t& opportunityTimestamp,
+      const std::vector<uint64_t>& eventTimestamps,
+      const uint64_t cohortId,
+      const uint64_t breakdownId,
+      const uint64_t tsOffset,
+      const int64_t valuesIdx,
+      const std::vector<int64_t>& values) const;
+
   std::tuple<uint64_t, bool> parseUint64OrDie(
       const std::string& column,
       const std::vector<std::string>& inLine,
