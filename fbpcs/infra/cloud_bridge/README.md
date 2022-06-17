@@ -54,13 +54,14 @@ docker images cloudbridge-private_lift-server
 6. given the right docker image tag/id, do `docker run`
   * run the following command to open the docker image in an interactive shell
 ```
-docker run -it --entrypoint=/bin/sh <image-name:image-tag>  (without the '<' and '>')
-example:  docker run -it --entrypoint=/bin/sh cloudbridge-private_lift-server:0.0.1
+docker run -it --entrypoint=/bin/bash <image-name:image-tag>  (without the '<' and '>')
+example:  docker run -it --entrypoint=/bin/bash cloudbridge-private_lift-server:0.0.1
 ```
 7. show `deploy.sh` arguments and usage
   * run the following command
 ```
-/bin/sh ./terraform_deployment/deploy.sh --help
+cd /terraform_deployment
+/bin/bash deploy.sh --help
 ```
 8. create environment variables on AWS credentials (while be removed eventually)
   * run the following command
@@ -72,52 +73,53 @@ export AWS_ACCESS_KEY_ID=<YOUR_OWN_AWS_ACCESS_KEY> \
 export AWS_SECRET_ACCESS_KEY=<YOUR_OWN_AWS_SECRET_ACCESS_KEY> \
 export AWS_SESSION_TOKEN=<YOUR_OWN_AWS_SESSION_TOKEN> \
 export TF_LOG=DEBUG \
-export TF_LOG_PATH=/tmp/deploy.log
+export TF_LOG_PATH=/tmp/deploy.log \
+export TF_LOG_STREAMING=/tmp/deploymentStream.log
 ```
 9. run `deploy.sh`
  * For standard `deploy` and without any semi-automated data ingestion, run the following command
 
 ```
-/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
-example: "/bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
+/bin/bash deploy.sh deploy -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+example: "/bin/bash deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
 ```
 
  * For standard `undeploy` and without any semi-automated data ingestion, run the following command
 ```
-/bin/sh deploy.sh undeploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
-example: "/bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
+/bin/bash deploy.sh undeploy -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+example: "/bin/bash deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 627672676272 -p 43454354533545 -v vpc-036652587a2d1839c
 
 ```
 
  * For deploy with semi-automated data ingestion and without using any bucket names, run the following command
 ```
-/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+/bin/bash deploy.sh deploy -r <> -t <> -a <> -p <> -v <> -b<optional>
 
-example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b
+example: /bin/bash deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b
 
 ```
 
  * For undeploy with semi-automated data ingestion and without using any bucket names, run the following command
 ```
-/bin/sh deploy.sh undeploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+/bin/bash deploy.sh undeploy -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
 
-example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b
+example: /bin/bash deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b
 
 ```
 
  * For deploy with semi-automated data ingestion and  using manual bucket names, run the following command
 ```
-/bin/sh deploy.sh deploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+/bin/bash deploy.sh deploy -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
 
-example: /bin/sh deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name-optional -d data-storage-bucket-name-optional
+example: /bin/bash deploy.sh deploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name-optional -d data-storage-bucket-name-optional
 
 ```
 
  * For undeploy with semi-automated data ingestion and without using any bucket names, run the following command
 ```
-/bin/sh deploy.sh undeploy ./terraform_deploment/deploy.sh -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
+/bin/bash deploy.sh undeploy -r <> -t <> -a <> -p <> -v <> -s<optional> -d<optional> -b<optional>
 
-example: /bin/sh deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name-optional -d data-storage-bucket-name-optional
+example: /bin/bash deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 592513842793 -p 539290649537 -v vpc-036652587a2d1839c -b -s storage-bucket-name-optional -d data-storage-bucket-name-optional
 ```
 
 
