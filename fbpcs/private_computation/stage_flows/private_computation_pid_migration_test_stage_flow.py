@@ -18,6 +18,9 @@ from fbpcs.private_computation.service.pid_prepare_stage_service import (
 from fbpcs.private_computation.service.pid_run_protocol_stage_service import (
     PIDRunProtocolStageService,
 )
+from fbpcs.private_computation.service.pid_shard_stage_service import (
+    PIDShardStageService,
+)
 
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -148,6 +151,12 @@ class PrivateComputationPIDMigrationTestStageFlow(PrivateComputationBaseStageFlo
             return ComputeMetricsStageService(
                 args.onedocker_binary_config_map,
                 args.mpc_svc,
+            )
+        elif self is self.PID_SHARD:
+            return PIDShardStageService(
+                args.storage_svc,
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
             )
         else:
             return self.get_default_stage_service(args)
