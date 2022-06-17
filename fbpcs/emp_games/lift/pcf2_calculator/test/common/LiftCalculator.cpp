@@ -7,6 +7,7 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -14,7 +15,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "fbpcs/emp_games/common/Csv.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/OutputMetricsData.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftCalculator.h"
 
@@ -35,30 +35,29 @@ std::unordered_map<std::string, int32_t> LiftCalculator::mapColToIndex(
   return colNameToIndex;
 }
 
-// Parse input string with format [111,222,333,...]
-std::vector<uint64_t> LiftCalculator::parseArray(std::string array) const {
-  auto innerString = array.substr(1, array.size() - 1);
-  std::vector<uint64_t> out;
-  auto values = private_measurement::csv::splitByComma(innerString, false);
-  for (std::size_t i = 0; i < values.size(); ++i) {
-    int64_t parsed = 0;
-    std::istringstream iss{values[i]};
-    iss >> parsed;
+std::tuple<uint64_t, bool> LiftCalculator::parseUint64OrDie(
+    const std::string& column,
+    const std::vector<std::string>& inParts,
+    const std::unordered_map<std::string, int32_t>& colNameToIndex) const {
+  uint64_t res;
+  if (colNameToIndex.find(column) != colNameToIndex.end()) {
+    std::istringstream iss(inParts.at(colNameToIndex.at(column)));
+    iss >> res;
     if (iss.fail()) {
-      LOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
+      LOG(FATAL) << "Failed to parse '" << iss.str() << "' to uint64_t";
+    } else {
+      return {res, true};
     }
-    out.push_back(parsed);
   }
-  return out;
+  return {res, false};
 }
 
-OutputMetricsData LiftCalculator::compute(
+GroupedLiftMetrics LiftCalculator::compute(
     std::ifstream& inFilePublisher,
     std::ifstream& inFilePartner,
     std::unordered_map<std::string, int32_t>& colNameToIndex,
     int32_t tsOffset,
     bool useAdvancedLift) const {
-  OutputMetricsData out;
   uint64_t opportunity = 0;
   uint64_t numImpressions = 0;
   uint64_t numClicks = 0;
@@ -66,26 +65,17 @@ OutputMetricsData LiftCalculator::compute(
   uint64_t testFlag = 0;
   uint64_t opportunityTimestamp = 0;
   std::vector<uint64_t> eventTimestamps;
-  std::vector<uint64_t> values;
+  std::vector<int64_t> values;
 
   std::string linePublisher;
   std::string linePartner;
 
-  // Initialize field values from OutputMetricsData
-  out.testEvents = 0;
-  out.controlEvents = 0;
-  out.testConverters = 0;
-  out.controlConverters = 0;
-  out.testValue = 0;
-  out.controlValue = 0;
-  out.testValueSquared = 0;
-  out.controlValueSquared = 0;
-  out.testNumConvSquared = 0;
-  out.controlNumConvSquared = 0;
-  out.testMatchCount = 0;
-  out.controlMatchCount = 0;
-  out.reachedConversions = 0;
-  out.reachedValue = 0;
+  GroupedLiftMetrics glm(numCohorts_, numPublisherBreakdown_);
+
+  glm.reset();
+
+  uint64_t parsedVal;
+  bool parseStatus;
 
   // Read line by line, at the same time compute metrics
   while (getline(inFilePublisher, linePublisher) &&
@@ -100,75 +90,49 @@ OutputMetricsData LiftCalculator::compute(
     }
 
     // Opportunity is actually an optional column
-    if (colNameToIndex.find("opportunity") != colNameToIndex.end()) {
-      std::istringstream issOpportunity{
-          partsPublisher.at(colNameToIndex.at("opportunity"))};
-      issOpportunity >> opportunity;
-      if (issOpportunity.fail()) {
-        LOG(FATAL) << "Failed to parse '" << issOpportunity.str()
-                   << "' to uint64_t";
-      }
-    } else {
-      // If it isn't present, assume all lines had opportunities
-      opportunity = 1;
-    }
+    std::tie(parsedVal, parseStatus) =
+        parseUint64OrDie("opportunity", partsPublisher, colNameToIndex);
+    opportunity = parseStatus ? parsedVal : 1;
 
-    std::istringstream issTestFlag{
-        partsPublisher.at(colNameToIndex.at("test_flag"))};
-    issTestFlag >> testFlag;
-    if (issTestFlag.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issTestFlag.str() << "' to uint64_t";
-    }
+    std::tie(parsedVal, parseStatus) =
+        parseUint64OrDie("test_flag", partsPublisher, colNameToIndex);
+    testFlag = parseStatus ? parsedVal : 0;
 
-    std::istringstream issOpportunityTimestamp{
-        partsPublisher.at(colNameToIndex.at("opportunity_timestamp"))};
-    issOpportunityTimestamp >> opportunityTimestamp;
-    if (issOpportunityTimestamp.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issOpportunityTimestamp.str()
-                 << "' to uint64_t";
-    }
+    std::tie(parsedVal, parseStatus) = parseUint64OrDie(
+        "opportunity_timestamp", partsPublisher, colNameToIndex);
+    opportunityTimestamp =
+        parseStatus ? (parsedVal > epoch_ ? (parsedVal - epoch_) : 0) : 0;
 
-    std::istringstream issNumClicks{
-        partsPublisher.at(colNameToIndex.at("num_clicks"))};
-    issNumClicks >> numClicks;
-    if (issNumClicks.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issNumClicks.str()
-                 << "' to uint64_t";
-    }
+    std::tie(parsedVal, parseStatus) =
+        parseUint64OrDie("num_clicks", partsPublisher, colNameToIndex);
+    numClicks = parseStatus ? parsedVal : 0;
 
-    std::istringstream issNumImpressions{
-        partsPublisher.at(colNameToIndex.at("num_impressions"))};
-    issNumImpressions >> numImpressions;
-    if (issNumImpressions.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issNumImpressions.str()
-                 << "' to uint64_t";
-    }
+    std::tie(parsedVal, parseStatus) =
+        parseUint64OrDie("num_impressions", partsPublisher, colNameToIndex);
+    numImpressions = parseStatus ? parsedVal : 0;
 
-    std::istringstream issTotalSpend{
-        partsPublisher.at(colNameToIndex.at("total_spend"))};
-    issTotalSpend >> totalSpend;
-    if (issTotalSpend.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issTotalSpend.str()
-                 << "' to uint64_t";
-    }
+    std::tie(parsedVal, parseStatus) =
+        parseUint64OrDie("total_spend", partsPublisher, colNameToIndex);
+    totalSpend = parseStatus ? parsedVal : 0;
 
     if (partsPartner.empty()) {
       LOG(FATAL) << "Empty partner line";
     }
-    eventTimestamps =
-        parseArray(partsPartner.at(colNameToIndex.at("event_timestamps")));
-
+    eventTimestamps = parseArray<uint64_t>(
+        partsPartner.at(colNameToIndex.at("event_timestamps")));
+    eventTimestamps = getAdjustedTimesEpochOffset(eventTimestamps);
     auto valuesIdx = colNameToIndex.find("values") != colNameToIndex.end()
         ? colNameToIndex.at("values")
         : -1;
     if (valuesIdx != -1) {
-      values = parseArray(partsPartner.at(valuesIdx));
+      values = parseArray<int64_t>(partsPartner.at(valuesIdx));
 
       if (eventTimestamps.size() != values.size()) {
         LOG(FATAL) << "Size of event_timestamps (" << eventTimestamps.size()
                    << ") and values (" << values.size() << ") are inconsistent";
       }
     }
+
     if (opportunity && opportunityTimestamp > 0) {
       uint64_t value_subsum = 0;
       uint64_t convCount = 0;
@@ -178,19 +142,19 @@ OutputMetricsData LiftCalculator::compute(
         for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
               !countedMatchAlready) {
-            ++out.testMatchCount;
+            ++glm.metrics.testMatchCount;
             countedMatchAlready = true;
           }
           if (opportunityTimestamp < eventTimestamps.at(i) + tsOffset) {
             // Only record the first time the user has a valid conversion
             if (!converted) {
-              ++out.testConverters;
+              ++glm.metrics.testConverters;
             }
-            ++out.testEvents;
+            ++glm.metrics.testConversions;
             ++convCount;
             converted = true;
             if (numImpressions > 0) {
-              ++out.reachedConversions;
+              ++glm.metrics.reachedConversions;
             }
             if (valuesIdx != -1) {
               // Only add values if the values column exists
@@ -199,25 +163,25 @@ OutputMetricsData LiftCalculator::compute(
             }
           }
         }
-        out.testValue += value_subsum;
+        glm.metrics.testValue += value_subsum;
         if (numImpressions > 0) {
-          out.reachedValue += value_subsum;
+          glm.metrics.reachedValue += value_subsum;
         }
-        out.testValueSquared += value_subsum * value_subsum;
-        out.testNumConvSquared += convCount * convCount;
+        glm.metrics.testValueSquared += value_subsum * value_subsum;
+        glm.metrics.testNumConvSquared += convCount * convCount;
       } else {
         for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
           if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
               !countedMatchAlready) {
-            ++out.controlMatchCount;
+            ++glm.metrics.controlMatchCount;
             countedMatchAlready = true;
           }
           if (opportunityTimestamp < eventTimestamps.at(i) + tsOffset) {
             // Only record the first time the user has a valid conversion
             if (!converted) {
-              ++out.controlConverters;
+              ++glm.metrics.controlConverters;
             }
-            ++out.controlEvents;
+            ++glm.metrics.controlConversions;
             ++convCount;
             converted = true;
             if (valuesIdx != -1) {
@@ -227,13 +191,25 @@ OutputMetricsData LiftCalculator::compute(
             }
           }
         }
-        out.controlValue += value_subsum;
-        out.controlValueSquared += value_subsum * value_subsum;
-        out.controlNumConvSquared += convCount * convCount;
+        glm.metrics.controlValue += value_subsum;
+        glm.metrics.controlValueSquared += value_subsum * value_subsum;
+        glm.metrics.controlNumConvSquared += convCount * convCount;
       }
     }
   }
 
-  return out;
+  return glm;
 }
+
+std::vector<uint64_t> LiftCalculator::getAdjustedTimesEpochOffset(
+    const std::vector<uint64_t>& timestamps) const {
+  std::vector<uint64_t> res(timestamps.size(), 0);
+  for (size_t i = 0; i < timestamps.size(); ++i) {
+    if (timestamps[i] > epoch_) {
+      res[i] = timestamps[i] - epoch_;
+    }
+  }
+  return res;
+}
+
 } // namespace private_lift

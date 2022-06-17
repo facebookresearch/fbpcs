@@ -38,7 +38,9 @@ class GroupedLiftMetricsTest : public ::testing::Test {
  protected:
   void SetUp() override {
     groupedMetrics_ = GroupedLiftMetrics{
-        fakeLiftMetrics(), {fakeLiftMetrics(), fakeLiftMetrics()}};
+        fakeLiftMetrics(),
+        {fakeLiftMetrics(), fakeLiftMetrics()},
+        {fakeLiftMetrics(), fakeLiftMetrics()}};
   }
 
   GroupedLiftMetrics groupedMetrics_;
@@ -49,5 +51,7 @@ TEST_F(GroupedLiftMetricsTest, GroupedLiftMetrics) {
   auto parsedMetrics = GroupedLiftMetrics::fromJson(json);
   EXPECT_EQ(groupedMetrics_.metrics, parsedMetrics.metrics);
   EXPECT_EQ(groupedMetrics_.cohortMetrics, parsedMetrics.cohortMetrics);
+  EXPECT_EQ(
+      groupedMetrics_.publisherBreakdowns, parsedMetrics.publisherBreakdowns);
 }
 } // namespace private_lift

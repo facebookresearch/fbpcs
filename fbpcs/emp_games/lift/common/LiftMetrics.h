@@ -81,6 +81,25 @@ struct LiftMetrics {
   std::string toJson() const;
   static LiftMetrics fromJson(const std::string& str);
 
+  void reset() {
+    this->testConversions = 0;
+    this->controlConversions = 0;
+    this->testConverters = 0;
+    this->controlConverters = 0;
+    this->testValue = 0;
+    this->controlValue = 0;
+    this->testValueSquared = 0;
+    this->controlValueSquared = 0;
+    this->testNumConvSquared = 0;
+    this->controlNumConvSquared = 0;
+    this->testMatchCount = 0;
+    this->controlMatchCount = 0;
+    this->reachedConversions = 0;
+    this->reachedValue = 0;
+    this->testConvHistogram.clear();
+    this->controlConvHistogram.clear();
+  }
+
  private:
   folly::dynamic toDynamic() const;
   static LiftMetrics fromDynamic(const folly::dynamic& obj);
