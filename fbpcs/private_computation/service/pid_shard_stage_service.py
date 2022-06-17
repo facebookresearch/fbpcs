@@ -7,10 +7,16 @@
 import logging
 from typing import DefaultDict, List, Optional
 
+from fbpcp.entity.container_instance import ContainerInstance
+
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
-from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
+from fbpcs.onedocker_binary_config import (
+    ONEDOCKER_REPOSITORY_PATH,
+    OneDockerBinaryConfig,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -20,6 +26,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.private_computation.service.utils import (
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+    file_exists_async,
     get_pc_status_from_stage_state,
 )
 
@@ -60,7 +67,7 @@ class PIDShardStageService(PrivateComputationStageService):
             An updated version of pc_instance
         """
         self._logger.info(f"[{self}] Starting PIDShardStageService")
-        container_instances = []
+        container_instances = await self.start_pid_shard_service(pc_instance)
 
         self._logger.info("PIDShardStageService finished")
         stage_state = StageStateInstance(
@@ -84,3 +91,41 @@ class PIDShardStageService(PrivateComputationStageService):
             The latest status for private computation instance
         """
         return get_pc_status_from_stage_state(pc_instance, self._onedocker_svc)
+
+    async def start_pid_shard_service(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> List[ContainerInstance]:
+        """start pid shard service and spine up the container instances"""
+        logging.info("Instantiated PID shard stage")
+        num_shards = pc_instance.num_pid_containers
+        input_path = pc_instance.input_path
+        output_base_path = pc_instance.pid_stage_output_data_path
+        pc_role = pc_instance.role
+        # make sure the input file is on the storage service before proceed
+        if not await file_exists_async(self._storage_svc, input_path):
+            raise ValueError("Input file for PIDShardStageService are missing")
+
+        sharding_binary_service = ShardingService()
+        # generate the list of command args for publisher or partner
+        binary_name = ShardingService.get_binary_name(ShardType.HASHED_FOR_PID)
+        onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
+        args = ShardingService.build_args(
+            filepath=input_path,
+            output_base_path=output_base_path,
+            file_start_index=0,
+            num_output_files=num_shards,
+            tmp_directory=onedocker_binary_config.tmp_directory,
+            hmac_key=pc_instance.hmac_key,
+        )
+        # start containers
+        logging.info(f"{pc_role} spinning up containers")
+        env_vars = {ONEDOCKER_REPOSITORY_PATH: onedocker_binary_config.repository_path}
+        return await sharding_binary_service.start_containers(
+            cmd_args_list=[args],
+            onedocker_svc=self._onedocker_svc,
+            binary_version=onedocker_binary_config.binary_version,
+            binary_name=binary_name,
+            timeout=self._container_timeout,
+            env_vars=env_vars,
+        )
