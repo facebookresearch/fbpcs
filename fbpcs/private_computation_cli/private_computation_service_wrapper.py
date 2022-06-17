@@ -494,9 +494,9 @@ def _build_pid_service(
         pidinstance_repository_config, PIDInstanceRepository
     )
 
-    multikey_enabled = True
-    if "multikey_enabled" in pid_config.keys() and not pid_config["multikey_enabled"]:
-        multikey_enabled = False
+    multikey_enabled = False
+    if "multikey_enabled" in pid_config.keys() and pid_config["multikey_enabled"]:
+        multikey_enabled = True
     return PIDService(
         onedocker_service,
         storage_service,
