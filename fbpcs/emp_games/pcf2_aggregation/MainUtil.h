@@ -60,7 +60,9 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
   common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
 
   // split files evenly across threads
-  auto remainingFiles = inputSecretShareFilenames.size() - startFileIndex;
+  auto remainingFiles =
+      static_cast<std::int64_t>(inputSecretShareFilenames.size()) -
+      startFileIndex;
   if (remainingFiles > 0) {
     auto numFiles = (remainingThreads > remainingFiles)
         ? 1

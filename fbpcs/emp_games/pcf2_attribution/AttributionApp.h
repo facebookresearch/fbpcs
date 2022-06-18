@@ -30,8 +30,8 @@ class AttributionApp {
       const std::string& attributionRules,
       const std::vector<std::string>& inputFilenames,
       const std::vector<std::string>& outputFilenames,
-      const int startFileIndex = 0,
-      const int numFiles = 1)
+      std::uint32_t startFileIndex = 0U,
+      int numFiles = 1)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
         attributionRules_{attributionRules},
         inputFilenames_(inputFilenames),
@@ -105,8 +105,8 @@ class AttributionApp {
   std::string attributionRules_;
   std::vector<std::string> inputFilenames_;
   std::vector<std::string> outputFilenames_;
-  int startFileIndex_;
-  int numFiles_;
+  const std::uint32_t startFileIndex_;
+  const int numFiles_;
   common::SchedulerStatistics schedulerStatistics_;
 };
 
