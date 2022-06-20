@@ -60,6 +60,12 @@ class DataclassHookMixin:
             self._run_hooks(HookEventType.POST_INIT, name, None, value)
 
     def __delattr__(self, name: str) -> None:
+        """
+        In dataclass,
+        an attribute with default value (default_factory not include) can never be truly deleted.
+        After deleting an attribute with default value (even if you might have updated it already)
+        you can still get access to its default value.
+        """
         # Run the PRE_DELETE hooks, delete the field, then run the POST_DELETE hooks
         old_value = getattr(self, name, None)
         self._run_hooks(HookEventType.PRE_DELETE, name, old_value)
