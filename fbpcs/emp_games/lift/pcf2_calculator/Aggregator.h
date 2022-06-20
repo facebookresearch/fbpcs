@@ -157,6 +157,8 @@ class Aggregator {
   std::vector<std::vector<bool>> cohortIndexShares_;
   std::vector<std::vector<bool>> testCohortIndexShares_;
   std::unordered_map<int64_t, OutputMetricsData> cohortMetrics_;
+  std::unordered_map<int64_t, OutputMetricsData>
+      publisherBreakdowns_; // place holder for publisher breakdown metrics.
 };
 } // namespace private_lift
 
