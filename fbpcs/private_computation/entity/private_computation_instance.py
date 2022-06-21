@@ -143,6 +143,11 @@ class PrivateComputationInstance(InstanceBase):
     concurrency: int = 1  # used only by MPC compute metrics stage. TODO T102588568: rename to compute_metrics_concurrency
     k_anonymity_threshold: int = 0
 
+    # start and end date of the partner side dataset in current computation run
+    # this fields are specific to private attribution
+    computation_dataset_start_date: Optional[str] = None
+    computation_dataset_end_date: Optional[str] = None
+
     # this field is deprecated
     fail_fast: bool = False
 
