@@ -223,7 +223,6 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
 
   res.publisherBreakdowns.clear();
-  res.publisherBreakdowns.clear();
   expectedResult.publisherBreakdowns.clear();
   expectedResult.cohortMetrics.clear();
 
