@@ -169,10 +169,11 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
   auto expectedResult =
       GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputPath));
 
-  // In this test we are not worried about cohorts or publisher breakdowns yet.
+  // In this test we are not worried about publisher breakdowns yet.
   // TODO: update this test once the breakdown aggregations are
   // implemented.
   result.publisherBreakdowns.clear();
+  expectedResult.publisherBreakdowns.clear();
 
   EXPECT_EQ(expectedResult, result);
 }
@@ -221,11 +222,6 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       liftCalculator.mapColToIndex(headerPublisher, headerPartner);
   GroupedLiftMetrics expectedResult = liftCalculator.compute(
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
-
-  res.publisherBreakdowns.clear();
-  res.publisherBreakdowns.clear();
-  expectedResult.publisherBreakdowns.clear();
-  expectedResult.cohortMetrics.clear();
 
   EXPECT_EQ(expectedResult, res);
 }

@@ -70,6 +70,87 @@ class LiftCalculator {
     return out;
   }
 
+  /**
+   * Updates the `GroupedLiftMetrics` with metrics related to **Test** group.
+   */
+  void updateTestMetrics(
+      GroupedLiftMetrics& glm,
+      const uint64_t& opportunityTimestamp,
+      const std::vector<uint64_t>& eventTimestamps,
+      const uint8_t cohortId,
+      const uint8_t breakdownId,
+      const uint64_t tsOffset,
+      const uint64_t numImpressions,
+      const int64_t valuesIdx,
+      const std::vector<int64_t>& values) const;
+
+  /**
+   * Updates the `GroupedLiftMetrics` with metrics related to **Control** group.
+   */
+  void updateControlMetrics(
+      GroupedLiftMetrics& glm,
+      const uint64_t& opportunityTimestamp,
+      const std::vector<uint64_t>& eventTimestamps,
+      const uint8_t cohortId,
+      const uint8_t breakdownId,
+      const uint64_t tsOffset,
+      const int64_t valuesIdx,
+      const std::vector<int64_t>& values) const;
+
+  /**
+   * Checks if the control event occurred after opportunity time and if was
+   * attributed already increments match count and returns true.
+   */
+  bool checkAndUpdateControlMatchCount(
+      GroupedLiftMetrics& glm,
+      uint64_t opportunityTimestamp,
+      uint64_t eventTimestamp,
+      bool countedMatchAlready,
+      uint8_t cohortId,
+      uint8_t breakdownId) const;
+
+  /**
+   * Checks if the test event occurred after opportunity + tsOffset  time and if
+   * was attributed already increments match count and returns true.
+   */
+  bool checkAndUpdateTestMatchCount(
+      GroupedLiftMetrics& glm,
+      uint64_t opportunityTimestamp,
+      uint64_t eventTimestamp,
+      bool countedMatchAlready,
+      uint8_t cohortId,
+      uint8_t breakdownId) const;
+
+  /**
+   * Checks if the control event occurred after opportunity + tsOffset time and
+   * increments control conversions. If the conversion was a valid conversion,
+   * then increments controlConverters.
+   * @return true if opportunityTime < (event + tsOffset)
+   */
+  bool checkAndUpdateControlConversions(
+      GroupedLiftMetrics& glm,
+      uint64_t opportunityTimestamp,
+      uint64_t eventTimestamp,
+      int32_t tsOffset,
+      bool converted,
+      uint8_t cohortId,
+      uint8_t breakdownId) const;
+
+  /**
+   * Checks if the test event occurred after opportunity + tsOffset time and
+   * increments control conversions. If the conversion was a valid conversion,
+   * then increments controlConverters.
+   * @return true if opportunityTime < (event + tsOffset)
+   */
+  bool checkAndUpdateTestConversions(
+      GroupedLiftMetrics& glm,
+      uint64_t opportunityTimestamp,
+      uint64_t eventTimestamp,
+      int32_t tsOffset,
+      bool converted,
+      uint8_t cohortId,
+      uint8_t breakdownId) const;
+
   std::tuple<uint64_t, bool> parseUint64OrDie(
       const std::string& column,
       const std::vector<std::string>& inLine,

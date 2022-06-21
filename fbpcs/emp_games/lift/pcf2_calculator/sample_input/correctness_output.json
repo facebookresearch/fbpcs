@@ -73,5 +73,42 @@
             "controlConvHistogram": []
         }
     ],
-    "publisherBreakdowns": []
+    "publisherBreakdowns": [
+        {
+            "testConversions": 4,
+            "controlConversions": 4,
+            "testConverters": 3,
+            "controlConverters": 3,
+            "testNumConvSquared": 6,
+            "controlNumConvSquared": 6,
+            "testMatchCount": 6,
+            "controlMatchCount": 6,
+            "reachedConversions": 1,
+            "testValue": 30,
+            "controlValue": 70,
+            "reachedValue": 50,
+            "testValueSquared": 5900,
+            "controlValueSquared": 1700,
+            "testConvHistogram": [],
+            "controlConvHistogram": []
+        },
+        {
+            "testConversions": 5,
+            "controlConversions": 1,
+            "testConverters": 4,
+            "controlConverters": 1,
+            "testNumConvSquared": 7,
+            "controlNumConvSquared": 1,
+            "testMatchCount": 6,
+            "controlMatchCount": 1,
+            "reachedConversions": 3,
+            "testValue": 90,
+            "controlValue": -50,
+            "reachedValue": 50,
+            "testValueSquared": 2100,
+            "controlValueSquared": 2500,
+            "testConvHistogram": [],
+            "controlConvHistogram": []
+        }
+    ]
 }
