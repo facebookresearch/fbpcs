@@ -7,6 +7,7 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <iomanip>
@@ -64,6 +65,8 @@ GroupedLiftMetrics LiftCalculator::compute(
   uint64_t totalSpend = 0;
   uint64_t testFlag = 0;
   uint64_t opportunityTimestamp = 0;
+  uint8_t breakdownId = 0;
+  uint8_t cohortId = 0;
   std::vector<uint64_t> eventTimestamps;
   std::vector<int64_t> values;
 
@@ -115,6 +118,13 @@ GroupedLiftMetrics LiftCalculator::compute(
         parseUint64OrDie("total_spend", partsPublisher, colNameToIndex);
     totalSpend = parseStatus ? parsedVal : 0;
 
+    std::tie(parsedVal, parseStatus) =
+        parseUint64OrDie("breakdown_id", partsPublisher, colNameToIndex);
+    breakdownId = parseStatus ? parsedVal : 0;
+    if (numPublisherBreakdown_ > 0 && parseStatus)
+      CHECK_LE(breakdownId, numPublisherBreakdown_)
+          << " breakdownId has to be less than numPublisherBreakdown, check constructor of LiftCalculator.";
+
     if (partsPartner.empty()) {
       LOG(FATAL) << "Empty partner line";
     }
@@ -132,6 +142,13 @@ GroupedLiftMetrics LiftCalculator::compute(
                    << ") and values (" << values.size() << ") are inconsistent";
       }
     }
+    std::tie(parsedVal, parseStatus) =
+        parseUint64OrDie("cohort_id", partsPartner, colNameToIndex);
+    cohortId = parseStatus ? parsedVal : 0;
+    if (numCohorts_ > 0 && parseStatus) {
+      CHECK_LE(cohortId, numCohorts_)
+          << " cohortId has to be less than numCohorts, check constructor of LiftCalculator.";
+    }
 
     if (opportunity && opportunityTimestamp > 0) {
       uint64_t value_subsum = 0;
@@ -139,66 +156,265 @@ GroupedLiftMetrics LiftCalculator::compute(
       bool converted = false;
       bool countedMatchAlready = false;
       if (testFlag) {
-        for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
-          if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
-              !countedMatchAlready) {
-            ++glm.metrics.testMatchCount;
-            countedMatchAlready = true;
-          }
-          if (opportunityTimestamp < eventTimestamps.at(i) + tsOffset) {
-            // Only record the first time the user has a valid conversion
-            if (!converted) {
-              ++glm.metrics.testConverters;
-            }
-            ++glm.metrics.testConversions;
-            ++convCount;
-            converted = true;
-            if (numImpressions > 0) {
-              ++glm.metrics.reachedConversions;
-            }
-            if (valuesIdx != -1) {
-              // Only add values if the values column exists
-              // (support valueless objectives)
-              value_subsum += values.at(i);
-            }
-          }
-        }
-        glm.metrics.testValue += value_subsum;
-        if (numImpressions > 0) {
-          glm.metrics.reachedValue += value_subsum;
-        }
-        glm.metrics.testValueSquared += value_subsum * value_subsum;
-        glm.metrics.testNumConvSquared += convCount * convCount;
+        updateTestMetrics(
+            glm,
+            opportunityTimestamp,
+            eventTimestamps,
+            cohortId,
+            breakdownId,
+            tsOffset,
+            numImpressions,
+            valuesIdx,
+            values);
       } else {
-        for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
-          if (opportunityTimestamp > 0 && eventTimestamps.at(i) > 0 &&
-              !countedMatchAlready) {
-            ++glm.metrics.controlMatchCount;
-            countedMatchAlready = true;
-          }
-          if (opportunityTimestamp < eventTimestamps.at(i) + tsOffset) {
-            // Only record the first time the user has a valid conversion
-            if (!converted) {
-              ++glm.metrics.controlConverters;
-            }
-            ++glm.metrics.controlConversions;
-            ++convCount;
-            converted = true;
-            if (valuesIdx != -1) {
-              // Only add values if the values column exists
-              // (support valueless objectives)
-              value_subsum += values.at(i);
-            }
-          }
-        }
-        glm.metrics.controlValue += value_subsum;
-        glm.metrics.controlValueSquared += value_subsum * value_subsum;
-        glm.metrics.controlNumConvSquared += convCount * convCount;
+        updateControlMetrics(
+            glm,
+            opportunityTimestamp,
+            eventTimestamps,
+            cohortId,
+            breakdownId,
+            tsOffset,
+            valuesIdx,
+            values);
       }
     }
   }
 
   return glm;
+}
+
+bool LiftCalculator::checkAndUpdateControlMatchCount(
+    GroupedLiftMetrics& glm,
+    uint64_t opportunityTimestamp,
+    uint64_t eventTimestamp,
+    bool countedMatchAlready,
+    uint8_t cohortId,
+    uint8_t breakdownId) const {
+  if (opportunityTimestamp > 0 && eventTimestamp > 0 && !countedMatchAlready) {
+    ++glm.metrics.controlMatchCount;
+    if (numCohorts_ > 0)
+      ++glm.cohortMetrics[cohortId].controlMatchCount;
+    if (numPublisherBreakdown_ > 0)
+      ++glm.publisherBreakdowns[breakdownId].controlMatchCount;
+
+    return true;
+  }
+  return false;
+}
+
+bool LiftCalculator::checkAndUpdateTestMatchCount(
+    GroupedLiftMetrics& glm,
+    uint64_t opportunityTimestamp,
+    uint64_t eventTimestamp,
+    bool countedMatchAlready,
+    uint8_t cohortId,
+    uint8_t breakdownId) const {
+  if (opportunityTimestamp > 0 && eventTimestamp > 0 && !countedMatchAlready) {
+    ++glm.metrics.testMatchCount;
+    if (numCohorts_ > 0)
+      ++glm.cohortMetrics[cohortId].testMatchCount;
+    if (numPublisherBreakdown_ > 0)
+      ++glm.publisherBreakdowns[breakdownId].testMatchCount;
+
+    return true;
+  }
+  return false;
+}
+
+bool LiftCalculator::checkAndUpdateControlConversions(
+    GroupedLiftMetrics& glm,
+    uint64_t opportunityTimestamp,
+    uint64_t eventTimestamp,
+    int32_t tsOffset,
+    bool converted,
+    uint8_t cohortId,
+    uint8_t breakdownId) const {
+  if (opportunityTimestamp < eventTimestamp + tsOffset) {
+    // Only record the first time the user has a valid conversion
+    if (!converted) {
+      ++glm.metrics.controlConverters;
+      if (numCohorts_ > 0)
+        ++glm.cohortMetrics[cohortId].controlConverters;
+      if (numPublisherBreakdown_ > 0)
+        ++glm.publisherBreakdowns[breakdownId].controlConverters;
+    }
+    ++glm.metrics.controlConversions;
+
+    if (numCohorts_ > 0)
+      ++glm.cohortMetrics[cohortId].controlConversions;
+    if (numPublisherBreakdown_ > 0)
+      ++glm.publisherBreakdowns[breakdownId].controlConversions;
+
+    return true;
+  }
+  return false;
+}
+
+bool LiftCalculator::checkAndUpdateTestConversions(
+    GroupedLiftMetrics& glm,
+    uint64_t opportunityTimestamp,
+    uint64_t eventTimestamp,
+    int32_t tsOffset,
+    bool converted,
+    uint8_t cohortId,
+    uint8_t breakdownId) const {
+  if (opportunityTimestamp < eventTimestamp + tsOffset) {
+    // Only record the first time the user has a valid conversion
+    if (!converted) {
+      ++glm.metrics.testConverters;
+      if (numCohorts_ > 0)
+        ++glm.cohortMetrics[cohortId].testConverters;
+      if (numPublisherBreakdown_ > 0)
+        ++glm.publisherBreakdowns[breakdownId].testConverters;
+    }
+
+    ++glm.metrics.testConversions;
+    if (numCohorts_ > 0)
+      ++glm.cohortMetrics[cohortId].testConversions;
+    if (numPublisherBreakdown_ > 0)
+      ++glm.publisherBreakdowns[breakdownId].testConversions;
+
+    return true;
+  }
+  return false;
+}
+
+void LiftCalculator::updateControlMetrics(
+    GroupedLiftMetrics& glm,
+    const uint64_t& opportunityTimestamp,
+    const std::vector<uint64_t>& eventTimestamps,
+    const uint8_t cohortId,
+    const uint8_t breakdownId,
+    const uint64_t tsOffset,
+    const int64_t valuesIdx,
+    const std::vector<int64_t>& values) const {
+  uint64_t value_subsum = 0;
+  uint64_t convCount = 0;
+  bool converted = false;
+  bool countedMatchAlready = false;
+
+  for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
+    countedMatchAlready |= checkAndUpdateControlMatchCount(
+        glm,
+        opportunityTimestamp,
+        eventTimestamps.at(i),
+        countedMatchAlready,
+        cohortId,
+        breakdownId);
+
+    if (checkAndUpdateControlConversions(
+            glm,
+            opportunityTimestamp,
+            eventTimestamps.at(i),
+            tsOffset,
+            converted,
+            cohortId,
+            breakdownId)) {
+      converted = true;
+      convCount++;
+      if (valuesIdx != -1) {
+        // Only add values if the values column exists
+        // (support valueless objectives)
+        value_subsum += values.at(i);
+      }
+    }
+  }
+  uint64_t controlValueSquared = value_subsum * value_subsum;
+  uint64_t controlNumConvSquared = convCount * convCount;
+  glm.metrics.controlValue += value_subsum;
+  glm.metrics.controlValueSquared += controlValueSquared;
+  glm.metrics.controlNumConvSquared += controlNumConvSquared;
+  if (numCohorts_ > 0) {
+    glm.cohortMetrics[cohortId].controlValue += value_subsum;
+    glm.cohortMetrics[cohortId].controlValueSquared += controlValueSquared;
+    glm.cohortMetrics[cohortId].controlNumConvSquared += controlNumConvSquared;
+  }
+  if (numPublisherBreakdown_ > 0) {
+    glm.publisherBreakdowns[breakdownId].controlValue += value_subsum;
+    glm.publisherBreakdowns[breakdownId].controlValueSquared +=
+        controlValueSquared;
+    glm.publisherBreakdowns[breakdownId].controlNumConvSquared +=
+        controlNumConvSquared;
+  }
+}
+
+void LiftCalculator::updateTestMetrics(
+    GroupedLiftMetrics& glm,
+    const uint64_t& opportunityTimestamp,
+    const std::vector<uint64_t>& eventTimestamps,
+    const uint8_t cohortId,
+    const uint8_t breakdownId,
+    const uint64_t tsOffset,
+    const uint64_t numImpressions,
+    const int64_t valuesIdx,
+    const std::vector<int64_t>& values) const {
+  uint64_t value_subsum = 0;
+  uint64_t convCount = 0;
+  bool converted = false;
+  bool countedMatchAlready = false;
+
+  for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
+    countedMatchAlready |= checkAndUpdateTestMatchCount(
+        glm,
+        opportunityTimestamp,
+        eventTimestamps.at(i),
+        countedMatchAlready,
+        cohortId,
+        breakdownId);
+
+    if (checkAndUpdateTestConversions(
+            glm,
+            opportunityTimestamp,
+            eventTimestamps.at(i),
+            tsOffset,
+            converted,
+            cohortId,
+            breakdownId)) {
+      converted = true;
+      convCount++;
+      if (numImpressions > 0) {
+        ++glm.metrics.reachedConversions;
+        if (numCohorts_ > 0)
+          ++glm.cohortMetrics[cohortId].reachedConversions;
+        if (numPublisherBreakdown_ > 0)
+          ++glm.publisherBreakdowns[breakdownId].reachedConversions;
+      }
+      if (valuesIdx != -1) {
+        // Only add values if the values column exists
+        // (support valueless objectives)
+        value_subsum += values.at(i);
+      }
+    }
+  }
+
+  if (numImpressions > 0) {
+    glm.metrics.reachedValue += value_subsum;
+
+    if (numCohorts_ > 0)
+      glm.cohortMetrics[cohortId].reachedValue += value_subsum;
+    if (numPublisherBreakdown_ > 0)
+      glm.publisherBreakdowns[breakdownId].reachedValue += value_subsum;
+  }
+
+  uint64_t testValueSquared = value_subsum * value_subsum;
+  uint64_t testNumConvSquared = convCount * convCount;
+
+  glm.metrics.testValue += value_subsum;
+  glm.metrics.testValueSquared += testValueSquared;
+  glm.metrics.testNumConvSquared += testNumConvSquared;
+
+  if (numCohorts_ > 0) {
+    glm.cohortMetrics[cohortId].testValue += value_subsum;
+    glm.cohortMetrics[cohortId].testValueSquared += testValueSquared;
+    glm.cohortMetrics[cohortId].testNumConvSquared += testNumConvSquared;
+  }
+
+  if (numPublisherBreakdown_ > 0) {
+    glm.publisherBreakdowns[breakdownId].testValue += value_subsum;
+    glm.publisherBreakdowns[breakdownId].testValueSquared += testValueSquared;
+    glm.publisherBreakdowns[breakdownId].testNumConvSquared +=
+        testNumConvSquared;
+  }
 }
 
 std::vector<uint64_t> LiftCalculator::getAdjustedTimesEpochOffset(
