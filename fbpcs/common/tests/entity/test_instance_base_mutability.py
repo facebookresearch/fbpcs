@@ -5,7 +5,7 @@
 
 import unittest
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Generic, List, Optional, TypeVar
 
 from fbpcs.common.entity.exceptions import InstanceFrozenFieldError
 
@@ -18,6 +18,16 @@ from fbpcs.common.entity.instance_base import (
 
 def create_new_num_list() -> List[int]:
     return [1, 2, 3]
+
+
+T = TypeVar("T")
+
+
+@dataclass
+class FieldMutation(Generic[T]):
+    field_name: str
+    old_value: T
+    new_value: T
 
 
 @dataclass
@@ -64,26 +74,32 @@ class TestInstanceBase(unittest.TestCase):
         self.obj_2 = DummyInstance("2", "Tupper", "PCI", None, 800, 501, 124)
 
     def test_mutable(self) -> None:
-        mutable_data_obj_1 = (  # (feild, original_val, change_vals)
-            ["name", "Tupper", ["ECS"]],
-            ["user", "PCI", ["PCA"]],
-            ["number", None, [501]],
-            ["status1", "start", ["completed"]],
-            ["counters1", [], [[1, 2, 3], [9, 2, 3]]],
-            ["status2", "start", ["completed"]],
-            ["containers1", [1, 2, 3], [[9, 2, 3]]],
-        )
-        mutable_data_obj_2 = (  # (feild, original_val, change_vals)
-            ["user", None, ["PCA", "PCI"]],
-            ["number", 501, [502]],
-        )
+        mutable_data_obj_1: list[FieldMutation]
+        mutable_data_obj_2: list[FieldMutation]
+
+        mutable_data_obj_1 = [
+            FieldMutation("name", "Tupper", ["ECS"]),
+            FieldMutation("user", "PCI", ["PCA"]),
+            FieldMutation("number", None, [501]),
+            FieldMutation("status1", "start", ["completed"]),
+            FieldMutation("counters1", [], [[1, 2, 3], [9, 2, 3]]),
+            FieldMutation("status2", "start", ["completed"]),
+            FieldMutation("containers1", [1, 2, 3], [[9, 2, 3]]),
+        ]
+        mutable_data_obj_2 = [
+            FieldMutation("user", None, ["PCA", "PCI"]),
+            FieldMutation("number", 501, [502]),
+        ]
         self._test_mutable_helper(self.obj_1, mutable_data_obj_1)
         self._test_mutable_helper(self.obj_2, mutable_data_obj_2)
 
     def _test_mutable_helper(
-        self, intance_base_obj: InstanceBase, mutable_data: Tuple
+        self, intance_base_obj: InstanceBase, mutable_data: List[FieldMutation]
     ) -> None:
-        for test_field, original_val, change_vals in mutable_data:
+        for data in mutable_data:
+            test_field = data.field_name
+            original_val = data.old_value
+            change_vals = data.new_value
             with self.subTest("Testing mutability for: ", test_field=test_field):
                 # assert original
                 self.assertEqual(getattr(intance_base_obj, test_field), original_val)
@@ -94,30 +110,35 @@ class TestInstanceBase(unittest.TestCase):
                     self.assertEqual(getattr(intance_base_obj, test_field), change_val)
 
     def test_immutable(self) -> None:
-        immutable_data_obj_1 = (  # (feild, original_val, change_vals)
-            ["instance_id", "1", "2"],
-            ["owner", None, "Facebook"],
-            ["counter", None, [801, 900]],
-            ["container", 123, 125],
-            ["location", "Seattle", "Kirkland"],
-            ["location1", None, "Seattle"],
-            ["counters", [], [1, 2, 3]],
-            ["org", "Measurement", "signal"],
-            ["org_id", 9527, 89757],
-            ["containers", [1, 2, 3], [9, 2, 3]],
-        )
-        immutable_data_obj_2 = (  # (feild, original_val, change_vals)
-            ["owner", "PCI", "Meta"],
-            ["counter", 800, 900],
-            ["container", 124, 125],
-        )
+        immutable_data_obj_1: list[FieldMutation]
+        immutable_data_obj_2: list[FieldMutation]
+        immutable_data_obj_1 = [
+            FieldMutation("instance_id", "1", "2"),
+            FieldMutation("owner", None, "Facebook"),
+            FieldMutation("counter", None, [801, 900]),
+            FieldMutation("container", 123, 125),
+            FieldMutation("location", "Seattle", "Kirkland"),
+            FieldMutation("location1", None, "Seattle"),
+            FieldMutation("counters", [], [1, 2, 3]),
+            FieldMutation("org", "Measurement", "signal"),
+            FieldMutation("org_id", 9527, 89757),
+            FieldMutation("containers", [1, 2, 3], [9, 2, 3]),
+        ]
+        immutable_data_obj_2 = [
+            FieldMutation("owner", "PCI", "Meta"),
+            FieldMutation("counter", 800, 900),
+            FieldMutation("container", 124, 125),
+        ]
         self._test_immutable_helper(self.obj_1, immutable_data_obj_1)
         self._test_immutable_helper(self.obj_2, immutable_data_obj_2)
 
     def _test_immutable_helper(
-        self, intance_base_obj: InstanceBase, immutable_data: Tuple
+        self, intance_base_obj: InstanceBase, immutable_data: List[FieldMutation]
     ) -> None:
-        for test_field, original_val, change_vals in immutable_data:
+        for data in immutable_data:
+            test_field = data.field_name
+            original_val = data.old_value
+            change_vals = data.new_value
             with self.subTest("Testing immutability for: ", test_field=test_field):
                 # assert original
                 self.assertEqual(getattr(intance_base_obj, test_field), original_val)
