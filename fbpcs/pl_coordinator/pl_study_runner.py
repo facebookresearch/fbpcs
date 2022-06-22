@@ -27,6 +27,7 @@ from fbpcs.pl_coordinator.pl_instance_runner import run_instances
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
+    ResultVisibility,
 )
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -69,6 +70,7 @@ def run_study(
     stage_flow: Type[PrivateComputationBaseStageFlow],
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,  # if set to true, it will only run one stage
+    result_visibility: Optional[ResultVisibility] = None,
 ) -> None:
 
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
@@ -135,6 +137,7 @@ def run_study(
             logger,
             num_tries,
             dry_run,
+            result_visibility,
         )
         logger.info(f"Finished running instances {instance_ids}.")
 

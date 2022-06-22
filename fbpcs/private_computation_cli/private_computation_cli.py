@@ -20,7 +20,7 @@ Usage:
     pc-cli get_mpc <instance_id> --config=<config_file> [options]
     pc-cli run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
+    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --dry_run] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
@@ -394,6 +394,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             stage_flow=stage_flow,
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
+            result_visibility=arguments["--result_visibility"],
         )
     elif arguments["run_attribution"]:
         stage_flow = PrivateComputationPCF2StageFlow
