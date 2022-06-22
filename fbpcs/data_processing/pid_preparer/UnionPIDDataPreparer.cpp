@@ -23,6 +23,8 @@
 #include <re2/re2.h>
 
 #include <folly/String.h>
+#include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileReader.h"
 #include "folly/Random.h"
 #include "folly/logging/xlog.h"
 
@@ -39,8 +41,9 @@ static const std::string kIdColumnPrefix = "id_";
 
 UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   UnionPIDDataPreparerResults res;
-  auto inStreamPtr = fbpcf::io::getInputStream(inputPath_);
-  auto& inStream = inStreamPtr->get();
+  auto reader = std::make_unique<fbpcf::io::FileReader>(inputPath_);
+  auto bufferedReader = std::make_unique<fbpcf::io::BufferedReader>(
+      std::move(reader), kBufferedReaderChunkSize);
 
   // Get a random ID to avoid potential name collisions if multiple
   // runs at the same time point to the same input file
@@ -51,10 +54,9 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   std::cout << "\t\tCreated temporary filepath --> " << tmpFilepath << '\n';
   auto tmpFile = std::make_unique<std::ofstream>(tmpFilename);
 
-  std::string line;
   std::vector<std::string> header;
 
-  getline(inStream, line);
+  std::string line = bufferedReader->readLine();
   line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
   folly::split(",", line, header);
 
@@ -80,7 +82,8 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   }
 
   std::unordered_set<std::string> seenIds;
-  while (getline(inStream, line)) {
+  while (!bufferedReader->eof()) {
+    line = bufferedReader->readLine();
     std::vector<std::string> cols;
     line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
     folly::split(",", line, cols);
@@ -137,6 +140,7 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
                  << " lines.";
     }
   }
+  bufferedReader->close();
   XLOG(INFO) << "Processed with "
              << private_lift::logging::formatNumber(res.duplicateIdCount)
              << " duplicate ids.";
