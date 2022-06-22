@@ -66,7 +66,7 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
     )
     concurrency: Optional[int] = None
     attribution_rule: Optional[AttributionRule] = None
-    aggregation_type: Optional[AggregationType] = None
+    aggregation_type: Optional[AggregationType] = AggregationType.MEASUREMENT
     num_files_per_mpc_container: Optional[int] = None
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
