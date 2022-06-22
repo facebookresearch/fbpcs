@@ -254,7 +254,11 @@ class AwsContainerLogs(AwsCloud):
                     )
 
     def upload_logs_to_s3_from_cloudwatch(
-        self, s3_bucket_name: str, container_arn_list: List[str]
+        self,
+        s3_bucket_name: str,
+        container_arn_list: List[str],
+        copy_debug_logs: bool = False,
+        copy_debug_logs_location: str = DEFAULT_DOWNLOAD_LOCATION,
     ) -> None:
         """
         Umbrella function to call other functions to upload the logs from cloudwatch to S3
@@ -321,11 +325,20 @@ class AwsContainerLogs(AwsCloud):
             self.utils.compress_downloaded_logs(folder_location=local_folder_location)
             self.log.info("Compressed download log folder.")
 
+            zipped_file_path = self.LOCAL_ZIP_FOLDER_LOCATION.format(
+                local_folder_location
+            )
+
             self.upload_file_to_s3(
                 s3_bucket_name=s3_bucket_name,
                 s3_file_path=f"{self.S3_LOGGING_FOLDER}/{self.ZIPPED_FOLDER_NAME.format(self.tag_name)}",
-                file_name=f"{self.LOCAL_ZIP_FOLDER_LOCATION.format(local_folder_location)}",
+                file_name=zipped_file_path,
             )
+
+            if copy_debug_logs:
+                self.copy_logs_for_debug(
+                    source=zipped_file_path, destination=copy_debug_logs_location
+                )
 
             self.log.info("Removing logs locally.")
 
@@ -583,3 +596,13 @@ class AwsContainerLogs(AwsCloud):
                         f"Downloading container {container} log generated an exception: {exc}"
                     )
         return res
+
+    def copy_logs_for_debug(
+        self, source: str, destination: str = DEFAULT_DOWNLOAD_LOCATION
+    ) -> None:
+        """
+        Copy logs from temp dir for local debugging
+        """
+        self.log.info(f"Copying compressed logs to {destination}")
+        self.utils.copy_file(source=source, destination=destination)
+        self.log.info(f"Copied compressed logs to {destination}")

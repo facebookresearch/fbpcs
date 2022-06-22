@@ -85,6 +85,20 @@ class Utils:
                 f"Please check if folder exists.\nAborting folder compression."
             )
 
+    @staticmethod
+    def copy_file(source: str, destination: str) -> None:
+        """
+        Copys folder from source to destination path
+        """
+        try:
+            shutil.copy2(source, destination)
+        except shutil.SameFileError as err:
+            raise shutil.SameFileError(
+                f"{source} and {destination} represents same file)"
+            ) from err
+        except PermissionError as err:
+            raise PermissionError("Permission denied") from err
+
 
 @dataclass
 class ContainerDetails:
