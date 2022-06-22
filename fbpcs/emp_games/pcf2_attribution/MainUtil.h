@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <future>
 #include <memory>
 
@@ -51,13 +52,13 @@ getIOFilenames(
 }
 
 template <
-    int PARTY,
-    int index,
+    std::uint32_t PARTY,
+    std::uint32_t index,
     bool usingBatch,
     common::InputEncryption inputEncryption>
 inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
-    int startFileIndex,
-    int remainingThreads,
+    std::uint32_t startFileIndex,
+    std::uint32_t remainingThreads,
     std::string serverIp,
     int port,
     std::string attributionRules,
@@ -71,7 +72,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
       static_cast<std::int64_t>(inputFilenames.size()) - startFileIndex;
   if (remainingFiles > 0) {
     auto numFiles = (remainingThreads > remainingFiles)
-        ? 1
+        ? 1U
         : (remainingFiles / remainingThreads);
 
     std::map<
@@ -79,8 +80,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
             PartyInfo>
         partyInfos(
-            {{0, {serverIp, port + index * 100}},
-             {1, {serverIp, port + index * 100}}});
+            {{0, {serverIp, port + static_cast<int>(index) * 100}},
+             {1, {serverIp, port + static_cast<int>(index) * 100}}});
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
@@ -137,14 +138,15 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     int port,
     std::string attributionRules) {
   // use only as many threads as the number of files
-  auto numThreads = std::min((int)inputFilenames.size(), (int)concurrency);
+  auto numThreads =
+      std::min(static_cast<std::int16_t>(inputFilenames.size()), concurrency);
 
   return startAttributionAppsForShardedFilesHelper<
       PARTY,
-      0,
+      0U,
       usingBatch,
       inputEncryption>(
-      0,
+      0U,
       numThreads,
       serverIp,
       port,
