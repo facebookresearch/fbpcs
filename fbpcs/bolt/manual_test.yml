@@ -1,0 +1,43 @@
+runner:
+  publisher_client_config: measurement/private_lift/platform/pl_coordinator/config_cloud_dev.yml
+  partner_client_config: measurement/private_lift/platform/pl_coordinator/config_cloud_dev.yml
+jobs:
+  # job name
+  job1:
+    # publisher player args
+    publisher:
+      # required args #
+      input_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/publisher/publisher_e2e_input.csv
+      # optional args #
+      output_dir: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/publisher/
+      expected_result_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/publisher/publisher_expected_result.json
+    # partner player args
+    partner:
+      # required args #
+      input_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv
+      # optional args #
+      output_dir: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/partner/
+      expected_result_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/lift/partner/partner_expected_result.json
+    # args shared by both publisher and partner
+    shared:
+      # required args #
+      game_type: lift
+  job2:
+    # publisher player args
+    publisher:
+      # required args
+      input_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/attribution/publisher/publisher_e2e_input.csv
+      # optional args
+      expected_result_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/attribution/publisher/publisher_expected_result.json
+    # partner player args
+    partner:
+      # required args
+      input_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/attribution/partner/partner_e2e_input.csv
+      # optional args
+      expected_result_path: https://fbpcs-e2e-dev.s3.us-west-2.amazonaws.com/attribution/partner/partner_expected_result.json
+    # args shared by both publisher and partner
+    shared:
+      # required args #
+      game_type: attribution
+      # optional args
+      attribution_rule: last_touch_1d
