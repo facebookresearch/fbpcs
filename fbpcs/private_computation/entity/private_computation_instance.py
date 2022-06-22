@@ -169,6 +169,12 @@ class PrivateComputationInstance(InstanceBase):
             raise ValueError(
                 f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.num_pid_containers} and num_mpc_containers = {self.num_mpc_containers}"
             )
+        if (
+            self.game_type is PrivateComputationGameType.ATTRIBUTION
+            and self.attribution_rule is None
+        ):
+            self.attribution_rule = AttributionRule.LAST_CLICK_1D
+
         if self.creation_ts == 0:
             self.creation_ts = int(time.time())
 
