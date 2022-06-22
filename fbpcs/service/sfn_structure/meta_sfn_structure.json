@@ -18,6 +18,7 @@
         ],
         "ServiceRole": "EMR_DefaultRole",
         "JobFlowRole": "EMR_EC2_PID_META",
+        "LogUri.$": "States.Format('s3://{}/elasticmapreduce/', $.logBucketName)",
         "Instances": {
           "KeepJobFlowAliveWhenNoSteps": true,
           "InstanceFleets": [
