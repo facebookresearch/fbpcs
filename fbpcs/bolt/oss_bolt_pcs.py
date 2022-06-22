@@ -8,11 +8,15 @@
 
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from time import time
 from typing import Any, Dict, List, Optional, Type
+
+from dataclasses_json import config, DataClassJsonMixin
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 from fbpcs.bolt.bolt_runner import BoltClient, BoltState
+from fbpcs.bolt.constants import DEFAULT_ATTRIBUTION_STAGE_FLOW, DEFAULT_LIFT_STAGE_FLOW
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
@@ -36,14 +40,30 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 
 
 @dataclass
-class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs):
+class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
     instance_id: str
     role: PrivateComputationRole
     game_type: PrivateComputationGameType
     input_path: str
-    output_dir: str
-    num_pid_containers: int
-    num_mpc_containers: int
+    output_dir: str = ""
+    num_pid_containers: int = 1
+    num_mpc_containers: int = 1
+    stage_flow_cls: Type[PrivateComputationBaseStageFlow] = field(
+        default=PrivateComputationBaseStageFlow,
+        metadata={
+            **config(
+                # the enum will be represented as a list of its members, so we can
+                # use the first enum member to get the class name
+                encoder=lambda x: x[0].get_cls_name(),
+                # if no value is provided in the yaml file, then the dataclass json
+                # library will return the default stage flow. Otherwise, if it was
+                # provided in the yaml file, we should decode the string.
+                decoder=lambda x: x
+                if x is PrivateComputationBaseStageFlow
+                else PrivateComputationBaseStageFlow.cls_name_to_cls(x),
+            )
+        },
+    )
     concurrency: Optional[int] = None
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = None
@@ -56,12 +76,32 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs):
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
     k_anonymity_threshold: Optional[int] = None
-    stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
     tier: Optional[str] = None
     pid_use_row_numbers: bool = True
     post_processing_data_optional: Optional[PostProcessingData] = None
     pid_configs: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self) -> None:
+        if self.stage_flow_cls is PrivateComputationBaseStageFlow:
+            self.stage_flow_cls = (
+                DEFAULT_ATTRIBUTION_STAGE_FLOW
+                if self.game_type is PrivateComputationGameType.ATTRIBUTION
+                else DEFAULT_LIFT_STAGE_FLOW
+            )
+        if not self.output_dir:
+            self.output_dir = self.input_path[: self.input_path.rfind("/")]
+
+    @classmethod
+    def from_yml_dict(cls, yml_dict: Dict[str, Any]) -> "BoltPCSCreateInstanceArgs":
+        if "instance_id" not in yml_dict:
+            role = yml_dict["role"]
+            role_prefix = "Publisher_" if role.upper() == "PUBLISHER" else "Partner_"
+            yml_dict["instance_id"] = (
+                role_prefix + yml_dict["job_name"] + f"_{int(time())}"
+            )
+        yml_dict["game_type"] = yml_dict["game_type"].upper()
+        return cls.from_dict(yml_dict)
 
 
 class BoltPCSClient(BoltClient):
