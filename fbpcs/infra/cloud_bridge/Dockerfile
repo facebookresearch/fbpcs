@@ -59,7 +59,8 @@ COPY data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
 COPY semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
 COPY config.yml /terraform_deployment/config
 COPY cli.py /terraform_deployment
-COPY deployment_helper /terraform_deployment/deployment_helper
+RUN mkdir -p /terraform_deployment/fbpcs/infra/cloud_bridge
+COPY deployment_helper /terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper
 # #########################################
 # Spring Boot
 # #########################################

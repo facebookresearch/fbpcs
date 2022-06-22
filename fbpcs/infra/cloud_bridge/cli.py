@@ -6,7 +6,9 @@
 
 import argparse
 
-from deployment_helper.aws.aws_deployment_helper_tool import AwsDeploymentHelperTool
+from fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper_tool import (
+    AwsDeploymentHelperTool,
+)
 
 
 def main():
