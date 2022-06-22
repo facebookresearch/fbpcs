@@ -37,8 +37,8 @@ class AwsDeploymentHelperTool:
         if self.cli_args.add_iam_policy:
             if self.cli_args.policy_name is None or self.cli_args.region is None:
                 raise Exception(
-                    "Need policy name to add IAM policy. Please add username using"
-                    " --policy_name argument in cli.py"
+                    "Need policy name and region to add IAM policy. Please add policy name using"
+                    " --policy_name argument in cli.py and region using --region argument"
                 )
             policy_params = PolicyParams(
                 firehose_stream_name=self.cli_args.firehose_stream_name,
