@@ -7,8 +7,10 @@
 
 import os
 import tempfile
+from concurrent.futures import as_completed, ThreadPoolExecutor
+from threading import Lock
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from botocore.exceptions import ClientError
 
@@ -36,6 +38,8 @@ class AwsContainerLogs(AwsCloud):
     LOCAL_FILE_LOCATION = "{}/{}"
     ZIPPED_FOLDER_NAME = "{}.zip"
     DEFAULT_RETRIES_LIMIT = 3
+    MAX_THREADS = 500
+    THREADS_PER_CORE = 20
 
     def __init__(
         self,
@@ -52,6 +56,8 @@ class AwsContainerLogs(AwsCloud):
         self.utils = Utils()
         self.tag_name: str = tag_name
         self.containers_without_logs: List[str] = []
+        self.containers_download_logs_failed: List[str] = []
+        self.write_to_file_lock = Lock()
 
     def get_cloudwatch_logs(
         self,
@@ -292,55 +298,22 @@ class AwsContainerLogs(AwsCloud):
             self.log.info(f"Created temperory directory to store logs {tempdir}")
 
             # store logs in local
-            # local_folder_location = self.LOCAL_FOLDER_LOCATION.format(self.tag_name)
             local_folder_location = f"{tempdir}/{self.tag_name}"
             self.utils.create_folder(folder_location=local_folder_location)
 
-            for container_arn in container_arn_list:
-                # fetch logs
-                self.log.info(
-                    "Getting service name, container name and container ID from continer arn"
-                )
-                container_details = self._parse_container_arn(
-                    container_arn=container_arn
-                )
-                service_name = container_details.service_name
-                container_name = container_details.container_name
-                container_id = container_details.container_id
-
-                # T122923883 - for better formatting of the strings
-                log_group_name = self.LOG_GROUP.format(service_name, container_name)
-                log_stream_name = self.LOG_STREAM.format(
-                    service_name, container_name, container_id
-                )
-
-                # Check if logs are missing for any containers
-                if not self._verify_log_group(
-                    log_group_name=log_group_name
-                ) or not self._verify_log_stream(
-                    log_group_name=log_group_name, log_stream_name=log_stream_name
-                ):
-                    self.containers_without_logs.append(container_arn)
-                else:
-                    message_events = self.get_cloudwatch_logs(
-                        log_group_name=log_group_name,
-                        log_stream_name=log_stream_name,
-                        container_arn=container_arn,
-                    )
-
-                    self.log.info(
-                        f"Creating file to store log locally in location {self.LOCAL_FILE_LOCATION.format(local_folder_location, container_id)}"
-                    )
-
-                    self.utils.create_file(
-                        file_location=self.LOCAL_FILE_LOCATION.format(
-                            local_folder_location, container_id
-                        ),
-                        content=message_events,
-                    )
+            # Call threading function to download logs locally and upload to S3
+            self.run_threaded_download(
+                func=self.store_container_logs_locally,
+                container_arn_list=container_arn_list,
+                local_folder_location=local_folder_location,
+            )
 
             # List all the containers with no cloudwatch logs
             self.log_containers_without_logs()
+
+            # List all containers for which download failed because of thread crash
+            # TODO: T123687467: add retry logic to download logs for the failed cases of download
+            self.log_containers_download_log_failed()
 
             # compressing the folder before uploading it to S3
             self.log.info("Compressing downloaded logs folder")
@@ -526,3 +499,85 @@ class AwsContainerLogs(AwsCloud):
         self.log.error("Couldn't find logs for the following containers..")
         for container in self.containers_without_logs:
             self.log.error(f"Container ARN: {container}")
+
+    def log_containers_download_log_failed(self) -> None:
+        """
+        List contianers for which download logs failed because of thread crash
+        """
+        if len(self.containers_download_logs_failed) == 0:
+            self.log.info("Downloaded logs for all the available containers")
+            return
+
+        arns = ", ".join(self.containers_without_logs)
+        self.log.error(f"Couldn't find logs for the following_containers: {arns}")
+
+    def store_container_logs_locally(
+        self, local_folder_location: str, container_arn: str
+    ) -> None:
+        # fetch logs
+        self.log.info(
+            "Getting service name, container name and container ID from continer arn"
+        )
+        container_details = self._parse_container_arn(container_arn=container_arn)
+        service_name = container_details.service_name
+        container_name = container_details.container_name
+        container_id = container_details.container_id
+
+        # T122923883 - for better formatting of the strings
+        log_group_name = self.LOG_GROUP.format(service_name, container_name)
+        log_stream_name = self.LOG_STREAM.format(
+            service_name, container_name, container_id
+        )
+
+        # Check if logs are missing for any containers
+        if not self._verify_log_group(
+            log_group_name=log_group_name
+        ) or not self._verify_log_stream(
+            log_group_name=log_group_name, log_stream_name=log_stream_name
+        ):
+            self.containers_without_logs.append(container_arn)
+        else:
+            message_events = self.get_cloudwatch_logs(
+                log_group_name=log_group_name,
+                log_stream_name=log_stream_name,
+                container_arn=container_arn,
+            )
+
+            self.log.info(
+                f"Creating file to store log locally in location {self.LOCAL_FILE_LOCATION.format(local_folder_location, container_id)}"
+            )
+            with self.write_to_file_lock:
+                self.utils.create_file(
+                    file_location=self.LOCAL_FILE_LOCATION.format(
+                        local_folder_location, container_id
+                    ),
+                    content=message_events,
+                )
+
+    def run_threaded_download(
+        self,
+        func: Callable[[str, str], None],
+        container_arn_list: List[str],
+        local_folder_location: str,
+        num_threads: int = MAX_THREADS,
+    ) -> List[str]:
+        core_count = (
+            os.cpu_count() or self.MAX_THREADS
+        )  # os.cpu_count returns None if undertermined
+        num_threads = min(core_count * self.THREADS_PER_CORE, num_threads)
+        res = []
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            future_to_container = {
+                executor.submit(func, local_folder_location, container): container
+                for container in container_arn_list
+            }
+            for future in as_completed(future_to_container):
+                container = future_to_container[future]
+                try:
+                    res.append(future.result())
+                except Exception as exc:
+                    self.containers_download_logs_failed.append(container)
+                    self.log.warning(
+                        f"Downloading container {container} log generated an exception: {exc}"
+                    )
+        return res

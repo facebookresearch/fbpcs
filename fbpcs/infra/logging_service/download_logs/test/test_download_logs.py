@@ -179,16 +179,6 @@ class TestDownloadLogs(unittest.TestCase):
         error_cases = [
             ("head_bucket", "NoSuchBucket", "Couldn't find bucket.*"),
             ("head_bucket", "SomethingElseHappenedException", "Couldn't find the S3.*"),
-            (
-                "describe_log_groups",
-                "InvalidParameterException",
-                "Couldn't find log group.*",
-            ),
-            (
-                "describe_log_streams",
-                "InvalidParameterException",
-                "Couldn't find log stream.*",
-            ),
         ]
         for s3_endpoint, error_code, exc_regex in error_cases:
             with self.subTest(f"{s3_endpoint}.{error_code}"):
