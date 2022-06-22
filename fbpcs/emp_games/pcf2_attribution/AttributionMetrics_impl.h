@@ -82,7 +82,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   }
 
   std::vector<int64_t> unique_ids;
-  for (auto i = 0; i < timestamps.size(); ++i) {
+  for (auto i = 0U; i < timestamps.size(); ++i) {
     unique_ids.push_back(i);
   }
 
@@ -155,16 +155,16 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
       CHECK_EQ(convTimestamps.size(), targetId.size())
           << "Conversion timestamps arrays and target_id arrays are not the same length.";
     } else {
-      for (auto i = 0; i < convTimestamps.size(); i++) {
-        targetId.push_back(0);
+      for (auto i = 0ULL; i < convTimestamps.size(); i++) {
+        targetId.push_back(0U);
       }
     }
     if (actionTypePresent) {
       CHECK_EQ(convTimestamps.size(), actionType.size())
           << "Conversion timestamps arrays and action_type arrays are not the same length.";
     } else {
-      for (auto i = 0; i < convTimestamps.size(); i++) {
-        actionType.push_back(0);
+      for (auto i = 0ULL; i < convTimestamps.size(); i++) {
+        actionType.push_back(0U);
       }
     }
   }
@@ -185,7 +185,9 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
 
   // Add padding at the end of the input data for partner; publisher data
   // consists only of padded data
-  for (auto i = convs.size(); i < FLAGS_max_num_conversions; ++i) {
+  for (auto i = convs.size();
+       i < static_cast<std::size_t>(FLAGS_max_num_conversions);
+       ++i) {
     // Add padding
     convs.push_back(ParsedConversion{0, 0, 0});
   }

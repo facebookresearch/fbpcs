@@ -180,7 +180,7 @@ class MeasurementAggregator : public Aggregator {
 
     // Mapping the sorted original adIds with the compressed Ids : 1 to
     // num_of_ad_ids.
-    for (auto i = 0U; i < validOriginalAdIds_.size(); i++) {
+    for (auto i = 0u; i < validOriginalAdIds_.size(); i++) {
       compressedAdIdToAdIdMap.insert({i + 1, validOriginalAdIds_.at(i)});
     }
     for (auto& [adId, metrics] : _adIdToMetrics) {

@@ -196,7 +196,7 @@ template <typename T>
 std::string vecToString(const std::vector<T>& in) {
   std::stringstream out;
   out << "[";
-  for (auto j = 0; j < in.size(); j++) {
+  for (auto j = 0U; j < in.size(); j++) {
     out << in[j];
     if (j + 1 < in.size()) {
       out << ", ";
