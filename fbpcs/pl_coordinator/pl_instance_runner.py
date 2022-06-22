@@ -37,6 +37,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
     PrivateComputationGameType,
+    ResultVisibility,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -73,6 +74,7 @@ def run_instance(
     k_anonymity_threshold: Optional[int] = None,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
+    result_visibility: Optional[ResultVisibility] = None,
 ) -> None:
     num_tries = num_tries if num_tries is not None else MAX_TRIES
     if num_tries < MIN_TRIES or num_tries > MAX_TRIES:
@@ -98,6 +100,7 @@ def run_instance(
         concurrency,
         num_files_per_mpc_container,
         k_anonymity_threshold,
+        result_visibility,
     )
     logger.info(f"Running private {game_type.name.lower()} for instance {instance_id}")
     instance_runner.run()
@@ -112,6 +115,7 @@ def run_instances(
     logger: logging.Logger,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
+    result_visibility: Optional[ResultVisibility] = None,
 ) -> None:
     if len(instance_ids) is not len(input_paths):
         raise PCStudyValidationException(
@@ -143,6 +147,7 @@ def run_instances(
                     "game_type": PrivateComputationGameType.LIFT,
                     "num_tries": num_tries,
                     "dry_run": dry_run,
+                    "result_visibility": result_visibility,
                 },
             ),
             instance_ids,
@@ -162,6 +167,7 @@ class PLInstanceRunner:
     Private Lift Partner-Publisher computation for an instance.
     """
 
+    # TODO(T124214185): [BE] make PLInstanceRunner args keyword only
     def __init__(
         self,
         config: Dict[str, Any],
@@ -180,6 +186,7 @@ class PLInstanceRunner:
         concurrency: Optional[int] = None,
         num_files_per_mpc_container: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
+        result_visibility: Optional[ResultVisibility] = None,
     ) -> None:
         self.logger = logger
         self.instance_id = instance_id
@@ -200,6 +207,7 @@ class PLInstanceRunner:
             num_mpc_containers=num_mpc_containers,
             num_pid_containers=num_pid_containers,
             logger=logger,
+            result_visibility=result_visibility,
         )
         self.num_tries = num_tries
         self.dry_run = dry_run

@@ -19,6 +19,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
+    ResultVisibility,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -54,6 +55,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
         concurrency: Optional[int] = None,
         num_files_per_mpc_container: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
+        result_visibility: Optional[ResultVisibility] = None,
     ) -> None:
         super().__init__(instance_id, logger, PrivateComputationRole.PARTNER)
         self.config: Dict[str, Any] = config
@@ -81,6 +83,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
                 concurrency=concurrency,
                 num_files_per_mpc_container=num_files_per_mpc_container,
                 k_anonymity_threshold=k_anonymity_threshold,
+                result_visibility=result_visibility,
             )
 
         self.status = pc_instance.status
