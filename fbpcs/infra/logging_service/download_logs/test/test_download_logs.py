@@ -372,3 +372,7 @@ class TestDownloadLogs(unittest.TestCase):
     def test_run_threaded_download(self) -> None:
         # T124197675
         pass
+
+    def test_copy_logs_for_debug(self) -> None:
+        # T124216294
+        pass
