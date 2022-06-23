@@ -5,8 +5,17 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'org.owasp:dependency-check-gradle:7.1.1'
+  }
+}
+
 plugins {
-  id 'org.springframework.boot' version '2.4.4'
+  id 'org.springframework.boot' version '2.7.0'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'java'
 }
@@ -25,8 +34,11 @@ dependencies {
   implementation 'com.amazonaws:aws-java-sdk-sts'
   implementation 'com.amazonaws:aws-java-sdk-ec2'
   implementation 'com.amazonaws:aws-java-sdk-servicequotas'
-  implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.+')
+  implementation platform('com.amazonaws:aws-java-sdk-bom:1.12.+')
 }
+
 test {
   useJUnitPlatform()
 }
+
+apply plugin: 'org.owasp.dependencycheck'
