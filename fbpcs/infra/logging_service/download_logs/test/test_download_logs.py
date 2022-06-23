@@ -364,3 +364,11 @@ class TestDownloadLogs(unittest.TestCase):
                     captured.records[1].getMessage(),
                     "Container ARN: a",
                 )
+
+    def test_log_containers_download_log_failed(self) -> None:
+        # T124204521
+        pass
+
+    def test_run_threaded_download(self) -> None:
+        # T124197675
+        pass
