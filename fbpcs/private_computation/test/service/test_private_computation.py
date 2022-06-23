@@ -16,6 +16,7 @@ from unittest.mock import AsyncMock, call, MagicMock, Mock, patch
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
@@ -416,6 +417,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 "get_status": Mock(
                     # run_async will return whatever pc_instance privatelift.run_stage passes it
                     side_effect=lambda pc_instance, *args, **kwargs: pc_instance.status
+                ),
+                "stop_service": Mock(
+                    # run_async will return whatever pc_instance privatelift.run_stage passes it
+                    side_effect=lambda pc_instance, *args, **kwargs: None
                 ),
             },
         )()
@@ -894,6 +899,47 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             actual_service._onedocker_binary_config_map,
             args.onedocker_binary_config_map,
+        )
+
+    @mock.patch.object(
+        PrivateComputationStageFlow,
+        "get_stage_service",
+    )
+    def test_cancel_current_stage_state(self, mock_get_stage_service) -> None:
+        mock_stage_svc = Mock(spec=self._get_dummy_stage_svc())
+        mock_stage_svc.get_status.return_value = (
+            PrivateComputationInstanceStatus.CREATION_FAILED
+        )
+        mock_get_stage_service.return_value = mock_stage_svc
+        # create one StageStateInstance to be put into PrivateComputationInstance
+        # at the beginning of the cancel_current_stage function
+        state_instance = StageStateInstance(
+            instance_id=self.test_private_computation_id,
+            stage_name="test_stage",
+        )
+        private_computation_instance = self.create_sample_instance(
+            status=PrivateComputationInstanceStatus.CREATION_STARTED,
+            role=PrivateComputationRole.PARTNER,
+            instances=[state_instance],
+        )
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=private_computation_instance
+        )
+
+        # call cancel, expect no exception
+        private_computation_instance = (
+            self.private_computation_service.cancel_current_stage(
+                instance_id=self.test_private_computation_id,
+            )
+        )
+
+        # aseerts
+        mock_stage_svc.stop_service.assert_called_once_with(
+            private_computation_instance
+        )
+        self.assertEqual(
+            PrivateComputationInstanceStatus.CREATION_FAILED,
+            private_computation_instance.status,
         )
 
     def test_cancel_current_stage_pid(self) -> None:
