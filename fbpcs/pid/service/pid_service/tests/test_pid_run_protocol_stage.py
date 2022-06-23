@@ -45,8 +45,15 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             onedocker_binary_config=self.onedocker_binary_config,
         )
 
+        """
+        We are temporarily setting this test result to READY. We have a case where FBPCS does not have
+        read permission on S3 file due to pl-coordinator-env not granted the S3 read access. Therefore, we
+        are setting all the cases to be READY even if the file does not exist.
+        This code would be removed once we complete PIDService migration to StageServices.
+        Please visit https://fburl.com/gdoc/iqh8laww for the migration details.
+        """
         self.assertEqual(
-            PIDStageStatus.FAILED,
+            PIDStageStatus.READY,
             await adv_run_stage._ready(stage_input=stage_input),
         )
 
