@@ -29,7 +29,7 @@ class AwsCloud(CloudBaseClass):
         aws_secret_access_key: Optional[str] = None,
         aws_session_token: Optional[str] = None,
         aws_region: Optional[str] = None,
-        logger_name: str = "logging_service",
+        logger_name: Optional[str] = None,
     ) -> None:
 
         aws_access_key_id = aws_access_key_id or os.environ.get("AWS_ACCESS_KEY_ID")
@@ -38,7 +38,7 @@ class AwsCloud(CloudBaseClass):
         )
         aws_session_token = aws_session_token or os.environ.get("AWS_SESSION_TOKEN")
         aws_region = aws_region or os.environ.get("AWS_REGION")
-        self.log: logging.Logger = logging.getLogger(logger_name)
+        self.log: logging.Logger = logging.getLogger(logger_name or __name__)
 
         try:
             sts = boto3.client(

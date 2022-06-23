@@ -1,0 +1,2 @@
+arn:aws:ecs:us-west-2:5592513842793:task/onedocker-container-comp-ui-e2e/00a04af576dd454784a4af543925c8de
+arn:aws:ecs:us-west-2:5592513842793:task/onedocker-container-comp-ui-e2e/03705975e3c04b4db8b7fe4667baac37

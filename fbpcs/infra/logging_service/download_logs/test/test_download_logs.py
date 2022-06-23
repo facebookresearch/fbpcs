@@ -6,17 +6,21 @@
 
 # pyre-strict
 
+import os
 import unittest
-from unittest.mock import MagicMock, patch
+from pathlib import Path
+from unittest.mock import patch
 
 from botocore.exceptions import ClientError
 
 from fbpcs.infra.logging_service.download_logs.download_logs import AwsContainerLogs
+from fbpcs.infra.logging_service.download_logs.download_logs_cli import DownloadLogsCli
 from fbpcs.infra.logging_service.download_logs.utils.utils import ContainerDetails
 
 
 class TestDownloadLogs(unittest.TestCase):
     def setUp(self) -> None:
+        self.test_dir = Path(os.path.dirname(__file__))
         self.tag = "my_tag"
         with patch(
             "fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3"
@@ -166,10 +170,6 @@ class TestDownloadLogs(unittest.TestCase):
         arn = [
             "arn:aws:ecs:fake-region:123456789:task/fake-container-name/1234abcdef56789"
         ]
-        expected_key = (
-            f"{self.aws_container_logs.S3_LOGGING_FOLDER}/{self.tag}/1234abcdef56789"
-        )
-        expected_body = "123\n456\n789".encode("utf-8")
 
         # TODO: add changes to test temp dir changes
 
@@ -201,6 +201,29 @@ class TestDownloadLogs(unittest.TestCase):
                     getattr(
                         self.aws_container_logs.s3_client, s3_endpoint
                     ).assert_called()
+
+    def test_download_logs_cli(self) -> None:
+        cli = DownloadLogsCli()
+        exc_regex = "Unable to locate credentials"
+        with self.assertRaisesRegex(Exception, exc_regex):
+            cli.run(
+                [
+                    str(self._get_sample_log_path("container_ids.txt")),
+                    "bucket-name",
+                    "tag-name",
+                    "--input_ids",
+                ]
+            )
+        self.assertEqual("bucket-name", cli.s3_bucket)
+        self.assertEqual("us-west-2", cli.aws_region)
+        self.assertEqual(
+            [
+                "arn:aws:ecs:us-west-2:5592513842793:task/onedocker-container-comp-ui-e2e/00a04af576dd454784a4af543925c8de",
+                "arn:aws:ecs:us-west-2:5592513842793:task/onedocker-container-comp-ui-e2e/03705975e3c04b4db8b7fe4667baac37",
+            ],
+            cli.container_ids,
+        )
+        self.assertIsNotNone(cli.aws_container_logs)
 
     #######################################
     # Tests for logically private methods #
@@ -376,3 +399,9 @@ class TestDownloadLogs(unittest.TestCase):
     def test_copy_logs_for_debug(self) -> None:
         # T124216294
         pass
+
+    def _get_sample_log_path(
+        self,
+        log_file: str,
+    ) -> Path:
+        return self.test_dir / "sample_log" / log_file
