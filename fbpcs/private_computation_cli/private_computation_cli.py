@@ -29,6 +29,7 @@ Usage:
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
     pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [options]
     pc-cli pre_validate --config=<config_file> [--dataset_id=<dataset_id>] --input_path=<input_path> [--timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>] [options]
+    pc-cli bolt_e2e --bolt_config=<bolt_config_file>
 
 
 Options:
@@ -38,6 +39,7 @@ Options:
     --verbose                       Set logging level to DEBUG
 """
 
+import asyncio
 import logging
 import os
 import re
@@ -49,6 +51,7 @@ from typing import Iterable, List, Optional, Tuple, Union
 
 import schema
 from docopt import docopt
+from fbpcs.bolt.read_config import parse_bolt_config
 from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
@@ -187,10 +190,16 @@ def main(argv: Optional[List[str]] = None) -> None:
             "print_current_status": bool,
             "print_log_urls": bool,
             "get_attribution_dataset_info": bool,
+            "bolt_e2e": bool,
             "<instance_id>": schema.Or(None, str),
             "<instance_ids>": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "<study_id>": schema.Or(None, str),
-            "--config": schema.And(schema.Use(PurePath), os.path.exists),
+            "--config": schema.Or(
+                None, schema.And(schema.Use(PurePath), os.path.exists)
+            ),
+            "--bolt_config": schema.Or(
+                None, schema.And(schema.Use(PurePath), os.path.exists)
+            ),
             "--role": schema.Or(
                 None,
                 schema.And(
@@ -254,9 +263,15 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--help": bool,
         }
     )
-
     arguments = s.validate(docopt(__doc__, argv))
-    config = ConfigYamlDict.from_file(arguments["--config"])
+
+    config = {}
+    if arguments["--config"]:
+        config = ConfigYamlDict.from_file(arguments["--config"])
+    # if no --config given and endpoint isn't bolt_e2e, raise exception
+    # bolt_e2e endpoint needs --bolt_config argument
+    elif not arguments["bolt_e2e"]:
+        raise ValueError("--config is a required argument")
 
     log_path = arguments["--log_path"]
     instance_id = arguments["<instance_id>"]
@@ -456,6 +471,17 @@ def main(argv: Optional[List[str]] = None) -> None:
             input_paths=input_paths,
             logger=logger,
         )
+    elif arguments["bolt_e2e"]:
+        bolt_config = ConfigYamlDict.from_file(arguments["--bolt_config"])
+        bolt_runner, jobs = parse_bolt_config(config=bolt_config, logger=logger)
+        run_results = asyncio.run(bolt_runner.run_async(jobs))
+        if not all(run_results):
+            failed_job_names = [
+                job.job_name for job, result in zip(jobs, run_results) if not result
+            ]
+            raise RuntimeError(f"Jobs failed: {failed_job_names}")
+        else:
+            print("Jobs succeeded")
 
 
 if __name__ == "__main__":
