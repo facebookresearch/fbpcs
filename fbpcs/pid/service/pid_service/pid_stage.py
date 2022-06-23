@@ -114,15 +114,12 @@ class PIDStage(abc.ABC):
         Check if a list of filepaths exist. These are checked from the given
         StorageService or on the local disk (which may be used for some stages).
         """
-        for path in paths:
-            # If the path isn't local, assume our storage_svc can handle it
-            if StorageService.path_type(path) != PathType.Local:
-                if not self.storage_svc.file_exists(path):
-                    return False
-            else:
-                # Local path
-                if not os.path.exists(path):
-                    return False
+        """
+        We are temporarily disabling this feature. We have a case where FBPCS does not have
+        read permission on S3 file due to pl-coordinator-env not granted the S3 read access.
+        This code would be removed once we complete PIDService migration to StageServices.
+        Please visit https://fburl.com/gdoc/iqh8laww for the migration details.
+        """
         return True
 
     def copy_synthetic_shard(self, src: str, dest: str) -> None:
