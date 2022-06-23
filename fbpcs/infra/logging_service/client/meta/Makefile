@@ -37,7 +37,7 @@ distclean:
 	docker rmi $(CONTAINER_IMAGE)
 
 copy_fbpcs:
+	rm -fr "$(FBPCS_DIR)/../$(TMP_DIR)/"
 	mkdir -p "$(FBPCS_DIR)/../$(TMP_DIR)/"
-	rm -fr "$(FBPCS_DIR)/../$(TMP_DIR)/*"
-	cp -r "$(FBPCS_DIR)" "$(FBPCS_DIR)/../$(TMP_DIR)/fbpcs/"
-	cp "$(FBPCS_DIR)/Dockerfile" "$(FBPCS_DIR)/../$(TMP_DIR)/"
+	cp -r "$(FBPCS_DIR)" "$(FBPCS_DIR)/../$(TMP_DIR)/fbpcs"
+	cp "$(FBPCS_DIR)/Dockerfile" "$(FBPCS_DIR)/../$(TMP_DIR)"

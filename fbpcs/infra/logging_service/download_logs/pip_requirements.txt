@@ -1,0 +1,6 @@
+boto3
+botocore
+dataclasses_json
+docopt
+schema
+tqdm
