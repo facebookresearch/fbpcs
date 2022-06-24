@@ -47,6 +47,7 @@ from fbpcs.private_computation.service.constants import (
     NUM_NEW_SHARDS_PER_FILE,
 )
 from fbpcs.private_computation.service.errors import (
+    PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
@@ -287,12 +288,17 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         """Fetches the next eligible stage in the instance's stage flow and runs it"""
         pc_instance = self.get_instance(instance_id)
+        if pc_instance.is_stage_flow_completed():
+            raise PrivateComputationServiceInvalidStageError(
+                f"Instance {instance_id} stage flow completed. (status: {pc_instance.status}). Ignored"
+            )
+
         next_stage = pc_instance.get_next_runnable_stage()
         if not next_stage:
-            # TODO(T106517341): Raise a custom exception instead of something generic
-            raise RuntimeError(
+            raise PrivateComputationServiceInvalidStageError(
                 f"Instance {instance_id} has no eligible stages to run at this time (status: {pc_instance.status})"
             )
+
         return await self.run_stage_async(
             instance_id, next_stage, server_ips=server_ips
         )
