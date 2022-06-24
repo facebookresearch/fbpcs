@@ -31,9 +31,9 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   bool targetIdPresent = false;
   bool actionTypePresent = false;
 
-  for (auto i = 0; i < header.size(); ++i) {
-    auto column = header[i];
-    auto value = parts[i];
+  for (auto i = 0U; i < header.size(); ++i) {
+    const auto& column = header[i];
+    const auto& value = parts[i];
     if (column == "timestamps") {
       timestamps = common::getInnerArray<uint64_t>(value);
     } else if (column == "is_click") {
@@ -62,43 +62,27 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   CHECK_LE(timestamps.size(), FLAGS_max_num_touchpoints)
       << "Number of touchpoints exceeds the maximum allowed value.";
 
-  if (timestamps.size() != 0) {
+  if (!timestamps.empty()) {
     if (targetIdPresent) {
       CHECK_EQ(timestamps.size(), targetId.size())
           << "timestamps arrays and target_id arrays are not the same length.";
-    } else {
-      for (auto i = 0; i < timestamps.size(); i++) {
-        targetId.push_back(0);
-      }
     }
     if (actionTypePresent) {
       CHECK_EQ(timestamps.size(), actionType.size())
           << "timestamps arrays and action_type arrays are not the same length.";
-    } else {
-      for (auto i = 0; i < timestamps.size(); i++) {
-        actionType.push_back(0);
-      }
     }
   }
 
-  std::vector<int64_t> unique_ids;
-  for (auto i = 0U; i < timestamps.size(); ++i) {
-    unique_ids.push_back(i);
-  }
-
-  const std::unordered_set<int64_t> idSet{unique_ids.begin(), unique_ids.end()};
-  CHECK_EQ(idSet.size(), timestamps.size())
-      << "Found non-unique id for line " << lineNo << ". "
-      << "This implementation currently only supports unique touchpoint ids per user.";
-
   std::vector<ParsedTouchpoint> tps;
-  for (auto i = 0U; i < timestamps.size(); ++i) {
+  tps.reserve(static_cast<std::size_t>(FLAGS_max_num_touchpoints));
+
+  for (size_t i = 0U; i < timestamps.size(); ++i) {
     tps.push_back(ParsedTouchpoint{
-        /* id */ unique_ids.at(i),
+        /* id */ static_cast<std::int64_t>(i),
         /* isClick */ isClicks.at(i) == 1,
         /* ts */ timestamps.at(i),
-        /* targetId */ targetId.at(i),
-        /* actionType */ actionType.at(i)});
+        /* targetId */ !targetId.empty() ? targetId.at(i) : 0ULL,
+        /* actionType */ !actionType.empty() ? actionType.at(i) : 0ULL});
   }
 
   // The input received by attribution game from data processing is sorted by
@@ -112,10 +96,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
 
   // Add padding at the end of the input data for publisher; partner data
   // consists only of padded data
-  for (auto i = tps.size();
-       i < static_cast<std::size_t>(FLAGS_max_num_touchpoints);
-       ++i) {
-    tps.push_back(ParsedTouchpoint{-1, false, 0, 0, 0});
+  if (tps.size() < static_cast<std::size_t>(FLAGS_max_num_touchpoints)) {
+    tps.resize(static_cast<std::size_t>(FLAGS_max_num_touchpoints));
   }
   return tps;
 }
@@ -133,8 +115,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
   bool actionTypePresent = false;
 
   for (auto i = 0; i < header.size(); ++i) {
-    auto column = header[i];
-    auto value = parts[i];
+    const auto& column = header[i];
+    const auto& value = parts[i];
 
     if (column == "conversion_timestamps") {
       convTimestamps = common::getInnerArray<uint64_t>(value);
@@ -154,27 +136,19 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
     if (targetIdPresent) {
       CHECK_EQ(convTimestamps.size(), targetId.size())
           << "Conversion timestamps arrays and target_id arrays are not the same length.";
-    } else {
-      for (auto i = 0ULL; i < convTimestamps.size(); i++) {
-        targetId.push_back(0U);
-      }
     }
     if (actionTypePresent) {
       CHECK_EQ(convTimestamps.size(), actionType.size())
           << "Conversion timestamps arrays and action_type arrays are not the same length.";
-    } else {
-      for (auto i = 0ULL; i < convTimestamps.size(); i++) {
-        actionType.push_back(0U);
-      }
     }
   }
 
   std::vector<ParsedConversion> convs;
-  for (auto i = 0; i < convTimestamps.size(); ++i) {
+  for (auto i = 0U; i < convTimestamps.size(); ++i) {
     convs.push_back(ParsedConversion{
         /* ts */ convTimestamps.at(i),
-        /* targetId */ targetId.at(i),
-        /* actionType*/ actionType.at(i)});
+        /* targetId */ !targetId.empty() ? targetId.at(i) : 0ULL,
+        /* actionType */ !actionType.empty() ? actionType.at(i) : 0ULL});
   }
 
   // Sorting conversions based on timestamp. If the input is encrypted, this has
@@ -185,11 +159,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
 
   // Add padding at the end of the input data for partner; publisher data
   // consists only of padded data
-  for (auto i = convs.size();
-       i < static_cast<std::size_t>(FLAGS_max_num_conversions);
-       ++i) {
-    // Add padding
-    convs.push_back(ParsedConversion{0, 0, 0});
+  if (convs.size() < static_cast<std::size_t>(FLAGS_max_num_conversions)) {
+    convs.resize(static_cast<std::size_t>(FLAGS_max_num_conversions));
   }
   return convs;
 }
@@ -267,11 +238,12 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
 
     // The conversions are parsed row by row, whereas the batches are across
     // rows.
-    for (size_t i = 0; i < parsedConversions.size(); ++i) {
-      for (size_t j = 0; j < parsedConversions.at(i).size(); ++j) {
-        timestamps.at(j).push_back(parsedConversions.at(i).at(j).ts);
-        targetIds.at(j).push_back(parsedConversions.at(i).at(j).targetId);
-        actionTypes.at(j).push_back(parsedConversions.at(i).at(j).actionType);
+    for (const auto& oneBatchedParsedConversions : parsedConversions) {
+      for (size_t j = 0; j < oneBatchedParsedConversions.size(); ++j) {
+        timestamps.at(j).push_back(oneBatchedParsedConversions.at(j).ts);
+        targetIds.at(j).push_back(oneBatchedParsedConversions.at(j).targetId);
+        actionTypes.at(j).push_back(
+            oneBatchedParsedConversions.at(j).actionType);
       }
     }
     for (size_t i = 0; i < timestamps.size(); ++i) {
@@ -279,9 +251,9 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
           timestamps.at(i), targetIds.at(i), actionTypes.at(i)});
     }
   } else {
-    for (size_t i = 0; i < parsedConversions.size(); ++i) {
+    for (const auto& parsedRow : parsedConversions) {
       std::vector<Conversion<false>> conversionRow;
-      for (auto& parsedConversion : parsedConversions.at(i)) {
+      for (const auto& parsedConversion : parsedRow) {
         conversionRow.push_back(Conversion<false>{
             parsedConversion.ts,
             parsedConversion.targetId,

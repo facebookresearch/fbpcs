@@ -80,11 +80,11 @@ struct PrivateIsClick {
 
 // Used for parsing touchpoints from input CSV files
 struct ParsedTouchpoint {
-  int64_t id;
-  bool isClick;
-  uint64_t ts;
-  uint64_t targetId;
-  uint64_t actionType;
+  int64_t id = -1;
+  bool isClick = false;
+  uint64_t ts = 0U;
+  uint64_t targetId = 0U;
+  uint64_t actionType = 0U;
 
   /**
    * If both are clicks, or both are views, the earliest one comes first.
