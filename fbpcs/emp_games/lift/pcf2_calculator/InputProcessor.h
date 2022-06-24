@@ -51,6 +51,14 @@ class InputProcessor {
     return numPublisherBreakdowns_;
   }
 
+  uint32_t getNumGroups() const {
+    return numGroups_;
+  }
+
+  uint32_t getNumTestGroups() const {
+    return numTestGroups_;
+  }
+
   const std::vector<std::vector<bool>> getCohortIndexShares() const {
     return cohortIndexShares_;
   }
@@ -126,6 +134,8 @@ class InputProcessor {
   int32_t numConversionsPerUser_;
   uint32_t numPartnerCohorts_;
   uint32_t numPublisherBreakdowns_;
+  uint32_t numGroups_;
+  uint32_t numTestGroups_;
 
   SecTimestamp<schedulerId> opportunityTimestamps_;
   SecBit<schedulerId> isValidOpportunityTimestamp_;
