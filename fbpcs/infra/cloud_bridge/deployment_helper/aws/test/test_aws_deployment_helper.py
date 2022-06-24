@@ -295,8 +295,15 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             self.aws_deployment_helper.iam.list_access_keys.assert_called_once()
 
     def test_read_json_file(self) -> None:
-        # T122887357
-        pass
+        self.aws_deployment_helper.region = "test_region"
+        test_policy = MagicMock()
+        test_policy.cluster_name = "test_cluster_name"
+
+        test_data = self.aws_deployment_helper.read_json_file(
+            "test/test_aws_deployment_helper_config.json", test_policy
+        )
+        self.assertEqual(test_data["REGION"], self.aws_deployment_helper.region)
+        self.assertEqual(test_data["CLUSTER_NAME"], test_policy.cluster_name)
 
     def test_create_user_workflow(self) -> None:
         self.aws_deployment_helper.iam.create_user_workflow.return_value = True
