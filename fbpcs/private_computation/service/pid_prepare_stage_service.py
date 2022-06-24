@@ -32,7 +32,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
-    all_files_exist_on_cloud,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     get_pc_status_from_stage_state,
 )
@@ -116,15 +115,6 @@ class PIDPrepareStageService(PrivateComputationStageService):
         input_path = pc_instance.pid_stage_output_data_path
         output_path = pc_instance.pid_stage_output_prepare_path
         pc_role = pc_instance.role
-
-        # make sure all input files are on the storage service before proceed
-        if not await all_files_exist_on_cloud(
-            input_path, num_shards, self._storage_svc
-        ):
-            raise ValueError(
-                f"At least one input file for PIDPrepareStageService are missing in {input_path}"
-            )
-
         # generate the list of command args for publisher or partner
         args_list = []
         # later mltikey_enabled, protocol, and max_col_cnt wil be centralized in PrivateComputationInstance.

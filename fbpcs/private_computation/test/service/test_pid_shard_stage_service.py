@@ -79,15 +79,11 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
         containers = [
             self.create_container_instance() for _ in range(test_num_containers)
         ]
-        # The input file should exist on cloud, or else the stage service won't proceed.
-        self.mock_storage_svc.file_exists.return_value = True
         self.mock_onedocker_svc.start_containers = MagicMock(return_value=containers)
         self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
             return_value=containers
         )
         updated_pc_instance = await stage_svc.run_async(pc_instance=pc_instance)
-        # assert file_exists is called in self.stage_svc.run_async()
-        self.mock_storage_svc.file_exists.assert_called()
         env_vars = {
             "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
         }

@@ -82,8 +82,6 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             await self.create_container_instance()
             for _ in range(self.test_num_containers)
         ]
-        # All files should exist on cloud, or else the stage service won't proceed.
-        self.mock_storage_svc.file_exists.return_value = True
         self.mock_onedocker_svc.start_containers = MagicMock(return_value=containers)
         self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
             return_value=containers
@@ -91,8 +89,6 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         updated_pc_instance = await stage_svc.run_async(
             pc_instance=pc_instance, server_ips=self.server_ips
         )
-        # assert file_exists is called in self.stage_svc.run_async()
-        self.mock_storage_svc.file_exists.assert_called()
 
         binary_name = PIDRunProtocolBinaryService.get_binary_name(protocol, pc_role)
         binary_config = self.onedocker_binary_config_map[binary_name]
