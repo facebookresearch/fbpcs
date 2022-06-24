@@ -27,10 +27,12 @@
 
 namespace pid::combiner {
 void idSwapMultiKey(
-    std::istream& dataFile,
-    std::istream& spineIdFile,
+    std::shared_ptr<fbpcf::io::BufferedReader> dataFile,
+    std::shared_ptr<fbpcf::io::BufferedReader> spineIdFile,
     std::ostream& outFile,
-    int32_t maxIdColumnCnt) {
+    int32_t maxIdColumnCnt,
+    std::string headerLine,
+    std::string spineIdPath) {
   const std::string kCommaSplitRegex = ",";
   const std::string kIdColumnPrefix = "id_";
   const std::string kDefaultNullReplacement = "0";
@@ -38,10 +40,19 @@ void idSwapMultiKey(
   XLOG(INFO) << "Starting.";
 
   std::string line;
-
-  getline(dataFile, line);
+  /*
+   * Need to create a duplicate reader for spine input file path as its being
+   * read multiple times in this method. In the short term,
+   * this may end up being inefficient because we make multiple
+   * requests to AWS. However, it should not add much walltime,
+   * and we can revisit this to store the contents during the
+   * first read.
+   */
+  auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineIdPath);
+  auto spineIdFileDup = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), pid::combiner::kBufferedReaderChunkSize);
   std::vector<std::string> header;
-  folly::split(kCommaSplitRegex, line, header);
+  folly::split(kCommaSplitRegex, headerLine, header);
 
   auto idColumnIndices = headerIndices(header, kIdColumnPrefix);
 
@@ -57,7 +68,8 @@ void idSwapMultiKey(
   // Build a map for <id_ to private_id> from the spineId File
   std::unordered_map<std::string, std::string> idToPrivateIDMap;
   std::string spineRow;
-  while (getline(spineIdFile, spineRow)) {
+  while (!spineIdFile->eof()) {
+    spineRow = spineIdFile->readLine();
     std::vector<std::string> cols;
     folly::split(kCommaSplitRegex, spineRow, cols);
     // expect col 1 in spineIdFile to contain the id_
@@ -83,14 +95,13 @@ void idSwapMultiKey(
       idToPrivateIDMap[id] = privId;
     }
   }
-  spineIdFile.clear();
-  spineIdFile.seekg(0);
 
   // Build a map for <pid to data> from data file
   std::unordered_map<std::string, std::vector<std::vector<std::string>>>
       pidToDataMap;
 
-  while (getline(dataFile, line)) {
+  while (!dataFile->eof()) {
+    line = dataFile->readLine();
     std::vector<std::string> rowVec;
     folly::split(kCommaSplitRegex, line, rowVec);
 
@@ -151,7 +162,8 @@ void idSwapMultiKey(
 
   // Here we output each row from dataFile to outFile.
   std::string row;
-  while (getline(spineIdFile, row)) {
+  while (!spineIdFileDup->eof()) {
+    row = spineIdFileDup->readLine();
     std::vector<std::string> cols;
     folly::split(kCommaSplitRegex, row, cols);
 
@@ -184,7 +196,7 @@ void idSwapMultiKey(
       continue;
     }
   }
-
+  spineIdFileDup->close();
   XLOG(INFO) << "Finished.";
 }
 } // namespace pid::combiner

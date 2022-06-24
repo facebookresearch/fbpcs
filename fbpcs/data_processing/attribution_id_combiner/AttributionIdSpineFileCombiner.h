@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <unordered_map>
 #include <vector>
+#include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileReader.h"
 
 namespace pid::combiner {
 /*
@@ -45,7 +47,8 @@ AAA     [0, 0, a1, a2]    [0, 0, t1, t2]     [0, 0, 1, 0]
 BBB     [0, 0, 0, a1]     [0, 0, 0, t1]      [0, 0, 0, 0]
 */
 void attributionIdSpineFileCombiner(
-    std::istream& dataFile,
-    std::istream& spineIdFile,
-    std::ostream& outFile);
+    std::shared_ptr<fbpcf::io::BufferedReader> dataFile,
+    std::shared_ptr<fbpcf::io::BufferedReader> spineIdFile,
+    std::ostream& outFile,
+    std::string spinePath);
 } // namespace pid::combiner

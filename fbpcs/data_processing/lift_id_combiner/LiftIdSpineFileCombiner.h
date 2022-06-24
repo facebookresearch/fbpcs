@@ -14,6 +14,14 @@
 
 namespace pid {
 /*
+ * This chunk size has to be large enough that we don't make
+ * unnecessary trips to cloud storage but small enough that
+ * we don't cause OOM issues. This chunk size was chosen based
+ * on the size of our containers as well as the expected size
+ * of our files to fit the aforementioned constraints.
+ */
+constexpr size_t kBufferedReaderChunkSize = 1073741824; // 2^30
+/*
 This class implements the combiner that is used to combine the output of pid
 partner and publisher files with the help of an identity spine from union pid
 */

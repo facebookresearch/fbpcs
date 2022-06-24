@@ -12,10 +12,12 @@
 #include <filesystem>
 #include <fstream>
 
+#include <folly/Random.h>
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
 
 #include <folly/logging/xlog.h>
+#include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
 
 class IdSwapMultiKeyTest : public testing::Test {
  public:
@@ -46,17 +48,36 @@ class IdSwapMultiKeyTest : public testing::Test {
       std::vector<std::string>& expectedOutput,
       std::int32_t maxIdColumnCnt) {
     // Execute the union pid combiner with the pre-created files
-
-    vectorStringToStream(dataInput, dataStream_);
-    vectorStringToStream(spineInput, spineStream_);
+    auto randStart = folly::Random::secureRand64();
+    std::string dataInputPath =
+        "/tmp/AttributionIdSpineFileCombinerTestDataPath" +
+        std::to_string(randStart);
+    std::string spineInputPath =
+        "/tmp/AttributionIdSpineFileCombinerTestSpineInputPath" +
+        std::to_string(randStart);
+    constexpr size_t kBufferedReaderChunkSize = 4096;
+    data_processing::test_utils::writeVecToFile(dataInput, dataInputPath);
+    data_processing::test_utils::writeVecToFile(spineInput, spineInputPath);
+    auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataInputPath);
+    auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineInputPath);
+    auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
+        std::move(dataReader), kBufferedReaderChunkSize);
+    auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
+        std::move(spineReader), kBufferedReaderChunkSize);
+    std::string headerLine = bufferedDataReader->readLine();
     pid::combiner::idSwapMultiKey(
-        dataStream_, spineStream_, outputStream_, maxIdColumnCnt);
+        bufferedDataReader,
+        bufferedSpineReader,
+        outputStream_,
+        maxIdColumnCnt,
+        headerLine,
+        spineInputPath);
+    bufferedDataReader->close();
+    bufferedSpineReader->close();
     validateOutputContent(expectedOutput);
   }
 
  protected:
-  std::stringstream dataStream_;
-  std::stringstream spineStream_;
   std::stringstream outputStream_;
 };
 
@@ -193,14 +214,35 @@ TEST_F(IdSwapMultiKeyTest, MissingPrivateIdsSpine) {
       "EEEE,375,300",
       "FFFF,400,400"};
 
-  vectorStringToStream(dataInput, dataStream_);
-  vectorStringToStream(spineInput, spineStream_);
-
+  auto randStart = folly::Random::secureRand64();
+  std::string dataInputPath =
+      "/tmp/AttributionIdSpineFileCombinerTestDataPath" +
+      std::to_string(randStart);
+  std::string spineInputPath =
+      "/tmp/AttributionIdSpineFileCombinerTestSpineInputPath" +
+      std::to_string(randStart);
+  constexpr size_t kBufferedReaderChunkSize = 4096;
+  data_processing::test_utils::writeVecToFile(dataInput, dataInputPath);
+  data_processing::test_utils::writeVecToFile(spineInput, spineInputPath);
+  auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataInputPath);
+  auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineInputPath);
+  auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(dataReader), kBufferedReaderChunkSize);
+  auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), kBufferedReaderChunkSize);
   int32_t maxIdColumnCnt = 1;
+  std::string headerLine = bufferedDataReader->readLine();
   ASSERT_DEATH(
       pid::combiner::idSwapMultiKey(
-          dataStream_, spineStream_, outputStream_, maxIdColumnCnt),
+          bufferedDataReader,
+          bufferedSpineReader,
+          outputStream_,
+          maxIdColumnCnt,
+          headerLine,
+          spineInputPath),
       "ID is missing in the spineID file");
+  bufferedDataReader->close();
+  bufferedSpineReader->close();
 }
 
 // Spine id contains an id_ that doesn't exist in data
