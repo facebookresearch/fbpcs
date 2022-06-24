@@ -27,6 +27,8 @@ class InputProcessor {
         numRows_{inputData.getNumRows()},
         numConversionsPerUser_{numConversionsPerUser} {
     validateNumRowsStep();
+    shareNumGroupsStep();
+    privatelyShareGroupIdsStep();
     privatelySharePopulationStep();
     privatelyShareCohortsStep();
     privatelyShareTestCohortsStep();
@@ -43,6 +45,10 @@ class InputProcessor {
 
   uint32_t getNumPartnerCohorts() const {
     return numPartnerCohorts_;
+  }
+
+  uint32_t getNumPublisherBreakdowns() const {
+    return numPublisherBreakdowns_;
   }
 
   const std::vector<std::vector<bool>> getCohortIndexShares() const {
@@ -90,8 +96,14 @@ class InputProcessor {
   // Make sure input files have the same size
   void validateNumRowsStep();
 
+  // Share number of groups, including cohorts and publisher breakdowns.
+  void shareNumGroupsStep();
+
   // Privately share popoulation
   void privatelySharePopulationStep();
+
+  // Privately share cohort ids and breakdown ids.
+  void privatelyShareGroupIdsStep();
 
   // Privately share number of cohorts and index shares of cohort group ids.
   void privatelyShareCohortsStep();
@@ -113,6 +125,7 @@ class InputProcessor {
   int64_t numRows_;
   int32_t numConversionsPerUser_;
   uint32_t numPartnerCohorts_;
+  uint32_t numPublisherBreakdowns_;
 
   SecTimestamp<schedulerId> opportunityTimestamps_;
   SecBit<schedulerId> isValidOpportunityTimestamp_;
@@ -125,6 +138,7 @@ class InputProcessor {
 
   SecBit<schedulerId> controlPopulation_;
   SecGroup<schedulerId> cohortGroupIds_;
+  SecBit<schedulerId> breakdownGroupIds_;
   std::vector<std::vector<bool>> cohortIndexShares_;
   std::vector<std::vector<bool>> testCohortIndexShares_;
 };
