@@ -29,11 +29,9 @@ class Utils:
             # write to a file, if it already exists
             with open(file_location, "w") as file_object:
                 self.write_to_file(file_object, content)
-        except FileNotFoundError as error:
+        except IOError as error:
             # T122918736 - for better execption messages
-            raise Exception(
-                f"Please check if this is the right file path. Error: {error}"
-            )
+            raise Exception(f"Failed to create file {file_location}") from error
 
     @classmethod
     def write_to_file(
