@@ -6,14 +6,36 @@
 # pyre-strict
 
 import unittest
+from unittest.mock import mock_open, patch
+
+from fbpcs.infra.logging_service.download_logs.utils.utils import Utils
 
 
 class TestUtils(unittest.TestCase):
     def setUp(self) -> None:
-        pass
+        self.utils = Utils()
 
     def test_create_file(self) -> None:
-        pass
+
+        fake_file_path = "fake/file/path"
+        content_list = ["This is test string"]
+        with patch(
+            "fbpcs.infra.logging_service.download_logs.utils.utils.open",
+            mock_open(),
+        ) as mocked_file:
+            with self.subTest("basic"):
+                self.utils.create_file(
+                    file_location=fake_file_path, content=content_list
+                )
+                mocked_file.assert_called_once_with(fake_file_path, "w")
+                mocked_file().write.assert_called_once_with(content_list[0] + "\n")
+
+            with self.subTest("ExceptionOpen"):
+                mocked_file.side_effect = IOError()
+                with self.assertRaisesRegex(Exception, "Failed to create file*"):
+                    self.utils.create_file(
+                        file_location=fake_file_path, content=content_list
+                    )
 
     def test_write_to_file(self) -> None:
         pass
