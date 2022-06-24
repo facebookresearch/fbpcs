@@ -20,6 +20,8 @@
 #include <folly/logging/xlog.h>
 
 #include <fbpcs/performance_tools/CostEstimation.h>
+#include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileReader.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerOptions.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerUtil.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineFileCombiner.h"
@@ -44,10 +46,14 @@ int main(int argc, char** argv) {
              << ", sorting_strategy: " << FLAGS_sort_strategy
              << ", max_id_column_cnt: " << FLAGS_max_id_column_cnt;
 
-  auto dataInStreamPtr = fbpcf::io::getInputStream(FLAGS_data_path);
-  auto spineInStreamPtr = fbpcf::io::getInputStream(FLAGS_spine_path);
-  std::istream& dataStream = dataInStreamPtr->get();
-  std::istream& spineStream = spineInStreamPtr->get();
+  auto dataReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_data_path);
+  auto spineReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_spine_path);
+  auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(dataReader),
+      measurement::private_attribution::kBufferedReaderChunkSize);
+  auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader),
+      measurement::private_attribution::kBufferedReaderChunkSize);
 
   // Get a random ID to avoid potential name collisions if multiple
   // runs at the same time point to the same input file
@@ -59,8 +65,10 @@ int main(int argc, char** argv) {
   std::ofstream tmpFile{tmpFilepath};
 
   pid::combiner::attributionIdSpineFileCombiner(
-      dataStream, spineStream, tmpFile);
+      bufferedDataReader, bufferedSpineReader, tmpFile, FLAGS_spine_path);
   tmpFile.close();
+  bufferedDataReader->close();
+  bufferedSpineReader->close();
 
   auto outputType = fbpcf::io::getFileType(outputPath);
   if (outputPath != tmpFilepath) {
