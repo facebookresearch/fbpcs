@@ -30,8 +30,8 @@ class InputProcessor {
     shareNumGroupsStep();
     privatelyShareGroupIdsStep();
     privatelySharePopulationStep();
-    privatelyShareCohortsStep();
-    privatelyShareTestCohortsStep();
+    privatelyShareIndexSharesStep();
+    privatelyShareTestIndexSharesStep();
     privatelyShareTimestampsStep();
     privatelySharePurchaseValuesStep();
     privatelyShareTestReachStep();
@@ -59,12 +59,12 @@ class InputProcessor {
     return numTestGroups_;
   }
 
-  const std::vector<std::vector<bool>> getCohortIndexShares() const {
-    return cohortIndexShares_;
+  const std::vector<std::vector<bool>> getIndexShares() const {
+    return indexShares_;
   }
 
-  const std::vector<std::vector<bool>> getTestCohortIndexShares() const {
-    return testCohortIndexShares_;
+  const std::vector<std::vector<bool>> getTestIndexShares() const {
+    return testIndexShares_;
   }
 
   const SecTimestamp<schedulerId> getOpportunityTimestamps() const {
@@ -113,11 +113,12 @@ class InputProcessor {
   // Privately share cohort ids and breakdown ids.
   void privatelyShareGroupIdsStep();
 
-  // Privately share number of cohorts and index shares of cohort group ids.
-  void privatelyShareCohortsStep();
+  // Privately share index shares of group ids encoding the population, cohorts
+  // and publisher breakdowns.
+  void privatelyShareIndexSharesStep();
 
-  // Privately share cohort group ids for the test population only.
-  void privatelyShareTestCohortsStep();
+  // Privately share index shares of group ids for the test population only.
+  void privatelyShareTestIndexSharesStep();
 
   // Privately share timestamps
   void privatelyShareTimestampsStep();
@@ -149,8 +150,8 @@ class InputProcessor {
   SecBit<schedulerId> controlPopulation_;
   SecGroup<schedulerId> cohortGroupIds_;
   SecBit<schedulerId> breakdownGroupIds_;
-  std::vector<std::vector<bool>> cohortIndexShares_;
-  std::vector<std::vector<bool>> testCohortIndexShares_;
+  std::vector<std::vector<bool>> indexShares_;
+  std::vector<std::vector<bool>> testIndexShares_;
 };
 
 } // namespace private_lift
