@@ -9,8 +9,6 @@
 
 #include <algorithm>
 #include <exception>
-
-#include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionGame.h"
 #include "fbpcs/emp_games/pcf2_attribution/Constants.h"
 
@@ -293,172 +291,6 @@ template <
     int schedulerId,
     bool usingBatch,
     common::InputEncryption inputEncryption>
-std::vector<uint64_t>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    retrieveValidOriginalTargetIds(
-        int myRole,
-        std::vector<TouchpointT<usingBatch>>& touchpoints,
-        std::vector<ConversionT<usingBatch>>& conversions) {
-  std::unordered_set<uint64_t> targetIdSet;
-
-  auto revealTargetId = [&](const auto& secOriginalTargetId) {
-    auto publisherTargetId =
-        secOriginalTargetId.openToParty(common::PUBLISHER).getValue();
-    auto partnerTargetId =
-        secOriginalTargetId.openToParty(common::PARTNER).getValue();
-    auto revealedTargetId =
-        (myRole == common::PUBLISHER) ? publisherTargetId : partnerTargetId;
-    return revealedTargetId;
-  };
-
-  auto publisherSideExtractTargetId = [&](const auto& touchpointT) {
-    SecOriginalTargetId<schedulerId, usingBatch> secOriginalTargetId;
-    if (inputEncryption == common::InputEncryption::Xor) {
-      typename SecOriginalTargetId<schedulerId, usingBatch>::ExtractedInt
-          extractedTargetId(touchpointT.targetId);
-      secOriginalTargetId = SecOriginalTargetId<schedulerId, usingBatch>(
-          std::move(extractedTargetId));
-    } else {
-      secOriginalTargetId = SecOriginalTargetId<schedulerId, usingBatch>(
-          touchpointT.targetId, common::PUBLISHER);
-    }
-    return secOriginalTargetId;
-  };
-
-  auto partnerSideExtractTargetId = [&](const auto& conversionT) {
-    SecOriginalTargetId<schedulerId, usingBatch> secOriginalTargetId;
-    if (inputEncryption == common::InputEncryption::Plaintext) {
-      secOriginalTargetId = SecOriginalTargetId<schedulerId, usingBatch>(
-          conversionT.targetId, common::PARTNER);
-    } else {
-      typename SecOriginalTargetId<schedulerId, usingBatch>::ExtractedInt
-          extractedTargetId(conversionT.targetId);
-      secOriginalTargetId = SecOriginalTargetId<schedulerId, usingBatch>(
-          std::move(extractedTargetId));
-    }
-    return secOriginalTargetId;
-  };
-
-  if constexpr (usingBatch) {
-    // publisher side
-    for (auto& touchpointT : touchpoints) {
-      // Reveal target id to publisher and partner
-      auto secOriginalTargetId = publisherSideExtractTargetId(touchpointT);
-      auto revealedTargetId = revealTargetId(secOriginalTargetId);
-
-      touchpointT.originalTargetId = revealedTargetId;
-      for (const auto& tid : revealedTargetId) {
-        if (tid > 0) {
-          targetIdSet.insert(tid);
-        }
-      }
-    }
-    // partner side
-    for (auto& conversionT : conversions) {
-      auto secOriginalTargetId = partnerSideExtractTargetId(conversionT);
-      // Reveal target id to publisher and partner
-      auto revealedTargetId = revealTargetId(secOriginalTargetId);
-
-      conversionT.originalTargetId = revealedTargetId;
-      for (const auto& tid : revealedTargetId) {
-        if (tid > 0) {
-          targetIdSet.insert(tid);
-        }
-      }
-    }
-  } else {
-    // publisher side
-    for (auto& touchpointT : touchpoints) {
-      for (auto& touchpoint : touchpointT) {
-        auto secOriginalTargetId = publisherSideExtractTargetId(touchpoint);
-        // Reveal target id to publisher and partner
-        auto revealedTargetId = revealTargetId(secOriginalTargetId);
-
-        touchpoint.originalTargetId = revealedTargetId;
-        if (revealedTargetId > 0) {
-          targetIdSet.insert(revealedTargetId);
-        }
-      }
-    }
-    // partner side
-    for (auto& conversionT : conversions) {
-      for (auto& conversion : conversionT) {
-        auto secOriginalTargetId = partnerSideExtractTargetId(conversion);
-        // Reveal target id to publisher and partner
-        auto revealedTargetId = revealTargetId(secOriginalTargetId);
-
-        conversion.originalTargetId = revealedTargetId;
-        if (revealedTargetId > 0) {
-          targetIdSet.insert(revealedTargetId);
-        }
-      }
-    }
-  }
-  XLOGF(INFO, "Number of Distinct Target Ids: {}", targetIdSet.size());
-  // Added a check here to make sure that number of target Ids never exceed
-  // 65,536 (16 unsigned bit).
-  CHECK_LE(targetIdSet.size(), 65536)
-      << "Number of target Ids cannot be more than 65,536.";
-
-  std::vector<uint64_t> validOriginalTargetIds(
-      targetIdSet.begin(), targetIdSet.end());
-  return validOriginalTargetIds;
-}
-
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-void AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    replaceTargetIdWithCompressedTargetId(
-        std::vector<TouchpointT<usingBatch>>& touchpoints,
-        std::vector<ConversionT<usingBatch>>& conversions,
-        std::vector<uint64_t>& validOriginalTargetIds) {
-  uint64_t compressedTargetId = 1;
-  std::unordered_map<uint64_t, uint64_t> targetIdToCompressedTargetIdMap;
-
-  for (auto targetId : validOriginalTargetIds) {
-    targetIdToCompressedTargetIdMap.insert({targetId, compressedTargetId});
-    compressedTargetId++;
-  }
-
-  auto replaceTargetId = [&](auto& attributionArray) {
-    if constexpr (usingBatch) {
-      for (auto& attributionArrayT : attributionArray) {
-        std::vector<uint64_t> compressedTargetId;
-        for (const auto& originalTargetId :
-             attributionArrayT.originalTargetId) {
-          if (originalTargetId > 0) {
-            compressedTargetId.push_back(
-                targetIdToCompressedTargetIdMap.at(originalTargetId));
-          } else {
-            compressedTargetId.push_back(originalTargetId);
-          }
-        }
-        attributionArrayT.targetId = compressedTargetId;
-      }
-    } else {
-      for (auto& attributionArrayT : attributionArray) {
-        for (auto& attributionData : attributionArrayT) {
-          if (attributionData.originalTargetId > 0) {
-            attributionData.targetId = targetIdToCompressedTargetIdMap.at(
-                attributionData.originalTargetId);
-          } else {
-            attributionData.targetId = attributionData.originalTargetId;
-          }
-        }
-      }
-    }
-  };
-
-  replaceTargetId(touchpoints);
-  replaceTargetId(conversions);
-}
-
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
 AttributionOutputMetrics
 AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
     const int myRole,
@@ -468,20 +300,11 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
   uint32_t numIds = ids.size();
   XLOGF(INFO, "Have {} ids", numIds);
 
-  auto touchpointArrays = inputData.getTouchpointArrays();
-  auto conversionArrays = inputData.getConversionArrays();
-
-  auto validOriginalTargetId = retrieveValidOriginalTargetIds(
-      myRole, touchpointArrays, conversionArrays);
-
-  replaceTargetIdWithCompressedTargetId(
-      touchpointArrays, conversionArrays, validOriginalTargetId);
-
   // Send over all of the data needed for this computation
   XLOG(INFO, "Privately sharing touchpoints...");
-  auto tpArrays = privatelyShareTouchpoints(touchpointArrays);
+  auto tpArrays = privatelyShareTouchpoints(inputData.getTouchpointArrays());
   XLOG(INFO, "Privately sharing conversions...");
-  auto convArrays = privatelyShareConversions(conversionArrays);
+  auto convArrays = privatelyShareConversions(inputData.getConversionArrays());
 
   // Currently we only have one attribution output format
   std::string attributionFormat = "default";
@@ -499,7 +322,7 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
 
     // Share touchpoint threshold information for computing attributions
     auto thresholdArrays = privatelyShareThresholds(
-        touchpointArrays, tpArrays, *attributionRule, numIds);
+        inputData.getTouchpointArrays(), tpArrays, *attributionRule, numIds);
     CHECK_EQ(thresholdArrays.size(), tpArrays.size())
         << "threshold arrays and touchpoint arrays are not the same length.";
 

@@ -19,7 +19,6 @@ struct Touchpoint {
   ConditionalVector<uint64_t, usingBatch> ts;
   ConditionalVector<uint64_t, usingBatch> targetId;
   ConditionalVector<uint64_t, usingBatch> actionType;
-  ConditionalVector<uint64_t, usingBatch> originalTargetId;
 };
 
 template <bool usingBatch>
@@ -41,6 +40,9 @@ struct PrivateTouchpoint {
       typename SecTimestamp<schedulerId, usingBatch>::ExtractedInt extractedTs(
           touchpoint.ts);
       ts = SecTimestamp<schedulerId, usingBatch>(std::move(extractedTs));
+      typename SecTargetId<schedulerId, usingBatch>::ExtractedInt extractedTids(
+          touchpoint.targetId);
+      targetId = SecTargetId<schedulerId, usingBatch>(std::move(extractedTids));
       typename SecActionType<schedulerId, usingBatch>::ExtractedInt
           extractedAids(touchpoint.actionType);
       actionType =
@@ -48,11 +50,11 @@ struct PrivateTouchpoint {
     } else {
       ts = SecTimestamp<schedulerId, usingBatch>(
           touchpoint.ts, common::PUBLISHER);
+      targetId = SecTargetId<schedulerId, usingBatch>(
+          touchpoint.targetId, common::PUBLISHER);
       actionType = SecActionType<schedulerId, usingBatch>(
           touchpoint.actionType, common::PUBLISHER);
     }
-    targetId = SecTargetId<schedulerId, usingBatch>(
-        touchpoint.targetId, common::PUBLISHER);
   }
 };
 
@@ -83,7 +85,6 @@ struct ParsedTouchpoint {
   uint64_t ts;
   uint64_t targetId;
   uint64_t actionType;
-  uint64_t originalTargetId;
 
   /**
    * If both are clicks, or both are views, the earliest one comes first.
