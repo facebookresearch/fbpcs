@@ -34,16 +34,6 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const int myRole,
       const AttributionInputMetrics<usingBatch, inputEncryption>& inputData);
 
-  std::vector<uint64_t> retrieveValidOriginalTargetIds(
-      int myRole,
-      std::vector<TouchpointT<usingBatch>>& touchpoints,
-      std::vector<ConversionT<usingBatch>>& conversions);
-
-  void replaceTargetIdWithCompressedTargetId(
-      std::vector<TouchpointT<usingBatch>>& touchpoints,
-      std::vector<ConversionT<usingBatch>>& conversions,
-      std::vector<uint64_t>& validOriginalTargetIds);
-
   using PrivateTouchpointT = ConditionalVector<
       PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>,
       !usingBatch>;
@@ -58,7 +48,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   std::vector<std::shared_ptr<
       const AttributionRule<schedulerId, usingBatch, inputEncryption>>>
   shareAttributionRules(
-      int myRole,
+      const int myRole,
       const std::vector<std::string>& attributionRuleNames);
 
   /**

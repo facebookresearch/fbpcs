@@ -13,8 +13,7 @@ namespace pcf2_attribution {
 
 const int kMaxConcurrency = 16;
 const size_t timeStampWidth = 32;
-const size_t originalTargetIdWidth = 64;
-const size_t targetIdWidth = 16;
+const size_t targetIdWidth = 64;
 const size_t actionTypeWidth = 16;
 
 template <int schedulerId, bool usingBatch = true>
@@ -37,13 +36,6 @@ using PubTargetId = typename fbpcf::frontend::MpcGame<
 template <int schedulerId, bool usingBatch = true>
 using SecTargetId = typename fbpcf::frontend::MpcGame<
     schedulerId>::template SecUnsignedInt<targetIdWidth, usingBatch>;
-
-template <int schedulerId, bool usingBatch = true>
-using PubOriginalTargetId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template PubUnsignedInt<originalTargetIdWidth, usingBatch>;
-template <int schedulerId, bool usingBatch = true>
-using SecOriginalTargetId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template SecUnsignedInt<originalTargetIdWidth, usingBatch>;
 
 template <int schedulerId, bool usingBatch = true>
 using PubActionType = typename fbpcf::frontend::MpcGame<
