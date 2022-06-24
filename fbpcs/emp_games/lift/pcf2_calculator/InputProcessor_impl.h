@@ -96,7 +96,7 @@ void InputProcessor<schedulerId>::privatelyShareGroupIdsStep() {
 }
 
 template <int schedulerId>
-void InputProcessor<schedulerId>::privatelyShareCohortsStep() {
+void InputProcessor<schedulerId>::privatelyShareIndexSharesStep() {
   // We compute the metrics for both test/control populations and cohorts. To
   // differentiate the cohort group ids for the test/control population, we set
   // the test group ids as the original group ids, and the control group ids as
@@ -118,15 +118,15 @@ void InputProcessor<schedulerId>::privatelyShareCohortsStep() {
   // We now set the group ids depending on whether each row is a test or
   // control
   auto groupIds = cohortGroupIds_.mux(controlPopulation_, secControlGroupIds);
-  cohortIndexShares_ = groupIds.extractIntShare().getBooleanShares();
+  indexShares_ = groupIds.extractIntShare().getBooleanShares();
   // Resize to width needed for the number of groups
   size_t cohortWidth =
       std::ceil(std::log2(std::max(uint32_t(2), 2 * numPartnerCohorts_)));
-  cohortIndexShares_.resize(cohortWidth);
+  indexShares_.resize(cohortWidth);
 }
 
 template <int schedulerId>
-void InputProcessor<schedulerId>::privatelyShareTestCohortsStep() {
+void InputProcessor<schedulerId>::privatelyShareTestIndexSharesStep() {
   // We only compute the reach metrics for the test population, hence we also
   // contruct cohort index shares for just the test population. To differentiate
   // the cohort group ids for the test/control population, we set the test group
@@ -141,11 +141,11 @@ void InputProcessor<schedulerId>::privatelyShareTestCohortsStep() {
   // We now set the group ids depending on whether each row is a test or
   // control
   auto groupIds = cohortGroupIds_.mux(controlPopulation_, secControlGroupIds);
-  testCohortIndexShares_ = groupIds.extractIntShare().getBooleanShares();
+  testIndexShares_ = groupIds.extractIntShare().getBooleanShares();
   // Resize to width needed for the number of groups
   size_t testCohortWidth =
       std::ceil(std::log2(std::max(uint32_t(2), numPartnerCohorts_ + 1)));
-  testCohortIndexShares_.resize(testCohortWidth);
+  testIndexShares_.resize(testCohortWidth);
 }
 
 template <int schedulerId>

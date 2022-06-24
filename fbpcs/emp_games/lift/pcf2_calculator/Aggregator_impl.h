@@ -14,18 +14,18 @@ template <int schedulerId>
 void Aggregator<schedulerId>::initOram() {
   // Initialize ORAM
   bool isPublisher = (myRole_ == common::PUBLISHER);
-  numCohortGroups_ = std::max(2 * numPartnerCohorts_, uint32_t(2));
-  numTestCohortGroups_ = std::max(numPartnerCohorts_ + 1, uint32_t(2));
+  numGroups_ = std::max(2 * numPartnerCohorts_, uint32_t(2));
+  numTestGroups_ = std::max(numPartnerCohorts_ + 1, uint32_t(2));
 
-  if (numCohortGroups_ > 4) {
+  if (numGroups_ > 4) {
     // If the ORAM size is larger than 4, linear ORAM is less efficient
     // theoretically
-    cohortUnsignedWriteOnlyOramFactory_ =
+    unsignedWriteOnlyOramFactory_ =
         fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
             Intp<false, valueWidth>,
             groupWidth,
             schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
-    cohortSignedWriteOnlyOramFactory_ =
+    signedWriteOnlyOramFactory_ =
         fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
             Intp<true, valueWidth>,
             groupWidth,
@@ -36,10 +36,10 @@ void Aggregator<schedulerId>::initOram() {
             groupWidth,
             schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
   } else {
-    cohortUnsignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
+    unsignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
         getSecureLinearOramFactory<Intp<false, valueWidth>, schedulerId>(
             isPublisher, 0, 1, *communicationAgentFactory_);
-    cohortSignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
+    signedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
         getSecureLinearOramFactory<Intp<true, valueWidth>, schedulerId>(
             isPublisher, 0, 1, *communicationAgentFactory_);
     valueSquaredWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
@@ -47,22 +47,22 @@ void Aggregator<schedulerId>::initOram() {
             isPublisher, 0, 1, *communicationAgentFactory_);
   }
 
-  if (numTestCohortGroups_ > 4) {
-    testCohortUnsignedWriteOnlyOramFactory_ =
+  if (numTestGroups_ > 4) {
+    testUnsignedWriteOnlyOramFactory_ =
         fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
             Intp<false, valueWidth>,
             groupWidth,
             schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
-    testCohortSignedWriteOnlyOramFactory_ =
+    testSignedWriteOnlyOramFactory_ =
         fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
             Intp<true, valueWidth>,
             groupWidth,
             schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_);
   } else {
-    testCohortUnsignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
+    testUnsignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
         getSecureLinearOramFactory<Intp<false, valueWidth>, schedulerId>(
             isPublisher, 0, 1, *communicationAgentFactory_);
-    testCohortSignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
+    testSignedWriteOnlyOramFactory_ = fbpcf::mpc_std_lib::oram::
         getSecureLinearOramFactory<Intp<true, valueWidth>, schedulerId>(
             isPublisher, 0, 1, *communicationAgentFactory_);
   }
@@ -122,9 +122,9 @@ void Aggregator<schedulerId>::sumEvents() {
     valueShares[0] = events.extractBit().getValue();
     valueSharesArray.push_back(std::move(valueShares));
   }
-  auto oram = cohortUnsignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto oram = unsignedWriteOnlyOramFactory_->create(numGroups_);
   auto aggregationOutput = aggregate<false, valueWidth, true>(
-      cohortIndexShares_, valueSharesArray, numCohortGroups_, std::move(oram));
+      indexShares_, valueSharesArray, numGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealCohortOutput(aggregationOutput);
@@ -143,9 +143,9 @@ void Aggregator<schedulerId>::sumConverters() {
   std::vector<std::vector<bool>> valueShares(
       valueWidth, std::vector<bool>(numRows_, 0));
   valueShares[0] = attributor_->getConverters().extractBit().getValue();
-  auto oram = cohortUnsignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto oram = unsignedWriteOnlyOramFactory_->create(numGroups_);
   auto aggregationOutput = aggregate<false, valueWidth, false>(
-      cohortIndexShares_, valueShares, numCohortGroups_, std::move(oram));
+      indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealCohortOutput(aggregationOutput);
@@ -163,9 +163,9 @@ void Aggregator<schedulerId>::sumNumConvSquared() {
   // Aggregate across test/control and cohorts
   auto valueShares =
       attributor_->getNumConvSquared().extractIntShare().getBooleanShares();
-  auto oram = cohortUnsignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto oram = unsignedWriteOnlyOramFactory_->create(numGroups_);
   auto aggregationOutput = aggregate<false, valueWidth, false>(
-      cohortIndexShares_, valueShares, numCohortGroups_, std::move(oram));
+      indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealCohortOutput(aggregationOutput);
@@ -184,9 +184,9 @@ void Aggregator<schedulerId>::sumMatch() {
   std::vector<std::vector<bool>> valueShares(
       valueWidth, std::vector<bool>(numRows_, 0));
   valueShares[0] = attributor_->getMatch().extractBit().getValue();
-  auto oram = cohortUnsignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto oram = unsignedWriteOnlyOramFactory_->create(numGroups_);
   auto aggregationOutput = aggregate<false, valueWidth, false>(
-      cohortIndexShares_, valueShares, numCohortGroups_, std::move(oram));
+      indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealCohortOutput(aggregationOutput);
@@ -209,13 +209,9 @@ void Aggregator<schedulerId>::sumReachedConversions() {
     valueShares[0] = events.extractBit().getValue();
     valueSharesArray.push_back(std::move(valueShares));
   }
-  auto oram =
-      testCohortUnsignedWriteOnlyOramFactory_->create(numTestCohortGroups_);
+  auto oram = testUnsignedWriteOnlyOramFactory_->create(numTestGroups_);
   auto aggregationOutput = aggregate<false, valueWidth, true>(
-      testCohortIndexShares_,
-      valueSharesArray,
-      numTestCohortGroups_,
-      std::move(oram));
+      testIndexShares_, valueSharesArray, numTestGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealTestCohortOutput(aggregationOutput);
@@ -234,9 +230,9 @@ void Aggregator<schedulerId>::sumValues() {
     auto valueShares = input.extractIntShare().getBooleanShares();
     valueSharesArray.push_back(std::move(valueShares));
   }
-  auto oram = cohortSignedWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto oram = signedWriteOnlyOramFactory_->create(numGroups_);
   auto aggregationOutput = aggregate<true, valueWidth, true>(
-      cohortIndexShares_, valueSharesArray, numCohortGroups_, std::move(oram));
+      indexShares_, valueSharesArray, numGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealCohortOutput(aggregationOutput);
@@ -257,13 +253,9 @@ void Aggregator<schedulerId>::sumReachedValues() {
     auto valueShares = input.extractIntShare().getBooleanShares();
     valueSharesArray.push_back(std::move(valueShares));
   }
-  auto oram =
-      testCohortSignedWriteOnlyOramFactory_->create(numTestCohortGroups_);
+  auto oram = testSignedWriteOnlyOramFactory_->create(numTestGroups_);
   auto aggregationOutput = aggregate<true, valueWidth, true>(
-      testCohortIndexShares_,
-      valueSharesArray,
-      numTestCohortGroups_,
-      std::move(oram));
+      testIndexShares_, valueSharesArray, numTestGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealTestCohortOutput(aggregationOutput);
@@ -279,9 +271,9 @@ void Aggregator<schedulerId>::sumValueSquared() {
   // Aggregate across test/control and cohorts
   auto valueShares =
       attributor_->getValueSquared().extractIntShare().getBooleanShares();
-  auto oram = valueSquaredWriteOnlyOramFactory_->create(numCohortGroups_);
+  auto oram = valueSquaredWriteOnlyOramFactory_->create(numGroups_);
   auto aggregationOutput = aggregate<false, valueSquaredWidth, false>(
-      cohortIndexShares_, valueShares, numCohortGroups_, std::move(oram));
+      indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
   auto cohortOutput = revealCohortOutput(aggregationOutput);

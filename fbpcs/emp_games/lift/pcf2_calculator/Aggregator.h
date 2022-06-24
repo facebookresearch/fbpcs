@@ -52,8 +52,8 @@ class Aggregator {
         numPartnerCohorts_{inputProcessor.getNumPartnerCohorts()},
         numConversionsPerUser_{numConversionsPerUser},
         communicationAgentFactory_{communicationAgentFactory},
-        cohortIndexShares_{inputProcessor.getCohortIndexShares()},
-        testCohortIndexShares_{inputProcessor.getTestCohortIndexShares()} {
+        indexShares_{inputProcessor.getIndexShares()},
+        testIndexShares_{inputProcessor.getTestIndexShares()} {
     initOram();
     sumEvents();
     sumConverters();
@@ -131,31 +131,31 @@ class Aggregator {
   std::unique_ptr<Attributor<schedulerId>> attributor_;
   int64_t numRows_;
   uint32_t numPartnerCohorts_;
+  uint32_t numGroups_;
+  uint32_t numTestGroups_;
   int32_t numConversionsPerUser_;
-  uint32_t numCohortGroups_;
-  uint32_t numTestCohortGroups_;
   OutputMetricsData metrics_;
 
   std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
       communicationAgentFactory_;
   std::unique_ptr<
       fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<false, valueWidth>>>
-      cohortUnsignedWriteOnlyOramFactory_;
+      unsignedWriteOnlyOramFactory_;
   std::unique_ptr<
       fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<true, valueWidth>>>
-      cohortSignedWriteOnlyOramFactory_;
+      signedWriteOnlyOramFactory_;
   std::unique_ptr<
       fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<false, valueWidth>>>
-      testCohortUnsignedWriteOnlyOramFactory_;
+      testUnsignedWriteOnlyOramFactory_;
   std::unique_ptr<
       fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<Intp<true, valueWidth>>>
-      testCohortSignedWriteOnlyOramFactory_;
+      testSignedWriteOnlyOramFactory_;
   std::unique_ptr<fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<
       Intp<false, valueSquaredWidth>>>
       valueSquaredWriteOnlyOramFactory_;
 
-  std::vector<std::vector<bool>> cohortIndexShares_;
-  std::vector<std::vector<bool>> testCohortIndexShares_;
+  std::vector<std::vector<bool>> indexShares_;
+  std::vector<std::vector<bool>> testIndexShares_;
   std::unordered_map<int64_t, OutputMetricsData> cohortMetrics_;
   std::unordered_map<int64_t, OutputMetricsData>
       publisherBreakdowns_; // place holder for publisher breakdown metrics.
