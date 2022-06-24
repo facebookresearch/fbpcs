@@ -38,7 +38,7 @@ void InputProcessor<schedulerId>::privatelySharePopulationStep() {
 }
 
 template <int schedulerId>
-void InputProcessor<schedulerId>::privatelyShareCohortsStep() {
+void InputProcessor<schedulerId>::shareNumGroupsStep() {
   // TODO: We shouldn't be using MPC for this, it should just be shared over
   // a normal network socket as part of the protocol setup
   XLOG(INFO) << "Set up number of partner groups";
@@ -54,19 +54,45 @@ void InputProcessor<schedulerId>::privatelyShareCohortsStep() {
   numPartnerCohorts_ = common::
       shareIntFrom<schedulerId, groupWidth, common::PARTNER, common::PUBLISHER>(
           myRole_, inputData_.getNumGroups());
-  XLOG(INFO) << "Will be computing metrics for " << numPartnerCohorts_
+  numPublisherBreakdowns_ = common::
+      shareIntFrom<schedulerId, groupWidth, common::PUBLISHER, common::PARTNER>(
+          myRole_, inputData_.getNumGroups());
+  if (numPublisherBreakdowns_ > 2) {
+    XLOG(ERR)
+        << "The input has " << numPublisherBreakdowns_
+        << " publisher breakdowns but we only support 2 publisher breakdowns.";
+    exit(1);
+  }
+  XLOG(INFO) << "Will be computing metrics for " << numPublisherBreakdowns_
+             << " publisher breakdowns and " << numPartnerCohorts_
              << " partner cohorts";
+}
 
+template <int schedulerId>
+void InputProcessor<schedulerId>::privatelyShareGroupIdsStep() {
+  XLOG(INFO) << "Share cohort group ids";
+  cohortGroupIds_ = common::privatelyShareArrayWithPaddingFrom<
+      common::PARTNER,
+      uint32_t,
+      SecGroup<schedulerId>>(inputData_.getGroupIds(), numRows_, 0);
+
+  XLOG(INFO) << "Share publisher breakdown group ids";
+  std::vector<bool> booleanBreakdownGroupIds(
+      inputData_.getBreakdownIds().begin(), inputData_.getBreakdownIds().end());
+  breakdownGroupIds_ = common::privatelyShareArrayWithPaddingFrom<
+      common::PUBLISHER,
+      bool,
+      SecBit<schedulerId>>(booleanBreakdownGroupIds, numRows_, 0);
+}
+
+template <int schedulerId>
+void InputProcessor<schedulerId>::privatelyShareCohortsStep() {
   // We compute the metrics for both test/control populations and cohorts. To
   // differentiate the cohort group ids for the test/control population, we set
   // the test group ids as the original group ids, and the control group ids as
   // the original group ids plus numPartnerCohorts_. If there are no partner
   // cohorts, the original group ids are all zero, and we set the control group
   // ids to be 1 to differentiate them from the test group ids.
-  cohortGroupIds_ = common::privatelyShareArrayWithPaddingFrom<
-      common::PARTNER,
-      uint32_t,
-      SecGroup<schedulerId>>(inputData_.getGroupIds(), numRows_, 0);
   std::vector<uint32_t> controlGroupIds;
   if (numPartnerCohorts_ > 0) {
     for (auto groupId : inputData_.getGroupIds()) {
