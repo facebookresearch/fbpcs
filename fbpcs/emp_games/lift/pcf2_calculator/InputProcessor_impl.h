@@ -63,6 +63,16 @@ void InputProcessor<schedulerId>::shareNumGroupsStep() {
         << " publisher breakdowns but we only support 2 publisher breakdowns.";
     exit(1);
   }
+  // The number of groups is 2 (for test/control population) times the number of
+  // partner cohorts and the number of publisher breakdowns. If there are no
+  // cohorts or breakdowns, we multiply by 1 instead.
+  numGroups_ = 2 * std::max(uint32_t(1), numPartnerCohorts_) *
+      std::max(uint32_t(1), numPublisherBreakdowns_);
+  // The test groups consist of the groups corresponding to the test population,
+  // and one additional group for the control population (disregarding
+  // breakdown or cohort id). These are used for computing reach metrics, which
+  // are only for the test population.
+  numTestGroups_ = 1 + numGroups_ / 2;
   XLOG(INFO) << "Will be computing metrics for " << numPublisherBreakdowns_
              << " publisher breakdowns and " << numPartnerCohorts_
              << " partner cohorts";
