@@ -31,10 +31,7 @@ from fbpcs.private_computation.service.constants import DEFAULT_SERVER_PORT_NUMB
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-from fbpcs.private_computation.service.utils import (
-    all_files_exist_on_cloud,
-    get_pc_status_from_stage_state,
-)
+from fbpcs.private_computation.service.utils import get_pc_status_from_stage_state
 
 
 class PIDRunProtocolStageService(PrivateComputationStageService):
@@ -115,11 +112,6 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         input_path = pc_instance.pid_stage_output_prepare_path
         output_path = pc_instance.pid_stage_output_spine_path
         pc_role = pc_instance.role
-        # make sure all input files are on the storage service before proceed
-        if not await all_files_exist_on_cloud(
-            input_path, num_shards, self._storage_svc
-        ):
-            raise ValueError("Input files for PID run protocol service are missing")
         protocol = get_pid_protocol_from_num_shards(num_shards, self._multikey_enabled)
         metric_paths = self.get_metric_paths(pc_role, output_path, num_shards)
         server_hostnames = self.get_server_hostnames(pc_role, server_ips, num_shards)

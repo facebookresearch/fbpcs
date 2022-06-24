@@ -26,7 +26,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.private_computation.service.utils import (
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
-    file_exists_async,
     get_pc_status_from_stage_state,
 )
 
@@ -102,10 +101,6 @@ class PIDShardStageService(PrivateComputationStageService):
         input_path = pc_instance.input_path
         output_base_path = pc_instance.pid_stage_output_data_path
         pc_role = pc_instance.role
-        # make sure the input file is on the storage service before proceed
-        if not await file_exists_async(self._storage_svc, input_path):
-            raise ValueError("Input file for PIDShardStageService are missing")
-
         sharding_binary_service = ShardingService()
         # generate the list of command args for publisher or partner
         binary_name = ShardingService.get_binary_name(ShardType.HASHED_FOR_PID)
