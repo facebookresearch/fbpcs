@@ -98,6 +98,10 @@ class InputData {
     return groupIds_;
   }
 
+  const std::vector<uint32_t>& getBreakdownIds() const {
+    return breakdownIds_;
+  }
+
   int64_t getNumGroups() const {
     return numGroups_;
   }
@@ -161,6 +165,7 @@ class InputData {
   std::vector<int64_t> purchaseValues_;
   std::vector<int64_t> purchaseValuesSquared_;
   std::vector<uint32_t> groupIds_;
+  std::vector<uint32_t> breakdownIds_;
   std::vector<std::vector<uint32_t>> opportunityTimestampArrays_;
   std::vector<std::vector<uint32_t>> purchaseTimestampArrays_;
   std::vector<std::vector<int64_t>> purchaseValueArrays_;

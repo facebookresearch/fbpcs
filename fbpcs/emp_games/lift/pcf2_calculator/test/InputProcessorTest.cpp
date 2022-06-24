@@ -96,6 +96,11 @@ TEST_F(InputProcessorTest, testNumPartnerCohorts) {
   EXPECT_EQ(partnerInputProcessor_.getNumPartnerCohorts(), 3);
 }
 
+TEST_F(InputProcessorTest, testNumBreakdowns) {
+  EXPECT_EQ(publisherInputProcessor_.getNumPublisherBreakdowns(), 2);
+  EXPECT_EQ(partnerInputProcessor_.getNumPublisherBreakdowns(), 2);
+}
+
 TEST_F(InputProcessorTest, testCohortIndexShares) {
   auto publisherShares = publisherInputProcessor_.getCohortIndexShares();
   auto partnerShares = partnerInputProcessor_.getCohortIndexShares();
