@@ -63,3 +63,11 @@ class PrivateComputationStageService(abc.ABC):
         pc_instance: PrivateComputationInstance,
     ) -> PrivateComputationInstanceStatus:
         ...
+
+    def stop_service(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> None:
+        """after stop_service been called, you need to make sure get_status will return failed status for post-check"""
+        # TODO: T124322832 make stop service as abstract method and enforce all stage service to implement
+        raise NotImplementedError
