@@ -10,7 +10,10 @@
 #include <vector>
 
 #include <fbpcf/io/FileManagerUtil.h>
+#include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileReader.h"
 
+#include "Constants.h"
 #include "Csv.h"
 
 namespace private_measurement::csv {
@@ -56,24 +59,22 @@ bool readCsv(
         void(const std::vector<std::string>&, const std::vector<std::string>&)>
         readLine,
     std::function<void(const std::vector<std::string>&)> processHeader) {
-  auto infilePtr = fbpcf::io::getInputStream(fileName);
-  auto& infile = infilePtr->get();
-  if (!infile.good()) {
-    return false;
-  }
-  std::string line;
+  auto inlineReader = std::make_unique<fbpcf::io::FileReader>(fileName);
+  auto inlineBufferedReader = std::make_unique<fbpcf::io::BufferedReader>(
+      std::move(inlineReader), common::kBufferedReaderChunkSize);
 
-  std::getline(infile, line);
+  std::string line = inlineBufferedReader->readLine();
   auto header = splitByComma(line, false);
   processHeader(header);
 
-  while (std::getline(infile, line)) {
+  while (!inlineBufferedReader->eof()) {
     // Split on commas, but if it looks like we're reading an array
     // like `[1, 2, 3]`, take the whole array
+    line = inlineBufferedReader->readLine();
     auto parts = splitByComma(line, true);
     readLine(header, parts);
   }
-
+  inlineBufferedReader->close();
   return true;
 }
 
