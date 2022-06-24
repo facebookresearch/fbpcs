@@ -31,9 +31,10 @@
 
 namespace pid::combiner {
 void attributionIdSpineFileCombiner(
-    std::istream& dataFile,
-    std::istream& spineIdFile,
-    std::ostream& outFile) {
+    std::shared_ptr<fbpcf::io::BufferedReader> dataFile,
+    std::shared_ptr<fbpcf::io::BufferedReader> spineIdFile,
+    std::ostream& outFile,
+    std::string spineIdFilePath) {
   XLOG(INFO) << "Started.";
   const int32_t kPaddingSize = FLAGS_padding_size;
   std::vector<std::string> publisherCols = {"ad_id", "timestamp", "is_click"};
@@ -45,13 +46,10 @@ void attributionIdSpineFileCombiner(
       "conversion_metadata", "conversion_target_id", "conversion_action_type"};
 
   // Inspect the headers and verify if this is the publisher or partner dataset
-  std::string headerLine;
-  getline(dataFile, headerLine);
+  std::string headerLine = dataFile->readLine();
   boost::algorithm::trim_if(headerLine, boost::is_any_of("\r"));
   std::vector<std::string> header;
   folly::split(",", headerLine, header);
-  dataFile.clear();
-  dataFile.seekg(0);
 
   bool isPublisherDataset = verifyHeaderContainsCols(header, publisherCols);
   bool isPartnerDataset = verifyHeaderContainsCols(header, partnerCols);
@@ -99,7 +97,13 @@ void attributionIdSpineFileCombiner(
   std::vector<int32_t> colPaddingSize(aggregatedCols.size(), kPaddingSize);
 
   std::stringstream idSwapOutFile;
-  idSwapMultiKey(dataFile, spineIdFile, idSwapOutFile, FLAGS_max_id_column_cnt);
+  idSwapMultiKey(
+      std::move(dataFile),
+      std::move(spineIdFile),
+      idSwapOutFile,
+      FLAGS_max_id_column_cnt,
+      headerLine,
+      spineIdFilePath);
 
   std::stringstream groupByOutFile;
   std::stringstream groupByUnsortedOutFile;

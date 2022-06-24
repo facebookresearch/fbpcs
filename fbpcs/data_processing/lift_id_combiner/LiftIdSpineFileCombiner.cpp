@@ -35,14 +35,18 @@
 #include "../id_combiner/SortIntegralValues.h"
 #include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcf/io/IInputStream.h"
+#include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileReader.h"
 #include "fbpcs/data_processing/lift_id_combiner/LiftIdSpineCombinerOptions.h"
 
 namespace pid {
 void LiftIdSpineFileCombiner::combineFile() {
-  auto dataInStreamPtr = fbpcf::io::getInputStream(dataPath_);
-  auto spineInStreamPtr = fbpcf::io::getInputStream(spinePath_);
-  auto& dataInStream = dataInStreamPtr->get();
-  auto& spineInStream = spineInStreamPtr->get();
+  auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataPath_);
+  auto spineReader = std::make_unique<fbpcf::io::FileReader>(spinePath_);
+  auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(dataReader), kBufferedReaderChunkSize);
+  auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), kBufferedReaderChunkSize);
 
   // Get a random ID to avoid potential name collisions if multiple
   // runs at the same time point to the same input file
@@ -62,16 +66,11 @@ void LiftIdSpineFileCombiner::combineFile() {
   // TODO T86923630: Uncomment this once data validation supports hashed ids
   // Temporary workaround because it breaks on non-int id_ column
   // pid::combiner::validateCsvData(dataInStream);
-  dataInStream.clear();
-  dataInStream.seekg(0);
 
   // Inspect the headers and verify if this is the publisher or partner dataset
-  std::string headerLine;
-  getline(dataInStream, headerLine);
+  std::string headerLine = bufferedDataReader->readLine();
   std::vector<std::string> header;
   folly::split(",", headerLine, header);
-  dataInStream.clear();
-  dataInStream.seekg(0);
 
   bool isPublisherDataset =
       combiner::verifyHeaderContainsCols(header, requiredPublisherCols);
@@ -85,7 +84,14 @@ void LiftIdSpineFileCombiner::combineFile() {
   std::stringstream idSwapOutFile;
   std::stringstream idMappedOutFile;
   pid::combiner::idSwapMultiKey(
-      dataInStream, spineInStream, idSwapOutFile, FLAGS_max_id_column_cnt);
+      std::move(bufferedDataReader),
+      std::move(bufferedSpineReader),
+      idSwapOutFile,
+      FLAGS_max_id_column_cnt,
+      headerLine,
+      spinePath_);
+  bufferedDataReader->close();
+  bufferedSpineReader->close();
 
   std::string idSwapOutFileHeaderLine;
   getline(idSwapOutFile, idSwapOutFileHeaderLine);

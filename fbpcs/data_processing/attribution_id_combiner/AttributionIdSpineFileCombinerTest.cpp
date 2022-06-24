@@ -15,7 +15,9 @@
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
 
+#include <folly/Random.h>
 #include "AttributionIdSpineCombinerOptions.h"
+#include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
 
 using namespace ::pid::combiner;
 
@@ -46,15 +48,42 @@ class AttributionIdSpineFileCombinerTest : public testing::Test {
       std::vector<std::string>& dataContent,
       std::vector<std::string>& spineIdContent,
       std::vector<std::string>& expectedOutput) {
-    vectorStringToStream(dataContent, dataStream_);
-    vectorStringToStream(spineIdContent, spineIdStream_);
-    attributionIdSpineFileCombiner(dataStream_, spineIdStream_, outputStream_);
+    auto randStart = folly::Random::secureRand64();
+    std::string dataContentPath =
+        "/tmp/AttributionIdSpineFileCombinerTestDataContent" +
+        std::to_string(randStart);
+    std::string spineIdContentPath =
+        "/tmp/AttributionIdSpineFileCombinerTestSpineIdContent" +
+        std::to_string(randStart);
+    /*
+     * This chunk size has to be large enough that we don't make
+     * unnecessary trips to cloud storage but small enough that
+     * we don't cause OOM issues. This chunk size was chosen based
+     * on the size of our containers as well as the expected size
+     * of our files to fit the aforementioned constraints.
+     */
+    constexpr size_t kBufferedReaderChunkSize = 1073741824; // 2^30
+    data_processing::test_utils::writeVecToFile(dataContent, dataContentPath);
+    data_processing::test_utils::writeVecToFile(
+        spineIdContent, spineIdContentPath);
+    auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataContentPath);
+    auto spineReader =
+        std::make_unique<fbpcf::io::FileReader>(spineIdContentPath);
+    auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
+        std::move(dataReader), kBufferedReaderChunkSize);
+    auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
+        std::move(spineReader), kBufferedReaderChunkSize);
+    attributionIdSpineFileCombiner(
+        std::move(bufferedDataReader),
+        std::move(bufferedSpineReader),
+        outputStream_,
+        spineIdContentPath);
+    bufferedDataReader->close();
+    bufferedSpineReader->close();
     validateOutputFile(expectedOutput);
   }
 
  protected:
-  std::stringstream dataStream_;
-  std::stringstream spineIdStream_;
   std::stringstream outputStream_;
 };
 
