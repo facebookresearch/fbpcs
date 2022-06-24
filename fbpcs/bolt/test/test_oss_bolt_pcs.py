@@ -28,12 +28,14 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_PID_PROTOCOL,
+    NUM_NEW_SHARDS_PER_FILE,
+)
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
 from fbpcs.private_computation.service.private_computation import (
-    DEFAULT_PID_PROTOCOL,
-    NUM_NEW_SHARDS_PER_FILE,
     PrivateComputationService,
 )
 

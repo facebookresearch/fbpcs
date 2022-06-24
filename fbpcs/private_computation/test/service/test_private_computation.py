@@ -37,7 +37,13 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     UnionedPCInstance,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
-from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_K_ANONYMITY_THRESHOLD_PA,
+    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+    DEFAULT_LOG_COST_TO_S3,
+    DEFAULT_PID_PROTOCOL,
+    NUM_NEW_SHARDS_PER_FILE,
+)
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
@@ -47,10 +53,6 @@ from fbpcs.private_computation.service.pcf2_attribution_stage_service import (
 )
 from fbpcs.private_computation.service.pid_stage_service import PIDStageService
 from fbpcs.private_computation.service.private_computation import (
-    DEFAULT_K_ANONYMITY_THRESHOLD_PA,
-    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
-    DEFAULT_PID_PROTOCOL,
-    NUM_NEW_SHARDS_PER_FILE,
     PrivateComputationService,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
