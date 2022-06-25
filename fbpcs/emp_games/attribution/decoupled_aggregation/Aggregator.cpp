@@ -60,7 +60,7 @@ class MeasurementAggregator : public Aggregator {
     validOriginalAdIds_ = validAdIds;
     for (uint16_t compressedAdId = 1; compressedAdId <= numValidAdIds;
          compressedAdId++) {
-      _adIdToMetrics.push_back(std::make_pair(
+      adIdToMetrics_.push_back(std::make_pair(
           emp::Integer{INT_SIZE_16, compressedAdId, emp::PUBLIC},
           PrivateConvMetrics{}));
     }
@@ -114,7 +114,7 @@ class MeasurementAggregator : public Aggregator {
         const auto& conversion =
             touchpointConversionResult.measurementConversionMetadata;
 
-        for (auto& [adId, metrics] : _adIdToMetrics) {
+        for (auto& [adId, metrics] : adIdToMetrics_) {
           const emp::Integer zero{INT_SIZE_32, 0, emp::PUBLIC};
           const emp::Integer one{INT_SIZE_32, 1, emp::PUBLIC};
 
@@ -180,10 +180,10 @@ class MeasurementAggregator : public Aggregator {
 
     // Mapping the sorted original adIds with the compressed Ids : 1 to
     // num_of_ad_ids.
-    for (auto i = 0u; i < validOriginalAdIds_.size(); i++) {
+    for (auto i = 0U; i < validOriginalAdIds_.size(); i++) {
       compressedAdIdToAdIdMap.insert({i + 1, validOriginalAdIds_.at(i)});
     }
-    for (auto& [adId, metrics] : _adIdToMetrics) {
+    for (auto& [adId, metrics] : adIdToMetrics_) {
       const auto compressedAdId =
           static_cast<uint16_t>(adId.reveal<uint32_t>());
       const auto rAdId = compressedAdIdToAdIdMap.at(compressedAdId);
@@ -196,7 +196,7 @@ class MeasurementAggregator : public Aggregator {
   }
 
  private:
-  PrivateConvMap _adIdToMetrics;
+  PrivateConvMap adIdToMetrics_;
 };
 } // namespace
 

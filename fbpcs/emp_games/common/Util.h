@@ -19,7 +19,7 @@ namespace common {
 
 // utility method used for parsing string information to vector of type T.
 template <typename T>
-static const std::vector<T> getInnerArray(std::string& str) {
+static const std::vector<T> getInnerArray(const std::string& str) {
   // Strip the brackets [] before splitting into individual timestamp values
   auto innerString = str;
   innerString.erase(

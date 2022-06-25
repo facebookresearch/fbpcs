@@ -56,9 +56,9 @@ struct PrivateConversion {
 
 // Used for parsing conversions from input CSV files
 struct ParsedConversion {
-  uint64_t ts;
-  uint64_t targetId;
-  uint64_t actionType;
+  uint64_t ts = 0U;
+  uint64_t targetId = 0U;
+  uint64_t actionType = 0U;
 
   bool operator<(const ParsedConversion& conv) const {
     return (ts < conv.ts);
