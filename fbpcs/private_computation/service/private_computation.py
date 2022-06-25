@@ -287,6 +287,12 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         """Fetches the next eligible stage in the instance's stage flow and runs it"""
         pc_instance = self.get_instance(instance_id)
+        if pc_instance.is_stage_flow_completed():
+            self.logger.warning(
+                f"Instance {instance_id} stage flow completed. (status: {pc_instance.status}). Ignored"
+            )
+            return pc_instance
+
         next_stage = pc_instance.get_next_runnable_stage()
         if not next_stage:
             # TODO(T106517341): Raise a custom exception instead of something generic
