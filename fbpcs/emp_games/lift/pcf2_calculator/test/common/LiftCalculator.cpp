@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
@@ -45,7 +46,8 @@ std::tuple<uint64_t, bool> LiftCalculator::parseUint64OrDie(
     std::istringstream iss(inParts.at(colNameToIndex.at(column)));
     iss >> res;
     if (iss.fail()) {
-      LOG(FATAL) << "Failed to parse '" << iss.str() << "' to uint64_t";
+      LOG(ERROR) << "Failed to parse '" << iss.str() << "' to uint64_t";
+      throw std::runtime_error("Parse error");
     } else {
       return {res, true};
     }
@@ -73,9 +75,9 @@ GroupedLiftMetrics LiftCalculator::compute(
   std::string linePublisher;
   std::string linePartner;
 
-  GroupedLiftMetrics glm(numCohorts_, numPublisherBreakdown_);
+  GroupedLiftMetrics groupedLiftMetrics(numCohorts_, numPublisherBreakdown_);
 
-  glm.reset();
+  groupedLiftMetrics.reset();
 
   uint64_t parsedVal;
   bool parseStatus;
@@ -89,7 +91,8 @@ GroupedLiftMetrics LiftCalculator::compute(
         private_measurement::csv::splitByComma(linePartner, true);
 
     if (partsPublisher.empty()) {
-      LOG(FATAL) << "Empty publisher line";
+      LOG(ERROR) << "Empty publisher line";
+      throw std::runtime_error("Empty publisher lines");
     }
 
     // Opportunity is actually an optional column
@@ -126,7 +129,8 @@ GroupedLiftMetrics LiftCalculator::compute(
           << " breakdownId has to be less than numPublisherBreakdown, check constructor of LiftCalculator.";
 
     if (partsPartner.empty()) {
-      LOG(FATAL) << "Empty partner line";
+      LOG(ERROR) << "Empty partner line";
+      throw std::runtime_error("Empty partner line");
     }
     eventTimestamps = parseArray<uint64_t>(
         partsPartner.at(colNameToIndex.at("event_timestamps")));
@@ -138,8 +142,9 @@ GroupedLiftMetrics LiftCalculator::compute(
       values = parseArray<int64_t>(partsPartner.at(valuesIdx));
 
       if (eventTimestamps.size() != values.size()) {
-        LOG(FATAL) << "Size of event_timestamps (" << eventTimestamps.size()
+        LOG(ERROR) << "Size of event_timestamps (" << eventTimestamps.size()
                    << ") and values (" << values.size() << ") are inconsistent";
+        throw std::runtime_error("Inconsistent size error");
       }
     }
     std::tie(parsedVal, parseStatus) =
@@ -157,7 +162,7 @@ GroupedLiftMetrics LiftCalculator::compute(
       bool countedMatchAlready = false;
       if (testFlag) {
         updateTestMetrics(
-            glm,
+            groupedLiftMetrics,
             opportunityTimestamp,
             eventTimestamps,
             cohortId,
@@ -168,7 +173,7 @@ GroupedLiftMetrics LiftCalculator::compute(
             values);
       } else {
         updateControlMetrics(
-            glm,
+            groupedLiftMetrics,
             opportunityTimestamp,
             eventTimestamps,
             cohortId,
@@ -180,22 +185,23 @@ GroupedLiftMetrics LiftCalculator::compute(
     }
   }
 
-  return glm;
+  return groupedLiftMetrics;
 }
 
 bool LiftCalculator::checkAndUpdateControlMatchCount(
-    GroupedLiftMetrics& glm,
+    GroupedLiftMetrics& groupedLiftMetrics,
     uint64_t opportunityTimestamp,
     uint64_t eventTimestamp,
     bool countedMatchAlready,
     uint8_t cohortId,
     uint8_t breakdownId) const {
   if (opportunityTimestamp > 0 && eventTimestamp > 0 && !countedMatchAlready) {
-    ++glm.metrics.controlMatchCount;
+    ++groupedLiftMetrics.metrics.controlMatchCount;
     if (numCohorts_ > 0)
-      ++glm.cohortMetrics[cohortId].controlMatchCount;
+      ++groupedLiftMetrics.cohortMetrics.at(cohortId).controlMatchCount;
     if (numPublisherBreakdown_ > 0)
-      ++glm.publisherBreakdowns[breakdownId].controlMatchCount;
+      ++groupedLiftMetrics.publisherBreakdowns.at(breakdownId)
+            .controlMatchCount;
 
     return true;
   }
@@ -203,18 +209,18 @@ bool LiftCalculator::checkAndUpdateControlMatchCount(
 }
 
 bool LiftCalculator::checkAndUpdateTestMatchCount(
-    GroupedLiftMetrics& glm,
+    GroupedLiftMetrics& groupedLiftMetrics,
     uint64_t opportunityTimestamp,
     uint64_t eventTimestamp,
     bool countedMatchAlready,
     uint8_t cohortId,
     uint8_t breakdownId) const {
   if (opportunityTimestamp > 0 && eventTimestamp > 0 && !countedMatchAlready) {
-    ++glm.metrics.testMatchCount;
+    ++groupedLiftMetrics.metrics.testMatchCount;
     if (numCohorts_ > 0)
-      ++glm.cohortMetrics[cohortId].testMatchCount;
+      ++groupedLiftMetrics.cohortMetrics.at(cohortId).testMatchCount;
     if (numPublisherBreakdown_ > 0)
-      ++glm.publisherBreakdowns[breakdownId].testMatchCount;
+      ++groupedLiftMetrics.publisherBreakdowns.at(breakdownId).testMatchCount;
 
     return true;
   }
@@ -222,7 +228,7 @@ bool LiftCalculator::checkAndUpdateTestMatchCount(
 }
 
 bool LiftCalculator::checkAndUpdateControlConversions(
-    GroupedLiftMetrics& glm,
+    GroupedLiftMetrics& groupedLiftMetrics,
     uint64_t opportunityTimestamp,
     uint64_t eventTimestamp,
     int32_t tsOffset,
@@ -232,18 +238,20 @@ bool LiftCalculator::checkAndUpdateControlConversions(
   if (opportunityTimestamp < eventTimestamp + tsOffset) {
     // Only record the first time the user has a valid conversion
     if (!converted) {
-      ++glm.metrics.controlConverters;
+      ++groupedLiftMetrics.metrics.controlConverters;
       if (numCohorts_ > 0)
-        ++glm.cohortMetrics[cohortId].controlConverters;
+        ++groupedLiftMetrics.cohortMetrics.at(cohortId).controlConverters;
       if (numPublisherBreakdown_ > 0)
-        ++glm.publisherBreakdowns[breakdownId].controlConverters;
+        ++groupedLiftMetrics.publisherBreakdowns.at(breakdownId)
+              .controlConverters;
     }
-    ++glm.metrics.controlConversions;
+    ++groupedLiftMetrics.metrics.controlConversions;
 
     if (numCohorts_ > 0)
-      ++glm.cohortMetrics[cohortId].controlConversions;
+      ++groupedLiftMetrics.cohortMetrics.at(cohortId).controlConversions;
     if (numPublisherBreakdown_ > 0)
-      ++glm.publisherBreakdowns[breakdownId].controlConversions;
+      ++groupedLiftMetrics.publisherBreakdowns.at(breakdownId)
+            .controlConversions;
 
     return true;
   }
@@ -251,7 +259,7 @@ bool LiftCalculator::checkAndUpdateControlConversions(
 }
 
 bool LiftCalculator::checkAndUpdateTestConversions(
-    GroupedLiftMetrics& glm,
+    GroupedLiftMetrics& groupedLiftMetrics,
     uint64_t opportunityTimestamp,
     uint64_t eventTimestamp,
     int32_t tsOffset,
@@ -261,18 +269,18 @@ bool LiftCalculator::checkAndUpdateTestConversions(
   if (opportunityTimestamp < eventTimestamp + tsOffset) {
     // Only record the first time the user has a valid conversion
     if (!converted) {
-      ++glm.metrics.testConverters;
+      ++groupedLiftMetrics.metrics.testConverters;
       if (numCohorts_ > 0)
-        ++glm.cohortMetrics[cohortId].testConverters;
+        ++groupedLiftMetrics.cohortMetrics.at(cohortId).testConverters;
       if (numPublisherBreakdown_ > 0)
-        ++glm.publisherBreakdowns[breakdownId].testConverters;
+        ++groupedLiftMetrics.publisherBreakdowns.at(breakdownId).testConverters;
     }
 
-    ++glm.metrics.testConversions;
+    ++groupedLiftMetrics.metrics.testConversions;
     if (numCohorts_ > 0)
-      ++glm.cohortMetrics[cohortId].testConversions;
+      ++groupedLiftMetrics.cohortMetrics.at(cohortId).testConversions;
     if (numPublisherBreakdown_ > 0)
-      ++glm.publisherBreakdowns[breakdownId].testConversions;
+      ++groupedLiftMetrics.publisherBreakdowns.at(breakdownId).testConversions;
 
     return true;
   }
@@ -280,7 +288,7 @@ bool LiftCalculator::checkAndUpdateTestConversions(
 }
 
 void LiftCalculator::updateControlMetrics(
-    GroupedLiftMetrics& glm,
+    GroupedLiftMetrics& groupedLiftMetrics,
     const uint64_t& opportunityTimestamp,
     const std::vector<uint64_t>& eventTimestamps,
     const uint8_t cohortId,
@@ -295,7 +303,7 @@ void LiftCalculator::updateControlMetrics(
 
   for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
     countedMatchAlready |= checkAndUpdateControlMatchCount(
-        glm,
+        groupedLiftMetrics,
         opportunityTimestamp,
         eventTimestamps.at(i),
         countedMatchAlready,
@@ -303,7 +311,7 @@ void LiftCalculator::updateControlMetrics(
         breakdownId);
 
     if (checkAndUpdateControlConversions(
-            glm,
+            groupedLiftMetrics,
             opportunityTimestamp,
             eventTimestamps.at(i),
             tsOffset,
@@ -321,25 +329,28 @@ void LiftCalculator::updateControlMetrics(
   }
   uint64_t controlValueSquared = value_subsum * value_subsum;
   uint64_t controlNumConvSquared = convCount * convCount;
-  glm.metrics.controlValue += value_subsum;
-  glm.metrics.controlValueSquared += controlValueSquared;
-  glm.metrics.controlNumConvSquared += controlNumConvSquared;
+  groupedLiftMetrics.metrics.controlValue += value_subsum;
+  groupedLiftMetrics.metrics.controlValueSquared += controlValueSquared;
+  groupedLiftMetrics.metrics.controlNumConvSquared += controlNumConvSquared;
   if (numCohorts_ > 0) {
-    glm.cohortMetrics[cohortId].controlValue += value_subsum;
-    glm.cohortMetrics[cohortId].controlValueSquared += controlValueSquared;
-    glm.cohortMetrics[cohortId].controlNumConvSquared += controlNumConvSquared;
+    groupedLiftMetrics.cohortMetrics.at(cohortId).controlValue += value_subsum;
+    groupedLiftMetrics.cohortMetrics.at(cohortId).controlValueSquared +=
+        controlValueSquared;
+    groupedLiftMetrics.cohortMetrics.at(cohortId).controlNumConvSquared +=
+        controlNumConvSquared;
   }
   if (numPublisherBreakdown_ > 0) {
-    glm.publisherBreakdowns[breakdownId].controlValue += value_subsum;
-    glm.publisherBreakdowns[breakdownId].controlValueSquared +=
-        controlValueSquared;
-    glm.publisherBreakdowns[breakdownId].controlNumConvSquared +=
-        controlNumConvSquared;
+    groupedLiftMetrics.publisherBreakdowns.at(breakdownId).controlValue +=
+        value_subsum;
+    groupedLiftMetrics.publisherBreakdowns.at(breakdownId)
+        .controlValueSquared += controlValueSquared;
+    groupedLiftMetrics.publisherBreakdowns.at(breakdownId)
+        .controlNumConvSquared += controlNumConvSquared;
   }
 }
 
 void LiftCalculator::updateTestMetrics(
-    GroupedLiftMetrics& glm,
+    GroupedLiftMetrics& groupedLiftMetrics,
     const uint64_t& opportunityTimestamp,
     const std::vector<uint64_t>& eventTimestamps,
     const uint8_t cohortId,
@@ -355,7 +366,7 @@ void LiftCalculator::updateTestMetrics(
 
   for (std::size_t i = 0; i < eventTimestamps.size(); ++i) {
     countedMatchAlready |= checkAndUpdateTestMatchCount(
-        glm,
+        groupedLiftMetrics,
         opportunityTimestamp,
         eventTimestamps.at(i),
         countedMatchAlready,
@@ -363,7 +374,7 @@ void LiftCalculator::updateTestMetrics(
         breakdownId);
 
     if (checkAndUpdateTestConversions(
-            glm,
+            groupedLiftMetrics,
             opportunityTimestamp,
             eventTimestamps.at(i),
             tsOffset,
@@ -373,11 +384,12 @@ void LiftCalculator::updateTestMetrics(
       converted = true;
       convCount++;
       if (numImpressions > 0) {
-        ++glm.metrics.reachedConversions;
+        ++groupedLiftMetrics.metrics.reachedConversions;
         if (numCohorts_ > 0)
-          ++glm.cohortMetrics[cohortId].reachedConversions;
+          ++groupedLiftMetrics.cohortMetrics.at(cohortId).reachedConversions;
         if (numPublisherBreakdown_ > 0)
-          ++glm.publisherBreakdowns[breakdownId].reachedConversions;
+          ++groupedLiftMetrics.publisherBreakdowns.at(breakdownId)
+                .reachedConversions;
       }
       if (valuesIdx != -1) {
         // Only add values if the values column exists
@@ -388,31 +400,37 @@ void LiftCalculator::updateTestMetrics(
   }
 
   if (numImpressions > 0) {
-    glm.metrics.reachedValue += value_subsum;
+    groupedLiftMetrics.metrics.reachedValue += value_subsum;
 
     if (numCohorts_ > 0)
-      glm.cohortMetrics[cohortId].reachedValue += value_subsum;
+      groupedLiftMetrics.cohortMetrics.at(cohortId).reachedValue +=
+          value_subsum;
     if (numPublisherBreakdown_ > 0)
-      glm.publisherBreakdowns[breakdownId].reachedValue += value_subsum;
+      groupedLiftMetrics.publisherBreakdowns.at(breakdownId).reachedValue +=
+          value_subsum;
   }
 
   uint64_t testValueSquared = value_subsum * value_subsum;
   uint64_t testNumConvSquared = convCount * convCount;
 
-  glm.metrics.testValue += value_subsum;
-  glm.metrics.testValueSquared += testValueSquared;
-  glm.metrics.testNumConvSquared += testNumConvSquared;
+  groupedLiftMetrics.metrics.testValue += value_subsum;
+  groupedLiftMetrics.metrics.testValueSquared += testValueSquared;
+  groupedLiftMetrics.metrics.testNumConvSquared += testNumConvSquared;
 
   if (numCohorts_ > 0) {
-    glm.cohortMetrics[cohortId].testValue += value_subsum;
-    glm.cohortMetrics[cohortId].testValueSquared += testValueSquared;
-    glm.cohortMetrics[cohortId].testNumConvSquared += testNumConvSquared;
+    groupedLiftMetrics.cohortMetrics.at(cohortId).testValue += value_subsum;
+    groupedLiftMetrics.cohortMetrics.at(cohortId).testValueSquared +=
+        testValueSquared;
+    groupedLiftMetrics.cohortMetrics.at(cohortId).testNumConvSquared +=
+        testNumConvSquared;
   }
 
   if (numPublisherBreakdown_ > 0) {
-    glm.publisherBreakdowns[breakdownId].testValue += value_subsum;
-    glm.publisherBreakdowns[breakdownId].testValueSquared += testValueSquared;
-    glm.publisherBreakdowns[breakdownId].testNumConvSquared +=
+    groupedLiftMetrics.publisherBreakdowns.at(breakdownId).testValue +=
+        value_subsum;
+    groupedLiftMetrics.publisherBreakdowns.at(breakdownId).testValueSquared +=
+        testValueSquared;
+    groupedLiftMetrics.publisherBreakdowns.at(breakdownId).testNumConvSquared +=
         testNumConvSquared;
   }
 }

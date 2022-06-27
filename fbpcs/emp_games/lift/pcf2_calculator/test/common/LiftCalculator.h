@@ -9,8 +9,10 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <gtest/gtest.h>
 #include <fstream>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -62,8 +64,9 @@ class LiftCalculator {
       std::istringstream iss{values[i]};
       iss >> parsed;
       if (iss.fail()) {
-        LOG(FATAL) << "Failed to parse '" << iss.str() << "' to "
+        LOG(ERROR) << "Failed to parse '" << iss.str() << "' to "
                    << typeid(T).name();
+        throw std::runtime_error("Parse Error");
       }
       out.push_back(parsed);
     }
@@ -110,7 +113,7 @@ class LiftCalculator {
       uint8_t breakdownId) const;
 
   /**
-   * Checks if the test event occurred after opportunity + tsOffset  time and if
+   * Checks if the test event occurred after opportunity time and if
    * was attributed already increments match count and returns true.
    */
   bool checkAndUpdateTestMatchCount(
@@ -158,5 +161,9 @@ class LiftCalculator {
 
   std::vector<uint64_t> getAdjustedTimesEpochOffset(
       const std::vector<uint64_t>& timestamps) const;
+
+  friend class LiftCalculatorLocalTestFixture;
+  FRIEND_TEST(LiftCalculatorLocalTestFixture, parseTest);
+  FRIEND_TEST(LiftCalculatorLocalTestFixture, PrivateMethods);
 };
 } // namespace private_lift
