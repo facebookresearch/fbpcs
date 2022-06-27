@@ -294,6 +294,9 @@ class PrivateComputationInstance(InstanceBase):
         """
         return self.stage_flow.get_next_runnable_stage_from_status(self.status)
 
+    def is_stage_flow_completed(self) -> bool:
+        return self.status is self.stage_flow.get_last_stage().completed_status
+
     def update_status(
         self, new_status: PrivateComputationInstanceStatus, logger: Logger
     ) -> None:
@@ -304,7 +307,7 @@ class PrivateComputationInstance(InstanceBase):
             logger.info(
                 f"Updating status of {self.instance_id} from {old_status} to {self.status} at time {self.status_update_ts}"
             )
-        if self.status is self.stage_flow.get_last_stage().completed_status:
+        if self.is_stage_flow_completed():
             self.end_ts = int(time.time())
 
     @property

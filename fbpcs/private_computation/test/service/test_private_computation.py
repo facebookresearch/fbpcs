@@ -39,6 +39,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.errors import (
+    PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
 )
 from fbpcs.private_computation.service.pcf2_attribution_stage_service import (
@@ -461,6 +462,40 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         instance._stage_flow_cls_name = flow.get_cls_name()
 
         self.assertEqual(None, instance.get_next_runnable_stage())
+
+    @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService.run_stage_async"
+    )
+    def test_run_next(self, mock_run_stage_async) -> None:
+        flow = PrivateComputationStageFlow
+        # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
+        status = flow.ID_MATCH.previous_stage.completed_status
+
+        instance = self.create_sample_instance(status)
+        instance._stage_flow_cls_name = flow.get_cls_name()
+
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=instance
+        )
+        self.private_computation_service.run_next(instance.instance_id)
+        mock_run_stage_async.assert_called_with(
+            instance.instance_id, flow.ID_MATCH, server_ips=None
+        )
+
+    @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService.run_stage_async"
+    )
+    def test_run_next_ignore_stage_flow_completed(self, mock_run_stage_async) -> None:
+        flow = PrivateComputationStageFlow
+        status = flow.get_last_stage().completed_status
+
+        instance = self.create_sample_instance(status)
+        instance._stage_flow_cls_name = flow.get_cls_name()
+
+        with self.assertRaises(PrivateComputationServiceInvalidStageError):
+            self.private_computation_service.run_next(instance.instance_id)
+
+        mock_run_stage_async.assert_not_called()
 
     def test_run_stage_correct_stage_order(
         self,
