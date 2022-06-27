@@ -6,6 +6,7 @@
 
 # pyre-strict
 
+import pathlib
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -299,9 +300,12 @@ class TestAwsDeploymentHelper(unittest.TestCase):
         test_policy = MagicMock()
         test_policy.cluster_name = "test_cluster_name"
 
-        test_data = self.aws_deployment_helper.read_json_file(
-            "test/test_aws_deployment_helper_config.json", test_policy
+        test_file = (
+            pathlib.Path(__file__).parent
+            / "test_resources"
+            / "test_aws_deployment_helper_config.json"
         )
+        test_data = self.aws_deployment_helper.read_json_file(test_file, test_policy)
         self.assertEqual(test_data["REGION"], self.aws_deployment_helper.region)
         self.assertEqual(test_data["CLUSTER_NAME"], test_policy.cluster_name)
 
