@@ -15,6 +15,7 @@ void CalculatorApp<schedulerId>::run() {
   // Run calculator game sequentially on numFiles files, starting from
   // startFileIndex
   auto scheduler = createScheduler();
+  auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
   CalculatorGame<schedulerId> game{
       party_, std::move(scheduler), std::move(communicationAgentFactory_)};
 
@@ -57,6 +58,7 @@ void CalculatorApp<schedulerId>::run() {
   schedulerStatistics_.freeGates = gateStatistics.second;
   schedulerStatistics_.sentNetwork = trafficStatistics.first;
   schedulerStatistics_.receivedNetwork = trafficStatistics.second;
+  schedulerStatistics_.details = metricsCollector->collectMetrics();
 };
 
 template <int schedulerId>
