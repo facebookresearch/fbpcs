@@ -7,6 +7,7 @@
 import logging
 from typing import Dict, List, Optional
 
+from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
@@ -21,6 +22,7 @@ from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
+from fbpcs.private_computation.service.retry_handler import RetryHandler
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
@@ -110,9 +112,13 @@ class PIDProtocolRunStage(PIDStage):
                     timeout=timeout,
                 )
 
-                containers = await self.onedocker_svc.wait_for_pending_containers(
-                    [container.instance_id for container in pending_containers]
-                )
+                with RetryHandler(
+                    ThrottlingError, logger=self.logger, backoff_seconds=30
+                ) as retry_handler:
+                    containers = await retry_handler.execute(
+                        self.onedocker_svc.wait_for_pending_containers,
+                        [container.instance_id for container in pending_containers],
+                    )
             except Exception as e:
                 status = PIDStageStatus.FAILED
                 await self.update_instance_status(
