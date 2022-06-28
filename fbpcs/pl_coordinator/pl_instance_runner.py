@@ -11,7 +11,6 @@ from time import sleep, time
 from typing import Any, Dict, List, Optional, Type
 
 from fbpcs.pl_coordinator.constants import (
-    CANCEL_STAGE_TIMEOUT,
     INSTANCE_SLA,
     MAX_NUM_INSTANCES,
     MAX_TRIES,
@@ -355,19 +354,18 @@ class PLInstanceRunner:
         self.wait_stage_complete(stage)
 
     def wait_stage_complete(self, stage: PrivateComputationBaseStageFlow) -> None:
-        start_status = stage.started_status
         complete_status = stage.completed_status
         fail_status = stage.failed_status
         timeout = stage.timeout
 
         start_time = time()
-        cancel_time = 0
         while time() < start_time + timeout:
             self.publisher.update_instance()
             self.partner.update_instance()
             self.logger.info(
                 f"Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
             )
+            # stages are completed
             if (
                 self.publisher.status is complete_status
                 and self.partner.status is complete_status
@@ -382,35 +380,34 @@ class PLInstanceRunner:
                     )
                 )
                 return
+
+            # stage fail, tear down partner-side service
             if (
                 self.publisher.status
                 in [fail_status, PrivateComputationInstanceStatus.TIMEOUT]
                 or self.partner.status is fail_status
             ):
-                if (
-                    self.publisher.status
-                    in [fail_status, PrivateComputationInstanceStatus.TIMEOUT]
-                    and self.partner.status is start_status
-                    and cancel_time <= CANCEL_STAGE_TIMEOUT
-                ):
-                    # wait 5 minutes for partner to become fail status on its own
-                    # if not, only perform 'cancel_stage' one time
-                    if cancel_time == CANCEL_STAGE_TIMEOUT:
-                        self.logger.error(f"Canceling partner stage {stage.name}.")
-                        self.partner.cancel_current_stage()
-                    else:
-                        self.logger.info(
-                            f"Waiting to cancel partner stage {stage.name}."
+                # trying to cancel partner stage only in joint stage (even it's fail status)
+                if stage.is_joint_stage:
+                    try:
+                        self.logger.error(
+                            f"Publisher status: {self.publisher.status}. Canceling partner stage {stage.name}."
                         )
-                    # only cancel once
-                    cancel_time += POLL_INTERVAL
-                else:
-                    raise PCInstanceCalculationException(
-                        f"Stage {stage.name} failed.",
-                        f"Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.",
-                        "Try running again",
-                    )
+                        self.partner.cancel_current_stage()
+                    except Exception as e:
+                        self.logger.error(
+                            f"Unable to cancal current stage {stage.name}. Error: type: {type(e)}, message: {e}."
+                        )
+
+                raise PCInstanceCalculationException(
+                    f"Stage {stage.name} failed.",
+                    f"Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.",
+                    "Try running again",
+                )
+
+            # keep polling
             sleep(POLL_INTERVAL)
+
         raise PCInstanceCalculationException(
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}.",
             "unknown",
