@@ -27,7 +27,9 @@ class DummyDataProcessorFactory final
 
   std::unique_ptr<IDataProcessor<schedulerId>> create() {
     return std::make_unique<DummyDataProcessor<schedulerId>>(
-        myId_, partnerId_, agentFactory_.create(partnerId_));
+        myId_,
+        partnerId_,
+        agentFactory_.create(partnerId_, "dummy_data_processor_traffic"));
   }
 
  private:
