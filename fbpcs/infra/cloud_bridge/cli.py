@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
+# pyre-strict
 
 
 import argparse
@@ -11,7 +14,7 @@ from fbpcs.infra.cloud_bridge.deployment_helper.aws.aws_deployment_helper_tool i
 )
 
 
-def main():
+def main() -> None:
     cli_parser = argparse.ArgumentParser()
 
     subparsers = cli_parser.add_subparsers(dest="action")
@@ -64,7 +67,9 @@ def main():
         action_to_perform()
 
 
-def aws_parser_arguments(aws_parser: argparse) -> argparse:
+def aws_parser_arguments(
+    aws_parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
     aws_parser.add_argument(
         "--access_key", type=str, required=False, help="Access key of the AWS account"
     )
@@ -80,7 +85,7 @@ def aws_parser_arguments(aws_parser: argparse) -> argparse:
     return aws_parser
 
 
-def aws_create_iam_user_parser_arguments(aws_parser: argparse):
+def aws_create_iam_user_parser_arguments(aws_parser: argparse.ArgumentParser) -> None:
     iam_user_command_group = aws_parser.add_argument_group(
         "iam_user", "Arguments to add IAM user"
     )
@@ -93,7 +98,7 @@ def aws_create_iam_user_parser_arguments(aws_parser: argparse):
     )
 
 
-def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
+def aws_create_iam_policy_parser_arguments(aws_parser: argparse.ArgumentParser) -> None:
     iam_policy_command_group = aws_parser.add_argument_group(
         "iam_policy", "Arguments to add IAM policy"
     )
@@ -137,7 +142,7 @@ def aws_create_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
 
-def aws_attach_iam_policy_parser_arguments(aws_parser: argparse):
+def aws_attach_iam_policy_parser_arguments(aws_parser: argparse.ArgumentParser) -> None:
     iam_policy_command_group = aws_parser.add_argument_group(
         "iam_policy_attach", "Arguments to attach IAM policy to the user"
     )
@@ -153,7 +158,7 @@ def aws_attach_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
 
-def aws_destroy_iam_user_parser_arguments(aws_parser: argparse):
+def aws_destroy_iam_user_parser_arguments(aws_parser: argparse.ArgumentParser) -> None:
     iam_user_command_group = aws_parser.add_argument_group(
         "iam_user", "Arguments to delete iam user"
     )
@@ -166,7 +171,9 @@ def aws_destroy_iam_user_parser_arguments(aws_parser: argparse):
     )
 
 
-def aws_destroy_iam_policy_parser_arguments(aws_parser: argparse):
+def aws_destroy_iam_policy_parser_arguments(
+    aws_parser: argparse.ArgumentParser,
+) -> None:
     iam_policy_command_group = aws_parser.add_argument_group(
         "iam_policy", "Arguments to add IAM policy"
     )
@@ -181,7 +188,7 @@ def aws_destroy_iam_policy_parser_arguments(aws_parser: argparse):
     )
 
 
-def aws_detach_iam_policy_parser_arguments(aws_parser: argparse):
+def aws_detach_iam_policy_parser_arguments(aws_parser: argparse.ArgumentParser) -> None:
     iam_policy_command_group = aws_parser.add_argument_group(
         "iam_policy_detach", "Arguments to detach IAM policy to the user"
     )
