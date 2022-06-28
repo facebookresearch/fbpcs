@@ -11,10 +11,12 @@ import logging
 from typing import Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+from fbpcs.private_computation.service.retry_handler import RetryHandler
 
 DEFAULT_WAIT_FOR_CONTAINER_POLL = 5
 
@@ -42,9 +44,13 @@ class RunBinaryBaseService:
             env_vars=env_vars,
         )
 
-        containers = await onedocker_svc.wait_for_pending_containers(
-            [container.instance_id for container in pending_containers]
-        )
+        with RetryHandler(
+            ThrottlingError, logger=logger, backoff_seconds=30
+        ) as retry_handler:
+            containers = await retry_handler.execute(
+                onedocker_svc.wait_for_pending_containers,
+                [container.instance_id for container in pending_containers],
+            )
 
         # Log the URL once... since the DataProcessingStage doesn't expose the
         # containers, we handle the logic directly in each stage like so.

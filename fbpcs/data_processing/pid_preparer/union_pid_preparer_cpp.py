@@ -16,10 +16,12 @@ import tempfile
 from typing import Dict, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
 from fbpcs.data_processing.pid_preparer.preparer import UnionPIDDataPreparerService
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+from fbpcs.private_computation.service.retry_handler import RetryHandler
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
@@ -159,11 +161,15 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 env_vars=env_vars,
             )
 
-            container = (
-                await onedocker_svc.wait_for_pending_containers(
-                    [container.instance_id for container in pending_containers]
-                )
-            )[0]
+            with RetryHandler(
+                ThrottlingError, logger=logger, backoff_seconds=30
+            ) as retry_handler:
+                container = (
+                    await retry_handler.execute(
+                        onedocker_svc.wait_for_pending_containers,
+                        [container.instance_id for container in pending_containers],
+                    )
+                )[0]
 
             # Busy wait until the container is finished
             if wait_for_container:
