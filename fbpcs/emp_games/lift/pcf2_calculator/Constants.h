@@ -13,7 +13,7 @@ namespace private_lift {
 
 const int kMaxConcurrency = 16;
 
-const size_t groupWidth = 6; // at most 32 cohorts
+const size_t groupWidth = 7; // at most 32 cohorts and 2 publisher breakdowns
 const size_t numConvSquaredWidth = 32;
 const size_t valueWidth = 32;
 const size_t valueSquaredWidth = 64;

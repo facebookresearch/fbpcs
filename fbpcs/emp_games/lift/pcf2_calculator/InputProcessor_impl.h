@@ -97,55 +97,89 @@ void InputProcessor<schedulerId>::privatelyShareGroupIdsStep() {
 
 template <int schedulerId>
 void InputProcessor<schedulerId>::privatelyShareIndexSharesStep() {
-  // We compute the metrics for both test/control populations and cohorts. To
-  // differentiate the cohort group ids for the test/control population, we set
-  // the test group ids as the original group ids, and the control group ids as
-  // the original group ids plus numPartnerCohorts_. If there are no partner
-  // cohorts, the original group ids are all zero, and we set the control group
-  // ids to be 1 to differentiate them from the test group ids.
-  std::vector<uint32_t> controlGroupIds;
+  // We compute the metrics for test/control populations, 0/1 publisher
+  // breakdowns, and partner cohorts. In order to compute the ORAM aggregation
+  // for these 3 different types of groups, we have to differentiate them from
+  // each other when assigning the group ids. There are up to
+  // 4 * numPartnerCohorts_ group ids in total, and we assign the first
+  // 2 * numPartnerCohorts_ group ids to the test population, and the second
+  // half to the control population. Within the test population, we assign the
+  // group ids 0 to numPartnerCohorts_ - 1 to breakdown id 0, and the group ids
+  // from numPartnerCohorts_ to 2 * numPartnerCohorts_ - 1 to breakdown id 1. We
+  // similarly assign the group ids for the control population.
+  std::vector<uint32_t> testBreakdown1GroupIds;
+  std::vector<uint32_t> controlBreakdown0GroupIds;
+  std::vector<uint32_t> controlBreakdown1GroupIds;
   if (numPartnerCohorts_ > 0) {
     for (auto groupId : inputData_.getGroupIds()) {
-      controlGroupIds.push_back(groupId + numPartnerCohorts_);
+      testBreakdown1GroupIds.push_back(groupId + numPartnerCohorts_);
+      controlBreakdown0GroupIds.push_back(groupId + 2 * numPartnerCohorts_);
+      controlBreakdown1GroupIds.push_back(groupId + 3 * numPartnerCohorts_);
     }
   }
-  // We set the padding value for the control group ids to be 1, so that if
-  // there are no cohorts, the control group ids are all 1.
-  auto secControlGroupIds = common::privatelyShareArrayWithPaddingFrom<
+
+  // We share the new group ids with padding values 1, 2 and 3, to account for
+  // the case where there are no cohorts.
+  auto secTestBreakdown1GroupIds = common::privatelyShareArrayWithPaddingFrom<
       common::PARTNER,
       uint32_t,
-      SecGroup<schedulerId>>(controlGroupIds, numRows_, 1);
+      SecGroup<schedulerId>>(testBreakdown1GroupIds, numRows_, 1);
+  auto secControlBreakdown0GroupIds =
+      common::privatelyShareArrayWithPaddingFrom<
+          common::PARTNER,
+          uint32_t,
+          SecGroup<schedulerId>>(
+          controlBreakdown0GroupIds,
+          numRows_,
+          numPublisherBreakdowns_ > 0 ? 2 : 1);
+  auto secControlBreakdown1GroupIds =
+      common::privatelyShareArrayWithPaddingFrom<
+          common::PARTNER,
+          uint32_t,
+          SecGroup<schedulerId>>(controlBreakdown1GroupIds, numRows_, 3);
+
   // We now set the group ids depending on whether each row is a test or
-  // control
-  auto groupIds = cohortGroupIds_.mux(controlPopulation_, secControlGroupIds);
-  indexShares_ = groupIds.extractIntShare().getBooleanShares();
+  // control, and whether the breakdown id is 0 or 1.
+  testGroupIds_ =
+      cohortGroupIds_.mux(breakdownGroupIds_, secTestBreakdown1GroupIds);
+  auto secControlGroupIds = secControlBreakdown0GroupIds.mux(
+      breakdownGroupIds_, secControlBreakdown1GroupIds);
+  auto secGroupIds = testGroupIds_.mux(controlPopulation_, secControlGroupIds);
+
+  // Generate index shares from group ids
+  indexShares_ = secGroupIds.extractIntShare().getBooleanShares();
   // Resize to width needed for the number of groups
-  size_t cohortWidth =
-      std::ceil(std::log2(std::max(uint32_t(2), 2 * numPartnerCohorts_)));
-  indexShares_.resize(cohortWidth);
+  size_t groupWidth = std::ceil(std::log2(numGroups_));
+  indexShares_.resize(groupWidth);
 }
 
 template <int schedulerId>
 void InputProcessor<schedulerId>::privatelyShareTestIndexSharesStep() {
   // We only compute the reach metrics for the test population, hence we also
-  // contruct cohort index shares for just the test population. To differentiate
-  // the cohort group ids for the test/control population, we set the test group
-  // ids as the original group ids, and the control group ids as
-  // numPartnerCohorts_ (or 1 if there are no cohorts).
-  std::vector<uint32_t> controlGroupIds(
-      numRows_, std::max(uint32_t(1), numPartnerCohorts_));
+  // contruct index shares for just the test population. Similarly to how we
+  // construct index shares in privatelyShareIndexSharesStep, we have to
+  // differentiate the publisher breakdowns and partner cohorts when assigning
+  // the group ids. There are now up to 2 * numPartnerCohorts_ + 1 group ids
+  // in total, and we assign the first numPartnerCohorts_ to breakdown id 0, the
+  // second numPartnerCohorts_ to breakdown id 1, and the last group id to the
+  // control population.
+  std::vector<uint32_t> controlGroupIds(numRows_, numTestGroups_ - 1);
+
+  // We share the new control group ids
   auto secControlGroupIds = common::privatelyShareArrayWithPaddingFrom<
       common::PARTNER,
       uint32_t,
-      SecGroup<schedulerId>>(controlGroupIds, numRows_, 1);
+      SecGroup<schedulerId>>(controlGroupIds, numRows_, numTestGroups_ - 1);
+
   // We now set the group ids depending on whether each row is a test or
   // control
-  auto groupIds = cohortGroupIds_.mux(controlPopulation_, secControlGroupIds);
-  testIndexShares_ = groupIds.extractIntShare().getBooleanShares();
+  auto secGroupIds = testGroupIds_.mux(controlPopulation_, secControlGroupIds);
+
+  // Generate index shares from group ids
+  testIndexShares_ = secGroupIds.extractIntShare().getBooleanShares();
   // Resize to width needed for the number of groups
-  size_t testCohortWidth =
-      std::ceil(std::log2(std::max(uint32_t(2), numPartnerCohorts_ + 1)));
-  testIndexShares_.resize(testCohortWidth);
+  size_t testGroupWidth = std::ceil(std::log2(numTestGroups_));
+  testIndexShares_.resize(testGroupWidth);
 }
 
 template <int schedulerId>
