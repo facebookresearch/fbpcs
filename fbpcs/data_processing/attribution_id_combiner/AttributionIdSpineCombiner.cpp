@@ -10,6 +10,7 @@
 #include <string>
 
 #include <gflags/gflags.h>
+#include <signal.h>
 
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/io/FileManagerUtil.h>
@@ -35,6 +36,8 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
 
   std::filesystem::path outputPath{FLAGS_output_path};
   std::filesystem::path tmpDirectory{FLAGS_tmp_directory};

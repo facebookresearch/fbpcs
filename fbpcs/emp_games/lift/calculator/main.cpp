@@ -9,6 +9,7 @@
 #include <cstdlib>
 
 #include <glog/logging.h>
+#include <signal.h>
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -83,6 +84,9 @@ using namespace private_lift;
 int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
+
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   std::vector<std::string> inputFilepaths;

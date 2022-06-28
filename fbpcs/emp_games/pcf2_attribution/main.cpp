@@ -6,6 +6,7 @@
  */
 
 #include <gflags/gflags.h>
+#include <signal.h>
 #include <string>
 
 #include "folly/Format.h"
@@ -27,6 +28,9 @@ int main(int argc, char* argv[]) {
 
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  signal(SIGPIPE, SIG_IGN);
+
   fbpcf::AwsSdk::aquire();
 
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner
