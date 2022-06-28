@@ -127,12 +127,13 @@ void Aggregator<schedulerId>::sumEvents() {
       indexShares_, valueSharesArray, numGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealCohortOutput(aggregationOutput);
-  metrics_.testEvents = std::get<0>(cohortOutput).at(0);
-  metrics_.controlEvents = std::get<0>(cohortOutput).at(1);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, false);
+  metrics_.testEvents = std::get<0>(populationOutput);
+  metrics_.controlEvents = std::get<1>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, false);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].testEvents = std::get<1>(cohortOutput).at(i);
-    cohortMetrics_[i].controlEvents = std::get<2>(cohortOutput).at(i);
+    cohortMetrics_[i].testEvents = std::get<0>(cohortOutput).at(i);
+    cohortMetrics_[i].controlEvents = std::get<1>(cohortOutput).at(i);
   }
 }
 
@@ -148,12 +149,13 @@ void Aggregator<schedulerId>::sumConverters() {
       indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealCohortOutput(aggregationOutput);
-  metrics_.testConverters = std::get<0>(cohortOutput).at(0);
-  metrics_.controlConverters = std::get<0>(cohortOutput).at(1);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, false);
+  metrics_.testConverters = std::get<0>(populationOutput);
+  metrics_.controlConverters = std::get<1>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, false);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].testConverters = std::get<1>(cohortOutput).at(i);
-    cohortMetrics_[i].controlConverters = std::get<2>(cohortOutput).at(i);
+    cohortMetrics_[i].testConverters = std::get<0>(cohortOutput).at(i);
+    cohortMetrics_[i].controlConverters = std::get<1>(cohortOutput).at(i);
   }
 }
 
@@ -168,12 +170,13 @@ void Aggregator<schedulerId>::sumNumConvSquared() {
       indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealCohortOutput(aggregationOutput);
-  metrics_.testNumConvSquared = std::get<0>(cohortOutput).at(0);
-  metrics_.controlNumConvSquared = std::get<0>(cohortOutput).at(1);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, false);
+  metrics_.testNumConvSquared = std::get<0>(populationOutput);
+  metrics_.controlNumConvSquared = std::get<1>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, false);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].testNumConvSquared = std::get<1>(cohortOutput).at(i);
-    cohortMetrics_[i].controlNumConvSquared = std::get<2>(cohortOutput).at(i);
+    cohortMetrics_[i].testNumConvSquared = std::get<0>(cohortOutput).at(i);
+    cohortMetrics_[i].controlNumConvSquared = std::get<1>(cohortOutput).at(i);
   }
 }
 
@@ -189,12 +192,13 @@ void Aggregator<schedulerId>::sumMatch() {
       indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealCohortOutput(aggregationOutput);
-  metrics_.testMatchCount = std::get<0>(cohortOutput).at(0);
-  metrics_.controlMatchCount = std::get<0>(cohortOutput).at(1);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, false);
+  metrics_.testMatchCount = std::get<0>(populationOutput);
+  metrics_.controlMatchCount = std::get<1>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, false);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].testMatchCount = std::get<1>(cohortOutput).at(i);
-    cohortMetrics_[i].controlMatchCount = std::get<2>(cohortOutput).at(i);
+    cohortMetrics_[i].testMatchCount = std::get<0>(cohortOutput).at(i);
+    cohortMetrics_[i].controlMatchCount = std::get<1>(cohortOutput).at(i);
   }
 }
 
@@ -214,10 +218,11 @@ void Aggregator<schedulerId>::sumReachedConversions() {
       testIndexShares_, valueSharesArray, numTestGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealTestCohortOutput(aggregationOutput);
-  metrics_.reachedConversions = std::get<0>(cohortOutput);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, true);
+  metrics_.reachedConversions = std::get<0>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, true);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].reachedConversions = std::get<1>(cohortOutput).at(i);
+    cohortMetrics_[i].reachedConversions = std::get<0>(cohortOutput).at(i);
   }
 }
 
@@ -235,12 +240,13 @@ void Aggregator<schedulerId>::sumValues() {
       indexShares_, valueSharesArray, numGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealCohortOutput(aggregationOutput);
-  metrics_.testValue = std::get<0>(cohortOutput).at(0);
-  metrics_.controlValue = std::get<0>(cohortOutput).at(1);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, false);
+  metrics_.testValue = std::get<0>(populationOutput);
+  metrics_.controlValue = std::get<1>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, false);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].testValue = std::get<1>(cohortOutput).at(i);
-    cohortMetrics_[i].controlValue = std::get<2>(cohortOutput).at(i);
+    cohortMetrics_[i].testValue = std::get<0>(cohortOutput).at(i);
+    cohortMetrics_[i].controlValue = std::get<1>(cohortOutput).at(i);
   }
 }
 
@@ -258,10 +264,11 @@ void Aggregator<schedulerId>::sumReachedValues() {
       testIndexShares_, valueSharesArray, numTestGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealTestCohortOutput(aggregationOutput);
-  metrics_.reachedValue = std::get<0>(cohortOutput);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, true);
+  metrics_.reachedValue = std::get<0>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, true);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].reachedValue = std::get<1>(cohortOutput).at(i);
+    cohortMetrics_[i].reachedValue = std::get<0>(cohortOutput).at(i);
   }
 }
 
@@ -276,12 +283,13 @@ void Aggregator<schedulerId>::sumValueSquared() {
       indexShares_, valueShares, numGroups_, std::move(oram));
 
   // Extract metrics
-  auto cohortOutput = revealCohortOutput(aggregationOutput);
-  metrics_.testValueSquared = std::get<0>(cohortOutput).at(0);
-  metrics_.controlValueSquared = std::get<0>(cohortOutput).at(1);
+  auto populationOutput = revealPopulationOutput(aggregationOutput, false);
+  metrics_.testValueSquared = std::get<0>(populationOutput);
+  metrics_.controlValueSquared = std::get<1>(populationOutput);
+  auto cohortOutput = revealCohortOutput(aggregationOutput, false);
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    cohortMetrics_[i].testValueSquared = std::get<1>(cohortOutput).at(i);
-    cohortMetrics_[i].controlValueSquared = std::get<2>(cohortOutput).at(i);
+    cohortMetrics_[i].testValueSquared = std::get<0>(cohortOutput).at(i);
+    cohortMetrics_[i].controlValueSquared = std::get<1>(cohortOutput).at(i);
   }
 }
 
@@ -319,23 +327,33 @@ Aggregator<schedulerId>::aggregate(
 
 template <int schedulerId>
 template <bool isSigned, int8_t width>
-std::tuple<
-    std::vector<NativeIntp<isSigned, width>>,
+std::pair<
     std::vector<NativeIntp<isSigned, width>>,
     std::vector<NativeIntp<isSigned, width>>>
 Aggregator<schedulerId>::revealCohortOutput(
-    std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput) const {
+    std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput,
+    bool testOnly) const {
   std::vector<NativeIntp<isSigned, width>> testCohortOutput;
   std::vector<NativeIntp<isSigned, width>> controlCohortOutput;
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     // Extract cohort metrics
     testCohortOutput.push_back(
         aggregationOutput.at(i).extractIntShare().getValue());
-    controlCohortOutput.push_back(aggregationOutput.at(i + numPartnerCohorts_)
-                                      .extractIntShare()
-                                      .getValue());
+    if (!testOnly) {
+      controlCohortOutput.push_back(aggregationOutput.at(i + numPartnerCohorts_)
+                                        .extractIntShare()
+                                        .getValue());
+    }
   }
+  return std::make_pair(testCohortOutput, controlCohortOutput);
+}
 
+template <int schedulerId>
+template <bool isSigned, int8_t width>
+std::pair<NativeIntp<isSigned, width>, NativeIntp<isSigned, width>>
+Aggregator<schedulerId>::revealPopulationOutput(
+    std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput,
+    bool testOnly) const {
   // Initialize test/control metrics for the case where there are no partner
   // cohorts
   auto test = aggregationOutput.at(0);
@@ -345,37 +363,16 @@ Aggregator<schedulerId>::revealCohortOutput(
     // Compute test/control metrics by summing up cohort metrics for each
     // population
     test = test + aggregationOutput.at(i);
-    control = control + aggregationOutput.at(i + numPartnerCohorts_);
+    if (!testOnly) {
+      control = control + aggregationOutput.at(i + numPartnerCohorts_);
+    }
   }
-  std::vector<NativeIntp<isSigned, width>> testControlOutput;
-  testControlOutput.push_back(test.extractIntShare().getValue());
-  testControlOutput.push_back(control.extractIntShare().getValue());
-  return std::make_tuple(
-      testControlOutput, testCohortOutput, controlCohortOutput);
-}
-
-template <int schedulerId>
-template <bool isSigned, int8_t width>
-std::tuple<
-    NativeIntp<isSigned, width>,
-    std::vector<NativeIntp<isSigned, width>>>
-Aggregator<schedulerId>::revealTestCohortOutput(
-    std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput) const {
-  // Extract metrics
-  std::vector<NativeIntp<isSigned, width>> testCohortOutput;
-  for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    testCohortOutput.push_back(
-        aggregationOutput.at(i).extractIntShare().getValue());
+  auto testOutput = test.extractIntShare().getValue();
+  NativeIntp<isSigned, width> controlOutput;
+  if (!testOnly) {
+    controlOutput = control.extractIntShare().getValue();
   }
-
-  // Initialize test metrics for the case where there are no partner cohorts
-  auto test = aggregationOutput.at(0);
-  for (size_t i = 1; i < numPartnerCohorts_; ++i) {
-    // Compute test metrics by summing by cohort metrics
-    test = test + aggregationOutput.at(i);
-  }
-
-  return std::make_tuple(test.extractIntShare().getValue(), testCohortOutput);
+  return std::make_pair(testOutput, controlOutput);
 }
 
 } // namespace private_lift
