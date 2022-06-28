@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import copy
 import itertools
 from collections import defaultdict
 from typing import List
@@ -79,8 +81,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             multikey_enabled=multikey_enabled,
         )
         containers = [
-            await self.create_container_instance()
-            for _ in range(self.test_num_containers)
+            self.create_container_instance(i) for i in range(self.test_num_containers)
         ]
         self.mock_onedocker_svc.start_containers = MagicMock(return_value=containers)
         self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
@@ -120,14 +121,74 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             "Appended StageStageInstance is not as expected",
         )
 
+    def test_stop_service(self):
+        num_containers = 2
+        pc_instance = self.create_sample_pc_instance(
+            status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED
+        )
+        subset_data = [
+            ("PID_PREPARE", False),
+            ("ID_MATCH", False),
+            ("ID_MATCH", True),
+        ]
+        for (test_state_name, stopped_containers) in subset_data:
+            with self.subTest(
+                test_state_name=test_state_name,
+                stopped_containers=stopped_containers,
+            ):
+                self.mock_onedocker_svc.reset_mock()
+                self.mock_storage_svc.reset_mock()
+                # prepare for stop_service()
+                input_pc_instance = copy.deepcopy(pc_instance)
+                stage_svc = PIDRunProtocolStageService(
+                    storage_svc=self.mock_storage_svc,
+                    onedocker_svc=self.mock_onedocker_svc,
+                    onedocker_binary_config_map=self.onedocker_binary_config_map,
+                )
+
+                containers = [
+                    self.create_container_instance(i) for i in range(num_containers)
+                ]
+                stage_stage = StageStateInstance(
+                    pc_instance.instance_id,
+                    test_state_name,
+                    containers=containers,
+                )
+                input_pc_instance.instances.append(stage_stage)
+                if stopped_containers:
+                    self.mock_onedocker_svc.stop_containers = MagicMock(
+                        return_value=[None, None]
+                    )
+                else:
+                    self.mock_onedocker_svc.stop_containers = MagicMock(
+                        return_value=[None, "Oops"]
+                    )
+                # test if the function works as expected
+                if test_state_name != "ID_MATCH":
+                    with self.assertRaises(AssertionError):
+                        stage_svc.stop_service(input_pc_instance)
+                elif not stopped_containers:
+                    with self.assertRaises(RuntimeError):
+                        stage_svc.stop_service(input_pc_instance)
+                    self.mock_onedocker_svc.stop_containers.assert_called_with(
+                        ["test_container_instance_0", "test_container_instance_1"]
+                    )
+                else:
+                    stage_svc.stop_service(input_pc_instance)
+                    self.mock_onedocker_svc.stop_containers.assert_called_with(
+                        ["test_container_instance_0", "test_container_instance_1"]
+                    )
+
     def create_sample_pc_instance(
-        self, pc_role: PrivateComputationRole
+        self,
+        pc_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
+        status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
     ) -> PrivateComputationInstance:
         return PrivateComputationInstance(
             instance_id=self.pc_instance_id,
             role=pc_role,
             instances=[],
-            status=PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
+            status=status,
             status_update_ts=1600000000,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
@@ -138,11 +199,15 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             pid_use_row_numbers=True,
         )
 
-    async def create_container_instance(self) -> ContainerInstance:
+    def create_container_instance(
+        self,
+        id: int,
+        container_status: ContainerInstanceStatus = ContainerInstanceStatus.COMPLETED,
+    ) -> ContainerInstance:
         return ContainerInstance(
-            instance_id="test_container_instance_123",
-            ip_address="127.0.0.1",
-            status=ContainerInstanceStatus.COMPLETED,
+            instance_id=f"test_container_instance_{id}",
+            ip_address=f"127.0.0.{id}",
+            status=container_status,
         )
 
     def get_args_expect(
