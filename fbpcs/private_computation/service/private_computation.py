@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar
 
 from fbpcp.entity.mpc_instance import MPCInstance
+from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
@@ -268,9 +269,14 @@ class PrivateComputationService:
         stage = private_computation_instance.current_stage
         stage_svc = stage.get_stage_service(self.stage_service_args)
         self.logger.info(f"Updating instance | {stage}={stage!r}")
-        new_status = stage_svc.get_status(private_computation_instance)
-        private_computation_instance.update_status(new_status, self.logger)
-        self.instance_repository.update(private_computation_instance)
+        try:
+            new_status = stage_svc.get_status(private_computation_instance)
+            private_computation_instance.update_status(new_status, self.logger)
+            self.instance_repository.update(private_computation_instance)
+        except ThrottlingError as e:
+            self.logger.warning(
+                f"Got ThrottlingError when updating instance. Skipping update! Error: {e}"
+            )
         self.logger.info(
             f"Finished updating instance: {private_computation_instance.instance_id}"
         )
