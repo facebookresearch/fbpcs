@@ -104,6 +104,11 @@ TEST_F(AggregatorTest, testEvents) {
   EXPECT_EQ(cohort[0].controlEvents, 2);
   EXPECT_EQ(cohort[1].controlEvents, 2);
   EXPECT_EQ(cohort[2].controlEvents, 1);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].testEvents, 4);
+  EXPECT_EQ(breakdown[1].testEvents, 5);
+  EXPECT_EQ(breakdown[0].controlEvents, 4);
+  EXPECT_EQ(breakdown[1].controlEvents, 1);
 }
 
 TEST_F(AggregatorTest, testConverters) {
@@ -118,6 +123,11 @@ TEST_F(AggregatorTest, testConverters) {
   EXPECT_EQ(cohort[0].controlConverters, 2);
   EXPECT_EQ(cohort[1].controlConverters, 1);
   EXPECT_EQ(cohort[2].controlConverters, 1);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].testConverters, 3);
+  EXPECT_EQ(breakdown[1].testConverters, 4);
+  EXPECT_EQ(breakdown[0].controlConverters, 3);
+  EXPECT_EQ(breakdown[1].controlConverters, 1);
 }
 
 TEST_F(AggregatorTest, testNumConvSquared) {
@@ -132,6 +142,11 @@ TEST_F(AggregatorTest, testNumConvSquared) {
   EXPECT_EQ(cohort[0].controlNumConvSquared, 2);
   EXPECT_EQ(cohort[1].controlNumConvSquared, 4);
   EXPECT_EQ(cohort[2].controlNumConvSquared, 1);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].testNumConvSquared, 6);
+  EXPECT_EQ(breakdown[1].testNumConvSquared, 7);
+  EXPECT_EQ(breakdown[0].controlNumConvSquared, 6);
+  EXPECT_EQ(breakdown[1].controlNumConvSquared, 1);
 }
 
 TEST_F(AggregatorTest, testMatchCount) {
@@ -146,6 +161,11 @@ TEST_F(AggregatorTest, testMatchCount) {
   EXPECT_EQ(cohort[0].controlMatchCount, 4);
   EXPECT_EQ(cohort[1].controlMatchCount, 2);
   EXPECT_EQ(cohort[2].controlMatchCount, 1);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].testMatchCount, 6);
+  EXPECT_EQ(breakdown[1].testMatchCount, 6);
+  EXPECT_EQ(breakdown[0].controlMatchCount, 6);
+  EXPECT_EQ(breakdown[1].controlMatchCount, 1);
 }
 
 TEST_F(AggregatorTest, testReachedConversions) {
@@ -156,6 +176,9 @@ TEST_F(AggregatorTest, testReachedConversions) {
   EXPECT_EQ(cohort[0].reachedConversions, 1);
   EXPECT_EQ(cohort[1].reachedConversions, 0);
   EXPECT_EQ(cohort[2].reachedConversions, 3);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].reachedConversions, 1);
+  EXPECT_EQ(breakdown[1].reachedConversions, 3);
 }
 
 TEST_F(AggregatorTest, testValues) {
@@ -170,6 +193,11 @@ TEST_F(AggregatorTest, testValues) {
   EXPECT_EQ(cohort[0].controlValue, 40);
   EXPECT_EQ(cohort[1].controlValue, 30);
   EXPECT_EQ(cohort[2].controlValue, -50);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].testValue, 30);
+  EXPECT_EQ(breakdown[1].testValue, 90);
+  EXPECT_EQ(breakdown[0].controlValue, 70);
+  EXPECT_EQ(breakdown[1].controlValue, -50);
 }
 
 TEST_F(AggregatorTest, testReachedValues) {
@@ -179,6 +207,9 @@ TEST_F(AggregatorTest, testReachedValues) {
   EXPECT_EQ(cohort[0].reachedValue, 20);
   EXPECT_EQ(cohort[1].reachedValue, 0);
   EXPECT_EQ(cohort[2].reachedValue, 80);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].reachedValue, 50);
+  EXPECT_EQ(breakdown[1].reachedValue, 50);
 }
 
 TEST_F(AggregatorTest, testValueSquared) {
@@ -193,6 +224,11 @@ TEST_F(AggregatorTest, testValueSquared) {
   EXPECT_EQ(cohort[0].controlValueSquared, 800);
   EXPECT_EQ(cohort[1].controlValueSquared, 900);
   EXPECT_EQ(cohort[2].controlValueSquared, 2500);
+  auto breakdown = publisherAggregator_->getBreakdownMetrics();
+  EXPECT_EQ(breakdown[0].testValueSquared, 5900);
+  EXPECT_EQ(breakdown[1].testValueSquared, 2100);
+  EXPECT_EQ(breakdown[0].controlValueSquared, 1700);
+  EXPECT_EQ(breakdown[1].controlValueSquared, 2500);
 }
 
 } // namespace private_lift

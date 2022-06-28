@@ -77,6 +77,11 @@ class Aggregator {
     return cohortMetrics_;
   }
 
+  const std::unordered_map<int64_t, OutputMetricsData> getBreakdownMetrics()
+      const {
+    return publisherBreakdowns_;
+  }
+
   std::string toJson() const;
 
  private:
@@ -116,6 +121,16 @@ class Aggregator {
       std::vector<NativeIntp<isSigned, width>>,
       std::vector<NativeIntp<isSigned, width>>>
   revealCohortOutput(
+      std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput,
+      bool testOnly) const;
+
+  // Reveal breakdown output from aggregation output as a pair consisting of the
+  // test breakdown metrics and optionally the control breakdown metrics.
+  template <bool isSigned, int8_t width>
+  std::pair<
+      std::vector<NativeIntp<isSigned, width>>,
+      std::vector<NativeIntp<isSigned, width>>>
+  revealBreakdownOutput(
       std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput,
       bool testOnly) const;
 
@@ -159,8 +174,7 @@ class Aggregator {
   std::vector<std::vector<bool>> indexShares_;
   std::vector<std::vector<bool>> testIndexShares_;
   std::unordered_map<int64_t, OutputMetricsData> cohortMetrics_;
-  std::unordered_map<int64_t, OutputMetricsData>
-      publisherBreakdowns_; // place holder for publisher breakdown metrics.
+  std::unordered_map<int64_t, OutputMetricsData> publisherBreakdowns_;
 };
 } // namespace private_lift
 

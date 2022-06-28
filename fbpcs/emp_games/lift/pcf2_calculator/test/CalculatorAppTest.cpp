@@ -168,13 +168,6 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
 
   auto expectedResult =
       GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputPath));
-
-  // In this test we are not worried about publisher breakdowns yet.
-  // TODO: update this test once the breakdown aggregations are
-  // implemented.
-  result.publisherBreakdowns.clear();
-  expectedResult.publisherBreakdowns.clear();
-
   EXPECT_EQ(expectedResult, result);
 }
 
