@@ -13,6 +13,7 @@ from typing import List, Optional, Tuple
 from unittest import mock
 from unittest.mock import AsyncMock, call, MagicMock, Mock, patch
 
+from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -404,6 +405,33 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             expected_elapsed_time,
             private_computation_instance.elapsed_time,
         )
+
+    def test_update_instance_throttling_error(self) -> None:
+        # Arrange
+        instance_mock = MagicMock(
+            status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+            current_stage=MagicMock(
+                get_stage_service=MagicMock(
+                    return_value=MagicMock(
+                        get_status=MagicMock(side_effect=ThrottlingError())
+                    )
+                )
+            ),
+        )
+        self.private_computation_service.logger = MagicMock()
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=instance_mock
+        )
+
+        # Act
+        self.private_computation_service.update_instance(instance_id="1")
+
+        # Assert
+        # Asserting for the specific log message is a bit too prescriptive,
+        # but knowing that we logged a warning and *didn't* raise an error is
+        # the most important thing.
+        instance_mock.current_stage.get_stage_service().get_status.assert_called_once()
+        self.private_computation_service.logger.warning.assert_called_once()
 
     @staticmethod
     def _get_dummy_stage_svc() -> PrivateComputationStageService:
