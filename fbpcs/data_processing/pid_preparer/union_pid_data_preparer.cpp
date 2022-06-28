@@ -8,6 +8,7 @@
 #include <filesystem>
 
 #include <gflags/gflags.h>
+#include <signal.h>
 
 #include "folly/init/Init.h"
 
@@ -29,6 +30,8 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
 
   std::filesystem::path tmpDirectory{FLAGS_tmp_directory};
   measurement::pid::UnionPIDDataPreparer preparer{

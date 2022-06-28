@@ -6,6 +6,7 @@
  */
 
 #include <glog/logging.h>
+#include <signal.h>
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -88,6 +89,9 @@ int main(int argc, char** argv) {
 
   folly::init(&argc, &argv);
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
+
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   // since DEFINE_INT16 is not supported, cast int32_t FLAGS_concurrency to
