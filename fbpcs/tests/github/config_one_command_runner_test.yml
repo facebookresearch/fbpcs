@@ -28,7 +28,7 @@ private_computation:
           binary_version: latest
     OneDockerServiceConfig:
       constructor:
-        task_definition: onedocker-task-comp-ui-e2e:1#onedocker-container-comp-ui-e2e
+        task_definition: onedocker-task-pc-e2e-test:1#onedocker-container-pc-e2e-test
 pid:
   dependency:
     PIDInstanceRepository:
