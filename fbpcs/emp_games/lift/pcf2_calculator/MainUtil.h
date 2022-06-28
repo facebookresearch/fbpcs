@@ -90,7 +90,11 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY, partyInfos, false, "");
+        PARTY,
+        partyInfos,
+        false,
+        "",
+        "lift_traffic_for_thread_" + std::to_string(index));
 
     // Each CalculatorApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId

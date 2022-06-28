@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <string>
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionApp.h"
@@ -85,7 +86,11 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY, partyInfos, false, "");
+        PARTY,
+        partyInfos,
+        false,
+        "",
+        "attribution_traffic_for_thread_" + std::to_string(index));
 
     // Each AttributionApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
