@@ -106,25 +106,23 @@ class Aggregator {
           fbpcf::mpc_std_lib::oram::IWriteOnlyOram<Intp<isSigned, width>>> oram)
       const;
 
-  // Reveal cohort output from aggregation output as a tuple consisting of the
-  // test/control metrics, the test cohort metrics, and the control cohort
-  // metrics.
+  // Reveal cohort output from aggregation output as a pair consisting of the
+  // test cohort metrics and optionally the control cohort metrics.
   template <bool isSigned, int8_t width>
-  std::tuple<
-      std::vector<NativeIntp<isSigned, width>>,
+  std::pair<
       std::vector<NativeIntp<isSigned, width>>,
       std::vector<NativeIntp<isSigned, width>>>
-  revealCohortOutput(std::vector<SecInt<schedulerId, isSigned, width>>
-                         aggregationOutput) const;
+  revealCohortOutput(
+      std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput,
+      bool testOnly) const;
 
-  // Reveal cohort output from aggregation output as a tuple consisting of the
-  // test metrics and the test cohort metrics.
+  // Reveal population output from aggregation output as a pair consisting
+  // of the test metrics and optionally the control metrics.
   template <bool isSigned, int8_t width>
-  std::tuple<
-      NativeIntp<isSigned, width>,
-      std::vector<NativeIntp<isSigned, width>>>
-  revealTestCohortOutput(std::vector<SecInt<schedulerId, isSigned, width>>
-                             aggregationOutput) const;
+  std::pair<NativeIntp<isSigned, width>, NativeIntp<isSigned, width>>
+  revealPopulationOutput(
+      std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput,
+      bool testOnly) const;
 
   int32_t myRole_;
   InputProcessor<schedulerId> inputProcessor_;
