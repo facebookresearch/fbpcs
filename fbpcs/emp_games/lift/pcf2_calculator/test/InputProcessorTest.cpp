@@ -111,30 +111,43 @@ TEST_F(InputProcessorTest, testNumTestGroups) {
   EXPECT_EQ(partnerInputProcessor_.getNumTestGroups(), 7);
 }
 
-TEST_F(InputProcessorTest, testCohortIndexShares) {
-  auto publisherShares = publisherInputProcessor_.getIndexShares();
-  auto partnerShares = partnerInputProcessor_.getIndexShares();
-  // 0 1 3 0 0 4 1 1 3 1 1 3 0 1 4 0 0 3 0 0 3 0 0 3 0 0 2 2 0 0 2 2 5
-  std::vector<std::vector<bool>> expectCohortIndexShares = {
-      {0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0,
-       1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
-       1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0},
-      {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
-  EXPECT_EQ(publisherShares, expectCohortIndexShares);
+// Convert input boolean index shares to group ids
+std::vector<uint32_t> convertIndexSharesToGroupIds(
+    std::vector<std::vector<bool>> indexShares) {
+  std::vector<uint32_t> groupIds;
+  if (indexShares.size() == 0) {
+    return groupIds;
+  }
+  for (auto i = 0; i < indexShares.at(0).size(); ++i) {
+    uint32_t groupId = 0;
+    for (auto j = 0; j < indexShares.size(); ++j) {
+      groupId += indexShares.at(j).at(i) << j;
+    }
+    groupIds.push_back(groupId);
+  }
+  return groupIds;
 }
 
-TEST_F(InputProcessorTest, testTestCohortIndexShares) {
+TEST_F(InputProcessorTest, testIndexShares) {
+  auto publisherShares = publisherInputProcessor_.getIndexShares();
+  size_t groupWidth = std::ceil(std::log2(12));
+  EXPECT_EQ(publisherShares.size(), groupWidth);
+  std::vector<uint32_t> expectGroupIds = {3, 1, 9, 0, 0, 7, 1, 4, 6, 1, 4,
+                                          6, 3, 1, 7, 3, 3, 6, 0, 0, 6, 3,
+                                          3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 11};
+  auto groupIds = convertIndexSharesToGroupIds(publisherShares);
+  EXPECT_EQ(expectGroupIds, groupIds);
+}
+
+TEST_F(InputProcessorTest, testTestIndexShares) {
   auto publisherShares = publisherInputProcessor_.getTestIndexShares();
-  auto partnerShares = partnerInputProcessor_.getTestIndexShares();
-  // 0 1 3 0 0 3 1 1 3 1 1 3 0 1 3 0 0 3 0 0 3 0 0 3 0 0 2 2 0 0 2 2 3
-  std::vector<std::vector<bool>> expectTestCohortIndexShares = {
-      {0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0,
-       1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-       1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1}};
-  EXPECT_EQ(publisherShares, expectTestCohortIndexShares);
+  size_t testGroupWidth = std::ceil(std::log2(7));
+  EXPECT_EQ(publisherShares.size(), testGroupWidth);
+  std::vector<uint32_t> expectTestGroupIds = {3, 1, 6, 0, 0, 6, 1, 4, 6, 1, 4,
+                                              6, 3, 1, 6, 3, 3, 6, 0, 0, 6, 3,
+                                              3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 6};
+  auto testGroupIds = convertIndexSharesToGroupIds(publisherShares);
+  EXPECT_EQ(expectTestGroupIds, testGroupIds);
 }
 
 TEST_F(InputProcessorTest, testOpportunityTimestamps) {
