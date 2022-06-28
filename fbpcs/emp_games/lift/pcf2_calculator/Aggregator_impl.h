@@ -14,9 +14,6 @@ template <int schedulerId>
 void Aggregator<schedulerId>::initOram() {
   // Initialize ORAM
   bool isPublisher = (myRole_ == common::PUBLISHER);
-  numGroups_ = std::max(2 * numPartnerCohorts_, uint32_t(2));
-  numTestGroups_ = std::max(numPartnerCohorts_ + 1, uint32_t(2));
-
   if (numGroups_ > 4) {
     // If the ORAM size is larger than 4, linear ORAM is less efficient
     // theoretically
@@ -336,13 +333,22 @@ Aggregator<schedulerId>::revealCohortOutput(
   std::vector<NativeIntp<isSigned, width>> testCohortOutput;
   std::vector<NativeIntp<isSigned, width>> controlCohortOutput;
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
-    // Extract cohort metrics
-    testCohortOutput.push_back(
-        aggregationOutput.at(i).extractIntShare().getValue());
+    auto test = aggregationOutput.at(i);
+    SecInt<schedulerId, isSigned, width> control;
     if (!testOnly) {
-      controlCohortOutput.push_back(aggregationOutput.at(i + numPartnerCohorts_)
-                                        .extractIntShare()
-                                        .getValue());
+      control = aggregationOutput.at(i + numGroups_ / 2);
+    }
+    if (numPublisherBreakdowns_ > 0) {
+      test = test + aggregationOutput.at(i + numPartnerCohorts_);
+      if (!testOnly) {
+        control = control +
+            aggregationOutput.at(i + numGroups_ / 2 + numPartnerCohorts_);
+      }
+    }
+    // Extract cohort metrics
+    testCohortOutput.push_back(test.extractIntShare().getValue());
+    if (!testOnly) {
+      controlCohortOutput.push_back(control.extractIntShare().getValue());
     }
   }
   return std::make_pair(testCohortOutput, controlCohortOutput);
@@ -357,14 +363,12 @@ Aggregator<schedulerId>::revealPopulationOutput(
   // Initialize test/control metrics for the case where there are no partner
   // cohorts
   auto test = aggregationOutput.at(0);
-  auto control =
-      aggregationOutput.at(std::max(uint32_t(1), numPartnerCohorts_));
-  for (size_t i = 1; i < numPartnerCohorts_; ++i) {
-    // Compute test/control metrics by summing up cohort metrics for each
-    // population
+  auto control = aggregationOutput.at(numGroups_ / 2);
+  for (size_t i = 1; i < numGroups_ / 2; ++i) {
+    // Compute test/control metrics by summing up metrics for each population
     test = test + aggregationOutput.at(i);
     if (!testOnly) {
-      control = control + aggregationOutput.at(i + numPartnerCohorts_);
+      control = control + aggregationOutput.at(i + numGroups_ / 2);
     }
   }
   auto testOutput = test.extractIntShare().getValue();

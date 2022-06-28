@@ -50,6 +50,9 @@ class Aggregator {
         attributor_{std::move(attributor)},
         numRows_{inputProcessor.getNumRows()},
         numPartnerCohorts_{inputProcessor.getNumPartnerCohorts()},
+        numPublisherBreakdowns_{inputProcessor.getNumPublisherBreakdowns()},
+        numGroups_{inputProcessor.getNumGroups()},
+        numTestGroups_{inputProcessor.getNumTestGroups()},
         numConversionsPerUser_{numConversionsPerUser},
         communicationAgentFactory_{communicationAgentFactory},
         indexShares_{inputProcessor.getIndexShares()},
@@ -129,6 +132,7 @@ class Aggregator {
   std::unique_ptr<Attributor<schedulerId>> attributor_;
   int64_t numRows_;
   uint32_t numPartnerCohorts_;
+  uint32_t numPublisherBreakdowns_;
   uint32_t numGroups_;
   uint32_t numTestGroups_;
   int32_t numConversionsPerUser_;

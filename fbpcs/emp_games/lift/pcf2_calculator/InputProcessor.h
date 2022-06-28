@@ -30,6 +30,7 @@ class InputProcessor {
     shareNumGroupsStep();
     privatelyShareGroupIdsStep();
     privatelySharePopulationStep();
+    privatelyShareGroupIdsStep();
     privatelyShareIndexSharesStep();
     privatelyShareTestIndexSharesStep();
     privatelyShareTimestampsStep();
@@ -150,6 +151,7 @@ class InputProcessor {
   SecBit<schedulerId> controlPopulation_;
   SecGroup<schedulerId> cohortGroupIds_;
   SecBit<schedulerId> breakdownGroupIds_;
+  SecGroup<schedulerId> testGroupIds_;
   std::vector<std::vector<bool>> indexShares_;
   std::vector<std::vector<bool>> testIndexShares_;
 };
