@@ -8,6 +8,8 @@ include(${fbpcf_cmake})
 
 find_library(fbpcf libfbpcf.a)
 
+add_compile_options(-std=c++2a)
+
 # emp game common
 file(GLOB emp_game_common_src
   "fbpcs/emp_games/common/**.c"
