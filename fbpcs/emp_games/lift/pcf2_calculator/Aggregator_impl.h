@@ -132,6 +132,11 @@ void Aggregator<schedulerId>::sumEvents() {
     cohortMetrics_[i].testEvents = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlEvents = std::get<1>(cohortOutput).at(i);
   }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].testEvents = std::get<0>(breakdownOutput).at(i);
+    publisherBreakdowns_[i].controlEvents = std::get<1>(breakdownOutput).at(i);
+  }
 }
 
 template <int schedulerId>
@@ -154,6 +159,12 @@ void Aggregator<schedulerId>::sumConverters() {
     cohortMetrics_[i].testConverters = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlConverters = std::get<1>(cohortOutput).at(i);
   }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].testConverters = std::get<0>(breakdownOutput).at(i);
+    publisherBreakdowns_[i].controlConverters =
+        std::get<1>(breakdownOutput).at(i);
+  }
 }
 
 template <int schedulerId>
@@ -174,6 +185,13 @@ void Aggregator<schedulerId>::sumNumConvSquared() {
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     cohortMetrics_[i].testNumConvSquared = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlNumConvSquared = std::get<1>(cohortOutput).at(i);
+  }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].testNumConvSquared =
+        std::get<0>(breakdownOutput).at(i);
+    publisherBreakdowns_[i].controlNumConvSquared =
+        std::get<1>(breakdownOutput).at(i);
   }
 }
 
@@ -196,6 +214,12 @@ void Aggregator<schedulerId>::sumMatch() {
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     cohortMetrics_[i].testMatchCount = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlMatchCount = std::get<1>(cohortOutput).at(i);
+  }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].testMatchCount = std::get<0>(breakdownOutput).at(i);
+    publisherBreakdowns_[i].controlMatchCount =
+        std::get<1>(breakdownOutput).at(i);
   }
 }
 
@@ -221,6 +245,11 @@ void Aggregator<schedulerId>::sumReachedConversions() {
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     cohortMetrics_[i].reachedConversions = std::get<0>(cohortOutput).at(i);
   }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, true);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].reachedConversions =
+        std::get<0>(breakdownOutput).at(i);
+  }
 }
 
 template <int schedulerId>
@@ -245,6 +274,11 @@ void Aggregator<schedulerId>::sumValues() {
     cohortMetrics_[i].testValue = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlValue = std::get<1>(cohortOutput).at(i);
   }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].testValue = std::get<0>(breakdownOutput).at(i);
+    publisherBreakdowns_[i].controlValue = std::get<1>(breakdownOutput).at(i);
+  }
 }
 
 template <int schedulerId>
@@ -267,6 +301,10 @@ void Aggregator<schedulerId>::sumReachedValues() {
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     cohortMetrics_[i].reachedValue = std::get<0>(cohortOutput).at(i);
   }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, true);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].reachedValue = std::get<0>(breakdownOutput).at(i);
+  }
 }
 
 template <int schedulerId>
@@ -287,6 +325,13 @@ void Aggregator<schedulerId>::sumValueSquared() {
   for (size_t i = 0; i < numPartnerCohorts_; ++i) {
     cohortMetrics_[i].testValueSquared = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlValueSquared = std::get<1>(cohortOutput).at(i);
+  }
+  auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
+  for (size_t i = 0; i < numPublisherBreakdowns_; ++i) {
+    publisherBreakdowns_[i].testValueSquared =
+        std::get<0>(breakdownOutput).at(i);
+    publisherBreakdowns_[i].controlValueSquared =
+        std::get<1>(breakdownOutput).at(i);
   }
 }
 
@@ -352,6 +397,43 @@ Aggregator<schedulerId>::revealCohortOutput(
     }
   }
   return std::make_pair(testCohortOutput, controlCohortOutput);
+}
+
+template <int schedulerId>
+template <bool isSigned, int8_t width>
+std::pair<
+    std::vector<NativeIntp<isSigned, width>>,
+    std::vector<NativeIntp<isSigned, width>>>
+Aggregator<schedulerId>::revealBreakdownOutput(
+    std::vector<SecInt<schedulerId, isSigned, width>> aggregationOutput,
+    bool testOnly) const {
+  std::vector<NativeIntp<isSigned, width>> testBreakdownOutput;
+  std::vector<NativeIntp<isSigned, width>> controlBreakdownOutput;
+  for (size_t j = 0; j < numPublisherBreakdowns_; ++j) {
+    // The order of the metrics are test and breakdown 0, test and
+    // breakdown 1, control and breakdown 0, control and breakdown 1.
+    size_t testStartIndex = j * numGroups_ / 4;
+    size_t controlStartIndex = (2 + j) * numGroups_ / 4;
+    // Initialize test/control metrics for the case where there are no partner
+    // cohorts.
+    auto test = aggregationOutput.at(testStartIndex);
+    SecInt<schedulerId, isSigned, width> control;
+    if (!testOnly) {
+      control = aggregationOutput.at(controlStartIndex);
+    }
+    for (size_t i = 1; i < numPartnerCohorts_; ++i) {
+      test = test + aggregationOutput.at(i + testStartIndex);
+      if (!testOnly) {
+        control = control + aggregationOutput.at(i + controlStartIndex);
+      }
+    }
+    // Extract breakdown metrics
+    testBreakdownOutput.push_back(test.extractIntShare().getValue());
+    if (!testOnly) {
+      controlBreakdownOutput.push_back(control.extractIntShare().getValue());
+    }
+  }
+  return std::make_pair(testBreakdownOutput, controlBreakdownOutput);
 }
 
 template <int schedulerId>

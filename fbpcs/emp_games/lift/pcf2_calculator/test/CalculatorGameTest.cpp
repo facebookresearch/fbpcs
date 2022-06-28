@@ -124,10 +124,6 @@ TEST_P(CalculatorGameTestFixture, TestCorrectness) {
   // Read expected output from file
   auto expectedRes =
       GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputFilename));
-  expectedRes.publisherBreakdowns.clear();
-  res.publisherBreakdowns
-      .clear(); // we don't have publisher breakdown implemented.
-
   EXPECT_EQ(expectedRes, res);
 }
 
