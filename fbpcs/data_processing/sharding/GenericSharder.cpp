@@ -8,6 +8,7 @@
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <filesystem>
@@ -29,6 +30,8 @@
 #include <folly/logging/xlog.h>
 #include <re2/re2.h>
 
+#include <folly/DynamicConverter.h>
+#include <folly/json.h>
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
 #include "fbpcs/data_processing/common/Logging.h"
 #include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
@@ -149,6 +152,10 @@ void GenericSharder::shard() {
     }
   }
 
+  // Log number of rows in each shard to the
+  // "<filepath_for_0th_shard>_shardDistribution" file.
+  logShardDistribution();
+
   XLOG(INFO) << "Finished after processing "
              << private_lift::logging::formatNumber(lineIdx) << " lines.";
 
@@ -156,7 +163,7 @@ void GenericSharder::shard() {
 
   for (auto i = 0; i < numShards; ++i) {
     outFiles.at(i)->close();
-    XLOG(INFO, fmt::format("Shard {} has {} rows", i, rowsInShard[i]));
+    XLOG(INFO, fmt::format("Shard {} has {} rows", i, getRowsForShard(i)));
   }
 
   XLOG(INFO) << "All file writes successful";
@@ -191,5 +198,34 @@ void GenericSharder::shardLine(
   std::string newLine = "\n";
   outFiles.at(shard)->writeString(line);
   outFiles.at(shard)->writeString(newLine);
+}
+
+void GenericSharder::logShardDistribution() {
+  std::size_t numShards = getOutputPaths().size();
+  if (numShards == 0) {
+    XLOG(INFO) << "No shard to write distribution to.";
+    return;
+  }
+  std::string outputPath = getOutputPaths().at(0);
+  if (outputPath.empty()) {
+    XLOG(INFO) << "No filepath present to log shard distribution to.";
+    return;
+  }
+  const std::string& shardDistributionPath =
+      outputPath + '_' + "shardDistribution";
+  auto fWriter = std::make_unique<fbpcf::io::FileWriter>(shardDistributionPath);
+  auto bWriter = std::make_unique<fbpcf::io::BufferedWriter>(
+      std::move(fWriter), kBufferedWriterChunkSize);
+  std::string shardDstributionJson = getShardDistributionJson();
+  bWriter->writeString(shardDstributionJson);
+  bWriter->close();
+  XLOG(INFO) << "Distribution of shards written to: '" << shardDistributionPath
+             << "'";
+}
+
+std::string GenericSharder::getShardDistributionJson() {
+  auto rowsInShardDynamic = folly::toDynamic(rowsInShard);
+  std::string shardDstributionStr = folly::toPrettyJson(rowsInShardDynamic);
+  return shardDstributionStr;
 }
 } // namespace data_processing::sharder
