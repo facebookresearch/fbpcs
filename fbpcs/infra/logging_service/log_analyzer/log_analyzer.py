@@ -316,9 +316,9 @@ class LogDigest:
         match: Match[str],
         _last_lines: Optional[List[str]],
     ) -> None:
-        # The stage ID's are like INPUT_DATA_VALIDATION, PID_SHARD, etc.
+        # The stage ID's are like PC_PRE_VALIDATION, PID_SHARD, etc.
         # They also appear in the log lines highlighting the current stage among the full flow. E.g.
-        # CREATED -> INPUT_DATA_VALIDATION -> [**PID_SHARD**] -> PID_PREPARE -> ID_MATCH -> ID_MATCH_POST_PROCESS -> PREPARE -> COMPUTE -> AGGREGATE -> POST_PROCESSING_HANDLERS
+        # CREATED -> PC_PRE_VALIDATION -> [**PID_SHARD**] -> PID_PREPARE -> ID_MATCH -> ID_MATCH_POST_PROCESS -> PREPARE -> COMPUTE -> AGGREGATE -> POST_PROCESSING_HANDLERS
         self.logger.info(
             f"Found flow_stage={match.group(2)}, instance={match.group(1)}. At line_num={context.line_num}"
         )

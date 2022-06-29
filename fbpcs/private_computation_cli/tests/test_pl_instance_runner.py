@@ -378,8 +378,8 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "CREATED",
-                PrivateComputationStageFlow.INPUT_DATA_VALIDATION.started_status,
-                PrivateComputationStageFlow.INPUT_DATA_VALIDATION.is_retryable,
+                PrivateComputationStageFlow.PC_PRE_VALIDATION.started_status,
+                PrivateComputationStageFlow.PC_PRE_VALIDATION.is_retryable,
             ),
         ]
         for (
@@ -426,7 +426,7 @@ class TestPlInstanceRunner(TestCase):
             ),
             (
                 "CREATED",
-                PrivateComputationStageFlow.INPUT_DATA_VALIDATION.failed_status,
+                PrivateComputationStageFlow.PC_PRE_VALIDATION.failed_status,
                 True,
             ),
             (

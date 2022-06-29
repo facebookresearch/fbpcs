@@ -103,7 +103,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
 
         if self.status in (
             PrivateComputationInstanceStatus.CREATED,
-            PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
+            PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
         ):
             return True
         else:

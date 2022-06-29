@@ -38,7 +38,7 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED INPUT_DATA_VALIDATION PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD PCF2_ATTRIBUTION PCF2_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED PC_PRE_VALIDATION PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD PCF2_ATTRIBUTION PCF2_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -48,10 +48,10 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.CREATION_FAILED,
         False,
     )
-    INPUT_DATA_VALIDATION = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_STARTED,
-        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED,
-        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
+    PC_PRE_VALIDATION = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
         False,
     )
     PID_SHARD = PrivateComputationStageFlowData(
