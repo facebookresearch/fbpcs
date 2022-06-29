@@ -37,9 +37,9 @@ from fbpcs.private_computation.service.utils import get_pc_status_from_stage_sta
 PRE_VALIDATION_CHECKS_TIMEOUT: int = 1200
 
 
-class InputDataValidationStageService(PrivateComputationStageService):
+class PCPreValidationStageService(PrivateComputationStageService):
     """
-    This InputDataValidation stage service validates input data files.
+    This PCPreValidation stage service validates input data files.
     Validation fails if the issues detected in the data file
     do not pass the input_data_validation. A failing validation stage
     will prevent the next stage from running.

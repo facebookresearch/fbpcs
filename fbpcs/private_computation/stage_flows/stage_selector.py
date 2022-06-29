@@ -13,8 +13,8 @@ from fbpcs.private_computation.service.dummy_stage_service import DummyStageServ
 from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
     IdSpineCombinerStageService,
 )
-from fbpcs.private_computation.service.input_data_validation_stage_service import (
-    InputDataValidationStageService,
+from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
+    PCPreValidationStageService,
 )
 from fbpcs.private_computation.service.pid_stage_service import PIDStageService
 from fbpcs.private_computation.service.post_processing_stage_service import (
@@ -44,7 +44,7 @@ class StageSelector:
         if stage_flow.name == "CREATED":
             return DummyStageService()
         elif stage_flow.name == "INPUT_DATA_VALIDATION":
-            return InputDataValidationStageService(
+            return PCPreValidationStageService(
                 args.pc_validator_config,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,

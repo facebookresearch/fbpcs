@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.private_computation.service.input_data_validation_stage_service import (
+from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
     PRE_VALIDATION_CHECKS_TIMEOUT,
 )
 from fbpcs.private_computation.service.pre_validation_util import get_cmd_args
