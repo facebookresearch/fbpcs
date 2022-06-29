@@ -228,8 +228,7 @@ inline folly::dynamic getCostExtraInfo(
         ("non_free_gates", schedulerStatistics.nonFreeGates)
         ("free_gates", schedulerStatistics.freeGates)
         ("scheduler_transmitted_network", schedulerStatistics.sentNetwork)
-        ("scheduler_received_network", schedulerStatistics.receivedNetwork)
-        ("mpc_traffic_details", schedulerStatistics.details);
+        ("scheduler_received_network", schedulerStatistics.receivedNetwork);
 }
 
 } // namespace common
