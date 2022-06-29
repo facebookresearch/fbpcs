@@ -86,3 +86,33 @@ class TestAws(unittest.TestCase):
                 self.aws.check_s3_buckets_exists(
                     s3_bucket_name=s3_bucket_name, bucket_version=False
                 )
+
+    def test_create_s3_bucket(self) -> None:
+        self.aws.s3_client.create_bucket = create_autospec(
+            self.aws.s3_client.create_bucket
+        )
+        s3_bucket_name = "fake_bucket"
+
+        with self.subTest("Basic"):
+            with self.assertLogs() as captured:
+                self.aws.create_s3_bucket(
+                    s3_bucket_name=s3_bucket_name, bucket_version=False
+                )
+                self.assertEqual(len(captured.records), 2)
+                self.assertEqual(
+                    captured.records[1].getMessage(),
+                    f"Create S3 bucket {s3_bucket_name} operation was successful.",
+                )
+
+        with self.subTest("CreateBucketException"):
+            self.aws.s3_client.create_bucket.side_effect = ClientError(
+                error_response={"Error": {"Code": None}},
+                operation_name="create_bucket",
+            )
+
+            with self.assertRaisesRegex(
+                S3BucketCreationError, "Failed to create S3 bucket*"
+            ):
+                self.aws.create_s3_bucket(
+                    s3_bucket_name=s3_bucket_name, bucket_version=False
+                )
