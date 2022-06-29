@@ -67,7 +67,7 @@ DEFINE_bool(
     "Reveal output with XOR secret shares instead of in the clear to both parties");
 DEFINE_int32(
     num_conversions_per_user,
-    25,
+    4,
     "Cap and pad to this many conversions per user");
 DEFINE_int32(
     concurrency,
@@ -127,6 +127,8 @@ int main(int argc, char** argv) {
                << "\tserver_ip_address: " << FLAGS_server_ip << "\n"
                << "\tport: " << FLAGS_port << "\n"
                << "\tconcurrency: " << FLAGS_concurrency << "\n"
+               << "\tnumber of conversions per user: "
+               << FLAGS_num_conversions_per_user << "\n"
                << "\tinput: " << inputFileLogList.str()
                << "\toutput: " << outputFileLogList.str();
   }
