@@ -125,7 +125,7 @@ class AWS(CloudBase):
                 CreateBucketConfiguration=bucket_configuration,
             )
             self.log.info(
-                f"Create S3 bucket {s3_bucket_name} opeeration was successful."
+                f"Create S3 bucket {s3_bucket_name} operation was successful."
             )
         except ClientError as error:
             error_code = error.response.get("Error", {}).get("Code", None)
