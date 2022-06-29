@@ -293,6 +293,7 @@ class TestPlInstanceRunner(TestCase):
             partner_statuses,
             result,
         ) in self._get_wait_stage_completed():
+            mock_cancel_current_stage.reset_mock()
             with self.subTest(
                 stage=stage,
                 publisher_statuses=publisher_statuses,
@@ -310,8 +311,19 @@ class TestPlInstanceRunner(TestCase):
                 if not result:
                     with self.assertRaises(PCInstanceCalculationException):
                         runner.wait_stage_complete(stage)
+
+                    if stage.is_joint_stage:
+                        # make sure when any of role fail it will try to call cancel_current_stage
+                        mock_cancel_current_stage.assert_called_once_with(
+                            config={},
+                            instance_id=self.instance_id,
+                            logger=self.mock_logger,
+                        )
+                    else:
+                        mock_cancel_current_stage.assert_not_called()
                 else:
                     runner.wait_stage_complete(stage)
+                    mock_cancel_current_stage.assert_not_called()
 
     @patch("fbpcs.pl_coordinator.pc_calc_instance.sleep")
     @patch("fbpcs.pl_coordinator.pc_partner_instance.get_instance")

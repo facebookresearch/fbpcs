@@ -117,7 +117,9 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
         self.status = get_instance(self.config, self.instance_id, self.logger).status
 
     def cancel_current_stage(self) -> None:
-        cancel_current_stage(self.config, self.instance_id, self.logger)
+        cancel_current_stage(
+            config=self.config, instance_id=self.instance_id, logger=self.logger
+        )
 
     def get_output_dir_from_input_path(self, input_path: str) -> str:
         return input_path[: input_path.rfind("/")]

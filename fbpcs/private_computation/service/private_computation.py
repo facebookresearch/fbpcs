@@ -435,12 +435,13 @@ class PrivateComputationService:
         private_computation_instance = self.get_instance(instance_id)
 
         # pre-checks to make sure it's in a cancel-able state
-        if not private_computation_instance.stage_flow.is_started_status(
+        if private_computation_instance.stage_flow.is_completed_status(
             private_computation_instance.status
         ):
-            raise ValueError(
+            self.logger.warning(
                 f"Instance {instance_id} has status {private_computation_instance.status}. Nothing to cancel."
             )
+            return private_computation_instance
 
         if not private_computation_instance.instances:
             raise ValueError(
@@ -482,7 +483,7 @@ class PrivateComputationService:
             )
 
         self.logger.info(
-            f"The current stage of instance {instance_id} has been canceled."
+            f"The current stage {stage} of instance {instance_id} has been canceled."
         )
         return private_computation_instance
 
