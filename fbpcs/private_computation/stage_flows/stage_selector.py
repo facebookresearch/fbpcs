@@ -43,7 +43,7 @@ class StageSelector:
     ) -> Optional[PrivateComputationStageService]:
         if stage_flow.name == "CREATED":
             return DummyStageService()
-        elif stage_flow.name == "INPUT_DATA_VALIDATION":
+        elif stage_flow.name == "PC_PRE_VALIDATION":
             return PCPreValidationStageService(
                 args.pc_validator_config,
                 args.onedocker_svc,

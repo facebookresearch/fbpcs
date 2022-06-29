@@ -33,7 +33,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED INPUT_DATA_VALIDATION UNION_PID_MR_MULTIKEY"
+    _order_ = "CREATED PC_PRE_VALIDATION UNION_PID_MR_MULTIKEY"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -43,10 +43,10 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.CREATION_FAILED,
         False,
     )
-    INPUT_DATA_VALIDATION = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_STARTED,
-        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED,
-        PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED,
+    PC_PRE_VALIDATION = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
         False,
     )
     UNION_PID_MR_MULTIKEY = PrivateComputationStageFlowData(

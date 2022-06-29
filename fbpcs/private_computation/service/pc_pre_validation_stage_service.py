@@ -39,10 +39,12 @@ PRE_VALIDATION_CHECKS_TIMEOUT: int = 1200
 
 class PCPreValidationStageService(PrivateComputationStageService):
     """
-    This PCPreValidation stage service validates input data files.
+    This PCPreValidation stage service validates input data files and
+    binary files access.
     Validation fails if the issues detected in the data file
-    do not pass the input_data_validation. A failing validation stage
-    will prevent the next stage from running.
+    do not pass the input_data_validation or if the binaries are not
+    accessible. A failing validation stage will prevent the next
+    stage from running.
 
     It is implemented in a Cloud agnostic way.
     """
@@ -55,7 +57,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._failed_status: PrivateComputationInstanceStatus = (
-            PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
+            PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED
         )
 
         self._onedocker_binary_config_map = onedocker_binary_config_map
@@ -151,7 +153,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
 
             return instance_status
 
-        return PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
+        return PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
 
     def _should_run_pre_validation(
         self, pc_instance: PrivateComputationInstance

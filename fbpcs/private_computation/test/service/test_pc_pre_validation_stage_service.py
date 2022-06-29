@@ -38,7 +38,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             instance_id="123",
             role=PrivateComputationRole.PARTNER,
             instances=[],
-            status=PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_STARTED,
+            status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
             status_update_ts=1600000000,
             num_pid_containers=1,
             num_mpc_containers=1,
@@ -112,9 +112,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         self, mock_get_pc_status_from_stage_state
     ) -> None:
         pc_instance = self._pc_instance
-        expected_status = (
-            PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
-        )
+        expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
         mock_onedocker_svc = MagicMock()
         pc_validator_config = PCValidatorConfig(
             region="us-west-1",
@@ -139,9 +137,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     ) -> None:
         pc_instance = self._pc_instance
         pc_instance.role = PrivateComputationRole.PUBLISHER
-        expected_status = (
-            PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
-        )
+        expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
         mock_onedocker_svc = MagicMock()
         pc_validator_config = PCValidatorConfig(
             region="us-west-1",
@@ -167,9 +163,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         self, mock_get_pc_status_from_stage_state
     ) -> None:
         pc_instance = self._pc_instance
-        expected_status = (
-            PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_COMPLETED
-        )
+        expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
         mock_onedocker_svc = MagicMock()
         pc_validator_config = PCValidatorConfig(
             region="us-west-1",
@@ -228,7 +222,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         #  PCSMPCInstance, PIDInstance, PostProcessingInstance]]`; used as
         #  `List[StageStateInstance]`.
         pc_instance.instances = unioned_pc_instances
-        expected_status = PrivateComputationInstanceStatus.INPUT_DATA_VALIDATION_FAILED
+        expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED
         onedocker_svc_mock = MagicMock()
         onedocker_svc_mock.get_cluster.side_effect = [cluster_name]
         pc_validator_config = PCValidatorConfig(
