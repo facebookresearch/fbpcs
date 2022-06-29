@@ -78,11 +78,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY,
-        partyInfos,
-        false,
-        "",
-        "aggregation_traffic_for_thread_" + std::to_string(index));
+        PARTY, partyInfos, false, "");
 
     // Each AggregationApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId

@@ -41,8 +41,6 @@ class AttributionApp {
         schedulerStatistics_{0, 0, 0, 0} {}
 
   void run() {
-    auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
-
     auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
         MY_ROLE, *communicationAgentFactory_);
 
@@ -79,7 +77,6 @@ class AttributionApp {
     schedulerStatistics_.freeGates = gateStatistics.second;
     schedulerStatistics_.sentNetwork = trafficStatistics.first;
     schedulerStatistics_.receivedNetwork = trafficStatistics.second;
-    schedulerStatistics_.details = metricsCollector->collectMetrics();
   }
 
   common::SchedulerStatistics getSchedulerStatistics() {

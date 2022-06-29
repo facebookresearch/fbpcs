@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <folly/dynamic.h>
 #include <cstdint>
 
 namespace common {
@@ -17,14 +16,12 @@ struct SchedulerStatistics {
   uint64_t freeGates;
   uint64_t sentNetwork;
   uint64_t receivedNetwork;
-  folly::dynamic details;
 
   void add(SchedulerStatistics other) {
     nonFreeGates += other.nonFreeGates;
     freeGates += other.freeGates;
     sentNetwork += other.sentNetwork;
     receivedNetwork += other.receivedNetwork;
-    details += other.details;
   }
 };
 
