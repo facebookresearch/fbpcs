@@ -9,6 +9,7 @@
 
 #include <exception>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -128,7 +129,17 @@ class GenericSharder {
   }
 
   void logRowsToShard(std::size_t shard) {
-    rowsInShard[shard]++;
+    std::stringstream ss;
+    ss << shard;
+    std::string key = ss.str();
+    rowsInShard[key]++;
+  }
+
+  int getRowsForShard(std::size_t shard) {
+    std::stringstream ss;
+    ss << shard;
+    std::string key = ss.str();
+    return rowsInShard[key];
   }
 
   /**
@@ -161,10 +172,20 @@ class GenericSharder {
       const std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>>& outFiles,
       const std::vector<int32_t>& idColumnIndices);
 
+  /**
+   * Log number of rows in each shard to a json file
+   */
+  void logShardDistribution();
+
+  /**
+   * Return the json string that contains the number of rows in each shard
+   */
+  std::string getShardDistributionJson();
+
  private:
   std::string inputPath_;
   std::vector<std::string> outputPaths_;
   int32_t logEveryN_;
-  std::unordered_map<std::size_t, int> rowsInShard;
+  std::unordered_map<std::string, int> rowsInShard;
 };
 } // namespace data_processing::sharder

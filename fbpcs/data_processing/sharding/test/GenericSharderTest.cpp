@@ -36,6 +36,10 @@ class GenericSharderTest final : public GenericSharder {
           std::unique_ptr<fbpcf::io::BufferedWriter>>& /* unused */,
       const std::vector<int32_t>& /* unused */) final {
     linesCalledWith_.push_back(line);
+    // shardLine is overwritten here so we should mannually call the
+    // logRowsToShard to make changes to rowsInShard.
+    std::size_t s = {0};
+    logRowsToShard(s);
   }
 
   std::size_t shardFor_ = 123;
@@ -142,4 +146,36 @@ TEST(GenericSharderTest, TestShardLine) {
   };
   EXPECT_EQ(actual.linesCalledWith_, expected);
 }
+
+TEST(GenericSharderTest, TestGetShardDistributionJson) {
+  // This test is just ensuring that the json file is correctly written
+  auto randStart = folly::Random::secureRand64();
+  std::string inputPath =
+      "/tmp/GenericSharderTestShardLineInput" + std::to_string(randStart);
+  std::vector<std::string> outputPaths{
+      "/tmp/GenericSharderTestShardLineOutput" + std::to_string(randStart),
+      "/tmp/GenericSharderTestShardLineOutput" + std::to_string(randStart + 1),
+  };
+  int32_t logEveryN = 123;
+  GenericSharderTest actual{inputPath, outputPaths, logEveryN};
+  std::vector<std::string> rows{
+      "id_,a,b,c",
+      "abcd,1,2,3",
+      "abcd,4,5,6",
+      "defg,7,8,9",
+      "hijk,0,0,0",
+  };
+  data_processing::test_utils::writeVecToFile(rows, inputPath);
+  actual.shard();
+  // There are 2 output paths, so there will be two shards.
+  // Since there are 4 rows in the input file, the shardLine() is called for 4
+  // times. logRowsToShard(0) is also called for 4 times. Thus, the first pair
+  // in json should be "0":4. As rowsInShard[1] is never specified, it should be
+  // a default 0, thus the second pair should be "1":0.
+  std::string expected{
+      "{\n  \"0\": 4,\n  \"1\": 0\n}",
+  };
+  EXPECT_EQ(actual.getShardDistributionJson(), expected);
+}
+
 } // namespace data_processing::sharder
