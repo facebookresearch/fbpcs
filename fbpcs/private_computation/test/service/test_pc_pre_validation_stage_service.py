@@ -24,15 +24,15 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-from fbpcs.private_computation.service.input_data_validation_stage_service import (
-    InputDataValidationStageService,
+from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
+    PCPreValidationStageService,
 )
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
 
 
-class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
+class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self._pc_instance = PrivateComputationInstance(
             instance_id="123",
@@ -58,7 +58,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
 
     @patch.object(RunBinaryBaseService, "start_containers")
     @patch(
-        "fbpcs.private_computation.service.input_data_validation_stage_service.StageStateInstance"
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.StageStateInstance"
     )
     async def test_run_async_when_there_are_no_issues_running_onedocker_service(
         self, mock_stage_state_instance, mock_run_binary_base_service_start_containers
@@ -82,7 +82,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             region=region,
             pc_pre_validator_enabled=True,
         )
-        stage_service = InputDataValidationStageService(
+        stage_service = PCPreValidationStageService(
             pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
@@ -106,7 +106,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         self.assertEqual(pc_instance.instances, [mock_stage_state_instance()])
 
     @patch(
-        "fbpcs.private_computation.service.input_data_validation_stage_service.get_pc_status_from_stage_state"
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.get_pc_status_from_stage_state"
     )
     async def test_run_async_completes_when_the_pre_validator_is_not_enabled(
         self, mock_get_pc_status_from_stage_state
@@ -120,7 +120,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             region="us-west-1",
             pc_pre_validator_enabled=False,
         )
-        stage_service = InputDataValidationStageService(
+        stage_service = PCPreValidationStageService(
             pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
@@ -132,7 +132,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         self.assertEqual(status, expected_status)
 
     @patch(
-        "fbpcs.private_computation.service.input_data_validation_stage_service.get_pc_status_from_stage_state"
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.get_pc_status_from_stage_state"
     )
     async def test_run_async_completes_when_the_pre_validator_is_enabled_but_the_role_is_publisher(
         self, mock_get_pc_status_from_stage_state
@@ -147,7 +147,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             region="us-west-1",
             pc_pre_validator_enabled=True,
         )
-        stage_service = InputDataValidationStageService(
+        stage_service = PCPreValidationStageService(
             pc_validator_config,
             mock_onedocker_svc,
             self.onedocker_binary_config_map,
@@ -161,7 +161,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         self.assertEqual(status, expected_status)
 
     @patch(
-        "fbpcs.private_computation.service.input_data_validation_stage_service.get_pc_status_from_stage_state"
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.get_pc_status_from_stage_state"
     )
     def test_get_status_returns_the_stage_status_from_stage_state(
         self, mock_get_pc_status_from_stage_state
@@ -176,7 +176,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             pc_pre_validator_enabled=True,
         )
 
-        stage_service = InputDataValidationStageService(
+        stage_service = PCPreValidationStageService(
             pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
         mock_get_pc_status_from_stage_state.side_effect = [expected_status]
@@ -198,7 +198,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             region="us-west-1",
             pc_pre_validator_enabled=True,
         )
-        stage_service = InputDataValidationStageService(
+        stage_service = PCPreValidationStageService(
             pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
@@ -206,7 +206,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
             await stage_service.run_async(pc_instance)
 
     @patch(
-        "fbpcs.private_computation.service.input_data_validation_stage_service.get_pc_status_from_stage_state"
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.get_pc_status_from_stage_state"
     )
     async def test_get_status_logs_a_helpful_error_when_the_validation_fails(
         self, mock_get_pc_status_from_stage_state
@@ -239,7 +239,7 @@ class TestInputDataValidationStageService(IsolatedAsyncioTestCase):
         logger_mock = MagicMock()
         mock_get_pc_status_from_stage_state.side_effect = [expected_status]
 
-        stage_service = InputDataValidationStageService(
+        stage_service = PCPreValidationStageService(
             pc_validator_config, onedocker_svc_mock, self.onedocker_binary_config_map
         )
         stage_service._logger = logger_mock
