@@ -52,6 +52,9 @@ class InfraConfig:
     status_update_ts: int
     instances: List[UnionedPCInstance]
     game_type: PrivateComputationGameType
+    num_pid_containers: int
+    num_mpc_containers: int
+
     tier: Optional[str] = None
     pce_config: Optional[PCEConfig] = None
 

@@ -75,7 +75,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         self._logger.info(f"[{self}] Starting id spine combiner service")
 
         pid_protocol = get_pid_protocol_from_num_shards(
-            pc_instance.num_pid_containers,
+            pc_instance.infra_config.num_pid_containers,
             False if self._pid_svc is None else self._pid_svc.multikey_enabled,
         )
 
