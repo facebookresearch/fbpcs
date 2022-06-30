@@ -43,11 +43,11 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             instances=[self.test_mpc_instance],
+            game_type=PrivateComputationGameType.LIFT,
         )
         test_read_private_computation_instance = PrivateComputationInstance(
             infra_config,
             num_files_per_mpc_container=40,
-            game_type=PrivateComputationGameType.LIFT,
             input_path="in",
             output_dir="out",
             num_pid_containers=4,
@@ -68,12 +68,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             instances=[self.test_mpc_instance],
+            game_type=PrivateComputationGameType.LIFT,
         )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
                 infra_config,
                 num_files_per_mpc_container=40,
-                game_type=PrivateComputationGameType.LIFT,
                 input_path="in",
                 output_dir="out",
                 num_pid_containers=8,
@@ -89,11 +89,11 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             instances=[self.test_mpc_instance],
+            game_type=PrivateComputationGameType.LIFT,
         )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config,
             num_files_per_mpc_container=40,
-            game_type=PrivateComputationGameType.LIFT,
             input_path="in",
             output_dir="out",
             num_pid_containers=4,

@@ -158,13 +158,13 @@ class PrivateComputationService:
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=PrivateComputationService.get_ts_now(),
             instances=[],
+            game_type=game_type,
         )
         instance = PrivateComputationInstance(
             infra_config,
             num_files_per_mpc_container=unwrap_or_default(
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
             ),
-            game_type=game_type,
             num_pid_containers=num_pid_containers,
             num_mpc_containers=self._get_number_of_mpc_containers(
                 game_type, num_pid_containers, num_mpc_containers
