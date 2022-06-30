@@ -160,5 +160,5 @@ class PCPreValidationStageService(PrivateComputationStageService):
     ) -> bool:
         return (
             self._pc_validator_config.pc_pre_validator_enabled
-            and pc_instance.role == PrivateComputationRole.PARTNER
+            and pc_instance.infra_config.role == PrivateComputationRole.PARTNER
         )
