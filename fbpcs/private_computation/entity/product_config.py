@@ -16,6 +16,9 @@ from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 class CommonProductConfig:
     """Stores metadata of common product config used both by attribution config and lift config"""
 
+    input_path: str
+    output_dir: str
+
 
 @dataclass
 class ProductConfig(DataClassJsonMixin):
