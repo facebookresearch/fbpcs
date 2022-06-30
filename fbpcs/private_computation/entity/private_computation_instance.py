@@ -139,7 +139,7 @@ class PrivateComputationInstance(InstanceBase):
 
     breakdown_key: Optional[BreakdownKey] = None
     pce_config: Optional[PCEConfig] = None
-    is_test: Optional[bool] = False  # set to be true for testing account ID
+
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
     _stage_flow_cls_name: str = "PrivateComputationStageFlow"
