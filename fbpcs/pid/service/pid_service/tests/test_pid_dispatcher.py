@@ -244,7 +244,6 @@ class TestPIDDispatcher(unittest.TestCase):
         protocol = PIDProtocol.UNION_PID
         pid_role = PIDRole.PARTNER
         num_shards = 50
-        is_validating = False
         input_path = "abc.text"
         output_path = "def.txt"
 
@@ -257,7 +256,6 @@ class TestPIDDispatcher(unittest.TestCase):
             protocol=protocol,
             pid_role=pid_role,
             num_shards=num_shards,
-            is_validating=is_validating,
             input_path=input_path,
             output_path=output_path,
         )
@@ -447,7 +445,6 @@ class TestPIDDispatcher(unittest.TestCase):
         protocol = PIDProtocol.UNION_PID
         pid_role = PIDRole.PARTNER
         num_shards = 50
-        is_validating = False
         input_path = "abc.text"
         output_path = "def.txt"
 
@@ -460,7 +457,6 @@ class TestPIDDispatcher(unittest.TestCase):
             protocol=protocol,
             pid_role=pid_role,
             num_shards=num_shards,
-            is_validating=is_validating,
             input_path=input_path,
             output_path=output_path,
         )
@@ -770,7 +766,6 @@ class TestPIDDispatcher(unittest.TestCase):
         protocol: PIDProtocol,
         pid_role: PIDRole,
         num_shards: int,
-        is_validating: bool,
         input_path: str,
         output_path: str,
         data_path: str = "",
@@ -781,7 +776,6 @@ class TestPIDDispatcher(unittest.TestCase):
             protocol=protocol,
             pid_role=pid_role,
             num_shards=num_shards,
-            is_validating=is_validating,
             input_path=input_path,
             output_path=output_path,
             data_path=data_path,
