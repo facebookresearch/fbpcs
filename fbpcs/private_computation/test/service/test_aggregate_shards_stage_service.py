@@ -49,21 +49,21 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             + "_aggregate_metrics0",
             game_name=GameNames.LIFT.value,
             mpc_party=MPCParty.CLIENT,
-            num_workers=private_computation_instance.num_mpc_containers,
+            num_workers=private_computation_instance.infra_config.num_mpc_containers,
         )
 
         self.mock_mpc_svc.start_instance_async = AsyncMock(return_value=mpc_instance)
 
         test_server_ips = [
             f"192.0.2.{i}"
-            for i in range(private_computation_instance.num_mpc_containers)
+            for i in range(private_computation_instance.infra_config.num_mpc_containers)
         ]
         await self.stage_svc.run_async(private_computation_instance, test_server_ips)
         test_game_args = [
             {
                 "input_base_path": private_computation_instance.compute_stage_output_base_path,
                 "metrics_format_type": "lift",
-                "num_shards": private_computation_instance.num_mpc_containers
+                "num_shards": private_computation_instance.infra_config.num_mpc_containers
                 * NUM_NEW_SHARDS_PER_FILE,
                 "output_path": private_computation_instance.shard_aggregate_stage_output_path,
                 "threshold": private_computation_instance.k_anonymity_threshold,
@@ -95,11 +95,11 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=2,
+            num_mpc_containers=2,
         )
         return PrivateComputationInstance(
             infra_config,
-            num_pid_containers=2,
-            num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             input_path="456",
             output_dir="789",
