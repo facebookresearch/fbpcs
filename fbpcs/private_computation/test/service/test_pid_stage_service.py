@@ -14,6 +14,7 @@ from fbpcs.pid.entity.pid_instance import (
     PIDRole,
 )
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -140,8 +141,9 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig("123")
         return PrivateComputationInstance(
-            instance_id="123",
+            infra_config,
             role=PrivateComputationRole.PUBLISHER,
             instances=[],
             status=PrivateComputationInstanceStatus.UNKNOWN,

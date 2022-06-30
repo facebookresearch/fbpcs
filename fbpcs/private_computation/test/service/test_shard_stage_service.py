@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from fbpcs.data_processing.service.sharding_service import ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -50,8 +51,9 @@ class TestShardStageService(IsolatedAsyncioTestCase):
             mock_shard.assert_called()
 
     def create_sample_instance(self) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig("test_instance_123")
         return PrivateComputationInstance(
-            instance_id="test_instance_123",
+            infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
