@@ -8,19 +8,13 @@
 
 from typing import List, Optional
 
-from fbpcs.pid.entity.pid_instance import (
-    PIDInstance,
-    PIDInstanceStatus,
-    PIDProtocol,
-    PIDRole,
-)
+from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -60,7 +54,9 @@ class IdMatchStageService(PrivateComputationStageService):
         """
 
         retry_counter_str = str(pc_instance.retry_counter)
-        pid_instance_id = pc_instance.instance_id + "_id_match" + retry_counter_str
+        pid_instance_id = (
+            pc_instance.infra_config.instance_id + "_id_match" + retry_counter_str
+        )
         pid_instance = self._pid_svc.create_instance(
             instance_id=pid_instance_id,
             pid_role=self._map_private_computation_role_to_pid_role(pc_instance.role),
