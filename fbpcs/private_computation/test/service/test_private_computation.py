@@ -29,14 +29,13 @@ from fbpcs.pid.entity.pid_instance import (
     UnionPIDStage,
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.private_computation.entity.infra_config import InfraConfig
+from fbpcs.private_computation.entity.infra_config import InfraConfig, UnionedPCInstance
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
-    UnionedPCInstance,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import (
@@ -1113,11 +1112,14 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         instances: Optional[List[UnionedPCInstance]] = None,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
-            self.test_private_computation_id, role, status, 1600000000
+            instance_id=self.test_private_computation_id,
+            role=role,
+            status=status,
+            status_update_ts=1600000000,
+            instances=instances or [],
         )
         return PrivateComputationInstance(
             infra_config,
-            instances=instances or [],
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             concurrency=self.test_concurrency,
