@@ -32,7 +32,6 @@ TEST_INPUT_PATH = "in"
 TEST_OUTPUT_PATH = "out"
 TEST_DATA_PATH = "data"
 TEST_SPINE_PATH = "spine"
-TEST_IS_VALIDATING = False
 TEST_HMAC_KEY = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
 
@@ -262,7 +261,6 @@ class TestPIDService(unittest.TestCase):
             protocol=TEST_PROTOCOL,
             pid_role=TEST_PID_ROLE,
             num_shards=TEST_NUM_SHARDS,
-            is_validating=TEST_IS_VALIDATING,
             input_path=TEST_INPUT_PATH,
             output_path=TEST_OUTPUT_PATH,
             data_path=TEST_DATA_PATH,
