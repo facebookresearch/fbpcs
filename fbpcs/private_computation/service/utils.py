@@ -236,14 +236,17 @@ async def start_combiner_service(
         return: list of container instances running combiner service
     """
     stage_data = PrivateComputationServiceData.get(
-        private_computation_instance.game_type
+        private_computation_instance.infra_config.game_type
     ).combiner_stage
 
     binary_name = stage_data.binary_name
     binary_config = onedocker_binary_config_map[binary_name]
 
     # TODO: T106159008 Add on attribution specific args
-    if private_computation_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
+    if (
+        private_computation_instance.infra_config.game_type
+        is PrivateComputationGameType.ATTRIBUTION
+    ):
         run_name = (
             private_computation_instance.infra_config.instance_id
             if log_cost_to_s3
