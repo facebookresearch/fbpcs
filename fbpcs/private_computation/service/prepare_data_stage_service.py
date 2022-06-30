@@ -32,7 +32,6 @@ class PrepareDataStageService(PrivateComputationStageService):
     Private attributes:
         _onedocker_svc: Spins up containers that run binaries in the cloud
         _onedocker_binary_config_map: Stores a mapping from mpc game to OneDockerBinaryConfig (binary version and tmp directory)
-        _is_validating: if a test shard is injected to do run time correctness validation
         _log_cost_to_s3: if money cost of the computation will be logged to S3
         _update_status_to_complete: if the status of the pc_instance should be set to complete after run_async finishes
     """
@@ -41,13 +40,11 @@ class PrepareDataStageService(PrivateComputationStageService):
         self,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-        is_validating: bool = False,
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         update_status_to_complete: bool = False,
     ) -> None:
         self._onedocker_svc = onedocker_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
-        self._is_validating = is_validating
         self._log_cost_to_s3 = log_cost_to_s3
         self._update_status_to_complete = update_status_to_complete
         self._logger: logging.Logger = logging.getLogger(__name__)
