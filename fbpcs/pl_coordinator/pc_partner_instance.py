@@ -86,7 +86,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
                 result_visibility=result_visibility,
             )
 
-        self.status = pc_instance.status
+        self.status = pc_instance.infra_config.status
         if self._need_override_input_path(pc_instance):
             update_input_path(
                 self.config, self.instance_id, self.input_path, self.logger
@@ -114,7 +114,9 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
             )
 
     def update_instance(self) -> None:
-        self.status = get_instance(self.config, self.instance_id, self.logger).status
+        self.status = get_instance(
+            self.config, self.instance_id, self.logger
+        ).infra_config.status
 
     def cancel_current_stage(self) -> None:
         cancel_current_stage(

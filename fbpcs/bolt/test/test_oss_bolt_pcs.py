@@ -166,12 +166,13 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             server_ips=["10.0.10.242"],
         )
         infra_config: InfraConfig = InfraConfig(
-            instance_id=self.test_instance_id, role=self.test_role
+            instance_id=self.test_instance_id,
+            role=self.test_role,
+            status=PrivateComputationInstanceStatus.CREATED,
         )
         test_instance = PrivateComputationInstance(
             infra_config,
             instances=[pid_instance],
-            status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=0,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             game_type=self.test_game_type,

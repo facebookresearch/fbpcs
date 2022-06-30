@@ -215,7 +215,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     self.test_private_computation_id, args.infra_config.instance_id
                 )
                 self.assertEqual(test_role, args.infra_config.role)
-                self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
+                self.assertEqual(
+                    PrivateComputationInstanceStatus.CREATED, args.infra_config.status
+                )
                 self.assertEqual(1, args.creation_ts)
                 self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
 
@@ -267,7 +269,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     self.test_private_computation_id, args.infra_config.instance_id
                 )
                 self.assertEqual(test_role, args.infra_config.role)
-                self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
+                self.assertEqual(
+                    PrivateComputationInstanceStatus.CREATED, args.infra_config.status
+                )
                 self.assertEqual(1, args.creation_ts)
                 self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
 
@@ -337,7 +341,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         # check updated_instance has new status
         self.assertEqual(
             PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-            updated_instance.status,
+            updated_instance.infra_config.status,
         )
 
         # create one MPC instance to be put into PrivateComputationInstance
@@ -387,7 +391,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         # check updated_instance has new status
         self.assertEqual(
             PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
-            updated_instance.status,
+            updated_instance.infra_config.status,
         )
 
         # elapsed_time should report current running time if the run is incomplete.
@@ -555,7 +559,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 pl_instance = self.private_computation_service.run_stage(
                     pl_instance.infra_config.instance_id, stage, stage_svc
                 )
-                self.assertEqual(pl_instance.status, stage.started_status)
+                self.assertEqual(pl_instance.infra_config.status, stage.started_status)
 
         for data_test in _get_valid_stages_data():
             stage = data_test[0]
@@ -609,7 +613,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             pl_instance = self.private_computation_service.run_stage(
                 pl_instance.infra_config.instance_id, stage, stage_svc, dry_run=True
             )
-            self.assertEqual(pl_instance.status, stage.started_status)
+            self.assertEqual(pl_instance.infra_config.status, stage.started_status)
 
         for data_test in _get_valid_stages_data():
             stage = data_test[0]
@@ -677,7 +681,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 pl_instance = self.private_computation_service.run_stage(
                     pl_instance.infra_config.instance_id, stage, stage_svc
                 )
-                self.assertEqual(pl_instance.status, stage.started_status)
+                self.assertEqual(pl_instance.infra_config.status, stage.started_status)
 
         for data_test in _get_valid_stages_data():
             stage = data_test[0]
@@ -714,7 +718,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     pl_instance.infra_config.instance_id, stage, stage_svc
                 )
 
-            self.assertEqual(pl_instance.status, stage.failed_status)
+            self.assertEqual(pl_instance.infra_config.status, stage.failed_status)
 
         for data_test in _get_valid_stages_data():
             stage = data_test[0]
@@ -812,7 +816,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             PrivateComputationInstanceStatus.AGGREGATION_FAILED,
-            self.private_computation_service._update_instance(pc_instance).status,
+            self.private_computation_service._update_instance(
+                pc_instance
+            ).infra_config.status,
         )
 
         # Test get status from the PID stage
@@ -838,7 +844,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-            self.private_computation_service._update_instance(pc_instance).status,
+            self.private_computation_service._update_instance(
+                pc_instance
+            ).infra_config.status,
         )
 
     def test_validate_metrics_results_doesnt_match(self) -> None:
@@ -903,7 +911,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         # assert the pl instance returned has the correct status
         self.assertEqual(
             PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-            private_computation_instance.status,
+            private_computation_instance.infra_config.status,
         )
 
     def test_stage_selector(self) -> None:
@@ -1012,7 +1020,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             PrivateComputationInstanceStatus.CREATION_FAILED,
-            private_computation_instance.status,
+            private_computation_instance.infra_config.status,
         )
 
     def test_cancel_current_stage_pid(self) -> None:
@@ -1068,7 +1076,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         # assert the pc instance returned has the correct status
         self.assertEqual(
             PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-            private_computation_instance.status,
+            private_computation_instance.infra_config.status,
         )
 
     def test_server_ips(self) -> None:
@@ -1104,11 +1112,12 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
         instances: Optional[List[UnionedPCInstance]] = None,
     ) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig(self.test_private_computation_id, role)
+        infra_config: InfraConfig = InfraConfig(
+            self.test_private_computation_id, role, status
+        )
         return PrivateComputationInstance(
             infra_config,
             instances=instances or [],
-            status=status,
             status_update_ts=1600000000,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
