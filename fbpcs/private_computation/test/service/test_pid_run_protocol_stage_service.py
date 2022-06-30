@@ -106,7 +106,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         )
         # test the return value is as expected
         self.assertEqual(
-            len(updated_pc_instance.instances),
+            len(updated_pc_instance.infra_config.instances),
             self.test_num_containers,
             "Failed to add the StageStageInstance into pc_instance",
         )
@@ -115,7 +115,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             pc_instance.current_stage.name,
             containers=containers,
         )
-        stage_state_actual = updated_pc_instance.instances[0]
+        stage_state_actual = updated_pc_instance.infra_config.instances[0]
         self.assertEqual(
             stage_state_actual,
             stage_state_expect,
@@ -155,7 +155,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                     test_state_name,
                     containers=containers,
                 )
-                input_pc_instance.instances.append(stage_stage)
+                input_pc_instance.infra_config.instances.append(stage_stage)
                 if stopped_containers:
                     self.mock_onedocker_svc.stop_containers = MagicMock(
                         return_value=[None, None]
@@ -190,10 +190,10 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             role=pc_role,
             status=status,
             status_update_ts=1600000000,
+            instances=[],
         )
         return PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=self.test_num_containers,

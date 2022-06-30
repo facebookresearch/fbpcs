@@ -81,7 +81,7 @@ class ShardStageService(PrivateComputationStageService):
             containers=container_instances,
         )
 
-        pc_instance.instances.append(stage_state)
+        pc_instance.infra_config.instances.append(stage_state)
         return pc_instance
 
     def get_status(
