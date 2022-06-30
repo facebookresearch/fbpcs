@@ -42,11 +42,11 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=1,
+            num_mpc_containers=1,
         )
         self._pc_instance = PrivateComputationInstance(
             infra_config=infra_config,
-            num_pid_containers=1,
-            num_mpc_containers=1,
             num_files_per_mpc_container=1,
             input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
             output_dir="789",

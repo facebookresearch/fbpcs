@@ -187,7 +187,7 @@ class AttributionStageService(PrivateComputationStageService):
                     * private_computation_instance.num_files_per_mpc_container,
                 },
             }
-            for i in range(private_computation_instance.num_mpc_containers)
+            for i in range(private_computation_instance.infra_config.num_mpc_containers)
         ]
 
         return game_args

@@ -110,7 +110,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
     ) -> List[ContainerInstance]:
         """start pid prepare service and spine up the container instances"""
         logging.info("Instantiated PID prepare stage")
-        num_shards = pc_instance.num_pid_containers
+        num_shards = pc_instance.infra_config.num_pid_containers
         # input_path is the output_path from PID Shard Stage
         input_path = pc_instance.pid_stage_output_data_path
         output_path = pc_instance.pid_stage_output_prepare_path
