@@ -117,7 +117,9 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         logging.info("MPC instance started running.")
 
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
+        pc_instance.infra_config.instances.append(
+            PCSMPCInstance.from_mpc_instance(mpc_instance)
+        )
         return pc_instance
 
     def get_status(
