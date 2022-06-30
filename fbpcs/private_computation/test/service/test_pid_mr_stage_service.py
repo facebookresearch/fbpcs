@@ -26,10 +26,11 @@ from fbpcs.service.workflow_sfn import SfnWorkflowService
 class TestPIDMRStageService(IsolatedAsyncioTestCase):
     @patch("fbpcs.private_computation.service.pid_mr_stage_service.PIDMRStageService")
     async def test_run_async(self, pid_mr_svc_mock) -> None:
-        infra_config: InfraConfig = InfraConfig("publisher_123")
+        infra_config: InfraConfig = InfraConfig(
+            "publisher_123", PrivateComputationRole.PUBLISHER
+        )
         pc_instance = PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PUBLISHER,
             instances=[],
             status=PrivateComputationInstanceStatus.PID_MR_STARTED,
             status_update_ts=1600000000,

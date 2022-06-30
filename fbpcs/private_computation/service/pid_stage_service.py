@@ -77,7 +77,7 @@ class PIDStageService(PrivateComputationStageService):
             pid_instance = self._pid_svc.create_instance(
                 instance_id=pid_instance_id,
                 pid_role=self._map_private_computation_role_to_pid_role(
-                    pc_instance.role
+                    pc_instance.infra_config.role
                 ),
                 num_shards=pc_instance.num_pid_containers,
                 input_path=pc_instance.input_path,
@@ -103,7 +103,7 @@ class PIDStageService(PrivateComputationStageService):
             instance_id=pid_instance.instance_id,
             server_ips=server_ips,
             pid_union_stage=self._publisher_stage
-            if pc_instance.role is PrivateComputationRole.PUBLISHER
+            if pc_instance.infra_config.role is PrivateComputationRole.PUBLISHER
             else self._partner_stage,
             wait_for_containers=False,
             container_timeout=self._container_timeout,
