@@ -73,7 +73,7 @@ class PIDStageService(PrivateComputationStageService):
             and self._partner_stage is UnionPIDStage.ADV_SHARD
         ):
             # increment the retry counter (starts at 0 for first attempt)
-            pid_instance_id = f"{pc_instance.infra_config.instance_id}_id_match{pc_instance.retry_counter}"
+            pid_instance_id = f"{pc_instance.infra_config.instance_id}_id_match{pc_instance.infra_config.retry_counter}"
             pid_instance = self._pid_svc.create_instance(
                 instance_id=pid_instance_id,
                 pid_role=self._map_private_computation_role_to_pid_role(
