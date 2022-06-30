@@ -83,7 +83,9 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             self.mock_mpc_svc.create_instance.call_args[1]["game_args"],
         )
 
-        self.assertEqual(mpc_instance, private_computation_instance.instances[0])
+        self.assertEqual(
+            mpc_instance, private_computation_instance.infra_config.instances[0]
+        )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
@@ -91,10 +93,10 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             role=PrivateComputationRole.PARTNER,
             status=PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
             status_update_ts=1600000000,
+            instances=[],
         )
         return PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_pid_containers=2,
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,

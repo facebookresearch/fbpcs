@@ -87,11 +87,11 @@ class PIDStageService(PrivateComputationStageService):
             )
         else:
             # If there no previous instance, then we should run shard first
-            if not pc_instance.instances:
+            if not pc_instance.infra_config.instances:
                 raise RuntimeError(
                     f"Cannot run PID stages {self._publisher_stage}, {self._partner_stage}. Run PID shard first."
                 )
-            pid_instance = pc_instance.instances[-1]
+            pid_instance = pc_instance.infra_config.instances[-1]
             # if the last instance is not a pid instance, then we are out of order
             if not isinstance(pid_instance, PIDInstance):
                 raise ValueError(
@@ -109,14 +109,14 @@ class PIDStageService(PrivateComputationStageService):
             container_timeout=self._container_timeout,
         )
 
-        if not pc_instance.instances or not isinstance(
-            pc_instance.instances[-1], PIDInstance
+        if not pc_instance.infra_config.instances or not isinstance(
+            pc_instance.infra_config.instances[-1], PIDInstance
         ):
             # Push PID instance to PrivateComputationInstance.instances
-            pc_instance.instances.append(pid_instance)
+            pc_instance.infra_config.instances.append(pid_instance)
         else:
             # replace the outdated pid instance with the updated one
-            pc_instance.instances[-1] = pid_instance
+            pc_instance.infra_config.instances[-1] = pid_instance
 
         return pc_instance
 
@@ -133,18 +133,18 @@ class PIDStageService(PrivateComputationStageService):
             The latest status for private_computation_instance
         """
         status = pc_instance.infra_config.status
-        if pc_instance.instances:
+        if pc_instance.infra_config.instances:
             # Only need to update the last stage/instance
-            last_instance = pc_instance.instances[-1]
+            last_instance = pc_instance.infra_config.instances[-1]
             if not isinstance(last_instance, PIDInstance):
                 raise ValueError(f"Expected {last_instance} to be a PIDInstance")
 
             # PID service has to call update_instance to get the newest containers
             # information in case they are still running
-            pc_instance.instances[-1] = self._pid_svc.update_instance(
+            pc_instance.infra_config.instances[-1] = self._pid_svc.update_instance(
                 last_instance.instance_id
             )
-            last_instance = pc_instance.instances[-1]
+            last_instance = pc_instance.infra_config.instances[-1]
             assert isinstance(last_instance, PIDInstance)  # appeasing pyre
 
             pid_current_stage = last_instance.current_stage
