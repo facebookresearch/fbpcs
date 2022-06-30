@@ -43,6 +43,7 @@ class AWS(CloudBase):
         self.aws_region: Optional[str] = aws_region or os.environ.get("AWS_REGION")
 
         self.log: logging.Logger = logging.getLogger(__name__)
+        self.__account_id: Optional[str] = None
 
         try:
             self.sts: botocore.client.BaseClient = boto3.client(
@@ -76,7 +77,10 @@ class AWS(CloudBase):
             )
         try:
             self.log.info("Verifying AWS credentials.")
-            self.sts.get_caller_identity()
+            response = self.sts.get_caller_identity()
+
+            # fetching account ID for the given credentials
+            self.__account_id = response.get("Account", None)
         except NoCredentialsError as error:
             self.log.error(f"Couldn't validate the AWS credentials." f"{error}")
 
@@ -170,3 +174,30 @@ class AWS(CloudBase):
             raise S3BucketDeleteError(
                 f"Error in deleting bucket {s3_bucket_name}"
             ) from error
+
+    def check_s3_object_exists(
+        self, s3_bucket_name: str, key_name: str, account_id: Optional[str] = ""
+    ) -> bool:
+        account_id = account_id or self.__account_id
+        try:
+            self.log.info(f"Checking for file {key_name} in bucket {s3_bucket_name}")
+            self.s3_client.head_object(
+                Bucket=s3_bucket_name, Key=key_name, ExpectedBucketOwner=account_id
+            )
+            self.log.info(f"File {key_name} exists.")
+            return True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "404":
+                self.log.error(
+                    f"Couldn't find file {key_name} in bucket {s3_bucket_name}"
+                )
+            elif error.response["Error"]["Code"] == "403":
+                self.log.error(
+                    f"Access denied: failed to access bucket {s3_bucket_name}"
+                )
+            else:
+                self.log.error(
+                    f"Failed to find file {key_name} in bucket {s3_bucket_name}"
+                )
+            self.log.info(f"File {key_name} doesn't exist.")
+            return False
