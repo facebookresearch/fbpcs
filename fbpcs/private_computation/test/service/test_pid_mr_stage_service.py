@@ -50,7 +50,7 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             },
         )
         flow = PrivateComputationMRStageFlow
-        pc_instance._stage_flow_cls_name = flow.get_cls_name()
+        pc_instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         service = SfnWorkflowService("us-west-2", "access_key", "access_data")
         service.start_workflow = MagicMock(return_value="execution_arn")
