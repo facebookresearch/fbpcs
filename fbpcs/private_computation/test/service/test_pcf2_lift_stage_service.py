@@ -109,13 +109,13 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             status_update_ts=1600000000,
             instances=[],
+            game_type=PrivateComputationGameType.LIFT,
         )
         return PrivateComputationInstance(
             infra_config,
             num_pid_containers=2,
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
-            game_type=PrivateComputationGameType.LIFT,
             input_path="456",
             output_dir="789",
         )
