@@ -37,10 +37,10 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         infra_config: InfraConfig = InfraConfig(
             instance_id="123",
+            role=PrivateComputationRole.PARTNER,
         )
         self._pc_instance = PrivateComputationInstance(
             infra_config=infra_config,
-            role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
             status_update_ts=1600000000,
@@ -140,7 +140,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         self, mock_get_pc_status_from_stage_state
     ) -> None:
         pc_instance = self._pc_instance
-        pc_instance.role = PrivateComputationRole.PUBLISHER
+        pc_instance.infra_config.role = PrivateComputationRole.PUBLISHER
         expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
         mock_onedocker_svc = MagicMock()
         pc_validator_config = PCValidatorConfig(

@@ -100,7 +100,7 @@ class PIDShardStageService(PrivateComputationStageService):
         num_shards = pc_instance.num_pid_containers
         input_path = pc_instance.input_path
         output_base_path = pc_instance.pid_stage_output_data_path
-        pc_role = pc_instance.role
+        pc_role = pc_instance.infra_config.role
         sharding_binary_service = ShardingService()
         # generate the list of command args for publisher or partner
         binary_name = ShardingService.get_binary_name(ShardType.HASHED_FOR_PID)
