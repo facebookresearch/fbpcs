@@ -236,14 +236,16 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
       privateConversions.at(0),
       *lastClick1D,
       thresholdsLastClick1D,
-      1);
+      1,
+      false);
 
   auto computeAttributionLastTouch1D = game.computeAttributionsHelper(
       privateTouchpoints.at(0),
       privateConversions.at(0),
       *lastTouch1D,
       thresholdsLastTouch1D,
-      1);
+      1,
+      false);
 
   for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
     EXPECT_EQ(
@@ -324,14 +326,16 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
       privateConversions,
       *lastClick1D,
       thresholdsLastClick1D,
-      batchSize);
+      batchSize,
+      false);
 
   auto computeAttributionLastTouch1D = game.computeAttributionsHelper(
       privateTouchpoints,
       privateConversions,
       *lastTouch1D,
       thresholdsLastTouch1D,
-      batchSize);
+      batchSize,
+      false);
 
   for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
     for (size_t j = 0; j < batchSize; ++j) {
@@ -370,7 +374,7 @@ AttributionOutputMetrics computeAttributionsWithScheduler(
   auto game = std::make_unique<
       AttributionGame<schedulerId, usingBatch, inputEncryption>>(
       std::move(scheduler));
-  return game->computeAttributions(myId, inputData);
+  return game->computeAttributions(myId, inputData, false);
 }
 
 template <bool usingBatch, common::InputEncryption inputEncryption>

@@ -63,7 +63,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     int port,
     std::string attributionRules,
     std::vector<std::string>& inputFilenames,
-    std::vector<std::string>& outputFilenames) {
+    std::vector<std::string>& outputFilenames,
+    bool use_new_format) {
   // aggregate scheduler statistics across apps
   common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
 
@@ -99,7 +100,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
         inputFilenames,
         outputFilenames,
         startFileIndex,
-        numFiles);
+        numFiles,
+        use_new_format);
 
     auto future = std::async([&app]() {
       app->run();
@@ -119,7 +121,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
             port,
             attributionRules,
             inputFilenames,
-            outputFilenames);
+            outputFilenames,
+            use_new_format);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -136,7 +139,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     int16_t concurrency,
     std::string serverIp,
     int port,
-    std::string attributionRules) {
+    std::string attributionRules,
+    bool use_new_format) {
   // use only as many threads as the number of files
   auto numThreads =
       std::min(static_cast<std::int16_t>(inputFilenames.size()), concurrency);
@@ -152,7 +156,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
       port,
       attributionRules,
       inputFilenames,
-      outputFilenames);
+      outputFilenames,
+      use_new_format);
 }
 
 } // namespace pcf2_attribution
