@@ -91,7 +91,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = self._onedocker_binary_config_map[binary_name]
         cmd_args = get_cmd_args(
-            pc_instance.product_config.common_product_config.input_path,
+            pc_instance.product_config.common.input_path,
             region,
             binary_config,
         )

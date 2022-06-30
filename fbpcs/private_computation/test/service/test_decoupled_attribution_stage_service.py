@@ -83,8 +83,8 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             + "_decoupled_attribution"
             if self.stage_svc._log_cost_to_s3
             else "",
-            "max_num_touchpoints": private_computation_instance.product_config.common_product_config.padding_size,
-            "max_num_conversions": private_computation_instance.product_config.common_product_config.padding_size,
+            "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
+            "max_num_conversions": private_computation_instance.product_config.common.padding_size,
             "attribution_rules": AttributionRule.LAST_CLICK_1D.value,
             "use_xor_encryption": True,
             "use_postfix": True,
@@ -118,13 +118,13 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="456",
             output_dir="789",
             padding_size=4,
         )
         product_config: ProductConfig = AttributionConfig(
-            common_product_config=common_product_config,
+            common=common,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             aggregation_type=AggregationType.MEASUREMENT,
         )

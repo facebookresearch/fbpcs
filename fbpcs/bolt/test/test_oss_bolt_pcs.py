@@ -186,19 +186,19 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,
             output_dir=self.test_output_path,
         )
         product_config: ProductConfig
         if self.test_game_type is PrivateComputationGameType.ATTRIBUTION:
             product_config = AttributionConfig(
-                common_product_config=common_product_config,
+                common=common,
                 attribution_rule=AttributionRule.LAST_CLICK_1D,
                 aggregation_type=AggregationType.MEASUREMENT,
             )
         elif self.test_game_type is PrivateComputationGameType.LIFT:
-            product_config = LiftConfig(common_product_config=common_product_config)
+            product_config = LiftConfig(common=common)
         test_instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,

@@ -457,9 +457,7 @@ class TestPlInstanceRunner(TestCase):
                     self._get_graph_api_output(publisher_status)
                 )
                 old_pc_instance = self._get_pc_instance(partner_status)
-                old_pc_instance.product_config.common_product_config.input_path = (
-                    "need_to_be_updated"
-                )
+                old_pc_instance.product_config.common.input_path = "need_to_be_updated"
                 mock_get_instance.return_value = old_pc_instance
                 if need_override:
                     self._get_runner(PrivateComputationStageFlow)
@@ -517,12 +515,12 @@ class TestPlInstanceRunner(TestCase):
             num_mpc_containers=self.num_shards,
             num_files_per_mpc_container=40,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="fake_input_path",
             output_dir="789",
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
         )
         return PrivateComputationInstance(
             infra_config=infra_config,

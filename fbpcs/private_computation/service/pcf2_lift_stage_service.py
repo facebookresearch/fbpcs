@@ -162,10 +162,8 @@ class PCF2LiftStageService(PrivateComputationStageService):
                 + "_"
                 + GameNames.PCF2_LIFT.value
             )
-            if (
-                private_computation_instance.product_config.common_product_config.post_processing_data
-            ):
-                private_computation_instance.product_config.common_product_config.post_processing_data.s3_cost_export_output_paths.add(
+            if private_computation_instance.product_config.common.post_processing_data:
+                private_computation_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
                     f"pl-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json"
                 )
         else:
@@ -271,8 +269,8 @@ class PCF2LiftStageService(PrivateComputationStageService):
                     "run_name": private_computation_instance.infra_config.instance_id
                     if self._log_cost_to_s3
                     else "",
-                    "max_num_touchpoints": private_computation_instance.product_config.common_product_config.padding_size,
-                    "max_num_conversions": private_computation_instance.product_config.common_product_config.padding_size,
+                    "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
+                    "max_num_conversions": private_computation_instance.product_config.common.padding_size,
                 },
             }
             for i in range(private_computation_instance.infra_config.num_mpc_containers)

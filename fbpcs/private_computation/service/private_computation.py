@@ -182,7 +182,7 @@ class PrivateComputationService:
             ),
             mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path=input_path,
             output_dir=output_dir,
             hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
@@ -204,13 +204,13 @@ class PrivateComputationService:
             if attribution_rule is None:
                 raise RuntimeError("Missing attribution input: attribution_rule.")
             product_config = AttributionConfig(
-                common_product_config=common_product_config,
+                common=common,
                 attribution_rule=attribution_rule,
                 aggregation_type=aggregation_type,
             )
         elif game_type is PrivateComputationGameType.LIFT:
             product_config = LiftConfig(
-                common_product_config=common_product_config,
+                common=common,
                 k_anonymity_threshold=unwrap_or_default(
                     optional=k_anonymity_threshold,
                     default=DEFAULT_K_ANONYMITY_THRESHOLD_PA
@@ -256,7 +256,7 @@ class PrivateComputationService:
         """
         pc_instance = self.get_instance(instance_id)
         if pc_instance.infra_config.role is PrivateComputationRole.PARTNER:
-            pc_instance.product_config.common_product_config.input_path = input_path
+            pc_instance.product_config.common.input_path = input_path
             self.instance_repository.update(pc_instance)
 
         return pc_instance

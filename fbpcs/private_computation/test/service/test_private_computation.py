@@ -239,7 +239,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 yesterday_timestamp = datetime.timestamp(yesterday_date)
                 self.assertEqual(
                     int(yesterday_timestamp),
-                    args.product_config.common_product_config.post_processing_data.dataset_timestamp,
+                    args.product_config.common.post_processing_data.dataset_timestamp,
                 )
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
@@ -1145,13 +1145,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             mpc_compute_concurrency=self.test_concurrency,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
             hmac_key=self.test_hmac_key,
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
             k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,
         )
         return PrivateComputationInstance(

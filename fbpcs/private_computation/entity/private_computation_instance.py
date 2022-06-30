@@ -167,7 +167,7 @@ class PrivateComputationInstance(InstanceBase):
     @property
     def pid_mr_stage_output_data_path(self) -> str:
         return os.path.join(
-            self.product_config.common_product_config.output_dir,
+            self.product_config.common.output_dir,
             f"{self.infra_config.instance_id}_out_dir",
             "pid_mr",
         )
@@ -206,7 +206,7 @@ class PrivateComputationInstance(InstanceBase):
 
     def _get_stage_output_path(self, stage: str, extension_type: str) -> str:
         return os.path.join(
-            self.product_config.common_product_config.output_dir,
+            self.product_config.common.output_dir,
             f"{self.infra_config.instance_id}_out_dir",
             stage,
             f"out.{extension_type}",

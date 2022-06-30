@@ -42,13 +42,11 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="456",
             output_dir="789",
         )
-        product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config
-        )
+        product_config: ProductConfig = LiftConfig(common=common)
 
         pc_instance = PrivateComputationInstance(
             infra_config=infra_config,
@@ -60,7 +58,7 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
             protocol=PIDProtocol.UNION_PID,
             pid_role=PIDRole.PUBLISHER,
             num_shards=2,
-            input_path=pc_instance.product_config.common_product_config.input_path,
+            input_path=pc_instance.product_config.common.input_path,
             output_path=pc_instance.pid_stage_output_data_path,
             status=PIDInstanceStatus.STARTED,
         )
