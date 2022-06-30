@@ -16,10 +16,13 @@ from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionConfig,
+    AttributionRule,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_service_data import (
@@ -140,14 +143,14 @@ class AggregationStageService(PrivateComputationStageService):
         logging.info(
             f"PATH : {private_computation_instance.decoupled_attribution_stage_output_base_path}"
         )
-        aggregation_type = checked_cast(
-            AggregationType, private_computation_instance.aggregation_type
+
+        attribution_config: AttributionConfig = checked_cast(
+            AttributionConfig,
+            private_computation_instance.product_config,
         )
-        # decoupled aggregation game does not need the attribution rule. Passing it here just for cost logging,
-        # so that we get to know how much the game cost for a aggregation format and attribution rule.
-        attribution_rule = checked_cast(
-            AttributionRule, private_computation_instance.attribution_rule
-        )
+        attribution_rule: AttributionRule = attribution_config.attribution_rule
+
+        aggregation_type: AggregationType = attribution_config.aggregation_type
 
         if self._log_cost_to_s3:
             run_name = private_computation_instance.infra_config.instance_id

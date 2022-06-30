@@ -22,6 +22,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.product_config import (
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
+)
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
@@ -158,8 +163,13 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
         return PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path="456",
             output_dir="789",
         )
