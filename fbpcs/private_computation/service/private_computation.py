@@ -129,7 +129,6 @@ class PrivateComputationService:
         attribution_rule: Optional[AttributionRule] = None,
         aggregation_type: Optional[AggregationType] = None,
         num_files_per_mpc_container: Optional[int] = None,
-        is_validating: Optional[bool] = False,
         synthetic_shard_path: Optional[str] = None,
         breakdown_key: Optional[BreakdownKey] = None,
         pce_config: Optional[PCEConfig] = None,
@@ -165,7 +164,6 @@ class PrivateComputationService:
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
             ),
             game_type=game_type,
-            is_validating=is_validating,
             synthetic_shard_path=synthetic_shard_path,
             num_pid_containers=num_pid_containers,
             num_mpc_containers=self._get_number_of_mpc_containers(
