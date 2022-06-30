@@ -165,10 +165,11 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             status=PIDInstanceStatus.STARTED,
             server_ips=["10.0.10.242"],
         )
-        infra_config: InfraConfig = InfraConfig(instance_id=self.test_instance_id)
+        infra_config: InfraConfig = InfraConfig(
+            instance_id=self.test_instance_id, role=self.test_role
+        )
         test_instance = PrivateComputationInstance(
             infra_config,
-            role=self.test_role,
             instances=[pid_instance],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=0,
