@@ -19,6 +19,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.product_config import (
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
+)
 from fbpcs.private_computation.repository.private_computation_instance_local import (
     LocalPrivateComputationInstanceRepository,
 )
@@ -49,8 +54,14 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
+
         test_read_private_computation_instance = PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path="in",
             output_dir="out",
         )
@@ -74,9 +85,14 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
-                infra_config,
+                infra_config=infra_config,
+                product_config=product_config,
                 input_path="in",
                 output_dir="out",
             )
@@ -95,8 +111,13 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
         test_update_private_computation_instance = PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path="in",
             output_dir="out",
         )

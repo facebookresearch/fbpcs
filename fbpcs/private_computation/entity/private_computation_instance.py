@@ -9,7 +9,7 @@
 import os
 import time
 from dataclasses import dataclass
-from enum import Enum, IntEnum
+from enum import IntEnum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
         PrivateComputationBaseStageFlow,
     )
 
+import json
 from datetime import datetime, timezone
 from logging import Logger
 
@@ -45,22 +46,12 @@ from fbpcs.private_computation.entity.post_processing_data import PostProcessing
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-
-
-class AttributionRule(Enum):
-    LAST_CLICK_1D = "last_click_1d"
-    LAST_CLICK_7D = "last_click_7d"
-    LAST_CLICK_28D = "last_click_28d"
-    LAST_TOUCH_1D = "last_touch_1d"
-    LAST_TOUCH_7D = "last_touch_7d"
-    LAST_TOUCH_28D = "last_touch_28d"
-    LAST_CLICK_2_7D = "last_click_2_7d"
-    LAST_TOUCH_2_7D = "last_touch_2_7d"
-    LAST_CLICK_1D_TARGETID = "last_click_1d_targetid"
-
-
-class AggregationType(Enum):
-    MEASUREMENT = "measurement"
+from fbpcs.private_computation.entity.product_config import (
+    AttributionConfig,
+    AttributionRule,
+    LiftConfig,
+    ProductConfig,
+)
 
 
 # This is the visibility defined in https://fburl.com/code/i1itu32l
@@ -83,12 +74,6 @@ class PrivateComputationInstance(InstanceBase):
     """Stores metadata of a private computation instance
 
     Public attributes:
-        attribution_rule: the rule that a conversion is attributed to an exposure (e.g., last_click_1d,
-                            last_click_28d, last_touch_1d, last_touch_28d). Not currently used by Lift.
-        aggregation_type: the level the statistics are aggregated at (e.g., ad-object, which includes ad,
-                            campaign and campaign group). In the future, aggregation_type will also be
-                            used to infer the metrics_format_type argument of the shard aggregator game.
-                            Not currently used by Lift.
         padding_size: the id spine combiner would pad each partner row to have this number of conversions.
                         This is required by MPC compute metrics to support multiple conversions per id while
                         at the same time maintaining privacy. It is currently only used when game_type=attribution
@@ -101,12 +86,11 @@ class PrivateComputationInstance(InstanceBase):
     """
 
     infra_config: InfraConfig
+    product_config: ProductConfig
 
     input_path: str
     output_dir: str
 
-    attribution_rule: Optional[AttributionRule] = None
-    aggregation_type: Optional[AggregationType] = None
     pid_configs: Optional[Dict[str, Any]] = None
 
     # TODO T98476320: make the following optional attributes non-optional. They are optional
@@ -133,12 +117,57 @@ class PrivateComputationInstance(InstanceBase):
             )
         if (
             self.infra_config.game_type is PrivateComputationGameType.ATTRIBUTION
-            and self.attribution_rule is None
+            and isinstance(self.product_config, AttributionConfig)
+            and self.product_config.attribution_rule is None
         ):
-            self.attribution_rule = AttributionRule.LAST_CLICK_1D
+            self.product_config.attribution_rule = AttributionRule.LAST_CLICK_1D
 
         if self.infra_config.creation_ts == 0:
             self.infra_config.creation_ts = int(time.time())
+
+    # TODO: These two functions can be simplfied better after the whole decouple task finish.
+    # I will do this in clean-up part in the same stack
+    def dumps_schema(self) -> str:
+        json_object = json.loads(super().dumps_schema())
+
+        if isinstance(self.product_config, AttributionConfig):
+            json_object["product_config"] = json.loads(
+                AttributionConfig.schema().dumps(self.product_config)
+            )
+        elif isinstance(self.product_config, LiftConfig):
+            json_object["product_config"] = json.loads(
+                LiftConfig.schema().dumps(self.product_config)
+            )
+        else:
+            raise ValueError(f"Invalid product config: {self.product_config}")
+
+        return json.dumps(json_object)
+
+    @classmethod
+    def loads_schema(cls, json_schema_str: str) -> "PrivateComputationInstance":
+        json_object = json.loads(json_schema_str)
+
+        product_config: ProductConfig
+        if json_object["infra_config"]["game_type"] == "ATTRIBUTION":
+            product_config = AttributionConfig.schema().loads(
+                json.dumps(json_object["product_config"]), many=None
+            )
+        elif json_object["infra_config"]["game_type"] == "LIFT":
+            product_config = LiftConfig.schema().loads(
+                json.dumps(json_object["product_config"]), many=None
+            )
+        else:
+            raise ValueError(f"Invalid product config: {json_schema_str}")
+
+        # filter out subclass fields, only fields in ProductConfig class left
+        json_object["product_config"] = json.loads(
+            ProductConfig.schema().dumps(product_config)
+        )
+        pc_instance: PrivateComputationInstance = cls.schema().loads(
+            json.dumps(json_object), many=None
+        )
+        pc_instance.product_config = product_config
+        return pc_instance
 
     def get_instance_id(self) -> str:
         return self.infra_config.instance_id
