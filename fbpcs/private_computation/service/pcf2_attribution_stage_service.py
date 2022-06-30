@@ -96,7 +96,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
         retry_counter_str = str(pc_instance.retry_counter)
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
-            instance_id=pc_instance.instance_id
+            instance_id=pc_instance.infra_config.instance_id
             + "_pcf2_attribution"
             + retry_counter_str,
             game_name=game_name,
@@ -151,7 +151,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
         )
         if self._log_cost_to_s3:
             run_name = (
-                private_computation_instance.instance_id
+                private_computation_instance.infra_config.instance_id
                 + "_"
                 + GameNames.PCF2_ATTRIBUTION.value
             )

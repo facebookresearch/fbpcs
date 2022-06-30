@@ -240,7 +240,11 @@ async def start_combiner_service(
 
     # TODO: T106159008 Add on attribution specific args
     if private_computation_instance.game_type is PrivateComputationGameType.ATTRIBUTION:
-        run_name = private_computation_instance.instance_id if log_cost_to_s3 else ""
+        run_name = (
+            private_computation_instance.infra_config.instance_id
+            if log_cost_to_s3
+            else ""
+        )
         padding_size = checked_cast(int, private_computation_instance.padding_size)
         log_cost = log_cost_to_s3
     else:
@@ -377,7 +381,7 @@ def get_log_urls(
     else:
         logging.warning(
             "The last instance of PrivateComputationInstance "
-            f"{private_computation_instance.instance_id} has no supported way "
+            f"{private_computation_instance.infra_config.instance_id} has no supported way "
             "of retrieving log URLs"
         )
     return res

@@ -15,6 +15,7 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
 from fbpcs.post_processing_handler.tests.dummy_handler import PostProcessingDummyHandler
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -140,8 +141,9 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig("test_instance_123")
         return PrivateComputationInstance(
-            instance_id="test_instance_123",
+            infra_config,
             role=PrivateComputationRole.PUBLISHER,
             instances=[],
             status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
