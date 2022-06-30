@@ -93,7 +93,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
         game_name = checked_cast(str, stage_data.game_name)
 
         binary_config = self._onedocker_binary_config_map[binary_name]
-        retry_counter_str = str(pc_instance.retry_counter)
+        retry_counter_str = str(pc_instance.infra_config.retry_counter)
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
             instance_id=pc_instance.infra_config.instance_id
