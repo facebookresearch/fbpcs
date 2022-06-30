@@ -33,13 +33,15 @@ from fbpcs.pl_coordinator.pc_publisher_instance import (
     PrivateComputationPublisherInstance,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationGameType,
     ResultVisibility,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionRule,
 )
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,

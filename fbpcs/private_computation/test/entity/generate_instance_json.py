@@ -38,6 +38,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.entity.product_config import (
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
+)
 
 LIFT_PC_PATH: str = os.path.join(
     os.path.dirname(__file__),
@@ -156,12 +161,16 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         num_files_per_mpc_container=40,
         mpc_compute_concurrency=4,
     )
+    common_product_config: CommonProductConfig = CommonProductConfig()
+    product_config: ProductConfig = LiftConfig(
+        common_product_config=common_product_config
+    )
+
     return PrivateComputationInstance(
-        infra_config,
+        infra_config=infra_config,
+        product_config=product_config,
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
         output_dir="https://bucket.s3.us-west-2.amazonaws.com/lift/partner",
-        attribution_rule=None,
-        aggregation_type=None,
         hmac_key="",
         padding_size=25,
         k_anonymity_threshold=100,

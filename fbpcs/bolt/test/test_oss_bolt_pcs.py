@@ -19,15 +19,25 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
 from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.private_computation.entity.infra_config import InfraConfig
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
+    PrivateComputationGameType,
+)
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionConfig,
+    AttributionRule,
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
 )
 from fbpcs.private_computation.service.constants import (
     DEFAULT_PID_PROTOCOL,
@@ -176,8 +186,19 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig
+        if self.test_game_type is PrivateComputationGameType.ATTRIBUTION:
+            product_config = AttributionConfig(
+                common_product_config=common_product_config,
+                attribution_rule=AttributionRule.LAST_CLICK_1D,
+                aggregation_type=AggregationType.MEASUREMENT,
+            )
+        elif self.test_game_type is PrivateComputationGameType.LIFT:
+            product_config = LiftConfig(common_product_config=common_product_config)
         test_instance = PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path=self.test_input_path,
             output_dir=self.test_output_path,
         )
