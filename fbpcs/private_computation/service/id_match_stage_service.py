@@ -66,7 +66,7 @@ class IdMatchStageService(PrivateComputationStageService):
             input_path=pc_instance.product_config.common_product_config.input_path,
             output_path=pc_instance.pid_stage_output_base_path,
             hmac_key=pc_instance.product_config.common_product_config.hmac_key,
-            pid_use_row_numbers=pc_instance.pid_use_row_numbers,
+            pid_use_row_numbers=pc_instance.product_config.common_product_config.pid_use_row_numbers,
         )
 
         # Run pid

@@ -115,10 +115,11 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         protocol = get_pid_protocol_from_num_shards(num_shards, self._multikey_enabled)
         metric_paths = self.get_metric_paths(pc_role, output_path, num_shards)
         server_hostnames = self.get_server_hostnames(pc_role, server_ips, num_shards)
-        if pc_instance.pid_use_row_numbers:
+        if pc_instance.product_config.common_product_config.pid_use_row_numbers:
             logging.info("use-row-numbers is enabled for Private ID")
-        use_row_numbers = pc_instance.pid_use_row_numbers and (
-            protocol != PIDProtocol.UNION_PID_MULTIKEY
+        use_row_numbers = (
+            pc_instance.product_config.common_product_config.pid_use_row_numbers
+            and (protocol != PIDProtocol.UNION_PID_MULTIKEY)
         )
         # generate the list of command args for publisher or partner
         args_list = []
