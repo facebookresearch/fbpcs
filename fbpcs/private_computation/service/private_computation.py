@@ -131,7 +131,6 @@ class PrivateComputationService:
         num_files_per_mpc_container: Optional[int] = None,
         breakdown_key: Optional[BreakdownKey] = None,
         pce_config: Optional[PCEConfig] = None,
-        is_test: Optional[bool] = False,
         hmac_key: Optional[str] = None,
         padding_size: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
@@ -173,7 +172,6 @@ class PrivateComputationService:
             output_dir=output_dir,
             breakdown_key=breakdown_key,
             pce_config=pce_config,
-            is_test=is_test,
             hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             padding_size=unwrap_or_default(
                 optional=padding_size,
