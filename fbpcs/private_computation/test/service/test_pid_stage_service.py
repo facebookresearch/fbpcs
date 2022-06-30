@@ -42,15 +42,15 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             partner_stage=UnionPIDStage.ADV_SHARD,
         )
 
-        self.assertEqual(len(pc_instance.instances), 0)
+        self.assertEqual(len(pc_instance.infra_config.instances), 0)
         await stage_svc.run_async(pc_instance)
 
         # an instance should be created and added to pc_instance.instances
         pid_svc_mock.create_instance.assert_called()
-        self.assertEqual(len(pc_instance.instances), 1)
+        self.assertEqual(len(pc_instance.infra_config.instances), 1)
 
         # verifies that the shard stage service returns an instance
-        self.assertIsInstance(pc_instance.instances[0], PIDInstance)
+        self.assertIsInstance(pc_instance.infra_config.instances[0], PIDInstance)
 
     @patch("fbpcs.pid.service.pid_service.pid.PIDService")
     async def test_run_prepare(self, pid_svc_mock) -> None:
@@ -74,20 +74,20 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             partner_stage=UnionPIDStage.ADV_PREPARE,
         )
 
-        self.assertEqual(len(pc_instance.instances), 0)
+        self.assertEqual(len(pc_instance.infra_config.instances), 0)
 
         with self.assertRaises(RuntimeError):
             # pid run won't create a pid instance
             await stage_svc.run_async(pc_instance)
 
-        pc_instance.instances.append(old_pid_instance)
+        pc_instance.infra_config.instances.append(old_pid_instance)
         await stage_svc.run_async(pc_instance)
 
         # a new instance should not be created (all pid stages share an instance)
         pid_svc_mock.create_instance.assert_not_called()
         # verifies that the stage svc stores the latest instance
-        self.assertEqual(len(pc_instance.instances), 1)
-        self.assertEqual(pc_instance.instances[0], new_pid_instance)
+        self.assertEqual(len(pc_instance.infra_config.instances), 1)
+        self.assertEqual(pc_instance.infra_config.instances[0], new_pid_instance)
 
     @patch("fbpcs.pid.service.pid_service.pid.PIDService")
     async def test_run_pid_run(self, pid_svc_mock) -> None:
@@ -111,20 +111,20 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             partner_stage=UnionPIDStage.ADV_RUN_PID,
         )
 
-        self.assertEqual(len(pc_instance.instances), 0)
+        self.assertEqual(len(pc_instance.infra_config.instances), 0)
 
         with self.assertRaises(RuntimeError):
             # pid run won't create a pid instance
             await stage_svc.run_async(pc_instance)
 
-        pc_instance.instances.append(old_pid_instance)
+        pc_instance.infra_config.instances.append(old_pid_instance)
         await stage_svc.run_async(pc_instance)
 
         # a new instance should not be created (all pid stages share an instance)
         pid_svc_mock.create_instance.assert_not_called()
         # verifies that the stage svc stores the latest instance
-        self.assertEqual(len(pc_instance.instances), 1)
-        self.assertEqual(pc_instance.instances[0], new_pid_instance)
+        self.assertEqual(len(pc_instance.infra_config.instances), 1)
+        self.assertEqual(pc_instance.infra_config.instances[0], new_pid_instance)
 
     def test_map_private_computation_role_to_pid_role(self) -> None:
         self.assertEqual(
@@ -146,10 +146,10 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.UNKNOWN,
             status_update_ts=1600000000,
+            instances=[],
         )
         return PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_pid_containers=1,
             num_mpc_containers=1,
             num_files_per_mpc_container=1,

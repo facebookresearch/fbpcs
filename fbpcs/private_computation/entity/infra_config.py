@@ -5,8 +5,15 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import List, Union
 
 from dataclasses_json import dataclass_json
+from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.pid.entity.pid_instance import PIDInstance
+from fbpcs.post_processing_handler.post_processing_instance import (
+    PostProcessingInstance,
+)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -15,6 +22,11 @@ from fbpcs.private_computation.entity.private_computation_status import (
 class PrivateComputationRole(Enum):
     PUBLISHER = "PUBLISHER"
     PARTNER = "PARTNER"
+
+
+UnionedPCInstance = Union[
+    PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
+]
 
 
 @dataclass_json
@@ -32,3 +44,4 @@ class InfraConfig:
     role: PrivateComputationRole
     status: PrivateComputationInstanceStatus
     status_update_ts: int
+    instances: List[UnionedPCInstance]
