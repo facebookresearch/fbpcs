@@ -76,7 +76,7 @@ class IdMatchStageService(PrivateComputationStageService):
         )
 
         # Push PID instance to PrivateComputationInstance.instances
-        pc_instance.instances.append(pid_instance)
+        pc_instance.infra_config.instances.append(pid_instance)
 
         return pc_instance
 
@@ -93,19 +93,19 @@ class IdMatchStageService(PrivateComputationStageService):
             The latest status for private_computation_instance
         """
         status = pc_instance.infra_config.status
-        if pc_instance.instances:
+        if pc_instance.infra_config.instances:
             # Only need to update the last stage/instance
-            last_instance = pc_instance.instances[-1]
+            last_instance = pc_instance.infra_config.instances[-1]
             if not isinstance(last_instance, PIDInstance):
                 return status
 
             # PID service has to call update_instance to get the newest containers
             # information in case they are still running
-            pc_instance.instances[-1] = self._pid_svc.update_instance(
+            pc_instance.infra_config.instances[-1] = self._pid_svc.update_instance(
                 last_instance.instance_id
             )
 
-            pid_instance_status = pc_instance.instances[-1].status
+            pid_instance_status = pc_instance.infra_config.instances[-1].status
 
             stage = pc_instance.current_stage
             if pid_instance_status is PIDInstanceStatus.STARTED:
