@@ -113,7 +113,6 @@ class PrivateComputationInstance(InstanceBase):
     infra_config: InfraConfig
 
     instances: List[UnionedPCInstance]
-    status_update_ts: int
     num_files_per_mpc_container: int
     game_type: PrivateComputationGameType
     input_path: str
@@ -297,9 +296,11 @@ class PrivateComputationInstance(InstanceBase):
         old_status = self.infra_config.status
         self.infra_config.status = new_status
         if old_status is not new_status:
-            self.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
+            self.infra_config.status_update_ts = int(
+                datetime.now(tz=timezone.utc).timestamp()
+            )
             logger.info(
-                f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.infra_config.status} at time {self.status_update_ts}"
+                f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.infra_config.status} at time {self.infra_config.status_update_ts}"
             )
         if self.is_stage_flow_completed():
             self.end_ts = int(time.time())
