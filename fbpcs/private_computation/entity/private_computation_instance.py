@@ -9,7 +9,6 @@
 import os
 import time
 from dataclasses import dataclass
-from enum import IntEnum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
@@ -52,14 +51,6 @@ from fbpcs.private_computation.entity.product_config import (
     ProductConfig,
 )
 
-
-# This is the visibility defined in https://fburl.com/code/i1itu32l
-class ResultVisibility(IntEnum):
-    PUBLIC = 0
-    PUBLISHER = 1
-    PARTNER = 2
-
-
 UnionedPCInstanceStatus = Union[
     PIDInstanceStatus,
     MPCInstanceStatus,
@@ -83,12 +74,6 @@ class PrivateComputationInstance(InstanceBase):
     product_config: ProductConfig
 
     pid_configs: Optional[Dict[str, Any]] = None
-
-    result_visibility: ResultVisibility = ResultVisibility.PUBLIC
-
-    # this is used by Private ID protocol to indicate whether we should
-    # enable 'use-row-numbers' argument.
-    pid_use_row_numbers: bool = True
 
     post_processing_data: Optional[PostProcessingData] = None
 
