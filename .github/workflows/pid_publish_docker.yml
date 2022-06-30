@@ -1,0 +1,104 @@
+name: Github Tests for Migration Of PID Stage Services
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Manually running this workflow will skip "Check New Commits" step and build image directly'
+        default: "Run"
+      new_tag:
+        description: "The new tag of the docker image"
+        required: false
+        type: string
+        default: latest-build
+      tracker_hash:
+        description: "[Internal usage] Used for tracking workflow job status within Meta infra"
+        required: false
+        type: str
+
+env:
+  DISTRO: ubuntu
+  REGISTRY: ghcr.io
+  LOCAL_IMAGE_NAME: fbpcs/onedocker
+  RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
+  PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
+  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator
+  PL_CONTAINER_NAME: e2e_pl_container
+  PA_CONTAINER_NAME: e2e_pa_container
+  TIME_RANGE: 24 hours
+
+jobs:
+  ### Build and publish rc/onedocker image
+  build_image:
+    name: Build Image
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash }}
+
+      - name: Remove unused images
+        run: |
+          docker image prune -af
+
+      - name: Build onedocker image in rc
+        run: |
+          ./build-docker.sh onedocker -t ${{github.event.inputs.new_tag}} -f
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag docker image
+        run: |
+          docker tag ${{ env.LOCAL_IMAGE_NAME }}:${{github.event.inputs.new_tag}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+          docker tag ${{ env.LOCAL_IMAGE_NAME }}:${{github.event.inputs.new_tag}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{github.event.inputs.new_tag}}
+          # temporarily tagging with rc because the task definition
+          # (fbpcs-github-cicd:4 https://us-west-2.console.aws.amazon.com/ecs/home?region=us-west-2#/taskDefinitions/fbpcs-github-cicd/4)
+          # points at :rc instead of latest-build
+          docker tag ${{ env.LOCAL_IMAGE_NAME }}:${{github.event.inputs.new_tag}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:rc
+      - name: Push image with to rc registry
+        run: |
+          docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
+
+      - name: Cleanup ECS running tasks and previous running results
+        run: |
+          ./cleanup.sh
+        working-directory: ./fbpcs/tests/github/
+
+      - name: Pull coordinator image
+        run: |
+          docker pull ${{ env.COORDINATOR_IMAGE }}:${{ github.event.inputs.new_tag }}
+
+      ### Private Lift and Attribution E2E tests
+      - name: End to end testing
+        timeout-minutes: 60
+        run: |
+          docker run --rm -v "instances":"/instances" -v "$(realpath fbpcs_e2e_aws.yml):/home/pcs/pl_coordinator_env/fbpcs_e2e_aws.yml" -v "$(realpath bolt_pid_stage_service_test.yml):/home/pcs/pl_coordinator_env/bolt_pid_stage_service_test.yml" ${{ env.COORDINATOR_IMAGE }}:${{ github.event.inputs.new_tag }} python3.8 -m fbpcs.private_computation_cli.private_computation_cli bolt_e2e --bolt_config="bolt_pid_stage_service_test.yml"
+        working-directory: ./fbpcs/tests/github/
+
+
+      - name: Pull image from rc registry
+        run: |
+          docker pull ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Set output
+        id: vars
+        run: echo ::set-output name=ref::${GITHUB_REF##*/}
+
+      - name: Tag image
+        run: |
+          docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+          docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{github.event.inputs.new_tag}}
+          docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ steps.vars.outputs.ref }}
+
+      - name: Push docker image to prod registry
+        run: |
+          docker push --all-tags ${{ env.PROD_REGISTRY_IMAGE_NAME }}
