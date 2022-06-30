@@ -34,6 +34,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.utils import (
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     get_pc_status_from_stage_state,
+    stop_stage_service,
 )
 
 
@@ -142,3 +143,9 @@ class PIDPrepareStageService(PrivateComputationStageService):
             timeout=self._container_timeout,
             env_vars=env_vars,
         )
+
+    def stop_service(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> None:
+        stop_stage_service(pc_instance, self._onedocker_svc)

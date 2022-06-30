@@ -547,3 +547,15 @@ async def all_files_exist_on_cloud(
         *[file_exists_async(storage_svc, path) for path in input_paths]
     )
     return sum(tasks) == num_shards
+
+
+def stop_stage_service(
+    pc_instance: PrivateComputationInstance, onedocker_svc: OneDockerService
+) -> None:
+    last_instance = pc_instance.infra_config.instances[-1]
+    # make sure the last instance is the StageStageInstance appended by current stage
+    if not isinstance(last_instance, StageStateInstance):
+        raise ValueError("Have no StageState for stop_service")
+    assert last_instance.stage_name == pc_instance.current_stage.name
+    # stop containers
+    last_instance.stop_containers(onedocker_svc)

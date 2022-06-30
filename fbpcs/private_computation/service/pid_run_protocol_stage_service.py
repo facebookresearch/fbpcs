@@ -31,7 +31,10 @@ from fbpcs.private_computation.service.constants import DEFAULT_SERVER_PORT_NUMB
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-from fbpcs.private_computation.service.utils import get_pc_status_from_stage_state
+from fbpcs.private_computation.service.utils import (
+    get_pc_status_from_stage_state,
+    stop_stage_service,
+)
 
 
 class PIDRunProtocolStageService(PrivateComputationStageService):
@@ -179,22 +182,4 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         self,
         pc_instance: PrivateComputationInstance,
     ) -> None:
-        last_instance = pc_instance.infra_config.instances[-1]
-        # make sure the last instance is the StageStageInstance appended by current stage
-        if not isinstance(last_instance, StageStateInstance):
-            raise ValueError("Have no StageState for stop_service")
-
-        assert last_instance.stage_name == pc_instance.current_stage.name
-
-        # stop containers
-        containers = last_instance.containers
-        if containers:
-            container_ids = [instance.instance_id for instance in containers]
-            errors = self._onedocker_svc.stop_containers(container_ids)
-            error_msg = [
-                (id, error) for id, error in zip(container_ids, errors) if error
-            ]
-            if error_msg:
-                raise RuntimeError(
-                    f"We encountered errors when stopping containers: {error_msg}"
-                )
+        stop_stage_service(pc_instance, self._onedocker_svc)

@@ -33,7 +33,6 @@ from fbpcs.private_computation.service.constants import (
 from fbpcs.private_computation.service.pid_prepare_stage_service import (
     PIDPrepareStageService,
 )
-
 from libfb.py.testutil import data_provider, MagicMock
 
 
@@ -91,7 +90,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             multikey_enabled=multikey_enabled,
         )
         containers = [
-            self.create_container_instance() for _ in range(test_num_containers)
+            self.create_container_instance(i) for i in range(test_num_containers)
         ]
         self.mock_onedocker_svc.start_containers = MagicMock(return_value=containers)
         self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
@@ -131,14 +130,17 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         )
 
     def create_sample_pc_instance(
-        self, pc_role: PrivateComputationRole, test_num_containers: int
+        self,
+        pc_role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
+        test_num_containers: int = 1,
+        status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.pc_instance_id,
             role=pc_role,
-            status=PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
-            status_update_ts=1600000000,
             instances=[],
+            status=status,
+            status_update_ts=1600000000,
             game_type=PrivateComputationGameType.LIFT,
             num_pid_containers=test_num_containers,
             num_mpc_containers=test_num_containers,
@@ -157,11 +159,15 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             product_config=product_config,
         )
 
-    def create_container_instance(self) -> ContainerInstance:
+    def create_container_instance(
+        self,
+        id: int,
+        container_status: ContainerInstanceStatus = ContainerInstanceStatus.COMPLETED,
+    ) -> ContainerInstance:
         return ContainerInstance(
-            instance_id="test_container_instance_123",
-            ip_address="127.0.0.1",
-            status=ContainerInstanceStatus.COMPLETED,
+            instance_id=f"test_container_instance_{id}",
+            ip_address=f"127.0.0.{id}",
+            status=container_status,
         )
 
     def get_args_expected(
