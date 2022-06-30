@@ -98,7 +98,7 @@ class PrivateComputationInstance(InstanceBase):
         post_processing_data: fields to be sent to the post processing tier.
 
     Private attributes:
-        _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
+
     """
 
     infra_config: InfraConfig
@@ -123,10 +123,6 @@ class PrivateComputationInstance(InstanceBase):
     k_anonymity_threshold: int = 0
 
     breakdown_key: Optional[BreakdownKey] = None
-
-    # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
-    # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
-    _stage_flow_cls_name: str = "PrivateComputationStageFlow"
 
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
@@ -158,7 +154,7 @@ class PrivateComputationInstance(InstanceBase):
 
     @property
     def get_flow_cls_name(self) -> str:
-        return self._stage_flow_cls_name
+        return self.infra_config._stage_flow_cls_name
 
     @property
     def pid_stage_output_base_path(self) -> str:
@@ -248,7 +244,7 @@ class PrivateComputationInstance(InstanceBase):
         )
 
         return PrivateComputationBaseStageFlow.cls_name_to_cls(
-            self._stage_flow_cls_name
+            self.infra_config._stage_flow_cls_name
         )
 
     @property
