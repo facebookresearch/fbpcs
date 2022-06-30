@@ -37,17 +37,15 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
-from fbpcs.private_computation.entity.infra_config import InfraConfig
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
+    PrivateComputationRole,
+)
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-
-
-class PrivateComputationRole(Enum):
-    PUBLISHER = "PUBLISHER"
-    PARTNER = "PARTNER"
 
 
 class PrivateComputationGameType(Enum):
@@ -114,7 +112,6 @@ class PrivateComputationInstance(InstanceBase):
 
     infra_config: InfraConfig
 
-    role: PrivateComputationRole
     instances: List[UnionedPCInstance]
     status: PrivateComputationInstanceStatus
     status_update_ts: int
@@ -186,7 +183,7 @@ class PrivateComputationInstance(InstanceBase):
     def pid_stage_output_prepare_path(self) -> str:
         suffix = (
             STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_PREPARE]
-            if self.role is PrivateComputationRole.PUBLISHER
+            if self.infra_config.role is PrivateComputationRole.PUBLISHER
             else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_PREPARE]
         )
 
@@ -196,7 +193,7 @@ class PrivateComputationInstance(InstanceBase):
     def pid_stage_output_spine_path(self) -> str:
         spine_path_suffix = (
             STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_RUN_PID]
-            if self.role is PrivateComputationRole.PUBLISHER
+            if self.infra_config.role is PrivateComputationRole.PUBLISHER
             else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_RUN_PID]
         )
 
@@ -206,7 +203,7 @@ class PrivateComputationInstance(InstanceBase):
     def pid_stage_output_data_path(self) -> str:
         data_path_suffix = (
             STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_SHARD]
-            if self.role is PrivateComputationRole.PUBLISHER
+            if self.infra_config.role is PrivateComputationRole.PUBLISHER
             else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_SHARD]
         )
         return f"{self.pid_stage_output_base_path}{data_path_suffix}"

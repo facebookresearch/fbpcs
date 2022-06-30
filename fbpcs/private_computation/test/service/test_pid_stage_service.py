@@ -141,10 +141,9 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig("123")
+        infra_config: InfraConfig = InfraConfig("123", PrivateComputationRole.PUBLISHER)
         return PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PUBLISHER,
             instances=[],
             status=PrivateComputationInstanceStatus.UNKNOWN,
             status_update_ts=1600000000,

@@ -103,7 +103,9 @@ class PCF2AggregationStageService(PrivateComputationStageService):
             + GameNames.PCF2_AGGREGATION.value
             + retry_counter_str,
             game_name=game_name,
-            mpc_party=map_private_computation_role_to_mpc_party(pc_instance.role),
+            mpc_party=map_private_computation_role_to_mpc_party(
+                pc_instance.infra_config.role
+            ),
             num_containers=len(game_args),
             binary_version=binary_config.binary_version,
             server_ips=server_ips,
@@ -151,7 +153,7 @@ class PCF2AggregationStageService(PrivateComputationStageService):
             run_name = private_computation_instance.infra_config.instance_id
             if private_computation_instance.post_processing_data:
                 private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
-                    f"agg-logs/{run_name}_{private_computation_instance.role.value.title()}.json",
+                    f"agg-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json",
                 )
         else:
             run_name = ""

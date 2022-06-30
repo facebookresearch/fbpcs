@@ -141,10 +141,11 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig("test_instance_123")
+        infra_config: InfraConfig = InfraConfig(
+            "test_instance_123", PrivateComputationRole.PUBLISHER
+        )
         return PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PUBLISHER,
             instances=[],
             status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
             status_update_ts=1600000000,
