@@ -199,3 +199,81 @@ class TestAws(unittest.TestCase):
                 S3BucketDeleteError,
                 lambda: self.aws.delete_s3_bucket(s3_bucket_name=s3_bucket_name),
             )
+
+    def test_check_s3_object_exists(self) -> None:
+        s3_bucket_name = "fake_bucket"
+        key_name = "fake_file"
+        account_id = "123456789"
+
+        with self.subTest("basic"):
+            self.aws.s3_client.head_object = create_autospec(
+                self.aws.s3_client.head_object
+            )
+            self.aws.s3_client.head_object.return_value = {"ContentLength": 100}
+            self.assertTrue(
+                self.aws.check_s3_object_exists(
+                    s3_bucket_name=s3_bucket_name,
+                    key_name=key_name,
+                    account_id=account_id,
+                )
+            )
+
+        with self.subTest("KeyNotExistError"):
+            self.aws.s3_client.head_object.side_effect = ClientError(
+                error_response={"Error": {"Code": "404"}},
+                operation_name="head_object",
+            )
+
+            with self.assertLogs() as captured:
+                self.assertFalse(
+                    self.aws.check_s3_object_exists(
+                        s3_bucket_name=s3_bucket_name,
+                        key_name=key_name,
+                        account_id=account_id,
+                    )
+                )
+                self.assertEqual(len(captured.records), 3)
+                self.assertEqual(
+                    captured.records[1].getMessage(),
+                    f"Couldn't find file {key_name} in bucket {s3_bucket_name}",
+                )
+
+        with self.subTest("AccessDeniedError"):
+            self.aws.s3_client.head_object.side_effect = ClientError(
+                error_response={"Error": {"Code": "403"}},
+                operation_name="head_object",
+            )
+
+            with self.assertLogs() as captured:
+                self.assertFalse(
+                    self.aws.check_s3_object_exists(
+                        s3_bucket_name=s3_bucket_name,
+                        key_name=key_name,
+                        account_id=account_id,
+                    )
+                )
+                self.assertEqual(len(captured.records), 3)
+                self.assertEqual(
+                    captured.records[1].getMessage(),
+                    f"Access denied: failed to access bucket {s3_bucket_name}",
+                )
+
+        with self.subTest("CatchAllError"):
+            self.aws.s3_client.head_object.side_effect = ClientError(
+                error_response={"Error": {"Code": None}},
+                operation_name="head_object",
+            )
+
+            with self.assertLogs() as captured:
+                self.assertFalse(
+                    self.aws.check_s3_object_exists(
+                        s3_bucket_name=s3_bucket_name,
+                        key_name=key_name,
+                        account_id=account_id,
+                    )
+                )
+                self.assertEqual(len(captured.records), 3)
+                self.assertEqual(
+                    captured.records[1].getMessage(),
+                    f"Failed to find file {key_name} in bucket {s3_bucket_name}",
+                )
