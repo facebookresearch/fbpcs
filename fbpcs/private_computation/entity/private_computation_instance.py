@@ -8,7 +8,7 @@
 
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
@@ -37,6 +37,7 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -155,6 +156,8 @@ class PrivateComputationInstance(InstanceBase):
     creation_ts: int = 0
     end_ts: int = 0
 
+    infra_config: InfraConfig = field(init=False)
+
     def __post_init__(self) -> None:
         if self.num_pid_containers > self.num_mpc_containers:
             raise ValueError(
@@ -168,6 +171,8 @@ class PrivateComputationInstance(InstanceBase):
 
         if self.creation_ts == 0:
             self.creation_ts = int(time.time())
+
+        self.infra_config: InfraConfig = InfraConfig()
 
     def get_instance_id(self) -> str:
         return self.instance_id
