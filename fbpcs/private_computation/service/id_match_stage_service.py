@@ -31,18 +31,15 @@ class IdMatchStageService(PrivateComputationStageService):
 
     Private attributes:
         _pid_svc: Creates PID instances and runs PID SHARD, PID PREPARE, and PID RUN
-        _is_validating: if a test shard is injected to do run time correctness validation
         _synthetic_shard_path: path to the test shard to be injected if _is_validating
     """
 
     def __init__(
         self,
         pid_svc: PIDService,
-        is_validating: bool = False,
         synthetic_shard_path: Optional[str] = None,
     ) -> None:
         self._pid_svc = pid_svc
-        self._is_validating = is_validating
         self._synthetic_shard_path = synthetic_shard_path
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
@@ -73,7 +70,6 @@ class IdMatchStageService(PrivateComputationStageService):
             num_shards=pc_instance.num_pid_containers,
             input_path=pc_instance.input_path,
             output_path=pc_instance.pid_stage_output_base_path,
-            is_validating=self._is_validating or pc_instance.is_validating,
             synthetic_shard_path=self._synthetic_shard_path
             or pc_instance.synthetic_shard_path,
             hmac_key=pc_instance.hmac_key,
