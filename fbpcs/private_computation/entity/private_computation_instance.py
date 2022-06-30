@@ -89,7 +89,6 @@ class PrivateComputationInstance(InstanceBase):
                             campaign and campaign group). In the future, aggregation_type will also be
                             used to infer the metrics_format_type argument of the shard aggregator game.
                             Not currently used by Lift.
-        concurrency: number of threads to run per container at the MPC compute metrics stage
         padding_size: the id spine combiner would pad each partner row to have this number of conversions.
                         This is required by MPC compute metrics to support multiple conversions per id while
                         at the same time maintaining privacy. It is currently only used when game_type=attribution
@@ -115,7 +114,6 @@ class PrivateComputationInstance(InstanceBase):
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
 
-    concurrency: int = 1  # used only by MPC compute metrics stage. TODO T102588568: rename to compute_metrics_concurrency
     k_anonymity_threshold: int = 0
 
     breakdown_key: Optional[BreakdownKey] = None

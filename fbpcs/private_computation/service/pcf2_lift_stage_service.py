@@ -170,7 +170,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
             "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
-            "concurrency": private_computation_instance.concurrency,
+            "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
             "run_name": run_name,
             "log_cost": self._log_cost_to_s3,
         }

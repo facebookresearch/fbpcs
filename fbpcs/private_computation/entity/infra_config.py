@@ -41,6 +41,7 @@ class InfraConfig:
     """Stores metadata of infra config in a private computation instance
 
     Public attributes:
+        mpc_compute_concurrency: number of threads to run per container at the MPC compute metrics stage
 
     Private attributes:
         _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
@@ -66,3 +67,4 @@ class InfraConfig:
     retry_counter: int = 0
     creation_ts: int = 0
     end_ts: int = 0
+    mpc_compute_concurrency: int = 1
