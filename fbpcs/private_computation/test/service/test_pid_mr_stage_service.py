@@ -15,6 +15,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.product_config import (
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
+)
 from fbpcs.private_computation.service.pid_mr_stage_service import PIDMRStageService
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
@@ -37,8 +42,14 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
+
         pc_instance = PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test_data/stress_test/input.csv",
             output_dir="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output",
             pid_configs={

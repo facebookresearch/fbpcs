@@ -20,6 +20,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.entity.product_config import AttributionConfig
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_service_data import (
@@ -150,9 +151,12 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             MPC game args to be used by onedocker
         """
 
-        attribution_rule = checked_cast(
-            AttributionRule, private_computation_instance.attribution_rule
+        attribution_config: AttributionConfig = checked_cast(
+            AttributionConfig,
+            private_computation_instance.product_config,
         )
+        attribution_rule: AttributionRule = attribution_config.attribution_rule
+
         if self._log_cost_to_s3:
             run_name = (
                 private_computation_instance.infra_config.instance_id
