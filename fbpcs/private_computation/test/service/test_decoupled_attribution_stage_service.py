@@ -100,12 +100,13 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
-            "test_instance_123", PrivateComputationRole.PARTNER
+            "test_instance_123",
+            PrivateComputationRole.PARTNER,
+            PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
         )
         return PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             status_update_ts=1600000000,
             num_pid_containers=2,
