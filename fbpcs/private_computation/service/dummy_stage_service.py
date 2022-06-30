@@ -44,4 +44,4 @@ class DummyStageService(PrivateComputationStageService):
         """
         Does nothing except return pc_instance.status back to caller
         """
-        return pc_instance.status
+        return pc_instance.infra_config.status
