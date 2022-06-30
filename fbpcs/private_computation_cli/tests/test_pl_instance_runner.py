@@ -500,12 +500,13 @@ class TestPlInstanceRunner(TestCase):
         self, status: PrivateComputationInstanceStatus
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
-            self.instance_id, PrivateComputationRole.PARTNER
+            self.instance_id,
+            PrivateComputationRole.PARTNER,
+            status,
         )
         return PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=status,
             status_update_ts=1600000000,
             num_pid_containers=self.num_shards,
             num_mpc_containers=self.num_shards,

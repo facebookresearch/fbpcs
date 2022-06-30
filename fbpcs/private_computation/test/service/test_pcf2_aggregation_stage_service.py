@@ -111,12 +111,13 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
-            "test_instance_123", PrivateComputationRole.PARTNER
+            "test_instance_123",
+            PrivateComputationRole.PARTNER,
+            PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_COMPLETED,
         )
         return PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_COMPLETED,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             aggregation_type=AggregationType.MEASUREMENT,
             status_update_ts=1600000000,
