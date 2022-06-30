@@ -103,7 +103,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
         )
 
         stage_state = StageStateInstance(
-            pc_instance.instance_id,
+            pc_instance.infra_config.instance_id,
             pc_instance.current_stage.name,
             containers=container_instances,
         )

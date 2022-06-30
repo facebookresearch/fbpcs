@@ -22,6 +22,7 @@ from fbpcs.onedocker_binary_config import (
 )
 from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
 from fbpcs.pid.entity.pid_instance import PIDProtocol
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -110,7 +111,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             "Failed to add the StageStageInstance into pc_instance",
         )
         stage_state_expect = StageStateInstance(
-            pc_instance.instance_id,
+            pc_instance.infra_config.instance_id,
             pc_instance.current_stage.name,
             containers=containers,
         )
@@ -150,7 +151,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                     self.create_container_instance(i) for i in range(num_containers)
                 ]
                 stage_stage = StageStateInstance(
-                    pc_instance.instance_id,
+                    pc_instance.infra_config.instance_id,
                     test_state_name,
                     containers=containers,
                 )
@@ -184,8 +185,9 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         pc_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
         status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
     ) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig(self.pc_instance_id)
         return PrivateComputationInstance(
-            instance_id=self.pc_instance_id,
+            infra_config,
             role=pc_role,
             instances=[],
             status=status,

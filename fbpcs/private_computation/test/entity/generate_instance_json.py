@@ -28,6 +28,7 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -131,8 +132,9 @@ def gen_dummy_post_processing_instance() -> PostProcessingInstance:
 
 def gen_dummy_pc_instance() -> PrivateComputationInstance:
     """Creates a dummy private computation instance to be used in unit tests"""
+    infra_config: InfraConfig = InfraConfig("pc_instance_id")
     return PrivateComputationInstance(
-        instance_id="pc_instance_id",
+        infra_config,
         role=PrivateComputationRole.PUBLISHER,
         instances=[
             gen_dummy_pid_instance(),
