@@ -33,7 +33,6 @@ from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
 from fbpcs.post_processing_handler.post_processing_instance import (
-    PostProcessingInstance,
     PostProcessingInstanceStatus,
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -76,9 +75,6 @@ class ResultVisibility(IntEnum):
     PARTNER = 2
 
 
-UnionedPCInstance = Union[
-    PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
-]
 UnionedPCInstanceStatus = Union[
     PIDInstanceStatus,
     MPCInstanceStatus,
@@ -112,7 +108,6 @@ class PrivateComputationInstance(InstanceBase):
 
     infra_config: InfraConfig
 
-    instances: List[UnionedPCInstance]
     num_files_per_mpc_container: int
     game_type: PrivateComputationGameType
     input_path: str
@@ -308,9 +303,9 @@ class PrivateComputationInstance(InstanceBase):
     @property
     def server_ips(self) -> List[str]:
         server_ips_list = []
-        if not self.instances:
+        if not self.infra_config.instances:
             return server_ips_list
-        last_instance = self.instances[-1]
+        last_instance = self.infra_config.instances[-1]
         if isinstance(last_instance, (PIDInstance, PCSMPCInstance, StageStateInstance)):
             server_ips_list = last_instance.server_ips or []
         return server_ips_list

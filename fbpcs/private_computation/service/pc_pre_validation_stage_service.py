@@ -107,7 +107,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
             pc_instance.current_stage.name,
             containers=container_instances,
         )
-        pc_instance.instances.append(stage_state)
+        pc_instance.infra_config.instances.append(stage_state)
         self._logger.info(
             f"[PCPreValidation] - Started container instance_id: {container_instances[0].instance_id} status: {container_instances[0].status}"
         )
@@ -126,8 +126,8 @@ class PCPreValidationStageService(PrivateComputationStageService):
             )
 
             task_id = ""
-            if pc_instance.instances:
-                last_instance = pc_instance.instances[-1]
+            if pc_instance.infra_config.instances:
+                last_instance = pc_instance.infra_config.instances[-1]
                 if isinstance(last_instance, StageStateInstance):
                     last_container = last_instance.containers[-1]
                     task_id = (
