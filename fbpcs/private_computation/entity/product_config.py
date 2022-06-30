@@ -14,10 +14,23 @@ from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 @dataclass_json
 @dataclass
 class CommonProductConfig:
-    """Stores metadata of common product config used both by attribution config and lift config"""
+    """Stores metadata of common product config used both by attribution config and lift config
+
+    Public attributes:
+        padding_size: the id spine combiner would pad each partner row to have this number of conversions.
+                        This is required by MPC compute metrics to support multiple conversions per id while
+                        at the same time maintaining privacy. It is currently only used when game_type=attribution
+                        because the lift id spine combiner uses a hard-coded value of 25.
+                        TODO T104391012: pass padding size to lift id spine combiner.
+    """
 
     input_path: str
     output_dir: str
+
+    # TODO T98476320: make the following optional attributes non-optional. They are optional
+    # because at the time the instance is created, pl might not provide any or all of them.
+    hmac_key: Optional[str] = None
+    padding_size: Optional[int] = None
 
 
 @dataclass

@@ -185,6 +185,13 @@ class PrivateComputationService:
         common_product_config: CommonProductConfig = CommonProductConfig(
             input_path=input_path,
             output_dir=output_dir,
+            hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
+            padding_size=unwrap_or_default(
+                optional=padding_size,
+                default=LIFT_DEFAULT_PADDING_SIZE
+                if game_type is PrivateComputationGameType.LIFT
+                else ATTRIBUTION_DEFAULT_PADDING_SIZE,
+            ),
         )
         product_config: ProductConfig
         if game_type is PrivateComputationGameType.ATTRIBUTION:
@@ -211,13 +218,6 @@ class PrivateComputationService:
         instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
-            padding_size=unwrap_or_default(
-                optional=padding_size,
-                default=LIFT_DEFAULT_PADDING_SIZE
-                if game_type is PrivateComputationGameType.LIFT
-                else ATTRIBUTION_DEFAULT_PADDING_SIZE,
-            ),
             result_visibility=result_visibility or ResultVisibility.PUBLIC,
             pid_use_row_numbers=pid_use_row_numbers,
             post_processing_data=post_processing_data,
