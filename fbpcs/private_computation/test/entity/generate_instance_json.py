@@ -151,7 +151,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         num_mpc_containers=1,
         attribution_rule=None,
         aggregation_type=None,
-        partial_container_retry_enabled=False,
         is_validating=False,
         synthetic_shard_path=None,
         retry_counter=0,
