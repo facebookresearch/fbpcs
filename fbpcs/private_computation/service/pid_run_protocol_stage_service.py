@@ -81,7 +81,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             pc_instance.current_stage.name,
             containers=container_instances,
         )
-        pc_instance.instances.append(stage_state)
+        pc_instance.infra_config.instances.append(stage_state)
         return pc_instance
 
     def get_status(
@@ -179,7 +179,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         self,
         pc_instance: PrivateComputationInstance,
     ) -> None:
-        last_instance = pc_instance.instances[-1]
+        last_instance = pc_instance.infra_config.instances[-1]
         # make sure the last instance is the StageStageInstance appended by current stage
         if not isinstance(last_instance, StageStateInstance):
             raise ValueError("Have no StageState for stop_service")

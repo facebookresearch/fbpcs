@@ -46,7 +46,9 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         private_computation_instance = self._create_pc_instance()
         await stage_svc.run_async(private_computation_instance)
 
-        post_processing_instance = private_computation_instance.instances[0]
+        post_processing_instance = private_computation_instance.infra_config.instances[
+            0
+        ]
         self.assertIsInstance(post_processing_instance, PostProcessingInstance)
 
         # post processing instance should have status COMPLETED
@@ -80,7 +82,9 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         private_computation_instance = self._create_pc_instance()
         await stage_svc.run_async(private_computation_instance)
 
-        post_processing_instance = private_computation_instance.instances[0]
+        post_processing_instance = private_computation_instance.infra_config.instances[
+            0
+        ]
         self.assertIsInstance(post_processing_instance, PostProcessingInstance)
 
         # post processing instance should have status FAILED
@@ -114,7 +118,9 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         private_computation_instance = self._create_pc_instance()
         await stage_svc.run_async(private_computation_instance)
 
-        post_processing_instance = private_computation_instance.instances[0]
+        post_processing_instance = private_computation_instance.infra_config.instances[
+            0
+        ]
         self.assertIsInstance(post_processing_instance, PostProcessingInstance)
 
         # post processing instance should have status FAILED
@@ -146,10 +152,10 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
             status_update_ts=1600000000,
+            instances=[],
         )
         return PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_pid_containers=2,
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
