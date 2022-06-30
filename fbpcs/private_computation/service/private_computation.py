@@ -152,11 +152,12 @@ class PrivateComputationService:
         post_processing_data = post_processing_data_optional or PostProcessingData(
             dataset_timestamp=int(yesterday_timestamp)
         )
-        infra_config: InfraConfig = InfraConfig(instance_id, role)
+        infra_config: InfraConfig = InfraConfig(
+            instance_id, role, PrivateComputationInstanceStatus.CREATED
+        )
         instance = PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=PrivateComputationService.get_ts_now(),
             num_files_per_mpc_container=unwrap_or_default(
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
@@ -242,7 +243,7 @@ class PrivateComputationService:
         # if the status is started, then we need to update the instance
         # to either failed, started, or completed
         if private_computation_instance.stage_flow.is_started_status(
-            private_computation_instance.status
+            private_computation_instance.infra_config.status
         ):
             self.logger.info(f"Updating instance: {instance_id}")
             return self._update_instance(
@@ -253,7 +254,7 @@ class PrivateComputationService:
             # don't need to update the status
             # trying to prevent issues like this: https://fburl.com/yrrozywg
             self.logger.info(
-                f"Not updating {instance_id}: status is {private_computation_instance.status}"
+                f"Not updating {instance_id}: status is {private_computation_instance.infra_config.status}"
             )
             return private_computation_instance
 
@@ -289,13 +290,13 @@ class PrivateComputationService:
         pc_instance = self.get_instance(instance_id)
         if pc_instance.is_stage_flow_completed():
             raise PrivateComputationServiceInvalidStageError(
-                f"Instance {instance_id} stage flow completed. (status: {pc_instance.status}). Ignored"
+                f"Instance {instance_id} stage flow completed. (status: {pc_instance.infra_config.status}). Ignored"
             )
 
         next_stage = pc_instance.get_next_runnable_stage()
         if not next_stage:
             raise PrivateComputationServiceInvalidStageError(
-                f"Instance {instance_id} has no eligible stages to run at this time (status: {pc_instance.status})"
+                f"Instance {instance_id} has no eligible stages to run at this time (status: {pc_instance.infra_config.status})"
             )
 
         return await self.run_stage_async(
@@ -336,21 +337,21 @@ class PrivateComputationService:
         # if the instance status is the complete status of the previous stage, then we can run the target stage
         # e.g. if status == ID_MATCH_COMPLETE, then we can run COMPUTE_METRICS
         # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
-        if pc_instance.status is stage.previous_stage.completed_status:
+        if pc_instance.infra_config.status is stage.previous_stage.completed_status:
             pc_instance.retry_counter = 0
         # if the instance status is the fail status of the target stage, then we can retry the target stage
         # e.g. if status == COMPUTE_METRICS_FAILED, then we can run COMPUTE_METRICS
-        elif pc_instance.status is stage.failed_status:
+        elif pc_instance.infra_config.status is stage.failed_status:
             pc_instance.retry_counter += 1
         # if the instance status is a start status, it's running something already. Don't run another stage, even if dry_run=True
-        elif stage.is_started_status(pc_instance.status):
+        elif stage.is_started_status(pc_instance.infra_config.status):
             raise ValueError(
-                f"Cannot start a new operation when instance {instance_id} has status {pc_instance.status}."
+                f"Cannot start a new operation when instance {instance_id} has status {pc_instance.infra_config.status}."
             )
         # if dry_run = True, then we can run the target stage. Otherwise, throw an error
         elif not dry_run:
             raise ValueError(
-                f"Instance {instance_id} has status {pc_instance.status}. Not ready for {stage}."
+                f"Instance {instance_id} has status {pc_instance.infra_config.status}. Not ready for {stage}."
             )
 
         return pc_instance
@@ -430,10 +431,10 @@ class PrivateComputationService:
 
         # pre-checks to make sure it's in a cancel-able state
         if private_computation_instance.stage_flow.is_completed_status(
-            private_computation_instance.status
+            private_computation_instance.infra_config.status
         ):
-            self.logger.warning(
-                f"Instance {instance_id} has status {private_computation_instance.status}. Nothing to cancel."
+            raise ValueError(
+                f"Instance {instance_id} has status {private_computation_instance.infra_config.status}. Nothing to cancel."
             )
             return private_computation_instance
 
@@ -470,10 +471,10 @@ class PrivateComputationService:
         )
 
         if not private_computation_instance.stage_flow.is_failed_status(
-            private_computation_instance.status
+            private_computation_instance.infra_config.status
         ):
             raise ValueError(
-                f"Failed to cancel the current stage unexpectedly. Instance {instance_id} has status {private_computation_instance.status}"
+                f"Failed to cancel the current stage unexpectedly. Instance {instance_id} has status {private_computation_instance.infra_config.status}"
             )
 
         self.logger.info(
