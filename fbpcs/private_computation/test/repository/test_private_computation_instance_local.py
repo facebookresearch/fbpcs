@@ -54,7 +54,10 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path="in",
+            output_dir="out",
+        )
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
         )
@@ -62,8 +65,6 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
         test_read_private_computation_instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            input_path="in",
-            output_dir="out",
         )
         self.repo.create(test_read_private_computation_instance)
         self.assertEqual(
@@ -85,7 +86,10 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path="in",
+            output_dir="out",
+        )
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
         )
@@ -93,8 +97,6 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             PrivateComputationInstance(
                 infra_config=infra_config,
                 product_config=product_config,
-                input_path="in",
-                output_dir="out",
             )
 
     def test_update(self) -> None:
@@ -111,15 +113,16 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path="in",
+            output_dir="out",
+        )
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
         )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            input_path="in",
-            output_dir="out",
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)

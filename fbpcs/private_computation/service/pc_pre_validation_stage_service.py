@@ -90,7 +90,11 @@ class PCPreValidationStageService(PrivateComputationStageService):
         region = self._pc_validator_config.region
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = self._onedocker_binary_config_map[binary_name]
-        cmd_args = get_cmd_args(pc_instance.input_path, region, binary_config)
+        cmd_args = get_cmd_args(
+            pc_instance.product_config.common_product_config.input_path,
+            region,
+            binary_config,
+        )
 
         env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
         container_instances = await RunBinaryBaseService().start_containers(
