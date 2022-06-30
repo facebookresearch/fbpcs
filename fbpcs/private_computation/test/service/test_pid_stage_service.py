@@ -34,7 +34,7 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
     async def test_run_shard_async(self, pid_svc_mock) -> None:
         pc_instance = self._create_pc_instance()
         pid_instance = self._create_pid_instance(
-            pc_instance.product_config.common_product_config.input_path,
+            pc_instance.product_config.common.input_path,
             pc_instance.pid_stage_output_data_path,
             UnionPIDStage.PUBLISHER_SHARD,
         )
@@ -61,12 +61,12 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
     async def test_run_prepare(self, pid_svc_mock) -> None:
         pc_instance = self._create_pc_instance()
         old_pid_instance = self._create_pid_instance(
-            pc_instance.product_config.common_product_config.input_path,
+            pc_instance.product_config.common.input_path,
             pc_instance.pid_stage_output_data_path,
             UnionPIDStage.PUBLISHER_SHARD,
         )
         new_pid_instance = self._create_pid_instance(
-            pc_instance.product_config.common_product_config.input_path,
+            pc_instance.product_config.common.input_path,
             pc_instance.pid_stage_output_data_path,
             UnionPIDStage.PUBLISHER_PREPARE,
         )
@@ -98,12 +98,12 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
     async def test_run_pid_run(self, pid_svc_mock) -> None:
         pc_instance = self._create_pc_instance()
         old_pid_instance = self._create_pid_instance(
-            pc_instance.product_config.common_product_config.input_path,
+            pc_instance.product_config.common.input_path,
             pc_instance.pid_stage_output_data_path,
             UnionPIDStage.PUBLISHER_PREPARE,
         )
         new_pid_instance = self._create_pid_instance(
-            pc_instance.product_config.common_product_config.input_path,
+            pc_instance.product_config.common.input_path,
             pc_instance.pid_stage_output_data_path,
             UnionPIDStage.PUBLISHER_RUN_PID,
         )
@@ -157,12 +157,12 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="456",
             output_dir="789",
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
         )
         return PrivateComputationInstance(
             infra_config=infra_config,

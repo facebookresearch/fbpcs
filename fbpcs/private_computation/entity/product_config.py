@@ -53,7 +53,7 @@ class CommonProductConfig:
 class ProductConfig(DataClassJsonMixin):
     """Stores metadata of product config in a private computation instance"""
 
-    common_product_config: CommonProductConfig
+    common: CommonProductConfig
 
 
 class AttributionRule(Enum):

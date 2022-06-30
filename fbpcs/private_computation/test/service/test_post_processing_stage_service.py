@@ -163,12 +163,12 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="456",
             output_dir="789",
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
         )
         return PrivateComputationInstance(
             infra_config=infra_config,

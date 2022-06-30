@@ -80,10 +80,10 @@ class PIDStageService(PrivateComputationStageService):
                     pc_instance.infra_config.role
                 ),
                 num_shards=pc_instance.infra_config.num_pid_containers,
-                input_path=pc_instance.product_config.common_product_config.input_path,
+                input_path=pc_instance.product_config.common.input_path,
                 output_path=pc_instance.pid_stage_output_base_path,
-                hmac_key=pc_instance.product_config.common_product_config.hmac_key,
-                pid_use_row_numbers=pc_instance.product_config.common_product_config.pid_use_row_numbers,
+                hmac_key=pc_instance.product_config.common.hmac_key,
+                pid_use_row_numbers=pc_instance.product_config.common.pid_use_row_numbers,
             )
         else:
             # If there no previous instance, then we should run shard first

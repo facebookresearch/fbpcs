@@ -163,10 +163,8 @@ class PCF2AttributionStageService(PrivateComputationStageService):
                 + "_"
                 + GameNames.PCF2_ATTRIBUTION.value
             )
-            if (
-                private_computation_instance.product_config.common_product_config.post_processing_data
-            ):
-                private_computation_instance.product_config.common_product_config.post_processing_data.s3_cost_export_output_paths.add(
+            if private_computation_instance.product_config.common.post_processing_data:
+                private_computation_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
                     f"att-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json"
                 )
         else:
@@ -178,8 +176,8 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
             "run_name": run_name,
-            "max_num_touchpoints": private_computation_instance.product_config.common_product_config.padding_size,
-            "max_num_conversions": private_computation_instance.product_config.common_product_config.padding_size,
+            "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
+            "max_num_conversions": private_computation_instance.product_config.common.padding_size,
             "log_cost": self._log_cost_to_s3,
             "attribution_rules": attribution_rule.value,
             "use_xor_encryption": True,

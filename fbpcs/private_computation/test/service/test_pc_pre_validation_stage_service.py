@@ -51,13 +51,11 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
             output_dir="789",
         )
-        product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config
-        )
+        product_config: ProductConfig = LiftConfig(common=common)
         self._pc_instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
@@ -87,7 +85,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         region = "us-west-1"
         expected_cmd_args = " ".join(
             [
-                f"--input-file-path={self._pc_instance.product_config.common_product_config.input_path}",
+                f"--input-file-path={self._pc_instance.product_config.common.input_path}",
                 "--cloud-provider=AWS",
                 f"--region={region}",
                 "--binary-version=latest",

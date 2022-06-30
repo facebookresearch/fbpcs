@@ -110,8 +110,8 @@ class AggregateShardsStageService(PrivateComputationStageService):
         if self._log_cost_to_s3:
             run_name = pc_instance.infra_config.instance_id
 
-            if pc_instance.product_config.common_product_config.post_processing_data:
-                pc_instance.product_config.common_product_config.post_processing_data.s3_cost_export_output_paths.add(
+            if pc_instance.product_config.common.post_processing_data:
+                pc_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
                     f"sa-logs/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
                 )
         else:
@@ -134,12 +134,10 @@ class AggregateShardsStageService(PrivateComputationStageService):
         ]
         # We should only export visibility to scribe when it's set
         if (
-            pc_instance.product_config.common_product_config.result_visibility
+            pc_instance.product_config.common.result_visibility
             is not ResultVisibility.PUBLIC
         ):
-            result_visibility = int(
-                pc_instance.product_config.common_product_config.result_visibility
-            )
+            result_visibility = int(pc_instance.product_config.common.result_visibility)
             for arg in game_args:
                 arg["visibility"] = result_visibility
 

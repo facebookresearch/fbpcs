@@ -98,7 +98,7 @@ class PIDShardStageService(PrivateComputationStageService):
         """start pid shard service and spine up the container instances"""
         logging.info("Instantiated PID shard stage")
         num_shards = pc_instance.infra_config.num_pid_containers
-        input_path = pc_instance.product_config.common_product_config.input_path
+        input_path = pc_instance.product_config.common.input_path
         output_base_path = pc_instance.pid_stage_output_data_path
         pc_role = pc_instance.infra_config.role
         sharding_binary_service = ShardingService()
@@ -111,7 +111,7 @@ class PIDShardStageService(PrivateComputationStageService):
             file_start_index=0,
             num_output_files=num_shards,
             tmp_directory=onedocker_binary_config.tmp_directory,
-            hmac_key=pc_instance.product_config.common_product_config.hmac_key,
+            hmac_key=pc_instance.product_config.common.hmac_key,
         )
         # start containers
         logging.info(f"{pc_role} spinning up containers")

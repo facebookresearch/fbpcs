@@ -161,14 +161,14 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         num_files_per_mpc_container=40,
         mpc_compute_concurrency=4,
     )
-    common_product_config: CommonProductConfig = CommonProductConfig(
+    common: CommonProductConfig = CommonProductConfig(
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
         output_dir="https://bucket.s3.us-west-2.amazonaws.com/lift/partner",
         hmac_key="",
         padding_size=25,
     )
     product_config: ProductConfig = LiftConfig(
-        common_product_config=common_product_config,
+        common=common,
         k_anonymity_threshold=100,
         breakdown_key=BreakdownKey.get_default_key(),
     )

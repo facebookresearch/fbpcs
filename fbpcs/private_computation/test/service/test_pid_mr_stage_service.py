@@ -42,7 +42,7 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test_data/stress_test/input.csv",
             output_dir="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output",
             pid_configs={
@@ -54,7 +54,7 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             },
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
         )
 
         pc_instance = PrivateComputationInstance(

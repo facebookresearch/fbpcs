@@ -54,12 +54,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="in",
             output_dir="out",
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
         )
 
         test_read_private_computation_instance = PrivateComputationInstance(
@@ -86,12 +86,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="in",
             output_dir="out",
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
         )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
@@ -113,12 +113,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig(
+        common: CommonProductConfig = CommonProductConfig(
             input_path="in",
             output_dir="out",
         )
         product_config: ProductConfig = LiftConfig(
-            common_product_config=common_product_config,
+            common=common,
         )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config=infra_config,
