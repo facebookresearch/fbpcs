@@ -19,6 +19,7 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
 from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -164,8 +165,9 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             status=PIDInstanceStatus.STARTED,
             server_ips=["10.0.10.242"],
         )
+        infra_config: InfraConfig = InfraConfig(instance_id=self.test_instance_id)
         test_instance = PrivateComputationInstance(
-            instance_id=self.test_instance_id,
+            infra_config,
             role=self.test_role,
             instances=[pid_instance],
             status=PrivateComputationInstanceStatus.CREATED,

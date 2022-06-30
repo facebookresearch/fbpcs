@@ -12,6 +12,7 @@ import unittest
 
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -36,8 +37,9 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
 
     def test_read(self) -> None:
         instance_id = self._get_random_id()
+        infra_config: InfraConfig = InfraConfig(instance_id)
         test_read_private_computation_instance = PrivateComputationInstance(
-            instance_id=instance_id,
+            infra_config,
             role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
             status=PrivateComputationInstanceStatus.CREATED,
@@ -58,9 +60,10 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
 
     def test_create_with_invalid_num_containers(self) -> None:
         instance_id = self._get_random_id()
+        infra_config: InfraConfig = InfraConfig(instance_id)
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
-                instance_id=instance_id,
+                infra_config,
                 role=PrivateComputationRole.PUBLISHER,
                 instances=[self.test_mpc_instance],
                 status=PrivateComputationInstanceStatus.CREATED,
@@ -76,8 +79,9 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
 
     def test_update(self) -> None:
         instance_id = self._get_random_id()
+        infra_config: InfraConfig = InfraConfig(instance_id)
         test_update_private_computation_instance = PrivateComputationInstance(
-            instance_id=instance_id,
+            infra_config,
             role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
             status=PrivateComputationInstanceStatus.CREATED,
