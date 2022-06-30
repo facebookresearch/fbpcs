@@ -35,10 +35,10 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
             game_type=PrivateComputationGameType.LIFT,
             num_pid_containers=1,
             num_mpc_containers=1,
+            num_files_per_mpc_container=1,
         )
         pc_instance = PrivateComputationInstance(
             infra_config,
-            num_files_per_mpc_container=1,
             input_path="456",
             output_dir="789",
         )
