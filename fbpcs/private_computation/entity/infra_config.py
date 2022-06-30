@@ -43,7 +43,7 @@ class InfraConfig:
     Public attributes:
 
     Private attributes:
-
+        _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
     """
 
     instance_id: str
@@ -54,3 +54,7 @@ class InfraConfig:
     game_type: PrivateComputationGameType
     tier: Optional[str] = None
     pce_config: Optional[PCEConfig] = None
+
+    # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
+    # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
+    _stage_flow_cls_name: str = "PrivateComputationStageFlow"
