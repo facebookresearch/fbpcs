@@ -40,10 +40,10 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             role=PrivateComputationRole.PARTNER,
             status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
             status_update_ts=1600000000,
+            instances=[],
         )
         self._pc_instance = PrivateComputationInstance(
             infra_config=infra_config,
-            instances=[],
             num_pid_containers=1,
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
@@ -107,7 +107,9 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             self._pc_instance.current_stage.name,
             containers=[mock_container_instance],
         )
-        self.assertEqual(pc_instance.instances, [mock_stage_state_instance()])
+        self.assertEqual(
+            pc_instance.infra_config.instances, [mock_stage_state_instance()]
+        )
 
     @patch(
         "fbpcs.private_computation.service.pc_pre_validation_stage_service.get_pc_status_from_stage_state"
@@ -225,7 +227,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         # pyre-fixme[8]: Attribute has type `List[Union[StageStateInstance,
         #  PCSMPCInstance, PIDInstance, PostProcessingInstance]]`; used as
         #  `List[StageStateInstance]`.
-        pc_instance.instances = unioned_pc_instances
+        pc_instance.infra_config.instances = unioned_pc_instances
         expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED
         onedocker_svc_mock = MagicMock()
         onedocker_svc_mock.get_cluster.side_effect = [cluster_name]
