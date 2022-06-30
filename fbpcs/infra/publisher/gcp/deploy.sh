@@ -38,7 +38,6 @@ while [ $# -gt 0 ]; do
         -t|--tag) pce_id="$2" ;;
         -r|--region) region="$2" ;;
         -a|--account_id) gcp_project_id="$2" ;;
-        -p|--partner_account_id) partner_gcp_project_id="$2" ;;
         -c|--publisher_vpc_cidr) vpc_cidr="$2" ;;
         -s|--secondary_subnet_cidr) subnet_secondary_cidr="$2" ;;
         -v|--partner_vpc_cidr) partner_vpc_cidr="$2" ;;
@@ -55,7 +54,6 @@ echo "GCP region is $region."
 echo "The string '$name_postfix' will be appended after the name of the GCP resources."
 echo "Publisher's GCP project ID is $gcp_project_id"
 echo "Publisher's VPC CIDR is $vpc_cidr"
-echo "Partner's GCP project ID is $partner_gcp_project_id"
 echo "Partner's VPC CIDR is $partner_vpc_cidr"
 echo "The GCS bucket for storing the Terraform state file is $gcs_bucket_for_storage"
 
