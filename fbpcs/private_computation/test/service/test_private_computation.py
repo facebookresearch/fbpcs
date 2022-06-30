@@ -470,7 +470,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         status = flow.ID_MATCH.previous_stage.completed_status
 
         instance = self.create_sample_instance(status)
-        instance._stage_flow_cls_name = flow.get_cls_name()
+        instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         self.assertEqual(flow.ID_MATCH, instance.get_next_runnable_stage())
 
@@ -479,7 +479,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         status = flow.ID_MATCH.failed_status
 
         instance = self.create_sample_instance(status)
-        instance._stage_flow_cls_name = flow.get_cls_name()
+        instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         self.assertEqual(flow.ID_MATCH, instance.get_next_runnable_stage())
 
@@ -488,7 +488,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         status = flow.ID_MATCH.started_status
 
         instance = self.create_sample_instance(status)
-        instance._stage_flow_cls_name = flow.get_cls_name()
+        instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         self.assertEqual(None, instance.get_next_runnable_stage())
 
@@ -497,7 +497,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         status = flow.get_last_stage().completed_status
 
         instance = self.create_sample_instance(status)
-        instance._stage_flow_cls_name = flow.get_cls_name()
+        instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         self.assertEqual(None, instance.get_next_runnable_stage())
 
@@ -510,7 +510,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         status = flow.ID_MATCH.previous_stage.completed_status
 
         instance = self.create_sample_instance(status)
-        instance._stage_flow_cls_name = flow.get_cls_name()
+        instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         self.private_computation_service.instance_repository.read = MagicMock(
             return_value=instance
@@ -528,7 +528,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         status = flow.get_last_stage().completed_status
 
         instance = self.create_sample_instance(status)
-        instance._stage_flow_cls_name = flow.get_cls_name()
+        instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         with self.assertRaises(PrivateComputationServiceInvalidStageError):
             self.private_computation_service.run_next(instance.infra_config.instance_id)
