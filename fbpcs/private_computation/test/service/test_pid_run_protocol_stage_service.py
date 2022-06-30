@@ -185,11 +185,14 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         pc_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
         status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
     ) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig(self.pc_instance_id, pc_role)
+        infra_config: InfraConfig = InfraConfig(
+            self.pc_instance_id,
+            pc_role,
+            status,
+        )
         return PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=status,
             status_update_ts=1600000000,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,

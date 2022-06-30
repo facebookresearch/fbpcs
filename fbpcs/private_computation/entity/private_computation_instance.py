@@ -113,7 +113,6 @@ class PrivateComputationInstance(InstanceBase):
     infra_config: InfraConfig
 
     instances: List[UnionedPCInstance]
-    status: PrivateComputationInstanceStatus
     status_update_ts: int
     num_files_per_mpc_container: int
     game_type: PrivateComputationGameType
@@ -268,7 +267,7 @@ class PrivateComputationInstance(InstanceBase):
 
     @property
     def current_stage(self) -> "PrivateComputationBaseStageFlow":
-        return self.stage_flow.get_stage_from_status(self.status)
+        return self.stage_flow.get_stage_from_status(self.infra_config.status)
 
     @property
     def elapsed_time(self) -> int:
@@ -282,20 +281,25 @@ class PrivateComputationInstance(InstanceBase):
         * If the instance has a failed status, return the current stage in the flow
         * If the instance has a completed status, return the next stage in the flow (which could be None)
         """
-        return self.stage_flow.get_next_runnable_stage_from_status(self.status)
+        return self.stage_flow.get_next_runnable_stage_from_status(
+            self.infra_config.status
+        )
 
     def is_stage_flow_completed(self) -> bool:
-        return self.status is self.stage_flow.get_last_stage().completed_status
+        return (
+            self.infra_config.status
+            is self.stage_flow.get_last_stage().completed_status
+        )
 
     def update_status(
         self, new_status: PrivateComputationInstanceStatus, logger: Logger
     ) -> None:
-        old_status = self.status
-        self.status = new_status
+        old_status = self.infra_config.status
+        self.infra_config.status = new_status
         if old_status is not new_status:
             self.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
             logger.info(
-                f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.status} at time {self.status_update_ts}"
+                f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.infra_config.status} at time {self.status_update_ts}"
             )
         if self.is_stage_flow_completed():
             self.end_ts = int(time.time())

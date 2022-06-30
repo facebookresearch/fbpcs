@@ -26,11 +26,14 @@ from fbpcs.private_computation.service.id_match_stage_service import IdMatchStag
 class TestIdMatchStageService(IsolatedAsyncioTestCase):
     @patch("fbpcs.pid.service.pid_service.pid.PIDService")
     async def test_run_async(self, pid_svc_mock) -> None:
-        infra_config: InfraConfig = InfraConfig("123", PrivateComputationRole.PUBLISHER)
+        infra_config: InfraConfig = InfraConfig(
+            "123",
+            PrivateComputationRole.PUBLISHER,
+            PrivateComputationInstanceStatus.CREATED,
+        )
         pc_instance = PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             num_pid_containers=1,
             num_mpc_containers=1,
