@@ -42,7 +42,6 @@ class PCF2LiftStageService(PrivateComputationStageService):
     Private attributes:
         _onedocker_binary_config_map: Stores a mapping from mpc game to OneDockerBinaryConfig (binary version and tmp directory)
         _mpc_svc: creates and runs MPC instances
-        _is_validating: if a test shard is injected to do run time correctness validation
         _log_cost_to_s3: if money cost of the computation will be logged to S3
         _container_timeout: optional duration in seconds before cloud containers timeout
     """
@@ -51,13 +50,11 @@ class PCF2LiftStageService(PrivateComputationStageService):
         self,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         mpc_service: MPCService,
-        is_validating: bool = False,
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         container_timeout: Optional[int] = None,
     ) -> None:
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._mpc_service = mpc_service
-        self._is_validating = is_validating
         self._log_cost_to_s3 = log_cost_to_s3
         self._container_timeout = container_timeout
 
