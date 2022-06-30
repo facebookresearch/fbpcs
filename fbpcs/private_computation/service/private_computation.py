@@ -31,7 +31,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
-    ResultVisibility,
 )
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
@@ -40,6 +39,7 @@ from fbpcs.private_computation.entity.product_config import (
     CommonProductConfig,
     LiftConfig,
     ProductConfig,
+    ResultVisibility,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -192,6 +192,8 @@ class PrivateComputationService:
                 if game_type is PrivateComputationGameType.LIFT
                 else ATTRIBUTION_DEFAULT_PADDING_SIZE,
             ),
+            result_visibility=result_visibility or ResultVisibility.PUBLIC,
+            pid_use_row_numbers=pid_use_row_numbers,
         )
         product_config: ProductConfig
         if game_type is PrivateComputationGameType.ATTRIBUTION:
@@ -218,8 +220,6 @@ class PrivateComputationService:
         instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            result_visibility=result_visibility or ResultVisibility.PUBLIC,
-            pid_use_row_numbers=pid_use_row_numbers,
             post_processing_data=post_processing_data,
             pid_configs=pid_configs,
         )

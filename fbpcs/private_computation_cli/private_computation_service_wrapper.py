@@ -30,11 +30,11 @@ from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
-    ResultVisibility,
 )
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
     AttributionRule,
+    ResultVisibility,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
