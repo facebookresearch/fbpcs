@@ -99,7 +99,9 @@ class AttributionStageService(PrivateComputationStageService):
             + "_decoupled_attribution"
             + retry_counter_str,
             game_name=game_name,
-            mpc_party=map_private_computation_role_to_mpc_party(pc_instance.role),
+            mpc_party=map_private_computation_role_to_mpc_party(
+                pc_instance.infra_config.role
+            ),
             num_containers=len(game_args),
             binary_version=binary_config.binary_version,
             server_ips=server_ips,
@@ -156,7 +158,7 @@ class AttributionStageService(PrivateComputationStageService):
             )
             if private_computation_instance.post_processing_data:
                 private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
-                    f"att-logs/{run_name}_{private_computation_instance.role.value.title()}.json",
+                    f"att-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json",
                 )
         else:
             run_name = ""
