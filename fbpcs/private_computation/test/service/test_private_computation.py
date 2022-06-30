@@ -312,7 +312,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         # end_ts should not be calculated until the instance run is complete.
-        self.assertEqual(0, private_computation_instance.end_ts)
+        self.assertEqual(0, private_computation_instance.infra_config.end_ts)
 
         # call update on the PrivateComputationInstance
         updated_instance = self.private_computation_service.update_instance(
@@ -404,9 +404,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             private_computation_instance.stage_flow.get_last_stage().completed_status,
             logging.getLogger(),
         )
-        self.assertEqual(expected_end_ts, private_computation_instance.end_ts)
+        self.assertEqual(
+            expected_end_ts, private_computation_instance.infra_config.end_ts
+        )
         expected_elapsed_time = (
-            private_computation_instance.end_ts
+            private_computation_instance.infra_config.end_ts
             - private_computation_instance.infra_config.creation_ts
         )
         self.assertEqual(

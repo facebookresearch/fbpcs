@@ -61,3 +61,4 @@ class InfraConfig:
 
     retry_counter: int = 0
     creation_ts: int = 0
+    end_ts: int = 0
