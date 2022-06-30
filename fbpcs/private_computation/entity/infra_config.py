@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from enum import Enum
 
 from dataclasses_json import dataclass_json
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
+)
 
 
 class PrivateComputationRole(Enum):
@@ -27,3 +30,4 @@ class InfraConfig:
 
     instance_id: str
     role: PrivateComputationRole
+    status: PrivateComputationInstanceStatus
