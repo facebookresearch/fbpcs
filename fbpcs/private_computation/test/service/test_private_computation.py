@@ -1148,6 +1148,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         common_product_config: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
+            hmac_key=self.test_hmac_key,
         )
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
@@ -1156,7 +1157,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         return PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            hmac_key=self.test_hmac_key,
         )
 
 

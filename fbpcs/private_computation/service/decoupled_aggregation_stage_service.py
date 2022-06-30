@@ -172,8 +172,8 @@ class AggregationStageService(PrivateComputationStageService):
             "use_xor_encryption": True,
             "use_postfix": True,
             "run_name": run_name,
-            "max_num_touchpoints": private_computation_instance.padding_size,
-            "max_num_conversions": private_computation_instance.padding_size,
+            "max_num_touchpoints": private_computation_instance.product_config.common_product_config.padding_size,
+            "max_num_conversions": private_computation_instance.product_config.common_product_config.padding_size,
             "log_cost": self._log_cost_to_s3,
         }
 

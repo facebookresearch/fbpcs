@@ -256,8 +256,8 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                     "run_name": private_computation_instance.infra_config.instance_id
                     if self._log_cost_to_s3
                     else "",
-                    "max_num_touchpoints": private_computation_instance.padding_size,
-                    "max_num_conversions": private_computation_instance.padding_size,
+                    "max_num_touchpoints": private_computation_instance.product_config.common_product_config.padding_size,
+                    "max_num_conversions": private_computation_instance.product_config.common_product_config.padding_size,
                 },
             }
             for i in range(private_computation_instance.infra_config.num_mpc_containers)

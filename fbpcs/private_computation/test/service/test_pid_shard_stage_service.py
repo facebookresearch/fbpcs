@@ -142,6 +142,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
         common_product_config: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
             output_dir=self.output_path,
+            hmac_key=hmac_key,
         )
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
@@ -149,7 +150,6 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
         return PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            hmac_key=hmac_key,
         )
 
     def create_container_instance(self) -> ContainerInstance:
