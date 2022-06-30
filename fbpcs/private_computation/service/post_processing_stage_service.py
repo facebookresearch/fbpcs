@@ -85,7 +85,7 @@ class PostProcessingStageService(PrivateComputationStageService):
         post_processing_instance = PostProcessingInstance.create_instance(
             instance_id=pc_instance.infra_config.instance_id
             + "_post_processing"
-            + str(pc_instance.retry_counter),
+            + str(pc_instance.infra_config.retry_counter),
             handlers=self._post_processing_handlers,
             handler_statuses=post_processing_handlers_statuses,
             status=PostProcessingInstanceStatus.STARTED,
