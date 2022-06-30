@@ -131,8 +131,6 @@ class PrivateComputationInstance(InstanceBase):
 
     post_processing_data: Optional[PostProcessingData] = None
 
-    end_ts: int = 0
-
     def __post_init__(self) -> None:
         if self.num_pid_containers > self.num_mpc_containers:
             raise ValueError(
@@ -251,7 +249,7 @@ class PrivateComputationInstance(InstanceBase):
 
     @property
     def elapsed_time(self) -> int:
-        end_ts = self.end_ts or int(time.time())
+        end_ts = self.infra_config.end_ts or int(time.time())
         return end_ts - self.infra_config.creation_ts
 
     def get_next_runnable_stage(self) -> Optional["PrivateComputationBaseStageFlow"]:
@@ -284,7 +282,7 @@ class PrivateComputationInstance(InstanceBase):
                 f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.infra_config.status} at time {self.infra_config.status_update_ts}"
             )
         if self.is_stage_flow_completed():
-            self.end_ts = int(time.time())
+            self.infra_config.end_ts = int(time.time())
 
     @property
     def server_ips(self) -> List[str]:
