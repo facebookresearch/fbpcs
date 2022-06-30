@@ -67,7 +67,9 @@ class PIDMRStageService(PrivateComputationStageService):
             and SPARK_CONFIGS in pid_configs[PIDMR]
         ):
             data_configs = {
-                INTPUT: self.get_s3uri_from_url(pc_instance.input_path),
+                INTPUT: self.get_s3uri_from_url(
+                    pc_instance.product_config.common_product_config.input_path
+                ),
                 OUTPUT: self.get_s3uri_from_url(
                     pc_instance.pid_mr_stage_output_data_path
                 ),

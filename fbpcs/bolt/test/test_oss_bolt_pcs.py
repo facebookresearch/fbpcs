@@ -186,7 +186,10 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path=self.test_input_path,
+            output_dir=self.test_output_path,
+        )
         product_config: ProductConfig
         if self.test_game_type is PrivateComputationGameType.ATTRIBUTION:
             product_config = AttributionConfig(
@@ -199,8 +202,6 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         test_instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            input_path=self.test_input_path,
-            output_dir=self.test_output_path,
         )
         mock_update.return_value = test_instance
         return_state = await self.bolt_pcs_client.update_instance(

@@ -1145,7 +1145,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             mpc_compute_concurrency=self.test_concurrency,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path=self.test_input_path,
+            output_dir=self.test_output_dir,
+        )
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
             k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,
@@ -1153,8 +1156,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         return PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            input_path=self.test_input_path,
-            output_dir=self.test_output_dir,
             hmac_key=self.test_hmac_key,
         )
 
