@@ -86,10 +86,11 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
         self.assertEqual(mpc_instance, private_computation_instance.instances[0])
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig("test_instance_123")
+        infra_config: InfraConfig = InfraConfig(
+            "test_instance_123", PrivateComputationRole.PARTNER
+        )
         return PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
             status_update_ts=1600000000,
