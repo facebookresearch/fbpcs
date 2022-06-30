@@ -143,6 +143,12 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
             gen_dummy_post_processing_instance(),
         ],
         game_type=PrivateComputationGameType.LIFT,
+        pce_config=PCEConfig(
+            subnets=["subnet"],
+            cluster="onedocker-cluster-name",
+            region="us-west-2",
+            onedocker_task_definition="arn:aws:ecs:us-west-2:000000000000:task/cluster-name/subnet",
+        ),
     )
     return PrivateComputationInstance(
         infra_config,
@@ -160,12 +166,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         k_anonymity_threshold=100,
         _stage_flow_cls_name="PrivateComputationStageFlow",
         breakdown_key=BreakdownKey.get_default_key(),
-        pce_config=PCEConfig(
-            subnets=["subnet"],
-            cluster="onedocker-cluster-name",
-            region="us-west-2",
-            onedocker_task_definition="arn:aws:ecs:us-west-2:000000000000:task/cluster-name/subnet",
-        ),
     )
 
 

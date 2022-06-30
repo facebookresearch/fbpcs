@@ -14,6 +14,7 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
 )
+from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -52,3 +53,4 @@ class InfraConfig:
     instances: List[UnionedPCInstance]
     game_type: PrivateComputationGameType
     tier: Optional[str] = None
+    pce_config: Optional[PCEConfig] = None
