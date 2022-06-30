@@ -21,6 +21,7 @@ from fbpcs.infra.pce_deployment_library.errors_library.aws_errors import (
     AccessDeniedError,
     S3BucketCreationError,
     S3BucketDeleteError,
+    S3BucketDoesntExist,
     S3BucketVersioningFailedError,
 )
 
@@ -134,9 +135,9 @@ class AWS(CloudBase):
             ) from error
 
         if bucket_version:
-            self.bucket_versioning(s3_bucket_name=s3_bucket_name)
+            self.update_bucket_versioning(s3_bucket_name=s3_bucket_name)
 
-    def bucket_versioning(
+    def update_bucket_versioning(
         self, s3_bucket_name: str, versioning_status: Optional[str] = "Enabled"
     ) -> None:
         versioning_configuration = {"Status": versioning_status}
@@ -145,8 +146,13 @@ class AWS(CloudBase):
             self.s3_client.put_bucket_versioning(
                 Bucket=s3_bucket_name, VersioningConfiguration=versioning_configuration
             )
+            self.log.info(f"Bucket {s3_bucket_name} is enabled with versioning.")
         except ClientError as error:
-            if error.response["Error"]["Code"] == "403":
+            if error.response["Error"]["Code"] == "404":
+                raise S3BucketDoesntExist(
+                    f"S3 bucket {s3_bucket_name} doesn't exist"
+                ) from error
+            elif error.response["Error"]["Code"] == "403":
                 raise AccessDeniedError("Access denied") from error
             else:
                 raise S3BucketVersioningFailedError(

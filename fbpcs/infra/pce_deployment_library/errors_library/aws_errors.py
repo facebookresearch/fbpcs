@@ -24,3 +24,7 @@ class S3BucketVersioningFailedError(AwsDeploymentError):
 
 class S3BucketDeleteError(AwsDeploymentError):
     pass
+
+
+class S3BucketDoesntExist(AwsDeploymentError):
+    pass
