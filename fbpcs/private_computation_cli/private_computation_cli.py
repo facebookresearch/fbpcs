@@ -57,11 +57,13 @@ from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import Lif
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationGameType,
     PrivateComputationRole,
     ResultVisibility,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionRule,
 )
 from fbpcs.private_computation.pc_attribution_runner import (
     get_attribution_dataset_info,

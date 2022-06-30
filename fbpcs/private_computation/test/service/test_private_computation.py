@@ -37,6 +37,13 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionRule,
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
+)
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import (
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
@@ -200,6 +207,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     concurrency=self.test_concurrency,
                     num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
                     hmac_key=self.test_hmac_key,
+                    attribution_rule=AttributionRule.LAST_CLICK_1D,
+                    aggregation_type=AggregationType.MEASUREMENT,
                 )
                 # check instance_repository.create is called with the correct arguments
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
@@ -249,6 +258,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
                     hmac_key=self.test_hmac_key,
                     stage_flow_cls=PrivateComputationMRStageFlow,
+                    attribution_rule=AttributionRule.LAST_CLICK_1D,
+                    aggregation_type=AggregationType.MEASUREMENT,
                 )
                 # check instance_repository.create is called with the correct arguments
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
@@ -1125,8 +1136,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             mpc_compute_concurrency=self.test_concurrency,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
         return PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
             k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,
