@@ -15,6 +15,7 @@ from fbpcs.onedocker_binary_config import (
     OneDockerBinaryConfig,
 )
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -34,8 +35,11 @@ from fbpcs.private_computation.service.run_binary_base_service import (
 
 class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     def setUp(self) -> None:
-        self._pc_instance = PrivateComputationInstance(
+        infra_config: InfraConfig = InfraConfig(
             instance_id="123",
+        )
+        self._pc_instance = PrivateComputationInstance(
+            infra_config=infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
@@ -99,7 +103,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         )
 
         mock_stage_state_instance.assert_called_with(
-            self._pc_instance.instance_id,
+            self._pc_instance.infra_config.instance_id,
             self._pc_instance.current_stage.name,
             containers=[mock_container_instance],
         )

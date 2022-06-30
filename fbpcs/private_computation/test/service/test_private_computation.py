@@ -29,6 +29,7 @@ from fbpcs.pid.entity.pid_instance import (
     UnionPIDStage,
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
@@ -210,7 +211,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 ][
                     0
                 ]
-                self.assertEqual(self.test_private_computation_id, args.instance_id)
+                self.assertEqual(
+                    self.test_private_computation_id, args.infra_config.instance_id
+                )
                 self.assertEqual(test_role, args.role)
                 self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
                 self.assertEqual(1, args.creation_ts)
@@ -260,7 +263,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     "PrivateComputationMRStageFlow",
                 )
 
-                self.assertEqual(self.test_private_computation_id, args.instance_id)
+                self.assertEqual(
+                    self.test_private_computation_id, args.infra_config.instance_id
+                )
                 self.assertEqual(test_role, args.role)
                 self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
                 self.assertEqual(1, args.creation_ts)
@@ -507,9 +512,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.private_computation_service.instance_repository.read = MagicMock(
             return_value=instance
         )
-        self.private_computation_service.run_next(instance.instance_id)
+        self.private_computation_service.run_next(instance.infra_config.instance_id)
         mock_run_stage_async.assert_called_with(
-            instance.instance_id, flow.ID_MATCH, server_ips=None
+            instance.infra_config.instance_id, flow.ID_MATCH, server_ips=None
         )
 
     @mock.patch(
@@ -523,7 +528,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         instance._stage_flow_cls_name = flow.get_cls_name()
 
         with self.assertRaises(PrivateComputationServiceInvalidStageError):
-            self.private_computation_service.run_next(instance.instance_id)
+            self.private_computation_service.run_next(instance.infra_config.instance_id)
 
         mock_run_stage_async.assert_not_called()
 
@@ -548,7 +553,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 )
 
                 pl_instance = self.private_computation_service.run_stage(
-                    pl_instance.instance_id, stage, stage_svc
+                    pl_instance.infra_config.instance_id, stage, stage_svc
                 )
                 self.assertEqual(pl_instance.status, stage.started_status)
 
@@ -575,7 +580,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
             with self.assertRaises(ValueError):
                 pl_instance = self.private_computation_service.run_stage(
-                    pl_instance.instance_id, stage, stage_svc
+                    pl_instance.infra_config.instance_id, stage, stage_svc
                 )
 
         for data_test in _get_valid_stages_data():
@@ -602,7 +607,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             )
 
             pl_instance = self.private_computation_service.run_stage(
-                pl_instance.instance_id, stage, stage_svc, dry_run=True
+                pl_instance.infra_config.instance_id, stage, stage_svc, dry_run=True
             )
             self.assertEqual(pl_instance.status, stage.started_status)
 
@@ -631,7 +636,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
             with self.assertRaises(ValueError):
                 pl_instance = self.private_computation_service.run_stage(
-                    pl_instance.instance_id, stage, stage_svc, dry_run=False
+                    pl_instance.infra_config.instance_id,
+                    stage,
+                    stage_svc,
+                    dry_run=False,
                 )
 
         for data_test in _get_valid_stages_data():
@@ -663,11 +671,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             if stage.is_joint_stage:
                 with self.assertRaises(ValueError):
                     pl_instance = self.private_computation_service.run_stage(
-                        pl_instance.instance_id, stage, stage_svc
+                        pl_instance.infra_config.instance_id, stage, stage_svc
                     )
             else:
                 pl_instance = self.private_computation_service.run_stage(
-                    pl_instance.instance_id, stage, stage_svc
+                    pl_instance.infra_config.instance_id, stage, stage_svc
                 )
                 self.assertEqual(pl_instance.status, stage.started_status)
 
@@ -703,7 +711,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
             with self.assertRaises(stage_failure_exception):
                 pl_instance = self.private_computation_service.run_stage(
-                    pl_instance.instance_id, stage, stage_svc
+                    pl_instance.infra_config.instance_id, stage, stage_svc
                 )
 
             self.assertEqual(pl_instance.status, stage.failed_status)
@@ -1096,8 +1104,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
         instances: Optional[List[UnionedPCInstance]] = None,
     ) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig(self.test_private_computation_id)
         return PrivateComputationInstance(
-            instance_id=self.test_private_computation_id,
+            infra_config,
             role=role,
             instances=instances or [],
             status=status,
