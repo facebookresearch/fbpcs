@@ -129,8 +129,6 @@ class PrivateComputationInstance(InstanceBase):
     pid_configs: Optional[Dict[str, Any]] = None
     retry_counter: int = 0
 
-    synthetic_shard_path: Optional[str] = None
-
     # TODO T98476320: make the following optional attributes non-optional. They are optional
     # because at the time the instance is created, pl might not provide any or all of them.
     hmac_key: Optional[str] = None
