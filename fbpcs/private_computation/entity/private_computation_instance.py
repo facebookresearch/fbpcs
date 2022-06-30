@@ -36,7 +36,6 @@ from fbpcs.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_
 from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
-from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -97,10 +96,6 @@ class PrivateComputationInstance(InstanceBase):
     # because at the time the instance is created, pl might not provide any or all of them.
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
-
-    k_anonymity_threshold: int = 0
-
-    breakdown_key: Optional[BreakdownKey] = None
 
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
