@@ -113,7 +113,9 @@ class AttributionStageService(PrivateComputationStageService):
         logging.info("MPC instance started running for decoupled attribution.")
 
         # Push MPC instance to PrivateComputationInstance.instances and update PA Instance status
-        pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
+        pc_instance.infra_config.instances.append(
+            PCSMPCInstance.from_mpc_instance(mpc_instance)
+        )
         return pc_instance
 
     def get_status(
