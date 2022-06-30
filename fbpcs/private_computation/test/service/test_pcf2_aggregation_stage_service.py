@@ -55,14 +55,14 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             + "0",
             game_name=GameNames.PCF2_AGGREGATION.value,
             mpc_party=MPCParty.CLIENT,
-            num_workers=private_computation_instance.num_mpc_containers,
+            num_workers=private_computation_instance.infra_config.num_mpc_containers,
         )
 
         self.mock_mpc_svc.start_instance_async = AsyncMock(return_value=mpc_instance)
 
         test_server_ips = [
             f"192.0.2.{i}"
-            for i in range(private_computation_instance.num_mpc_containers)
+            for i in range(private_computation_instance.infra_config.num_mpc_containers)
         ]
         await self.stage_svc.run_async(private_computation_instance, test_server_ips)
 
@@ -119,13 +119,13 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.ATTRIBUTION,
+            num_pid_containers=2,
+            num_mpc_containers=2,
         )
         return PrivateComputationInstance(
             infra_config,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             aggregation_type=AggregationType.MEASUREMENT,
-            num_pid_containers=2,
-            num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             input_path="456",
             output_dir="789",
