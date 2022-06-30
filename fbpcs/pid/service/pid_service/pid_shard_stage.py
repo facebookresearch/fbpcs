@@ -33,7 +33,6 @@ class PIDShardStage(PIDStage):
         input_paths = stage_input.input_paths
         output_paths = stage_input.output_paths
         num_shards = stage_input.num_shards
-        is_validating = stage_input.is_validating
 
         if len(input_paths) != 1:
             raise ValueError(f"Expected 1 input path, not {len(input_paths)}")
@@ -53,23 +52,6 @@ class PIDShardStage(PIDStage):
             wait_for_containers,
             container_timeout,
         )
-
-        # if validating, copy synthetic shard and update instance.num_shards
-        if is_validating:
-            synthetic_data_output_path = f"{output_paths[0]}_{num_shards}"
-            src_path = stage_input.synthetic_shard_path
-            if src_path is None:
-                raise ValueError(
-                    "In validation mode, but src_path for synthetic shards is None"
-                )
-            self.copy_synthetic_shard(
-                src_path,
-                synthetic_data_output_path,
-            )
-            num_shards = stage_input.num_shards + 1
-            await self.update_instance_num_shards(
-                instance_id=instance_id, num_shards=num_shards
-            )
 
         await self.update_instance_status(instance_id=instance_id, status=status)
         return status

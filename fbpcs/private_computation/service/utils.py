@@ -257,9 +257,7 @@ async def start_combiner_service(
         spine_path=private_computation_instance.pid_stage_output_spine_path,
         data_path=private_computation_instance.pid_stage_output_data_path,
         output_path=combine_output_path,
-        num_shards=private_computation_instance.num_pid_containers + 1
-        if private_computation_instance.is_validating
-        else private_computation_instance.num_pid_containers,
+        num_shards=private_computation_instance.num_pid_containers,
         tmp_directory=binary_config.tmp_directory,
         max_id_column_cnt=max_id_column_count,
         run_name=run_name,
@@ -303,11 +301,7 @@ async def start_sharder_service(
     logging.info("Instantiated sharder")
 
     args_list = []
-    for shard_index in range(
-        private_computation_instance.num_pid_containers + 1
-        if private_computation_instance.is_validating
-        else private_computation_instance.num_pid_containers
-    ):
+    for shard_index in range(private_computation_instance.num_pid_containers):
         path_to_shard = PIDStage.get_sharded_filepath(combine_output_path, shard_index)
         logging.info(f"Input path to sharder: {path_to_shard}")
 
