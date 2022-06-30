@@ -140,9 +140,6 @@ class PrivateComputationInstance(InstanceBase):
     concurrency: int = 1  # used only by MPC compute metrics stage. TODO T102588568: rename to compute_metrics_concurrency
     k_anonymity_threshold: int = 0
 
-    # this field is deprecated
-    fail_fast: bool = False
-
     breakdown_key: Optional[BreakdownKey] = None
     pce_config: Optional[PCEConfig] = None
     is_test: Optional[bool] = False  # set to be true for testing account ID
