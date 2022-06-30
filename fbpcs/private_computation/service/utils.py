@@ -252,7 +252,10 @@ async def start_combiner_service(
             if log_cost_to_s3
             else ""
         )
-        padding_size = checked_cast(int, private_computation_instance.padding_size)
+        padding_size = checked_cast(
+            int,
+            private_computation_instance.product_config.common_product_config.padding_size,
+        )
         log_cost = log_cost_to_s3
     else:
         run_name = None
