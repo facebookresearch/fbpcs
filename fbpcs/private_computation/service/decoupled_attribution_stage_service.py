@@ -95,7 +95,7 @@ class AttributionStageService(PrivateComputationStageService):
         retry_counter_str = str(pc_instance.retry_counter)
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
-            instance_id=pc_instance.instance_id
+            instance_id=pc_instance.infra_config.instance_id
             + "_decoupled_attribution"
             + retry_counter_str,
             game_name=game_name,
@@ -151,7 +151,8 @@ class AttributionStageService(PrivateComputationStageService):
 
         if self._log_cost_to_s3:
             run_name = (
-                private_computation_instance.instance_id + "_decoupled_attribution"
+                private_computation_instance.infra_config.instance_id
+                + "_decoupled_attribution"
             )
             if private_computation_instance.post_processing_data:
                 private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
