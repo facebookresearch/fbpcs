@@ -24,6 +24,7 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
+from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -31,7 +32,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
-    PrivateComputationRole,
     ResultVisibility,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
@@ -244,7 +244,7 @@ def get_server_ips(
     pc_instance = pc_service.instance_repository.read(instance_id)
 
     # This utility should only be used to get ips from a publisher instance
-    if pc_instance.role is not PrivateComputationRole.PUBLISHER:
+    if pc_instance.infra_config.role is not PrivateComputationRole.PUBLISHER:
         logger.warning("Unable to get server ips from a partner instance")
         return []
 
