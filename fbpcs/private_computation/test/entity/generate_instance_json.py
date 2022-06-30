@@ -154,6 +154,7 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         num_pid_containers=1,
         num_mpc_containers=1,
         num_files_per_mpc_container=40,
+        mpc_compute_concurrency=4,
     )
     return PrivateComputationInstance(
         infra_config,
@@ -162,7 +163,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         attribution_rule=None,
         aggregation_type=None,
         hmac_key="",
-        concurrency=4,
         padding_size=25,
         k_anonymity_threshold=100,
         breakdown_key=BreakdownKey.get_default_key(),
