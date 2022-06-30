@@ -15,11 +15,14 @@ from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionConfig,
+    AttributionRule,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_service_data import (
@@ -232,12 +235,15 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             MPC game args to be used by onedocker
         """
         game_args = []
-        aggregation_type = checked_cast(
-            AggregationType, private_computation_instance.aggregation_type
+
+        attribution_config: AttributionConfig = checked_cast(
+            AttributionConfig,
+            private_computation_instance.product_config,
         )
-        attribution_rule = checked_cast(
-            AttributionRule, private_computation_instance.attribution_rule
-        )
+        attribution_rule: AttributionRule = attribution_config.attribution_rule
+
+        aggregation_type: AggregationType = attribution_config.aggregation_type
+
         game_args = [
             {
                 **common_compute_game_args,
