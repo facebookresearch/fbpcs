@@ -217,7 +217,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(
                     PrivateComputationInstanceStatus.CREATED, args.infra_config.status
                 )
-                self.assertEqual(1, args.creation_ts)
+                self.assertEqual(1, args.infra_config.creation_ts)
                 self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
 
                 yesterday_date = datetime.now(tz=timezone.utc) - timedelta(days=1)
@@ -271,7 +271,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(
                     PrivateComputationInstanceStatus.CREATED, args.infra_config.status
                 )
-                self.assertEqual(1, args.creation_ts)
+                self.assertEqual(1, args.infra_config.creation_ts)
                 self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
@@ -395,7 +395,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         # elapsed_time should report current running time if the run is incomplete.
         self.assertEqual(
-            time.time() - private_computation_instance.creation_ts + 1,
+            time.time() - private_computation_instance.infra_config.creation_ts + 1,
             private_computation_instance.elapsed_time,
         )
 
@@ -407,7 +407,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(expected_end_ts, private_computation_instance.end_ts)
         expected_elapsed_time = (
             private_computation_instance.end_ts
-            - private_computation_instance.creation_ts
+            - private_computation_instance.infra_config.creation_ts
         )
         self.assertEqual(
             expected_elapsed_time,
