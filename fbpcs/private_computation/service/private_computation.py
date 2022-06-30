@@ -159,6 +159,7 @@ class PrivateComputationService:
             status_update_ts=PrivateComputationService.get_ts_now(),
             instances=[],
             game_type=game_type,
+            tier=tier,
         )
         instance = PrivateComputationInstance(
             infra_config,
@@ -196,7 +197,6 @@ class PrivateComputationService:
                 else PrivateComputationStageFlow,
             ).get_cls_name(),
             result_visibility=result_visibility or ResultVisibility.PUBLIC,
-            tier=tier,
             pid_use_row_numbers=pid_use_row_numbers,
             post_processing_data=post_processing_data,
             pid_configs=pid_configs,
