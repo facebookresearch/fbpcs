@@ -9,7 +9,9 @@
 import os
 import time
 from dataclasses import dataclass
-from typing import List, Optional, TYPE_CHECKING, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
+
+from dataclasses_json.mm import SchemaType
 
 if TYPE_CHECKING:
     from typing import Type
@@ -84,49 +86,43 @@ class PrivateComputationInstance(InstanceBase):
         if self.infra_config.creation_ts == 0:
             self.infra_config.creation_ts = int(time.time())
 
-    # TODO: These two functions can be simplfied better after the whole decouple task finish.
-    # I will do this in clean-up part in the same stack
     def dumps_schema(self) -> str:
         json_object = json.loads(super().dumps_schema())
 
-        if isinstance(self.product_config, AttributionConfig):
-            json_object["product_config"] = json.loads(
-                AttributionConfig.schema().dumps(self.product_config)
-            )
-        elif isinstance(self.product_config, LiftConfig):
-            json_object["product_config"] = json.loads(
-                LiftConfig.schema().dumps(self.product_config)
-            )
-        else:
-            raise ValueError(f"Invalid product config: {self.product_config}")
+        # this is a helper field used in InstanceBase setter
+        json_object.pop("initialized", None)
 
+        json_object["product_config"] = json.loads(
+            self.product_config.__class__.schema().dumps(self.product_config)
+        )
         return json.dumps(json_object)
 
     @classmethod
     def loads_schema(cls, json_schema_str: str) -> "PrivateComputationInstance":
         json_object = json.loads(json_schema_str)
 
-        product_config: ProductConfig
-        if json_object["infra_config"]["game_type"] == "ATTRIBUTION":
-            product_config = AttributionConfig.schema().loads(
-                json.dumps(json_object["product_config"]), many=None
-            )
-        elif json_object["infra_config"]["game_type"] == "LIFT":
-            product_config = LiftConfig.schema().loads(
-                json.dumps(json_object["product_config"]), many=None
-            )
-        else:
-            raise ValueError(f"Invalid product config: {json_schema_str}")
+        # create infra config
+        infra_config: InfraConfig = InfraConfig.schema().loads(
+            json.dumps(json_object["infra_config"]), many=None
+        )
 
-        # filter out subclass fields, only fields in ProductConfig class left
-        json_object["product_config"] = json.loads(
-            ProductConfig.schema().dumps(product_config)
+        # create product config
+        product_config: ProductConfig = cls._product_map(json_object).loads(
+            json.dumps(json_object["product_config"]), many=None
         )
-        pc_instance: PrivateComputationInstance = cls.schema().loads(
-            json.dumps(json_object), many=None
+
+        return PrivateComputationInstance(
+            infra_config=infra_config, product_config=product_config
         )
-        pc_instance.product_config = product_config
-        return pc_instance
+
+    @classmethod
+    def _product_map(cls, json_object: Dict[str, Any]) -> SchemaType:
+        """
+        return the corresponding SchemaType object based on the product_config type
+        """
+        if json_object["infra_config"]["game_type"] == "ATTRIBUTION":
+            return AttributionConfig.schema()
+        return LiftConfig.schema()
 
     def get_instance_id(self) -> str:
         return self.infra_config.instance_id
