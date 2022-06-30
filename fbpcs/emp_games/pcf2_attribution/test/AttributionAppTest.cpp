@@ -43,7 +43,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, tlsDir);
+      PARTY, partyInfos, useTls, tlsDir, "attribution_test_traffic");
 
   AttributionApp<PARTY, schedulerId, usingBatch, inputEncryption>(
       std::move(communicationAgentFactory),

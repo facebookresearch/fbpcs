@@ -48,7 +48,7 @@ void runCalculatorApp(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      myId, partyInfos, useTls, tlsDir);
+      myId, partyInfos, useTls, tlsDir, "lift_test_traffic");
 
   auto app = std::make_unique<CalculatorApp<schedulerId>>(
       myId,

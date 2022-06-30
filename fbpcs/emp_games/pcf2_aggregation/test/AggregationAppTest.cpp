@@ -46,7 +46,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, tlsDir);
+      PARTY, partyInfos, useTls, tlsDir, "aggregation_test_traffic");
 
   AggregationApp<PARTY, schedulerId>(
       inputEncryption,

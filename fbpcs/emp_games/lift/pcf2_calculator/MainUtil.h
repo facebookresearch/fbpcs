@@ -11,6 +11,7 @@
 #include <future>
 #include <memory>
 
+#include <folly/dynamic.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorApp.h"
 
@@ -71,7 +72,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
     int epoch,
     bool useXorEncryption) {
   // aggregate scheduler statistics across apps
-  common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
+  common::SchedulerStatistics schedulerStatistics{
+      0, 0, 0, 0, folly::dynamic::object()};
 
   // split files evenly across threads
   auto remainingFiles = inputFilepaths.size() - startFileIndex;
@@ -90,7 +92,11 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY, partyInfos, false, "");
+        PARTY,
+        partyInfos,
+        false,
+        "",
+        "lift_traffic_for_thread_" + std::to_string(index));
 
     // Each CalculatorApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
