@@ -112,7 +112,6 @@ class PrivateComputationInstance(InstanceBase):
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = None
     pid_configs: Optional[Dict[str, Any]] = None
-    retry_counter: int = 0
 
     # TODO T98476320: make the following optional attributes non-optional. They are optional
     # because at the time the instance is created, pl might not provide any or all of them.
