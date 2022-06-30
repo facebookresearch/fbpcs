@@ -118,6 +118,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             status=PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_COMPLETED,
             status_update_ts=1600000000,
             instances=[],
+            game_type=PrivateComputationGameType.ATTRIBUTION,
         )
         return PrivateComputationInstance(
             infra_config,
@@ -126,7 +127,6 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             num_pid_containers=2,
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
-            game_type=PrivateComputationGameType.ATTRIBUTION,
             input_path="456",
             output_dir="789",
             padding_size=4,
