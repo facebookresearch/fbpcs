@@ -19,6 +19,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     ResultVisibility,
 )
+from fbpcs.private_computation.entity.product_config import AttributionConfig
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_stage_service import (
@@ -121,7 +122,10 @@ class AggregateShardsStageService(PrivateComputationStageService):
                 "metrics_format_type": metrics_format_type,
                 "num_shards": num_shards,
                 "output_path": pc_instance.shard_aggregate_stage_output_path,
-                "threshold": pc_instance.k_anonymity_threshold,
+                "threshold": 0
+                if isinstance(pc_instance.product_config, AttributionConfig)
+                # pyre-ignore Undefined attribute [16]
+                else pc_instance.product_config.k_anonymity_threshold,
                 "run_name": run_name,
                 "log_cost": self._log_cost_to_s3,
             },

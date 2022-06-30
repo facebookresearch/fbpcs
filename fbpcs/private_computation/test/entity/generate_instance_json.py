@@ -163,7 +163,9 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
     )
     common_product_config: CommonProductConfig = CommonProductConfig()
     product_config: ProductConfig = LiftConfig(
-        common_product_config=common_product_config
+        common_product_config=common_product_config,
+        k_anonymity_threshold=100,
+        breakdown_key=BreakdownKey.get_default_key(),
     )
 
     return PrivateComputationInstance(
@@ -173,8 +175,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         output_dir="https://bucket.s3.us-west-2.amazonaws.com/lift/partner",
         hmac_key="",
         padding_size=25,
-        k_anonymity_threshold=100,
-        breakdown_key=BreakdownKey.get_default_key(),
     )
 
 
