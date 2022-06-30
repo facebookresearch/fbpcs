@@ -506,11 +506,11 @@ class TestPlInstanceRunner(TestCase):
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=self.num_shards,
+            num_mpc_containers=self.num_shards,
         )
         return PrivateComputationInstance(
             infra_config,
-            num_pid_containers=self.num_shards,
-            num_mpc_containers=self.num_shards,
             num_files_per_mpc_container=40,
             input_path="fake_input_path",
             output_dir="789",

@@ -151,14 +151,14 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         ),
         _stage_flow_cls_name="PrivateComputationStageFlow",
         retry_counter=0,
+        num_pid_containers=1,
+        num_mpc_containers=1,
     )
     return PrivateComputationInstance(
         infra_config,
         num_files_per_mpc_container=40,
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
         output_dir="https://bucket.s3.us-west-2.amazonaws.com/lift/partner",
-        num_pid_containers=1,
-        num_mpc_containers=1,
         attribution_rule=None,
         aggregation_type=None,
         hmac_key="",
