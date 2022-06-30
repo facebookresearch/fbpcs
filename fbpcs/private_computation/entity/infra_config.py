@@ -58,3 +58,5 @@ class InfraConfig:
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
     _stage_flow_cls_name: str = "PrivateComputationStageFlow"
+
+    retry_counter: int = 0
