@@ -164,6 +164,8 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
     common_product_config: CommonProductConfig = CommonProductConfig(
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
         output_dir="https://bucket.s3.us-west-2.amazonaws.com/lift/partner",
+        hmac_key="",
+        padding_size=25,
     )
     product_config: ProductConfig = LiftConfig(
         common_product_config=common_product_config,
@@ -174,8 +176,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
     return PrivateComputationInstance(
         infra_config=infra_config,
         product_config=product_config,
-        hmac_key="",
-        padding_size=25,
     )
 
 
