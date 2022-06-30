@@ -153,10 +153,10 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         retry_counter=0,
         num_pid_containers=1,
         num_mpc_containers=1,
+        num_files_per_mpc_container=40,
     )
     return PrivateComputationInstance(
         infra_config,
-        num_files_per_mpc_container=40,
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
         output_dir="https://bucket.s3.us-west-2.amazonaws.com/lift/partner",
         attribution_rule=None,

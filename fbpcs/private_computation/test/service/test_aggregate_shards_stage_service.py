@@ -97,10 +97,10 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             game_type=PrivateComputationGameType.LIFT,
             num_pid_containers=2,
             num_mpc_containers=2,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         return PrivateComputationInstance(
             infra_config,
-            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             input_path="456",
             output_dir="789",
         )
