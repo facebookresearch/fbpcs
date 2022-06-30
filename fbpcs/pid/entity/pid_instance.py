@@ -61,7 +61,6 @@ class PIDInstance(InstanceBase):
     num_shards: int
     input_path: str
     output_path: str
-    synthetic_shard_path: Optional[str] = None
     data_path: Optional[str] = None
     spine_path: Optional[str] = None
     hmac_key: Optional[str] = None
