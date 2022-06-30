@@ -171,11 +171,11 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=0,
             instances=[pid_instance],
+            game_type=self.test_game_type,
         )
         test_instance = PrivateComputationInstance(
             infra_config,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
-            game_type=self.test_game_type,
             input_path=self.test_input_path,
             output_dir=self.test_output_path,
             num_pid_containers=self.test_num_containers,
