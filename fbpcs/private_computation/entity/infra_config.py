@@ -18,3 +18,5 @@ class InfraConfig:
     Private attributes:
 
     """
+
+    instance_id: str

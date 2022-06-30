@@ -104,7 +104,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             input_stage_path = pc_instance.compute_stage_output_base_path
 
         if self._log_cost_to_s3:
-            run_name = pc_instance.instance_id
+            run_name = pc_instance.infra_config.instance_id
 
             if pc_instance.post_processing_data:
                 pc_instance.post_processing_data.s3_cost_export_output_paths.add(
@@ -133,7 +133,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
 
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
-            instance_id=pc_instance.instance_id
+            instance_id=pc_instance.infra_config.instance_id
             + "_aggregate_shards"
             + str(pc_instance.retry_counter),
             game_name=GameNames.SHARD_AGGREGATOR.value,
