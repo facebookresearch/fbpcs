@@ -4,8 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
+from enum import Enum
 
 from dataclasses_json import dataclass_json
+
+
+class PrivateComputationRole(Enum):
+    PUBLISHER = "PUBLISHER"
+    PARTNER = "PARTNER"
 
 
 @dataclass_json
@@ -20,3 +26,4 @@ class InfraConfig:
     """
 
     instance_id: str
+    role: PrivateComputationRole
