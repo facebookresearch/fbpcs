@@ -167,15 +167,15 @@ class PrivateComputationService:
                 if game_type is PrivateComputationGameType.ATTRIBUTION
                 else PrivateComputationStageFlow,
             ).get_cls_name(),
+            num_pid_containers=num_pid_containers,
+            num_mpc_containers=self._get_number_of_mpc_containers(
+                game_type, num_pid_containers, num_mpc_containers
+            ),
         )
         instance = PrivateComputationInstance(
             infra_config,
             num_files_per_mpc_container=unwrap_or_default(
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
-            ),
-            num_pid_containers=num_pid_containers,
-            num_mpc_containers=self._get_number_of_mpc_containers(
-                game_type, num_pid_containers, num_mpc_containers
             ),
             attribution_rule=attribution_rule,
             aggregation_type=aggregation_type,
