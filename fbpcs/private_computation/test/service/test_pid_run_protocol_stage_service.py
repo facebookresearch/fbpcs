@@ -191,13 +191,13 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             status=status,
             status_update_ts=1600000000,
             instances=[],
+            game_type=PrivateComputationGameType.LIFT,
         )
         return PrivateComputationInstance(
             infra_config,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=self.test_num_containers,
-            game_type=PrivateComputationGameType.LIFT,
             input_path=self.input_path,
             output_dir=self.output_path,
             pid_use_row_numbers=True,

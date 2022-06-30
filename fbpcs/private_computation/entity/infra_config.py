@@ -24,6 +24,11 @@ class PrivateComputationRole(Enum):
     PARTNER = "PARTNER"
 
 
+class PrivateComputationGameType(Enum):
+    LIFT = "LIFT"
+    ATTRIBUTION = "ATTRIBUTION"
+
+
 UnionedPCInstance = Union[
     PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
 ]
@@ -45,3 +50,4 @@ class InfraConfig:
     status: PrivateComputationInstanceStatus
     status_update_ts: int
     instances: List[UnionedPCInstance]
+    game_type: PrivateComputationGameType
