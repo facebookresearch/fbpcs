@@ -58,7 +58,6 @@ class PIDService:
         output_path: str,
         data_path: str = "",
         spine_path: str = "",
-        synthetic_shard_path: Optional[str] = None,
         hmac_key: Optional[str] = None,
         pid_use_row_numbers: bool = False,
     ) -> PIDInstance:
@@ -72,7 +71,6 @@ class PIDService:
             num_shards=num_shards,
             input_path=input_path,
             output_path=output_path,
-            synthetic_shard_path=synthetic_shard_path,
             status=PIDInstanceStatus.CREATED,
             data_path=data_path,
             spine_path=spine_path,
@@ -233,7 +231,6 @@ class PIDService:
             input_path=instance.input_path,
             output_path=instance.output_path,
             num_shards=instance.num_shards,
-            synthetic_shard_path=instance.synthetic_shard_path,
             protocol=instance.protocol,
             role=instance.pid_role,
             onedocker_svc=self.onedocker_svc,
