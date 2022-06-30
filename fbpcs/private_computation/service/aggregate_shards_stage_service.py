@@ -108,7 +108,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
 
             if pc_instance.post_processing_data:
                 pc_instance.post_processing_data.s3_cost_export_output_paths.add(
-                    f"sa-logs/{run_name}_{pc_instance.role.value.title()}.json",
+                    f"sa-logs/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
                 )
         else:
             run_name = ""
@@ -137,7 +137,9 @@ class AggregateShardsStageService(PrivateComputationStageService):
             + "_aggregate_shards"
             + str(pc_instance.retry_counter),
             game_name=GameNames.SHARD_AGGREGATOR.value,
-            mpc_party=map_private_computation_role_to_mpc_party(pc_instance.role),
+            mpc_party=map_private_computation_role_to_mpc_party(
+                pc_instance.infra_config.role
+            ),
             num_containers=1,
             binary_version=binary_config.binary_version,
             server_ips=server_ips,

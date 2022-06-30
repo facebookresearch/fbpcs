@@ -214,7 +214,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(
                     self.test_private_computation_id, args.infra_config.instance_id
                 )
-                self.assertEqual(test_role, args.role)
+                self.assertEqual(test_role, args.infra_config.role)
                 self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
                 self.assertEqual(1, args.creation_ts)
                 self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
@@ -266,7 +266,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(
                     self.test_private_computation_id, args.infra_config.instance_id
                 )
-                self.assertEqual(test_role, args.role)
+                self.assertEqual(test_role, args.infra_config.role)
                 self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
                 self.assertEqual(1, args.creation_ts)
                 self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
@@ -1104,10 +1104,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
         instances: Optional[List[UnionedPCInstance]] = None,
     ) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig(self.test_private_computation_id)
+        infra_config: InfraConfig = InfraConfig(self.test_private_computation_id, role)
         return PrivateComputationInstance(
             infra_config,
-            role=role,
             instances=instances or [],
             status=status,
             status_update_ts=1600000000,
