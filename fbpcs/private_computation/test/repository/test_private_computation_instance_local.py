@@ -47,12 +47,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_pid_containers=4,
             num_mpc_containers=4,
             num_files_per_mpc_container=40,
+            mpc_compute_concurrency=1,
         )
         test_read_private_computation_instance = PrivateComputationInstance(
             infra_config,
             input_path="in",
             output_dir="out",
-            concurrency=1,
         )
         self.repo.create(test_read_private_computation_instance)
         self.assertEqual(
@@ -72,13 +72,13 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_pid_containers=8,
             num_mpc_containers=4,
             num_files_per_mpc_container=40,
+            mpc_compute_concurrency=1,
         )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
                 infra_config,
                 input_path="in",
                 output_dir="out",
-                concurrency=1,
             )
 
     def test_update(self) -> None:
@@ -93,12 +93,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_pid_containers=4,
             num_mpc_containers=4,
             num_files_per_mpc_container=40,
+            mpc_compute_concurrency=1,
         )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config,
             input_path="in",
             output_dir="out",
-            concurrency=1,
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)
