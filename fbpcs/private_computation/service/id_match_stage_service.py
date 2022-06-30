@@ -92,7 +92,7 @@ class IdMatchStageService(PrivateComputationStageService):
         Returns:
             The latest status for private_computation_instance
         """
-        status = pc_instance.status
+        status = pc_instance.infra_config.status
         if pc_instance.instances:
             # Only need to update the last stage/instance
             last_instance = pc_instance.instances[-1]

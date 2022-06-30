@@ -99,7 +99,7 @@ class PrepareDataStageService(PrivateComputationStageService):
         # this if statement will let the legacy way of calling prepare data NOT update the status,
         # whereas the new way of calling prepare data can update the status.
         if self._update_status_to_complete:
-            pc_instance.status = pc_instance.current_stage.completed_status
+            pc_instance.infra_config.status = pc_instance.current_stage.completed_status
         return pc_instance
 
     def get_status(
@@ -117,4 +117,4 @@ class PrepareDataStageService(PrivateComputationStageService):
         Returns:
             The latest status for private_computation_instance
         """
-        return pc_instance.status
+        return pc_instance.infra_config.status

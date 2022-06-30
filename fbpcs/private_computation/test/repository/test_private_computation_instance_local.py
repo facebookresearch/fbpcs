@@ -38,12 +38,13 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
     def test_read(self) -> None:
         instance_id = self._get_random_id()
         infra_config: InfraConfig = InfraConfig(
-            instance_id, PrivateComputationRole.PUBLISHER
+            instance_id,
+            PrivateComputationRole.PUBLISHER,
+            PrivateComputationInstanceStatus.CREATED,
         )
         test_read_private_computation_instance = PrivateComputationInstance(
             infra_config,
             instances=[self.test_mpc_instance],
-            status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             num_files_per_mpc_container=40,
             game_type=PrivateComputationGameType.LIFT,
@@ -62,13 +63,14 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
     def test_create_with_invalid_num_containers(self) -> None:
         instance_id = self._get_random_id()
         infra_config: InfraConfig = InfraConfig(
-            instance_id, PrivateComputationRole.PUBLISHER
+            instance_id,
+            PrivateComputationRole.PUBLISHER,
+            PrivateComputationInstanceStatus.CREATED,
         )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
                 infra_config,
                 instances=[self.test_mpc_instance],
-                status=PrivateComputationInstanceStatus.CREATED,
                 status_update_ts=1600000000,
                 num_files_per_mpc_container=40,
                 game_type=PrivateComputationGameType.LIFT,
@@ -82,12 +84,13 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
     def test_update(self) -> None:
         instance_id = self._get_random_id()
         infra_config: InfraConfig = InfraConfig(
-            instance_id, PrivateComputationRole.PUBLISHER
+            instance_id,
+            PrivateComputationRole.PUBLISHER,
+            PrivateComputationInstanceStatus.CREATED,
         )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config,
             instances=[self.test_mpc_instance],
-            status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
             num_files_per_mpc_container=40,
             game_type=PrivateComputationGameType.LIFT,

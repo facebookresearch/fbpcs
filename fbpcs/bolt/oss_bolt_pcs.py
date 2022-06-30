@@ -152,7 +152,7 @@ class BoltPCSClient(BoltClient):
             None, self.pcs.update_instance, instance_id
         )
         state = BoltState(
-            pc_instance_status=pc_instance.status,
+            pc_instance_status=pc_instance.infra_config.status,
             server_ips=pc_instance.server_ips,
         )
         return state
