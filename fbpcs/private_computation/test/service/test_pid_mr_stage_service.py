@@ -31,10 +31,10 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.PID_MR_STARTED,
             status_update_ts=1600000000,
+            instances=[],
         )
         pc_instance = PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_pid_containers=1,
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
@@ -68,5 +68,7 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             pc_instance.pid_mr_stage_output_data_path,
             "https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output/publisher_123_out_dir/pid_mr",
         )
-        self.assertEqual(pc_instance.instances[0].instance_id, "execution_arn")
-        self.assertIsInstance(pc_instance.instances[0], StageStateInstance)
+        self.assertEqual(
+            pc_instance.infra_config.instances[0].instance_id, "execution_arn"
+        )
+        self.assertIsInstance(pc_instance.infra_config.instances[0], StageStateInstance)
