@@ -49,7 +49,6 @@ class PIDDispatcher(Dispatcher):
         onedocker_svc: OneDockerService,
         storage_svc: StorageService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-        synthetic_shard_path: Optional[str] = None,
         server_ips: Optional[List[str]] = None,
         data_path: Optional[str] = None,
         spine_path: Optional[str] = None,
@@ -95,7 +94,6 @@ class PIDDispatcher(Dispatcher):
                 output_path_instance,
                 num_shards,
                 self.instance_id,
-                synthetic_shard_path,
                 hmac_key,
                 pid_use_row_numbers=pid_use_row_numbers,
             )
