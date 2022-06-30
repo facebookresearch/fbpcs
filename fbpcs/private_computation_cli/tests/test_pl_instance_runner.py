@@ -16,13 +16,15 @@ from fbpcs.pl_coordinator.pl_instance_runner import (
     PCInstanceCalculationException,
     PLInstanceRunner,
 )
-from fbpcs.private_computation.entity.infra_config import InfraConfig
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
+    PrivateComputationRole,
+)
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
-    PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -497,10 +499,11 @@ class TestPlInstanceRunner(TestCase):
     def _get_pc_instance(
         self, status: PrivateComputationInstanceStatus
     ) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig(self.instance_id)
+        infra_config: InfraConfig = InfraConfig(
+            self.instance_id, PrivateComputationRole.PARTNER
+        )
         return PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PARTNER,
             instances=[],
             status=status,
             status_update_ts=1600000000,
