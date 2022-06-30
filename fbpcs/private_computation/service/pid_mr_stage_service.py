@@ -58,7 +58,7 @@ class PIDMRStageService(PrivateComputationStageService):
             pc_instance.current_stage.name,
         )
         logging.info("Start PID MR Stage Service")
-        pid_configs = pc_instance.pid_configs
+        pid_configs = pc_instance.product_config.common_product_config.pid_configs
         if (
             pid_configs
             and PIDMR in pid_configs
@@ -115,7 +115,7 @@ class PIDMRStageService(PrivateComputationStageService):
             stage_name = last_instance.stage_name
             stage_id = last_instance.instance_id
             assert stage_name == pc_instance.current_stage.name
-            pid_configs = pc_instance.pid_configs
+            pid_configs = pc_instance.product_config.common_product_config.pid_configs
             stage_state_instance_status = WorkflowStatus.STARTED
             if pid_configs:
                 stage_state_instance_status = self.workflow_svc.get_workflow_status(

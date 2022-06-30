@@ -163,8 +163,10 @@ class AttributionStageService(PrivateComputationStageService):
                 private_computation_instance.infra_config.instance_id
                 + "_decoupled_attribution"
             )
-            if private_computation_instance.post_processing_data:
-                private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
+            if (
+                private_computation_instance.product_config.common_product_config.post_processing_data
+            ):
+                private_computation_instance.product_config.common_product_config.post_processing_data.s3_cost_export_output_paths.add(
                     f"att-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json",
                 )
         else:

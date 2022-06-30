@@ -5,10 +5,11 @@
 
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
+from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 
 # This is the visibility defined in https://fburl.com/code/i1itu32l
 class ResultVisibility(IntEnum):
@@ -28,6 +29,7 @@ class CommonProductConfig:
                         at the same time maintaining privacy. It is currently only used when game_type=attribution
                         because the lift id spine combiner uses a hard-coded value of 25.
                         TODO T104391012: pass padding size to lift id spine combiner.
+        post_processing_data: fields to be sent to the post processing tier.
     """
 
     input_path: str
@@ -42,6 +44,9 @@ class CommonProductConfig:
     # this is used by Private ID protocol to indicate whether we should
     # enable 'use-row-numbers' argument.
     pid_use_row_numbers: bool = True
+
+    pid_configs: Optional[Dict[str, Any]] = None
+    post_processing_data: Optional[PostProcessingData] = None
 
 
 @dataclass

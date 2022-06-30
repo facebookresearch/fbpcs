@@ -194,6 +194,8 @@ class PrivateComputationService:
             ),
             result_visibility=result_visibility or ResultVisibility.PUBLIC,
             pid_use_row_numbers=pid_use_row_numbers,
+            post_processing_data=post_processing_data,
+            pid_configs=pid_configs,
         )
         product_config: ProductConfig
         if game_type is PrivateComputationGameType.ATTRIBUTION:
@@ -220,8 +222,6 @@ class PrivateComputationService:
         instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            post_processing_data=post_processing_data,
-            pid_configs=pid_configs,
         )
 
         self.instance_repository.create(instance)

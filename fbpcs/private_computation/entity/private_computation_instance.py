@@ -9,7 +9,7 @@
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import List, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from typing import Type
@@ -40,7 +40,6 @@ from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -64,18 +63,11 @@ class PrivateComputationInstance(InstanceBase):
     """Stores metadata of a private computation instance
 
     Public attributes:
-        post_processing_data: fields to be sent to the post processing tier.
-
-    Private attributes:
 
     """
 
     infra_config: InfraConfig
     product_config: ProductConfig
-
-    pid_configs: Optional[Dict[str, Any]] = None
-
-    post_processing_data: Optional[PostProcessingData] = None
 
     def __post_init__(self) -> None:
         if self.infra_config.num_pid_containers > self.infra_config.num_mpc_containers:

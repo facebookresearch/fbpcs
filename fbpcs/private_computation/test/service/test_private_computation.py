@@ -239,7 +239,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 yesterday_timestamp = datetime.timestamp(yesterday_date)
                 self.assertEqual(
                     int(yesterday_timestamp),
-                    args.post_processing_data.dataset_timestamp,
+                    args.product_config.common_product_config.post_processing_data.dataset_timestamp,
                 )
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
