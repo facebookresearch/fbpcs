@@ -340,11 +340,11 @@ class PrivateComputationService:
         # e.g. if status == ID_MATCH_COMPLETE, then we can run COMPUTE_METRICS
         # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
         if pc_instance.infra_config.status is stage.previous_stage.completed_status:
-            pc_instance.retry_counter = 0
+            pc_instance.infra_config.retry_counter = 0
         # if the instance status is the fail status of the target stage, then we can retry the target stage
         # e.g. if status == COMPUTE_METRICS_FAILED, then we can run COMPUTE_METRICS
         elif pc_instance.infra_config.status is stage.failed_status:
-            pc_instance.retry_counter += 1
+            pc_instance.infra_config.retry_counter += 1
         # if the instance status is a start status, it's running something already. Don't run another stage, even if dry_run=True
         elif stage.is_started_status(pc_instance.infra_config.status):
             raise ValueError(
