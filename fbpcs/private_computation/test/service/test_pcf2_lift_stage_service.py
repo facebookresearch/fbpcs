@@ -14,6 +14,7 @@ from fbpcp.entity.mpc_instance import MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -48,7 +49,8 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
     async def test_compute_metrics(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=private_computation_instance.instance_id + "_pcf2_lift0",
+            instance_id=private_computation_instance.infra_config.instance_id
+            + "_pcf2_lift0",
             game_name=GameNames.PCF2_LIFT.value,
             mpc_party=MPCParty.CLIENT,
             num_workers=private_computation_instance.num_mpc_containers,
@@ -68,7 +70,9 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
         # TODO: add game args test for attribution args
         private_computation_instance = self._create_pc_instance()
         run_name = (
-            private_computation_instance.instance_id + "_" + GameNames.PCF2_LIFT.value
+            private_computation_instance.infra_config.instance_id
+            + "_"
+            + GameNames.PCF2_LIFT.value
             if self.stage_svc._log_cost_to_s3
             else ""
         )
@@ -97,8 +101,9 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig("test_instance_123")
         return PrivateComputationInstance(
-            instance_id="test_instance_123",
+            infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,

@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -52,8 +52,9 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
             mock_combine.assert_called()
 
     def create_sample_instance(self) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig("test_instance_123")
         return PrivateComputationInstance(
-            instance_id="test_instance_123",
+            infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
