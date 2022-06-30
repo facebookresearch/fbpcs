@@ -133,9 +133,10 @@ def gen_dummy_post_processing_instance() -> PostProcessingInstance:
 def gen_dummy_pc_instance() -> PrivateComputationInstance:
     """Creates a dummy private computation instance to be used in unit tests"""
     infra_config: InfraConfig = InfraConfig(
-        "pc_instance_id",
-        PrivateComputationRole.PUBLISHER,
-        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
+        instance_id="pc_instance_id",
+        role=PrivateComputationRole.PUBLISHER,
+        status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
+        status_update_ts=int(time.time()),
     )
     return PrivateComputationInstance(
         infra_config,
@@ -144,7 +145,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
             gen_dummy_mpc_instance(),
             gen_dummy_post_processing_instance(),
         ],
-        status_update_ts=int(time.time()),
         num_files_per_mpc_container=40,
         game_type=PrivateComputationGameType.LIFT,
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
