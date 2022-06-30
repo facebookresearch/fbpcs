@@ -106,8 +106,6 @@ class PrivateComputationInstance(InstanceBase):
     num_files_per_mpc_container: int
     input_path: str
     output_dir: str
-    num_pid_containers: int
-    num_mpc_containers: int
 
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = None
@@ -132,9 +130,9 @@ class PrivateComputationInstance(InstanceBase):
     post_processing_data: Optional[PostProcessingData] = None
 
     def __post_init__(self) -> None:
-        if self.num_pid_containers > self.num_mpc_containers:
+        if self.infra_config.num_pid_containers > self.infra_config.num_mpc_containers:
             raise ValueError(
-                f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.num_pid_containers} and num_mpc_containers = {self.num_mpc_containers}"
+                f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.infra_config.num_pid_containers} and num_mpc_containers = {self.infra_config.num_mpc_containers}"
             )
         if (
             self.infra_config.game_type is PrivateComputationGameType.ATTRIBUTION
