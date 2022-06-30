@@ -8,7 +8,6 @@
 
 
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 from dataclasses_json import dataclass_json
 
