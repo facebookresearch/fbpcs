@@ -10,8 +10,16 @@ from dataclasses_json import dataclass_json
 
 @dataclass_json
 @dataclass
+class CommonProductConfig:
+    """Stores metadata of common product config used both by attribution config and lift config"""
+
+
+@dataclass_json
+@dataclass
 class ProductConfig:
     """Stores metadata of product config in a private computation instance"""
+
+    common_product_config: CommonProductConfig
 
 
 @dataclass_json
