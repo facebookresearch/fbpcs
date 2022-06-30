@@ -53,7 +53,7 @@ class IdMatchStageService(PrivateComputationStageService):
             An updated version of pc_instance that stores a PIDInstance
         """
 
-        retry_counter_str = str(pc_instance.retry_counter)
+        retry_counter_str = str(pc_instance.infra_config.retry_counter)
         pid_instance_id = (
             pc_instance.infra_config.instance_id + "_id_match" + retry_counter_str
         )

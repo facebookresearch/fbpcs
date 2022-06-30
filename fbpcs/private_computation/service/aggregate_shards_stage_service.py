@@ -135,7 +135,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             mpc_svc=self._mpc_service,
             instance_id=pc_instance.infra_config.instance_id
             + "_aggregate_shards"
-            + str(pc_instance.retry_counter),
+            + str(pc_instance.infra_config.retry_counter),
             game_name=GameNames.SHARD_AGGREGATOR.value,
             mpc_party=map_private_computation_role_to_mpc_party(
                 pc_instance.infra_config.role
