@@ -114,7 +114,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
         # input_path is the output_path from PID Shard Stage
         input_path = pc_instance.pid_stage_output_data_path
         output_path = pc_instance.pid_stage_output_prepare_path
-        pc_role = pc_instance.role
+        pc_role = pc_instance.infra_config.role
         # generate the list of command args for publisher or partner
         args_list = []
         # later mltikey_enabled, protocol, and max_col_cnt wil be centralized in PrivateComputationInstance.
