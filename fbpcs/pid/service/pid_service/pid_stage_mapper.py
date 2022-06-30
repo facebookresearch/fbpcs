@@ -122,7 +122,6 @@ class PIDStageMapper:
         output_path: str,
         num_shards: int,
         run_id: str,
-        synthetic_shard_path: Optional[str] = None,
         hmac_key: Optional[str] = None,
         pid_use_row_numbers: bool = False,
     ) -> PIDStageInput:
@@ -132,7 +131,6 @@ class PIDStageMapper:
                 output_paths=[f"{output_path}{STAGE_TO_FILE_FORMAT_MAP[stage]}"],
                 num_shards=num_shards,
                 instance_id=run_id,
-                synthetic_shard_path=synthetic_shard_path,
                 hmac_key=hmac_key,
                 pid_use_row_numbers=pid_use_row_numbers,
             )
