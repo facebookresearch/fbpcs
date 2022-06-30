@@ -70,8 +70,8 @@ class PostProcessingStageService(PrivateComputationStageService):
         """
 
         post_processing_handlers_statuses = None
-        if pc_instance.instances:
-            last_instance = pc_instance.instances[-1]
+        if pc_instance.infra_config.instances:
+            last_instance = pc_instance.infra_config.instances[-1]
             if (
                 isinstance(last_instance, PostProcessingInstance)
                 and last_instance.handler_statuses.keys()
@@ -91,7 +91,7 @@ class PostProcessingStageService(PrivateComputationStageService):
             status=PostProcessingInstanceStatus.STARTED,
         )
 
-        pc_instance.instances.append(post_processing_instance)
+        pc_instance.infra_config.instances.append(post_processing_instance)
 
         # if any handlers fail, then the post_processing_instance status will be
         # set to failed, as will the pc_instance status
@@ -157,13 +157,15 @@ class PostProcessingStageService(PrivateComputationStageService):
             The latest status for private_computation_instance
         """
         status = pc_instance.infra_config.status
-        if pc_instance.instances:
+        if pc_instance.infra_config.instances:
             # Only need to update the last stage/instance
-            last_instance = pc_instance.instances[-1]
+            last_instance = pc_instance.infra_config.instances[-1]
             if not isinstance(last_instance, PostProcessingInstance):
                 return status
 
-            post_processing_instance_status = pc_instance.instances[-1].status
+            post_processing_instance_status = pc_instance.infra_config.instances[
+                -1
+            ].status
 
             stage = pc_instance.current_stage
             if post_processing_instance_status is PostProcessingInstanceStatus.STARTED:

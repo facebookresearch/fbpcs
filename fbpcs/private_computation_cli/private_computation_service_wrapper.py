@@ -249,7 +249,7 @@ def get_server_ips(
         return []
 
     server_ips_list = None
-    last_instance = pc_instance.instances[-1]
+    last_instance = pc_instance.infra_config.instances[-1]
     if isinstance(last_instance, (PIDInstance, MPCInstance)):
         server_ips_list = last_instance.server_ips
 
