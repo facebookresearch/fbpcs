@@ -77,7 +77,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
         # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type
         metrics_format_type = (
             "lift"
-            if pc_instance.game_type is PrivateComputationGameType.LIFT
+            if pc_instance.infra_config.game_type is PrivateComputationGameType.LIFT
             else "ad_object"
         )
 
