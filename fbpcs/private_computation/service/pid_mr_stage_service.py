@@ -54,7 +54,7 @@ class PIDMRStageService(PrivateComputationStageService):
             An updated version of pc_instance
         """
         stage_state = StageStateInstance(
-            pc_instance.instance_id,
+            pc_instance.infra_config.instance_id,
             pc_instance.current_stage.name,
         )
         logging.info("Start PID MR Stage Service")
@@ -71,7 +71,9 @@ class PIDMRStageService(PrivateComputationStageService):
                 OUTPUT: self.get_s3uri_from_url(
                     pc_instance.pid_mr_stage_output_data_path
                 ),
-                INSTANCE: self.removePrefixForInstance(pc_instance.instance_id),
+                INSTANCE: self.removePrefixForInstance(
+                    pc_instance.infra_config.instance_id
+                ),
             }
             pid_overall_configs = {
                 **pid_configs[PIDMR][PIDRunConfigs],
@@ -81,7 +83,7 @@ class PIDMRStageService(PrivateComputationStageService):
 
             stage_state.instance_id = self.workflow_svc.start_workflow(
                 pid_configs[PIDMR][PIDWorkflowConfigs],
-                pc_instance.instance_id,
+                pc_instance.infra_config.instance_id,
                 pid_overall_configs,
             )
         pc_instance.instances.append(stage_state)
