@@ -26,6 +26,7 @@ jobs:
       num_mpc_containers: 2
       num_pid_containers: 2
       concurrency: 4
+      stage_flow_cls: PrivateComputationPIDMigrationTestStageFlow
   attribution:
     # publisher player args
     publisher:
@@ -52,3 +53,4 @@ jobs:
       num_files_per_mpc_container: 1
       attribution_rule: last_touch_1d
       aggregation_type: measurement
+      stage_flow_cls: PrivateComputationPIDPATestStageFlow
