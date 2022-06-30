@@ -70,7 +70,6 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
     num_files_per_mpc_container: Optional[int] = None
     breakdown_key: Optional[BreakdownKey] = None
     pce_config: Optional[PCEConfig] = None
-    is_test: Optional[bool] = False
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
     k_anonymity_threshold: Optional[int] = None
@@ -125,7 +124,6 @@ class BoltPCSClient(BoltClient):
             num_files_per_mpc_container=instance_args.num_files_per_mpc_container,
             breakdown_key=instance_args.breakdown_key,
             pce_config=instance_args.pce_config,
-            is_test=instance_args.is_test,
             hmac_key=instance_args.hmac_key,
             padding_size=instance_args.padding_size,
             k_anonymity_threshold=instance_args.k_anonymity_threshold,
