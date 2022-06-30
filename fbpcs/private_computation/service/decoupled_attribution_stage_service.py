@@ -168,7 +168,7 @@ class AttributionStageService(PrivateComputationStageService):
         common_game_args = {
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.decoupled_attribution_stage_output_base_path,
-            "num_files": private_computation_instance.num_files_per_mpc_container,
+            "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
             "run_name": run_name,
             "max_num_touchpoints": private_computation_instance.padding_size,
@@ -184,7 +184,7 @@ class AttributionStageService(PrivateComputationStageService):
                 **common_game_args,
                 **{
                     "file_start_index": i
-                    * private_computation_instance.num_files_per_mpc_container,
+                    * private_computation_instance.infra_config.num_files_per_mpc_container,
                 },
             }
             for i in range(private_computation_instance.infra_config.num_mpc_containers)
