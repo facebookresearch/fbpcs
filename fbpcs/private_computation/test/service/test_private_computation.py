@@ -1113,12 +1113,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         instances: Optional[List[UnionedPCInstance]] = None,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
-            self.test_private_computation_id, role, status
+            self.test_private_computation_id, role, status, 1600000000
         )
         return PrivateComputationInstance(
             infra_config,
             instances=instances or [],
-            status_update_ts=1600000000,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             concurrency=self.test_concurrency,
