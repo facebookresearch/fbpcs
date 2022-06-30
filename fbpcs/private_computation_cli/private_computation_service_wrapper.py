@@ -28,11 +28,13 @@ from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
     ResultVisibility,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionRule,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,

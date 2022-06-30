@@ -19,6 +19,12 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionConfig,
+    CommonProductConfig,
+    ProductConfig,
+)
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
@@ -112,9 +118,15 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
-        return PrivateComputationInstance(
-            infra_config,
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = AttributionConfig(
+            common_product_config=common_product_config,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
+            aggregation_type=AggregationType.MEASUREMENT,
+        )
+        return PrivateComputationInstance(
+            infra_config=infra_config,
+            product_config=product_config,
             input_path="456",
             output_dir="789",
             padding_size=4,

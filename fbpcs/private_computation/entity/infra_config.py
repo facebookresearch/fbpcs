@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Union
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import DataClassJsonMixin
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.pid.entity.pid_instance import PIDInstance
@@ -35,9 +35,8 @@ UnionedPCInstance = Union[
 ]
 
 
-@dataclass_json
 @dataclass
-class InfraConfig:
+class InfraConfig(DataClassJsonMixin):
     """Stores metadata of infra config in a private computation instance
 
     Public attributes:
