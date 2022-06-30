@@ -23,11 +23,11 @@ from fbpcs.private_computation.entity.post_processing_data import PostProcessing
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationRole,
-    ResultVisibility,
 )
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
     AttributionRule,
+    ResultVisibility,
 )
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,

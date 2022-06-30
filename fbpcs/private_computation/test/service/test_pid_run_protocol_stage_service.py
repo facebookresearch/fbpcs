@@ -204,6 +204,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         common_product_config: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
             output_dir=self.output_path,
+            pid_use_row_numbers=True,
         )
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
@@ -211,7 +212,6 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         return PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            pid_use_row_numbers=True,
         )
 
     def create_container_instance(
