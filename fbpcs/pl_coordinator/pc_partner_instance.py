@@ -100,7 +100,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
         """
         we check partner stage status to see if it's able to override input
         """
-        if self.input_path == instance.input_path:
+        if self.input_path == instance.product_config.common_product_config.input_path:
             return False
 
         if self.status in (
@@ -110,7 +110,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
             return True
         else:
             raise PCInstanceCalculationException(
-                f"Unable to override input path {self.input_path} to exisiting instance input path {instance.input_path}",
+                f"Unable to override input path {self.input_path} to exisiting instance input path {instance.product_config.common_product_config.input_path}",
                 f"input path can't be updated as the current status is too late to override {self.status}",
                 "Please wait 24 hours for the instance to expire or contact your representative at meta for assistance",
             )

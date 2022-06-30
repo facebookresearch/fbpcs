@@ -98,7 +98,7 @@ class PIDShardStageService(PrivateComputationStageService):
         """start pid shard service and spine up the container instances"""
         logging.info("Instantiated PID shard stage")
         num_shards = pc_instance.infra_config.num_pid_containers
-        input_path = pc_instance.input_path
+        input_path = pc_instance.product_config.common_product_config.input_path
         output_base_path = pc_instance.pid_stage_output_data_path
         pc_role = pc_instance.infra_config.role
         sharding_binary_service = ShardingService()
