@@ -42,10 +42,10 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            instances=[self.test_mpc_instance],
         )
         test_read_private_computation_instance = PrivateComputationInstance(
             infra_config,
-            instances=[self.test_mpc_instance],
             num_files_per_mpc_container=40,
             game_type=PrivateComputationGameType.LIFT,
             input_path="in",
@@ -67,11 +67,11 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            instances=[self.test_mpc_instance],
         )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
                 infra_config,
-                instances=[self.test_mpc_instance],
                 num_files_per_mpc_container=40,
                 game_type=PrivateComputationGameType.LIFT,
                 input_path="in",
@@ -88,10 +88,10 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            instances=[self.test_mpc_instance],
         )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config,
-            instances=[self.test_mpc_instance],
             num_files_per_mpc_container=40,
             game_type=PrivateComputationGameType.LIFT,
             input_path="in",
@@ -110,10 +110,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
         )
         instances_new = [self.test_mpc_instance, test_mpc_instance_new]
         # Update instances
-        test_update_private_computation_instance.instances = instances_new
+        test_update_private_computation_instance.infra_config.instances = instances_new
         self.repo.update(test_update_private_computation_instance)
         # Assert instances is updated
-        self.assertEqual(self.repo.read(instance_id).instances, instances_new)
+        self.assertEqual(
+            self.repo.read(instance_id).infra_config.instances, instances_new
+        )
         self.repo.delete(instance_id)
 
     def _get_random_id(self) -> str:

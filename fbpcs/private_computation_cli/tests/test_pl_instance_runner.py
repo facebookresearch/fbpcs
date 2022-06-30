@@ -504,10 +504,10 @@ class TestPlInstanceRunner(TestCase):
             PrivateComputationRole.PARTNER,
             status,
             status_update_ts=1600000000,
+            instances=[],
         )
         return PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_pid_containers=self.num_shards,
             num_mpc_containers=self.num_shards,
             num_files_per_mpc_container=40,

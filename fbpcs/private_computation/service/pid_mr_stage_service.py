@@ -86,7 +86,7 @@ class PIDMRStageService(PrivateComputationStageService):
                 pc_instance.infra_config.instance_id,
                 pid_overall_configs,
             )
-        pc_instance.instances.append(stage_state)
+        pc_instance.infra_config.instances.append(stage_state)
         return pc_instance
 
     def get_status(
@@ -102,10 +102,10 @@ class PIDMRStageService(PrivateComputationStageService):
             The latest status for private_computation_instance
         """
         status = pc_instance.infra_config.status
-        if pc_instance.instances:
+        if pc_instance.infra_config.instances:
             # TODO: we should have some identifier or stage_name
             # to pick up the right instance instead of the last one
-            last_instance = pc_instance.instances[-1]
+            last_instance = pc_instance.infra_config.instances[-1]
             if not isinstance(last_instance, StageStateInstance):
                 raise ValueError(
                     f"The last instance type not StageStateInstance but {type(last_instance)}"
