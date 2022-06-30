@@ -4,11 +4,17 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Optional
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
+
+# This is the visibility defined in https://fburl.com/code/i1itu32l
+class ResultVisibility(IntEnum):
+    PUBLIC = 0
+    PUBLISHER = 1
+    PARTNER = 2
 
 
 @dataclass_json
@@ -31,6 +37,11 @@ class CommonProductConfig:
     # because at the time the instance is created, pl might not provide any or all of them.
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
+    result_visibility: ResultVisibility = ResultVisibility.PUBLIC
+
+    # this is used by Private ID protocol to indicate whether we should
+    # enable 'use-row-numbers' argument.
+    pid_use_row_numbers: bool = True
 
 
 @dataclass
