@@ -136,7 +136,7 @@ def get_updated_pc_status_mpc_game(
     Returns:
         The latest status for private_computation_instance
     """
-    status = private_computation_instance.status
+    status = private_computation_instance.infra_config.status
     if private_computation_instance.instances:
         # Only need to update the last stage/instance
         last_instance = private_computation_instance.instances[-1]
@@ -180,7 +180,7 @@ def get_pc_status_from_stage_state(
     Returns:
         The latest status for private_computation_instance
     """
-    status = private_computation_instance.status
+    status = private_computation_instance.infra_config.status
     if private_computation_instance.instances:
         # TODO: we should have some identifier or stage_name
         # to pick up the right instance instead of the last one

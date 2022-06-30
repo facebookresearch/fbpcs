@@ -225,7 +225,7 @@ def get_instance(
         config.get("pid_post_processing_handlers", {}),
     )
     instance = pc_service.get_instance(instance_id)
-    if instance.current_stage.is_started_status(instance.status):
+    if instance.current_stage.is_started_status(instance.infra_config.status):
         instance = pc_service.update_instance(instance_id)
     return instance
 
@@ -336,7 +336,7 @@ def print_current_status(
     instance = get_instance(config, instance_id, logger)
     print(
         colored(
-            f"[instance]: {instance_id} [current status]: {instance.status}",
+            f"[instance]: {instance_id} [current status]: {instance.infra_config.status}",
             "green",
             attrs=["bold"],
         )
