@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -48,7 +49,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
     async def test_aggregation_stage(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=private_computation_instance.instance_id
+            instance_id=private_computation_instance.infra_config.instance_id
             + "_"
             + GameNames.PCF2_AGGREGATION.value
             + "0",
@@ -76,7 +77,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             "output_base_path": private_computation_instance.pcf2_aggregation_stage_output_base_path,
             "num_files": private_computation_instance.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
-            "run_name": private_computation_instance.instance_id
+            "run_name": private_computation_instance.infra_config.instance_id
             if self.stage_svc._log_cost_to_s3
             else "",
             "max_num_touchpoints": private_computation_instance.padding_size,
@@ -109,9 +110,9 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
-
+        infra_config: InfraConfig = InfraConfig("test_instance_123")
         return PrivateComputationInstance(
-            instance_id="test_instance_123",
+            infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_COMPLETED,

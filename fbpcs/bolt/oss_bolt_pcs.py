@@ -134,7 +134,7 @@ class BoltPCSClient(BoltClient):
             post_processing_data_optional=instance_args.post_processing_data_optional,
             pid_configs=instance_args.pid_configs,
         )
-        return instance.instance_id
+        return instance.infra_config.instance_id
 
     async def run_stage(
         self,

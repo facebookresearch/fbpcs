@@ -99,7 +99,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         retry_counter_str = str(pc_instance.retry_counter)
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
-            instance_id=pc_instance.instance_id
+            instance_id=pc_instance.infra_config.instance_id
             + "_compute_metrics"
             + retry_counter_str,
             game_name=game_name,
@@ -240,7 +240,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                     "file_start_index": i
                     * private_computation_instance.num_files_per_mpc_container,
                     "use_xor_encryption": True,
-                    "run_name": private_computation_instance.instance_id
+                    "run_name": private_computation_instance.infra_config.instance_id
                     if self._log_cost_to_s3
                     else "",
                     "max_num_touchpoints": private_computation_instance.padding_size,
