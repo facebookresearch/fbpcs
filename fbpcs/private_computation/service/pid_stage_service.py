@@ -82,7 +82,7 @@ class PIDStageService(PrivateComputationStageService):
                 num_shards=pc_instance.infra_config.num_pid_containers,
                 input_path=pc_instance.product_config.common_product_config.input_path,
                 output_path=pc_instance.pid_stage_output_base_path,
-                hmac_key=pc_instance.hmac_key,
+                hmac_key=pc_instance.product_config.common_product_config.hmac_key,
                 pid_use_row_numbers=pc_instance.pid_use_row_numbers,
             )
         else:
