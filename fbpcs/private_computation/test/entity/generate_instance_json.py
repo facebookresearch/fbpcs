@@ -150,6 +150,7 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
             onedocker_task_definition="arn:aws:ecs:us-west-2:000000000000:task/cluster-name/subnet",
         ),
         _stage_flow_cls_name="PrivateComputationStageFlow",
+        retry_counter=0,
     )
     return PrivateComputationInstance(
         infra_config,
@@ -160,7 +161,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         num_mpc_containers=1,
         attribution_rule=None,
         aggregation_type=None,
-        retry_counter=0,
         hmac_key="",
         concurrency=4,
         padding_size=25,
