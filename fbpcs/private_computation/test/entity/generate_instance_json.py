@@ -142,11 +142,11 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
             gen_dummy_mpc_instance(),
             gen_dummy_post_processing_instance(),
         ],
+        game_type=PrivateComputationGameType.LIFT,
     )
     return PrivateComputationInstance(
         infra_config,
         num_files_per_mpc_container=40,
-        game_type=PrivateComputationGameType.LIFT,
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
         output_dir="https://bucket.s3.us-west-2.amazonaws.com/lift/partner",
         num_pid_containers=1,
