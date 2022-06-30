@@ -41,7 +41,6 @@ from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -124,7 +123,6 @@ class PrivateComputationInstance(InstanceBase):
     k_anonymity_threshold: int = 0
 
     breakdown_key: Optional[BreakdownKey] = None
-    pce_config: Optional[PCEConfig] = None
 
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
