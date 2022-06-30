@@ -60,4 +60,4 @@ DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");
-DEFINE_bool(use_new_format, false, "New Format of Attribution output");
+DEFINE_bool(use_new_output_format, false, "New Format of Attribution output");

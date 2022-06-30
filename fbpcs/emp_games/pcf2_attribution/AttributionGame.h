@@ -33,7 +33,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   AttributionOutputMetrics computeAttributions(
       const int myRole,
       const AttributionInputMetrics<usingBatch, inputEncryption>& inputData,
-      bool use_new_format);
+      bool useNewOutputFormat);
 
   using PrivateTouchpointT = ConditionalVector<
       PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>,
@@ -91,7 +91,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>&
           thresholds,
       size_t batchSize,
-      bool use_new_format);
+      bool useNewOutputFormat);
 };
 
 } // namespace pcf2_attribution

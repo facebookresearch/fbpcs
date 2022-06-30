@@ -121,6 +121,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="use_postfix", required=True),
             OneDockerArgument(name="log_cost", required=False),
             OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="use_new_output_format", required=True),
         ],
     },
     GameNames.PCF2_AGGREGATION.value: {
