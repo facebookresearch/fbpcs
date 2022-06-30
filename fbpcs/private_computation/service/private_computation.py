@@ -161,6 +161,12 @@ class PrivateComputationService:
             game_type=game_type,
             tier=tier,
             pce_config=pce_config,
+            _stage_flow_cls_name=unwrap_or_default(
+                optional=stage_flow_cls,
+                default=PrivateComputationPCF2StageFlow
+                if game_type is PrivateComputationGameType.ATTRIBUTION
+                else PrivateComputationStageFlow,
+            ).get_cls_name(),
         )
         instance = PrivateComputationInstance(
             infra_config,
@@ -190,12 +196,6 @@ class PrivateComputationService:
                 if game_type is PrivateComputationGameType.ATTRIBUTION
                 else DEFAULT_K_ANONYMITY_THRESHOLD_PL,
             ),
-            _stage_flow_cls_name=unwrap_or_default(
-                optional=stage_flow_cls,
-                default=PrivateComputationPCF2StageFlow
-                if game_type is PrivateComputationGameType.ATTRIBUTION
-                else PrivateComputationStageFlow,
-            ).get_cls_name(),
             result_visibility=result_visibility or ResultVisibility.PUBLIC,
             pid_use_row_numbers=pid_use_row_numbers,
             post_processing_data=post_processing_data,
