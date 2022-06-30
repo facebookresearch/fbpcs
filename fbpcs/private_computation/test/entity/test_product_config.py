@@ -18,7 +18,10 @@ from fbpcs.private_computation.entity.product_config import (
 class TestProductConfig(unittest.TestCase):
     def test_valid_initialization_lift(self) -> None:
         # create product_config
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path="456",
+            output_dir="789",
+        )
         product_Config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
         )
@@ -26,7 +29,10 @@ class TestProductConfig(unittest.TestCase):
 
     def test_valid_initialization_attribution(self) -> None:
         # create product_config
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path="456",
+            output_dir="789",
+        )
         product_Config: ProductConfig = AttributionConfig(
             common_product_config=common_product_config,
             attribution_rule=AttributionRule.LAST_CLICK_1D,

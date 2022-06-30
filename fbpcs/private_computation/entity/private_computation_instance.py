@@ -87,9 +87,6 @@ class PrivateComputationInstance(InstanceBase):
     infra_config: InfraConfig
     product_config: ProductConfig
 
-    input_path: str
-    output_dir: str
-
     pid_configs: Optional[Dict[str, Any]] = None
 
     # TODO T98476320: make the following optional attributes non-optional. They are optional
@@ -207,7 +204,7 @@ class PrivateComputationInstance(InstanceBase):
     @property
     def pid_mr_stage_output_data_path(self) -> str:
         return os.path.join(
-            self.output_dir,
+            self.product_config.common_product_config.output_dir,
             f"{self.infra_config.instance_id}_out_dir",
             "pid_mr",
         )
@@ -246,7 +243,7 @@ class PrivateComputationInstance(InstanceBase):
 
     def _get_stage_output_path(self, stage: str, extension_type: str) -> str:
         return os.path.join(
-            self.output_dir,
+            self.product_config.common_product_config.output_dir,
             f"{self.infra_config.instance_id}_out_dir",
             stage,
             f"out.{extension_type}",
