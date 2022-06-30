@@ -131,7 +131,6 @@ class PrivateComputationInstance(InstanceBase):
 
     post_processing_data: Optional[PostProcessingData] = None
 
-    creation_ts: int = 0
     end_ts: int = 0
 
     def __post_init__(self) -> None:
@@ -145,8 +144,8 @@ class PrivateComputationInstance(InstanceBase):
         ):
             self.attribution_rule = AttributionRule.LAST_CLICK_1D
 
-        if self.creation_ts == 0:
-            self.creation_ts = int(time.time())
+        if self.infra_config.creation_ts == 0:
+            self.infra_config.creation_ts = int(time.time())
 
     def get_instance_id(self) -> str:
         return self.infra_config.instance_id
@@ -253,7 +252,7 @@ class PrivateComputationInstance(InstanceBase):
     @property
     def elapsed_time(self) -> int:
         end_ts = self.end_ts or int(time.time())
-        return end_ts - self.creation_ts
+        return end_ts - self.infra_config.creation_ts
 
     def get_next_runnable_stage(self) -> Optional["PrivateComputationBaseStageFlow"]:
         """Returns the next runnable stage in the instance's stage flow
