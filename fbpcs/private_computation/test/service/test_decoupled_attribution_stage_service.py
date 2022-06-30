@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     AttributionRule,
     PrivateComputationGameType,
@@ -45,7 +46,7 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
     async def test_attribution_stage(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=private_computation_instance.instance_id
+            instance_id=private_computation_instance.infra_config.instance_id
             + "_decoupled_attribution0",
             game_name=GameNames.DECOUPLED_ATTRIBUTION.value,
             mpc_party=MPCParty.CLIENT,
@@ -70,7 +71,7 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             "output_base_path": private_computation_instance.decoupled_attribution_stage_output_base_path,
             "num_files": private_computation_instance.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
-            "run_name": private_computation_instance.instance_id
+            "run_name": private_computation_instance.infra_config.instance_id
             + "_decoupled_attribution"
             if self.stage_svc._log_cost_to_s3
             else "",
@@ -98,9 +99,9 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
-
+        infra_config: InfraConfig = InfraConfig("test_instance_123")
         return PrivateComputationInstance(
-            instance_id="test_instance_123",
+            infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
