@@ -21,6 +21,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.product_config import (
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
+)
 
 from fbpcs.private_computation.service.pid_shard_stage_service import (
     PIDShardStageService,
@@ -134,8 +139,13 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=test_num_containers,
             num_files_per_mpc_container=test_num_containers,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
         return PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path=self.input_path,
             output_dir=self.output_path,
             hmac_key=hmac_key,

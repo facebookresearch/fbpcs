@@ -27,13 +27,19 @@ from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConf
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
     ResultVisibility,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionConfig,
+    AttributionRule,
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
 )
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
@@ -176,10 +182,23 @@ class PrivateComputationService:
             ),
             mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig
+        if game_type is PrivateComputationGameType.ATTRIBUTION:
+            if aggregation_type is None:
+                raise RuntimeError("Missing attribution input: aggregation_type.")
+            if attribution_rule is None:
+                raise RuntimeError("Missing attribution input: attribution_rule.")
+            product_config = AttributionConfig(
+                common_product_config=common_product_config,
+                attribution_rule=attribution_rule,
+                aggregation_type=aggregation_type,
+            )
+        elif game_type is PrivateComputationGameType.LIFT:
+            product_config = LiftConfig(common_product_config=common_product_config)
         instance = PrivateComputationInstance(
-            infra_config,
-            attribution_rule=attribution_rule,
-            aggregation_type=aggregation_type,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path=input_path,
             output_dir=output_dir,
             breakdown_key=breakdown_key,

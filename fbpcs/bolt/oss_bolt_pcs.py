@@ -21,11 +21,13 @@ from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationGameType,
     PrivateComputationRole,
     ResultVisibility,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionRule,
 )
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,

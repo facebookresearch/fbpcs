@@ -25,6 +25,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.entity.product_config import (
+    CommonProductConfig,
+    ProductConfig,
+)
 from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
     PCPreValidationStageService,
 )
@@ -46,8 +50,13 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = ProductConfig(
+            common_product_config=common_product_config
+        )
         self._pc_instance = PrivateComputationInstance(
             infra_config=infra_config,
+            product_config=product_config,
             input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
             output_dir="789",
         )
