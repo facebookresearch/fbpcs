@@ -174,6 +174,7 @@ class PrivateComputationService:
             num_files_per_mpc_container=unwrap_or_default(
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
             ),
+            mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
         )
         instance = PrivateComputationInstance(
             infra_config,
@@ -189,7 +190,6 @@ class PrivateComputationService:
                 if game_type is PrivateComputationGameType.LIFT
                 else ATTRIBUTION_DEFAULT_PADDING_SIZE,
             ),
-            concurrency=concurrency or DEFAULT_CONCURRENCY,
             k_anonymity_threshold=unwrap_or_default(
                 optional=k_anonymity_threshold,
                 default=DEFAULT_K_ANONYMITY_THRESHOLD_PA
