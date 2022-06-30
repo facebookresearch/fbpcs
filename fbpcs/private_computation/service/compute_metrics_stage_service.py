@@ -103,7 +103,9 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             + "_compute_metrics"
             + retry_counter_str,
             game_name=game_name,
-            mpc_party=map_private_computation_role_to_mpc_party(pc_instance.role),
+            mpc_party=map_private_computation_role_to_mpc_party(
+                pc_instance.infra_config.role
+            ),
             num_containers=len(game_args),
             binary_version=binary_config.binary_version,
             server_ips=server_ips,

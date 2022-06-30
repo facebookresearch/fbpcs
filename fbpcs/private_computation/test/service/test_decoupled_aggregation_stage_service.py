@@ -108,10 +108,11 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig("test_instance_123")
+        infra_config: InfraConfig = InfraConfig(
+            "test_instance_123", PrivateComputationRole.PARTNER
+        )
         return PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_COMPLETED,
             attribution_rule=AttributionRule.LAST_CLICK_1D,

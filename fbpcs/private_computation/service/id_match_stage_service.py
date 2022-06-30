@@ -59,7 +59,9 @@ class IdMatchStageService(PrivateComputationStageService):
         )
         pid_instance = self._pid_svc.create_instance(
             instance_id=pid_instance_id,
-            pid_role=self._map_private_computation_role_to_pid_role(pc_instance.role),
+            pid_role=self._map_private_computation_role_to_pid_role(
+                pc_instance.infra_config.role
+            ),
             num_shards=pc_instance.num_pid_containers,
             input_path=pc_instance.input_path,
             output_path=pc_instance.pid_stage_output_base_path,

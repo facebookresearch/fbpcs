@@ -132,10 +132,11 @@ def gen_dummy_post_processing_instance() -> PostProcessingInstance:
 
 def gen_dummy_pc_instance() -> PrivateComputationInstance:
     """Creates a dummy private computation instance to be used in unit tests"""
-    infra_config: InfraConfig = InfraConfig("pc_instance_id")
+    infra_config: InfraConfig = InfraConfig(
+        "pc_instance_id", PrivateComputationRole.PUBLISHER
+    )
     return PrivateComputationInstance(
         infra_config,
-        role=PrivateComputationRole.PUBLISHER,
         instances=[
             gen_dummy_pid_instance(),
             gen_dummy_mpc_instance(),
