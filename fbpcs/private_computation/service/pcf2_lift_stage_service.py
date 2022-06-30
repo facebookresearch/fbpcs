@@ -98,7 +98,9 @@ class PCF2LiftStageService(PrivateComputationStageService):
         retry_counter_str = str(pc_instance.retry_counter)
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
-            instance_id=pc_instance.instance_id + "_pcf2_lift" + retry_counter_str,
+            instance_id=pc_instance.infra_config.instance_id
+            + "_pcf2_lift"
+            + retry_counter_str,
             game_name=game_name,
             mpc_party=map_private_computation_role_to_mpc_party(pc_instance.role),
             num_containers=len(game_args),
@@ -149,7 +151,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
         """
         if self._log_cost_to_s3:
             run_name = (
-                private_computation_instance.instance_id
+                private_computation_instance.infra_config.instance_id
                 + "_"
                 + GameNames.PCF2_LIFT.value
             )
@@ -251,7 +253,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
                     "file_start_index": i
                     * private_computation_instance.num_files_per_mpc_container,
                     "use_xor_encryption": True,
-                    "run_name": private_computation_instance.instance_id
+                    "run_name": private_computation_instance.infra_config.instance_id
                     if self._log_cost_to_s3
                     else "",
                     "max_num_touchpoints": private_computation_instance.padding_size,

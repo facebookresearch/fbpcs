@@ -16,6 +16,7 @@ from fbpcs.pl_coordinator.pl_instance_runner import (
     PCInstanceCalculationException,
     PLInstanceRunner,
 )
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     AggregationType,
     AttributionRule,
@@ -496,8 +497,9 @@ class TestPlInstanceRunner(TestCase):
     def _get_pc_instance(
         self, status: PrivateComputationInstanceStatus
     ) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig(self.instance_id)
         return PrivateComputationInstance(
-            instance_id=self.instance_id,
+            infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=status,
