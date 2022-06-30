@@ -15,6 +15,7 @@ from fbpcs.infra.pce_deployment_library.cloud_library.aws.aws import AWS
 from fbpcs.infra.pce_deployment_library.errors_library.aws_errors import (
     AccessDeniedError,
     S3BucketCreationError,
+    S3BucketDeleteError,
     S3BucketDoesntExist,
     S3BucketVersioningFailedError,
 )
@@ -168,4 +169,33 @@ class TestAws(unittest.TestCase):
                 lambda: self.aws.update_bucket_versioning(
                     s3_bucket_name=s3_bucket_name
                 ),
+            )
+            with self.assertRaisesRegex(
+                S3BucketVersioningFailedError, "Error in versioning S3 bucket*"
+            ):
+                self.aws.update_bucket_versioning(s3_bucket_name=s3_bucket_name)
+
+    def test_delete_s3_bucket(self) -> None:
+        s3_bucket_name = "fake_bucket"
+        self.aws.s3_client.delete_bucket = create_autospec(
+            self.aws.s3_client.delete_bucket
+        )
+
+        with self.subTest("Basic"):
+            with self.assertLogs() as captured:
+                self.aws.delete_s3_bucket(s3_bucket_name=s3_bucket_name)
+                self.assertEqual(len(captured.records), 2)
+                self.assertEqual(
+                    captured.records[1].getMessage(),
+                    f"Delete S3 bucket {s3_bucket_name} operation was successful.",
+                )
+
+        with self.subTest("BucketDeleteFailed"):
+            self.aws.s3_client.delete_bucket.side_effect = ClientError(
+                error_response={"Error": {"Code": None}},
+                operation_name="delete_bucket",
+            )
+            self.assertRaises(
+                S3BucketDeleteError,
+                lambda: self.aws.delete_s3_bucket(s3_bucket_name=s3_bucket_name),
             )

@@ -164,7 +164,7 @@ class AWS(CloudBase):
             self.log.info(f"Deleting S3 bucket {s3_bucket_name}")
             self.s3_client.delete_bucket(Bucket=s3_bucket_name)
             self.log.info(
-                f"Delete S3 bucket {s3_bucket_name} opeeration was successful."
+                f"Delete S3 bucket {s3_bucket_name} operation was successful."
             )
         except ClientError as error:
             raise S3BucketDeleteError(
