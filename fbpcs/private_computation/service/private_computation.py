@@ -182,7 +182,10 @@ class PrivateComputationService:
             ),
             mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
         )
-        common_product_config: CommonProductConfig = CommonProductConfig()
+        common_product_config: CommonProductConfig = CommonProductConfig(
+            input_path=input_path,
+            output_dir=output_dir,
+        )
         product_config: ProductConfig
         if game_type is PrivateComputationGameType.ATTRIBUTION:
             if aggregation_type is None:
@@ -208,8 +211,6 @@ class PrivateComputationService:
         instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
-            input_path=input_path,
-            output_dir=output_dir,
             hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             padding_size=unwrap_or_default(
                 optional=padding_size,
@@ -255,7 +256,7 @@ class PrivateComputationService:
         """
         pc_instance = self.get_instance(instance_id)
         if pc_instance.infra_config.role is PrivateComputationRole.PARTNER:
-            pc_instance.input_path = input_path
+            pc_instance.product_config.common_product_config.input_path = input_path
             self.instance_repository.update(pc_instance)
 
         return pc_instance
