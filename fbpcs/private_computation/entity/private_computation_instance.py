@@ -38,6 +38,7 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
+    PrivateComputationGameType,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.pce_config import PCEConfig
@@ -45,11 +46,6 @@ from fbpcs.private_computation.entity.post_processing_data import PostProcessing
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-
-
-class PrivateComputationGameType(Enum):
-    LIFT = "LIFT"
-    ATTRIBUTION = "ATTRIBUTION"
 
 
 class AttributionRule(Enum):
@@ -109,7 +105,6 @@ class PrivateComputationInstance(InstanceBase):
     infra_config: InfraConfig
 
     num_files_per_mpc_container: int
-    game_type: PrivateComputationGameType
     input_path: str
     output_dir: str
     num_pid_containers: int
@@ -153,7 +148,7 @@ class PrivateComputationInstance(InstanceBase):
                 f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.num_pid_containers} and num_mpc_containers = {self.num_mpc_containers}"
             )
         if (
-            self.game_type is PrivateComputationGameType.ATTRIBUTION
+            self.infra_config.game_type is PrivateComputationGameType.ATTRIBUTION
             and self.attribution_rule is None
         ):
             self.attribution_rule = AttributionRule.LAST_CLICK_1D
