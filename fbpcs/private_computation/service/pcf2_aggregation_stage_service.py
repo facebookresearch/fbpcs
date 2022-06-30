@@ -117,7 +117,9 @@ class PCF2AggregationStageService(PrivateComputationStageService):
         logging.info("MPC instance started running for pcf2.0 based aggregation stage.")
 
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
-        pc_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
+        pc_instance.infra_config.instances.append(
+            PCSMPCInstance.from_mpc_instance(mpc_instance)
+        )
         return pc_instance
 
     # For now, only passing the attribution game arguments, as this game is currently only used for PA.
