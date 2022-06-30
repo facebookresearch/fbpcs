@@ -6,7 +6,9 @@
 import unittest
 
 from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
     AttributionConfig,
+    AttributionRule,
     CommonProductConfig,
     LiftConfig,
     ProductConfig,
@@ -27,5 +29,7 @@ class TestProductConfig(unittest.TestCase):
         common_product_config: CommonProductConfig = CommonProductConfig()
         product_Config: ProductConfig = AttributionConfig(
             common_product_config=common_product_config,
+            attribution_rule=AttributionRule.LAST_CLICK_1D,
+            aggregation_type=AggregationType.MEASUREMENT,
         )
         self.assertIsInstance(product_Config, AttributionConfig)

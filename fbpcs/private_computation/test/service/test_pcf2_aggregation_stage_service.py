@@ -13,11 +13,16 @@ from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
     AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionConfig,
+    CommonProductConfig,
+    ProductConfig,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
@@ -85,9 +90,9 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             "max_num_touchpoints": private_computation_instance.padding_size,
             "max_num_conversions": private_computation_instance.padding_size,
             # pyre-fixme[16]: Optional type has no attribute `value`.
-            "attribution_rules": private_computation_instance.attribution_rule.value,
+            "attribution_rules": private_computation_instance.product_config.attribution_rule.value,
             # pyre-fixme[16]: Optional type has no attribute `value`.
-            "aggregators": private_computation_instance.aggregation_type.value,
+            "aggregators": private_computation_instance.product_config.aggregation_type.value,
             "use_xor_encryption": True,
             "use_postfix": True,
             "log_cost": True,
@@ -123,10 +128,15 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
-        return PrivateComputationInstance(
-            infra_config,
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = AttributionConfig(
+            common_product_config=common_product_config,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             aggregation_type=AggregationType.MEASUREMENT,
+        )
+        return PrivateComputationInstance(
+            infra_config=infra_config,
+            product_config=product_config,
             input_path="456",
             output_dir="789",
             padding_size=4,

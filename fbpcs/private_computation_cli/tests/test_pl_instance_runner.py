@@ -21,13 +21,18 @@ from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    AggregationType,
-    AttributionRule,
     PrivateComputationGameType,
     PrivateComputationInstance,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.entity.product_config import (
+    AggregationType,
+    AttributionRule,
+    CommonProductConfig,
+    LiftConfig,
+    ProductConfig,
 )
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -510,8 +515,13 @@ class TestPlInstanceRunner(TestCase):
             num_mpc_containers=self.num_shards,
             num_files_per_mpc_container=40,
         )
+        common_product_config: CommonProductConfig = CommonProductConfig()
+        product_config: ProductConfig = LiftConfig(
+            common_product_config=common_product_config,
+        )
         return PrivateComputationInstance(
-            infra_config,
+            infra_config=infra_config,
+            product_config=product_config,
             input_path="fake_input_path",
             output_dir="789",
         )
