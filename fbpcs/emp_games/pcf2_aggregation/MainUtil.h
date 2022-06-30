@@ -57,7 +57,8 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
     std::vector<std::string>& inputClearTextFilenames,
     std::vector<std::string>& outputFilenames) {
   // aggregate scheduler statistics across apps
-  common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
+  common::SchedulerStatistics schedulerStatistics{
+      0, 0, 0, 0, folly::dynamic::object()};
 
   // split files evenly across threads
   auto remainingFiles =
@@ -78,7 +79,11 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY, partyInfos, false, "");
+        PARTY,
+        partyInfos,
+        false,
+        "",
+        "aggregation_traffic_for_thread_" + std::to_string(index));
 
     // Each AggregationApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId

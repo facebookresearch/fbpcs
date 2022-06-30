@@ -11,6 +11,7 @@
 #include <future>
 #include <memory>
 
+#include <folly/dynamic.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionApp.h"
 
@@ -65,7 +66,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     std::vector<std::string>& inputFilenames,
     std::vector<std::string>& outputFilenames) {
   // aggregate scheduler statistics across apps
-  common::SchedulerStatistics schedulerStatistics{0, 0, 0, 0};
+  common::SchedulerStatistics schedulerStatistics{
+      0, 0, 0, 0, folly::dynamic::object()};
 
   // split files evenly across threads
   auto remainingFiles =
@@ -85,7 +87,11 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY, partyInfos, false, "");
+        PARTY,
+        partyInfos,
+        false,
+        "",
+        "attribution_traffic_for_thread_" + std::to_string(index));
 
     // Each AttributionApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId

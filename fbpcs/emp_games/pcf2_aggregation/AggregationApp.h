@@ -47,6 +47,7 @@ class AggregationApp {
   void run() {
     auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
         MY_ROLE, *communicationAgentFactory_);
+    auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
     AggregationGame<schedulerId> game(
         std::move(scheduler),
@@ -88,6 +89,7 @@ class AggregationApp {
     schedulerStatistics_.freeGates = gateStatistics.second;
     schedulerStatistics_.sentNetwork = trafficStatistics.first;
     schedulerStatistics_.receivedNetwork = trafficStatistics.second;
+    schedulerStatistics_.details = metricsCollector->collectMetrics();
   }
 
   common::SchedulerStatistics getSchedulerStatistics() {
