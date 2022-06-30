@@ -15,6 +15,7 @@
 #include "folly/logging/xlog.h"
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
+#include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
@@ -106,7 +107,8 @@ class AttributionAppTest
  protected:
   void SetUp() override {
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
-    port_ = 5000 + folly::Random::rand32() % 1000;
+    port_ = fbpcf::engine::communication::SocketInTestHelper::findNextOpenPort(
+        5000);
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
     std::string tempDir = std::filesystem::temp_directory_path();
