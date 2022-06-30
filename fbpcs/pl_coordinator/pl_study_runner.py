@@ -158,7 +158,7 @@ def run_study(
 
     for instance_id in all_instance_ids:
         if (
-            get_instance(config, instance_id, logger).status
+            get_instance(config, instance_id, logger).infra_config.status
             is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
         ):
             raise OneCommandRunnerBaseException(
