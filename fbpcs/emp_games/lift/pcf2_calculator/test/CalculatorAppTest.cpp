@@ -17,6 +17,7 @@
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
+#include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 #include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcs/emp_games/common/Csv.h"
@@ -85,7 +86,9 @@ class CalculatorAppTestFixture
     partnerOutputPath_ = folly::sformat(
         "{}/res_partner_{}", tempDir, folly::Random::secureRand64());
 
-    port_ = 5000 + folly::Random::rand32() % 1000;
+    port_ = fbpcf::engine::communication::SocketInTestHelper::findNextOpenPort(
+        5000);
+
     serverIp_ = "127.0.0.1";
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
   }
