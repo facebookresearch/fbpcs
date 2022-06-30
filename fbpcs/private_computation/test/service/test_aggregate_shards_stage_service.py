@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -44,7 +45,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
     async def test_aggregate_shards(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=private_computation_instance.instance_id
+            instance_id=private_computation_instance.infra_config.instance_id
             + "_aggregate_metrics0",
             game_name=GameNames.LIFT.value,
             mpc_party=MPCParty.CLIENT,
@@ -66,7 +67,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
                 * NUM_NEW_SHARDS_PER_FILE,
                 "output_path": private_computation_instance.shard_aggregate_stage_output_path,
                 "threshold": private_computation_instance.k_anonymity_threshold,
-                "run_name": private_computation_instance.instance_id
+                "run_name": private_computation_instance.infra_config.instance_id
                 if self.stage_svc._log_cost_to_s3
                 else "",
                 "log_cost": True,
@@ -85,8 +86,9 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
         self.assertEqual(mpc_instance, private_computation_instance.instances[0])
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig("test_instance_123")
         return PrivateComputationInstance(
-            instance_id="test_instance_123",
+            infra_config,
             role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
