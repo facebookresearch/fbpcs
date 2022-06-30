@@ -128,10 +128,9 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
     def create_sample_pc_instance(
         self, pc_role: PrivateComputationRole, test_num_containers: int
     ) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig(self.pc_instance_id)
+        infra_config: InfraConfig = InfraConfig(self.pc_instance_id, pc_role)
         return PrivateComputationInstance(
             infra_config,
-            role=pc_role,
             instances=[],
             status=PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
             status_update_ts=1600000000,

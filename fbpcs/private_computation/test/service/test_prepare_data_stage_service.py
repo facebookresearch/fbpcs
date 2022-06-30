@@ -77,10 +77,11 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
             mock_shard.assert_called()
 
     def create_sample_instance(self) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig("test_instance_123")
+        infra_config: InfraConfig = InfraConfig(
+            "test_instance_123", PrivateComputationRole.PARTNER
+        )
         return PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PARTNER,
             instances=[],
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             status_update_ts=1600000000,

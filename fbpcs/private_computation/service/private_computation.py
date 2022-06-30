@@ -152,10 +152,9 @@ class PrivateComputationService:
         post_processing_data = post_processing_data_optional or PostProcessingData(
             dataset_timestamp=int(yesterday_timestamp)
         )
-        infra_config: InfraConfig = InfraConfig(instance_id)
+        infra_config: InfraConfig = InfraConfig(instance_id, role)
         instance = PrivateComputationInstance(
             infra_config,
-            role=role,
             instances=[],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=PrivateComputationService.get_ts_now(),
@@ -231,7 +230,7 @@ class PrivateComputationService:
         override input path only allow partner side
         """
         pc_instance = self.get_instance(instance_id)
-        if pc_instance.role is PrivateComputationRole.PARTNER:
+        if pc_instance.infra_config.role is PrivateComputationRole.PARTNER:
             pc_instance.input_path = input_path
             self.instance_repository.update(pc_instance)
 
@@ -329,7 +328,7 @@ class PrivateComputationService:
         pc_instance = self.get_instance(instance_id)
         if (
             stage.is_joint_stage
-            and pc_instance.role is PrivateComputationRole.PARTNER
+            and pc_instance.infra_config.role is PrivateComputationRole.PARTNER
             and not server_ips
         ):
             raise ValueError("Missing server_ips")
