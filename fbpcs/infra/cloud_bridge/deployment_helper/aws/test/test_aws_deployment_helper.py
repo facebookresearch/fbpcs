@@ -184,8 +184,42 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             self.aws_deployment_helper.iam.attach_user_policy.assert_called_once()
 
     def test_detach_user_policy(self) -> None:
-        # T122887211
-        pass
+        self.aws_deployment_helper.iam.list_policies.return_value = {
+            "Policies": [{"PolicyName": "A"}]
+        }
+        self.aws_deployment_helper.iam.list_users.return_value = {
+            "Users": [{"UserName": "Z"}]
+        }
+
+        # Basic green path test
+        with self.subTest("basic"):
+            self.assertEqual(
+                None, self.aws_deployment_helper.detach_user_policy("A", "Z")
+            )
+
+        # Username not in current users
+        with self.subTest("user_name not in current_users"):
+            self.assertRaises(
+                Exception, self.aws_deployment_helper.detach_user_policy, "A", "Y"
+            )
+
+        # Policy not in current policies
+        with self.subTest("policy_name not in current_policies"):
+            self.assertRaises(
+                Exception, self.aws_deployment_helper.detach_user_policy, "B", "Z"
+            )
+
+        # Client error
+        with self.subTest("detach_user_policy.ClientError"):
+            self.aws_deployment_helper.iam.detach_user_policy.reset_mock()
+            self.aws_deployment_helper.iam.detach_user_policy.side_effect = ClientError(
+                error_response={"Error": {}},
+                operation_name="detach_user_policy",
+            )
+            self.assertEqual(
+                None, self.aws_deployment_helper.detach_user_policy("A", "Z")
+            )
+            self.aws_deployment_helper.iam.detach_user_policy.assert_called_once()
 
     def test_list_policies(self) -> None:
         self.aws_deployment_helper.iam.list_policies.return_value = {
