@@ -87,14 +87,14 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
-            "test_instance_123",
-            PrivateComputationRole.PARTNER,
-            PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+            instance_id="test_instance_123",
+            role=PrivateComputationRole.PARTNER,
+            status=PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+            status_update_ts=1600000000,
         )
         return PrivateComputationInstance(
             infra_config,
             instances=[],
-            status_update_ts=1600000000,
             num_pid_containers=2,
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
