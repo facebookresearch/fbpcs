@@ -29,10 +29,13 @@ from fbpcs.pid.entity.pid_instance import (
     UnionPIDStage,
 )
 from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.private_computation.entity.infra_config import InfraConfig, UnionedPCInstance
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
+    PrivateComputationGameType,
+    UnionedPCInstance,
+)
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
@@ -227,7 +230,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.CREATED, args.infra_config.status
                 )
                 self.assertEqual(1, args.infra_config.creation_ts)
-                self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
+                if test_game_type is PrivateComputationGameType.LIFT:
+                    self.assertEqual(
+                        expected_k_anon, args.product_config.k_anonymity_threshold
+                    )
 
                 yesterday_date = datetime.now(tz=timezone.utc) - timedelta(days=1)
                 yesterday_timestamp = datetime.timestamp(yesterday_date)
@@ -283,7 +289,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.CREATED, args.infra_config.status
                 )
                 self.assertEqual(1, args.infra_config.creation_ts)
-                self.assertEqual(expected_k_anon, args.k_anonymity_threshold)
+                if test_game_type is PrivateComputationGameType.LIFT:
+                    self.assertEqual(
+                        expected_k_anon, args.product_config.k_anonymity_threshold
+                    )
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
@@ -1139,13 +1148,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         common_product_config: CommonProductConfig = CommonProductConfig()
         product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config,
+            k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,
         )
         return PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
-            k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,
             hmac_key=self.test_hmac_key,
         )
 
