@@ -101,7 +101,7 @@ class PIDMRStageService(PrivateComputationStageService):
         Returns:
             The latest status for private_computation_instance
         """
-        status = pc_instance.status
+        status = pc_instance.infra_config.status
         if pc_instance.instances:
             # TODO: we should have some identifier or stage_name
             # to pick up the right instance instead of the last one
