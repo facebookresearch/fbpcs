@@ -97,7 +97,7 @@ class AggregationStageService(PrivateComputationStageService):
         retry_counter_str = str(pc_instance.retry_counter)
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
-            instance_id=pc_instance.instance_id
+            instance_id=pc_instance.infra_config.instance_id
             + "_decoupled_aggregation"
             + retry_counter_str,
             game_name=game_name,
@@ -146,7 +146,7 @@ class AggregationStageService(PrivateComputationStageService):
         )
 
         if self._log_cost_to_s3:
-            run_name = private_computation_instance.instance_id
+            run_name = private_computation_instance.infra_config.instance_id
             if private_computation_instance.post_processing_data:
                 private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
                     f"agg-logs/{run_name}_{private_computation_instance.role.value.title()}.json",

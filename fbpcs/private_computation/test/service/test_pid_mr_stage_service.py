@@ -8,6 +8,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.private_computation.entity.infra_config import InfraConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationGameType,
     PrivateComputationInstance,
@@ -25,9 +26,9 @@ from fbpcs.service.workflow_sfn import SfnWorkflowService
 class TestPIDMRStageService(IsolatedAsyncioTestCase):
     @patch("fbpcs.private_computation.service.pid_mr_stage_service.PIDMRStageService")
     async def test_run_async(self, pid_mr_svc_mock) -> None:
-
+        infra_config: InfraConfig = InfraConfig("publisher_123")
         pc_instance = PrivateComputationInstance(
-            instance_id="publisher_123",
+            infra_config,
             role=PrivateComputationRole.PUBLISHER,
             instances=[],
             status=PrivateComputationInstanceStatus.PID_MR_STARTED,
