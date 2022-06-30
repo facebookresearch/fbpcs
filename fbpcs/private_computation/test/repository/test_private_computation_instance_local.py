@@ -37,10 +37,11 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
 
     def test_read(self) -> None:
         instance_id = self._get_random_id()
-        infra_config: InfraConfig = InfraConfig(instance_id)
+        infra_config: InfraConfig = InfraConfig(
+            instance_id, PrivateComputationRole.PUBLISHER
+        )
         test_read_private_computation_instance = PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
@@ -60,11 +61,12 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
 
     def test_create_with_invalid_num_containers(self) -> None:
         instance_id = self._get_random_id()
-        infra_config: InfraConfig = InfraConfig(instance_id)
+        infra_config: InfraConfig = InfraConfig(
+            instance_id, PrivateComputationRole.PUBLISHER
+        )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
                 infra_config,
-                role=PrivateComputationRole.PUBLISHER,
                 instances=[self.test_mpc_instance],
                 status=PrivateComputationInstanceStatus.CREATED,
                 status_update_ts=1600000000,
@@ -79,10 +81,11 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
 
     def test_update(self) -> None:
         instance_id = self._get_random_id()
-        infra_config: InfraConfig = InfraConfig(instance_id)
+        infra_config: InfraConfig = InfraConfig(
+            instance_id, PrivateComputationRole.PUBLISHER
+        )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config,
-            role=PrivateComputationRole.PUBLISHER,
             instances=[self.test_mpc_instance],
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
