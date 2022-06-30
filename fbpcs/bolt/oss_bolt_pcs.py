@@ -68,7 +68,6 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
     attribution_rule: Optional[AttributionRule] = None
     aggregation_type: Optional[AggregationType] = AggregationType.MEASUREMENT
     num_files_per_mpc_container: Optional[int] = None
-    is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
     breakdown_key: Optional[BreakdownKey] = None
     pce_config: Optional[PCEConfig] = None
@@ -125,7 +124,6 @@ class BoltPCSClient(BoltClient):
             attribution_rule=instance_args.attribution_rule,
             aggregation_type=instance_args.aggregation_type,
             num_files_per_mpc_container=instance_args.num_files_per_mpc_container,
-            is_validating=instance_args.is_validating,
             synthetic_shard_path=instance_args.synthetic_shard_path,
             breakdown_key=instance_args.breakdown_key,
             pce_config=instance_args.pce_config,
