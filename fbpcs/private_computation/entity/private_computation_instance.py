@@ -129,9 +129,6 @@ class PrivateComputationInstance(InstanceBase):
     pid_configs: Optional[Dict[str, Any]] = None
     retry_counter: int = 0
 
-    # this field is deprecated
-    partial_container_retry_enabled: bool = False
-
     is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
 
