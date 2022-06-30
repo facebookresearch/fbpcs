@@ -174,10 +174,10 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             game_type=self.test_game_type,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         test_instance = PrivateComputationInstance(
             infra_config,
-            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             input_path=self.test_input_path,
             output_dir=self.test_output_path,
         )

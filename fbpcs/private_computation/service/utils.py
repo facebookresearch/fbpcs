@@ -323,7 +323,7 @@ async def start_sharder_service(
                 private_computation_instance.infra_config.num_mpc_containers
                 / private_computation_instance.infra_config.num_pid_containers
             )
-            * private_computation_instance.num_files_per_mpc_container
+            * private_computation_instance.infra_config.num_files_per_mpc_container
         )
         shard_index_offset = shard_index * shards_per_file
         logging.info(
