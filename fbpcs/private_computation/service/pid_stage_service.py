@@ -32,7 +32,6 @@ class PIDStageService(PrivateComputationStageService):
         _pid_svc: Creates PID instances and runs PID SHARD, PID PREPARE, and PID RUN
         _publisher_stage: The pid stage that should be ran by the publisher
         _partner_stage: The pid stage that should be ran by the partner
-        _synthetic_shard_path: path to the test shard to be injected if _is_validating
         _container_timeout: optional duration in seconds before cloud containers timeout
     """
 
@@ -41,13 +40,11 @@ class PIDStageService(PrivateComputationStageService):
         pid_svc: PIDService,
         publisher_stage: UnionPIDStage,
         partner_stage: UnionPIDStage,
-        synthetic_shard_path: Optional[str] = None,
         container_timeout: Optional[int] = None,
     ) -> None:
         self._pid_svc = pid_svc
         self._publisher_stage = publisher_stage
         self._partner_stage = partner_stage
-        self._synthetic_shard_path = synthetic_shard_path
         self._container_timeout = container_timeout
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
@@ -87,8 +84,6 @@ class PIDStageService(PrivateComputationStageService):
                 num_shards=pc_instance.num_pid_containers,
                 input_path=pc_instance.input_path,
                 output_path=pc_instance.pid_stage_output_base_path,
-                synthetic_shard_path=self._synthetic_shard_path
-                or pc_instance.synthetic_shard_path,
                 hmac_key=pc_instance.hmac_key,
                 pid_use_row_numbers=pc_instance.pid_use_row_numbers,
             )
