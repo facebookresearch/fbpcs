@@ -8,7 +8,7 @@
 
 import os
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
@@ -112,7 +112,8 @@ class PrivateComputationInstance(InstanceBase):
         _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
     """
 
-    instance_id: str
+    infra_config: InfraConfig
+
     role: PrivateComputationRole
     instances: List[UnionedPCInstance]
     status: PrivateComputationInstanceStatus
@@ -156,8 +157,6 @@ class PrivateComputationInstance(InstanceBase):
     creation_ts: int = 0
     end_ts: int = 0
 
-    infra_config: InfraConfig = field(init=False)
-
     def __post_init__(self) -> None:
         if self.num_pid_containers > self.num_mpc_containers:
             raise ValueError(
@@ -172,10 +171,8 @@ class PrivateComputationInstance(InstanceBase):
         if self.creation_ts == 0:
             self.creation_ts = int(time.time())
 
-        self.infra_config: InfraConfig = InfraConfig()
-
     def get_instance_id(self) -> str:
-        return self.instance_id
+        return self.infra_config.instance_id
 
     @property
     def get_flow_cls_name(self) -> str:
@@ -218,7 +215,7 @@ class PrivateComputationInstance(InstanceBase):
     def pid_mr_stage_output_data_path(self) -> str:
         return os.path.join(
             self.output_dir,
-            f"{self.instance_id}_out_dir",
+            f"{self.infra_config.instance_id}_out_dir",
             "pid_mr",
         )
 
@@ -257,7 +254,7 @@ class PrivateComputationInstance(InstanceBase):
     def _get_stage_output_path(self, stage: str, extension_type: str) -> str:
         return os.path.join(
             self.output_dir,
-            f"{self.instance_id}_out_dir",
+            f"{self.infra_config.instance_id}_out_dir",
             stage,
             f"out.{extension_type}",
         )
@@ -301,7 +298,7 @@ class PrivateComputationInstance(InstanceBase):
         if old_status is not new_status:
             self.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
             logger.info(
-                f"Updating status of {self.instance_id} from {old_status} to {self.status} at time {self.status_update_ts}"
+                f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.status} at time {self.status_update_ts}"
             )
         if self.is_stage_flow_completed():
             self.end_ts = int(time.time())
