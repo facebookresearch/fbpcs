@@ -27,12 +27,13 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
     @patch("fbpcs.private_computation.service.pid_mr_stage_service.PIDMRStageService")
     async def test_run_async(self, pid_mr_svc_mock) -> None:
         infra_config: InfraConfig = InfraConfig(
-            "publisher_123", PrivateComputationRole.PUBLISHER
+            "publisher_123",
+            PrivateComputationRole.PUBLISHER,
+            PrivateComputationInstanceStatus.PID_MR_STARTED,
         )
         pc_instance = PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=PrivateComputationInstanceStatus.PID_MR_STARTED,
             status_update_ts=1600000000,
             num_pid_containers=1,
             num_mpc_containers=1,
