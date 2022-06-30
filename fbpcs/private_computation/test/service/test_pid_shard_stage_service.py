@@ -123,11 +123,14 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
         test_num_containers: int,
         hmac_key: Optional[str],
     ) -> PrivateComputationInstance:
-        infra_config: InfraConfig = InfraConfig(self.pc_instance_id, pc_role)
+        infra_config: InfraConfig = InfraConfig(
+            self.pc_instance_id,
+            pc_role,
+            PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
+        )
         return PrivateComputationInstance(
             infra_config,
             instances=[],
-            status=PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
             status_update_ts=1600000000,
             num_pid_containers=test_num_containers,
             num_mpc_containers=test_num_containers,
