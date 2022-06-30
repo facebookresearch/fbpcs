@@ -5,7 +5,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union
+from typing import List, Optional, Union
 
 from dataclasses_json import dataclass_json
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -51,3 +51,4 @@ class InfraConfig:
     status_update_ts: int
     instances: List[UnionedPCInstance]
     game_type: PrivateComputationGameType
+    tier: Optional[str] = None
