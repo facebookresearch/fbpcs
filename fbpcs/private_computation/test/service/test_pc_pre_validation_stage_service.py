@@ -27,6 +27,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 )
 from fbpcs.private_computation.entity.product_config import (
     CommonProductConfig,
+    LiftConfig,
     ProductConfig,
 )
 from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
@@ -51,7 +52,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=1,
         )
         common_product_config: CommonProductConfig = CommonProductConfig()
-        product_config: ProductConfig = ProductConfig(
+        product_config: ProductConfig = LiftConfig(
             common_product_config=common_product_config
         )
         self._pc_instance = PrivateComputationInstance(
