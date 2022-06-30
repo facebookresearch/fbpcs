@@ -137,19 +137,23 @@ def get_updated_pc_status_mpc_game(
         The latest status for private_computation_instance
     """
     status = private_computation_instance.infra_config.status
-    if private_computation_instance.instances:
+    if private_computation_instance.infra_config.instances:
         # Only need to update the last stage/instance
-        last_instance = private_computation_instance.instances[-1]
+        last_instance = private_computation_instance.infra_config.instances[-1]
         if not isinstance(last_instance, MPCInstance):
             return status
 
         # MPC service has to call update_instance to get the newest containers
         # information in case they are still running
-        private_computation_instance.instances[-1] = PCSMPCInstance.from_mpc_instance(
+        private_computation_instance.infra_config.instances[
+            -1
+        ] = PCSMPCInstance.from_mpc_instance(
             mpc_svc.update_instance(last_instance.instance_id)
         )
 
-        mpc_instance_status = private_computation_instance.instances[-1].status
+        mpc_instance_status = private_computation_instance.infra_config.instances[
+            -1
+        ].status
 
         current_stage = private_computation_instance.current_stage
         if mpc_instance_status is MPCInstanceStatus.STARTED:
@@ -181,10 +185,10 @@ def get_pc_status_from_stage_state(
         The latest status for private_computation_instance
     """
     status = private_computation_instance.infra_config.status
-    if private_computation_instance.instances:
+    if private_computation_instance.infra_config.instances:
         # TODO: we should have some identifier or stage_name
         # to pick up the right instance instead of the last one
-        last_instance = private_computation_instance.instances[-1]
+        last_instance = private_computation_instance.infra_config.instances[-1]
         if not isinstance(last_instance, StageStateInstance):
             raise ValueError(
                 f"The last instance type not StageStateInstance but {type(last_instance)}"
@@ -356,7 +360,7 @@ def get_log_urls(
         The latest status for private_computation_instance as an ordered dict
     """
     # Get the last pid or mpc instance
-    last_instance = private_computation_instance.instances[-1]
+    last_instance = private_computation_instance.infra_config.instances[-1]
 
     # TODO - hope we're using AWS!
     log_retriever = LogRetriever(CloudProvider.AWS)

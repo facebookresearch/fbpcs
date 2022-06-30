@@ -31,10 +31,10 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
+            instances=[],
         )
         pc_instance = PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_pid_containers=1,
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
@@ -59,7 +59,7 @@ class TestIdMatchStageService(IsolatedAsyncioTestCase):
             pid_svc_mock,
         )
         await stage_svc.run_async(pc_instance)
-        self.assertIsInstance(pc_instance.instances[0], PIDInstance)
+        self.assertIsInstance(pc_instance.infra_config.instances[0], PIDInstance)
 
     def test_map_private_computation_role_to_pid_role(self) -> None:
         self.assertEqual(

@@ -157,10 +157,10 @@ class PrivateComputationService:
             role=role,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=PrivateComputationService.get_ts_now(),
+            instances=[],
         )
         instance = PrivateComputationInstance(
             infra_config,
-            instances=[],
             num_files_per_mpc_container=unwrap_or_default(
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
             ),
@@ -440,13 +440,13 @@ class PrivateComputationService:
             )
             return private_computation_instance
 
-        if not private_computation_instance.instances:
+        if not private_computation_instance.infra_config.instances:
             raise ValueError(
                 f"Instance {instance_id} is in invalid state because no stages are registered under."
             )
 
         # cancel the running stage
-        last_instance = private_computation_instance.instances[-1]
+        last_instance = private_computation_instance.infra_config.instances[-1]
         stage = private_computation_instance.current_stage
         self.logger.info(
             f"Canceling the current stage {stage} of instance {instance_id}"
