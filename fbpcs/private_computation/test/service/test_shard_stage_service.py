@@ -52,14 +52,14 @@ class TestShardStageService(IsolatedAsyncioTestCase):
 
     def create_sample_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
-            "test_instance_123",
-            PrivateComputationRole.PARTNER,
-            PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            instance_id="test_instance_123",
+            role=PrivateComputationRole.PARTNER,
+            status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            status_update_ts=1600000000,
         )
         return PrivateComputationInstance(
             infra_config,
             instances=[],
-            status_update_ts=1600000000,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
