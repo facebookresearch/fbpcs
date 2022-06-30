@@ -93,9 +93,6 @@ def create_instance(
         aggregation_type=aggregation_type,
         tier=tier,
         num_files_per_mpc_container=num_files_per_mpc_container,
-        is_validating=config["private_computation"]["dependency"]["ValidationConfig"][
-            "is_validating"
-        ],
         hmac_key=hmac_key,
         padding_size=padding_size,
         k_anonymity_threshold=k_anonymity_threshold,

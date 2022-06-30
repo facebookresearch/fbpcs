@@ -160,7 +160,6 @@ class TestPrivateComputationServiceWrapper(TestCase):
             aggregation_type=None,
             tier=ANY,
             num_files_per_mpc_container=None,
-            is_validating=False,
             hmac_key=None,
             padding_size=None,
             k_anonymity_threshold=None,
