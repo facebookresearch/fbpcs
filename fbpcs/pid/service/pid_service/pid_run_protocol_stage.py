@@ -75,11 +75,7 @@ class PIDProtocolRunStage(PIDStage):
         # Some invariant checking on the input and output paths
         input_paths = stage_input.input_paths
         output_paths = stage_input.output_paths
-        num_shards = (
-            stage_input.num_shards + 1
-            if stage_input.is_validating
-            else stage_input.num_shards
-        )
+        num_shards = stage_input.num_shards
         if len(input_paths) != 1:
             raise ValueError(f"Expected 1 input path, not {len(input_paths)}")
         if len(output_paths) != 1:
