@@ -103,7 +103,6 @@ class PrivateComputationInstance(InstanceBase):
 
     infra_config: InfraConfig
 
-    num_files_per_mpc_container: int
     input_path: str
     output_dir: str
 

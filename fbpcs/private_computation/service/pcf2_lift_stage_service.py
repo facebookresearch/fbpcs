@@ -169,7 +169,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
         common_compute_game_args = {
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
-            "num_files": private_computation_instance.num_files_per_mpc_container,
+            "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
             "run_name": run_name,
             "log_cost": self._log_cost_to_s3,
@@ -220,7 +220,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
                 **common_compute_game_args,
                 **{
                     "file_start_index": i
-                    * private_computation_instance.num_files_per_mpc_container
+                    * private_computation_instance.infra_config.num_files_per_mpc_container
                 },
             }
             for i in range(private_computation_instance.infra_config.num_mpc_containers)
@@ -258,7 +258,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
                     "aggregators": aggregation_type.value,
                     "attribution_rules": attribution_rule.value,
                     "file_start_index": i
-                    * private_computation_instance.num_files_per_mpc_container,
+                    * private_computation_instance.infra_config.num_files_per_mpc_container,
                     "use_xor_encryption": True,
                     "run_name": private_computation_instance.infra_config.instance_id
                     if self._log_cost_to_s3

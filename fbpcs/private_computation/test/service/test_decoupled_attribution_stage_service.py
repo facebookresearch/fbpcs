@@ -71,7 +71,7 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
         common_game_args = {
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.decoupled_attribution_stage_output_base_path,
-            "num_files": private_computation_instance.num_files_per_mpc_container,
+            "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
             "run_name": private_computation_instance.infra_config.instance_id
             + "_decoupled_attribution"
@@ -91,7 +91,7 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             },
             {
                 **common_game_args,
-                "file_start_index": private_computation_instance.num_files_per_mpc_container,
+                "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
             },
         ]
 
@@ -110,11 +110,11 @@ class TestAttributionStageService(IsolatedAsyncioTestCase):
             game_type=PrivateComputationGameType.ATTRIBUTION,
             num_pid_containers=2,
             num_mpc_containers=2,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         return PrivateComputationInstance(
             infra_config,
             attribution_rule=AttributionRule.LAST_CLICK_1D,
-            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             input_path="456",
             output_dir="789",
             padding_size=4,
