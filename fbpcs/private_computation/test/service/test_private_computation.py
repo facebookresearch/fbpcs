@@ -1122,11 +1122,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             game_type=PrivateComputationGameType.LIFT,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
         )
         return PrivateComputationInstance(
             infra_config,
             concurrency=self.test_concurrency,
-            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             input_path=self.test_input_path,
             output_dir=self.test_output_dir,
             k_anonymity_threshold=DEFAULT_K_ANONYMITY_THRESHOLD_PL,

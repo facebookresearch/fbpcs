@@ -54,6 +54,7 @@ class InfraConfig:
     game_type: PrivateComputationGameType
     num_pid_containers: int
     num_mpc_containers: int
+    num_files_per_mpc_container: int
 
     tier: Optional[str] = None
     pce_config: Optional[PCEConfig] = None
