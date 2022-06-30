@@ -161,7 +161,7 @@ class AggregationStageService(PrivateComputationStageService):
         common_game_args = {
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.decoupled_aggregation_stage_output_base_path,
-            "num_files": private_computation_instance.num_files_per_mpc_container,
+            "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.concurrency,
             "aggregators": aggregation_type.value,
             "attribution_rules": attribution_rule.value,
@@ -179,7 +179,7 @@ class AggregationStageService(PrivateComputationStageService):
                 **common_game_args,
                 **{
                     "file_start_index": i
-                    * private_computation_instance.num_files_per_mpc_container,
+                    * private_computation_instance.infra_config.num_files_per_mpc_container,
                 },
             }
             for i in range(private_computation_instance.infra_config.num_mpc_containers)
