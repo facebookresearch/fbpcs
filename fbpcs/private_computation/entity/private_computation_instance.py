@@ -129,7 +129,6 @@ class PrivateComputationInstance(InstanceBase):
     pid_configs: Optional[Dict[str, Any]] = None
     retry_counter: int = 0
 
-    is_validating: Optional[bool] = False
     synthetic_shard_path: Optional[str] = None
 
     # TODO T98476320: make the following optional attributes non-optional. They are optional
