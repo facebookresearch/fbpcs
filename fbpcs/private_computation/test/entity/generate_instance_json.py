@@ -137,14 +137,14 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         role=PrivateComputationRole.PUBLISHER,
         status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
         status_update_ts=int(time.time()),
-    )
-    return PrivateComputationInstance(
-        infra_config,
         instances=[
             gen_dummy_pid_instance(),
             gen_dummy_mpc_instance(),
             gen_dummy_post_processing_instance(),
         ],
+    )
+    return PrivateComputationInstance(
+        infra_config,
         num_files_per_mpc_container=40,
         game_type=PrivateComputationGameType.LIFT,
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
