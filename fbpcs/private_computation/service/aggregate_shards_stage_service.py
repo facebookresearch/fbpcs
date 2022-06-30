@@ -72,7 +72,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
 
         num_shards = (
             pc_instance.infra_config.num_mpc_containers
-            * pc_instance.num_files_per_mpc_container
+            * pc_instance.infra_config.num_files_per_mpc_container
         )
 
         # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type

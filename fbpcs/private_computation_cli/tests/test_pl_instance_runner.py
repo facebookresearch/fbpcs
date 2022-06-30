@@ -508,10 +508,10 @@ class TestPlInstanceRunner(TestCase):
             game_type=PrivateComputationGameType.LIFT,
             num_pid_containers=self.num_shards,
             num_mpc_containers=self.num_shards,
+            num_files_per_mpc_container=40,
         )
         return PrivateComputationInstance(
             infra_config,
-            num_files_per_mpc_container=40,
             input_path="fake_input_path",
             output_dir="789",
         )
