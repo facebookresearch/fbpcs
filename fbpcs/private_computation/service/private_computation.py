@@ -195,25 +195,27 @@ class PrivateComputationService:
                 aggregation_type=aggregation_type,
             )
         elif game_type is PrivateComputationGameType.LIFT:
-            product_config = LiftConfig(common_product_config=common_product_config)
+            product_config = LiftConfig(
+                common_product_config=common_product_config,
+                k_anonymity_threshold=unwrap_or_default(
+                    optional=k_anonymity_threshold,
+                    default=DEFAULT_K_ANONYMITY_THRESHOLD_PA
+                    if game_type is PrivateComputationGameType.ATTRIBUTION
+                    else DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                ),
+                breakdown_key=breakdown_key,
+            )
         instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
             input_path=input_path,
             output_dir=output_dir,
-            breakdown_key=breakdown_key,
             hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             padding_size=unwrap_or_default(
                 optional=padding_size,
                 default=LIFT_DEFAULT_PADDING_SIZE
                 if game_type is PrivateComputationGameType.LIFT
                 else ATTRIBUTION_DEFAULT_PADDING_SIZE,
-            ),
-            k_anonymity_threshold=unwrap_or_default(
-                optional=k_anonymity_threshold,
-                default=DEFAULT_K_ANONYMITY_THRESHOLD_PA
-                if game_type is PrivateComputationGameType.ATTRIBUTION
-                else DEFAULT_K_ANONYMITY_THRESHOLD_PL,
             ),
             result_visibility=result_visibility or ResultVisibility.PUBLIC,
             pid_use_row_numbers=pid_use_row_numbers,
