@@ -31,3 +31,4 @@ class InfraConfig:
     instance_id: str
     role: PrivateComputationRole
     status: PrivateComputationInstanceStatus
+    status_update_ts: int

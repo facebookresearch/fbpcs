@@ -39,11 +39,11 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             instance_id="123",
             role=PrivateComputationRole.PARTNER,
             status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+            status_update_ts=1600000000,
         )
         self._pc_instance = PrivateComputationInstance(
             infra_config=infra_config,
             instances=[],
-            status_update_ts=1600000000,
             num_pid_containers=1,
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
