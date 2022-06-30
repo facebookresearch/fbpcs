@@ -107,7 +107,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         """start pid run protocol service and spine up the container instances"""
         pid_run_protocol_binary_service = PIDRunProtocolBinaryService()
         logging.info("Instantiated PID run protocol stage")
-        num_shards = pc_instance.num_pid_containers
+        num_shards = pc_instance.infra_config.num_pid_containers
         # input_path is the output_path from PIDPrepareStage
         input_path = pc_instance.pid_stage_output_prepare_path
         output_path = pc_instance.pid_stage_output_spine_path
