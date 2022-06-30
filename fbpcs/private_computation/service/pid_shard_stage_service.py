@@ -111,7 +111,7 @@ class PIDShardStageService(PrivateComputationStageService):
             file_start_index=0,
             num_output_files=num_shards,
             tmp_directory=onedocker_binary_config.tmp_directory,
-            hmac_key=pc_instance.hmac_key,
+            hmac_key=pc_instance.product_config.common_product_config.hmac_key,
         )
         # start containers
         logging.info(f"{pc_role} spinning up containers")
