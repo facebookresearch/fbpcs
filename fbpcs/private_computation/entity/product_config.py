@@ -5,8 +5,10 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
+from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 
 
 @dataclass_json
@@ -62,6 +64,7 @@ class LiftConfig(ProductConfig):
 
     Public attributes:
 
-    Private attributes:
-
     """
+
+    k_anonymity_threshold: int = 0
+    breakdown_key: Optional[BreakdownKey] = None

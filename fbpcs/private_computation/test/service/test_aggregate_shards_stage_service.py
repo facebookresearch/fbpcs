@@ -19,6 +19,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.product_config import (
+    AttributionConfig,
     CommonProductConfig,
     LiftConfig,
     ProductConfig,
@@ -71,7 +72,12 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
                 "num_shards": private_computation_instance.infra_config.num_mpc_containers
                 * NUM_NEW_SHARDS_PER_FILE,
                 "output_path": private_computation_instance.shard_aggregate_stage_output_path,
-                "threshold": private_computation_instance.k_anonymity_threshold,
+                "threshold": 0
+                if isinstance(
+                    private_computation_instance.product_config, AttributionConfig
+                )
+                # pyre-ignore Undefined attribute [16]
+                else private_computation_instance.product_config.k_anonymity_threshold,
                 "run_name": private_computation_instance.infra_config.instance_id
                 if self.stage_svc._log_cost_to_s3
                 else "",
