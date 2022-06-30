@@ -156,8 +156,10 @@ class PCF2AggregationStageService(PrivateComputationStageService):
 
         if self._log_cost_to_s3:
             run_name = private_computation_instance.infra_config.instance_id
-            if private_computation_instance.post_processing_data:
-                private_computation_instance.post_processing_data.s3_cost_export_output_paths.add(
+            if (
+                private_computation_instance.product_config.common_product_config.post_processing_data
+            ):
+                private_computation_instance.product_config.common_product_config.post_processing_data.s3_cost_export_output_paths.add(
                     f"agg-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json",
                 )
         else:

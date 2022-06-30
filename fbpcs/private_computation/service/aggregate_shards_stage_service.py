@@ -110,8 +110,8 @@ class AggregateShardsStageService(PrivateComputationStageService):
         if self._log_cost_to_s3:
             run_name = pc_instance.infra_config.instance_id
 
-            if pc_instance.post_processing_data:
-                pc_instance.post_processing_data.s3_cost_export_output_paths.add(
+            if pc_instance.product_config.common_product_config.post_processing_data:
+                pc_instance.product_config.common_product_config.post_processing_data.s3_cost_export_output_paths.add(
                     f"sa-logs/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
                 )
         else:
