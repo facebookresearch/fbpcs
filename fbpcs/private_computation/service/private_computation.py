@@ -160,6 +160,7 @@ class PrivateComputationService:
             instances=[],
             game_type=game_type,
             tier=tier,
+            pce_config=pce_config,
         )
         instance = PrivateComputationInstance(
             infra_config,
@@ -175,7 +176,6 @@ class PrivateComputationService:
             input_path=input_path,
             output_dir=output_dir,
             breakdown_key=breakdown_key,
-            pce_config=pce_config,
             hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             padding_size=unwrap_or_default(
                 optional=padding_size,
