@@ -153,12 +153,14 @@ class PrivateComputationService:
             dataset_timestamp=int(yesterday_timestamp)
         )
         infra_config: InfraConfig = InfraConfig(
-            instance_id, role, PrivateComputationInstanceStatus.CREATED
+            instance_id=instance_id,
+            role=role,
+            status=PrivateComputationInstanceStatus.CREATED,
+            status_update_ts=PrivateComputationService.get_ts_now(),
         )
         instance = PrivateComputationInstance(
             infra_config,
             instances=[],
-            status_update_ts=PrivateComputationService.get_ts_now(),
             num_files_per_mpc_container=unwrap_or_default(
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
             ),
