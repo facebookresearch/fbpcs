@@ -33,11 +33,11 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=1,
+            num_mpc_containers=1,
         )
         pc_instance = PrivateComputationInstance(
             infra_config,
-            num_pid_containers=1,
-            num_mpc_containers=1,
             num_files_per_mpc_container=1,
             input_path="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test_data/stress_test/input.csv",
             output_dir="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output",

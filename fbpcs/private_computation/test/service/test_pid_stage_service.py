@@ -148,11 +148,11 @@ class TestPIDStageService(IsolatedAsyncioTestCase):
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=1,
+            num_mpc_containers=1,
         )
         return PrivateComputationInstance(
             infra_config,
-            num_pid_containers=1,
-            num_mpc_containers=1,
             num_files_per_mpc_container=1,
             input_path="456",
             output_dir="789",

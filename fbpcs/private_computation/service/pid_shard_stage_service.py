@@ -97,7 +97,7 @@ class PIDShardStageService(PrivateComputationStageService):
     ) -> List[ContainerInstance]:
         """start pid shard service and spine up the container instances"""
         logging.info("Instantiated PID shard stage")
-        num_shards = pc_instance.num_pid_containers
+        num_shards = pc_instance.infra_config.num_pid_containers
         input_path = pc_instance.input_path
         output_base_path = pc_instance.pid_stage_output_data_path
         pc_role = pc_instance.infra_config.role

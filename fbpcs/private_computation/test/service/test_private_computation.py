@@ -1120,11 +1120,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             status_update_ts=1600000000,
             instances=instances or [],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=self.test_num_containers,
+            num_mpc_containers=self.test_num_containers,
         )
         return PrivateComputationInstance(
             infra_config,
-            num_pid_containers=self.test_num_containers,
-            num_mpc_containers=self.test_num_containers,
             concurrency=self.test_concurrency,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             input_path=self.test_input_path,

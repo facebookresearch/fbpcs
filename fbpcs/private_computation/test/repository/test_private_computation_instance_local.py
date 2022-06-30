@@ -44,14 +44,14 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status_update_ts=1600000000,
             instances=[self.test_mpc_instance],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=4,
+            num_mpc_containers=4,
         )
         test_read_private_computation_instance = PrivateComputationInstance(
             infra_config,
             num_files_per_mpc_container=40,
             input_path="in",
             output_dir="out",
-            num_pid_containers=4,
-            num_mpc_containers=4,
             concurrency=1,
         )
         self.repo.create(test_read_private_computation_instance)
@@ -69,6 +69,8 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status_update_ts=1600000000,
             instances=[self.test_mpc_instance],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=8,
+            num_mpc_containers=4,
         )
         with self.assertRaises(ValueError):
             PrivateComputationInstance(
@@ -76,8 +78,6 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
                 num_files_per_mpc_container=40,
                 input_path="in",
                 output_dir="out",
-                num_pid_containers=8,
-                num_mpc_containers=4,
                 concurrency=1,
             )
 
@@ -90,14 +90,14 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             status_update_ts=1600000000,
             instances=[self.test_mpc_instance],
             game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=4,
+            num_mpc_containers=4,
         )
         test_update_private_computation_instance = PrivateComputationInstance(
             infra_config,
             num_files_per_mpc_container=40,
             input_path="in",
             output_dir="out",
-            num_pid_containers=4,
-            num_mpc_containers=4,
             concurrency=1,
         )
         # Create a new MPC instance to be added to instances
