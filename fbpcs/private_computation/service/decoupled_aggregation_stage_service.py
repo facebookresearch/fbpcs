@@ -162,7 +162,7 @@ class AggregationStageService(PrivateComputationStageService):
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.decoupled_aggregation_stage_output_base_path,
             "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
-            "concurrency": private_computation_instance.concurrency,
+            "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
             "aggregators": aggregation_type.value,
             "attribution_rules": attribution_rule.value,
             "input_base_path_secret_share": private_computation_instance.decoupled_attribution_stage_output_base_path,
