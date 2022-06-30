@@ -90,7 +90,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         logging.info("Starting to run MPC instance.")
 
         stage_data = PrivateComputationServiceData.get(
-            pc_instance.game_type
+            pc_instance.infra_config.game_type
         ).compute_stage
         binary_name = stage_data.binary_name
         game_name = checked_cast(str, stage_data.game_name)
@@ -167,7 +167,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         # TODO: we eventually will want to get rid of the if-else here, which will be
         #   easy to do once the Lift and Attribution MPC compute games are consolidated
         if (
-            private_computation_instance.game_type
+            private_computation_instance.infra_config.game_type
             is PrivateComputationGameType.ATTRIBUTION
         ):
             game_args = self._get_attribution_game_args(
@@ -175,7 +175,10 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                 common_compute_game_args,
             )
 
-        elif private_computation_instance.game_type is PrivateComputationGameType.LIFT:
+        elif (
+            private_computation_instance.infra_config.game_type
+            is PrivateComputationGameType.LIFT
+        ):
             game_args = self._get_lift_game_args(
                 private_computation_instance, common_compute_game_args
             )
