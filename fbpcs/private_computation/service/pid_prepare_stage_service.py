@@ -86,7 +86,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
             pc_instance.current_stage.name,
             containers=container_instances,
         )
-        pc_instance.instances.append(stage_state)
+        pc_instance.infra_config.instances.append(stage_state)
         return pc_instance
 
     def get_status(

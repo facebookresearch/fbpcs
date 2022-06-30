@@ -61,7 +61,9 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
         ]
         await self.stage_svc.run_async(private_computation_instance, test_server_ips)
 
-        self.assertEqual(mpc_instance, private_computation_instance.instances[0])
+        self.assertEqual(
+            mpc_instance, private_computation_instance.infra_config.instances[0]
+        )
 
     def test_get_game_args(self) -> None:
         private_computation_instance = self._create_pc_instance()
@@ -105,10 +107,10 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             role=PrivateComputationRole.PARTNER,
             status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
             status_update_ts=1600000000,
+            instances=[],
         )
         return PrivateComputationInstance(
             infra_config,
-            instances=[],
             attribution_rule=AttributionRule.LAST_CLICK_1D,
             num_pid_containers=2,
             num_mpc_containers=2,
