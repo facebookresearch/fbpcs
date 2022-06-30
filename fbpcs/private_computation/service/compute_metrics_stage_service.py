@@ -159,7 +159,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             "input_base_path": private_computation_instance.data_processing_output_path,
             "output_base_path": private_computation_instance.compute_stage_output_base_path,
             "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
-            "concurrency": private_computation_instance.concurrency,
+            "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
         }
 
         game_args = []
