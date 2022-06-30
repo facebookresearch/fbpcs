@@ -111,7 +111,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         # input_path is the output_path from PIDPrepareStage
         input_path = pc_instance.pid_stage_output_prepare_path
         output_path = pc_instance.pid_stage_output_spine_path
-        pc_role = pc_instance.role
+        pc_role = pc_instance.infra_config.role
         protocol = get_pid_protocol_from_num_shards(num_shards, self._multikey_enabled)
         metric_paths = self.get_metric_paths(pc_role, output_path, num_shards)
         server_hostnames = self.get_server_hostnames(pc_role, server_ips, num_shards)
