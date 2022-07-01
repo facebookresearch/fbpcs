@@ -78,3 +78,12 @@ class StageStateInstance(InstanceBase):
             self.status = StageStateInstanceStatus.UNKNOWN
 
         return self.status
+
+    def stop_containers(self, onedocker_svc: OneDockerService) -> None:
+        container_ids = [instance.instance_id for instance in self.containers]
+        errors = onedocker_svc.stop_containers(container_ids)
+        error_msg = [(id, error) for id, error in zip(container_ids, errors) if error]
+        if error_msg:
+            raise RuntimeError(
+                f"We encountered errors when stopping containers: {error_msg}"
+            )

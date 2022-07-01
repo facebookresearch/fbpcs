@@ -5,12 +5,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
+from unittest.mock import patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
 )
+from libfb.py.testutil import data_provider, MagicMock
 
 
 class TestStageStateInstance(unittest.TestCase):
@@ -43,3 +45,21 @@ class TestStageStateInstance(unittest.TestCase):
 
     def test_elapsed_time(self) -> None:
         self.assertEqual(self.stage_state_instance.elapsed_time, 5)
+
+    @data_provider(
+        lambda: ({"container_stoppable": True}, {"container_stoppable": False})
+    )
+    @patch("fbpcp.service.onedocker.OneDockerService")
+    def test_stop_containers(self, mock_onedocker_svc, container_stoppable) -> None:
+        mock_onedocker_svc.reset_mock()
+        if container_stoppable:
+            mock_onedocker_svc.stop_containers = MagicMock(return_value=[None, None])
+            self.stage_state_instance.stop_containers(mock_onedocker_svc)
+        else:
+            mock_onedocker_svc.stop_containers = MagicMock(return_value=[None, "Oops"])
+            with self.assertRaises(RuntimeError):
+                self.stage_state_instance.stop_containers(mock_onedocker_svc)
+
+        mock_onedocker_svc.stop_containers.assert_called_with(
+            ["test_container_instance_1", "test_container_instance_2"]
+        )

@@ -127,64 +127,6 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             "Appended StageStageInstance is not as expected",
         )
 
-    def test_stop_service(self):
-        num_containers = 2
-        pc_instance = self.create_sample_pc_instance(
-            status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED
-        )
-        subset_data = [
-            ("PID_PREPARE", False),
-            ("ID_MATCH", False),
-            ("ID_MATCH", True),
-        ]
-        for (test_state_name, stopped_containers) in subset_data:
-            with self.subTest(
-                test_state_name=test_state_name,
-                stopped_containers=stopped_containers,
-            ):
-                self.mock_onedocker_svc.reset_mock()
-                self.mock_storage_svc.reset_mock()
-                # prepare for stop_service()
-                input_pc_instance = copy.deepcopy(pc_instance)
-                stage_svc = PIDRunProtocolStageService(
-                    storage_svc=self.mock_storage_svc,
-                    onedocker_svc=self.mock_onedocker_svc,
-                    onedocker_binary_config_map=self.onedocker_binary_config_map,
-                )
-
-                containers = [
-                    self.create_container_instance(i) for i in range(num_containers)
-                ]
-                stage_stage = StageStateInstance(
-                    pc_instance.infra_config.instance_id,
-                    test_state_name,
-                    containers=containers,
-                )
-                input_pc_instance.infra_config.instances.append(stage_stage)
-                if stopped_containers:
-                    self.mock_onedocker_svc.stop_containers = MagicMock(
-                        return_value=[None, None]
-                    )
-                else:
-                    self.mock_onedocker_svc.stop_containers = MagicMock(
-                        return_value=[None, "Oops"]
-                    )
-                # test if the function works as expected
-                if test_state_name != "ID_MATCH":
-                    with self.assertRaises(AssertionError):
-                        stage_svc.stop_service(input_pc_instance)
-                elif not stopped_containers:
-                    with self.assertRaises(RuntimeError):
-                        stage_svc.stop_service(input_pc_instance)
-                    self.mock_onedocker_svc.stop_containers.assert_called_with(
-                        ["test_container_instance_0", "test_container_instance_1"]
-                    )
-                else:
-                    stage_svc.stop_service(input_pc_instance)
-                    self.mock_onedocker_svc.stop_containers.assert_called_with(
-                        ["test_container_instance_0", "test_container_instance_1"]
-                    )
-
     def create_sample_pc_instance(
         self,
         pc_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
