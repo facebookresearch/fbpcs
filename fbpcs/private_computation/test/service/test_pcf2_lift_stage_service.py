@@ -48,7 +48,8 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             )
         )
         self.stage_svc = PCF2LiftStageService(
-            onedocker_binary_config_map, self.mock_mpc_svc
+            onedocker_binary_config_map,
+            self.mock_mpc_svc,
         )
 
     async def test_compute_metrics(self) -> None:
@@ -88,6 +89,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
             "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
+            "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
             "run_name": run_name,
             "log_cost": True,
         }
