@@ -18,10 +18,10 @@ from fbpcs.pl_coordinator.pl_instance_runner import (
 )
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
+    PrivateComputationGameType,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
     PrivateComputationInstance,
 )
 from fbpcs.private_computation.entity.private_computation_status import (

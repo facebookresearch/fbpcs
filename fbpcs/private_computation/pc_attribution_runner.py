@@ -15,10 +15,8 @@ import pytz
 from fbpcs.pl_coordinator.exceptions import IncorrectVersionError, sys_exit_after
 from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance
+from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
-)
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
     AttributionRule,

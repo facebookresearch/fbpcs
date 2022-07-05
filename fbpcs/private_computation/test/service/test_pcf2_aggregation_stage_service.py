@@ -11,16 +11,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.private_computation.entity.infra_config import InfraConfig
-from fbpcs.private_computation.entity.private_computation_instance import (
-    AttributionRule,
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
     PrivateComputationGameType,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
     AttributionConfig,
+    AttributionRule,
     CommonProductConfig,
     ProductConfig,
 )

@@ -28,10 +28,12 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
-from fbpcs.private_computation.entity.infra_config import InfraConfig
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
+    PrivateComputationGameType,
+)
 from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
 )

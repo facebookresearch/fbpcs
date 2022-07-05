@@ -3,7 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Union
 
@@ -64,6 +65,13 @@ class InfraConfig(DataClassJsonMixin):
     _stage_flow_cls_name: str = "PrivateComputationStageFlow"
 
     retry_counter: int = 0
-    creation_ts: int = 0
+    creation_ts: int = field(default_factory=lambda: int(time.time()))
     end_ts: int = 0
     mpc_compute_concurrency: int = 1
+
+    def __post_init__(self) -> None:
+        # TODO: I will create hook for this check later
+        if self.num_pid_containers > self.num_mpc_containers:
+            raise ValueError(
+                f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.num_pid_containers} and num_mpc_containers = {self.num_mpc_containers}"
+            )

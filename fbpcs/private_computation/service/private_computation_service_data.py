@@ -7,13 +7,12 @@
 # pyre-strict
 
 from dataclasses import dataclass
+
 from typing import Dict, Optional
 
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
-)
+from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.repository.private_computation_game import (
     PRIVATE_COMPUTATION_GAME_CONFIG,
 )

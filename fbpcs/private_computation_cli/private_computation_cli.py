@@ -56,8 +56,8 @@ from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
+from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.product_config import (

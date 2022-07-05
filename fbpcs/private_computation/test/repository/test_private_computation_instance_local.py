@@ -12,9 +12,11 @@ import unittest
 
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
-from fbpcs.private_computation.entity.infra_config import InfraConfig
-from fbpcs.private_computation.entity.private_computation_instance import (
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
     PrivateComputationGameType,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
@@ -74,29 +76,19 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
 
     def test_create_with_invalid_num_containers(self) -> None:
         instance_id = self._get_random_id()
-        infra_config: InfraConfig = InfraConfig(
-            instance_id=instance_id,
-            role=PrivateComputationRole.PUBLISHER,
-            status=PrivateComputationInstanceStatus.CREATED,
-            status_update_ts=1600000000,
-            instances=[self.test_mpc_instance],
-            game_type=PrivateComputationGameType.LIFT,
-            num_pid_containers=8,
-            num_mpc_containers=4,
-            num_files_per_mpc_container=40,
-            mpc_compute_concurrency=1,
-        )
-        common: CommonProductConfig = CommonProductConfig(
-            input_path="in",
-            output_dir="out",
-        )
-        product_config: ProductConfig = LiftConfig(
-            common=common,
-        )
+
         with self.assertRaises(ValueError):
-            PrivateComputationInstance(
-                infra_config=infra_config,
-                product_config=product_config,
+            InfraConfig(
+                instance_id=instance_id,
+                role=PrivateComputationRole.PUBLISHER,
+                status=PrivateComputationInstanceStatus.CREATED,
+                status_update_ts=1600000000,
+                instances=[self.test_mpc_instance],
+                game_type=PrivateComputationGameType.LIFT,
+                num_pid_containers=8,
+                num_mpc_containers=4,
+                num_files_per_mpc_container=40,
+                mpc_compute_concurrency=1,
             )
 
     def test_update(self) -> None:
