@@ -47,12 +47,14 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         pid_svc: Optional[PIDService] = None,
+        padding_size: Optional[int] = None,
     ) -> None:
         self._onedocker_svc = onedocker_svc
         self._pid_svc = pid_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._log_cost_to_s3 = log_cost_to_s3
         self._logger: logging.Logger = logging.getLogger(__name__)
+        self.padding_size = padding_size
 
     async def run_async(
         self,
