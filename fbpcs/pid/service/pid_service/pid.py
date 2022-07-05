@@ -34,7 +34,7 @@ class PIDService:
         storage_svc: StorageService,
         instance_repository: PIDInstanceRepository,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-        multikey_enabled: bool = False,
+        multikey_enabled: bool = True,
     ) -> None:
         """Constructor of PIDService
         Keyword arguments:
