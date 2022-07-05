@@ -31,6 +31,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
         # TODO T106159008: padding_size and run_name are only temporarily optional
         # because Lift does not use them. It should and will be required to use them.
         padding_size: Optional[int] = None,
+        multi_conversion_limit: Optional[int] = None,
         # run_name is the binary name used by the log cost to s3 feature
         run_name: Optional[str] = None,
         log_cost: Optional[bool] = False,
@@ -51,6 +52,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
                 tmp_directory=tmp_directory,
                 max_id_column_cnt=max_id_column_cnt,
                 padding_size=padding_size,
+                multi_conversion_limit=multi_conversion_limit,
                 run_name=run_name,
                 sort_strategy=sort_strategy,
                 log_cost=log_cost,
