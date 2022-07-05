@@ -25,7 +25,10 @@ from fbpcs.private_computation.entity.product_config import (
     AttributionRule,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
-from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_LOG_COST_TO_S3,
+    LIFT_DEFAULT_PADDING_SIZE,
+)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -53,11 +56,13 @@ class PCF2LiftStageService(PrivateComputationStageService):
         self,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         mpc_service: MPCService,
+        padding_size: int = LIFT_DEFAULT_PADDING_SIZE,
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         container_timeout: Optional[int] = None,
     ) -> None:
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._mpc_service = mpc_service
+        self.padding_size = padding_size
         self._log_cost_to_s3 = log_cost_to_s3
         self._container_timeout = container_timeout
 
@@ -174,6 +179,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
             "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
             "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
+            "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
             "run_name": run_name,
             "log_cost": self._log_cost_to_s3,
         }
