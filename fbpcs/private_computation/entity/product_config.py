@@ -85,8 +85,8 @@ class AttributionConfig(ProductConfig):
                             used to infer the metrics_format_type argument of the shard aggregator game.
     """
 
-    attribution_rule: AttributionRule
     aggregation_type: AggregationType
+    attribution_rule: AttributionRule = AttributionRule.LAST_CLICK_1D
 
 
 @dataclass_json

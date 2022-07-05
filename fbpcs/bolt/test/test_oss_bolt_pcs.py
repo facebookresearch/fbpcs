@@ -22,12 +22,13 @@ from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
-    PrivateComputationRole,
 )
+
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )

@@ -14,9 +14,11 @@ from fbpcs.pid.entity.pid_instance import (
     PIDRole,
 )
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
-from fbpcs.private_computation.entity.infra_config import InfraConfig
-from fbpcs.private_computation.entity.private_computation_instance import (
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
     PrivateComputationGameType,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,

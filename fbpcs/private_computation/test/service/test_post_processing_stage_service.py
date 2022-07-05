@@ -15,9 +15,11 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
 from fbpcs.post_processing_handler.tests.dummy_handler import PostProcessingDummyHandler
-from fbpcs.private_computation.entity.infra_config import InfraConfig
-from fbpcs.private_computation.entity.private_computation_instance import (
+from fbpcs.private_computation.entity.infra_config import (
+    InfraConfig,
     PrivateComputationGameType,
+)
+from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,

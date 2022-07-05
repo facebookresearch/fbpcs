@@ -18,12 +18,13 @@ from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 from fbpcs.bolt.bolt_runner import BoltClient, BoltState
 from fbpcs.bolt.constants import DEFAULT_ATTRIBUTION_STAGE_FLOW, DEFAULT_LIFT_STAGE_FLOW
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
-from fbpcs.private_computation.entity.pce_config import PCEConfig
-from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
-from fbpcs.private_computation.entity.private_computation_instance import (
+from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
+
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
     AttributionRule,

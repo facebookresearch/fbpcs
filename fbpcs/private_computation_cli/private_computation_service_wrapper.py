@@ -24,11 +24,13 @@ from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
-from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
+from fbpcs.private_computation.entity.infra_config import (
+    PrivateComputationGameType,
+    PrivateComputationRole,
+)
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
     PrivateComputationInstance,
 )
 from fbpcs.private_computation.entity.product_config import (

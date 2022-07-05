@@ -13,8 +13,8 @@ from typing import Any, Dict, List, Optional
 from fbpcs.pl_coordinator.constants import WAIT_VALID_STATUS_TIMEOUT
 from fbpcs.pl_coordinator.exceptions import PCInstanceCalculationException
 from fbpcs.pl_coordinator.pc_calc_instance import PrivateComputationCalcInstance
+from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
     PrivateComputationInstance,
     PrivateComputationRole,
 )

@@ -32,9 +32,7 @@ from fbpcs.pl_coordinator.pc_partner_instance import PrivateComputationPartnerIn
 from fbpcs.pl_coordinator.pc_publisher_instance import (
     PrivateComputationPublisherInstance,
 )
-from fbpcs.private_computation.entity.private_computation_instance import (
-    PrivateComputationGameType,
-)
+from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )

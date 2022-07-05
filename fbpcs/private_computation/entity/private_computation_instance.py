@@ -39,7 +39,6 @@ from fbpcs.post_processing_handler.post_processing_instance import (
 )
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
-    PrivateComputationGameType,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -47,7 +46,6 @@ from fbpcs.private_computation.entity.private_computation_status import (
 )
 from fbpcs.private_computation.entity.product_config import (
     AttributionConfig,
-    AttributionRule,
     LiftConfig,
     ProductConfig,
 )
@@ -70,21 +68,6 @@ class PrivateComputationInstance(InstanceBase):
 
     infra_config: InfraConfig
     product_config: ProductConfig
-
-    def __post_init__(self) -> None:
-        if self.infra_config.num_pid_containers > self.infra_config.num_mpc_containers:
-            raise ValueError(
-                f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.infra_config.num_pid_containers} and num_mpc_containers = {self.infra_config.num_mpc_containers}"
-            )
-        if (
-            self.infra_config.game_type is PrivateComputationGameType.ATTRIBUTION
-            and isinstance(self.product_config, AttributionConfig)
-            and self.product_config.attribution_rule is None
-        ):
-            self.product_config.attribution_rule = AttributionRule.LAST_CLICK_1D
-
-        if self.infra_config.creation_ts == 0:
-            self.infra_config.creation_ts = int(time.time())
 
     def dumps_schema(self) -> str:
         json_object = json.loads(super().dumps_schema())
