@@ -26,3 +26,4 @@ DECLARE_int32(max_num_touchpoints);
 DECLARE_int32(max_num_conversions);
 DECLARE_int32(input_encryption);
 DECLARE_bool(log_cost);
+DECLARE_bool(use_new_output_format);
