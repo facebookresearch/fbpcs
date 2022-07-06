@@ -91,6 +91,13 @@ TEST_F(InputProcessorTest, testNumRows) {
   EXPECT_EQ(partnerInputProcessor_.getNumRows(), 33);
 }
 
+TEST_F(InputProcessorTest, testBitsForValues) {
+  EXPECT_EQ(publisherInputProcessor_.getValueBits(), 10);
+  EXPECT_EQ(partnerInputProcessor_.getValueBits(), 10);
+  EXPECT_EQ(publisherInputProcessor_.getValueSquaredBits(), 15);
+  EXPECT_EQ(partnerInputProcessor_.getValueSquaredBits(), 15);
+}
+
 TEST_F(InputProcessorTest, testNumPartnerCohorts) {
   EXPECT_EQ(publisherInputProcessor_.getNumPartnerCohorts(), 3);
   EXPECT_EQ(partnerInputProcessor_.getNumPartnerCohorts(), 3);

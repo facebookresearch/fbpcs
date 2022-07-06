@@ -17,6 +17,8 @@ const size_t groupWidth = 7; // at most 32 cohorts and 2 publisher breakdowns
 const size_t numConvSquaredWidth = 32;
 const size_t valueWidth = 32;
 const size_t valueSquaredWidth = 64;
+// only need log_2(64) < 8 bits to store value and valueSquared width
+const size_t numBitsForValuesWidth = 8;
 const size_t timeStampWidth = 32;
 
 template <int schedulerId, bool usingBatch = true>
