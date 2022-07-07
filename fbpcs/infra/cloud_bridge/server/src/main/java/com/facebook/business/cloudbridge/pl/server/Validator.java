@@ -129,15 +129,17 @@ public class Validator {
     return new ValidatorResult(true, "credentials provides are valid");
   }
 
-  public ValidatorResult validate(DeploymentParams deploymentParams) {
+  public ValidatorResult validate(DeploymentParams deploymentParams, boolean deploy) {
     final ValidatorResult credentialsValidationResult = validateCredentials(deploymentParams);
     if (!credentialsValidationResult.isSuccessful) {
       return credentialsValidationResult;
     }
 
-    final ValidatorResult vpcValidationResult = validateVpcQuotaPerRegion(deploymentParams);
-    if (!vpcValidationResult.isSuccessful) {
-      return vpcValidationResult;
+    if (deploy) {
+      final ValidatorResult vpcValidationResult = validateVpcQuotaPerRegion(deploymentParams);
+      if (!vpcValidationResult.isSuccessful) {
+        return vpcValidationResult;
+      }
     }
     // TODO S3 bucket limit validation T119080329
     return new ValidatorResult(true, "No pre validation issues found so far!");

@@ -57,7 +57,7 @@ public class DeployController {
   private APIReturn runDeployment(boolean shouldDeploy, DeploymentParams deployment) {
     try {
       deployment.validate();
-      Validator.ValidatorResult preValidationResult = validator.validate(deployment);
+      Validator.ValidatorResult preValidationResult = validator.validate(deployment, shouldDeploy);
       if (!preValidationResult.isSuccessful) {
         return new APIReturn(APIReturn.Status.STATUS_FAIL, preValidationResult.message);
       }
