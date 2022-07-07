@@ -17,6 +17,7 @@ struct Conversion {
   ConditionalVector<uint64_t, usingBatch> ts;
   ConditionalVector<uint64_t, usingBatch> targetId;
   ConditionalVector<uint64_t, usingBatch> actionType;
+  ConditionalVector<uint64_t, usingBatch> convValue;
 };
 
 template <bool usingBatch>
@@ -30,6 +31,7 @@ struct PrivateConversion {
   SecTimestamp<schedulerId, usingBatch> ts;
   SecTargetId<schedulerId, usingBatch> targetId;
   SecActionType<schedulerId, usingBatch> actionType;
+  SecConvValue<schedulerId, usingBatch> convValue;
 
   explicit PrivateConversion(const Conversion<usingBatch>& conversion) {
     if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
@@ -39,6 +41,8 @@ struct PrivateConversion {
           conversion.targetId, common::PARTNER);
       actionType = SecActionType<schedulerId, usingBatch>(
           conversion.actionType, common::PARTNER);
+      convValue = SecConvValue<schedulerId, usingBatch>(
+          conversion.convValue, common::PARTNER);
     } else {
       typename SecTimestamp<schedulerId, usingBatch>::ExtractedInt extractedTs(
           conversion.ts);
@@ -50,6 +54,9 @@ struct PrivateConversion {
           extractedAids(conversion.actionType);
       actionType =
           SecActionType<schedulerId, usingBatch>(std::move(extractedAids));
+      typename SecConvValue<schedulerId, usingBatch>::ExtractedInt extractedVs(
+          conversion.convValue);
+      convValue = SecConvValue<schedulerId, usingBatch>(std::move(extractedVs));
     }
   }
 };
@@ -59,6 +66,7 @@ struct ParsedConversion {
   uint64_t ts = 0U;
   uint64_t targetId = 0U;
   uint64_t actionType = 0U;
+  uint64_t convValue = 0U;
 
   bool operator<(const ParsedConversion& conv) const {
     return (ts < conv.ts);
