@@ -28,6 +28,7 @@ class InputProcessor {
         numConversionsPerUser_{numConversionsPerUser} {
     validateNumRowsStep();
     shareNumGroupsStep();
+    shareBitsForValuesStep();
     privatelyShareGroupIdsStep();
     privatelySharePopulationStep();
     privatelyShareGroupIdsStep();
@@ -58,6 +59,14 @@ class InputProcessor {
 
   uint32_t getNumTestGroups() const {
     return numTestGroups_;
+  }
+
+  uint8_t getValueBits() const {
+    return valueBits_;
+  }
+
+  uint8_t getValueSquaredBits() const {
+    return valueSquaredBits_;
   }
 
   const std::vector<std::vector<bool>> getIndexShares() const {
@@ -108,6 +117,9 @@ class InputProcessor {
   // Share number of groups, including cohorts and publisher breakdowns.
   void shareNumGroupsStep();
 
+  // Share number of bits needed to store the input value and its square
+  void shareBitsForValuesStep();
+
   // Privately share popoulation
   void privatelySharePopulationStep();
 
@@ -138,6 +150,8 @@ class InputProcessor {
   uint32_t numPublisherBreakdowns_;
   uint32_t numGroups_;
   uint32_t numTestGroups_;
+  uint8_t valueBits_;
+  uint8_t valueSquaredBits_;
 
   SecTimestamp<schedulerId> opportunityTimestamps_;
   SecBit<schedulerId> isValidOpportunityTimestamp_;

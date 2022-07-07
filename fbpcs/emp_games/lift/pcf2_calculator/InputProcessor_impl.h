@@ -79,6 +79,28 @@ void InputProcessor<schedulerId>::shareNumGroupsStep() {
 }
 
 template <int schedulerId>
+void InputProcessor<schedulerId>::shareBitsForValuesStep() {
+  XLOG(INFO) << "Set up number of bits needed for purchase value sharing";
+
+  auto valueBits = static_cast<uint64_t>(inputData_.getNumBitsForValue());
+  auto valueSquaredBits =
+      static_cast<uint64_t>(inputData_.getNumBitsForValueSquared());
+
+  valueBits_ = common::shareIntFrom<
+      schedulerId,
+      numBitsForValuesWidth,
+      common::PARTNER,
+      common::PUBLISHER>(myRole_, valueBits);
+  valueSquaredBits_ = common::shareIntFrom<
+      schedulerId,
+      numBitsForValuesWidth,
+      common::PARTNER,
+      common::PUBLISHER>(myRole_, valueSquaredBits);
+  XLOG(INFO) << "Num bits for values: " << valueBits_;
+  XLOG(INFO) << "Num bits for values squared: " << valueSquaredBits_;
+}
+
+template <int schedulerId>
 void InputProcessor<schedulerId>::privatelyShareGroupIdsStep() {
   XLOG(INFO) << "Share cohort group ids";
   cohortGroupIds_ = common::privatelyShareArrayWithPaddingFrom<
