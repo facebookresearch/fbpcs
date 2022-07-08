@@ -14,7 +14,7 @@ from time import time
 from typing import List, Optional
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
-from fbpcs.bolt.constants import POLL_INTERVAL
+from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
 from fbpcs.bolt.exceptions import (
     NoServerIpsException,
     StageFailedException,
@@ -154,7 +154,7 @@ class BoltRunner:
             self.logger.info(
                 f"{instance_id} current status is {status}, waiting for {stage.started_status}."
             )
-            await asyncio.sleep(POLL_INTERVAL)
+            await asyncio.sleep(DEFAULT_POLL_INTERVAL_SEC)
         raise StageTimeoutException(
             f"Poll {instance_id} status timed out after {timeout}s expecting status {stage.started_status}."
         )
@@ -187,7 +187,7 @@ class BoltRunner:
             self.logger.info(
                 f"Publisher {publisher_id} status is {publisher_state.pc_instance_status}, Partner {partner_id} status is {partner_state.pc_instance_status}. Waiting for status {complete_status}."
             )
-            await asyncio.sleep(POLL_INTERVAL)
+            await asyncio.sleep(DEFAULT_POLL_INTERVAL_SEC)
         raise StageTimeoutException(
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
         )

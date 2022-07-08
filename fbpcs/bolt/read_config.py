@@ -62,7 +62,9 @@ def create_bolt_runner(
     )
 
     runner = BoltRunner(
-        publisher_client=publisher_client, partner_client=partner_client, logger=logger
+        publisher_client=publisher_client,
+        partner_client=partner_client,
+        logger=logger,
     )
     return runner
 

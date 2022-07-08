@@ -49,3 +49,9 @@ class BoltJob(DataClassJsonMixin):
             )
         },
     )
+
+    def __post_init__(self) -> None:
+        if self.stage_flow is PrivateComputationBaseStageFlow:
+            raise ValueError(
+                f"Stage flow should not be {PrivateComputationBaseStageFlow}, pass a specific stage flow."
+            )
