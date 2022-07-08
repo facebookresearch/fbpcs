@@ -41,6 +41,20 @@ class InfraConfig(DataClassJsonMixin):
     """Stores metadata of infra config in a private computation instance
 
     Public attributes:
+        instance_id: this is unique for each PrivateComputationInstance.
+                        It is used to find and generate PCInstance in json repo.
+        role: an Enum indicating if this PrivateComputationInstance is a publisher object or partner object
+        status: an Enum indecating what stage and status the PCInstance is currently in
+        status_update_ts: the time of last status update
+        instances: during the whole computation run, all the instances created will be sotred here.
+        game_type: an Enum indicating if this PrivateComputationInstance is for private lift or private attribution
+        num_pid_containers: the number of containers used in pid
+        num_mpc_containers: the number of containers used in mpc
+        num_files_per_mpc_container: the number of files for each container
+        tier: an string indicating the release binary tier to run (rc, canary, latest)
+        retry_counter: the number times a stage has been retried
+        creation_ts: the time of the creation of this PrivateComputationInstance
+        end_ts: the time of the the end when finishing a computation run
         mpc_compute_concurrency: number of threads to run per container at the MPC compute metrics stage
 
     Private attributes:
