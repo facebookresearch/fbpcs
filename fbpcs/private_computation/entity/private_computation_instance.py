@@ -105,7 +105,9 @@ class PrivateComputationInstance(InstanceBase):
         """
         if json_object["infra_config"]["game_type"] == "ATTRIBUTION":
             return AttributionConfig.schema()
-        return LiftConfig.schema()
+        elif json_object["infra_config"]["game_type"] == "LIFT":
+            return LiftConfig.schema()
+        raise RuntimeError(f"Invalid product config: {json_object}")
 
     def get_instance_id(self) -> str:
         return self.infra_config.instance_id
