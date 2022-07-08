@@ -13,6 +13,6 @@ from fbpcs.private_computation.stage_flows.private_computation_stage_flow import
     PrivateComputationStageFlow,
 )
 
-POLL_INTERVAL = 60
+DEFAULT_POLL_INTERVAL_SEC = 5
 DEFAULT_ATTRIBUTION_STAGE_FLOW = PrivateComputationPCF2StageFlow
 DEFAULT_LIFT_STAGE_FLOW = PrivateComputationStageFlow
