@@ -105,7 +105,7 @@ class BoltRunner:
                 *[
                     self.publisher_client.validate_results(
                         instance_id=publisher_id,
-                        expected_result_path=job.partner_bolt_args.expected_result_path,
+                        expected_result_path=job.publisher_bolt_args.expected_result_path,
                     ),
                     self.partner_client.validate_results(
                         instance_id=partner_id,
