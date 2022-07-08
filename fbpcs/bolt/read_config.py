@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Tuple
 
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
+from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
@@ -64,6 +65,7 @@ def create_bolt_runner(
     runner = BoltRunner(
         publisher_client=publisher_client,
         partner_client=partner_client,
+        max_parallel_runs=runner_config.get("max_parallel_runs"),
         logger=logger,
     )
     return runner
@@ -78,6 +80,7 @@ def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
         partner_args["role"] = "PARTNER"
         shared_args = job_config["shared"]
         shared_args["job_name"] = job_name
+        job_specific_args = job_config.get("job_args", [])
 
         publisher_create_instance_args = BoltPCSCreateInstanceArgs.from_yml_dict(
             {**publisher_args, **shared_args}
@@ -98,6 +101,9 @@ def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
             publisher_bolt_args=publisher_bolt_args,
             partner_bolt_args=partner_bolt_args,
             stage_flow=publisher_create_instance_args.stage_flow_cls,
+            poll_interval=job_specific_args.get(
+                "poll_interval", DEFAULT_POLL_INTERVAL_SEC
+            ),
         )
         bolt_job_list.append(bolt_job)
 

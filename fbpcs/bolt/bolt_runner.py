@@ -14,7 +14,7 @@ from time import time
 from typing import List, Optional
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
-from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
+from fbpcs.bolt.constants import DEFAULT_MAX_PARALLEL_RUNS
 from fbpcs.bolt.exceptions import (
     NoServerIpsException,
     StageFailedException,
@@ -69,10 +69,14 @@ class BoltRunner:
         self,
         publisher_client: BoltClient,
         partner_client: BoltClient,
+        max_parallel_runs: Optional[int] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.publisher_client = publisher_client
         self.partner_client = partner_client
+        self.semaphore = asyncio.Semaphore(
+            max_parallel_runs or DEFAULT_MAX_PARALLEL_RUNS
+        )
         self.logger: logging.Logger = (
             logging.getLogger(__name__) if logger is None else logger
         )
@@ -84,49 +88,63 @@ class BoltRunner:
         return list(await asyncio.gather(*[self.run_one(job=job) for job in jobs]))
 
     async def run_one(self, job: BoltJob) -> bool:
-        try:
-            self.logger.info(f"[{job.job_name}] Creating instances...")
-            publisher_id, partner_id = await asyncio.gather(
-                self.publisher_client.create_instance(
-                    instance_args=job.publisher_bolt_args.create_instance_args
-                ),
-                self.partner_client.create_instance(
-                    instance_args=job.partner_bolt_args.create_instance_args
-                ),
-            )
-            for stage in list(job.stage_flow)[1:]:
-                await self.run_next_stage(
-                    publisher_id=publisher_id, partner_id=partner_id, stage=stage
-                )
-                await self.wait_stage_complete(
-                    publisher_id=publisher_id, partner_id=partner_id, stage=stage
-                )
-            results = await asyncio.gather(
-                *[
-                    self.publisher_client.validate_results(
-                        instance_id=publisher_id,
-                        expected_result_path=job.publisher_bolt_args.expected_result_path,
+        async with self.semaphore:
+            try:
+                self.logger.info(f"[{job.job_name}] Creating instances...")
+                publisher_id, partner_id = await asyncio.gather(
+                    self.publisher_client.create_instance(
+                        instance_args=job.publisher_bolt_args.create_instance_args
                     ),
-                    self.partner_client.validate_results(
-                        instance_id=partner_id,
-                        expected_result_path=job.partner_bolt_args.expected_result_path,
+                    self.partner_client.create_instance(
+                        instance_args=job.partner_bolt_args.create_instance_args
                     ),
-                ]
-            )
-            return all(results)
-        except Exception as e:
-            self.logger.exception(e)
-            return False
+                )
+                for stage in list(job.stage_flow)[1:]:
+                    await self.run_next_stage(
+                        publisher_id=publisher_id,
+                        partner_id=partner_id,
+                        stage=stage,
+                        poll_interval=job.poll_interval,
+                    )
+                    await self.wait_stage_complete(
+                        publisher_id=publisher_id,
+                        partner_id=partner_id,
+                        stage=stage,
+                        poll_interval=job.poll_interval,
+                    )
+                results = await asyncio.gather(
+                    *[
+                        self.publisher_client.validate_results(
+                            instance_id=publisher_id,
+                            expected_result_path=job.partner_bolt_args.expected_result_path,
+                        ),
+                        self.partner_client.validate_results(
+                            instance_id=partner_id,
+                            expected_result_path=job.partner_bolt_args.expected_result_path,
+                        ),
+                    ]
+                )
+                return all(results)
+            except Exception as e:
+                self.logger.exception(e)
+                return False
 
     async def run_next_stage(
-        self, publisher_id: str, partner_id: str, stage: PrivateComputationBaseStageFlow
+        self,
+        publisher_id: str,
+        partner_id: str,
+        stage: PrivateComputationBaseStageFlow,
+        poll_interval: int,
     ) -> None:
         self.logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
         await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
         server_ips = None
         if stage.is_joint_stage:
             server_ips = await self.get_server_ips_after_start(
-                instance_id=publisher_id, stage=stage, timeout=stage.timeout
+                instance_id=publisher_id,
+                stage=stage,
+                timeout=stage.timeout,
+                poll_interval=poll_interval,
             )
             if server_ips is None:
                 raise NoServerIpsException(
@@ -138,7 +156,11 @@ class BoltRunner:
         )
 
     async def get_server_ips_after_start(
-        self, instance_id: str, stage: PrivateComputationBaseStageFlow, timeout: int
+        self,
+        instance_id: str,
+        stage: PrivateComputationBaseStageFlow,
+        timeout: int,
+        poll_interval: int,
     ) -> Optional[List[str]]:
         # Waits until stage has started status then updates stage and returns server ips
         start_time = time()
@@ -154,13 +176,17 @@ class BoltRunner:
             self.logger.info(
                 f"{instance_id} current status is {status}, waiting for {stage.started_status}."
             )
-            await asyncio.sleep(DEFAULT_POLL_INTERVAL_SEC)
+            await asyncio.sleep(poll_interval)
         raise StageTimeoutException(
             f"Poll {instance_id} status timed out after {timeout}s expecting status {stage.started_status}."
         )
 
     async def wait_stage_complete(
-        self, publisher_id: str, partner_id: str, stage: PrivateComputationBaseStageFlow
+        self,
+        publisher_id: str,
+        partner_id: str,
+        stage: PrivateComputationBaseStageFlow,
+        poll_interval: int,
     ) -> None:
         fail_status = stage.failed_status
         complete_status = stage.completed_status
@@ -187,7 +213,7 @@ class BoltRunner:
             self.logger.info(
                 f"Publisher {publisher_id} status is {publisher_state.pc_instance_status}, Partner {partner_id} status is {partner_state.pc_instance_status}. Waiting for status {complete_status}."
             )
-            await asyncio.sleep(DEFAULT_POLL_INTERVAL_SEC)
+            await asyncio.sleep(poll_interval)
         raise StageTimeoutException(
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
         )
