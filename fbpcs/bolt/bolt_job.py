@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Type
 
 from dataclasses_json import config, DataClassJsonMixin
+from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
 
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -49,6 +50,7 @@ class BoltJob(DataClassJsonMixin):
             )
         },
     )
+    poll_interval: int = DEFAULT_POLL_INTERVAL_SEC
 
     def __post_init__(self) -> None:
         if self.stage_flow is PrivateComputationBaseStageFlow:

@@ -16,3 +16,4 @@ from fbpcs.private_computation.stage_flows.private_computation_stage_flow import
 DEFAULT_POLL_INTERVAL_SEC = 5
 DEFAULT_ATTRIBUTION_STAGE_FLOW = PrivateComputationPCF2StageFlow
 DEFAULT_LIFT_STAGE_FLOW = PrivateComputationStageFlow
+DEFAULT_MAX_PARALLEL_RUNS = 10

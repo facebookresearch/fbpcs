@@ -1,6 +1,7 @@
 runner:
   publisher_client_config: measurement/private_lift/platform/pl_coordinator/config_cloud_dev.yml
   partner_client_config: measurement/private_lift/platform/pl_coordinator/config_cloud_dev.yml
+  max_parallel_runs: 10
 jobs:
   # job name
   job1:
@@ -22,6 +23,9 @@ jobs:
     shared:
       # required args #
       game_type: lift
+    # optional job specific args
+    job_args:
+      poll_interval: 5
   job2:
     # publisher player args
     publisher:
@@ -41,3 +45,6 @@ jobs:
       game_type: attribution
       # optional args
       attribution_rule: last_touch_1d
+    # optional job specific args
+    job_args:
+      poll_interval: 5
