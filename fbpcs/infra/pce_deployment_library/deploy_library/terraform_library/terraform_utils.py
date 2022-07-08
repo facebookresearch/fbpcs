@@ -49,12 +49,33 @@ class TerraformUtils:
         """
         self.input = False
 
-    def get_command_list(self, command: str, *args: str, **kwargs: str) -> List[str]:
+    def get_command_list(self, command: str, *args: Any, **kwargs: str) -> List[str]:
         """
-        Converts string to list
+        Converts command string to list and updates commands with terraform options provided through kwargs and args.
         """
-        # TODO: Add option to pass more arguments through args and kwargs
-        return command.split()
+        commands = command.split()
+        for key, value in kwargs.items():
+            # terraform CLI accepts options with "-" using "_" will results in error
+            key = key.replace("_", "-")
+
+            if isinstance(value, list):
+                for inner_value in value:
+                    commands.append(f"-{key}={inner_value}")
+            elif isinstance(value, dict):
+                if "backend-config" in key:
+                    commands.extend(
+                        [f"-backend-config {k}={v}" for k, v in value.items()]
+                    )
+                # TODO: read var in kwargs and update commands
+            elif isinstance(value, bool):
+                value = "true" if value else "false"
+                commands.append(f"-{key}={value}")
+            else:
+                commands.append(f"-{key}={value}")
+
+        # Add args to commands list
+        commands.extend(args)
+        return commands
 
     def get_default_options(self, input_options: Dict[str, Any]) -> Dict[str, Any]:
         """
