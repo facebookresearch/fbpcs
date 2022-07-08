@@ -21,13 +21,7 @@ from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
-from fbpcs.pid.entity.pid_instance import (
-    PIDInstance,
-    PIDInstanceStatus,
-    PIDRole,
-    PIDStageStatus,
-    UnionPIDStage,
-)
+from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -62,7 +56,16 @@ from fbpcs.private_computation.service.errors import (
 from fbpcs.private_computation.service.pcf2_attribution_stage_service import (
     PCF2AttributionStageService,
 )
-from fbpcs.private_computation.service.pid_stage_service import PIDStageService
+from fbpcs.private_computation.service.pid_prepare_stage_service import (
+    PIDPrepareStageService,
+)
+from fbpcs.private_computation.service.pid_run_protocol_stage_service import (
+    PIDRunProtocolStageService,
+)
+from fbpcs.private_computation.service.pid_shard_stage_service import (
+    PIDShardStageService,
+)
+
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
@@ -296,40 +299,28 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
-        test_pid_id = self.test_private_computation_id + "_id_match"
-        test_pid_role = PIDRole.PUBLISHER
-        test_input_path = "pid_in"
-        test_output_path = "pid_out"
-        # create one PID instance to be put into PrivateComputationInstance
-        pid_instance = PIDInstance(
-            instance_id=test_pid_id,
-            protocol=DEFAULT_PID_PROTOCOL,
-            pid_role=test_pid_role,
-            num_shards=self.test_num_containers,
-            input_path=test_input_path,
-            output_path=test_output_path,
-            status=PIDInstanceStatus.STARTED,
+        stage_state_instance = StageStateInstance(
+            instance_id=self.test_private_computation_id,
+            stage_name="test_stage",
+            containers=[],
         )
-
         private_computation_instance = self.create_sample_instance(
             status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-            instances=[pid_instance],
+            instances=[stage_state_instance],
         )
-
-        updated_pid_instance = pid_instance
-        updated_pid_instance.status = PIDInstanceStatus.COMPLETED
-        updated_pid_instance.current_stage = UnionPIDStage.PUBLISHER_RUN_PID
-        updated_pid_instance.stages_status = {
-            UnionPIDStage.PUBLISHER_RUN_PID: PIDStageStatus.COMPLETED
-        }
-
-        self.private_computation_service.pid_svc.update_instance = MagicMock(
-            return_value=updated_pid_instance
+        pid_run_protocol_stage_svc = PIDRunProtocolStageService(
+            storage_svc=self.private_computation_service.storage_svc,
+            onedocker_svc=self.onedocker_service,
+            onedocker_binary_config_map=self.onedocker_binary_config_map,
         )
-
+        StageSelector.get_stage_service = MagicMock(
+            return_value=pid_run_protocol_stage_svc
+        )
         self.private_computation_service.instance_repository.read = MagicMock(
             return_value=private_computation_instance
         )
+        new_status = PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED
+        pid_run_protocol_stage_svc.get_status = MagicMock(return_value=new_status)
 
         # end_ts should not be calculated until the instance run is complete.
         self.assertEqual(0, private_computation_instance.infra_config.end_ts)
@@ -338,16 +329,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         updated_instance = self.private_computation_service.update_instance(
             instance_id=self.test_private_computation_id
         )
-
-        # check update instance called on the right pid instance
-        # pyre-fixme[16]: Callable `update_instance` has no attribute `assert_called`.
-        self.private_computation_service.pid_svc.update_instance.assert_called()
-        self.assertEqual(
-            test_pid_id,
-            # pyre-fixme[16]: Callable `update_instance` has no attribute `call_args`.
-            self.private_computation_service.pid_svc.update_instance.call_args[0][0],
-        )
-
         # check update instance called on the right private lift instance
         # pyre-fixme[16]: Callable `update` has no attribute `assert_called`.
         self.private_computation_service.instance_repository.update.assert_called()
@@ -356,10 +337,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             # pyre-fixme[16]: Callable `update` has no attribute `call_args`.
             self.private_computation_service.instance_repository.update.call_args[0][0],
         )
-
         # check updated_instance has new status
         self.assertEqual(
-            PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            new_status,
             updated_instance.infra_config.status,
         )
 
@@ -842,34 +822,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ).infra_config.status,
         )
 
-        # Test get status from the PID stage
-        pid_instance = PIDInstance(
-            instance_id="test_pid_id",
-            protocol=DEFAULT_PID_PROTOCOL,
-            pid_role=PIDRole.PUBLISHER,
-            num_shards=4,
-            input_path="input",
-            output_path="output",
-            stages_containers={},
-            stages_status={UnionPIDStage.PUBLISHER_RUN_PID: PIDStageStatus.COMPLETED},
-            current_stage=UnionPIDStage.PUBLISHER_RUN_PID,
-            status=PIDInstanceStatus.COMPLETED,
-        )
-        pc_instance = self.create_sample_instance(
-            PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-            instances=[pid_instance],
-        )
-
-        self.private_computation_service.pid_svc.update_instance = MagicMock(
-            return_value=pid_instance
-        )
-        self.assertEqual(
-            PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-            self.private_computation_service._update_instance(
-                pc_instance
-            ).infra_config.status,
-        )
-
     def test_validate_metrics_results_doesnt_match(self) -> None:
         self.private_computation_service.storage_svc.read = MagicMock()
         # pyre-fixme[16]: Callable `read` has no attribute `side_effect`.
@@ -935,41 +887,25 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             private_computation_instance.infra_config.status,
         )
 
-    def test_stage_selector(self) -> None:
-        """
-        Test for get_stage_service method in StageSelector class
-        """
-
-        args = self.private_computation_service.stage_service_args
-        actual_service = StageSelector.get_stage_service(
-            PrivateComputationStageFlow.ID_MATCH, args
-        )
-
-        self.assertIsInstance(actual_service, PIDStageService)
-        # We need this line so pyre knows
-        assert isinstance(actual_service, PIDStageService)
-        self.assertEqual(
-            actual_service._publisher_stage, UnionPIDStage.PUBLISHER_RUN_PID
-        )
-        self.assertEqual(actual_service._partner_stage, UnionPIDStage.ADV_RUN_PID)
-
-    def test_get_default_stage_service(self) -> None:
+    def test_get_default_pid_stage_service(self) -> None:
         """
         Test for get_default_stage_service method in stage flow classes
         """
         args = self.private_computation_service.stage_service_args
+        actual_service = (
+            PrivateComputationStageFlow.PID_SHARD.get_default_stage_service(args)
+        )
+        self.assertIsInstance(actual_service, PIDShardStageService)
+
+        actual_service = (
+            PrivateComputationStageFlow.PID_PREPARE.get_default_stage_service(args)
+        )
+        self.assertIsInstance(actual_service, PIDPrepareStageService)
 
         actual_service = PrivateComputationStageFlow.ID_MATCH.get_default_stage_service(
             args
         )
-
-        self.assertIsInstance(actual_service, PIDStageService)
-        # We need this line so pyre knows
-        assert isinstance(actual_service, PIDStageService)
-        self.assertEqual(
-            actual_service._publisher_stage, UnionPIDStage.PUBLISHER_RUN_PID
-        )
-        self.assertEqual(actual_service._partner_stage, UnionPIDStage.ADV_RUN_PID)
+        self.assertIsInstance(actual_service, PIDRunProtocolStageService)
 
     def test_get_default_stage_service_error(self) -> None:
         """
@@ -1041,62 +977,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             PrivateComputationInstanceStatus.CREATION_FAILED,
-            private_computation_instance.infra_config.status,
-        )
-
-    def test_cancel_current_stage_pid(self) -> None:
-        test_pid_id = self.test_private_computation_id + "_id_match"
-        test_input_path = "pid_in"
-        test_output_path = "pid_out"
-        # create one PID instance to be put into PrivateComputationInstance
-        # at the beginning of the cancel_current_stage function
-        pid_instance = PIDInstance(
-            instance_id=test_pid_id,
-            protocol=DEFAULT_PID_PROTOCOL,
-            pid_role=PIDRole.PARTNER,
-            num_shards=self.test_num_containers,
-            input_path=test_input_path,
-            output_path=test_output_path,
-            status=PIDInstanceStatus.STARTED,
-        )
-        private_computation_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-            role=PrivateComputationRole.PARTNER,
-            instances=[pid_instance],
-        )
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=private_computation_instance
-        )
-
-        # prepare the PID instance that's returned from pid_service.stop_instance()
-        pid_instance_canceled = PIDInstance(
-            instance_id=test_pid_id,
-            protocol=DEFAULT_PID_PROTOCOL,
-            pid_role=PIDRole.PARTNER,
-            num_shards=self.test_num_containers,
-            input_path=test_input_path,
-            output_path=test_output_path,
-            status=PIDInstanceStatus.CANCELED,
-            stages_status={UnionPIDStage.ADV_RUN_PID: PIDStageStatus.FAILED},
-            current_stage=UnionPIDStage.ADV_RUN_PID,
-        )
-        self.private_computation_service.pid_svc.stop_instance = MagicMock(
-            return_value=pid_instance_canceled
-        )
-        self.private_computation_service.pid_svc.instance_repository.read = MagicMock(
-            return_value=pid_instance_canceled
-        )
-
-        # call cancel, expect no exception
-        private_computation_instance = (
-            self.private_computation_service.cancel_current_stage(
-                instance_id=self.test_private_computation_id,
-            )
-        )
-
-        # assert the pc instance returned has the correct status
-        self.assertEqual(
-            PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
             private_computation_instance.infra_config.status,
         )
 

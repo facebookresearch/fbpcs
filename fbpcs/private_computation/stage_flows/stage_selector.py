@@ -5,7 +5,6 @@
 
 from typing import Optional, TYPE_CHECKING
 
-from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.private_computation.service.aggregate_shards_stage_service import (
     AggregateShardsStageService,
 )
@@ -16,7 +15,15 @@ from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
 from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
     PCPreValidationStageService,
 )
-from fbpcs.private_computation.service.pid_stage_service import PIDStageService
+from fbpcs.private_computation.service.pid_prepare_stage_service import (
+    PIDPrepareStageService,
+)
+from fbpcs.private_computation.service.pid_run_protocol_stage_service import (
+    PIDRunProtocolStageService,
+)
+from fbpcs.private_computation.service.pid_shard_stage_service import (
+    PIDShardStageService,
+)
 from fbpcs.private_computation.service.post_processing_stage_service import (
     PostProcessingStageService,
 )
@@ -50,22 +57,24 @@ class StageSelector:
                 args.onedocker_binary_config_map,
             )
         elif stage_flow.name == "PID_SHARD":
-            return PIDStageService(
-                args.pid_svc,
-                UnionPIDStage.PUBLISHER_SHARD,
-                UnionPIDStage.ADV_SHARD,
+            return PIDShardStageService(
+                args.storage_svc,
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
             )
         elif stage_flow.name == "PID_PREPARE":
-            return PIDStageService(
-                args.pid_svc,
-                UnionPIDStage.PUBLISHER_PREPARE,
-                UnionPIDStage.ADV_PREPARE,
+            return PIDPrepareStageService(
+                args.storage_svc,
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
+                args.pid_svc.multikey_enabled,
             )
         elif stage_flow.name == "ID_MATCH":
-            return PIDStageService(
-                args.pid_svc,
-                UnionPIDStage.PUBLISHER_RUN_PID,
-                UnionPIDStage.ADV_RUN_PID,
+            return PIDRunProtocolStageService(
+                args.storage_svc,
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
+                args.pid_svc.multikey_enabled,
             )
         elif stage_flow.name == "ID_MATCH_POST_PROCESS":
             return PostProcessingStageService(
