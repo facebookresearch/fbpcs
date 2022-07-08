@@ -18,7 +18,6 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -475,11 +474,9 @@ class PrivateComputationService:
         self.logger.info(
             f"Canceling the current stage {stage} of instance {instance_id}"
         )
-        # TODO: T124324848 move MPCInstance/PIDInstance stop instance to StageService.stop_service()
+        # TODO: T124324848 move MPCInstance stop instance to StageService.stop_service()
         if isinstance(last_instance, MPCInstance):
             self.mpc_svc.stop_instance(instance_id=last_instance.instance_id)
-        elif isinstance(last_instance, PIDInstance):
-            self.pid_svc.stop_instance(instance_id=last_instance.instance_id)
         else:
             stage_svc = stage.get_stage_service(self.stage_service_args)
             # TODO: T124322832 make stop service as abstract method and enforce all stage service to implement

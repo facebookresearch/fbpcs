@@ -18,6 +18,9 @@ Types of changes
 ### Added
 - Added optional new argument --padding_size which is passed as multi_conversion_limit to the lift id spine combiner and as num_conversions_per_user to the pcf2 private lift stage
 
+### Changed
+- change StageSelector to select PIDShardStageService, PIDPrepareStageService and PIDRunProtocolStageService for PID_SHARD, PID_PREPARE and ID_MATCH stages respectively
+
 ## [1.7.0] - 2022-06-23
 
 ### Changed
