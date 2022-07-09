@@ -9,8 +9,8 @@ import unittest
 from dataclasses import dataclass, field
 
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin
-from fbpcs.common.entity.instance_base import InstanceBase, mutable_field
-from fbpcs.common.entity.instance_base_config import InstanceBaseMetadata
+from fbpcs.common.entity.dataclasses_mutability import MutabilityMetadata, mutable_field
+from fbpcs.common.entity.instance_base import InstanceBase
 
 from fbpcs.common.entity.update_other_field_hook import UpdateOtherFieldHook
 
@@ -47,14 +47,14 @@ class DummyInstance(InstanceBase):
     instance_id: str = field(
         metadata={
             **DataclassHookMixin.get_metadata(name_update_hook),
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
         }
     )
 
     input_path: str = field(
         metadata={
             **DataclassHookMixin.get_metadata(ouput_update_hook, storage_update_hook),
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
         }
     )
 

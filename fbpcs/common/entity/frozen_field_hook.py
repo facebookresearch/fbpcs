@@ -12,9 +12,9 @@ from fbpcs.common.entity.dataclasses_hooks import (
     DataclassHookMixin,
     HookEventType,
 )
-from fbpcs.common.entity.instance_base_config import (
-    InstanceBaseMetadata,
+from fbpcs.common.entity.dataclasses_mutability import (
     IS_FROZEN_FIELD,
+    MutabilityMetadata,
 )
 
 T = TypeVar("T")
@@ -64,13 +64,13 @@ class FrozenFieldHook(DataclassHook[T]):
 
             if hooks is None:
                 # No hooks, so just set the metadata as immutable
-                field_obj.metadata = InstanceBaseMetadata.IMMUTABLE.value
+                field_obj.metadata = MutabilityMetadata.IMMUTABLE.value
             else:
                 # if this field has hooks
                 # We want to set the metadata as immutable and keep a record
                 # of the existing hooks (field metadata can't be updated because
                 # it is a "mappingproxy" object, not a real dict)
                 field_obj.metadata = {
-                    **InstanceBaseMetadata.IMMUTABLE.value,
+                    **MutabilityMetadata.IMMUTABLE.value,
                     **DataclassHookMixin.get_metadata(hooks),
                 }
