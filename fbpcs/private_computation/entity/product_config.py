@@ -24,11 +24,18 @@ class CommonProductConfig:
     """Stores metadata of common product config used both by attribution config and lift config
 
     Public attributes:
+        input_path: the input path of PrivateComputationInstance
+        output_dir: the output path of PrivateComputationInstance
+        hmac_key: key value of hmac
         padding_size: the id spine combiner would pad each partner row to have this number of conversions.
                         This is required by MPC compute metrics to support multiple conversions per id while
                         at the same time maintaining privacy. It is currently only used when game_type=attribution
                         because the lift id spine combiner uses a hard-coded value of 25.
                         TODO T104391012: pass padding size to lift id spine combiner.
+        result_visibility: an enum indicating the visibility of results.
+        pid_use_row_numbers: his is used by Private ID protocol to indicate whether we should enable
+                                'use-row-numbers' argument.
+        pid_configs: whether this should be in infra or product is controversial.
         post_processing_data: fields to be sent to the post processing tier.
     """
 
@@ -39,13 +46,12 @@ class CommonProductConfig:
     # because at the time the instance is created, pl might not provide any or all of them.
     hmac_key: Optional[str] = None
     padding_size: Optional[int] = None
+
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
-    # this is used by Private ID protocol to indicate whether we should
-    # enable 'use-row-numbers' argument.
     pid_use_row_numbers: bool = True
-
     pid_configs: Optional[Dict[str, Any]] = None
+
     post_processing_data: Optional[PostProcessingData] = None
 
 
@@ -95,7 +101,13 @@ class LiftConfig(ProductConfig):
     """Stores metadata of lift config in product config in a private computation instance
 
     Public attributes:
-
+        k_anonymity_threshold: Threshold for matched conversions to make results viewable
+                                For PA: K-Anon threshold strategy is five clicks per day for an Ad Id.
+                                But it will not get the value from PCInstance. Only lift run will use
+                                it from PCInstance. So this is a "lift unique" field here.
+                                For PL: K-Anon threshold is 100
+        breakdown_key: When PL service is running, CreateInstance accepts the breakdown key struct so
+                        that the instance can be aware of what cell-objective pair it belongs to at any stage.
     """
 
     k_anonymity_threshold: int = 0
