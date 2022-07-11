@@ -12,7 +12,6 @@
 #include <vector>
 
 #include <emp-sh2pc/emp-sh2pc.h>
-
 #include <folly/Format.h>
 #include <folly/json.h>
 #include <folly/logging/xlog.h>
@@ -20,6 +19,7 @@
 
 #include <fbpcf/common/FunctionalUtil.h>
 #include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include "AggMetrics.h"
 #include "ShardAggregatorGame.h"
@@ -82,8 +82,9 @@ std::vector<std::shared_ptr<AggMetrics>> ShardAggregatorApp::getInputData() {
       fbpcf::functional::map<std::string, std::shared_ptr<AggMetrics>>(
           inputPaths, [](const auto& inputPath) {
             XLOG(INFO) << "Opening file at <" << inputPath << ">";
-            return std::make_shared<AggMetrics>(AggMetrics::fromDynamic(
-                folly::parseJson(fbpcf::io::read(inputPath))));
+            return std::make_shared<AggMetrics>(
+                AggMetrics::fromDynamic(folly::parseJson(
+                    fbpcf::io::FileIOWrappers::readFile(inputPath))));
           });
   validateInputDataAggMetrics(inputData, metricsFormatType_);
   return inputData;
@@ -92,7 +93,8 @@ std::vector<std::shared_ptr<AggMetrics>> ShardAggregatorApp::getInputData() {
 void ShardAggregatorApp::putOutputData(
     const std::shared_ptr<AggMetrics>& metrics) {
   XLOG(INFO) << "putting out data ...";
-  fbpcf::io::write(outputPath_, folly::toJson(metrics->toDynamic()));
+  fbpcf::io::FileIOWrappers::writeFile(
+      outputPath_, folly::toJson(metrics->toDynamic()));
 }
 
 std::shared_ptr<AggMetrics> ShardAggregatorApp::revealMetrics(
