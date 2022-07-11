@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
 
@@ -85,7 +85,7 @@ class AttributionApp
   }
 
   void putOutputData(const AttributionOutputMetrics& attributions) override {
-    fbpcf::io::write(outputPath_, attributions.toJson());
+    fbpcf::io::FileIOWrappers::writeFile(outputPath_, attributions.toJson());
   }
 
  private:
