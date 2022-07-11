@@ -8,7 +8,7 @@
 #pragma once
 
 #include <fbpcf/io/FileManagerUtil.h>
-
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
@@ -117,7 +117,8 @@ class AggregationApp {
   void putOutputData(
       const AggregationOutputMetrics& aggregationOutput,
       std::string outputPath) {
-    fbpcf::io::write(outputPath, aggregationOutput.toJson());
+    fbpcf::io::FileIOWrappers::writeFile(
+        outputPath, aggregationOutput.toJson());
   }
 
  private:
