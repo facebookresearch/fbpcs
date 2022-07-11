@@ -80,7 +80,7 @@ def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
         partner_args["role"] = "PARTNER"
         shared_args = job_config["shared"]
         shared_args["job_name"] = job_name
-        job_specific_args = job_config.get("job_args", [])
+        job_specific_args = job_config.get("job_args", {})
 
         publisher_create_instance_args = BoltPCSCreateInstanceArgs.from_yml_dict(
             {**publisher_args, **shared_args}
