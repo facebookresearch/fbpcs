@@ -9,6 +9,8 @@
 
 #include <fbpcf/io/FileManagerUtil.h>
 
+#include <fbpcf/io/api/FileIOWrappers.h>
+#include <string>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
@@ -98,7 +100,8 @@ class AttributionApp {
   void putOutputData(
       const AttributionOutputMetrics& attributions,
       std::string outputPath) {
-    fbpcf::io::write(outputPath, attributions.toJson());
+    std::string content = attributions.toJson();
+    fbpcf::io::FileIOWrappers::writeFile(outputPath, content);
   }
 
  private:

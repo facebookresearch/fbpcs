@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/scheduler/SchedulerHelper.h>
 #include <vector>
 
@@ -80,7 +81,7 @@ void CalculatorApp<schedulerId>::putOutputData(
     const std::string& output,
     const std::string& outputPath) {
   XLOG(INFO) << "putting out data...";
-  fbpcf::io::write(outputPath, output);
+  fbpcf::io::FileIOWrappers::writeFile(outputPath, output);
 }
 
 template <int schedulerId>
