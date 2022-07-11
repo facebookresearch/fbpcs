@@ -10,7 +10,7 @@
 #include <gflags/gflags.h>
 #include "folly/logging/xlog.h"
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
 
@@ -69,6 +69,6 @@ CalculatorGameConfig CalculatorApp::getInputData() {
 
 void CalculatorApp::putOutputData(const std::string& output) {
   XLOG(INFO) << "putting out data...";
-  fbpcf::io::write(outputPath_, output);
+  fbpcf::io::FileIOWrappers::writeFile(outputPath_, output);
 }
 } // namespace private_lift
