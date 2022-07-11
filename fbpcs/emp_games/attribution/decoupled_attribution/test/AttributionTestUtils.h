@@ -28,7 +28,7 @@
 #include "fbpcs/emp_games/attribution/decoupled_attribution/AttributionOutput.h"
 #include "fbpcs/emp_games/attribution/decoupled_attribution/Constants.h"
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include "fbpcf/io/api/FileIOWrappers.h"
 
 namespace aggregation::private_attribution {
 
@@ -77,10 +77,10 @@ runGameAndGenOutputPUBLIC(
   futureAlice.wait();
   futureBob.wait();
 
-  auto resAlice =
-      AttributionOutputMetrics::fromJson(fbpcf::io::read(outputPathAlice));
-  auto resBob =
-      AttributionOutputMetrics::fromJson(fbpcf::io::read(outputPathBob));
+  auto resAlice = AttributionOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathAlice));
+  auto resBob = AttributionOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathBob));
 
   return std::make_pair(resAlice, resBob);
 }
@@ -115,10 +115,10 @@ runGameAndGenOutputXOR(
   futureAlice.wait();
   futureBob.wait();
 
-  auto resAlice =
-      AttributionOutputMetrics::fromJson(fbpcf::io::read(outputPathAlice));
-  auto resBob =
-      AttributionOutputMetrics::fromJson(fbpcf::io::read(outputPathBob));
+  auto resAlice = AttributionOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathAlice));
+  auto resBob = AttributionOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathBob));
 
   return std::make_pair(resAlice, resBob);
 }
@@ -130,7 +130,7 @@ inline void verifyOutput(
     AttributionOutputMetrics resBob,
     std::string ouputJsonFileName) {
   folly::dynamic expectedOutput =
-      folly::parseJson(fbpcf::io::read(ouputJsonFileName));
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(ouputJsonFileName));
 
   FOLLY_EXPECT_JSON_EQ(
       folly::toJson(resAlice.toDynamic()), folly::toJson(expectedOutput));

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <gtest/gtest.h>
 
 #include "folly/dynamic.h"
@@ -23,7 +23,7 @@ inline void verifyOutput(
     AggregationOutputMetrics output,
     std::string outputJsonFileName) {
   folly::dynamic expectedOutput =
-      folly::parseJson(fbpcf::io::read(outputJsonFileName));
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(outputJsonFileName));
 
   FOLLY_EXPECT_JSON_EQ(
       folly::toJson(output.toDynamic()), folly::toJson(expectedOutput));

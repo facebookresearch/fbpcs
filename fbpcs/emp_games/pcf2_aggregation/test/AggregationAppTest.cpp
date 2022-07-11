@@ -14,6 +14,7 @@
 #include "folly/Random.h"
 #include "folly/logging/xlog.h"
 
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
@@ -107,9 +108,9 @@ inline void testCorrectnessAggregationAppHelper(
   futureBob.get();
 
   auto resAlice = AggregationOutputMetrics::fromJson(
-      fbpcf::io::read(outputPathAlice.at(id)));
-  auto resBob =
-      AggregationOutputMetrics::fromJson(fbpcf::io::read(outputPathBob.at(id)));
+      fbpcf::io::FileIOWrappers::readFile(outputPathAlice.at(id)));
+  auto resBob = AggregationOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathBob.at(id)));
 
   if constexpr (outputVisibility == common::Visibility::Xor) {
     auto result = revealXORedResult(

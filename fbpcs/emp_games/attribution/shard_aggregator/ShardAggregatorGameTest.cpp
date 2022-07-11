@@ -18,7 +18,7 @@
 #include <folly/test/JsonTestUtil.h>
 #include <gtest/gtest.h>
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include <fbpcf/mpc/EmpTestUtil.h>
 #include <fbpcf/mpc/QueueIO.h>
@@ -33,13 +33,15 @@ using AggMetricsTag = private_measurement::AggMetricsTag;
 class ShardAggregatorGameTest : public ::testing::Test {
  protected:
   folly::dynamic outputMetricsObjFromPath(const std::string& path) {
-    return folly::parseJson(fbpcf::io::read(baseDir_ + path));
+    return folly::parseJson(
+        fbpcf::io::FileIOWrappers::readFile(baseDir_ + path));
   }
 
   std::shared_ptr<AggMetrics> outputAggMetricsObjFromPath(
       const std::string& path) {
-    return std::make_shared<AggMetrics>(AggMetrics::fromDynamic(
-        folly::parseJson(fbpcf::io::read(baseDir_ + path))));
+    return std::make_shared<AggMetrics>(
+        AggMetrics::fromDynamic(folly::parseJson(
+            fbpcf::io::FileIOWrappers::readFile(baseDir_ + path))));
   }
 
   // asserts that actual and expected structures, but not inner values, are
