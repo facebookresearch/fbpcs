@@ -29,11 +29,11 @@
 #include "folly/logging/xlog.h"
 
 // TODO: Rewrite for OSS?
-#include "fbpcf/io/FileManagerUtil.h"
-
 #include "../common/FilepathHelpers.h"
 #include "../common/Logging.h"
 #include "../common/S3CopyFromLocalUtil.h"
+#include "fbpcf/io/FileManagerUtil.h"
+#include "fbpcf/io/api/FileIOWrappers.h"
 
 namespace measurement::pid {
 
@@ -156,18 +156,7 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   // Reset underlying unique_ptr to ensure buffer gets flushed
   tmpFile.reset();
   XLOG(INFO) << "Writing " << tmpFilename << " -> " << outputPath_;
-
-  auto outputType = fbpcf::io::getFileType(outputPath_);
-  if (outputType == fbpcf::io::FileType::S3) {
-    private_lift::s3_utils::uploadToS3(tmpFilename, outputPath_);
-  } else if (outputType == fbpcf::io::FileType::Local) {
-    std::filesystem::copy(
-        tmpFilename,
-        outputPath_,
-        std::filesystem::copy_options::overwrite_existing);
-  } else {
-    throw std::runtime_error{"Unsupported output destination"};
-  }
+  fbpcf::io::FileIOWrappers::transferFileInParts(tmpFilename, outputPath_);
   // We need to make sure we clean up the tmpfiles now
   std::remove(tmpFilename.c_str());
   XLOG(INFO) << "File write successful.";
