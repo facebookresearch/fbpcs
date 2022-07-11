@@ -21,8 +21,8 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.service.workflow import WorkflowService, WorkflowStatus
 
-PIDWorkflowConfigs = "PIDWorkflowConfigs"
-PIDRunConfigs = "PIDRunConfigs"
+PID_WORKFLOW_CONFIGS = "PIDWorkflowConfigs"
+PID_RUN_CONFIGS = "PIDRunConfigs"
 PIDMR = "pid_mr"
 INTPUT = "inputPath"
 OUTPUT = "outputPath"
@@ -62,8 +62,8 @@ class PIDMRStageService(PrivateComputationStageService):
         if (
             pid_configs
             and PIDMR in pid_configs
-            and PIDRunConfigs in pid_configs[PIDMR]
-            and PIDWorkflowConfigs in pid_configs[PIDMR]
+            and PID_RUN_CONFIGS in pid_configs[PIDMR]
+            and PID_WORKFLOW_CONFIGS in pid_configs[PIDMR]
             and SPARK_CONFIGS in pid_configs[PIDMR]
         ):
             data_configs = {
@@ -78,13 +78,13 @@ class PIDMRStageService(PrivateComputationStageService):
                 ),
             }
             pid_overall_configs = {
-                **pid_configs[PIDMR][PIDRunConfigs],
+                **pid_configs[PIDMR][PID_RUN_CONFIGS],
                 **pid_configs[PIDMR][SPARK_CONFIGS],
                 **data_configs,
             }
 
             stage_state.instance_id = self.workflow_svc.start_workflow(
-                pid_configs[PIDMR][PIDWorkflowConfigs],
+                pid_configs[PIDMR][PID_WORKFLOW_CONFIGS],
                 pc_instance.infra_config.instance_id,
                 pid_overall_configs,
             )
@@ -119,7 +119,7 @@ class PIDMRStageService(PrivateComputationStageService):
             stage_state_instance_status = WorkflowStatus.STARTED
             if pid_configs:
                 stage_state_instance_status = self.workflow_svc.get_workflow_status(
-                    pid_configs[PIDMR][PIDWorkflowConfigs], stage_id
+                    pid_configs[PIDMR][PID_WORKFLOW_CONFIGS], stage_id
                 )
             current_stage = pc_instance.current_stage
             if stage_state_instance_status in [
