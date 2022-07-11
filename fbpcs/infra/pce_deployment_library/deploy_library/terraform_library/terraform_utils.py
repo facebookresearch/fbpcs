@@ -7,6 +7,11 @@
 
 from typing import Any, Dict, List, Optional
 
+from fbpcs.infra.pce_deployment_library.deploy_library.models import (
+    NOT_SUPPORTED_INIT_DEFAULT_OPTIONS,
+    TerraformCliOptions,
+)
+
 
 class TerraformUtils:
     def __init__(
@@ -53,40 +58,51 @@ class TerraformUtils:
         """
         Converts command string to list and updates commands with terraform options provided through kwargs and args.
         """
-        commands = command.split()
+
+        commands_list = command.split()
+
         for key, value in kwargs.items():
             # terraform CLI accepts options with "-" using "_" will results in error
             key = key.replace("_", "-")
 
             if isinstance(value, list):
                 for inner_value in value:
-                    commands.append(f"-{key}={inner_value}")
+                    commands_list.append(f"-{key}={inner_value}")
             elif isinstance(value, dict):
                 if "backend-config" in key:
-                    commands.extend(
+                    commands_list.extend(
                         [f"-backend-config {k}={v}" for k, v in value.items()]
                     )
                 # TODO: read var in kwargs and update commands
             elif isinstance(value, bool):
                 value = "true" if value else "false"
-                commands.append(f"-{key}={value}")
+                commands_list.append(f"-{key}={value}")
             else:
-                commands.append(f"-{key}={value}")
+                commands_list.append(f"-{key}={value}")
 
         # Add args to commands list
-        commands.extend(args)
-        return commands
+        commands_list.extend(args)
+        return commands_list
 
-    def get_default_options(self, input_options: Dict[str, Any]) -> Dict[str, Any]:
+    def get_default_options(
+        self, terraform_command: str, input_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Returns the terraform configs needed to create terraform cli
         """
-        return {
-            "state": self.state_file_path,
-            "target": self.resource_targets,
-            "var": self.terraform_variables,
-            "var_file": self.var_definition_file,
-            "parallelism": self.parallelism,
-            "input": self.input,
+
+        return_dict: Dict[str, Any] = {
+            TerraformCliOptions.state: self.state_file_path,
+            TerraformCliOptions.target: self.resource_targets,
+            TerraformCliOptions.var: self.terraform_variables,
+            TerraformCliOptions.var_file: self.var_definition_file,
+            TerraformCliOptions.parallelism: self.parallelism,
+            TerraformCliOptions.terraform_input: self.input,
             **input_options,
         }
+
+        if terraform_command == "init":
+            for default_option in NOT_SUPPORTED_INIT_DEFAULT_OPTIONS:
+                return_dict.pop(default_option, None)
+
+        return return_dict
