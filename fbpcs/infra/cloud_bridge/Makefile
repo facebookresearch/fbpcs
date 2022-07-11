@@ -7,6 +7,8 @@ IMAGE_NAME?=cloudbridge-private_lift-server
 
 SERVER_VERSION?=0.0.1
 SERVER_JAR=server/build/libs/server-$(SERVER_VERSION).jar
+SERVER_JAR_VERSION=`grep 'version = ' server/build.gradle | sed s"/^version = //" | sed s"/'*//g"`
+JAR_FILE_PATH="server/build/libs/server-${SERVER_JAR_VERSION}.jar"
 
 SOURCE_FILES=$(wildcard server/src/main/java/com/facebook/business/cloudbridge/pl/server/*.java)
 
@@ -32,7 +34,7 @@ local-run:
 
 
 image-build: $(SERVER_JAR) external_deps
-	docker build -t $(CONTAINER_IMAGE) .
+	docker build --build-arg JAR_FILE_PATH=$(JAR_FILE_PATH) -t $(CONTAINER_IMAGE) .
 	docker tag $(CONTAINER_IMAGE) $(LOCAL_IMAGE)
 
 	# Cleanup copied resources

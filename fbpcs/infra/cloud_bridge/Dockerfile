@@ -64,7 +64,7 @@ COPY deployment_helper /terraform_deployment/fbpcs/infra/cloud_bridge/deployment
 # #########################################
 # Spring Boot
 # #########################################
-ARG JAR_FILE=server/build/libs/*.jar
-COPY ${JAR_FILE} /server/server.jar
+ARG JAR_FILE_PATH
+COPY ${JAR_FILE_PATH}  /server/server.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/server/server.jar"]
