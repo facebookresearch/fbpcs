@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 
-#include <fbpcf/common/FunctionalUtil.h>
 #include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include "folly/json.h"
 #include "folly/logging/xlog.h"
 
@@ -225,8 +225,8 @@ AggregationInputMetrics::AggregationInputMetrics(
       inputSecretShareFilePath.string());
   // Reading the attribution results received from private attribution game in
   // an unordered_map.
-  auto attributionResultJson =
-      folly::parseJson(fbpcf::io::read(inputSecretShareFilePath));
+  auto attributionResultJson = folly::parseJson(
+      fbpcf::io::FileIOWrappers::readFile(inputSecretShareFilePath));
 
   for (const auto& [rule, formatters] : attributionResultJson.items()) {
     attributionRules_.push_back(rule.asString());
