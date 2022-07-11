@@ -16,6 +16,7 @@
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/exception/ExceptionBase.h>
 #include <fbpcs/performance_tools/CostEstimation.h>
+#include <signal.h>
 #include "MainUtil.h"
 #include "ShardAggregatorApp.h"
 
@@ -51,6 +52,7 @@ int main(int argc, char* argv[]) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   fbpcf::AwsSdk::aquire();
+  signal(SIGPIPE, SIG_IGN);
 
   XLOGF(INFO, "Party: {}", FLAGS_party);
   XLOGF(INFO, "Visibility: {}", FLAGS_visibility);
