@@ -14,6 +14,7 @@
 #include "folly/Random.h"
 #include "folly/logging/xlog.h"
 
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
@@ -92,9 +93,9 @@ inline void testCorrectnessAttributionAppHelper(
   futureBob.wait();
 
   auto resAlice = AttributionOutputMetrics::fromJson(
-      fbpcf::io::read(outputPathAlice.at(id)));
-  auto resBob =
-      AttributionOutputMetrics::fromJson(fbpcf::io::read(outputPathBob.at(id)));
+      fbpcf::io::FileIOWrappers::readFile(outputPathAlice.at(id)));
+  auto resBob = AttributionOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathBob.at(id)));
 
   auto result = revealXORedResult(resAlice, resBob, attributionRule.at(id));
 

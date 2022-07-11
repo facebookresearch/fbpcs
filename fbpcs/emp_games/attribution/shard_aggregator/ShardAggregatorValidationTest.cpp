@@ -13,7 +13,7 @@
 #include "folly/logging/xlog.h"
 
 #include <fbpcf/common/FunctionalUtil.h>
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 
 #include <gtest/gtest.h>
 
@@ -36,8 +36,9 @@ class ShardAggregatorValidationTest : public ::testing::Test {
 // Tests for ad object format validation
 TEST_F(ShardAggregatorValidationTest, AdObjectTestValidMeasurementInput) {
   auto validMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "valid_measurement_shard.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "valid_measurement_shard.json"))));
   auto validData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>({validMap});
   validateInputDataAggMetrics(validData, "ad_object");
@@ -45,8 +46,9 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestValidMeasurementInput) {
 
 TEST_F(ShardAggregatorValidationTest, AdObjectTestValidPCMInput) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "invalid_pcm_shard.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "invalid_pcm_shard.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -57,8 +59,9 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestValidPCMInput) {
 
 TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputLift) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "valid_lift_input.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "valid_lift_input.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -70,8 +73,9 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputLift) {
 
 TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputBadStructure) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "invalid_bad_structure.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "invalid_bad_structure.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -83,8 +87,9 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputBadStructure) {
 
 TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputEmptyMap0) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "invalid_empty_map_0.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "invalid_empty_map_0.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -96,8 +101,9 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputEmptyMap0) {
 
 TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputEmptyMap1) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "invalid_empty_map_1.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "invalid_empty_map_1.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -109,8 +115,9 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidInputEmptyMap1) {
 
 TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidAggregationName) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "invalid_aggregation_name.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "invalid_aggregation_name.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -123,8 +130,9 @@ TEST_F(ShardAggregatorValidationTest, AdObjectTestInvalidAggregationName) {
 // Tests for lift format validation
 TEST_F(ShardAggregatorValidationTest, LiftTestValidLiftInput) {
   auto validMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "valid_lift_input.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "valid_lift_input.json"))));
   auto validData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>({validMap});
   validateInputDataAggMetrics(validData, "lift");
@@ -132,8 +140,9 @@ TEST_F(ShardAggregatorValidationTest, LiftTestValidLiftInput) {
 
 TEST_F(ShardAggregatorValidationTest, LiftTestInvalidAdObjectInput) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "valid_measurement_shard.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "valid_measurement_shard.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -144,8 +153,9 @@ TEST_F(ShardAggregatorValidationTest, LiftTestInvalidAdObjectInput) {
 
 TEST_F(ShardAggregatorValidationTest, LiftTestInvalidInputEmptyMap) {
   auto invalidMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "invalid_empty_map_0.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "invalid_empty_map_0.json"))));
   auto invalidData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>(
           {invalidMap});
@@ -156,8 +166,9 @@ TEST_F(ShardAggregatorValidationTest, LiftTestInvalidInputEmptyMap) {
 
 TEST_F(ShardAggregatorValidationTest, LiftTestValidInputEmptyCohortMetrics) {
   auto validMap = std::make_shared<private_measurement::AggMetrics>(
-      private_measurement::AggMetrics::fromDynamic(folly::parseJson(
-          fbpcf::io::read(baseDir_ + "valid_lift_no_cohort_metrics.json"))));
+      private_measurement::AggMetrics::fromDynamic(
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(
+              baseDir_ + "valid_lift_no_cohort_metrics.json"))));
   auto validData =
       std::vector<std::shared_ptr<private_measurement::AggMetrics>>({validMap});
 

@@ -15,11 +15,11 @@
 #include <gtest/gtest.h>
 #include "folly/Random.h"
 
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
-#include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcs/emp_games/common/Csv.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
@@ -138,10 +138,10 @@ class CalculatorAppTestFixture
 
     future0.get();
     future1.get();
-    auto publisherResult =
-        GroupedLiftMetrics::fromJson(fbpcf::io::read(publisherOutputPath));
-    auto partnerResult =
-        GroupedLiftMetrics::fromJson(fbpcf::io::read(partnerOutputPath));
+    auto publisherResult = GroupedLiftMetrics::fromJson(
+        fbpcf::io::FileIOWrappers::readFile(publisherOutputPath));
+    auto partnerResult = GroupedLiftMetrics::fromJson(
+        fbpcf::io::FileIOWrappers::readFile(partnerOutputPath));
 
     return useXorEncryption ? publisherResult ^ partnerResult : publisherResult;
   }
@@ -169,8 +169,9 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
       useTls,
       useXorEncryption);
 
-  auto expectedResult =
-      GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputPath));
+  auto expectedResult = GroupedLiftMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(expectedOutputPath));
+
   EXPECT_EQ(expectedResult, result);
 }
 

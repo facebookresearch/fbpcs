@@ -14,7 +14,7 @@
 #include "folly/Format.h"
 #include "folly/Random.h"
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include "../../../common/Csv.h"
 #include "../CalculatorApp.h"
@@ -122,9 +122,11 @@ TEST_F(CalculatorAppTest, RandomInputTestVisibilityPublic) {
   GroupedLiftMetrics expectedRes;
   expectedRes.metrics = computedResult.toLiftMetrics();
 
-  auto resAlice =
-      GroupedLiftMetrics::fromJson(fbpcf::io::read(outputPathAlice_));
-  auto resBob = GroupedLiftMetrics::fromJson(fbpcf::io::read(outputPathBob_));
+  auto resAlice = GroupedLiftMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathAlice_));
+  auto resBob = GroupedLiftMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathBob_));
+
   EXPECT_EQ(expectedRes, resAlice);
   EXPECT_EQ(expectedRes, resBob);
 }

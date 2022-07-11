@@ -14,9 +14,9 @@
 #include <gtest/gtest.h>
 #include "folly/Random.h"
 
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/InMemoryPartyCommunicationAgentFactory.h"
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
-#include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcf/test/TestHelper.h"
 #include "fbpcs/emp_games/common/Csv.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
@@ -122,8 +122,9 @@ TEST_P(CalculatorGameTestFixture, TestCorrectness) {
       schedulerCreator, std::move(publisherConfig), std::move(partnerConfig));
 
   // Read expected output from file
-  auto expectedRes =
-      GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputFilename));
+  auto expectedRes = GroupedLiftMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(expectedOutputFilename));
+
   EXPECT_EQ(expectedRes, res);
 }
 

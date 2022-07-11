@@ -18,7 +18,7 @@
 #include <folly/logging/xlog.h>
 #include <folly/test/JsonTestUtil.h>
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 
 namespace measurement::private_attribution {
 
@@ -35,7 +35,8 @@ class AggMetricsTest : public ::testing::Test {
 
 TEST_F(AggMetricsTest, TestParseSimpleMap) {
   auto inputPath = baseDir_ + "test_new_parser/simple_map.json";
-  auto parsedInput = folly::parseJson(fbpcf::io::read(inputPath));
+  auto parsedInput =
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(inputPath));
   auto metrics = private_measurement::AggMetrics::fromDynamic(parsedInput);
   XLOG(INFO) << metrics;
   EXPECT_EQ(metrics.getAtKey("measurement")->getIntValue(), 339959610281870460);
@@ -45,7 +46,8 @@ TEST_F(AggMetricsTest, TestParseSimpleMap) {
 TEST_F(AggMetricsTest, TestParseAttribution) {
   auto inputPath =
       baseDir_ + "shard_validation_test/valid_measurement_shard.json";
-  auto parsedInput = folly::parseJson(fbpcf::io::read(inputPath));
+  auto parsedInput =
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(inputPath));
   auto metrics = private_measurement::AggMetrics::fromDynamic(parsedInput);
   XLOG(INFO) << metrics;
   EXPECT_EQ(
@@ -81,7 +83,8 @@ TEST_F(AggMetricsTest, TestParseAttribution) {
 
 TEST_F(AggMetricsTest, TestParseLift) {
   auto inputPath = baseDir_ + "shard_validation_test/valid_lift_input.json";
-  auto parsedInput = folly::parseJson(fbpcf::io::read(inputPath));
+  auto parsedInput =
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(inputPath));
   auto metrics = private_measurement::AggMetrics::fromDynamic(parsedInput);
   XLOG(INFO) << metrics;
 
@@ -150,7 +153,7 @@ TEST_F(AggMetricsTest, TestParseInvalidMap) {
   auto inputPath = baseDir_ + "test_new_parser/invalid_map.json";
   EXPECT_DEATH(
       private_measurement::AggMetrics::fromDynamic(
-          folly::parseJson(fbpcf::io::read(inputPath))),
+          folly::parseJson(fbpcf::io::FileIOWrappers::readFile(inputPath))),
       "Metric values should be integers");
 }
 } // namespace measurement::private_attribution

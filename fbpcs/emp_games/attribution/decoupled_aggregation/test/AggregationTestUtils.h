@@ -23,6 +23,7 @@
 #include "folly/logging/xlog.h"
 #include "folly/test/JsonTestUtil.h"
 
+#include "fbpcf/io/api/FileIOWrappers.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationApp.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationMetrics.h"
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/Constants.h"
@@ -82,10 +83,10 @@ runGameAndGenOutput(
   futureAlice.wait();
   futureBob.wait();
 
-  auto resAlice =
-      AggregationOutputMetrics::fromJson(fbpcf::io::read(outputPathAlice));
-  auto resBob =
-      AggregationOutputMetrics::fromJson(fbpcf::io::read(outputPathBob));
+  auto resAlice = AggregationOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathAlice));
+  auto resBob = AggregationOutputMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathBob));
 
   return std::make_pair(resAlice, resBob);
 }
@@ -96,7 +97,7 @@ inline void verifyOutput(
     AggregationOutputMetrics resBob,
     std::string ouputJsonFileName) {
   folly::dynamic expectedOutput =
-      folly::parseJson(fbpcf::io::read(ouputJsonFileName));
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(ouputJsonFileName));
 
   FOLLY_EXPECT_JSON_EQ(
       folly::toJson(resAlice.toDynamic()), folly::toJson(expectedOutput));

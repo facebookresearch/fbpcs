@@ -14,7 +14,7 @@
 #include <folly/test/JsonTestUtil.h>
 #include <gtest/gtest.h>
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include "../../common/TestUtil.h"
 #include "AggMetrics.h"
@@ -103,13 +103,15 @@ class ShardAggregatorAppTest : public ::testing::Test {
     futureAlice.wait();
     futureBob.wait();
 
-    auto resAlice = folly::parseJson(fbpcf::io::read(outputPathAlice_));
-    auto resBob = folly::parseJson(fbpcf::io::read(outputPathBob_));
+    auto resAlice =
+        folly::parseJson(fbpcf::io::FileIOWrappers::readFile(outputPathAlice_));
+    auto resBob =
+        folly::parseJson(fbpcf::io::FileIOWrappers::readFile(outputPathBob_));
 
-    folly::dynamic expectedOutAlice =
-        folly::parseJson(fbpcf::io::read(expectedAliceOutPath));
-    folly::dynamic expectedOutBob =
-        folly::parseJson(fbpcf::io::read(expectedBobOutPath));
+    folly::dynamic expectedOutAlice = folly::parseJson(
+        fbpcf::io::FileIOWrappers::readFile(expectedAliceOutPath));
+    folly::dynamic expectedOutBob = folly::parseJson(
+        fbpcf::io::FileIOWrappers::readFile(expectedBobOutPath));
 
     FOLLY_EXPECT_JSON_EQ(
         folly::toJson(resAlice), folly::toJson(expectedOutAlice));
