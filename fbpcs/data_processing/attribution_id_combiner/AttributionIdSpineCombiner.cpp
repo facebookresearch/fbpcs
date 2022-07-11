@@ -22,6 +22,7 @@
 
 #include <fbpcs/performance_tools/CostEstimation.h>
 #include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileIOWrappers.h"
 #include "fbpcf/io/api/FileReader.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerOptions.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerUtil.h"
@@ -73,20 +74,8 @@ int main(int argc, char** argv) {
   bufferedDataReader->close();
   bufferedSpineReader->close();
 
-  auto outputType = fbpcf::io::getFileType(outputPath);
   if (outputPath != tmpFilepath) {
-    if (outputType == fbpcf::io::FileType::S3) {
-      private_lift::s3_utils::uploadToS3(tmpFilepath, outputPath);
-    } else if (outputType == fbpcf::io::FileType::Local) {
-      std::filesystem::create_directories(outputPath.parent_path());
-      std::filesystem::copy(
-          tmpFilepath,
-          outputPath,
-          std::filesystem::copy_options::overwrite_existing);
-    } else {
-      throw std::runtime_error{"Unsupported output destination"};
-    }
-
+    fbpcf::io::FileIOWrappers::transferFileInParts(tmpFilepath, outputPath);
     // We need to make sure we clean up the tmpfiles now
     std::remove(tmpFilepath.c_str());
   }

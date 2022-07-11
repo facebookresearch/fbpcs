@@ -36,6 +36,7 @@
 #include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcf/io/IInputStream.h"
 #include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/FileIOWrappers.h"
 #include "fbpcf/io/api/FileReader.h"
 #include "fbpcs/data_processing/lift_id_combiner/LiftIdSpineCombinerOptions.h"
 
@@ -210,21 +211,7 @@ void LiftIdSpineFileCombiner::combineFile() {
     // the same location as our tmpDirectory)
     // TODO: This should never happen if we actually use a tmp filename
     XLOG(INFO) << "Writing " << tmpFilepath << " -> " << outputPath_;
-
-    auto outputType = fbpcf::io::getFileType(outputPath_);
-    if (outputType == fbpcf::io::FileType::S3) {
-      private_lift::s3_utils::uploadToS3(tmpFilepath, outputPath_);
-    } else if (outputType == fbpcf::io::FileType::Local) {
-      if (outputPath_.has_parent_path()) {
-        std::filesystem::create_directories(outputPath_.parent_path());
-      }
-      std::filesystem::copy(
-          tmpFilepath,
-          outputPath_,
-          std::filesystem::copy_options::overwrite_existing);
-    } else {
-      throw std::runtime_error{"Unsupported output destination"};
-    }
+    fbpcf::io::FileIOWrappers::transferFileInParts(tmpFilepath, outputPath_);
     // We need to make sure we clean up the tmpfiles now
     std::remove(tmpFilepath.c_str());
   }
