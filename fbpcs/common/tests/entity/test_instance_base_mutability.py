@@ -7,13 +7,11 @@ import unittest
 from dataclasses import dataclass
 from typing import Generic, List, Optional, TypeVar
 
+from fbpcs.common.entity.dataclasses_mutability import immutable_field, mutable_field
+
 from fbpcs.common.entity.exceptions import InstanceFrozenFieldError
 
-from fbpcs.common.entity.instance_base import (
-    immutable_field,
-    InstanceBase,
-    mutable_field,
-)
+from fbpcs.common.entity.instance_base import InstanceBase
 
 
 def create_new_num_list() -> List[int]:
