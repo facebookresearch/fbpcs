@@ -18,7 +18,7 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <sys/types.h>
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftCalculator.h"
@@ -240,8 +240,8 @@ TEST(LiftCalculatorLocalTest, JsonCorrectnessTest) {
       private_measurement::test_util::getBaseDirFromPath(__FILE__);
   std::string expectedOutputPath =
       baseDir + "../../../sample_input/correctness_output.json";
-  GroupedLiftMetrics expectedResult =
-      GroupedLiftMetrics::fromJson(fbpcf::io::read(expectedOutputPath));
+  GroupedLiftMetrics expectedResult = GroupedLiftMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(expectedOutputPath));
 
   auto result = getLiftMetrics();
   EXPECT_EQ(result, expectedResult);
