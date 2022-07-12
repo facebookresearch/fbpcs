@@ -8,8 +8,10 @@ from enum import Enum, IntEnum
 from typing import Any, Dict, Optional
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
+from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
 
 # This is the visibility defined in https://fburl.com/code/i1itu32l
 class ResultVisibility(IntEnum):
@@ -33,8 +35,11 @@ class CommonProductConfig:
                         because the lift id spine combiner uses a hard-coded value of 25.
                         TODO T104391012: pass padding size to lift id spine combiner.
         result_visibility: an enum indicating the visibility of results.
-        pid_use_row_numbers: his is used by Private ID protocol to indicate whether we should enable
+        pid_use_row_numbers: this is used by Private ID protocol to indicate whether we should enable
                                 'use-row-numbers' argument.
+        multikey_enabled: if it is true, then multiple identifier is used for PID matching; otherwise, only 1 key is used for PID matching.
+        pid_protocol: the PIDProtocol that is used for PID matching.
+        pid_max_column_count: this specifies how many indentifiers are used for PID matching.
         pid_configs: whether this should be in infra or product is controversial.
         post_processing_data: fields to be sent to the post processing tier.
     """
@@ -50,6 +55,9 @@ class CommonProductConfig:
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
     pid_use_row_numbers: bool = True
+    multikey_enabled: bool = False
+    pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL
+    pid_max_column_count: int = 1
     pid_configs: Optional[Dict[str, Any]] = None
 
     post_processing_data: Optional[PostProcessingData] = None

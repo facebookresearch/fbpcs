@@ -67,14 +67,12 @@ class StageSelector:
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                args.pid_svc.multikey_enabled,
             )
         elif stage_flow.name == "ID_MATCH":
             return PIDRunProtocolStageService(
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                args.pid_svc.multikey_enabled,
             )
         elif stage_flow.name == "ID_MATCH_POST_PROCESS":
             return PostProcessingStageService(

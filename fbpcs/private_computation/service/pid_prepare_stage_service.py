@@ -20,10 +20,6 @@ from fbpcs.onedocker_binary_config import (
     OneDockerBinaryConfig,
 )
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
-from fbpcs.pid.service.pid_service.utils import (
-    get_max_id_column_cnt,
-    get_pid_protocol_from_num_shards,
-)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -45,7 +41,6 @@ class PIDPrepareStageService(PrivateComputationStageService):
         _storage_svc: used to read/write files during private computation runs
         _onedocker_svc: used to spin up containers that run binaries in the cloud
         _onedocker_binary_config: stores OneDocker information
-        _multikey_enabled: use multiple columns for identifiers if true
         _containter_timeout: customed timeout for container
     """
 
@@ -54,13 +49,11 @@ class PIDPrepareStageService(PrivateComputationStageService):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-        multikey_enabled: bool = False,
         container_timeout: Optional[int] = DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     ) -> None:
         self._storage_svc = storage_svc
         self._onedocker_svc = onedocker_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
-        self._multikey_enabled = multikey_enabled
         self._container_timeout = container_timeout
         self._logger: logging.Logger = logging.getLogger(__name__)
 
@@ -118,8 +111,6 @@ class PIDPrepareStageService(PrivateComputationStageService):
         pc_role = pc_instance.infra_config.role
         # generate the list of command args for publisher or partner
         args_list = []
-        # later mltikey_enabled, protocol, and max_col_cnt wil be centralized in PrivateComputationInstance.
-        protocol = get_pid_protocol_from_num_shards(num_shards, self._multikey_enabled)
         binary_name = PIDPrepareBinaryService.get_binary_name()
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
         for shard in range(num_shards):
@@ -127,7 +118,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
                 input_path=PIDStage.get_sharded_filepath(input_path, shard),
                 output_path=PIDStage.get_sharded_filepath(output_path, shard),
                 tmp_directory=onedocker_binary_config.tmp_directory,
-                max_column_count=get_max_id_column_cnt(protocol),
+                max_column_count=pc_instance.product_config.common.pid_max_column_count,
             )
             args_list.append(args_per_shard)
         # start containers

@@ -138,14 +138,12 @@ class PrivateComputationPIDMigrationTestStageFlow(PrivateComputationBaseStageFlo
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                args.pid_svc.multikey_enabled,
             )
         elif self is self.PID_PREPARE:
             return PIDPrepareStageService(
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                args.pid_svc.multikey_enabled,
             )
         elif self is self.COMPUTE:
             return ComputeMetricsStageService(

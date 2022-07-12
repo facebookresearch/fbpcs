@@ -19,9 +19,7 @@ from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
 )
-from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
-from fbpcs.pid.service.pid_service.utils import get_pid_protocol_from_num_shards
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -44,7 +42,6 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         _storage_svc: used to read/write files during private computation runs
         _onedocker_svc: used to spin up containers that run binaries in the cloud
         _onedocker_binary_config: stores OneDocker information
-        _multikey_enabled: use multiple columns for identifiers if true
     """
 
     def __init__(
@@ -52,12 +49,10 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-        multikey_enabled: bool = False,
     ) -> None:
         self._storage_svc = storage_svc
         self._onedocker_svc = onedocker_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
-        self._multikey_enabled = multikey_enabled
         self._logger: logging.Logger = logging.getLogger(__name__)
 
     async def run_async(
@@ -115,14 +110,12 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         input_path = pc_instance.pid_stage_output_prepare_path
         output_path = pc_instance.pid_stage_output_spine_path
         pc_role = pc_instance.infra_config.role
-        protocol = get_pid_protocol_from_num_shards(num_shards, self._multikey_enabled)
+        pid_protocol = pc_instance.product_config.common.pid_protocol
         metric_paths = self.get_metric_paths(pc_role, output_path, num_shards)
         server_hostnames = self.get_server_hostnames(pc_role, server_ips, num_shards)
-        if pc_instance.product_config.common.pid_use_row_numbers:
+        use_row_numbers = pc_instance.product_config.common.pid_use_row_numbers
+        if use_row_numbers:
             logging.info("use-row-numbers is enabled for Private ID")
-        use_row_numbers = pc_instance.product_config.common.pid_use_row_numbers and (
-            protocol != PIDProtocol.UNION_PID_MULTIKEY
-        )
         # generate the list of command args for publisher or partner
         args_list = []
         for shard in range(num_shards):
@@ -137,7 +130,9 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             args_list.append(args_per_shard)
         # start containers
         logging.info(f"{pc_role} spinning up containers")
-        binary_name = pid_run_protocol_binary_service.get_binary_name(protocol, pc_role)
+        binary_name = pid_run_protocol_binary_service.get_binary_name(
+            pid_protocol, pc_role
+        )
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
         env_vars = {ONEDOCKER_REPOSITORY_PATH: onedocker_binary_config.repository_path}
         return await pid_run_protocol_binary_service.start_containers(
