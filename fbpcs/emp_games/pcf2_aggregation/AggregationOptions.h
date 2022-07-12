@@ -27,3 +27,5 @@ DECLARE_int32(max_num_touchpoints);
 DECLARE_int32(max_num_conversions);
 DECLARE_int32(input_encryption);
 DECLARE_bool(log_cost);
+DECLARE_string(log_cost_s3_bucket);
+DECLARE_string(log_cost_s3_region);

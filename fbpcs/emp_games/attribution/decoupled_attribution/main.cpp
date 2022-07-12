@@ -22,12 +22,17 @@
 #include "fbpcs/emp_games/attribution/decoupled_attribution/MainUtil.h"
 
 int main(int argc, char* argv[]) {
-  fbpcs::performance_tools::CostEstimation cost =
-      fbpcs::performance_tools::CostEstimation("attributor", "decoupled");
-  cost.start();
-
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  fbpcs::performance_tools::CostEstimation cost =
+      fbpcs::performance_tools::CostEstimation(
+          "attributor",
+          FLAGS_log_cost_s3_bucket,
+          FLAGS_log_cost_s3_region,
+          "decoupled");
+  cost.start();
+
   fbpcf::AwsSdk::aquire();
 
   XLOGF(INFO, "Party: {}", FLAGS_party);

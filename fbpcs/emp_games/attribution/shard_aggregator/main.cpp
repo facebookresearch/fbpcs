@@ -43,13 +43,20 @@ DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");
+DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
+DEFINE_string(
+    log_cost_s3_region,
+    ".s3.us-west-2.amazonaws.com/",
+    "s3 regioni name");
 
 int main(int argc, char* argv[]) {
-  fbpcs::performance_tools::CostEstimation cost{"shard_aggregator"};
-  cost.start();
-
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  fbpcs::performance_tools::CostEstimation cost{
+      "shard_aggregator", FLAGS_log_cost_s3_bucket, FLAGS_log_cost_s3_region};
+  cost.start();
+
   fbpcf::AwsSdk::aquire();
 
   XLOGF(INFO, "Party: {}", FLAGS_party);
