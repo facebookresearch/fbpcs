@@ -6,11 +6,12 @@
 
 
 import unittest
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from unittest import mock
 
 from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner, BoltState
+from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -36,18 +37,20 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             partner_client=mock_partner_client,
         )
 
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     async def test_joint_stage(
         self,
         mock_publisher_args,
         mock_partner_args,
+        mock_sleep,
     ) -> None:
         # testing that the correct server ips are used when a joint stage is run
         test_publisher_id = "test_pub_id"
         test_partner_id = "test_part_id"
         test_server_ips = ["1.1.1.1"]
-        mock_partner_run_stage = self.prepare_mock_client_functions(
+        mock_partner_run_stage = self._prepare_mock_client_functions(
             test_publisher_id,
             test_partner_id,
             PrivateComputationStageFlow.ID_MATCH,
@@ -69,13 +72,16 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             server_ips=test_server_ips,
         )
 
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
-    async def test_non_joint_stage(self, mock_publisher_args, mock_partner_args):
+    async def test_non_joint_stage(
+        self, mock_publisher_args, mock_partner_args, mock_sleep
+    ):
         # testing that server ips are not used when non-joint stage is run
         test_publisher_id = "test_pub_id"
         test_partner_id = "test_part_id"
-        mock_partner_run_stage = self.prepare_mock_client_functions(
+        mock_partner_run_stage = self._prepare_mock_client_functions(
             test_publisher_id, test_partner_id, PrivateComputationStageFlow.PID_SHARD
         )
 
@@ -93,7 +99,106 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             server_ips=None,
         )
 
-    def prepare_mock_client_functions(
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch(
+        "fbpcs.bolt.bolt_runner.BoltRunner.run_next_stage", new_callable=mock.AsyncMock
+    )
+    async def test_auto_stage_retry(
+        self, mock_run_next_stage, mock_publisher_args, mock_partner_args, mock_sleep
+    ) -> None:
+        for is_retryable in (True, False):
+            with self.subTest(is_retryable=is_retryable):
+                # mock runner has default num_tries = 2
+                mock_run_next_stage.reset_mock()
+                mock_run_next_stage.side_effect = [Exception(1), Exception(2)]
+                test_job = BoltJob(
+                    job_name="test",
+                    publisher_bolt_args=mock_publisher_args,
+                    partner_bolt_args=mock_partner_args,
+                    stage_flow=DummyRetryableStageFlow
+                    if is_retryable
+                    else DummyNonRetryableStageFlow,
+                )
+                await self.test_runner.run_async([test_job])
+                if is_retryable:
+                    self.assertEqual(mock_run_next_stage.call_count, DEFAULT_NUM_TRIES)
+                else:
+                    self.assertEqual(mock_run_next_stage.call_count, 1)
+
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
+    async def test_auto_stage_retry_one_sided_failure(self, mock_sleep) -> None:
+        for failing_side in ("publisher", "partner"):
+            (
+                mock_publisher_run_stage,
+                mock_partner_run_stage,
+                test_job,
+            ) = self._prepare_one_sided_failure_retry(failing_side=failing_side)
+            with self.subTest(failing_side=failing_side):
+                # if one side fails but the other doesn't and it's not a joint stage,
+                # only the failing side should retry. The joint stage case involves cancelling,
+                # which is tested separately
+                await self.test_runner.run_async([test_job])
+                if failing_side == "publisher":
+                    self.assertEquals(mock_publisher_run_stage.call_count, 2)
+                    self.assertEquals(mock_partner_run_stage.call_count, 1)
+                else:
+                    self.assertEquals(mock_publisher_run_stage.call_count, 1)
+                    self.assertEquals(mock_partner_run_stage.call_count, 2)
+
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    def _prepare_one_sided_failure_retry(
+        self, mock_publisher_args, mock_partner_args, failing_side: str
+    ) -> Tuple[mock.AsyncMock, mock.AsyncMock, BoltJob]:
+        mock_publisher_run_stage = mock.AsyncMock()
+        mock_partner_run_stage = mock.AsyncMock()
+        self.test_runner.publisher_client.run_stage = mock_publisher_run_stage
+        self.test_runner.partner_client.run_stage = mock_partner_run_stage
+        if failing_side == "publisher":
+            self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+                side_effect=[
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                ]
+            )
+            self.test_runner.partner_client.update_instance = mock.AsyncMock(
+                side_effect=[
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                ]
+            )
+        if failing_side == "partner":
+            self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+                side_effect=[
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                ]
+            )
+            self.test_runner.partner_client.update_instance = mock.AsyncMock(
+                side_effect=[
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
+                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
+                ]
+            )
+        test_job = BoltJob(
+            job_name="test",
+            publisher_bolt_args=mock_publisher_args,
+            partner_bolt_args=mock_partner_args,
+            stage_flow=DummyNonJointStageFlow,
+        )
+        return mock_publisher_run_stage, mock_partner_run_stage, test_job
+
+    def _prepare_mock_client_functions(
         self,
         test_publisher_id: str,
         test_partner_id: str,
@@ -112,14 +217,14 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         test_completed_state = BoltState(pc_instance_status=stage.completed_status)
         if server_ips:
             self.test_runner.publisher_client.update_instance = mock.AsyncMock(
-                side_effect=[test_start_state, test_completed_state]
+                side_effect=[test_start_state, test_start_state, test_completed_state]
             )
         else:
             self.test_runner.publisher_client.update_instance = mock.AsyncMock(
-                side_effect=[test_completed_state]
+                side_effect=[test_start_state, test_completed_state]
             )
         self.test_runner.partner_client.update_instance = mock.AsyncMock(
-            side_effect=[test_completed_state]
+            side_effect=[test_start_state, test_completed_state]
         )
         self.test_runner.publisher_client.run_stage = mock.AsyncMock()
         mock_partner_run_stage = mock.AsyncMock()
@@ -162,3 +267,47 @@ class DummyNonJointStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.PID_SHARD_FAILED,
         False,
     )
+
+
+class DummyRetryableStageFlow(PrivateComputationBaseStageFlow):
+    CREATED = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.CREATION_STARTED,
+        PrivateComputationInstanceStatus.CREATED,
+        PrivateComputationInstanceStatus.CREATION_FAILED,
+        False,
+    )
+
+    RETRYABLE_STAGE = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
+        False,
+        is_retryable=True,
+    )
+
+    def get_stage_service(
+        self, args: PrivateComputationStageServiceArgs
+    ) -> PrivateComputationStageService:
+        raise NotImplementedError()
+
+
+class DummyNonRetryableStageFlow(PrivateComputationBaseStageFlow):
+    CREATED = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.CREATION_STARTED,
+        PrivateComputationInstanceStatus.CREATED,
+        PrivateComputationInstanceStatus.CREATION_FAILED,
+        False,
+    )
+
+    NON_RETRYABLE_STAGE = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+        PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+        PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+        True,
+        is_retryable=False,
+    )
+
+    def get_stage_service(
+        self, args: PrivateComputationStageServiceArgs
+    ) -> PrivateComputationStageService:
+        raise NotImplementedError()

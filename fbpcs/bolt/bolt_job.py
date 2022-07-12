@@ -51,6 +51,7 @@ class BoltJob(DataClassJsonMixin):
         },
     )
     poll_interval: int = DEFAULT_POLL_INTERVAL_SEC
+    num_tries: Optional[int] = None
 
     def __post_init__(self) -> None:
         if self.stage_flow is PrivateComputationBaseStageFlow:

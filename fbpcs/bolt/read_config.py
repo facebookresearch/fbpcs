@@ -66,6 +66,7 @@ def create_bolt_runner(
         publisher_client=publisher_client,
         partner_client=partner_client,
         max_parallel_runs=runner_config.get("max_parallel_runs"),
+        num_tries=runner_config.get("num_tries"),
         logger=logger,
     )
     return runner
@@ -104,6 +105,7 @@ def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
             poll_interval=job_specific_args.get(
                 "poll_interval", DEFAULT_POLL_INTERVAL_SEC
             ),
+            num_tries=job_specific_args.get("num_tries"),
         )
         bolt_job_list.append(bolt_job)
 
