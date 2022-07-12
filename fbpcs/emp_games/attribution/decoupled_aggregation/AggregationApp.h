@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/AggregationGame.h"
@@ -77,7 +77,8 @@ class AggregationApp
 
   void putOutputData(
       const AggregationOutputMetrics& aggregationOutput) override {
-    fbpcf::io::write(outputPath_, aggregationOutput.toJson());
+    fbpcf::io::FileIOWrappers::writeFile(
+        outputPath_, aggregationOutput.toJson());
   }
 
  private:

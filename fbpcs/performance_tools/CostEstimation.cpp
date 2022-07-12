@@ -6,7 +6,7 @@
  */
 
 #include "fbpcs/performance_tools/CostEstimation.h"
-#include <fbpcf/io/FileManagerUtil.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <folly/dynamic.h>
 #include <folly/json.h>
 #include <folly/logging/xlog.h>
@@ -217,7 +217,7 @@ std::string CostEstimation::_writeToS3(
   std::string costData = folly::toPrettyJson(costDynamic);
   try {
     XLOG(INFO) << "Writing cost file to s3: " << filePath;
-    fbpcf::io::write(filePath, costData);
+    fbpcf::io::FileIOWrappers::writeFile(filePath, costData);
   } catch (const std::exception& e) {
     XLOG(WARN) << "Warning: Exception writing cost in S3.\n\terror msg: "
                << e.what();
