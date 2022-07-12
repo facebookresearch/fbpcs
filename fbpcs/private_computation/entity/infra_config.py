@@ -9,6 +9,8 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from dataclasses_json import DataClassJsonMixin
+from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
+from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.pid.entity.pid_instance import PIDInstance
@@ -36,8 +38,32 @@ UnionedPCInstance = Union[
 ]
 
 
+# called in num_pid_mpc_containers_hook
+def raise_containers_error(obj: "InfraConfig") -> None:
+    raise ValueError(
+        f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {obj.num_pid_containers} and num_mpc_containers = {obj.num_mpc_containers}"
+    )
+
+
+# called in num_pid_mpc_containers_hook
+def not_valid_containers(obj: "InfraConfig") -> bool:
+    if hasattr(obj, "num_pid_containers") and hasattr(obj, "num_mpc_containers"):
+        return obj.num_pid_containers > obj.num_mpc_containers
+    # one or both not initialized yet
+    return False
+
+
+# create generic_hook for num_pid_containers > num_mpc_containers check
+# if num_pid_containers < num_mpc_containers => raise an error
+num_pid_mpc_containers_hook: GenericHook["InfraConfig"] = GenericHook(
+    hook_function=raise_containers_error,
+    triggers=[HookEventType.POST_INIT, HookEventType.POST_UPDATE],
+    hook_condition=not_valid_containers,
+)
+
+
 @dataclass
-class InfraConfig(DataClassJsonMixin):
+class InfraConfig(DataClassJsonMixin, DataclassHookMixin):
     """Stores metadata of infra config in a private computation instance
 
     Public attributes:
@@ -67,8 +93,12 @@ class InfraConfig(DataClassJsonMixin):
     status_update_ts: int
     instances: List[UnionedPCInstance]
     game_type: PrivateComputationGameType
-    num_pid_containers: int
-    num_mpc_containers: int
+    num_pid_containers: int = field(
+        metadata=DataclassHookMixin.get_metadata(num_pid_mpc_containers_hook)
+    )
+    num_mpc_containers: int = field(
+        metadata=DataclassHookMixin.get_metadata(num_pid_mpc_containers_hook)
+    )
     num_files_per_mpc_container: int
 
     tier: Optional[str] = None
@@ -82,10 +112,3 @@ class InfraConfig(DataClassJsonMixin):
     creation_ts: int = field(default_factory=lambda: int(time.time()))
     end_ts: int = 0
     mpc_compute_concurrency: int = 1
-
-    def __post_init__(self) -> None:
-        # TODO: I will create hook for this check later
-        if self.num_pid_containers > self.num_mpc_containers:
-            raise ValueError(
-                f"num_pid_containers must be less than or equal to num_mpc_containers. Received num_pid_containers = {self.num_pid_containers} and num_mpc_containers = {self.num_mpc_containers}"
-            )
