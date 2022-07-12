@@ -14,7 +14,11 @@ from time import time
 from typing import List, Optional
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
-from fbpcs.bolt.constants import DEFAULT_MAX_PARALLEL_RUNS
+from fbpcs.bolt.constants import (
+    DEFAULT_MAX_PARALLEL_RUNS,
+    DEFAULT_NUM_TRIES,
+    RETRY_INTERVAL,
+)
 from fbpcs.bolt.exceptions import (
     NoServerIpsException,
     StageFailedException,
@@ -70,6 +74,7 @@ class BoltRunner:
         publisher_client: BoltClient,
         partner_client: BoltClient,
         max_parallel_runs: Optional[int] = None,
+        num_tries: Optional[int] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.publisher_client = publisher_client
@@ -80,6 +85,7 @@ class BoltRunner:
         self.logger: logging.Logger = (
             logging.getLogger(__name__) if logger is None else logger
         )
+        self.num_tries: int = num_tries or DEFAULT_NUM_TRIES
 
     async def run_async(
         self,
@@ -99,19 +105,37 @@ class BoltRunner:
                         instance_args=job.partner_bolt_args.create_instance_args
                     ),
                 )
+                # hierarchy: BoltJob num_tries --> BoltRunner num_tries --> default
+                max_tries = job.num_tries or self.num_tries
                 for stage in list(job.stage_flow)[1:]:
-                    await self.run_next_stage(
-                        publisher_id=publisher_id,
-                        partner_id=partner_id,
-                        stage=stage,
-                        poll_interval=job.poll_interval,
-                    )
-                    await self.wait_stage_complete(
-                        publisher_id=publisher_id,
-                        partner_id=partner_id,
-                        stage=stage,
-                        poll_interval=job.poll_interval,
-                    )
+                    tries = 0
+                    while tries < max_tries:
+                        tries += 1
+                        try:
+                            # disable retries if stage is not retryable by setting tries to max_tries+1
+                            if not stage.is_retryable:
+                                tries = max_tries + 1
+                            await self.run_next_stage(
+                                publisher_id=publisher_id,
+                                partner_id=partner_id,
+                                stage=stage,
+                                poll_interval=job.poll_interval,
+                            )
+                            await self.wait_stage_complete(
+                                publisher_id=publisher_id,
+                                partner_id=partner_id,
+                                stage=stage,
+                                poll_interval=job.poll_interval,
+                            )
+                            break
+                        except Exception as e:
+                            if tries >= max_tries:
+                                self.logger.exception(e)
+                                return False
+                            self.logger.error(
+                                f"Error: type: {type(e)}, message: {e}. Retries left: {self.num_tries - tries}."
+                            )
+                            await asyncio.sleep(RETRY_INTERVAL)
                 results = await asyncio.gather(
                     *[
                         self.publisher_client.validate_results(
@@ -136,24 +160,36 @@ class BoltRunner:
         stage: PrivateComputationBaseStageFlow,
         poll_interval: int,
     ) -> None:
-        self.logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
-        await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
+        publisher_status = (
+            await self.publisher_client.update_instance(publisher_id)
+        ).pc_instance_status
         server_ips = None
-        if stage.is_joint_stage:
-            server_ips = await self.get_server_ips_after_start(
-                instance_id=publisher_id,
-                stage=stage,
-                timeout=stage.timeout,
-                poll_interval=poll_interval,
-            )
-            if server_ips is None:
-                raise NoServerIpsException(
-                    f"{stage.name} requires server ips but got none."
+        if publisher_status is not stage.completed_status:
+            # This is necessary for auto-retry since we don't want to re-run
+            # the publisher side if it's completed already
+            self.logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
+            await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
+            if stage.is_joint_stage:
+                server_ips = await self.get_server_ips_after_start(
+                    instance_id=publisher_id,
+                    stage=stage,
+                    timeout=stage.timeout,
+                    poll_interval=poll_interval,
                 )
-        self.logger.info(f"Partner {partner_id} starting stage {stage.name}.")
-        await self.partner_client.run_stage(
-            instance_id=partner_id, stage=stage, server_ips=server_ips
-        )
+                if server_ips is None:
+                    raise NoServerIpsException(
+                        f"{stage.name} requires server ips but got none."
+                    )
+        partner_status = (
+            await self.partner_client.update_instance(partner_id)
+        ).pc_instance_status
+        if partner_status is not stage.completed_status:
+            # This is necessary for auto-retry since we don't want to re-run
+            # the partner side if it's completed already
+            self.logger.info(f"Partner {partner_id} starting stage {stage.name}.")
+            await self.partner_client.run_stage(
+                instance_id=partner_id, stage=stage, server_ips=server_ips
+            )
 
     async def get_server_ips_after_start(
         self,
