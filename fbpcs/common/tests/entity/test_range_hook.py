@@ -9,9 +9,9 @@ import unittest
 from dataclasses import dataclass, field
 
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin
+from fbpcs.common.entity.dataclasses_mutability import MutabilityMetadata
 from fbpcs.common.entity.exceptions import MissingRangeHookError, OutOfRangeHookError
 from fbpcs.common.entity.instance_base import InstanceBase
-from fbpcs.common.entity.instance_base_config import InstanceBaseMetadata
 from fbpcs.common.entity.range_hook import RangeHook
 
 # create a hook obj
@@ -43,14 +43,14 @@ class DummyInstance(InstanceBase):
     # each field will be mutable as default
     counter: int = field(
         metadata={
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
             **DataclassHookMixin.get_metadata(counter_range_hook),
         }
     )
 
     pressure: int = field(
         metadata={
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
             **DataclassHookMixin.get_metadata(pressure_range_hook),
         }
     )

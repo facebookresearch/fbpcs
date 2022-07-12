@@ -9,10 +9,10 @@ import unittest
 from dataclasses import dataclass, field
 
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin
+from fbpcs.common.entity.dataclasses_mutability import MutabilityMetadata, mutable_field
 from fbpcs.common.entity.exceptions import InstanceFrozenFieldError
 from fbpcs.common.entity.frozen_field_hook import FrozenFieldHook
-from fbpcs.common.entity.instance_base import InstanceBase, mutable_field
-from fbpcs.common.entity.instance_base_config import InstanceBaseMetadata
+from fbpcs.common.entity.instance_base import InstanceBase
 
 # create a hook obj
 # frozen input when status is complete
@@ -49,7 +49,7 @@ class DummyInstance(InstanceBase):
     user: str = field(
         metadata={
             **DataclassHookMixin.get_metadata(frozen_location_hook),
-            **InstanceBaseMetadata.IMMUTABLE.value,
+            **MutabilityMetadata.IMMUTABLE.value,
         },
     )
     location: str = mutable_field()
@@ -58,7 +58,7 @@ class DummyInstance(InstanceBase):
         default="start",
         metadata={
             **DataclassHookMixin.get_metadata(frozen_input_hook, frozen_output_hook),
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
         },
     )
 

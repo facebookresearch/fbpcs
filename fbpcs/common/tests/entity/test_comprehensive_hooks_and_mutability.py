@@ -6,19 +6,21 @@
 # pyer-strict
 
 import unittest
+
 from dataclasses import dataclass, field
 from typing import Optional, Tuple
 
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
+from fbpcs.common.entity.dataclasses_mutability import (
+    immutable_field,
+    MutabilityMetadata,
+    mutable_field,
+)
 from fbpcs.common.entity.exceptions import InstanceFrozenFieldError, OutOfRangeHookError
 from fbpcs.common.entity.frozen_field_hook import FrozenFieldHook
 from fbpcs.common.entity.generic_hook import GenericHook
-from fbpcs.common.entity.instance_base import (
-    immutable_field,
-    InstanceBase,
-    mutable_field,
-)
-from fbpcs.common.entity.instance_base_config import InstanceBaseMetadata
+from fbpcs.common.entity.instance_base import InstanceBase
+
 from fbpcs.common.entity.range_hook import RangeHook
 
 from fbpcs.common.entity.update_other_field_hook import UpdateOtherFieldHook
@@ -158,27 +160,27 @@ class DummyInstance(InstanceBase):
     instance_id: str = field(
         metadata={
             **DataclassHookMixin.get_metadata(name_init_hook),
-            **InstanceBaseMetadata.IMMUTABLE.value,
+            **MutabilityMetadata.IMMUTABLE.value,
         }
     )
 
     input_path: str = field(
         metadata={
             **DataclassHookMixin.get_metadata(ouput_update_hook, storage_update_hook),
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
         }
     )
 
     user: str = field(
         metadata={
-            **InstanceBaseMetadata.IMMUTABLE.value,
+            **MutabilityMetadata.IMMUTABLE.value,
             **DataclassHookMixin.get_metadata(org_init_hook),
         }
     )
     owner: Optional[str] = immutable_field()
     region: Optional[str] = field(
         metadata={
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
             **DataclassHookMixin.get_metadata(frozen_location_hook),
         },
     )
@@ -189,14 +191,14 @@ class DummyInstance(InstanceBase):
 
     counter: int = field(
         metadata={
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
             **DataclassHookMixin.get_metadata(counter_range_hook),
         }
     )
 
     pressure: int = field(
         metadata={
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
             **DataclassHookMixin.get_metadata(
                 pressure_range_hook, highest_pressure_hook
             ),
@@ -206,7 +208,7 @@ class DummyInstance(InstanceBase):
     priority: int = field(
         default=1,
         metadata={
-            **InstanceBaseMetadata.IMMUTABLE.value,
+            **MutabilityMetadata.IMMUTABLE.value,
             **DataclassHookMixin.get_metadata(priority_range_hook),
         },
     )
@@ -215,7 +217,7 @@ class DummyInstance(InstanceBase):
         default="start",
         metadata={
             **DataclassHookMixin.get_metadata(frozen_input_hook, frozen_output_hook),
-            **InstanceBaseMetadata.MUTABLE.value,
+            **MutabilityMetadata.MUTABLE.value,
         },
     )
 
