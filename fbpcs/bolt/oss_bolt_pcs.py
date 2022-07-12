@@ -184,3 +184,7 @@ class BoltPCSClient(BoltClient):
                     f"Validate results for instance {instance_id} are as expected."
                 )
                 return True
+
+    async def cancel_current_stage(self, instance_id: str) -> None:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self.pcs.cancel_current_stage, instance_id)

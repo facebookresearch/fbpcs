@@ -67,6 +67,9 @@ class BoltClient(ABC):
     ) -> bool:
         pass
 
+    async def cancel_current_stage(self, instance_id: str) -> None:
+        pass
+
 
 class BoltRunner:
     def __init__(
@@ -238,17 +241,33 @@ class BoltRunner:
                 publisher_state.pc_instance_status is complete_status
                 and partner_state.pc_instance_status is complete_status
             ):
+                # stages complete
                 return
             if (
-                publisher_state.pc_instance_status is fail_status
+                publisher_state.pc_instance_status
+                in [fail_status, PrivateComputationInstanceStatus.TIMEOUT]
                 or partner_state.pc_instance_status is fail_status
             ):
+                # stage failed, cancel partner side only in joint stage
+                if stage.is_joint_stage:
+                    try:
+                        self.logger.error(
+                            f"Publisher status: {publisher_state.pc_instance_status}. Canceling partner stage {stage.name}."
+                        )
+                        await self.partner_client.cancel_current_stage(
+                            instance_id=partner_id
+                        )
+                    except Exception as e:
+                        self.logger.error(
+                            f"Unable to cancel current stage {stage.name}. Error: type: {type(e)}, message: {e}."
+                        )
                 raise StageFailedException(
                     f"Stage {stage.name} failed. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
                 )
             self.logger.info(
                 f"Publisher {publisher_id} status is {publisher_state.pc_instance_status}, Partner {partner_id} status is {partner_state.pc_instance_status}. Waiting for status {complete_status}."
             )
+            # keep polling
             await asyncio.sleep(poll_interval)
         raise StageTimeoutException(
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
