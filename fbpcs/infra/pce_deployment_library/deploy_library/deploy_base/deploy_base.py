@@ -20,10 +20,6 @@ class DeployBase(ABC):
         pass
 
     @abstractmethod
-    def init(self) -> None:
-        pass
-
-    @abstractmethod
     def plan(self) -> None:
         pass
 
