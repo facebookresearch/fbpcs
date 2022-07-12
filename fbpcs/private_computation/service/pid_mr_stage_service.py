@@ -21,8 +21,8 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.service.workflow import WorkflowService, WorkflowStatus
 
-PID_WORKFLOW_CONFIGS = "PIDWorkflowConfigs"
-PID_RUN_CONFIGS = "PIDRunConfigs"
+PID_WORKFLOW_CONFIGS = "workflowConfigs"
+PID_RUN_CONFIGS = "runConfigs"
 PIDMR = "pid_mr"
 INTPUT = "inputPath"
 OUTPUT = "outputPath"

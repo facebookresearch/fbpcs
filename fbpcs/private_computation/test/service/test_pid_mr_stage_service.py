@@ -22,7 +22,13 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.service.pid_mr_stage_service import PIDMRStageService
+from fbpcs.private_computation.service.pid_mr_stage_service import (
+    PID_RUN_CONFIGS,
+    PID_WORKFLOW_CONFIGS,
+    PIDMR,
+    PIDMRStageService,
+    SPARK_CONFIGS,
+)
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
 )
@@ -48,10 +54,10 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             input_path="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test_data/stress_test/input.csv",
             output_dir="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output",
             pid_configs={
-                "pid_mr": {
-                    "PIDWorkflowConfigs": {"state_machine_arn": "machine_arn"},
-                    "PIDRunConfigs": {"conf": "conf1"},
-                    "sparkConfigs": {"conf-2": "conf2"},
+                PIDMR: {
+                    PID_WORKFLOW_CONFIGS: {"state_machine_arn": "machine_arn"},
+                    PID_RUN_CONFIGS: {"conf": "conf1"},
+                    SPARK_CONFIGS: {"conf-2": "conf2"},
                 }
             },
         )
