@@ -19,7 +19,13 @@ class UpdateGenericHook(DataclassHook[T]):
         only_trigger_on_change: bool = True,
         triggers: Optional[Iterable[HookEventType]] = None,
     ) -> None:
-        pass
+        self.update_function = update_function
+        self.update_condition = update_condition or (lambda _: True)
+        self.only_trigger_on_change = only_trigger_on_change
+        self._triggers = triggers or [
+            HookEventType.POST_INIT,
+            HookEventType.POST_UPDATE,
+        ]
 
     def run(
         self,
@@ -29,7 +35,10 @@ class UpdateGenericHook(DataclassHook[T]):
         new_field_value: Any,
         hook_event: HookEventType,
     ) -> None:
-        pass
+        if (
+            previous_field_value != new_field_value or not self.only_trigger_on_change
+        ) and self.update_condition(instance):
+            self.update_function(instance)
 
     @property
     def triggers(self) -> Iterable[HookEventType]:
