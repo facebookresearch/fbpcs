@@ -11,14 +11,14 @@ from subprocess import PIPE, Popen
 
 from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandReturn
 
-from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform import (
-    Terraform,
+from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_deployment import (
+    TerraformDeployment,
 )
 
 
-class TestTerraform(unittest.TestCase):
+class TestTerraformDeployment(unittest.TestCase):
     def setUp(self) -> None:
-        self.terraform = Terraform()
+        self.terraform = TerraformDeployment()
 
     def test_run_command(self) -> None:
         with self.subTest("basicCaptureTrue"):

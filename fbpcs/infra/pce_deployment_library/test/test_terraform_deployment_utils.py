@@ -7,14 +7,14 @@
 
 import unittest
 
-from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_utils import (
-    TerraformUtils,
+from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_deployment_utils import (
+    TerraformDeploymentUtils,
 )
 
 
-class TestTerraform(unittest.TestCase):
+class TestTerraformDeploymentUtils(unittest.TestCase):
     def setUp(self) -> None:
-        self.terraform_utils = TerraformUtils()
+        self.terraform_deployment_utils = TerraformDeploymentUtils()
 
     def test_get_default_options(self) -> None:
         # T125643751
