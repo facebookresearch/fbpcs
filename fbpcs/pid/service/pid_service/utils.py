@@ -24,3 +24,12 @@ def get_pid_protocol_from_num_shards(
     if num_pid_containers == 1 and multikey_enabled:
         return PIDProtocol.UNION_PID_MULTIKEY
     return DEFAULT_PID_PROTOCOL
+
+
+def pid_should_use_row_numbers(
+    pid_use_row_numbers: bool, pid_protocol: PIDProtocol
+) -> bool:
+    if pid_use_row_numbers and pid_protocol is not PIDProtocol.UNION_PID_MULTIKEY:
+        return True
+    else:
+        return False

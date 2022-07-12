@@ -19,6 +19,11 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.service.pid_service.pid import PIDService
+from fbpcs.pid.service.pid_service.utils import (
+    get_max_id_column_cnt,
+    get_pid_protocol_from_num_shards,
+    pid_should_use_row_numbers,
+)
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.infra_config import (
@@ -183,6 +188,13 @@ class PrivateComputationService:
             ),
             mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
         )
+        multikey_enabled = False
+        if pid_configs and "multikey_enabled" in pid_configs.keys():
+            multikey_enabled = pid_configs["multikey_enabled"]
+        pid_protocol = get_pid_protocol_from_num_shards(
+            num_pid_containers, multikey_enabled
+        )
+        pid_max_column_count = get_max_id_column_cnt(pid_protocol)
         common: CommonProductConfig = CommonProductConfig(
             input_path=input_path,
             output_dir=output_dir,
@@ -194,9 +206,14 @@ class PrivateComputationService:
                 else ATTRIBUTION_DEFAULT_PADDING_SIZE,
             ),
             result_visibility=result_visibility or ResultVisibility.PUBLIC,
-            pid_use_row_numbers=pid_use_row_numbers,
+            pid_use_row_numbers=pid_should_use_row_numbers(
+                pid_use_row_numbers, pid_protocol
+            ),
             post_processing_data=post_processing_data,
             pid_configs=pid_configs,
+            multikey_enabled=multikey_enabled,
+            pid_protocol=pid_protocol,
+            pid_max_column_count=pid_max_column_count,
         )
         product_config: ProductConfig
         if game_type is PrivateComputationGameType.ATTRIBUTION:

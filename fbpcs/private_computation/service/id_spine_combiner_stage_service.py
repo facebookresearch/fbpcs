@@ -14,10 +14,6 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.pid.service.pid_service.utils import (
-    get_max_id_column_cnt,
-    get_pid_protocol_from_num_shards,
-)
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -76,11 +72,6 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
 
         self._logger.info(f"[{self}] Starting id spine combiner service")
 
-        pid_protocol = get_pid_protocol_from_num_shards(
-            pc_instance.infra_config.num_pid_containers,
-            False if self._pid_svc is None else self._pid_svc.multikey_enabled,
-        )
-
         # TODO: we will write log_cost_to_s3 to the instance, so this function interface
         #   will get simplified
         container_instances = await start_combiner_service(
@@ -89,7 +80,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             self._onedocker_binary_config_map,
             combine_output_path,
             log_cost_to_s3=self._log_cost_to_s3,
-            max_id_column_count=get_max_id_column_cnt(pid_protocol),
+            max_id_column_count=pc_instance.product_config.common.pid_max_column_count,
         )
         self._logger.info("Finished running CombinerService")
 

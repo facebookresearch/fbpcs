@@ -84,12 +84,16 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             if pid_protocol is PIDProtocol.UNION_PID_MULTIKEY
             else 1
         )
-        pc_instance = self.create_sample_pc_instance(pc_role, test_num_containers)
+        pc_instance = self.create_sample_pc_instance(
+            pc_role=pc_role,
+            test_num_containers=test_num_containers,
+            multikey_enabled=multikey_enabled,
+            pid_max_column_count=max_col_cnt_expect,
+        )
         stage_svc = PIDPrepareStageService(
             storage_svc=self.mock_storage_svc,
             onedocker_svc=self.mock_onedocker_svc,
             onedocker_binary_config_map=self.onedocker_binary_config_map,
-            multikey_enabled=multikey_enabled,
         )
         containers = [
             self.create_container_instance(i) for i in range(test_num_containers)
@@ -135,6 +139,8 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         self,
         pc_role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
         test_num_containers: int = 1,
+        pid_max_column_count: int = 1,
+        multikey_enabled: bool = False,
         status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
@@ -152,6 +158,8 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             input_path=self.input_path,
             output_dir=self.output_path,
             pid_use_row_numbers=True,
+            pid_max_column_count=pid_max_column_count,
+            multikey_enabled=multikey_enabled,
         )
         product_config: ProductConfig = LiftConfig(
             common=common,

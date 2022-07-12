@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import copy
 import itertools
 from collections import defaultdict
 from typing import List
@@ -22,6 +21,7 @@ from fbpcs.onedocker_binary_config import (
 )
 from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
 from fbpcs.pid.entity.pid_instance import PIDProtocol
+from fbpcs.pid.service.pid_service.utils import pid_should_use_row_numbers
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -36,7 +36,10 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+    DEFAULT_PID_PROTOCOL,
+)
 from fbpcs.private_computation.service.pid_run_protocol_stage_service import (
     PIDRunProtocolStageService,
 )
@@ -76,17 +79,22 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
     async def test_pid_run_protocol_stage(
         self, pc_role: PrivateComputationRole, multikey_enabled: bool
     ) -> None:
-        protocol = (
+        pid_protocol = (
             PIDProtocol.UNION_PID_MULTIKEY
             if self.test_num_containers == 1 and multikey_enabled
             else PIDProtocol.UNION_PID
         )
-        pc_instance = self.create_sample_pc_instance(pc_role)
+        use_row_number = pid_should_use_row_numbers(self.use_row_numbers, pid_protocol)
+        pc_instance = self.create_sample_pc_instance(
+            pc_role,
+            pid_use_row_numbers=use_row_number,
+            pid_protocol=pid_protocol,
+            multikey_enabled=multikey_enabled,
+        )
         stage_svc = PIDRunProtocolStageService(
             storage_svc=self.mock_storage_svc,
             onedocker_svc=self.mock_onedocker_svc,
             onedocker_binary_config_map=self.onedocker_binary_config_map,
-            multikey_enabled=multikey_enabled,
         )
         containers = [
             self.create_container_instance(i) for i in range(self.test_num_containers)
@@ -99,10 +107,12 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             pc_instance=pc_instance, server_ips=self.server_ips
         )
 
-        binary_name = PIDRunProtocolBinaryService.get_binary_name(protocol, pc_role)
+        binary_name = PIDRunProtocolBinaryService.get_binary_name(pid_protocol, pc_role)
         binary_config = self.onedocker_binary_config_map[binary_name]
         env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
-        args_str_expect = self.get_args_expect(pc_role, protocol, self.use_row_numbers)
+        args_str_expect = self.get_args_expect(
+            pc_role, pid_protocol, self.use_row_numbers
+        )
         # test the start_containers is called with expected parameters
         self.mock_onedocker_svc.start_containers.assert_called_with(
             package_name=binary_name,
@@ -133,6 +143,9 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         self,
         pc_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
         status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
+        multikey_enabled: bool = False,
+        pid_use_row_numbers: bool = True,
+        pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.pc_instance_id,
@@ -148,7 +161,9 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
             output_dir=self.output_path,
-            pid_use_row_numbers=True,
+            pid_use_row_numbers=pid_use_row_numbers,
+            multikey_enabled=multikey_enabled,
+            pid_protocol=pid_protocol,
         )
         product_config: ProductConfig = LiftConfig(
             common=common,

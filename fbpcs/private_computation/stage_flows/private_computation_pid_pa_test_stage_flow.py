@@ -157,14 +157,12 @@ class PrivateComputationPIDPATestStageFlow(PrivateComputationBaseStageFlow):
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                args.pid_svc.multikey_enabled,
             )
         elif self is self.ID_MATCH:
             return PIDRunProtocolStageService(
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                args.pid_svc.multikey_enabled,
             )
         else:
             return self.get_default_stage_service(args)
