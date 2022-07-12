@@ -6,7 +6,7 @@
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, Set, Union
 
 from dataclasses_json import DataClassJsonMixin
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
@@ -18,6 +18,7 @@ from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
 )
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -102,6 +103,7 @@ class InfraConfig(DataClassJsonMixin, DataclassHookMixin):
     num_files_per_mpc_container: int
 
     tier: Optional[str] = None
+    pcs_features: Set[PCSFeature] = field(default_factory=set)
     pce_config: Optional[PCEConfig] = None
 
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
