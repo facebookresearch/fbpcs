@@ -12,6 +12,7 @@ from unittest import mock
 from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner, BoltState
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
+from fbpcs.bolt.exceptions import StageFailedException
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -147,6 +148,55 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     self.assertEquals(mock_publisher_run_stage.call_count, 1)
                     self.assertEquals(mock_partner_run_stage.call_count, 2)
 
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
+    async def test_wait_stage_complete(self, mock_sleep) -> None:
+        for (
+            stage,
+            publisher_statuses,
+            partner_statuses,
+            result,
+        ) in self._get_wait_stage_complete_data():
+            self.test_runner.partner_client.cancel_current_stage = mock.AsyncMock()
+            with self.subTest(
+                stage=stage,
+                publisher_statuses=publisher_statuses,
+                partner_statuses=partner_statuses,
+                result=result,
+            ):
+                self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+                    side_effect=[BoltState(status) for status in publisher_statuses]
+                )
+                self.test_runner.partner_client.update_instance = mock.AsyncMock(
+                    side_effect=[BoltState(status) for status in partner_statuses]
+                )
+
+                if not result:
+                    with self.assertRaises(StageFailedException):
+                        # stage should fail and raise an exception
+                        await self.test_runner.wait_stage_complete(
+                            publisher_id="test_pub_id",
+                            partner_id="test_part_id",
+                            stage=stage,
+                            poll_interval=5,
+                        )
+
+                    if stage.is_joint_stage:
+                        # make sure it calls cancel_current_stage
+                        self.test_runner.partner_client.cancel_current_stage.assert_called_once_with(
+                            instance_id="test_part_id"
+                        )
+                    else:
+                        self.test_runner.partner_client.cancel_current_stage.assert_not_called()
+                else:
+                    # stage should succeed
+                    await self.test_runner.wait_stage_complete(
+                        publisher_id="test_pub_id",
+                        partner_id="test_part_id",
+                        stage=stage,
+                        poll_interval=5,
+                    )
+                    self.test_runner.partner_client.cancel_current_stage.assert_not_called()
+
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     def _prepare_one_sided_failure_retry(
@@ -230,6 +280,98 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         mock_partner_run_stage = mock.AsyncMock()
         self.test_runner.partner_client.run_stage = mock_partner_run_stage
         return mock_partner_run_stage
+
+    def _get_wait_stage_complete_data(
+        self,
+    ) -> List[
+        Tuple[
+            PrivateComputationBaseStageFlow,
+            List[PrivateComputationInstanceStatus],
+            List[PrivateComputationInstanceStatus],
+            bool,
+        ]
+    ]:
+        """
+        Tuple represents:
+            * Stage
+            * Order of the publisher statuses
+            * Order of the partner statuses
+            * Does the stage succeed
+        """
+        return [
+            (
+                PrivateComputationStageFlow.ID_MATCH,
+                [
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+                ],
+                [
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+                ],
+                True,
+            ),
+            (
+                PrivateComputationStageFlow.ID_MATCH,
+                [
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+                ],
+                [
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+                    PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+                ],
+                False,
+            ),
+            (
+                PrivateComputationStageFlow.PC_PRE_VALIDATION,
+                [
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+                ],
+                [
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+                ],
+                True,
+            ),
+            (
+                PrivateComputationStageFlow.PC_PRE_VALIDATION,
+                [
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
+                ],
+                [
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
+                    PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
+                ],
+                False,
+            ),
+        ]
 
 
 class DummyJointStageFlow(PrivateComputationBaseStageFlow):
