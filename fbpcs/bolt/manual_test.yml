@@ -26,6 +26,7 @@ jobs:
     # optional job specific args
     job_args:
       poll_interval: 5
+      final_stage: aggregate
   job2:
     # publisher player args
     publisher:
@@ -48,3 +49,4 @@ jobs:
     # optional job specific args
     job_args:
       poll_interval: 5
+      final_stage: aggregate

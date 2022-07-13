@@ -97,6 +97,13 @@ def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
             create_instance_args=partner_create_instance_args,
             expected_result_path=partner_args.get("expected_result_path"),
         )
+        final_stage = (
+            publisher_create_instance_args.stage_flow_cls.get_stage_from_str(
+                job_specific_args.get("final_stage").upper()
+            )
+            if job_specific_args.get("final_stage")
+            else None
+        )
         bolt_job = BoltJob(
             job_name=job_name,
             publisher_bolt_args=publisher_bolt_args,
@@ -106,6 +113,7 @@ def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
                 "poll_interval", DEFAULT_POLL_INTERVAL_SEC
             ),
             num_tries=job_specific_args.get("num_tries"),
+            final_stage=final_stage,
         )
         bolt_job_list.append(bolt_job)
 

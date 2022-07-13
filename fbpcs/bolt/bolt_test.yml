@@ -52,5 +52,6 @@ jobs:
     job_args:
       poll_interval: xyz
       num_tries: xyz # if not specified, uses Runner's num_tries as default
+      final_stage: xyz # default is stage_flow_cls final stage
   job2:
     ...

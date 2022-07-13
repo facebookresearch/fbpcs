@@ -37,6 +37,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             publisher_client=mock_publisher_client,
             partner_client=mock_partner_client,
         )
+        self.test_runner.is_finished = mock.AsyncMock(return_value=False)
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
