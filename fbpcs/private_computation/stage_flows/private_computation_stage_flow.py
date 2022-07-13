@@ -10,6 +10,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
@@ -91,6 +92,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
         PrivateComputationInstanceStatus.COMPUTATION_FAILED,
         True,
+        timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,  # setting the timeout here to 12 hours, as lift stage can sometime take more time.
     )
     AGGREGATE = PrivateComputationStageFlowData(
         PrivateComputationInstanceStatus.AGGREGATION_STARTED,
