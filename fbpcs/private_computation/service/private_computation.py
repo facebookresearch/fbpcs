@@ -32,6 +32,7 @@ from fbpcs.private_computation.entity.infra_config import (
 )
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -153,6 +154,7 @@ class PrivateComputationService:
         pid_use_row_numbers: bool = True,
         post_processing_data_optional: Optional[PostProcessingData] = None,
         pid_configs: Optional[Dict[str, Any]] = None,
+        pcs_features: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
 
@@ -172,6 +174,10 @@ class PrivateComputationService:
             instances=[],
             game_type=game_type,
             tier=tier,
+            pcs_features={
+                PCSFeature.from_str(feature)
+                for feature in unwrap_or_default(optional=pcs_features, default=[])
+            },
             pce_config=pce_config,
             _stage_flow_cls_name=unwrap_or_default(
                 optional=stage_flow_cls,

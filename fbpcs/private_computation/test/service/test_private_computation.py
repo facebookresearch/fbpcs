@@ -29,6 +29,7 @@ from fbpcs.private_computation.entity.infra_config import (
     UnionedPCInstance,
 )
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -215,6 +216,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     hmac_key=self.test_hmac_key,
                     attribution_rule=AttributionRule.LAST_CLICK_1D,
                     aggregation_type=AggregationType.MEASUREMENT,
+                    pcs_features=[PCSFeature.PCS_DUMMY.value],
                 )
                 # check instance_repository.create is called with the correct arguments
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
@@ -244,6 +246,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     int(yesterday_timestamp),
                     args.product_config.common.post_processing_data.dataset_timestamp,
                 )
+                self.assertTrue(args.has_feature(PCSFeature.PCS_DUMMY))
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance_mr_workflow(self) -> None:

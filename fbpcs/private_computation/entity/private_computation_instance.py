@@ -21,8 +21,8 @@ if TYPE_CHECKING:
     )
 
 import json
+import logging
 from datetime import datetime, timezone
-from logging import Logger
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
@@ -41,6 +41,7 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -234,7 +235,7 @@ class PrivateComputationInstance(InstanceBase):
         )
 
     def update_status(
-        self, new_status: PrivateComputationInstanceStatus, logger: Logger
+        self, new_status: PrivateComputationInstanceStatus, logger: logging.Logger
     ) -> None:
         old_status = self.infra_config.status
         self.infra_config.status = new_status
@@ -257,3 +258,12 @@ class PrivateComputationInstance(InstanceBase):
         if isinstance(last_instance, (PIDInstance, PCSMPCInstance, StageStateInstance)):
             server_ips_list = last_instance.server_ips or []
         return server_ips_list
+
+    def has_feature(self, feature: PCSFeature) -> bool:
+        if feature is PCSFeature.UNKNOWN:
+            logging.warning(
+                f"checking Unknown feature on instance {self.infra_config.instance_id}"
+            )
+            return False
+
+        return feature in self.infra_config.pcs_features
