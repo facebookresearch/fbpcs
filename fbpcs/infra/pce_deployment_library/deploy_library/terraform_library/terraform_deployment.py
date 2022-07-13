@@ -19,12 +19,12 @@ from fbpcs.infra.pce_deployment_library.deploy_library.models import (
     TerraformCliOptions,
     TerraformCommands,
 )
-from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_utils import (
-    TerraformUtils,
+from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_deployment_utils import (
+    TerraformDeploymentUtils,
 )
 
 
-class Terraform(DeployBase):
+class TerraformDeployment(DeployBase):
     def __init__(
         self,
         state_file_path: Optional[str] = None,
@@ -50,7 +50,7 @@ class Terraform(DeployBase):
                                  More information on var_definition_file :https://www.terraform.io/language/values/variables#variable-definitions-tfvars-files
         """
         self.log: logging.Logger = logging.getLogger(__name__)
-        self.utils = TerraformUtils(
+        self.utils = TerraformDeploymentUtils(
             state_file_path=state_file_path,
             resource_targets=resource_targets,
             terraform_variables=terraform_variables,
