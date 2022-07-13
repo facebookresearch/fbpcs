@@ -31,11 +31,13 @@ const std::unordered_map<std::string, std::string> SUPPORTED_APPLICATIONS(
      {"lift", "pl-logs"},
      {"shard_aggregator", "sa-logs"}});
 const std::vector<std::string> SUPPORTED_VERSIONS{"decoupled", "pcf2"};
-const std::string S3_COST_BUCKET = "cost-estimation-logs";
 const std::string CLOUD = "aws";
 
-CostEstimation::CostEstimation(const std::string& app) : application_{app} {
-  s3Bucket_ = S3_COST_BUCKET;
+CostEstimation::CostEstimation(
+    const std::string& app,
+    const std::string& bucket,
+    const std::string& region)
+    : application_{app}, s3Bucket_{bucket}, s3Region_{region} {
   if (SUPPORTED_APPLICATIONS.find(app) == SUPPORTED_APPLICATIONS.end()) {
     XLOGF(ERR, "Application {} is not supported!", app);
   } else {
@@ -46,9 +48,13 @@ CostEstimation::CostEstimation(const std::string& app) : application_{app} {
 
 CostEstimation::CostEstimation(
     const std::string& app,
+    const std::string& bucket,
+    const std::string& region,
     const std::string& version)
-    : application_{app}, version_{version} {
-  s3Bucket_ = S3_COST_BUCKET;
+    : application_{app},
+      s3Bucket_{bucket},
+      s3Region_{region},
+      version_{version} {
   if (SUPPORTED_APPLICATIONS.find(app) == SUPPORTED_APPLICATIONS.end()) {
     XLOGF(ERR, "Application {} is not supported!", app);
   } else {
@@ -192,8 +198,8 @@ std::string CostEstimation::writeToS3(
     std::string party,
     std::string objectName,
     folly::dynamic costDynamic) {
-  std::string s3FullPath = folly::to<std::string>(
-      "https://", s3Bucket_, ".s3.us-west-2.amazonaws.com/", s3Path_, "/");
+  std::string s3FullPath =
+      folly::to<std::string>("https://", s3Bucket_, s3Region_, s3Path_, "/");
   std::string filePath =
       folly::to<std::string>(s3FullPath, objectName, "_", party, ".json");
 
@@ -203,8 +209,8 @@ std::string CostEstimation::writeToS3(
 std::string CostEstimation::writeToS3(
     std::string objectName,
     folly::dynamic costDynamic) {
-  std::string s3FullPath = folly::to<std::string>(
-      "https://", s3Bucket_, ".s3.us-west-2.amazonaws.com/", s3Path_, "/");
+  std::string s3FullPath =
+      folly::to<std::string>("https://", s3Bucket_, s3Region_, s3Path_, "/");
   std::string filePath =
       folly::to<std::string>(s3FullPath, objectName, ".json");
 

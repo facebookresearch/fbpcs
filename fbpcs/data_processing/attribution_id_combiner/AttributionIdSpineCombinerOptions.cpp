@@ -30,3 +30,8 @@ DEFINE_bool(
     false,
     "Log cost info into cloud which will be used for dashboard");
 DEFINE_int32(max_id_column_cnt, 1, "Maximum number of id columns to use as id");
+DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
+DEFINE_string(
+    log_cost_s3_region,
+    ".s3.us-west-2.amazonaws.com/",
+    "s3 region name");

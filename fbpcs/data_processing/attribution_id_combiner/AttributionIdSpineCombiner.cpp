@@ -31,11 +31,13 @@
 #include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
 
 int main(int argc, char** argv) {
-  fbpcs::performance_tools::CostEstimation cost{"data_processing"};
-  cost.start();
-
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  fbpcs::performance_tools::CostEstimation cost{
+      "data_processing", FLAGS_log_cost_s3_bucket, FLAGS_log_cost_s3_region};
+  cost.start();
+
   fbpcf::AwsSdk::aquire();
 
   signal(SIGPIPE, SIG_IGN);

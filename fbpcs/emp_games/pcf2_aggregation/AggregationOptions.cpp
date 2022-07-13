@@ -64,3 +64,8 @@ DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");
+DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
+DEFINE_string(
+    log_cost_s3_region,
+    ".s3.us-west-2.amazonaws.com/",
+    "s3 region name");

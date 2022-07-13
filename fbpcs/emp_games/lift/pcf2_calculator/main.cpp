@@ -81,18 +81,24 @@ DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");
+DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
+DEFINE_string(
+    log_cost_s3_region,
+    ".s3.us-west-2.amazonaws.com/",
+    "s3 regioni name");
 
 int main(int argc, char** argv) {
+  folly::init(&argc, &argv);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
   fbpcs::performance_tools::CostEstimation cost =
-      fbpcs::performance_tools::CostEstimation("lift", "pcf2");
+      fbpcs::performance_tools::CostEstimation(
+          "lift", FLAGS_log_cost_s3_bucket, FLAGS_log_cost_s3_region, "pcf2");
   cost.start();
 
-  folly::init(&argc, &argv);
   fbpcf::AwsSdk::aquire();
 
   signal(SIGPIPE, SIG_IGN);
-
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   // since DEFINE_INT16 is not supported, cast int32_t FLAGS_concurrency to
   // int16_t is necessary here

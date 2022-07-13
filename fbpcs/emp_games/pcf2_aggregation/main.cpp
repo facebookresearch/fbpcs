@@ -21,16 +21,20 @@
 #include "fbpcs/emp_games/pcf2_aggregation/MainUtil.h"
 
 int main(int argc, char* argv[]) {
-  fbpcs::performance_tools::CostEstimation cost =
-      fbpcs::performance_tools::CostEstimation("aggregator", "pcf2");
-  cost.start();
-
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  signal(SIGPIPE, SIG_IGN);
+  fbpcs::performance_tools::CostEstimation cost =
+      fbpcs::performance_tools::CostEstimation(
+          "aggregator",
+          FLAGS_log_cost_s3_bucket,
+          FLAGS_log_cost_s3_region,
+          "pcf2");
+  cost.start();
 
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
 
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner
                  // instead of 1 and 2

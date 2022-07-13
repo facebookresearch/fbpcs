@@ -29,9 +29,10 @@ const std::string NET_DEV_FILE = "/proc/net/dev";
  */
 class CostEstimation {
  private:
-  std::string s3Bucket_;
-  std::string s3Path_;
   std::string application_;
+  std::string s3Bucket_;
+  std::string s3Region_;
+  std::string s3Path_;
   std::string version_; // example: decoupled, pcf2
   double estimatedCost_;
   int64_t runningTimeInSec_;
@@ -41,8 +42,15 @@ class CostEstimation {
   std::chrono::time_point<std::chrono::system_clock> end_time_;
 
  public:
-  explicit CostEstimation(const std::string& app);
-  explicit CostEstimation(const std::string& app, const std::string& version);
+  explicit CostEstimation(
+      const std::string& app,
+      const std::string& bucket,
+      const std::string& region);
+  explicit CostEstimation(
+      const std::string& app,
+      const std::string& bucket,
+      const std::string& region,
+      const std::string& version);
 
   std::string& getApplication();
   double& getEstimatedCost();
