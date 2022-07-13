@@ -12,7 +12,7 @@ from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandR
 
 class DeployBase(ABC):
     @abstractmethod
-    def apply(self) -> None:
+    def create(self) -> RunCommandReturn:
         pass
 
     @abstractmethod

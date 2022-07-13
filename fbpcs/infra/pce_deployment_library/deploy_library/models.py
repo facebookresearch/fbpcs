@@ -6,6 +6,7 @@
 # pyre-strict
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import List, Optional
 
 
@@ -34,6 +35,6 @@ NOT_SUPPORTED_INIT_DEFAULT_OPTIONS: List[str] = [
 ]
 
 
-@dataclass
-class TerraformCommands:
-    init: str = "init"
+class TerraformCommands(str, Enum):
+    INIT: str = "init"
+    APPLY: str = "apply"
