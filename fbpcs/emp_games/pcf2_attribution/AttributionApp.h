@@ -33,13 +33,15 @@ class AttributionApp {
       const std::vector<std::string>& inputFilenames,
       const std::vector<std::string>& outputFilenames,
       std::uint32_t startFileIndex = 0U,
-      int numFiles = 1)
+      int numFiles = 1,
+      bool useNewOutputFormat = false)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
         attributionRules_{attributionRules},
         inputFilenames_(inputFilenames),
         outputFilenames_(outputFilenames),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
+        useNewOutputFormat_{useNewOutputFormat},
         schedulerStatistics_{0, 0, 0, 0} {}
 
   void run() {
@@ -56,7 +58,8 @@ class AttributionApp {
       CHECK_LT(i, inputFilenames_.size())
           << "File index exceeds number of files.";
       auto inputData = getInputData(inputFilenames_.at(i));
-      auto output = game.computeAttributions(MY_ROLE, inputData);
+      auto output =
+          game.computeAttributions(MY_ROLE, inputData, useNewOutputFormat_);
       putOutputData(output, outputFilenames_.at(i));
     }
 
@@ -112,6 +115,7 @@ class AttributionApp {
   std::vector<std::string> outputFilenames_;
   const std::uint32_t startFileIndex_;
   const int numFiles_;
+  const bool useNewOutputFormat_;
   common::SchedulerStatistics schedulerStatistics_;
 };
 

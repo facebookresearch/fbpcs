@@ -75,7 +75,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                FLAGS_use_new_output_format);
       } else if (FLAGS_input_encryption == 2) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
@@ -87,7 +88,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                FLAGS_use_new_output_format);
       } else {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
@@ -99,7 +101,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                FLAGS_use_new_output_format);
       }
 
     } else if (FLAGS_party == common::PARTNER) {
@@ -117,7 +120,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                FLAGS_use_new_output_format);
       } else if (FLAGS_input_encryption == 2) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
@@ -129,7 +133,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                FLAGS_use_new_output_format);
 
       } else {
         schedulerStatistics =
@@ -142,7 +147,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                FLAGS_use_new_output_format);
       }
 
     } else {

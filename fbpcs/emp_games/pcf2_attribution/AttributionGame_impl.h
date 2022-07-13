@@ -191,7 +191,8 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
             attributionRule,
         const std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>&
             thresholds,
-        size_t batchSize) {
+        size_t batchSize,
+        bool /*useNewOutputFormat*/) {
   if constexpr (usingBatch) {
     if (batchSize == 0) {
       throw std::invalid_argument(
@@ -208,6 +209,11 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
   // know that it is the preferred touchpoint as well.
   // Thus at the end we will get the fully reversed attribution match vector of
   // conversions and touchpoints.
+
+  // TODO: new format for attribution output
+  // We have added a flag to for new or old format in PA
+  // if the flag is false, then will use the old attribution output format
+  // else if the flag is true, then will use the new attribution output format (which will be implemented)
   for (auto conversion = conversions.rbegin(); conversion != conversions.rend();
        ++conversion) {
     auto conv = *conversion;
@@ -294,7 +300,8 @@ template <
 AttributionOutputMetrics
 AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
     const int myRole,
-    const AttributionInputMetrics<usingBatch, inputEncryption>& inputData) {
+    const AttributionInputMetrics<usingBatch, inputEncryption>& inputData,
+    bool useNewOutputFormat) {
   XLOG(INFO, "Running attribution");
   auto ids = inputData.getIds();
   uint32_t numIds = ids.size();
@@ -330,7 +337,12 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
 
     if constexpr (usingBatch) {
       attributions = computeAttributionsHelper(
-          tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
+          tpArrays,
+          convArrays,
+          *attributionRule,
+          thresholdArrays,
+          numIds,
+          useNewOutputFormat);
     } else {
       // Compute row by row if not using batch
       for (size_t i = 0; i < numIds; ++i) {
@@ -339,7 +351,8 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
             convArrays.at(i),
             *attributionRule,
             thresholdArrays.at(i),
-            numIds);
+            numIds,
+            useNewOutputFormat);
         attributions.push_back(std::move(attributionRow));
       }
     }
