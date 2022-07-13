@@ -7,7 +7,7 @@
 import itertools
 from typing import List
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
@@ -35,7 +35,6 @@ from fbpcs.private_computation.service.constants import (
 from fbpcs.private_computation.service.pid_prepare_stage_service import (
     PIDPrepareStageService,
 )
-from libfb.py.testutil import data_provider, MagicMock
 
 
 class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
@@ -58,82 +57,92 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         self.pc_instance_id = "test_instance_123"
         self.container_timeout = 43200
 
-    @data_provider(
-        lambda: (
-            itertools.product(
-                [PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER],
-                [True, False],
-                [1, 2],
-            )
-        )
-    )
     @to_sync
-    async def test_pid_prepare_stage_service(
-        self,
-        pc_role: PrivateComputationRole,
-        multikey_enabled: bool,
-        test_num_containers: int,
-    ) -> None:
-        pid_protocol = (
-            PIDProtocol.UNION_PID_MULTIKEY
-            if test_num_containers == 1 and multikey_enabled
-            else PIDProtocol.UNION_PID
+    async def test_pid_prepare_stage_service(self) -> None:
+        async def _run_sub_test(
+            pc_role: PrivateComputationRole,
+            multikey_enabled: bool,
+            test_num_containers: int,
+        ) -> None:
+            pid_protocol = (
+                PIDProtocol.UNION_PID_MULTIKEY
+                if test_num_containers == 1 and multikey_enabled
+                else PIDProtocol.UNION_PID
+            )
+            max_col_cnt_expect = (
+                DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT
+                if pid_protocol is PIDProtocol.UNION_PID_MULTIKEY
+                else 1
+            )
+            pc_instance = self.create_sample_pc_instance(
+                pc_role=pc_role,
+                test_num_containers=test_num_containers,
+                multikey_enabled=multikey_enabled,
+                pid_max_column_count=max_col_cnt_expect,
+            )
+            stage_svc = PIDPrepareStageService(
+                storage_svc=self.mock_storage_svc,
+                onedocker_svc=self.mock_onedocker_svc,
+                onedocker_binary_config_map=self.onedocker_binary_config_map,
+            )
+            containers = [
+                self.create_container_instance(i) for i in range(test_num_containers)
+            ]
+            self.mock_onedocker_svc.start_containers = MagicMock(
+                return_value=containers
+            )
+            self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
+                return_value=containers
+            )
+            updated_pc_instance = await stage_svc.run_async(pc_instance=pc_instance)
+            env_vars = {
+                "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
+            }
+            args_ls_expect = self.get_args_expected(
+                pc_role, test_num_containers, max_col_cnt_expect
+            )
+            # test the start_containers is called with expected parameters
+            self.mock_onedocker_svc.start_containers.assert_called_with(
+                package_name=self.binary_name,
+                version=self.onedocker_binary_config.binary_version,
+                cmd_args_list=args_ls_expect,
+                timeout=self.container_timeout,
+                env_vars=env_vars,
+            )
+            # test the return value is as expected
+            self.assertEqual(
+                len(updated_pc_instance.infra_config.instances),
+                1,
+                "Failed to add the StageStateInstance into pc_instance",
+            )
+            stage_state_expect = StageStateInstance(
+                pc_instance.infra_config.instance_id,
+                pc_instance.current_stage.name,
+                containers=containers,
+            )
+            stage_state_actual = updated_pc_instance.infra_config.instances[0]
+            self.assertEqual(
+                stage_state_actual,
+                stage_state_expect,
+                "Appended StageStateInstance is not as expected",
+            )
+
+        data_tests = itertools.product(
+            [PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER],
+            [True, False],
+            [1, 2],
         )
-        max_col_cnt_expect = (
-            DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT
-            if pid_protocol is PIDProtocol.UNION_PID_MULTIKEY
-            else 1
-        )
-        pc_instance = self.create_sample_pc_instance(
-            pc_role=pc_role,
-            test_num_containers=test_num_containers,
-            multikey_enabled=multikey_enabled,
-            pid_max_column_count=max_col_cnt_expect,
-        )
-        stage_svc = PIDPrepareStageService(
-            storage_svc=self.mock_storage_svc,
-            onedocker_svc=self.mock_onedocker_svc,
-            onedocker_binary_config_map=self.onedocker_binary_config_map,
-        )
-        containers = [
-            self.create_container_instance(i) for i in range(test_num_containers)
-        ]
-        self.mock_onedocker_svc.start_containers = MagicMock(return_value=containers)
-        self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
-            return_value=containers
-        )
-        updated_pc_instance = await stage_svc.run_async(pc_instance=pc_instance)
-        env_vars = {
-            "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
-        }
-        args_ls_expect = self.get_args_expected(
-            pc_role, test_num_containers, max_col_cnt_expect
-        )
-        # test the start_containers is called with expected parameters
-        self.mock_onedocker_svc.start_containers.assert_called_with(
-            package_name=self.binary_name,
-            version=self.onedocker_binary_config.binary_version,
-            cmd_args_list=args_ls_expect,
-            timeout=self.container_timeout,
-            env_vars=env_vars,
-        )
-        # test the return value is as expected
-        self.assertEqual(
-            len(updated_pc_instance.infra_config.instances),
-            1,
-            "Failed to add the StageStateInstance into pc_instance",
-        )
-        stage_state_expect = StageStateInstance(
-            pc_instance.infra_config.instance_id,
-            pc_instance.current_stage.name,
-            containers=containers,
-        )
-        stage_state_actual = updated_pc_instance.infra_config.instances[0]
-        self.assertEqual(
-            stage_state_actual,
-            stage_state_expect,
-            "Appended StageStateInstance is not as expected",
-        )
+        for pc_role, multikey_enabled, test_num_containers in data_tests:
+            with self.subTest(
+                pc_role=pc_role,
+                multikey_enabled=multikey_enabled,
+                test_num_containers=test_num_containers,
+            ):
+                await _run_sub_test(
+                    pc_role=pc_role,
+                    multikey_enabled=multikey_enabled,
+                    test_num_containers=test_num_containers,
+                )
 
     def create_sample_pc_instance(
         self,
