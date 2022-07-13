@@ -52,9 +52,12 @@ class BoltJob(DataClassJsonMixin):
     )
     poll_interval: int = DEFAULT_POLL_INTERVAL_SEC
     num_tries: Optional[int] = None
+    final_stage: Optional[PrivateComputationBaseStageFlow] = None
 
     def __post_init__(self) -> None:
         if self.stage_flow is PrivateComputationBaseStageFlow:
             raise ValueError(
                 f"Stage flow should not be {PrivateComputationBaseStageFlow}, pass a specific stage flow."
             )
+        if self.final_stage is None:
+            self.final_stage = self.stage_flow.get_last_stage()
