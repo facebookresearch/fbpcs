@@ -7,7 +7,7 @@
 import itertools
 from typing import List, Optional
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
@@ -33,8 +33,6 @@ from fbpcs.private_computation.service.pid_shard_stage_service import (
     PIDShardStageService,
 )
 
-from libfb.py.testutil import data_provider, MagicMock
-
 
 class TestPIDShardStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.storage.StorageService")
@@ -58,71 +56,81 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
         self.container_timeout = 789
         self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
-    @data_provider(
-        lambda: (
-            itertools.product(
-                [PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER],
-                [1, 2],
-                [True, False],
-            )
-        )
-    )
     @to_sync
-    async def test_pid_shard_stage_service(
-        self,
-        pc_role: PrivateComputationRole,
-        test_num_containers: int,
-        has_hmac_key: bool,
-    ) -> None:
-        hamc_key_expected = self.test_hmac_key if has_hmac_key else None
-        pc_instance = self.create_sample_pc_instance(
-            pc_role, test_num_containers, hamc_key_expected
+    async def test_pid_shard_stage_service(self) -> None:
+        async def _run_sub_test(
+            pc_role: PrivateComputationRole,
+            test_num_containers: int,
+            has_hmac_key: bool,
+        ) -> None:
+            hamc_key_expected = self.test_hmac_key if has_hmac_key else None
+            pc_instance = self.create_sample_pc_instance(
+                pc_role, test_num_containers, hamc_key_expected
+            )
+            stage_svc = PIDShardStageService(
+                storage_svc=self.mock_storage_svc,
+                onedocker_svc=self.mock_onedocker_svc,
+                onedocker_binary_config_map=self.onedocker_binary_config_map,
+                container_timeout=self.container_timeout,
+            )
+            containers = [
+                self.create_container_instance() for _ in range(test_num_containers)
+            ]
+            self.mock_onedocker_svc.start_containers = MagicMock(
+                return_value=containers
+            )
+            self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
+                return_value=containers
+            )
+            updated_pc_instance = await stage_svc.run_async(pc_instance=pc_instance)
+            env_vars = {
+                "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
+            }
+            args_ls_expect = self.get_args_expect(
+                pc_role, test_num_containers, has_hmac_key
+            )
+            # test the start_containers is called with expected parameters
+            self.mock_onedocker_svc.start_containers.assert_called_with(
+                package_name=self.binary_name,
+                version=self.onedocker_binary_config.binary_version,
+                cmd_args_list=args_ls_expect,
+                timeout=self.container_timeout,
+                env_vars=env_vars,
+            )
+            # test the return value is as expected
+            self.assertEqual(
+                len(updated_pc_instance.infra_config.instances),
+                1,
+                "Failed to add the StageStageInstance into pc_instance",
+            )
+            stage_state_expect = StageStateInstance(
+                pc_instance.infra_config.instance_id,
+                pc_instance.current_stage.name,
+                containers=containers,
+            )
+            stage_state_actual = updated_pc_instance.infra_config.instances[0]
+            self.assertEqual(
+                stage_state_actual,
+                stage_state_expect,
+                "Appended StageStageInstance is not as expected",
+            )
+
+        data_tests = itertools.product(
+            [PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER],
+            [1, 2],
+            [True, False],
         )
-        stage_svc = PIDShardStageService(
-            storage_svc=self.mock_storage_svc,
-            onedocker_svc=self.mock_onedocker_svc,
-            onedocker_binary_config_map=self.onedocker_binary_config_map,
-            container_timeout=self.container_timeout,
-        )
-        containers = [
-            self.create_container_instance() for _ in range(test_num_containers)
-        ]
-        self.mock_onedocker_svc.start_containers = MagicMock(return_value=containers)
-        self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
-            return_value=containers
-        )
-        updated_pc_instance = await stage_svc.run_async(pc_instance=pc_instance)
-        env_vars = {
-            "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
-        }
-        args_ls_expect = self.get_args_expect(
-            pc_role, test_num_containers, has_hmac_key
-        )
-        # test the start_containers is called with expected parameters
-        self.mock_onedocker_svc.start_containers.assert_called_with(
-            package_name=self.binary_name,
-            version=self.onedocker_binary_config.binary_version,
-            cmd_args_list=args_ls_expect,
-            timeout=self.container_timeout,
-            env_vars=env_vars,
-        )
-        # test the return value is as expected
-        self.assertEqual(
-            len(updated_pc_instance.infra_config.instances),
-            1,
-            "Failed to add the StageStageInstance into pc_instance",
-        )
-        stage_state_expect = StageStateInstance(
-            pc_instance.infra_config.instance_id,
-            pc_instance.current_stage.name,
-            containers=containers,
-        )
-        stage_state_actual = updated_pc_instance.infra_config.instances[0]
-        self.assertEqual(
-            stage_state_actual,
-            stage_state_expect,
-            "Appended StageStageInstance is not as expected",
-        )
+        for pc_role, test_num_containers, has_hmac_key in data_tests:
+            with self.subTest(
+                pc_role=pc_role,
+                test_num_containers=test_num_containers,
+                has_hmac_key=has_hmac_key,
+            ):
+                await _run_sub_test(
+                    pc_role=pc_role,
+                    test_num_containers=test_num_containers,
+                    has_hmac_key=has_hmac_key,
+                )
 
     def create_sample_pc_instance(
         self,
