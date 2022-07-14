@@ -55,7 +55,7 @@ class CommonProductConfig:
     result_visibility: ResultVisibility = ResultVisibility.PUBLIC
 
     pid_use_row_numbers: bool = True
-    multikey_enabled: bool = False
+    multikey_enabled: bool = True
     pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL
     pid_max_column_count: int = 1
     pid_configs: Optional[Dict[str, Any]] = None

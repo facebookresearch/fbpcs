@@ -194,7 +194,7 @@ class PrivateComputationService:
             ),
             mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
         )
-        multikey_enabled = False
+        multikey_enabled = True
         if pid_configs and "multikey_enabled" in pid_configs.keys():
             multikey_enabled = pid_configs["multikey_enabled"]
         pid_protocol = get_pid_protocol_from_num_shards(
