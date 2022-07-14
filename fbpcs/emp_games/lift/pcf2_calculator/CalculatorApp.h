@@ -31,6 +31,7 @@ class CalculatorApp {
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>
           communicationAgentFactory,
       const int numConversionsPerUser,
+      const bool computePublisherBreakdowns,
       const int epoch,
       const std::vector<std::string>& inputPaths,
       const std::vector<std::string>& outputPaths,
@@ -40,6 +41,7 @@ class CalculatorApp {
       : party_{party},
         communicationAgentFactory_{std::move(communicationAgentFactory)},
         numConversionsPerUser_(numConversionsPerUser),
+        computePublisherBreakdowns_(computePublisherBreakdowns),
         epoch_(epoch),
         inputPaths_(inputPaths),
         outputPaths_(outputPaths),
@@ -65,6 +67,7 @@ class CalculatorApp {
   std::unique_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
       communicationAgentFactory_;
   int numConversionsPerUser_;
+  bool computePublisherBreakdowns_;
   int epoch_;
   std::vector<std::string> inputPaths_;
   std::vector<std::string> outputPaths_;

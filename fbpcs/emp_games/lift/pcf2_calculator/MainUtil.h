@@ -69,6 +69,7 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
     std::vector<std::string>& inputFilepaths,
     std::vector<std::string>& outputFilepaths,
     int numConversionsPerUser,
+    bool computePublisherBreakdowns,
     int epoch,
     bool useXorEncryption) {
   // aggregate scheduler statistics across apps
@@ -104,6 +105,7 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
         PARTY,
         std::move(communicationAgentFactory),
         numConversionsPerUser,
+        computePublisherBreakdowns,
         epoch,
         inputFilepaths,
         outputFilepaths,
@@ -130,6 +132,7 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
                 inputFilepaths,
                 outputFilepaths,
                 numConversionsPerUser,
+                computePublisherBreakdowns,
                 epoch,
                 useXorEncryption);
         schedulerStatistics.add(remainingStats);
@@ -149,6 +152,7 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFiles(
     std::string serverIp,
     int port,
     int numConversionsPerUser,
+    bool computePublisherBreakdowns,
     int epoch,
     bool useXorEncryption) {
   // use only as many threads as the number of files
@@ -163,6 +167,7 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFiles(
       inputFilepaths,
       outputFilepaths,
       numConversionsPerUser,
+      computePublisherBreakdowns,
       epoch,
       useXorEncryption);
 }

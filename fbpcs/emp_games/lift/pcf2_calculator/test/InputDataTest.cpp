@@ -38,7 +38,11 @@ class InputDataTest : public ::testing::Test {
 
 TEST_F(InputDataTest, TestInputDataPublisher) {
   InputData inputData{
-      aliceInputFilename_, InputData::LiftMPCType::Standard, 1546300800, 4};
+      aliceInputFilename_,
+      InputData::LiftMPCType::Standard,
+      true,
+      1546300800,
+      4};
   std::vector<bool> expectTestPopulation = {0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
                                             0, 0, 0, 1, 1, 0, 0, 1, 0, 0};
   std::vector<bool> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
@@ -58,7 +62,11 @@ TEST_F(InputDataTest, TestInputDataPublisher) {
 
 TEST_F(InputDataTest, TestInputDataPublisherOppColLast) {
   InputData inputData{
-      aliceInputFilename2_, InputData::LiftMPCType::Standard, 1546300800, 4};
+      aliceInputFilename2_,
+      InputData::LiftMPCType::Standard,
+      true,
+      1546300800,
+      4};
   std::vector<bool> expectTestPopulation = {0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
                                             0, 0, 0, 1, 1, 0, 0, 1, 0, 0};
   std::vector<bool> expectControlPopulation = {1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
@@ -80,6 +88,7 @@ TEST_F(InputDataTest, TestInputDataPartner) {
   InputData inputData{
       bobInputFilename_,
       InputData::LiftMPCType::Standard,
+      true,
       1546300800, /* epoch */
       4 /* num_conversions_per_user */};
   std::vector<std::vector<uint32_t>> expectGetPurchaseTimestampArrays = {
@@ -125,6 +134,7 @@ TEST_F(InputDataTest, TestInputDataPartnerConverterLift) {
   InputData inputData{
       bobInputFilename2_,
       InputData::LiftMPCType::Standard,
+      true,
       0, /* epoch */
       1 /* num_conversions_per_user */};
   std::vector<std::vector<uint32_t>> expectGetPurchaseTimestamps = {
@@ -148,6 +158,7 @@ TEST_F(InputDataTest, TestGetBitmaskFor) {
   InputData inputData{
       bobInputFilename_,
       InputData::LiftMPCType::Standard,
+      true,
       1546300800, /* epoch */
       4 /* num_conversions_per_user */};
 

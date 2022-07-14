@@ -86,6 +86,10 @@ DEFINE_string(
     log_cost_s3_region,
     ".s3.us-west-2.amazonaws.com/",
     "s3 regioni name");
+DEFINE_bool(
+    compute_publisher_breakdowns,
+    true,
+    "To enable or disable computing publisher breakdown for result validation");
 
 int main(int argc, char** argv) {
   folly::init(&argc, &argv);
@@ -155,6 +159,7 @@ int main(int argc, char** argv) {
             FLAGS_server_ip,
             FLAGS_port,
             FLAGS_num_conversions_per_user,
+            FLAGS_compute_publisher_breakdowns,
             FLAGS_epoch,
             FLAGS_use_xor_encryption);
   } else if (FLAGS_party == common::PARTNER) {
@@ -168,6 +173,7 @@ int main(int argc, char** argv) {
             FLAGS_server_ip,
             FLAGS_port,
             FLAGS_num_conversions_per_user,
+            FLAGS_compute_publisher_breakdowns,
             FLAGS_epoch,
             FLAGS_use_xor_encryption);
   } else {

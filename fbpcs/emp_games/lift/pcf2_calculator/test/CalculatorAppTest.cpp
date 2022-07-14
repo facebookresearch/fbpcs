@@ -33,6 +33,7 @@ template <int schedulerId>
 void runCalculatorApp(
     int myId,
     const int numConversionsPerUser,
+    const bool computePublisherBreakdowns,
     const int epoch,
     const std::string& inputPath,
     const std::string& outputPath,
@@ -55,6 +56,7 @@ void runCalculatorApp(
       myId,
       std::move(communicationAgentFactory),
       numConversionsPerUser,
+      computePublisherBreakdowns,
       epoch,
       std::vector<std::string>{inputPath},
       std::vector<std::string>{outputPath},
@@ -107,6 +109,7 @@ class CalculatorAppTestFixture
       const std::string& publisherOutputPath,
       const std::string& partnerOutputPath,
       const int numConversionsPerUser,
+      const bool computePublisherBreakdowns,
       bool useTls,
       bool useXorEncryption) {
     int epoch = 1546300800;
@@ -114,6 +117,7 @@ class CalculatorAppTestFixture
         runCalculatorApp<0>,
         0,
         numConversionsPerUser,
+        computePublisherBreakdowns,
         epoch,
         publisherInputPath,
         publisherOutputPath,
@@ -127,6 +131,7 @@ class CalculatorAppTestFixture
         runCalculatorApp<1>,
         1,
         numConversionsPerUser,
+        computePublisherBreakdowns,
         epoch,
         partnerInputPath,
         partnerOutputPath,
@@ -166,6 +171,7 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
       publisherOutputPath_,
       partnerOutputPath_,
       numConversionsPerUser,
+      true,
       useTls,
       useXorEncryption);
 
@@ -199,6 +205,7 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       publisherOutputPath_,
       partnerOutputPath_,
       numConversionsPerUser,
+      true,
       useTls,
       useXorEncryption);
 
