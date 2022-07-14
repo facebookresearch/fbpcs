@@ -193,6 +193,7 @@ class PrivateComputationService:
                 optional=num_files_per_mpc_container, default=NUM_NEW_SHARDS_PER_FILE
             ),
             mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
+            status_updates=[],
         )
         multikey_enabled = True
         if pid_configs and "multikey_enabled" in pid_configs.keys():

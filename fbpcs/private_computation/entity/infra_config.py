@@ -52,6 +52,16 @@ class StatusUpdate:
 # happens whenever status is updated
 def post_update_status(obj: "InfraConfig") -> None:
     obj.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
+    append_status_updates(obj)
+
+
+# called in post_status_hook
+def append_status_updates(obj: "InfraConfig") -> None:
+    pair: StatusUpdate = StatusUpdate(
+        obj.status,
+        obj.status_update_ts,
+    )
+    obj.status_updates.append(pair)
 
 
 # create update_generic_hook for status
@@ -125,6 +135,9 @@ class InfraConfig(DataClassJsonMixin, DataclassHookMixin):
         metadata=DataclassHookMixin.get_metadata(num_pid_mpc_containers_hook)
     )
     num_files_per_mpc_container: int
+
+    # status_updates will be update in status hook
+    status_updates: List[StatusUpdate]
 
     tier: Optional[str] = None
     pcs_features: Set[PCSFeature] = field(default_factory=set)

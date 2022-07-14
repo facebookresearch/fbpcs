@@ -186,6 +186,7 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,

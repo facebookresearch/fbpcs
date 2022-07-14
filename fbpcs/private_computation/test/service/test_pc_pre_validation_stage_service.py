@@ -52,6 +52,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             num_pid_containers=1,
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
