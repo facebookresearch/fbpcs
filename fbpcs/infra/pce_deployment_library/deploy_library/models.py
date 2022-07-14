@@ -6,7 +6,7 @@
 # pyre-strict
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 
 @dataclass
@@ -14,3 +14,26 @@ class RunCommandReturn:
     return_code: int
     output: Optional[str]
     error: Optional[str]
+
+
+@dataclass
+class TerraformCliOptions:
+    state: str = "state"
+    target: str = "target"
+    var: str = "var"
+    var_file: str = "var_file"
+    parallelism: str = "parallelism"
+    terraform_input: str = "input"
+    backend_config: str = "backend_config"
+    reconfigure: str = "reconfigure"
+
+
+NOT_SUPPORTED_INIT_DEFAULT_OPTIONS: List[str] = [
+    TerraformCliOptions.state,
+    TerraformCliOptions.parallelism,
+]
+
+
+@dataclass
+class TerraformCommands:
+    init: str = "init"

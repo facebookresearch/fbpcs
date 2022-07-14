@@ -90,3 +90,6 @@ class TestTerraform(unittest.TestCase):
             self.assertEqual(test_command_return.return_code, func_ret.return_code)
             self.assertEqual(test_command_return.output, func_ret.output)
             self.assertEqual(test_command_return.error, func_ret.error)
+
+    def test_terraform_init(self) -> None:
+        pass
