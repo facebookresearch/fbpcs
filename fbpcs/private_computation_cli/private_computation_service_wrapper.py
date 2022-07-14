@@ -21,8 +21,6 @@ from fbpcs.common.service.pcs_container_service import PCSContainerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance
-from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
-from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
@@ -264,32 +262,6 @@ def get_server_ips(
     return server_ips_list
 
 
-def get_pid(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
-    container_service = _build_container_service(
-        config["private_computation"]["dependency"]["ContainerService"]
-    )
-    onedocker_service_config = _build_onedocker_service_cfg(
-        config["private_computation"]["dependency"]["OneDockerServiceConfig"]
-    )
-    onedocker_binary_config_map = _build_onedocker_binary_cfg_map(
-        config["private_computation"]["dependency"]["OneDockerBinaryConfig"]
-    )
-    onedocker_service = _build_onedocker_service(
-        container_service, onedocker_service_config.task_definition
-    )
-    storage_service = _build_storage_service(
-        config["private_computation"]["dependency"]["StorageService"]
-    )
-    pid_service = _build_pid_service(
-        config["pid"],
-        onedocker_service,
-        storage_service,
-        onedocker_binary_config_map,
-    )
-    instance = pid_service.get_instance(instance_id)
-    logger.info(instance)
-
-
 def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
     container_service = _build_container_service(
         config["private_computation"]["dependency"]["ContainerService"]
@@ -469,45 +441,12 @@ def _build_private_computation_service(
         _build_mpc_service(
             mpc_config, onedocker_service_config, container_service, storage_service
         ),
-        _build_pid_service(
-            pid_config,
-            onedocker_service,
-            storage_service,
-            onedocker_binary_config_map,
-        ),
         onedocker_service,
         onedocker_binary_config_map,
         _parse_pc_validator_config(pc_config),
         _get_post_processing_handlers(pph_config),
         _get_post_processing_handlers(pid_pph_config),
         workflow_svc=workflow_service,
-    )
-
-
-def _build_pid_service(
-    pid_config: Dict[str, Any],
-    onedocker_service: OneDockerService,
-    storage_service: StorageService,
-    onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
-) -> PIDService:
-    pidinstance_repository_config = pid_config["dependency"]["PIDInstanceRepository"]
-    repository_service = reflect.get_instance(
-        pidinstance_repository_config, PIDInstanceRepository
-    )
-
-    if "multikey_enabled" in pid_config.keys():
-        return PIDService(
-            onedocker_service,
-            storage_service,
-            repository_service,
-            onedocker_binary_config_map,
-            pid_config["multikey_enabled"],
-        )
-    return PIDService(
-        onedocker_service,
-        storage_service,
-        repository_service,
-        onedocker_binary_config_map,
     )
 
 

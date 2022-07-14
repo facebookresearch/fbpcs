@@ -82,7 +82,6 @@ class StageSelector:
             return IdSpineCombinerStageService(
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
-                pid_svc=args.pid_svc,
             )
         elif stage_flow.name == "RESHARD":
             return ShardStageService(

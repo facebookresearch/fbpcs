@@ -14,7 +14,6 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -31,7 +30,6 @@ class PrivateComputationStageServiceArgs:
     creation time. A combination of these arguments is used to construct stage private computation stage services.
     """
 
-    pid_svc: PIDService
     onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig]
     mpc_svc: MPCService
     storage_svc: StorageService

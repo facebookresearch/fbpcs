@@ -13,7 +13,6 @@ from typing import DefaultDict, List, Optional
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -42,11 +41,9 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
-        pid_svc: Optional[PIDService] = None,
         padding_size: Optional[int] = None,
     ) -> None:
         self._onedocker_svc = onedocker_svc
-        self._pid_svc = pid_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._log_cost_to_s3 = log_cost_to_s3
         self._logger: logging.Logger = logging.getLogger(__name__)

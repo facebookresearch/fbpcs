@@ -20,8 +20,7 @@ from fbpcs.onedocker_binary_config import (
     OneDockerBinaryConfig,
 )
 from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
-from fbpcs.pid.entity.pid_instance import PIDProtocol
-from fbpcs.pid.service.pid_service.utils import pid_should_use_row_numbers
+
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -42,6 +41,10 @@ from fbpcs.private_computation.service.constants import (
 )
 from fbpcs.private_computation.service.pid_run_protocol_stage_service import (
     PIDRunProtocolStageService,
+)
+from fbpcs.private_computation.service.pid_utils import (
+    pid_should_use_row_numbers,
+    PIDProtocol,
 )
 
 

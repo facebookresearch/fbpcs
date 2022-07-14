@@ -14,7 +14,7 @@ from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
-from fbpcs.pid.service.pid_service.utils import get_max_id_column_cnt
+from fbpcs.private_computation.service.pid_utils import get_max_id_column_cnt
 
 
 class PIDPrepareStage(PIDStage):

@@ -16,7 +16,6 @@ Usage:
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
-    pc-cli get_pid <instance_id> --config=<config_file> [options]
     pc-cli get_mpc <instance_id> --config=<config_file> [options]
     pc-cli run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
@@ -85,7 +84,6 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     create_instance,
     get_instance,
     get_mpc,
-    get_pid,
     get_server_ips,
     print_current_status,
     print_instance,
@@ -180,7 +178,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             "run_stage": bool,
             "get_instance": bool,
             "get_server_ips": bool,
-            "get_pid": bool,
             "get_mpc": bool,
             "run_instance": bool,
             "run_instances": bool,
@@ -358,9 +355,6 @@ def main(argv: Optional[List[str]] = None) -> None:
         logger.info(instance)
     elif arguments["get_server_ips"]:
         get_server_ips(config, instance_id, logger)
-    elif arguments["get_pid"]:
-        logger.info(f"Get PID instance: {instance_id}")
-        get_pid(config, instance_id, logger)
     elif arguments["get_mpc"]:
         logger.info(f"Get MPC instance: {instance_id}")
         get_mpc(config, instance_id, logger)

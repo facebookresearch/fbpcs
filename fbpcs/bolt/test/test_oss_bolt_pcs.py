@@ -18,7 +18,6 @@ from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
-from fbpcs.pid.service.pid_service.pid import PIDService
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -108,13 +107,6 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             mpc_game_svc=mpc_game_svc,
         )
 
-        self.pid_service = PIDService(
-            instance_repository=pid_instance_repository,
-            storage_svc=storage_svc,
-            onedocker_svc=self.onedocker_service,
-            onedocker_binary_config_map=self.onedocker_binary_config_map,
-        )
-
         self.pc_validator_config = PCValidatorConfig(
             region="us-west-2",
         )
@@ -123,7 +115,6 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             instance_repository=private_computation_instance_repository,
             storage_svc=storage_svc,
             mpc_svc=self.mpc_service,
-            pid_svc=self.pid_service,
             onedocker_svc=self.onedocker_service,
             onedocker_binary_config_map=self.onedocker_binary_config_map,
             pc_validator_config=self.pc_validator_config,

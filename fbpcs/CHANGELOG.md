@@ -21,6 +21,9 @@ Types of changes
 ### Changed
 - change StageSelector to select PIDShardStageService, PIDPrepareStageService and PIDRunProtocolStageService for PID_SHARD, PID_PREPARE and ID_MATCH stages respectively
 
+### Removed
+- Delete PIDStageService, PIDService because they are not used any more after we use the new PID stage services.
+
 ## [1.7.0] - 2022-06-23
 
 ### Changed
