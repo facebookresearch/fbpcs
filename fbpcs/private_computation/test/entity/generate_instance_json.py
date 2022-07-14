@@ -162,6 +162,7 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         num_mpc_containers=1,
         num_files_per_mpc_container=40,
         mpc_compute_concurrency=4,
+        status_updates=[],
     )
     common: CommonProductConfig = CommonProductConfig(
         input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",

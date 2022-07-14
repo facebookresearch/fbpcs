@@ -55,6 +55,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_mpc_containers=4,
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="in",
@@ -89,6 +90,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
                 num_mpc_containers=4,
                 num_files_per_mpc_container=40,
                 mpc_compute_concurrency=1,
+                status_updates=[],
             )
 
     def test_update(self) -> None:
@@ -104,6 +106,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             num_mpc_containers=4,
             num_files_per_mpc_container=40,
             mpc_compute_concurrency=1,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="in",

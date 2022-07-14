@@ -129,6 +129,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             num_pid_containers=2,
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
