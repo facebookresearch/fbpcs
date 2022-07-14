@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 
 import json
 import logging
-from datetime import datetime, timezone
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
@@ -238,11 +237,8 @@ class PrivateComputationInstance(InstanceBase):
         self, new_status: PrivateComputationInstanceStatus, logger: logging.Logger
     ) -> None:
         old_status = self.infra_config.status
-        self.infra_config.status = new_status
         if old_status is not new_status:
-            self.infra_config.status_update_ts = int(
-                datetime.now(tz=timezone.utc).timestamp()
-            )
+            self.infra_config.status = new_status
             logger.info(
                 f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.infra_config.status} at time {self.infra_config.status_update_ts}"
             )
