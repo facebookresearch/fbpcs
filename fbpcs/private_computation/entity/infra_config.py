@@ -5,6 +5,7 @@
 
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Set, Union
 
@@ -13,6 +14,7 @@ from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventT
 from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.common.entity.update_generic_hook import UpdateGenericHook
 from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
@@ -37,6 +39,19 @@ class PrivateComputationGameType(Enum):
 UnionedPCInstance = Union[
     PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
 ]
+
+
+# called in post_status_hook
+# happens whenever status is updated
+def post_update_status(obj: "InfraConfig") -> None:
+    obj.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
+
+
+# create update_generic_hook for status
+post_status_hook: UpdateGenericHook["InfraConfig"] = UpdateGenericHook(
+    triggers=[HookEventType.POST_UPDATE],
+    update_function=post_update_status,
+)
 
 
 # called in num_pid_mpc_containers_hook
@@ -90,7 +105,9 @@ class InfraConfig(DataClassJsonMixin, DataclassHookMixin):
 
     instance_id: str
     role: PrivateComputationRole
-    status: PrivateComputationInstanceStatus
+    status: PrivateComputationInstanceStatus = field(
+        metadata=DataclassHookMixin.get_metadata(post_status_hook)
+    )
     status_update_ts: int
     instances: List[UnionedPCInstance]
     game_type: PrivateComputationGameType
