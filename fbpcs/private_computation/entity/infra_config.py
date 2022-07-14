@@ -11,6 +11,10 @@ from typing import List, Optional, Set, Union
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
+from fbpcs.common.entity.dataclasses_mutability import (
+    DataclassMutabilityMixin,
+    immutable_field,
+)
 from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
@@ -96,7 +100,7 @@ num_pid_mpc_containers_hook: GenericHook["InfraConfig"] = GenericHook(
 
 
 @dataclass
-class InfraConfig(DataClassJsonMixin, DataclassHookMixin):
+class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     """Stores metadata of infra config in a private computation instance
 
     Public attributes:
@@ -120,14 +124,18 @@ class InfraConfig(DataClassJsonMixin, DataclassHookMixin):
         _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
     """
 
-    instance_id: str
+    instance_id: str = immutable_field()
+    # role should be immutable as well
+    # TODO will set this later
     role: PrivateComputationRole
     status: PrivateComputationInstanceStatus = field(
         metadata=DataclassHookMixin.get_metadata(post_status_hook)
     )
     status_update_ts: int
     instances: List[UnionedPCInstance]
-    game_type: PrivateComputationGameType
+    game_type: PrivateComputationGameType = immutable_field()
+
+    # TODO: these numbers should be immutable eventually
     num_pid_containers: int = field(
         metadata=DataclassHookMixin.get_metadata(num_pid_mpc_containers_hook)
     )
@@ -139,15 +147,21 @@ class InfraConfig(DataClassJsonMixin, DataclassHookMixin):
     # status_updates will be update in status hook
     status_updates: List[StatusUpdate]
 
-    tier: Optional[str] = None
+    tier: Optional[str] = immutable_field(default=None)
     pcs_features: Set[PCSFeature] = field(default_factory=set)
     pce_config: Optional[PCEConfig] = None
 
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
+    # TODO: _stage_flow_cls_name should be immutable
     _stage_flow_cls_name: str = "PrivateComputationStageFlow"
 
     retry_counter: int = 0
-    creation_ts: int = field(default_factory=lambda: int(time.time()))
+    creation_ts: int = immutable_field(default_factory=lambda: int(time.time()))
+
+    # end_ts should be immutable as well
+    # TODO will set this later
     end_ts: int = 0
+
+    # TODO: concurrency should be immutable eventually
     mpc_compute_concurrency: int = 1
