@@ -21,6 +21,11 @@ from fbpcs.utils.config_yaml.exceptions import ConfigYamlBaseException
 URL = "https://graph.facebook.com/v13.0"
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     "CREATED": PrivateComputationInstanceStatus.CREATED,
+    # INPUT_DATA_VALIDATION_XXX statuses mapping to PC_PRE_VALIDATION_XXX
+    # for backwards compatibility see context here: https://fburl.com/dkol8bma
+    "INPUT_DATA_VALIDATION_STARTED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+    "INPUT_DATA_VALIDATION_COMPLETED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+    "INPUT_DATA_VALIDATION_FAILED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
     "PC_PRE_VALIDATION_STARTED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
     "PC_PRE_VALIDATION_COMPLETED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
     "PC_PRE_VALIDATION_FAILED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
