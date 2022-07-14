@@ -93,3 +93,6 @@ class TestTerraformDeployment(unittest.TestCase):
 
     def test_terraform_init(self) -> None:
         pass
+
+    def test_create(self) -> None:
+        pass

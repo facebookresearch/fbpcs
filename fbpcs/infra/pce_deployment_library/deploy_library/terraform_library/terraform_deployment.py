@@ -25,11 +25,14 @@ from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terrafo
 
 
 class TerraformDeployment(DeployBase):
+
+    TERRAFORM_DEFAULT_PARALLELISM = 10
+
     def __init__(
         self,
         state_file_path: Optional[str] = None,
         terraform_variables: Optional[Dict[str, str]] = None,
-        parallelism: Optional[str] = None,
+        parallelism: int = TERRAFORM_DEFAULT_PARALLELISM,
         resource_targets: Optional[List[str]] = None,
         var_definition_file: Optional[str] = None,
     ) -> None:
@@ -58,8 +61,31 @@ class TerraformDeployment(DeployBase):
             var_definition_file=var_definition_file,
         )
 
-    def apply(self) -> None:
-        pass
+    def create(
+        self,
+        terraform_input: bool = False,
+        auto_approve: bool = True,
+        **kwargs: Dict[str, Any],
+    ) -> RunCommandReturn:
+        """
+        Implements `terraform apply` of terraform CLI.
+        `terraform apply` command executes the actions proposed in a `terraform plan`.
+
+        More information: https://www.terraform.io/cli/commands/apply
+
+        terraform_input:
+            Provides `-input=false`. It disables all of Terraform's interactive prompts.
+            More information: https://www.terraform.io/cli/commands/apply#apply-options
+
+        auto_approve:
+            Skips interactive approval of plan before applying
+            More information: https://www.terraform.io/cli/commands/apply#apply-options
+        """
+        options: Dict[str, Any] = kwargs.copy()
+        options["input"] = terraform_input
+        options["auto-approve"] = auto_approve  # a False value will require an input
+        options = self.utils.get_default_options(TerraformCommands.APPLY, options)
+        return self.run_command("terraform apply", **options)
 
     def destroy(self) -> None:
         pass
@@ -94,7 +120,7 @@ class TerraformDeployment(DeployBase):
                 TerraformCliOptions.reconfigure: reconfigure,
             }
         )
-        options = self.utils.get_default_options(TerraformCommands.init, options)
+        options = self.utils.get_default_options(TerraformCommands.INIT, options)
         return self.run_command("terraform init", **options)
 
     def plan(self) -> None:

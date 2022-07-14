@@ -14,11 +14,14 @@ from fbpcs.infra.pce_deployment_library.deploy_library.models import (
 
 
 class TerraformDeploymentUtils:
+
+    TERRAFORM_DEFAULT_PARALLELISM = 10
+
     def __init__(
         self,
         state_file_path: Optional[str] = None,
         terraform_variables: Optional[Dict[str, str]] = None,
-        parallelism: Optional[str] = None,
+        parallelism: int = TERRAFORM_DEFAULT_PARALLELISM,
         resource_targets: Optional[List[str]] = None,
         var_definition_file: Optional[str] = None,
     ) -> None:
@@ -77,7 +80,7 @@ class TerraformDeploymentUtils:
             elif isinstance(value, bool):
                 value = "true" if value else "false"
                 commands_list.append(f"-{key}={value}")
-            else:
+            elif value is not None:
                 commands_list.append(f"-{key}={value}")
 
         # Add args to commands list
