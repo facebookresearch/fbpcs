@@ -514,6 +514,7 @@ class TestPlInstanceRunner(TestCase):
             num_pid_containers=self.num_shards,
             num_mpc_containers=self.num_shards,
             num_files_per_mpc_container=40,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="fake_input_path",

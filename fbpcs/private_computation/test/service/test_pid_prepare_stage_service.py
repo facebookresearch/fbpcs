@@ -162,6 +162,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             num_pid_containers=test_num_containers,
             num_mpc_containers=test_num_containers,
             num_files_per_mpc_container=test_num_containers,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,

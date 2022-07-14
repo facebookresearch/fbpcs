@@ -1027,6 +1027,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             mpc_compute_concurrency=self.test_concurrency,
+            status_updates=[],
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,
