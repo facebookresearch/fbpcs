@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Set, Union
 
-from dataclasses_json import DataClassJsonMixin
+from dataclasses_json import dataclass_json, DataClassJsonMixin
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
 from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -39,6 +39,13 @@ class PrivateComputationGameType(Enum):
 UnionedPCInstance = Union[
     PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
 ]
+
+
+@dataclass_json
+@dataclass
+class StatusUpdate:
+    status: PrivateComputationInstanceStatus
+    status_update_ts: int
 
 
 # called in post_status_hook
