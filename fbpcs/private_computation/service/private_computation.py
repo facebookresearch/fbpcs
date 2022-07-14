@@ -18,12 +18,7 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pid.service.pid_service.pid import PIDService
-from fbpcs.pid.service.pid_service.utils import (
-    get_max_id_column_cnt,
-    get_pid_protocol_from_num_shards,
-    pid_should_use_row_numbers,
-)
+
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.infra_config import (
@@ -64,6 +59,11 @@ from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
 )
+from fbpcs.private_computation.service.pid_utils import (
+    get_max_id_column_cnt,
+    get_pid_protocol_from_num_shards,
+    pid_should_use_row_numbers,
+)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
@@ -91,7 +91,6 @@ class PrivateComputationService:
         instance_repository: PrivateComputationInstanceRepository,
         storage_svc: StorageService,
         mpc_svc: MPCService,
-        pid_svc: PIDService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         pc_validator_config: PCValidatorConfig,
@@ -105,7 +104,6 @@ class PrivateComputationService:
         self.instance_repository = instance_repository
         self.storage_svc = storage_svc
         self.mpc_svc = mpc_svc
-        self.pid_svc = pid_svc
         self.onedocker_svc = onedocker_svc
         self.workflow_svc = workflow_svc
         self.onedocker_binary_config_map = onedocker_binary_config_map
@@ -117,7 +115,6 @@ class PrivateComputationService:
         )
         self.pc_validator_config = pc_validator_config
         self.stage_service_args = PrivateComputationStageServiceArgs(
-            self.pid_svc,
             self.onedocker_binary_config_map,
             self.mpc_svc,
             self.storage_svc,

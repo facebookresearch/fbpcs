@@ -19,13 +19,17 @@ from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
 )
-from fbpcs.pid.service.pid_service.pid_stage import PIDStage
+
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_SERVER_PORT_NUMBER
+from fbpcs.private_computation.service.pid_utils import (
+    get_metrics_filepath,
+    get_sharded_filepath,
+)
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -120,8 +124,8 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         args_list = []
         for shard in range(num_shards):
             args_per_shard = pid_run_protocol_binary_service.build_args(
-                input_path=PIDStage.get_sharded_filepath(input_path, shard),
-                output_path=PIDStage.get_sharded_filepath(output_path, shard),
+                input_path=get_sharded_filepath(input_path, shard),
+                output_path=get_sharded_filepath(output_path, shard),
                 port=port,
                 metric_path=metric_paths[shard] if metric_paths else None,
                 use_row_numbers=use_row_numbers,
@@ -150,10 +154,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         # only publisher needs metric_paths
         if pc_role is PrivateComputationRole.PARTNER:
             return None
-        return [
-            PIDStage.get_metrics_filepath(output_path, shard)
-            for shard in range(num_shards)
-        ]
+        return [get_metrics_filepath(output_path, shard) for shard in range(num_shards)]
 
     @classmethod
     def get_server_hostnames(

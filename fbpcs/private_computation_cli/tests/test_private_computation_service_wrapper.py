@@ -111,7 +111,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
             pid_pph_config=self.config.get("pid_post_processing_handlers", {}),
         )
 
-        self.assertEqual(mock_reflect_get_instance.call_count, 6)
+        self.assertEqual(mock_reflect_get_instance.call_count, 5)
         calls = [
             call(None, PrivateComputationInstanceRepository),
             call(None, ContainerService),
@@ -121,7 +121,6 @@ class TestPrivateComputationServiceWrapper(TestCase):
                 {"class": "__PrivateComputationGameRepositoryClass__"},
                 MPCGameRepository,
             ),
-            call(None, PIDInstanceRepository),
         ]
         mock_reflect_get_instance.assert_has_calls(calls, any_order=True)
         mock_reflect_get_class.assert_called_once_with(

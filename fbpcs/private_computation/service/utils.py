@@ -35,7 +35,6 @@ from fbpcs.onedocker_binary_config import (
 )
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.pid.entity.pid_instance import PIDInstance
-from fbpcs.pid.service.pid_service.pid_stage import PIDStage
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -46,6 +45,7 @@ from fbpcs.private_computation.service.constants import (
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     DEFAULT_LOG_COST_TO_S3,
 )
+from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -323,7 +323,7 @@ async def start_sharder_service(
     for shard_index in range(
         private_computation_instance.infra_config.num_pid_containers
     ):
-        path_to_shard = PIDStage.get_sharded_filepath(combine_output_path, shard_index)
+        path_to_shard = get_sharded_filepath(combine_output_path, shard_index)
         logging.info(f"Input path to sharder: {path_to_shard}")
 
         shards_per_file = math.ceil(
@@ -545,7 +545,7 @@ async def all_files_exist_on_cloud(
     input_path: str, num_shards: int, storage_svc: StorageService
 ) -> bool:
     input_paths = [
-        PIDStage.get_sharded_filepath(input_path, shard) for shard in range(num_shards)
+        get_sharded_filepath(input_path, shard) for shard in range(num_shards)
     ]
     # if all files exist on storage service, every element of file_exist_booleans should be True.
     tasks = await asyncio.gather(

@@ -19,11 +19,12 @@ from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
 )
-from fbpcs.pid.service.pid_service.pid_stage import PIDStage
+
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -115,8 +116,8 @@ class PIDPrepareStageService(PrivateComputationStageService):
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
         for shard in range(num_shards):
             args_per_shard = PIDPrepareBinaryService.build_args(
-                input_path=PIDStage.get_sharded_filepath(input_path, shard),
-                output_path=PIDStage.get_sharded_filepath(output_path, shard),
+                input_path=get_sharded_filepath(input_path, shard),
+                output_path=get_sharded_filepath(output_path, shard),
                 tmp_directory=onedocker_binary_config.tmp_directory,
                 max_column_count=pc_instance.product_config.common.pid_max_column_count,
             )

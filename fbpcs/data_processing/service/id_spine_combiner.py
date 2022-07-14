@@ -7,8 +7,9 @@
 from typing import List, Optional
 
 from fbpcp.util.arg_builder import build_cmd_args
-from fbpcs.pid.service.pid_service.pid_stage import PIDStage
+
 from fbpcs.private_computation.service.constants import DEFAULT_SORT_STRATEGY
+from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
@@ -40,11 +41,9 @@ class IdSpineCombinerService(RunBinaryBaseService):
         # own ThreadPoolExecutor here and instead use async primitives
         cmd_args_list = []
         for shard in range(num_shards):
-            # TODO: There's a weird dependency between these two services
-            # AttributionIdSpineCombiner should operate independently of PIDStage
-            next_spine_path = PIDStage.get_sharded_filepath(spine_path, shard)
-            next_data_path = PIDStage.get_sharded_filepath(data_path, shard)
-            next_output_path = PIDStage.get_sharded_filepath(output_path, shard)
+            next_spine_path = get_sharded_filepath(spine_path, shard)
+            next_data_path = get_sharded_filepath(data_path, shard)
+            next_output_path = get_sharded_filepath(output_path, shard)
             cmd_args = build_cmd_args(
                 spine_path=next_spine_path,
                 data_path=next_data_path,
