@@ -1,5 +1,10 @@
 FROM python:3.8-slim
 
+# Set BUNDLE_ID ENV
+ARG FBPCS_BUNDLE_ID
+ENV FBPCS_BUNDLE_ID=${FBPCS_BUNDLE_ID:-0}
+RUN echo FBPCS_BUNDLE_ID=$FBPCS_BUNDLE_ID
+
 # Install Dependencies
 RUN apt-get update
 RUN apt-get install -y software-properties-common
