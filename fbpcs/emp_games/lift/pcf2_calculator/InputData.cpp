@@ -22,9 +22,11 @@ namespace private_lift {
 InputData::InputData(
     std::string filepath,
     LiftMPCType liftMpcType,
+    bool computePublisherBreakdowns,
     int64_t epoch,
     int32_t numConversionsPerUser)
     : liftMpcType_{liftMpcType},
+      computePublisherBreakdowns_{computePublisherBreakdowns},
       epoch_{epoch},
       numConversionsPerUser_{numConversionsPerUser} {
   auto readLine = [&](const std::vector<std::string>& header,
@@ -173,9 +175,12 @@ void InputData::addFromCSV(
       // We use parsed + 1 because cohorts are zero-indexed
       numGroups_ = std::max(numGroups_, static_cast<uint32_t>(parsed + 1));
     } else if (column == "breakdown_id") {
-      breakdownIds_.push_back(parsed);
-      // We use parsed + 1 because breakdowns are zero-indexed
-      numGroups_ = std::max(numGroups_, static_cast<uint32_t>(parsed + 1));
+      if (computePublisherBreakdowns_) {
+        breakdownIds_.push_back(parsed);
+
+        // We use parsed + 1 because breakdowns are zero-indexed
+        numGroups_ = std::max(numGroups_, static_cast<uint32_t>(parsed + 1));
+      }
     } else if (column == "event_timestamp") {
       // When event_timestamp column presents (in standard Converter Lift
       // input), parse it as arrays of size 1.

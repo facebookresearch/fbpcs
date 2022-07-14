@@ -46,11 +46,13 @@ class CalculatorGameTestFixture
  public:
   CalculatorGameConfig getInputData(
       const std::filesystem::path& inputPath,
-      int numConversionsPerUser) {
+      int numConversionsPerUser,
+      bool computePublisherBreakdowns) {
     int64_t epoch = 1546300800;
     InputData inputData{
         inputPath,
         InputData::LiftMPCType::Standard,
+        computePublisherBreakdowns,
         epoch,
         numConversionsPerUser};
     CalculatorGameConfig config = {inputData, true, numConversionsPerUser};
@@ -106,10 +108,12 @@ TEST_P(CalculatorGameTestFixture, TestCorrectness) {
   CalculatorGameConfig publisherConfig =
       CalculatorGameTestFixture::getInputData(
           baseDir + "../sample_input/publisher_unittest3.csv",
-          numConversionsPerUser);
+          numConversionsPerUser,
+          true);
   CalculatorGameConfig partnerConfig = CalculatorGameTestFixture::getInputData(
       baseDir + "../sample_input/partner_2_convs_unittest.csv",
-      numConversionsPerUser);
+      numConversionsPerUser,
+      true);
   std::string expectedOutputFilename =
       baseDir + "../sample_input/correctness_output.json";
 
@@ -144,9 +148,9 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
   testDataGenerator.genFakePartnerInputFile(partnerInputFilename_, params);
   CalculatorGameConfig publisherConfig =
       CalculatorGameTestFixture::getInputData(
-          publisherInputFilename_, numConversionsPerUser);
+          publisherInputFilename_, numConversionsPerUser, true);
   CalculatorGameConfig partnerConfig = CalculatorGameTestFixture::getInputData(
-      partnerInputFilename_, numConversionsPerUser);
+      partnerInputFilename_, numConversionsPerUser, true);
 
   // Run calculator game with test input
   const bool unsafe = true;

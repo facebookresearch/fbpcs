@@ -70,6 +70,7 @@ CalculatorGameConfig CalculatorApp<schedulerId>::getInputData(
   InputData inputData{
       inputPath,
       InputData::LiftMPCType::Standard,
+      computePublisherBreakdowns_,
       epoch_,
       numConversionsPerUser_};
   CalculatorGameConfig config = {inputData, true, numConversionsPerUser_};

@@ -30,6 +30,7 @@ class InputData {
   explicit InputData(
       std::string filepath,
       LiftMPCType liftMpcType,
+      bool computePublisherBreakdowns,
       int64_t epoch = 0,
       int32_t numConversionsPerUser = INT32_MAX);
 
@@ -154,6 +155,7 @@ class InputData {
       const std::vector<std::string>& parts);
 
   LiftMPCType liftMpcType_;
+  bool computePublisherBreakdowns_;
   int64_t epoch_;
   std::vector<bool> testPopulation_;
   std::vector<bool> controlPopulation_;
