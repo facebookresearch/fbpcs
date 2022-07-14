@@ -13,7 +13,7 @@ from fbpcs.infra.pce_deployment_library.deploy_library.models import (
 )
 
 
-class TerraformUtils:
+class TerraformDeploymentUtils:
     def __init__(
         self,
         state_file_path: Optional[str] = None,
