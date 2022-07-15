@@ -8,8 +8,10 @@
 from typing import Any, Dict, List, Optional
 
 from fbpcs.infra.pce_deployment_library.deploy_library.models import (
+    FlaggedOption,
     NOT_SUPPORTED_INIT_DEFAULT_OPTIONS,
     TerraformCliOptions,
+    TerraformOptionFlag,
 )
 
 
@@ -64,24 +66,22 @@ class TerraformDeploymentUtils:
 
         commands_list = command.split()
 
+        type_to_func_dict = {
+            dict: self.add_dict_options,
+            list: self.add_list_options,
+            bool: self.add_bool_options,
+            type(TerraformOptionFlag): self.add_flagged_option,
+        }
+
         for key, value in kwargs.items():
             # terraform CLI accepts options with "-" using "_" will results in error
             key = key.replace("_", "-")
 
-            if isinstance(value, list):
-                for inner_value in value:
-                    commands_list.append(f"-{key}={inner_value}")
-            elif isinstance(value, dict):
-                if "backend-config" in key:
-                    commands_list.extend(
-                        [f"-backend-config {k}={v}" for k, v in value.items()]
-                    )
-                # TODO: read var in kwargs and update commands
-            elif isinstance(value, bool):
-                value = "true" if value else "false"
-                commands_list.append(f"-{key}={value}")
-            elif value is not None:
-                commands_list.append(f"-{key}={value}")
+            # pyre-fixme
+            func = type_to_func_dict.get(type(value), self.add_other_options)
+
+            # pyre-fixme
+            commands_list.extend(func(key, value))
 
         # Add args to commands list
         commands_list.extend(args)
@@ -109,3 +109,77 @@ class TerraformDeploymentUtils:
                 return_dict.pop(default_option, None)
 
         return return_dict
+
+    def add_dict_options(self, key: str, value: Dict[str, Any]) -> List[str]:
+        """
+        Adds dict options in Terraform CLI:
+        Eg: t = TerraformDeploymentUtils()
+        options = {"backend_config": {"region": "us-west-2", "access_key":"fake_access_key"}}
+        t.get_command_list("terraform apply")
+
+        Returns:
+        => ['terraform', 'apply', '-backend-config region=us-west-2', '-backend-config access_key=fake_access_key']
+        """
+        commands_list: List[str] = []
+        commands_list.extend([f"-{key} {k}={v}" for k, v in value.items()])
+        return commands_list
+
+    def add_list_options(self, key: str, value: List[str]) -> List[str]:
+        """
+        Adds list options in Terraform CLI:
+        Eg: t = TerraformDeploymentUtils()
+        options = {"target": ["aws_s3_bucket_object.objects[2]", "aws_s3_bucket_object.objects[3]"]}
+        t.get_command_list("terraform apply")
+
+        Returns:
+        => ['terraform', 'apply', '-target=aws_s3_bucket_object.objects[2]', '-target=aws_s3_bucket_object.objects[3]']
+        """
+        commands_list: List[str] = []
+        for val in value:
+            commands_list.append(f"-{key}={val}")
+        return commands_list
+
+    def add_bool_options(self, key: str, value: bool) -> List[str]:
+        """
+        Adds bool options in Terraform CLI:
+        Eg: t = TerraformDeploymentUtils()
+        options = {"input": False}
+        t.get_command_list("terraform apply")
+
+        Returns:
+        => ['terraform', 'apply', '-input false']
+        """
+        commands_list: List[str] = []
+        ret_value: str = str(value).lower()
+        commands_list.append(f"-{key}={ret_value}")
+        return commands_list
+
+    def add_flagged_option(self, key: str, value: TerraformOptionFlag) -> List[str]:
+        """
+        Adds flag options in Terraform CLI:
+        Eg: t = TerraformDeploymentUtils()
+        options = {"reconfigure": FlaggedOption}
+        t.get_command_list("terraform init")
+
+        Returns:
+        => ['terraform', 'init', '-reconfigure']
+        """
+        commands_list: List[str] = []
+        if value == FlaggedOption:
+            commands_list.append(f"-{key}")
+        return commands_list
+
+    def add_other_options(self, key: str, value: str) -> List[str]:
+        """
+        Adds default options in Terraform CLI:
+        Eg: t = TerraformDeploymentUtils()
+        options = {"target": "aws_s3_bucket_object.objects[2]"}
+        t.get_command_list("terraform init")
+
+        Returns:
+        => ['terraform', 'init', '-target=aws_s3_bucket_object.objects[2]']
+        """
+        commands_list: List[str] = []
+        if value is not None:
+            commands_list.append(f"-{key}={value}")
+        return commands_list

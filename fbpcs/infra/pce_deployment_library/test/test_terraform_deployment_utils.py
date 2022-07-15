@@ -23,3 +23,18 @@ class TestTerraformDeploymentUtils(unittest.TestCase):
     def test_get_command_list(self) -> None:
         # T125643785
         pass
+
+    def test_add_dict_options(self) -> None:
+        pass
+
+    def test_add_list_options(self) -> None:
+        pass
+
+    def test_add_bool_options(self) -> None:
+        pass
+
+    def test_add_flagged_option(self) -> None:
+        pass
+
+    def test_add_other_options(self) -> None:
+        pass
