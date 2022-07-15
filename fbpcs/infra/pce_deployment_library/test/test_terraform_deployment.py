@@ -9,7 +9,7 @@
 import unittest
 from subprocess import PIPE, Popen
 
-from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandReturn
+from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandResult
 
 from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_deployment import (
     TerraformDeployment,
@@ -27,7 +27,7 @@ class TestTerraformDeployment(unittest.TestCase):
             test_obj = Popen(["echo", "Hello World!"], stdout=PIPE)
             test_stdout, test_error = test_obj.communicate()
             test_return_code = test_obj.returncode
-            test_command_return = RunCommandReturn(
+            test_command_return = RunCommandResult(
                 return_code=test_return_code,
                 output=test_stdout.decode("utf-8"),
                 error=test_error if test_error else "",
@@ -46,7 +46,7 @@ class TestTerraformDeployment(unittest.TestCase):
             test_obj = Popen(["echo", "Hello World!"])
             test_stdout, test_error = test_obj.communicate()
             test_return_code = test_obj.returncode
-            test_command_return = RunCommandReturn(
+            test_command_return = RunCommandResult(
                 return_code=test_return_code,
                 output=test_stdout,
                 error=test_stdout,
@@ -66,7 +66,7 @@ class TestTerraformDeployment(unittest.TestCase):
             func_ret = self.terraform.run_command(
                 command=command, capture_output=capture_output
             )
-            test_command_return = RunCommandReturn(
+            test_command_return = RunCommandResult(
                 return_code=1,
                 output="",
                 error="cp: missing file operand\nTry 'cp --help' for more information.\n",
@@ -82,7 +82,7 @@ class TestTerraformDeployment(unittest.TestCase):
             func_ret = self.terraform.run_command(
                 command=command, capture_output=capture_output
             )
-            test_command_return = RunCommandReturn(
+            test_command_return = RunCommandResult(
                 return_code=1,
                 output=None,
                 error=None,
