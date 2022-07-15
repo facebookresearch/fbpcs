@@ -53,6 +53,7 @@ from docopt import docopt
 from fbpcs.bolt.read_config import parse_bolt_config
 from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
+from fbpcs.pl_coordinator.constants import FBPCS_IMAGE_DIGEST
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
@@ -288,6 +289,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     logger = logging.getLogger(__name__)
     log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
     logger.setLevel(log_level)
+
+    logger.info(f"FBPCS_IMAGE_DIGEST: {os.getenv(FBPCS_IMAGE_DIGEST)}")
     # Concatenate all arguments to a string, with every argument wrapped by quotes.
     all_options = f"{sys.argv[1:]}"[1:-1].replace("', '", "' '")
     # E.g. Command line: private_computation_cli 'create_instance' 'partner_15464380' '--config=/tmp/tmp21ari0i6/config_local.yml' ...
