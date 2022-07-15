@@ -13,7 +13,6 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcs.data_processing.pid_preparer.union_pid_preparer_cpp import (
     CppUnionPIDDataPreparerService,
 )
-from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid_prepare_stage import PIDPrepareStage
@@ -30,7 +29,6 @@ def data_test_run() -> Tuple[
 
 class TestPIDPrepareStage(unittest.TestCase):
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_prepare(
         self,
         mock_instance_repo: unittest.mock.MagicMock,
@@ -91,7 +89,6 @@ class TestPIDPrepareStage(unittest.TestCase):
                     data_test[1],
                 )
 
-    @to_sync
     @patch(
         "fbpcs.private_computation.service.run_binary_base_service.RunBinaryBaseService.wait_for_containers_async"
     )

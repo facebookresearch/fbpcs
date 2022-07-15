@@ -7,13 +7,12 @@
 import itertools
 from typing import List
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 
-from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -57,7 +56,6 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         self.pc_instance_id = "test_instance_123"
         self.container_timeout = 43200
 
-    @to_sync
     async def test_pid_prepare_stage_service(self) -> None:
         async def _run_sub_test(
             pc_role: PrivateComputationRole,

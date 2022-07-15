@@ -8,7 +8,7 @@ import itertools
 from collections import defaultdict
 from typing import List
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
@@ -19,7 +19,6 @@ from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
 )
-from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
 
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -69,7 +68,6 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         self.port = 15200
         self.use_row_numbers = True
 
-    @to_sync
     async def test_pid_run_protocol_stage(self) -> None:
         async def _run_sub_test(
             pc_role: PrivateComputationRole, multikey_enabled: bool
