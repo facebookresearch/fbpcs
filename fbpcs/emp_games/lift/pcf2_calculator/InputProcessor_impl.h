@@ -134,40 +134,50 @@ void InputProcessor<schedulerId>::privatelyShareIndexSharesStep() {
   std::vector<uint32_t> controlBreakdown1GroupIds;
   if (numPartnerCohorts_ > 0) {
     for (auto groupId : inputData_.getGroupIds()) {
-      testBreakdown1GroupIds.push_back(groupId + numPartnerCohorts_);
-      controlBreakdown0GroupIds.push_back(groupId + 2 * numPartnerCohorts_);
-      controlBreakdown1GroupIds.push_back(groupId + 3 * numPartnerCohorts_);
+      if (numPublisherBreakdowns_ > 0) {
+        testBreakdown1GroupIds.push_back(groupId + numPartnerCohorts_);
+        controlBreakdown0GroupIds.push_back(groupId + 2 * numPartnerCohorts_);
+        controlBreakdown1GroupIds.push_back(groupId + 3 * numPartnerCohorts_);
+      } else {
+        controlBreakdown0GroupIds.push_back(groupId + numPartnerCohorts_);
+      }
     }
   }
 
-  // We share the new group ids with padding values 1, 2 and 3, to account for
-  // the case where there are no cohorts.
-  auto secTestBreakdown1GroupIds = common::privatelyShareArrayWithPaddingFrom<
-      common::PARTNER,
-      uint32_t,
-      SecGroup<schedulerId>>(testBreakdown1GroupIds, numRows_, 1);
-  auto secControlBreakdown0GroupIds =
-      common::privatelyShareArrayWithPaddingFrom<
-          common::PARTNER,
-          uint32_t,
-          SecGroup<schedulerId>>(
-          controlBreakdown0GroupIds,
-          numRows_,
-          numPublisherBreakdowns_ > 0 ? 2 : 1);
-  auto secControlBreakdown1GroupIds =
-      common::privatelyShareArrayWithPaddingFrom<
-          common::PARTNER,
-          uint32_t,
-          SecGroup<schedulerId>>(controlBreakdown1GroupIds, numRows_, 3);
+  SecGroup<schedulerId> secControlGroupIds;
+  if (numPublisherBreakdowns_ > 0) {
+    // We share the new group ids with padding values 1, 2 and 3, to account for
+    // the case where there are no cohorts.
+    auto secTestBreakdown1GroupIds = common::privatelyShareArrayWithPaddingFrom<
+        common::PARTNER,
+        uint32_t,
+        SecGroup<schedulerId>>(testBreakdown1GroupIds, numRows_, 1);
+    auto secControlBreakdown0GroupIds =
+        common::privatelyShareArrayWithPaddingFrom<
+            common::PARTNER,
+            uint32_t,
+            SecGroup<schedulerId>>(controlBreakdown0GroupIds, numRows_, 2);
+    auto secControlBreakdown1GroupIds =
+        common::privatelyShareArrayWithPaddingFrom<
+            common::PARTNER,
+            uint32_t,
+            SecGroup<schedulerId>>(controlBreakdown1GroupIds, numRows_, 3);
 
-  // We now set the group ids depending on whether each row is a test or
-  // control, and whether the breakdown id is 0 or 1.
-  testGroupIds_ =
-      cohortGroupIds_.mux(breakdownGroupIds_, secTestBreakdown1GroupIds);
-  auto secControlGroupIds = secControlBreakdown0GroupIds.mux(
-      breakdownGroupIds_, secControlBreakdown1GroupIds);
+    // We now set the group ids depending on whether each row is a test or
+    // control, and whether the breakdown id is 0 or 1.
+    testGroupIds_ =
+        cohortGroupIds_.mux(breakdownGroupIds_, secTestBreakdown1GroupIds);
+    secControlGroupIds = secControlBreakdown0GroupIds.mux(
+        breakdownGroupIds_, secControlBreakdown1GroupIds);
+  } else {
+    testGroupIds_ = cohortGroupIds_;
+    secControlGroupIds = common::privatelyShareArrayWithPaddingFrom<
+        common::PARTNER,
+        uint32_t,
+        SecGroup<schedulerId>>(controlBreakdown0GroupIds, numRows_, 1);
+  }
+
   auto secGroupIds = testGroupIds_.mux(controlPopulation_, secControlGroupIds);
-
   // Generate index shares from group ids
   indexShares_ = secGroupIds.extractIntShare().getBooleanShares();
   // Resize to width needed for the number of groups
