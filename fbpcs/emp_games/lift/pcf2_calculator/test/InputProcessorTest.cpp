@@ -32,10 +32,11 @@ InputProcessor<schedulerId> createInputProcessorWithScheduler(
   return InputProcessor<schedulerId>(myRole, inputData, numConversionsPerUser);
 }
 
-class InputProcessorTest : public ::testing::Test {
+class InputProcessorTest : public ::testing::TestWithParam<bool> {
  protected:
   InputProcessor<0> publisherInputProcessor_;
   InputProcessor<1> partnerInputProcessor_;
+  bool computePublisherBreakdowns_;
 
   void SetUp() override {
     std::string baseDir =
@@ -46,16 +47,17 @@ class InputProcessorTest : public ::testing::Test {
         baseDir + "../sample_input/partner_2_convs_unittest.csv";
     int numConversionsPerUser = 2;
     int epoch = 1546300800;
+    computePublisherBreakdowns_ = GetParam();
     auto publisherInputData = InputData(
         publisherInputFilename,
         InputData::LiftMPCType::Standard,
-        true,
+        computePublisherBreakdowns_,
         epoch,
         numConversionsPerUser);
     auto partnerInputData = InputData(
         partnerInputFilename,
         InputData::LiftMPCType::Standard,
-        true,
+        computePublisherBreakdowns_,
         epoch,
         numConversionsPerUser);
 
@@ -88,36 +90,51 @@ class InputProcessorTest : public ::testing::Test {
   }
 };
 
-TEST_F(InputProcessorTest, testNumRows) {
+TEST_P(InputProcessorTest, testNumRows) {
   EXPECT_EQ(publisherInputProcessor_.getNumRows(), 33);
   EXPECT_EQ(partnerInputProcessor_.getNumRows(), 33);
 }
 
-TEST_F(InputProcessorTest, testBitsForValues) {
+TEST_P(InputProcessorTest, testBitsForValues) {
   EXPECT_EQ(publisherInputProcessor_.getValueBits(), 10);
   EXPECT_EQ(partnerInputProcessor_.getValueBits(), 10);
   EXPECT_EQ(publisherInputProcessor_.getValueSquaredBits(), 15);
   EXPECT_EQ(partnerInputProcessor_.getValueSquaredBits(), 15);
 }
 
-TEST_F(InputProcessorTest, testNumPartnerCohorts) {
+TEST_P(InputProcessorTest, testNumPartnerCohorts) {
   EXPECT_EQ(publisherInputProcessor_.getNumPartnerCohorts(), 3);
   EXPECT_EQ(partnerInputProcessor_.getNumPartnerCohorts(), 3);
 }
 
-TEST_F(InputProcessorTest, testNumBreakdowns) {
-  EXPECT_EQ(publisherInputProcessor_.getNumPublisherBreakdowns(), 2);
-  EXPECT_EQ(partnerInputProcessor_.getNumPublisherBreakdowns(), 2);
+TEST_P(InputProcessorTest, testNumBreakdowns) {
+  if (computePublisherBreakdowns_) {
+    EXPECT_EQ(publisherInputProcessor_.getNumPublisherBreakdowns(), 2);
+    EXPECT_EQ(partnerInputProcessor_.getNumPublisherBreakdowns(), 2);
+  } else {
+    EXPECT_EQ(publisherInputProcessor_.getNumPublisherBreakdowns(), 0);
+    EXPECT_EQ(partnerInputProcessor_.getNumPublisherBreakdowns(), 0);
+  }
 }
 
-TEST_F(InputProcessorTest, testNumGroups) {
-  EXPECT_EQ(publisherInputProcessor_.getNumGroups(), 12);
-  EXPECT_EQ(partnerInputProcessor_.getNumGroups(), 12);
+TEST_P(InputProcessorTest, testNumGroups) {
+  if (computePublisherBreakdowns_) {
+    EXPECT_EQ(publisherInputProcessor_.getNumGroups(), 12);
+    EXPECT_EQ(partnerInputProcessor_.getNumGroups(), 12);
+  } else {
+    EXPECT_EQ(publisherInputProcessor_.getNumGroups(), 6);
+    EXPECT_EQ(partnerInputProcessor_.getNumGroups(), 6);
+  }
 }
 
-TEST_F(InputProcessorTest, testNumTestGroups) {
-  EXPECT_EQ(publisherInputProcessor_.getNumTestGroups(), 7);
-  EXPECT_EQ(partnerInputProcessor_.getNumTestGroups(), 7);
+TEST_P(InputProcessorTest, testNumTestGroups) {
+  if (computePublisherBreakdowns_) {
+    EXPECT_EQ(publisherInputProcessor_.getNumTestGroups(), 7);
+    EXPECT_EQ(partnerInputProcessor_.getNumTestGroups(), 7);
+  } else {
+    EXPECT_EQ(publisherInputProcessor_.getNumTestGroups(), 4);
+    EXPECT_EQ(partnerInputProcessor_.getNumTestGroups(), 4);
+  }
 }
 
 // Convert input boolean index shares to group ids
@@ -137,29 +154,41 @@ std::vector<uint32_t> convertIndexSharesToGroupIds(
   return groupIds;
 }
 
-TEST_F(InputProcessorTest, testIndexShares) {
+TEST_P(InputProcessorTest, testIndexShares) {
   auto publisherShares = publisherInputProcessor_.getIndexShares();
-  size_t groupWidth = std::ceil(std::log2(12));
+  size_t groupWidth =
+      std::ceil(std::log2(publisherInputProcessor_.getNumGroups()));
   EXPECT_EQ(publisherShares.size(), groupWidth);
-  std::vector<uint32_t> expectGroupIds = {3, 1, 9, 0, 0, 7, 1, 4, 6, 1, 4,
-                                          6, 3, 1, 7, 3, 3, 6, 0, 0, 6, 3,
-                                          3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 11};
+  std::vector<uint32_t> expectGroupIds;
+  if (computePublisherBreakdowns_) {
+    expectGroupIds = {3, 1, 9, 0, 0, 7, 1, 4, 6, 1, 4, 6, 3, 1, 7, 3, 3,
+                      6, 0, 0, 6, 3, 3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 11};
+  } else {
+    expectGroupIds = {0, 1, 3, 0, 0, 4, 1, 1, 3, 1, 1, 3, 0, 1, 4, 0, 0,
+                      3, 0, 0, 3, 0, 0, 3, 0, 0, 2, 2, 0, 0, 2, 2, 5};
+  }
   auto groupIds = convertIndexSharesToGroupIds(publisherShares);
   EXPECT_EQ(expectGroupIds, groupIds);
 }
 
-TEST_F(InputProcessorTest, testTestIndexShares) {
+TEST_P(InputProcessorTest, testTestIndexShares) {
   auto publisherShares = publisherInputProcessor_.getTestIndexShares();
-  size_t testGroupWidth = std::ceil(std::log2(7));
+  size_t testGroupWidth =
+      std::ceil(std::log2(publisherInputProcessor_.getNumTestGroups()));
   EXPECT_EQ(publisherShares.size(), testGroupWidth);
-  std::vector<uint32_t> expectTestGroupIds = {3, 1, 6, 0, 0, 6, 1, 4, 6, 1, 4,
-                                              6, 3, 1, 6, 3, 3, 6, 0, 0, 6, 3,
-                                              3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 6};
+  std::vector<uint32_t> expectTestGroupIds;
+  if (computePublisherBreakdowns_) {
+    expectTestGroupIds = {3, 1, 6, 0, 0, 6, 1, 4, 6, 1, 4, 6, 3, 1, 6, 3, 3,
+                          6, 0, 0, 6, 3, 3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 6};
+  } else {
+    expectTestGroupIds = {0, 1, 3, 0, 0, 3, 1, 1, 3, 1, 1, 3, 0, 1, 3, 0, 0,
+                          3, 0, 0, 3, 0, 0, 3, 0, 0, 2, 2, 0, 0, 2, 2, 3};
+  }
   auto testGroupIds = convertIndexSharesToGroupIds(publisherShares);
   EXPECT_EQ(expectTestGroupIds, testGroupIds);
 }
 
-TEST_F(InputProcessorTest, testOpportunityTimestamps) {
+TEST_P(InputProcessorTest, testOpportunityTimestamps) {
   auto future0 = std::async([&] {
     return publisherInputProcessor_.getOpportunityTimestamps()
         .openToParty(0)
@@ -179,7 +208,7 @@ TEST_F(InputProcessorTest, testOpportunityTimestamps) {
   EXPECT_EQ(opportunityTimestamps0, expectOpportunityTimestamps);
 }
 
-TEST_F(InputProcessorTest, testIsValidOpportunityTimestamp) {
+TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
   auto future0 = std::async([&] {
     return publisherInputProcessor_.getIsValidOpportunityTimestamp()
         .openToParty(0)
@@ -212,7 +241,7 @@ std::vector<std::vector<uint64_t>> revealPurchaseTimestamps(
   return purchaseTimestamps;
 }
 
-TEST_F(InputProcessorTest, testPurchaseTimestamps) {
+TEST_P(InputProcessorTest, testPurchaseTimestamps) {
   auto future0 =
       std::async(revealPurchaseTimestamps<0>, publisherInputProcessor_);
   auto future1 =
@@ -242,7 +271,7 @@ std::vector<std::vector<uint64_t>> revealThresholdTimestamps(
   return thresholdTimestamps;
 }
 
-TEST_F(InputProcessorTest, testThresholdTimestamps) {
+TEST_P(InputProcessorTest, testThresholdTimestamps) {
   auto future0 =
       std::async(revealThresholdTimestamps<0>, publisherInputProcessor_);
   auto future1 =
@@ -258,7 +287,7 @@ TEST_F(InputProcessorTest, testThresholdTimestamps) {
   EXPECT_EQ(thresholdTimestamps0, expectThresholdTimestamps);
 }
 
-TEST_F(InputProcessorTest, testAnyValidPurchaseTimestamp) {
+TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
   auto future0 = std::async([&] {
     return publisherInputProcessor_.getAnyValidPurchaseTimestamp()
         .openToParty(0)
@@ -288,7 +317,7 @@ std::vector<std::vector<int64_t>> revealPurchaseValues(
   return purchaseValues;
 }
 
-TEST_F(InputProcessorTest, testPurchaseValues) {
+TEST_P(InputProcessorTest, testPurchaseValues) {
   auto future0 = std::async(revealPurchaseValues<0>, publisherInputProcessor_);
   auto future1 = std::async(revealPurchaseValues<1>, partnerInputProcessor_);
   auto purchaseValues0 = future0.get();
@@ -315,7 +344,7 @@ std::vector<std::vector<int64_t>> revealPurchaseValueSquared(
   return purchaseValueSquared;
 }
 
-TEST_F(InputProcessorTest, testPurchaseValueSquared) {
+TEST_P(InputProcessorTest, testPurchaseValueSquared) {
   auto future0 =
       std::async(revealPurchaseValueSquared<0>, publisherInputProcessor_);
   auto future1 =
@@ -333,7 +362,7 @@ TEST_F(InputProcessorTest, testPurchaseValueSquared) {
   EXPECT_EQ(purchaseValueSquared0, expectPurchaseValueSquared);
 }
 
-TEST_F(InputProcessorTest, testReach) {
+TEST_P(InputProcessorTest, testReach) {
   auto future0 = std::async([&] {
     return publisherInputProcessor_.getTestReach().openToParty(0).getValue();
   });
@@ -348,5 +377,16 @@ TEST_F(InputProcessorTest, testReach) {
                                        0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0};
   EXPECT_EQ(testReach0, expectTestReach);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    InputProcessorTestSuite,
+    InputProcessorTest,
+    ::testing::Bool(),
+    [](const testing::TestParamInfo<InputProcessorTest::ParamType>& info) {
+      std::string computePublisherBreakdowns = info.param ? "True" : "False";
+      std::string name =
+          "computePublisherBreakdowns_" + computePublisherBreakdowns;
+      return name;
+    });
 
 } // namespace private_lift
