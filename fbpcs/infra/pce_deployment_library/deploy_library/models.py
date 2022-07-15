@@ -38,3 +38,15 @@ NOT_SUPPORTED_INIT_DEFAULT_OPTIONS: List[str] = [
 class TerraformCommands(str, Enum):
     INIT: str = "init"
     APPLY: str = "apply"
+
+
+class TerraformOptionFlag:
+    pass
+
+
+class FlaggedOption(TerraformOptionFlag):
+    pass
+
+
+class NotFlaggedOption(TerraformOptionFlag):
+    pass
