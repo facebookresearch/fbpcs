@@ -163,8 +163,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
 
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
-    # TODO: _stage_flow_cls_name should be immutable
-    _stage_flow_cls_name: str = "PrivateComputationStageFlow"
+    _stage_flow_cls_name: str = immutable_field(default="PrivateComputationStageFlow")
 
     retry_counter: int = 0
     creation_ts: int = immutable_field(default_factory=lambda: int(time.time()))
