@@ -42,6 +42,7 @@ from fbpcs.private_computation.service.run_binary_base_service import (
 
 class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     def setUp(self) -> None:
+        # create partner PrivateComputationInstance
         infra_config: InfraConfig = InfraConfig(
             instance_id="123",
             role=PrivateComputationRole.PARTNER,
@@ -70,6 +71,28 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 binary_version="latest",
                 repository_path="test_path/",
             )
+        )
+        # create publisher PrivateComputationInstance
+        infra_config_publisher: InfraConfig = InfraConfig(
+            instance_id="123",
+            role=PrivateComputationRole.PUBLISHER,
+            status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+            status_update_ts=1600000000,
+            instances=[],
+            game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=1,
+            num_mpc_containers=1,
+            num_files_per_mpc_container=1,
+            status_updates=[],
+        )
+        common_publisher: CommonProductConfig = CommonProductConfig(
+            input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
+            output_dir="789",
+        )
+        product_config_publisher: ProductConfig = LiftConfig(common=common_publisher)
+        self._pc_instance_publisher = PrivateComputationInstance(
+            infra_config=infra_config_publisher,
+            product_config=product_config_publisher,
         )
 
     @patch.object(RunBinaryBaseService, "start_containers")
@@ -153,8 +176,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     async def test_run_async_completes_when_the_pre_validator_is_enabled_but_the_role_is_publisher(
         self, mock_get_pc_status_from_stage_state
     ) -> None:
-        pc_instance = self._pc_instance
-        pc_instance.infra_config.role = PrivateComputationRole.PUBLISHER
+        pc_instance = self._pc_instance_publisher
         expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
         mock_onedocker_svc = MagicMock()
         pc_validator_config = PCValidatorConfig(
