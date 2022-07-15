@@ -42,7 +42,7 @@ GroupedLiftMetrics runCalculatorGame(
 }
 
 class CalculatorGameTestFixture
-    : public ::testing::TestWithParam<common::SchedulerType> {
+    : public ::testing::TestWithParam<std::tuple<common::SchedulerType, bool>> {
  public:
   CalculatorGameConfig getInputData(
       const std::filesystem::path& inputPath,
@@ -103,23 +103,27 @@ class CalculatorGameTestFixture
 
 TEST_P(CalculatorGameTestFixture, TestCorrectness) {
   int numConversionsPerUser = 2;
+
+  // test with and w/o computing publisher breakdowns
+  bool computePublisherBreakdowns = std::get<1>(GetParam());
   std::string baseDir =
       private_measurement::test_util::getBaseDirFromPath(__FILE__);
   CalculatorGameConfig publisherConfig =
       CalculatorGameTestFixture::getInputData(
           baseDir + "../sample_input/publisher_unittest3.csv",
           numConversionsPerUser,
-          true);
+          computePublisherBreakdowns);
   CalculatorGameConfig partnerConfig = CalculatorGameTestFixture::getInputData(
       baseDir + "../sample_input/partner_2_convs_unittest.csv",
       numConversionsPerUser,
-      true);
+      computePublisherBreakdowns);
   std::string expectedOutputFilename =
       baseDir + "../sample_input/correctness_output.json";
 
   // Run calculator game with input files
   const bool unsafe = true;
-  auto schedulerType = GetParam();
+
+  auto schedulerType = std::get<0>(GetParam());
   fbpcf::SchedulerCreator schedulerCreator =
       fbpcf::getSchedulerCreator<unsafe>(schedulerType);
   auto res = runGameWithScheduler(
@@ -129,12 +133,20 @@ TEST_P(CalculatorGameTestFixture, TestCorrectness) {
   auto expectedRes = GroupedLiftMetrics::fromJson(
       fbpcf::io::FileIOWrappers::readFile(expectedOutputFilename));
 
+  // No publisher breakdown computation required, remove the
+  // breakdown data from the expected output before result validation
+  if (!computePublisherBreakdowns) {
+    expectedRes.publisherBreakdowns.clear();
+  }
+
   EXPECT_EQ(expectedRes, res);
 }
 
 TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
   // Generate test input files with random data
   int numConversionsPerUser = 25;
+  bool computePublisherBreakdowns = std::get<1>(GetParam());
+
   GenFakeData testDataGenerator;
   LiftFakeDataParams params;
   params.setNumRows(15)
@@ -148,13 +160,15 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
   testDataGenerator.genFakePartnerInputFile(partnerInputFilename_, params);
   CalculatorGameConfig publisherConfig =
       CalculatorGameTestFixture::getInputData(
-          publisherInputFilename_, numConversionsPerUser, true);
+          publisherInputFilename_,
+          numConversionsPerUser,
+          computePublisherBreakdowns);
   CalculatorGameConfig partnerConfig = CalculatorGameTestFixture::getInputData(
-      partnerInputFilename_, numConversionsPerUser, true);
+      partnerInputFilename_, numConversionsPerUser, computePublisherBreakdowns);
 
   // Run calculator game with test input
   const bool unsafe = true;
-  auto schedulerType = GetParam();
+  auto schedulerType = std::get<0>(GetParam());
   fbpcf::SchedulerCreator schedulerCreator =
       fbpcf::getSchedulerCreator<unsafe>(schedulerType);
   auto res = runGameWithScheduler(
@@ -184,14 +198,19 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
 INSTANTIATE_TEST_SUITE_P(
     CalculatorGameTest,
     CalculatorGameTestFixture,
-    ::testing::Values(
-        common::SchedulerType::NetworkPlaintext,
-        common::SchedulerType::Eager,
-        common::SchedulerType::Lazy),
+    ::testing::Combine(
+        ::testing::Values(
+            common::SchedulerType::NetworkPlaintext,
+            common::SchedulerType::Eager,
+            common::SchedulerType::Lazy),
+        ::testing::Bool()),
     [](const testing::TestParamInfo<CalculatorGameTestFixture::ParamType>&
            info) {
-      auto schedulerType = info.param;
-      return getSchedulerName(schedulerType);
+      auto schedulerType = std::get<0>(info.param);
+      std::string computePublisherBreakdowns =
+          std::get<1>(info.param) ? "True" : "False";
+      return getSchedulerName(schedulerType) + "_ComputePublisherBreakdowns_" +
+          computePublisherBreakdowns;
     });
 
 } // namespace private_lift
