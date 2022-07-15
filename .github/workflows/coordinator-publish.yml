@@ -37,7 +37,7 @@ jobs:
 
       - name: Build image
         run: |
-          docker build -f ./fbpcs/Dockerfile -t ${{ env.LOCAL_IMAGE_NAME }}:${{ github.event.inputs.new_tag }} .
+          docker build --build-arg FBPCS_BUNDLE_ID=${{ github.event.inputs.new_tag }} -f ./fbpcs/Dockerfile -t ${{ env.LOCAL_IMAGE_NAME }}:${{ github.event.inputs.new_tag }} .
 
       # Tests will be added here
 

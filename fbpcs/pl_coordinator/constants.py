@@ -35,3 +35,4 @@ PROCESS_WAIT = 1  # interval between starting processes.
 INSTANCE_SLA = 57600  # 8 hr instance sla, 2 tries per stage, total 16 hrs.
 
 FBPCS_GRAPH_API_TOKEN = "FBPCS_GRAPH_API_TOKEN"
+FBPCS_BUNDLE_ID = "FBPCS_BUNDLE_ID"
