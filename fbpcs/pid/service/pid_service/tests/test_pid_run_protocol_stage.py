@@ -10,7 +10,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.coordination.file_coordination import FileCoordinationService
@@ -26,7 +25,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             repository_path="test_path/",
         )
 
-    @to_sync
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
     async def test_not_ready(self, mock_instance_repo) -> None:
         stage_input = PIDStageInput(
@@ -57,7 +55,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
             await adv_run_stage._ready(stage_input=stage_input),
         )
 
-    @to_sync
     @patch(
         "fbpcs.private_computation.service.run_binary_base_service.RunBinaryBaseService.wait_for_containers_async"
     )
@@ -167,7 +164,6 @@ class TestPIDProtocolRunStage(unittest.TestCase):
                 mock_wait_for_containers_async.reset_mock()
                 await _run_sub_test(wait_for_containers)
 
-    @to_sync
     @patch(
         "fbpcs.private_computation.service.run_binary_base_service.RunBinaryBaseService.wait_for_containers_async"
     )

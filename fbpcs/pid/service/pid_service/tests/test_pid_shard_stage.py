@@ -10,7 +10,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.data_processing.service.sharding_service import ShardingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pcf.tests.async_utils import to_sync
 from fbpcs.pid.entity.pid_instance import PIDStageStatus
 from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.pid.service.pid_service.pid_shard_stage import PIDShardStage
@@ -19,7 +18,6 @@ from fbpcs.pid.service.pid_service.pid_stage_input import PIDStageInput
 
 
 class TestPIDShardStage(unittest.TestCase):
-    @to_sync
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
     async def test_ready(self, mock_instance_repo) -> None:
         stage = PIDShardStage(
@@ -51,7 +49,6 @@ class TestPIDShardStage(unittest.TestCase):
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_run(
         self,
         mock_instance_repo,
@@ -172,7 +169,6 @@ class TestPIDShardStage(unittest.TestCase):
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_shard(
         self,
         mock_instance_repo,

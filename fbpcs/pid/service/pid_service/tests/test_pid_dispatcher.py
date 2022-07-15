@@ -6,13 +6,12 @@
 
 import unittest
 from collections import defaultdict
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.service.container_aws import AWSContainerService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.pcf.tests.async_utils import AsyncMock, to_sync
 from fbpcs.pid.entity.pid_instance import (
     PIDInstance,
     PIDProtocol,
@@ -224,7 +223,6 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_union_pid_run_all_order(
         self,
         mock_instance_repo,
@@ -290,7 +288,6 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_pid_run_stage_with_exception(
         self,
         mock_instance_repo,
@@ -349,7 +346,6 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_union_pid_run_stages_one_by_one(
         self,
         mock_instance_repo,
@@ -424,7 +420,6 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_union_pid_run_only_unfinished_stages(
         self,
         mock_instance_repo,
@@ -504,7 +499,6 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_union_pid_flow_valid_partner(
         self,
         mock_instance_repo,
@@ -583,7 +577,6 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_union_pid_flow_valid_partner_with_data_path_spine_path(
         self,
         mock_instance_repo,
@@ -671,7 +664,6 @@ class TestPIDDispatcher(unittest.TestCase):
     @patch("fbpcp.service.onedocker.OneDockerService", spec=OneDockerService)
     @patch("fbpcp.service.container_aws.AWSContainerService", spec=AWSContainerService)
     @patch("fbpcs.pid.repository.pid_instance.PIDInstanceRepository")
-    @to_sync
     async def test_valid_custom_flow(
         self,
         mock_instance_repo,
