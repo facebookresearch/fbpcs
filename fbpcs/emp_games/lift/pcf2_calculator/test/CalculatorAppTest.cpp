@@ -67,7 +67,7 @@ void runCalculatorApp(
 }
 
 class CalculatorAppTestFixture
-    : public ::testing::TestWithParam<std::tuple<bool, bool>> {
+    : public ::testing::TestWithParam<std::tuple<bool, bool, bool>> {
  protected:
   std::string publisherInputPath_;
   std::string partnerInputPath_;
@@ -165,18 +165,27 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
   bool useTls = std::get<0>(GetParam());
   bool useXorEncryption = std::get<1>(GetParam());
 
+  // test with and w/o computing publisher breakdowns
+  bool computePublisherBreakdowns = std::get<2>(GetParam());
+
   auto result = runTest(
       publisherInputPath,
       partnerInputPath,
       publisherOutputPath_,
       partnerOutputPath_,
       numConversionsPerUser,
-      true,
+      computePublisherBreakdowns,
       useTls,
       useXorEncryption);
 
   auto expectedResult = GroupedLiftMetrics::fromJson(
       fbpcf::io::FileIOWrappers::readFile(expectedOutputPath));
+
+  // No publisher breakdown computation required, remove the
+  // breakdown data from the expected output before result validation
+  if (!computePublisherBreakdowns) {
+    expectedResult.publisherBreakdowns.clear();
+  }
 
   EXPECT_EQ(expectedResult, result);
 }
@@ -199,13 +208,14 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
   // Run calculator app with test input
   bool useTls = std::get<0>(GetParam());
   bool useXorEncryption = std::get<1>(GetParam());
+  bool computePublisherBreakdowns = std::get<2>(GetParam());
   auto res = runTest(
       publisherInputPath_,
       partnerInputPath_,
       publisherOutputPath_,
       partnerOutputPath_,
       numConversionsPerUser,
-      true,
+      computePublisherBreakdowns,
       useTls,
       useXorEncryption);
 
@@ -233,12 +243,15 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
 INSTANTIATE_TEST_SUITE_P(
     CalculatorAppTest,
     CalculatorAppTestFixture,
-    ::testing::Combine(::testing::Bool(), ::testing::Bool()),
+    ::testing::Combine(::testing::Bool(), ::testing::Bool(), ::testing::Bool()),
     [](const testing::TestParamInfo<CalculatorAppTestFixture::ParamType>&
            info) {
       std::string tls = std::get<0>(info.param) ? "True" : "False";
       std::string useXorEncryption = std::get<1>(info.param) ? "True" : "False";
-      std::string name = "TLS_" + tls + "_XOR_" + useXorEncryption;
+      std::string computePublisherBreakdowns =
+          std::get<2>(info.param) ? "True" : "False";
+      std::string name = "TLS_" + tls + "_XOR_" + useXorEncryption +
+          "_ComputePublisherBreakdowns_" + computePublisherBreakdowns;
       return name;
     });
 

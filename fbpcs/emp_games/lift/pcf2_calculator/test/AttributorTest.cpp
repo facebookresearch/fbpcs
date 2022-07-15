@@ -48,16 +48,17 @@ class AttributorTest : public ::testing::Test {
         baseDir + "../sample_input/partner_2_convs_unittest.csv";
     int numConversionsPerUser = 2;
     int epoch = 1546300800;
+    bool computePublisherBreakdowns = true;
     auto publisherInputData = InputData(
         publisherInputFilename,
         InputData::LiftMPCType::Standard,
-        true,
+        computePublisherBreakdowns,
         epoch,
         numConversionsPerUser);
     auto partnerInputData = InputData(
         partnerInputFilename,
         InputData::LiftMPCType::Standard,
-        true,
+        computePublisherBreakdowns,
         epoch,
         numConversionsPerUser);
 
