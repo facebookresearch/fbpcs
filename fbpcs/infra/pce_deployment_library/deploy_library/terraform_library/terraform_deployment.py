@@ -15,9 +15,9 @@ from fbpcs.infra.pce_deployment_library.deploy_library.deploy_base.deploy_base i
 )
 
 from fbpcs.infra.pce_deployment_library.deploy_library.models import (
-    RunCommandReturn,
+    RunCommandResult,
     TerraformCliOptions,
-    TerraformCommands,
+    TerraformCommand,
 )
 from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_deployment_utils import (
     TerraformDeploymentUtils,
@@ -66,7 +66,7 @@ class TerraformDeployment(DeployBase):
         terraform_input: bool = False,
         auto_approve: bool = True,
         **kwargs: Dict[str, Any],
-    ) -> RunCommandReturn:
+    ) -> RunCommandResult:
         """
         Implements `terraform apply` of terraform CLI.
         `terraform apply` command executes the actions proposed in a `terraform plan`.
@@ -84,7 +84,7 @@ class TerraformDeployment(DeployBase):
         options: Dict[str, Any] = kwargs.copy()
         options["input"] = terraform_input
         options["auto-approve"] = auto_approve  # a False value will require an input
-        options = self.utils.get_default_options(TerraformCommands.APPLY, options)
+        options = self.utils.get_default_options(TerraformCommand.APPLY, options)
         return self.run_command("terraform apply", **options)
 
     def destroy(self) -> None:
@@ -95,7 +95,7 @@ class TerraformDeployment(DeployBase):
         backend_config: Optional[Dict[str, str]] = None,
         reconfigure: bool = False,
         **kwargs: Dict[str, Any],
-    ) -> RunCommandReturn:
+    ) -> RunCommandResult:
         """
         Implements `terraform init` of terraform CLI.
         `terraform init` command is used to initialize a working directory containing Terraform configuration files.
@@ -120,7 +120,7 @@ class TerraformDeployment(DeployBase):
                 TerraformCliOptions.reconfigure: reconfigure,
             }
         )
-        options = self.utils.get_default_options(TerraformCommands.INIT, options)
+        options = self.utils.get_default_options(TerraformCommand.INIT, options)
         return self.run_command("terraform init", **options)
 
     def plan(self) -> None:
@@ -128,7 +128,7 @@ class TerraformDeployment(DeployBase):
 
     def run_command(
         self, command: str, capture_output: bool = True, **kwargs: Any
-    ) -> RunCommandReturn:
+    ) -> RunCommandResult:
         """
         Executes Terraform CLIs apply/destroy/init/plan
         """
@@ -158,4 +158,4 @@ class TerraformDeployment(DeployBase):
                 out = None
                 err = None
 
-        return RunCommandReturn(return_code=ret_code, output=out, error=err)
+        return RunCommandResult(return_code=ret_code, output=out, error=err)

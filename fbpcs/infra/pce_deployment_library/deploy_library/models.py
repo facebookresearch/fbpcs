@@ -11,7 +11,7 @@ from typing import List, Optional
 
 
 @dataclass
-class RunCommandReturn:
+class RunCommandResult:
     return_code: int
     output: Optional[str]
     error: Optional[str]
@@ -35,6 +35,18 @@ NOT_SUPPORTED_INIT_DEFAULT_OPTIONS: List[str] = [
 ]
 
 
-class TerraformCommands(str, Enum):
+class TerraformCommand(str, Enum):
     INIT: str = "init"
     APPLY: str = "apply"
+
+
+class TerraformOptionFlag:
+    pass
+
+
+class FlaggedOption(TerraformOptionFlag):
+    pass
+
+
+class NotFlaggedOption(TerraformOptionFlag):
+    pass

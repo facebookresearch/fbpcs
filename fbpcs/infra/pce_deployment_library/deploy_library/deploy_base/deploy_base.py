@@ -7,12 +7,12 @@
 
 from abc import ABC, abstractmethod
 
-from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandReturn
+from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandResult
 
 
 class DeployBase(ABC):
     @abstractmethod
-    def create(self) -> RunCommandReturn:
+    def create(self) -> RunCommandResult:
         pass
 
     @abstractmethod
@@ -24,5 +24,5 @@ class DeployBase(ABC):
         pass
 
     @abstractmethod
-    def run_command(self) -> RunCommandReturn:
+    def run_command(self) -> RunCommandResult:
         pass
