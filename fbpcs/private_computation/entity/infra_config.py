@@ -9,11 +9,12 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Set, Union
 
-from dataclasses_json import dataclass_json, DataClassJsonMixin
+from dataclasses_json import config, dataclass_json, DataClassJsonMixin
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
 from fbpcs.common.entity.dataclasses_mutability import (
     DataclassMutabilityMixin,
     immutable_field,
+    MutabilityMetadata,
 )
 from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -28,6 +29,8 @@ from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from marshmallow import fields
+from marshmallow_enum import EnumField
 
 
 class PrivateComputationRole(Enum):
@@ -148,7 +151,14 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     status_updates: List[StatusUpdate]
 
     tier: Optional[str] = immutable_field(default=None)
-    pcs_features: Set[PCSFeature] = field(default_factory=set)
+    pcs_features: Set[PCSFeature] = field(
+        default_factory=set,
+        metadata={
+            # this makes type warning away when serialize this field
+            **config(mm_field=fields.List(EnumField(PCSFeature))),
+            **MutabilityMetadata.IMMUTABLE.value,
+        },
+    )
     pce_config: Optional[PCEConfig] = None
 
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
