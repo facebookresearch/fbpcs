@@ -58,6 +58,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
         num_files_per_mpc_container: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
         result_visibility: Optional[ResultVisibility] = None,
+        pcs_features: Optional[List[str]] = None,
     ) -> None:
         super().__init__(instance_id, logger, PrivateComputationRole.PARTNER)
         self.config: Dict[str, Any] = config
@@ -86,6 +87,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
                 num_files_per_mpc_container=num_files_per_mpc_container,
                 k_anonymity_threshold=k_anonymity_threshold,
                 result_visibility=result_visibility,
+                pcs_features=pcs_features,
             )
 
         self.status = pc_instance.infra_config.status

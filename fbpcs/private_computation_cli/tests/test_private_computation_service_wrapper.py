@@ -165,6 +165,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
             stage_flow_cls=None,
             pid_configs={"dependency": {"PIDInstanceRepository": None}},
             result_visibility=None,
+            pcs_features=None,
         )
 
     @patch(

@@ -8,7 +8,7 @@
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 import dateutil.parser
 import pytz
@@ -48,6 +48,7 @@ ATTRIBUTION_RULE = "attribution_rule"
 STATUS = "status"
 CREATED_TIME = "created_time"
 TIER = "tier"
+FEATURE_LIST = "feature_list"
 
 TERMINAL_STATUSES = [
     "POST_PROCESSING_HANDLERS_COMPLETED",
@@ -146,6 +147,10 @@ def run_attribution(
         )
     instance_data = _get_pa_instance_info(client, instance_id, logger)
     _check_version(instance_data, config)
+    # get the enabled features
+    pcs_features = _get_pcs_features(instance_data)
+    if pcs_features:
+        logger.info(f"Enabled features: {pcs_features}")
     num_pid_containers = instance_data[NUM_SHARDS]
     num_mpc_containers = instance_data[NUM_CONTAINERS]
 
@@ -166,6 +171,7 @@ def run_attribution(
         "num_files_per_mpc_container": num_files_per_mpc_container,
         "k_anonymity_threshold": k_anonymity_threshold,
         "num_tries": num_tries,
+        "pcs_features": pcs_features,
     }
     run_instance(**instance_parameters)
     logger.info(f"Finished running instances {instance_id}.")
@@ -218,6 +224,10 @@ def _check_version(
         raise IncorrectVersionError.make_error(
             instance["id"], expected_tier, config_tier
         )
+
+
+def _get_pcs_features(instance: Dict[str, Any]) -> Optional[List[str]]:
+    return instance.get(FEATURE_LIST)
 
 
 def get_attribution_dataset_info(
