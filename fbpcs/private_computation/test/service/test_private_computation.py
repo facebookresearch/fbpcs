@@ -393,7 +393,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             private_computation_instance.elapsed_time,
         )
 
-        expected_end_ts = time.time() + 2
+        expected_end_ts = time.time() + 1
         private_computation_instance.update_status(
             private_computation_instance.stage_flow.get_last_stage().completed_status,
             logging.getLogger(),

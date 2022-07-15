@@ -7,15 +7,24 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional, Set, Union
+from typing import List, Optional, Set, Type, TYPE_CHECKING, Union
 
 from dataclasses_json import config, dataclass_json, DataClassJsonMixin
+
+# this import statument can avoid circular import
+if TYPE_CHECKING:
+
+    from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+        PrivateComputationBaseStageFlow,
+    )
+
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
 from fbpcs.common.entity.dataclasses_mutability import (
     DataclassMutabilityMixin,
     immutable_field,
     MutabilityMetadata,
 )
+from fbpcs.common.entity.frozen_field_hook import FrozenFieldHook
 from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
@@ -58,8 +67,11 @@ class StatusUpdate:
 # called in post_status_hook
 # happens whenever status is updated
 def post_update_status(obj: "InfraConfig") -> None:
+    # TODO:T126122461 uniform time assignment for `status_update_ts` and `end_ts`
     obj.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
     append_status_updates(obj)
+    if obj.is_stage_flow_completed():
+        obj.end_ts = int(time.time())
 
 
 # called in post_status_hook
@@ -75,6 +87,13 @@ def append_status_updates(obj: "InfraConfig") -> None:
 post_status_hook: UpdateGenericHook["InfraConfig"] = UpdateGenericHook(
     triggers=[HookEventType.POST_UPDATE],
     update_function=post_update_status,
+)
+
+
+# create FrozenFieldHook: set end_ts immutable after initialized
+set_end_ts_immutable_hook: FrozenFieldHook = FrozenFieldHook(
+    other_field="end_ts",
+    freeze_when=lambda obj: obj.end_ts != 0,
 )
 
 
@@ -166,9 +185,24 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     retry_counter: int = 0
     creation_ts: int = immutable_field(default_factory=lambda: int(time.time()))
 
-    # end_ts should be immutable as well
-    # TODO will set this later
-    end_ts: int = 0
+    end_ts: int = field(
+        default=0, metadata=DataclassHookMixin.get_metadata(set_end_ts_immutable_hook)
+    )
 
     # TODO: concurrency should be immutable eventually
     mpc_compute_concurrency: int = 1
+
+    @property
+    def stage_flow(self) -> Type["PrivateComputationBaseStageFlow"]:
+        # this inner-function import allow us to call PrivateComputationBaseStageFlow.cls_name_to_cls
+        # TODO: [BE] create a safe way to avoid inner-function import
+        from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+            PrivateComputationBaseStageFlow,
+        )
+
+        return PrivateComputationBaseStageFlow.cls_name_to_cls(
+            self._stage_flow_cls_name
+        )
+
+    def is_stage_flow_completed(self) -> bool:
+        return self.status is self.stage_flow.get_last_stage().completed_status
