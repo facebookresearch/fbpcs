@@ -128,9 +128,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     """
 
     instance_id: str = immutable_field()
-    # role should be immutable as well
-    # TODO will set this later
-    role: PrivateComputationRole
+    role: PrivateComputationRole = immutable_field()
     status: PrivateComputationInstanceStatus = field(
         metadata=DataclassHookMixin.get_metadata(post_status_hook)
     )
