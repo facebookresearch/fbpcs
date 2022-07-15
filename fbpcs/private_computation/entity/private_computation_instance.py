@@ -30,9 +30,7 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
 )
-from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
-from fbpcs.pid.entity.pid_stages import UnionPIDStage
-from fbpcs.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
+from fbpcs.pid.entity.pid_stages import STAGE_TO_FILE_FORMAT_MAP, UnionPIDStage
 from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
@@ -51,7 +49,6 @@ from fbpcs.private_computation.entity.product_config import (
 )
 
 UnionedPCInstanceStatus = Union[
-    PIDInstanceStatus,
     MPCInstanceStatus,
     PostProcessingInstanceStatus,
     StageStateInstanceStatus,
@@ -251,7 +248,7 @@ class PrivateComputationInstance(InstanceBase):
         if not self.infra_config.instances:
             return server_ips_list
         last_instance = self.infra_config.instances[-1]
-        if isinstance(last_instance, (PIDInstance, PCSMPCInstance, StageStateInstance)):
+        if isinstance(last_instance, (PCSMPCInstance, StageStateInstance)):
             server_ips_list = last_instance.server_ips or []
         return server_ips_list
 

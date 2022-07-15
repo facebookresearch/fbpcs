@@ -23,6 +23,7 @@ Types of changes
 
 ### Removed
 - Delete PIDStageService, PIDService because they are not used any more after we use the new PID stage services.
+- Delete PIDDispatcher, PIDStageMapper and PIDStage because they are not used any more after we use the new PID stage services.
 
 ## [1.7.0] - 2022-06-23
 

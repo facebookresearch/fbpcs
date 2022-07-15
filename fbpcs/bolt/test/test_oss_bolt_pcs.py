@@ -10,14 +10,19 @@ from collections import defaultdict
 from unittest import mock
 from unittest.mock import patch
 
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+
 from fbpcp.service.mpc import MPCService
 
 from fbpcp.service.onedocker import OneDockerService
 
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
+from fbpcs.common.entity.stage_state_instance import (
+    StageStateInstance,
+    StageStateInstanceStatus,
+)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
-from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -39,10 +44,7 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.service.constants import (
-    DEFAULT_PID_PROTOCOL,
-    NUM_NEW_SHARDS_PER_FILE,
-)
+from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
@@ -58,9 +60,6 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         mpc_instance_repo_patcher = patch(
             "fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository"
         )
-        pid_instance_repo_patcher = patch(
-            "fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository"
-        )
         private_computation_instance_repo_patcher = patch(
             "fbpcs.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository"
         )
@@ -68,7 +67,6 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         container_svc = container_svc_patcher.start()
         storage_svc = storage_svc_patcher.start()
         mpc_instance_repository = mpc_instance_repo_patcher.start()
-        pid_instance_repository = pid_instance_repo_patcher.start()
         private_computation_instance_repository = (
             private_computation_instance_repo_patcher.start()
         )
@@ -78,7 +76,6 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             container_svc_patcher,
             storage_svc_patcher,
             mpc_instance_repo_patcher,
-            pid_instance_repo_patcher,
             private_computation_instance_repo_patcher,
             mpc_game_svc_patcher,
         ):
@@ -151,28 +148,24 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         "fbpcs.private_computation.service.private_computation.PrivateComputationService.update_instance"
     )
     async def test_update_instance(self, mock_update) -> None:
-        # mock pc update_instance to return a pc instance with specific test status and instances
-        test_pid_id = self.test_instance_id
-        test_pid_role = PIDRole.PUBLISHER
-        test_input_path = "pid_in"
-        test_output_path = "pid_out"
-        # create one PID instance to be put into PrivateComputationInstance
-        pid_instance = PIDInstance(
-            instance_id=test_pid_id,
-            protocol=DEFAULT_PID_PROTOCOL,
-            pid_role=test_pid_role,
-            num_shards=self.test_num_containers,
-            input_path=test_input_path,
-            output_path=test_output_path,
-            status=PIDInstanceStatus.STARTED,
-            server_ips=["10.0.10.242"],
+        stage_state_instance = StageStateInstance(
+            instance_id="stage_state_instance",
+            stage_name="test_stage",
+            status=StageStateInstanceStatus.COMPLETED,
+            containers=[
+                ContainerInstance(
+                    instance_id="test_container_instance",
+                    ip_address="10.0.10.242",
+                    status=ContainerInstanceStatus.COMPLETED,
+                )
+            ],
         )
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.test_instance_id,
             role=self.test_role,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=0,
-            instances=[pid_instance],
+            instances=[stage_state_instance],
             game_type=self.test_game_type,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,

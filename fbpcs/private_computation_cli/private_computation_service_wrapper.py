@@ -20,7 +20,6 @@ from fbpcp.service.storage import StorageService
 from fbpcs.common.service.pcs_container_service import PCSContainerService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
-from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
@@ -252,7 +251,7 @@ def get_server_ips(
 
     server_ips_list = None
     last_instance = pc_instance.infra_config.instances[-1]
-    if isinstance(last_instance, (PIDInstance, MPCInstance)):
+    if isinstance(last_instance, MPCInstance):
         server_ips_list = last_instance.server_ips
 
     if server_ips_list is None:
