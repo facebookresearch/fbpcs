@@ -31,8 +31,7 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstanceStatus,
 )
 from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus
-from fbpcs.pid.entity.pid_stages import UnionPIDStage
-from fbpcs.pid.service.pid_service.pid_stage_mapper import STAGE_TO_FILE_FORMAT_MAP
+from fbpcs.pid.entity.pid_stages import STAGE_TO_FILE_FORMAT_MAP, UnionPIDStage
 from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstanceStatus,
 )
