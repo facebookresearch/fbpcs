@@ -143,11 +143,11 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                 # which is tested separately
                 await self.test_runner.run_async([test_job])
                 if failing_side == "publisher":
-                    self.assertEquals(mock_publisher_run_stage.call_count, 2)
-                    self.assertEquals(mock_partner_run_stage.call_count, 1)
+                    mock_publisher_run_stage.assert_called_once()
+                    mock_partner_run_stage.assert_not_called()
                 else:
-                    self.assertEquals(mock_publisher_run_stage.call_count, 1)
-                    self.assertEquals(mock_partner_run_stage.call_count, 2)
+                    mock_publisher_run_stage.assert_not_called()
+                    mock_partner_run_stage.assert_called_once()
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     async def test_wait_stage_complete(self, mock_sleep) -> None:
@@ -262,20 +262,27 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         self.test_runner.partner_client.create_instance = mock.AsyncMock(
             return_value=test_partner_id
         )
+        test_previous_completed_state = BoltState(
+            pc_instance_status=PrivateComputationInstanceStatus.CREATED
+        )
         test_start_state = BoltState(
             pc_instance_status=stage.started_status, server_ips=server_ips
         )
         test_completed_state = BoltState(pc_instance_status=stage.completed_status)
         if server_ips:
             self.test_runner.publisher_client.update_instance = mock.AsyncMock(
-                side_effect=[test_start_state, test_start_state, test_completed_state]
+                side_effect=[
+                    test_previous_completed_state,
+                    test_start_state,
+                    test_completed_state,
+                ]
             )
         else:
             self.test_runner.publisher_client.update_instance = mock.AsyncMock(
-                side_effect=[test_start_state, test_completed_state]
+                side_effect=[test_previous_completed_state, test_completed_state]
             )
         self.test_runner.partner_client.update_instance = mock.AsyncMock(
-            side_effect=[test_start_state, test_completed_state]
+            side_effect=[test_previous_completed_state, test_completed_state]
         )
         self.test_runner.publisher_client.run_stage = mock.AsyncMock()
         mock_partner_run_stage = mock.AsyncMock()

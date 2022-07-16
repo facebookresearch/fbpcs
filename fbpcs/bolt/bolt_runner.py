@@ -196,9 +196,8 @@ class BoltRunner:
             await self.publisher_client.update_instance(publisher_id)
         ).pc_instance_status
         server_ips = None
-        if publisher_status is not stage.completed_status:
-            # This is necessary for auto-retry since we don't want to re-run
-            # the publisher side if it's completed already
+        if publisher_status not in [stage.started_status, stage.completed_status]:
+            # don't retry if started or completed status
             self.logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
             if stage.is_joint_stage:
@@ -215,9 +214,8 @@ class BoltRunner:
         partner_status = (
             await self.partner_client.update_instance(partner_id)
         ).pc_instance_status
-        if partner_status is not stage.completed_status:
-            # This is necessary for auto-retry since we don't want to re-run
-            # the partner side if it's completed already
+        if partner_status not in [stage.started_status, stage.completed_status]:
+            # don't retry if started or completed status
             self.logger.info(f"Partner {partner_id} starting stage {stage.name}.")
             await self.partner_client.run_stage(
                 instance_id=partner_id, stage=stage, server_ips=server_ips
