@@ -7,6 +7,7 @@
 # pyre-strict
 
 from enum import Enum
+from typing import Dict
 
 
 class UnionPIDStage(Enum):
@@ -24,3 +25,13 @@ class PIDStageFailureError(RuntimeError):
 
 class PIDFlowUnsupportedError(RuntimeError):
     """Custom exception thrown when a PID protocol + role combination is undefined"""
+
+
+STAGE_TO_FILE_FORMAT_MAP: Dict[UnionPIDStage, str] = {
+    UnionPIDStage.PUBLISHER_SHARD: "_publisher_sharded",
+    UnionPIDStage.PUBLISHER_PREPARE: "_publisher_prepared",
+    UnionPIDStage.PUBLISHER_RUN_PID: "_publisher_pid_matched",
+    UnionPIDStage.ADV_SHARD: "_advertiser_sharded",
+    UnionPIDStage.ADV_PREPARE: "_advertiser_prepared",
+    UnionPIDStage.ADV_RUN_PID: "_advertiser_pid_matched",
+}
