@@ -199,13 +199,7 @@ class PrivateComputationInstance(InstanceBase):
 
     @property
     def stage_flow(self) -> "Type[PrivateComputationBaseStageFlow]":
-        from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
-            PrivateComputationBaseStageFlow,
-        )
-
-        return PrivateComputationBaseStageFlow.cls_name_to_cls(
-            self.infra_config._stage_flow_cls_name
-        )
+        return self.infra_config.stage_flow
 
     @property
     def current_stage(self) -> "PrivateComputationBaseStageFlow":
@@ -228,10 +222,7 @@ class PrivateComputationInstance(InstanceBase):
         )
 
     def is_stage_flow_completed(self) -> bool:
-        return (
-            self.infra_config.status
-            is self.stage_flow.get_last_stage().completed_status
-        )
+        return self.infra_config.is_stage_flow_completed()
 
     def update_status(
         self, new_status: PrivateComputationInstanceStatus, logger: logging.Logger
@@ -242,8 +233,6 @@ class PrivateComputationInstance(InstanceBase):
             logger.info(
                 f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.infra_config.status} at time {self.infra_config.status_update_ts}"
             )
-        if self.is_stage_flow_completed():
-            self.infra_config.end_ts = int(time.time())
 
     @property
     def server_ips(self) -> List[str]:
