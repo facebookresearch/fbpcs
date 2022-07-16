@@ -39,6 +39,7 @@ from fbpcs.service.workflow_sfn import SfnWorkflowService
 class TestPIDMRStageService(IsolatedAsyncioTestCase):
     @patch("fbpcs.private_computation.service.pid_mr_stage_service.PIDMRStageService")
     async def test_run_async(self, pid_mr_svc_mock) -> None:
+        flow = PrivateComputationMRStageFlow
         infra_config: InfraConfig = InfraConfig(
             instance_id="publisher_123",
             role=PrivateComputationRole.PUBLISHER,
@@ -50,6 +51,7 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
             status_updates=[],
+            _stage_flow_cls_name=flow.get_cls_name(),
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test_data/stress_test/input.csv",
@@ -70,8 +72,6 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
             infra_config=infra_config,
             product_config=product_config,
         )
-        flow = PrivateComputationMRStageFlow
-        pc_instance.infra_config._stage_flow_cls_name = flow.get_cls_name()
 
         service = SfnWorkflowService("us-west-2", "access_key", "access_data")
         service.start_workflow = MagicMock(return_value="execution_arn")
