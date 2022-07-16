@@ -13,15 +13,19 @@ from typing import List, Optional, Tuple
 from unittest import mock
 from unittest.mock import AsyncMock, call, MagicMock, Mock, patch
 
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
-from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.common.entity.stage_state_instance import (
+    StageStateInstance,
+    StageStateInstanceStatus,
+)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
-from fbpcs.pid.entity.pid_instance import PIDInstance, PIDInstanceStatus, PIDRole
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -46,7 +50,6 @@ from fbpcs.private_computation.service.constants import (
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
     DEFAULT_LOG_COST_TO_S3,
-    DEFAULT_PID_PROTOCOL,
     NUM_NEW_SHARDS_PER_FILE,
 )
 from fbpcs.private_computation.service.errors import (
@@ -114,9 +117,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         mpc_instance_repo_patcher = patch(
             "fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository"
         )
-        pid_instance_repo_patcher = patch(
-            "fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository"
-        )
         private_computation_instance_repo_patcher = patch(
             "fbpcs.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository"
         )
@@ -124,7 +124,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         container_svc = container_svc_patcher.start()
         storage_svc = storage_svc_patcher.start()
         mpc_instance_repository = mpc_instance_repo_patcher.start()
-        pid_instance_repository = pid_instance_repo_patcher.start()
         private_computation_instance_repository = (
             private_computation_instance_repo_patcher.start()
         )
@@ -134,7 +133,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             container_svc_patcher,
             storage_svc_patcher,
             mpc_instance_repo_patcher,
-            pid_instance_repo_patcher,
             private_computation_instance_repo_patcher,
             mpc_game_svc_patcher,
         ):
@@ -976,22 +974,21 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(empty_instance.server_ips, [])
 
         # non empty case
-        test_pid_id = self.test_private_computation_id
-        test_pid_role = PIDRole.PUBLISHER
-        test_input_path = "pid_in"
-        test_output_path = "pid_out"
-        pid_instance = PIDInstance(
-            instance_id=test_pid_id,
-            protocol=DEFAULT_PID_PROTOCOL,
-            pid_role=test_pid_role,
-            num_shards=self.test_num_containers,
-            input_path=test_input_path,
-            output_path=test_output_path,
-            status=PIDInstanceStatus.STARTED,
-            server_ips=["1.1.1.1"],
+        stage_state_instance = StageStateInstance(
+            instance_id=self.test_private_computation_id,
+            stage_name="test_stage",
+            status=StageStateInstanceStatus.COMPLETED,
+            containers=[
+                ContainerInstance(
+                    instance_id="test_container_instance_0",
+                    ip_address="1.1.1.1",
+                    status=ContainerInstanceStatus.COMPLETED,
+                )
+            ],
         )
         non_empty_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.CREATED, instances=[pid_instance]
+            status=PrivateComputationInstanceStatus.CREATED,
+            instances=[stage_state_instance],
         )
         self.assertEqual(non_empty_instance.server_ips, ["1.1.1.1"])
 

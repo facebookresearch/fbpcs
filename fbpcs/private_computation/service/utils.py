@@ -34,7 +34,6 @@ from fbpcs.onedocker_binary_config import (
     OneDockerBinaryConfig,
 )
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -379,17 +378,7 @@ def get_log_urls(
     log_retriever = LogRetriever(CloudProvider.AWS)
 
     res = {}
-    if isinstance(last_instance, PIDInstance):
-        pid_current_stage = last_instance.current_stage
-        if not pid_current_stage:
-            logging.warning("Unreachable block: no stage has run yet")
-            return res
-        containers = last_instance.stages_containers[pid_current_stage]
-        for i, container in enumerate(containers):
-            res[f"{pid_current_stage}_{i}"] = log_retriever.get_log_url(
-                container.instance_id
-            )
-    elif isinstance(last_instance, PCSMPCInstance) or isinstance(
+    if isinstance(last_instance, PCSMPCInstance) or isinstance(
         last_instance, StageStateInstance
     ):
         containers = last_instance.containers
