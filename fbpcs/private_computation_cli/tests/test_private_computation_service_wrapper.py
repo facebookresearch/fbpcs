@@ -12,7 +12,6 @@ from fbpcp.repository.mpc_instance import MPCInstanceRepository
 from fbpcp.service.container import ContainerService
 from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.storage import StorageService
-from fbpcs.pid.repository.pid_instance import PIDInstanceRepository
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 
 from fbpcs.private_computation.entity.pcs_tier import PCSTier

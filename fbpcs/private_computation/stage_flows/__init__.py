@@ -22,8 +22,6 @@ __all__ = [  # noqa: ignore=F405
     "private_computation_pcf2_stage_flow",
     "private_computation_stage_flow",
     "private_computation_mr_stage_flow",
-    "private_computation_pid_migration_test_stage_flow",
-    "private_computation_pid_pa_test_stage_flow",
 ]
 
 from . import *  # noqa: ignore=F403
