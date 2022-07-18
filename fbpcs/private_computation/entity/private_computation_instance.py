@@ -6,10 +6,14 @@
 
 # pyre-strict
 
+import json
+import logging
 import os
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
+
+import marshmallow
 
 from dataclasses_json.mm import SchemaType
 
@@ -19,9 +23,6 @@ if TYPE_CHECKING:
     from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
         PrivateComputationBaseStageFlow,
     )
-
-import json
-import logging
 
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
@@ -83,13 +84,29 @@ class PrivateComputationInstance(InstanceBase):
 
         # create infra config
         infra_config: InfraConfig = InfraConfig.schema().loads(
-            json.dumps(json_object["infra_config"]), many=None
+            json.dumps(json_object["infra_config"]),
+            unknown="EXCLUDE",
+            many=None,
         )
 
         # create product config
-        product_config: ProductConfig = cls._product_map(json_object).loads(
-            json.dumps(json_object["product_config"]), many=None
-        )
+        product_config: ProductConfig
+        product_cleaned_json = False
+        product_json = json_object["product_config"]
+
+        while not product_cleaned_json:
+            # delete json contents which are not in config class
+            # this makes old PCInstance still valid when deleting attributes
+            try:
+                product_config = cls._product_map(json_object).loads(
+                    json.dumps(product_json),
+                    unknown="EXCLUDE",
+                    many=None,
+                )
+                product_cleaned_json = True
+            except marshmallow.exceptions.ValidationError as err:
+                logging.warning(f"delete unknown contents: {err.args[0]}")
+                cls._prune_json(product_json, err.args[0])
 
         return PrivateComputationInstance(
             infra_config=infra_config, product_config=product_config
@@ -105,6 +122,26 @@ class PrivateComputationInstance(InstanceBase):
         elif json_object["infra_config"]["game_type"] == "LIFT":
             return LiftConfig.schema()
         raise RuntimeError(f"Invalid product config: {json_object}")
+
+    @classmethod
+    def _prune_json(
+        cls, product_json: Dict[str, Any], err_dict: Dict[str, Any]
+    ) -> None:
+        """
+        This function will delete extra contents (which cannot be found in PCInstance) in product_json.
+        We do this because extra fields can sometimes break the deserialization logic.
+        """
+        bottom: bool = False
+        cannot_find_dict = err_dict
+
+        while not bottom:
+            for key, value in cannot_find_dict.items():
+                if isinstance(value, dict):
+                    product_json = product_json.get(key)
+                    cannot_find_dict = value
+                else:
+                    product_json.pop(key)
+                    bottom = True
 
     def get_instance_id(self) -> str:
         return self.infra_config.instance_id
