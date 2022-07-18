@@ -3,19 +3,22 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 from typing import Any, Dict, Optional
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
+from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin
 from fbpcs.common.entity.dataclasses_mutability import (
     DataclassMutabilityMixin,
     immutable_field,
 )
+from fbpcs.common.entity.frozen_field_hook import FrozenFieldHook
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 from fbpcs.private_computation.service.constants import DEFAULT_PID_PROTOCOL
+
 
 # This is the visibility defined in https://fburl.com/code/i1itu32l
 class ResultVisibility(IntEnum):
@@ -114,6 +117,12 @@ class AttributionConfig(ProductConfig):
     )
 
 
+# create frozen hook for breakdown_key
+frozen_breakdown_key_hook: FrozenFieldHook = FrozenFieldHook(
+    other_field="breakdown_key", freeze_when=lambda obj: obj.breakdown_key is not None
+)
+
+
 @dataclass_json
 @dataclass
 class LiftConfig(ProductConfig):
@@ -130,5 +139,8 @@ class LiftConfig(ProductConfig):
     """
 
     k_anonymity_threshold: int = immutable_field(default=0)
-    # TODO: frozen hook will create for breakdown_key
-    breakdown_key: Optional[BreakdownKey] = None
+
+    breakdown_key: Optional[BreakdownKey] = field(
+        default=None,
+        metadata=DataclassHookMixin.get_metadata(frozen_breakdown_key_hook),
+    )
