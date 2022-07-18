@@ -21,7 +21,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 
 @dataclass
 class BoltCreateInstanceArgs(ABC):
-    pass
+    instance_id: str
 
 
 @dataclass
