@@ -17,18 +17,18 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 
 @dataclass
 class BoltPLGraphAPICreateInstanceArgs(BoltCreateInstanceArgs):
+    instance_id: str  # used for temporary resuming solution
     study_id: str
     breakdown_key: Dict[str, str]
-    instance_id: str  # used for temporary resuming solution
 
 
 @dataclass
-class BoltPAGraphPICreateInstanceArgs(BoltCreateInstanceArgs):
+class BoltPAGraphAPICreateInstanceArgs(BoltCreateInstanceArgs):
+    instance_id: str  # used for temporary resuming solution
     dataset_id: str
     timestamp: str
     attribution_rule: str
     num_containers: str
-    instance_id: str  # used for temporary resuming solution
 
 
 class BoltGraphAPIClient(BoltClient):
