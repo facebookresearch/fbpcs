@@ -87,8 +87,25 @@ class TerraformDeployment(DeployBase):
         options = self.utils.get_default_options(TerraformCommand.APPLY, options)
         return self.run_command("terraform apply", **options)
 
-    def destroy(self) -> None:
-        pass
+    def destroy(
+        self, auto_approve: bool = True, **kwargs: Dict[str, Any]
+    ) -> RunCommandResult:
+        """
+        Implements `terraform destroy` of terraform CLI.
+        `terraform destroy` destroys all remote objects managed by a particular Terraform configuration.
+
+        More information: https://www.terraform.io/docs/commands/destroy.html
+
+        auto_approve:
+            Skips interactive approval of plan before applying
+            More information: https://www.terraform.io/cli/commands/apply#apply-options
+
+        """
+        options: Dict[str, Any] = kwargs.copy()
+        options["auto-approve"] = auto_approve
+
+        options = self.utils.get_default_options(TerraformCommand.DESTROY, options)
+        return self.run_command("terraform destroy", **options)
 
     def terraform_init(
         self,
