@@ -16,7 +16,7 @@ class DeployBase(ABC):
         pass
 
     @abstractmethod
-    def destroy(self) -> None:
+    def destroy(self) -> RunCommandResult:
         pass
 
     @abstractmethod
