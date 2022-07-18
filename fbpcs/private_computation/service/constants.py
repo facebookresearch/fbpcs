@@ -6,12 +6,7 @@
 
 # pyre-strict
 
-from typing import List
-
 from fbpcs.pid.entity.pid_instance import PIDProtocol
-from fbpcs.private_computation.entity.private_computation_status import (
-    PrivateComputationInstanceStatus,
-)
 
 """
 43200 s = 12 hrs
@@ -42,3 +37,5 @@ ATTRIBUTION_DEFAULT_PADDING_SIZE = 4
 DEFAULT_LOG_COST_TO_S3 = True
 DEFAULT_SORT_STRATEGY = "sort"
 DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT = 6
+
+FBPCS_BUNDLE_ID = "FBPCS_BUNDLE_ID"
