@@ -8,6 +8,10 @@ from enum import Enum, IntEnum
 from typing import Any, Dict, Optional
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
+from fbpcs.common.entity.dataclasses_mutability import (
+    DataclassMutabilityMixin,
+    immutable_field,
+)
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
@@ -22,7 +26,7 @@ class ResultVisibility(IntEnum):
 
 @dataclass_json
 @dataclass
-class CommonProductConfig:
+class CommonProductConfig(DataclassMutabilityMixin):
     """Stores metadata of common product config used both by attribution config and lift config
 
     Public attributes:
@@ -44,27 +48,32 @@ class CommonProductConfig:
         post_processing_data: fields to be sent to the post processing tier.
     """
 
+    # input_path used to be mutable because people always have typo using script
+    # Now we have launched computation UI, so input_path can be immutable now
+    # TODO: set input_path as immutalbe
     input_path: str
-    output_dir: str
+    output_dir: str = immutable_field()
 
     # TODO T98476320: make the following optional attributes non-optional. They are optional
     # because at the time the instance is created, pl might not provide any or all of them.
-    hmac_key: Optional[str] = None
-    padding_size: Optional[int] = None
+    hmac_key: Optional[str] = immutable_field(default=None)
+    padding_size: Optional[int] = immutable_field(default=None)
 
-    result_visibility: ResultVisibility = ResultVisibility.PUBLIC
+    result_visibility: ResultVisibility = immutable_field(
+        default=ResultVisibility.PUBLIC
+    )
 
-    pid_use_row_numbers: bool = True
-    multikey_enabled: bool = True
-    pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL
-    pid_max_column_count: int = 1
-    pid_configs: Optional[Dict[str, Any]] = None
+    pid_use_row_numbers: bool = immutable_field(default=True)
+    multikey_enabled: bool = immutable_field(default=True)
+    pid_protocol: PIDProtocol = immutable_field(default=DEFAULT_PID_PROTOCOL)
+    pid_max_column_count: int = immutable_field(default=1)
+    pid_configs: Optional[Dict[str, Any]] = immutable_field(default=None)
 
-    post_processing_data: Optional[PostProcessingData] = None
+    post_processing_data: Optional[PostProcessingData] = immutable_field(default=None)
 
 
 @dataclass
-class ProductConfig(DataClassJsonMixin):
+class ProductConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     """Stores metadata of product config in a private computation instance"""
 
     common: CommonProductConfig
@@ -99,8 +108,10 @@ class AttributionConfig(ProductConfig):
                             used to infer the metrics_format_type argument of the shard aggregator game.
     """
 
-    aggregation_type: AggregationType
-    attribution_rule: AttributionRule = AttributionRule.LAST_CLICK_1D
+    aggregation_type: AggregationType = immutable_field()
+    attribution_rule: AttributionRule = immutable_field(
+        default=AttributionRule.LAST_CLICK_1D
+    )
 
 
 @dataclass_json
@@ -118,5 +129,6 @@ class LiftConfig(ProductConfig):
                         that the instance can be aware of what cell-objective pair it belongs to at any stage.
     """
 
-    k_anonymity_threshold: int = 0
+    k_anonymity_threshold: int = immutable_field(default=0)
+    # TODO: frozen hook will create for breakdown_key
     breakdown_key: Optional[BreakdownKey] = None
