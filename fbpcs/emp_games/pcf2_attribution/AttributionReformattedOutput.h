@@ -67,13 +67,18 @@ struct AttributionReformattedOutputFmt {
   SecBit<schedulerId, usingBatch> is_attributed;
 };
 
+template <int schedulerId, bool usingBatch>
+using AttributionReformattedOutputFmtT = ConditionalVector<
+    AttributionReformattedOutputFmt<schedulerId, usingBatch>,
+    !usingBatch>;
+
 template <int schedulerId, bool usingBatch = true>
 class AttributionReformattedOutput {
  public:
   AttributionReformattedOutput(
       const std::vector<int64_t>& uids,
       const std::vector<
-          AttributionReformattedOutputFmt<schedulerId, usingBatch>>&
+          AttributionReformattedOutputFmtT<schedulerId, usingBatch>>&
           attributionStruct)
       : uids_{uids}, attributionStruct_{attributionStruct} {}
 
@@ -154,10 +159,11 @@ class AttributionReformattedOutput {
       std::vector<OutputMetricReformatted> revealedMetric;
       if constexpr (usingBatch) {
         for (size_t j = 0; j < revealedAdId.size(); ++j) {
-          revealedMetric.emplace_back(
+          OutputMetricReformatted outputMetric{
               revealedAdId.at(j).at(i),
               revealedConvValue.at(j).at(i),
-              revealedAttribution.at(j).at(i));
+              revealedAttribution.at(j).at(i)};
+          revealedMetric.emplace_back(outputMetric);
           IF_OMNISCIENT_MODE {
             if (revealedAdId.at(j).at(i)) {
               adIdCountOmniscient++;
@@ -171,10 +177,11 @@ class AttributionReformattedOutput {
       } else {
         // revealedAttribution for non-batch is related to batch by transposing
         for (size_t j = 0; j < revealedAdId.at(i).size(); ++j) {
-          revealedMetric.emplace_back(
+          OutputMetricReformatted outputMetric{
               revealedAdId.at(i).at(j),
               revealedConvValue.at(i).at(j),
-              revealedAttribution.at(i).at(j));
+              revealedAttribution.at(i).at(j)};
+          revealedMetric.emplace_back(outputMetric);
 
           IF_OMNISCIENT_MODE {
             if (revealedAdId.at(i).at(j)) {
@@ -201,7 +208,7 @@ class AttributionReformattedOutput {
 
  private:
   std::vector<int64_t> uids_;
-  std::vector<AttributionReformattedOutputFmt<schedulerId, usingBatch>>
+  std::vector<AttributionReformattedOutputFmtT<schedulerId, usingBatch>>
       attributionStruct_;
 };
 } // namespace pcf2_attribution
