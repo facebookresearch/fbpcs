@@ -14,6 +14,7 @@
 #include "fbpcs/emp_games/common/Csv.h"
 
 #include "fbpcs/emp_games/pcf2_attribution/AttributionOutput.h"
+#include "fbpcs/emp_games/pcf2_attribution/AttributionReformattedOutput.h"
 #include "fbpcs/emp_games/pcf2_attribution/Conversion.h"
 #include "fbpcs/emp_games/pcf2_attribution/Touchpoint.h"
 
