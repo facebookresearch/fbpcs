@@ -138,11 +138,6 @@ class AggMetrics {
   std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>
   getAtIndex(size_t i) const;
 
-  // returns copy of a AggMetric. Does a deep copy.
-  static std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>
-  copy(const std::shared_ptr<
-       AggMetrics<schedulerId, usingBatch, inputEncryption>>& rhs);
-
   // creates a Metrics blob with 0 initialized values following the schema
   // of rhs.
   static std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>
