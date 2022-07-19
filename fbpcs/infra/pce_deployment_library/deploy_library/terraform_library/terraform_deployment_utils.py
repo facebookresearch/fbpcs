@@ -23,7 +23,7 @@ class TerraformDeploymentUtils:
         self,
         state_file_path: Optional[str] = None,
         terraform_variables: Optional[Dict[str, str]] = None,
-        parallelism: int = TERRAFORM_DEFAULT_PARALLELISM,
+        parallelism: Optional[int] = None,
         resource_targets: Optional[List[str]] = None,
         var_definition_file: Optional[str] = None,
     ) -> None:
