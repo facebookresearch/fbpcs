@@ -53,7 +53,6 @@ from docopt import docopt
 from fbpcs.bolt.read_config import parse_bolt_config
 from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
-from fbpcs.pl_coordinator.constants import FBPCS_BUNDLE_ID
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
@@ -69,6 +68,7 @@ from fbpcs.private_computation.pc_attribution_runner import (
     get_attribution_dataset_info,
     run_attribution,
 )
+from fbpcs.private_computation.service.constants import FBPCS_BUNDLE_ID
 from fbpcs.private_computation.service.pre_validate_service import PreValidateService
 from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (

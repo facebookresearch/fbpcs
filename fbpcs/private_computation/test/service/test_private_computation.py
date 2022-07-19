@@ -5,6 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import logging
+import os
+import random
 import time
 import unittest
 from collections import defaultdict
@@ -50,6 +52,7 @@ from fbpcs.private_computation.service.constants import (
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
     DEFAULT_LOG_COST_TO_S3,
+    FBPCS_BUNDLE_ID,
     NUM_NEW_SHARDS_PER_FILE,
 )
 from fbpcs.private_computation.service.errors import (
@@ -991,6 +994,14 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             instances=[stage_state_instance],
         )
         self.assertEqual(non_empty_instance.server_ips, ["1.1.1.1"])
+
+    def test_fbpcs_bundle_id(self) -> None:
+        TEST_BUNDLE_ID = str(random.randint(100, 200))
+        with patch.dict(os.environ, {FBPCS_BUNDLE_ID: TEST_BUNDLE_ID}):
+            test_instance = self.create_sample_instance(
+                status=PrivateComputationInstanceStatus.CREATED
+            )
+            self.assertEqual(test_instance.infra_config.fbpcs_bundle_id, TEST_BUNDLE_ID)
 
     def create_sample_instance(
         self,

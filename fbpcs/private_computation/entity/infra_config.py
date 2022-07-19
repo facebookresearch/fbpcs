@@ -18,6 +18,8 @@ if TYPE_CHECKING:
         PrivateComputationBaseStageFlow,
     )
 
+import os
+
 from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventType
 from fbpcs.common.entity.dataclasses_mutability import (
     DataclassMutabilityMixin,
@@ -38,6 +40,7 @@ from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import FBPCS_BUNDLE_ID
 from marshmallow import fields
 from marshmallow_enum import EnumField
 
@@ -136,6 +139,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
         num_pid_containers: the number of containers used in pid
         num_mpc_containers: the number of containers used in mpc
         num_files_per_mpc_container: the number of files for each container
+        fbpcs_bundle_id: an string indicating the fbpcs bundle id to run.
         tier: an string indicating the release binary tier to run (rc, canary, latest)
         retry_counter: the number times a stage has been retried
         creation_ts: the time of the creation of this PrivateComputationInstance
@@ -167,6 +171,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     # status_updates will be update in status hook
     status_updates: List[StatusUpdate]
 
+    fbpcs_bundle_id: Optional[str] = immutable_field(init=False)
     tier: Optional[str] = immutable_field(default=None)
     pcs_features: Set[PCSFeature] = field(
         default_factory=set,
@@ -206,3 +211,10 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
 
     def is_stage_flow_completed(self) -> bool:
         return self.status is self.stage_flow.get_last_stage().completed_status
+
+    def __post_init__(self):
+        # ensure mutability before override __post_init__
+        super().__post_init__()
+        # note: The reason can't make it fbpcs_bundle_id = immutable_field(default=os.getenv(FBPCS_BUNDLE_ID)),
+        # is because that will happend in static varible when module been loaded, moved it to __post_init__ for better init control
+        self.fbpcs_bundle_id = os.getenv(FBPCS_BUNDLE_ID)
