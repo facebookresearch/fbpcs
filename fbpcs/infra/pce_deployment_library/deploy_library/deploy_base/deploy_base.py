@@ -20,9 +20,5 @@ class DeployBase(ABC):
         pass
 
     @abstractmethod
-    def plan(self) -> None:
-        pass
-
-    @abstractmethod
     def run_command(self) -> RunCommandResult:
         pass

@@ -39,6 +39,7 @@ class TerraformCommand(str, Enum):
     INIT: str = "init"
     APPLY: str = "apply"
     DESTROY: str = "destroy"
+    PLAN: str = "plan"
 
 
 class TerraformOptionFlag:
@@ -46,8 +47,33 @@ class TerraformOptionFlag:
 
 
 class FlaggedOption(TerraformOptionFlag):
+    """
+    Used to set flag options, eg, `terraform init -reconfigure`
+    `-reconfigure` is a flagged option here.
+
+    This should not be confused with the options that accept bool values.
+    In case of options that accept bool values, explicit bool value is passed.
+    Eg of bool option: `terraform apply -input=false`
+
+    Usage of FlaggedOption:
+        t = TerraformDeployment()
+        t.terraform_init(reconfigure=FlaggedOption)
+
+        Results in : `terraform init -reconfigure`
+    """
+
     pass
 
 
 class NotFlaggedOption(TerraformOptionFlag):
+    """
+    Is opposite of the FlaggedOption and is used to unset flag options.
+
+    Usage:
+        t = TerraformDeployment()
+        t.terraform_init(reconfigure=NotFlaggedOption)
+
+        Results in : `terraform init`
+    """
+
     pass
