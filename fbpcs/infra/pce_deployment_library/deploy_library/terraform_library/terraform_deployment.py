@@ -8,13 +8,14 @@
 import logging
 import sys
 from subprocess import PIPE, Popen
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type
 
 from fbpcs.infra.pce_deployment_library.deploy_library.deploy_base.deploy_base import (
     DeployBase,
 )
 
 from fbpcs.infra.pce_deployment_library.deploy_library.models import (
+    FlaggedOption,
     RunCommandResult,
     TerraformCliOptions,
     TerraformCommand,
@@ -110,7 +111,7 @@ class TerraformDeployment(DeployBase):
     def terraform_init(
         self,
         backend_config: Optional[Dict[str, str]] = None,
-        reconfigure: bool = False,
+        reconfigure: Type[FlaggedOption] = FlaggedOption,
         **kwargs: Dict[str, Any],
     ) -> RunCommandResult:
         """
@@ -128,7 +129,7 @@ class TerraformDeployment(DeployBase):
 
         reconfigure:
             in `terraform init` reconfigure disregards any existing configuration, preventing migration of any existing state.
-            More info: https://www.terraform.io/cli/commands/init#backend-initialization
+            More information: https://www.terraform.io/cli/commands/init#backend-initialization
         """
         options: Dict[str, Any] = kwargs.copy()
         options.update(
@@ -140,11 +141,28 @@ class TerraformDeployment(DeployBase):
         options = self.utils.get_default_options(TerraformCommand.INIT, options)
         return self.run_command("terraform init", **options)
 
-    def plan(self) -> None:
-        pass
+    def plan(
+        self,
+        detailed_exitcode: Type[FlaggedOption] = FlaggedOption,
+        **kwargs: Dict[str, Any],
+    ) -> RunCommandResult:
+        """
+        Implements `terraform plan` of terraform CLI.
+        `terraform plan` creates an execution plan, which lets you preview the changes that Terraform plans to make to your infrastructure
+
+        More information: https://www.terraform.io/cli/commands/plan
+
+        detailed_exitcode:
+            Returns a detailed exit code when the command exits
+            More information: https://www.terraform.io/cli/commands/plan#other-options
+        """
+        options: Dict[str, Any] = kwargs.copy()
+        options["detailed_exitcode"] = detailed_exitcode
+        options = self.utils.get_default_options(TerraformCommand.PLAN, options)
+        return self.run_command("terraform plan", **options)
 
     def run_command(
-        self, command: str, capture_output: bool = True, **kwargs: Any
+        self, command: str, capture_output: bool = True, **kwargs: Dict[str, Any]
     ) -> RunCommandResult:
         """
         Executes Terraform CLIs apply/destroy/init/plan
