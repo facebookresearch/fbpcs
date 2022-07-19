@@ -118,6 +118,11 @@ def run_study(
     # check that the version in config.yml is same as from graph api
     _check_versions(cell_obj_instance, config, client)
 
+    # get the enabled features
+    pcs_features = _get_pcs_features(cell_obj_instance, client)
+    if pcs_features:
+        logger.info(f"Enabled features: {pcs_features}")
+
     ## Step 3. Run Instances. Run maximum number of instances in parallel
 
     all_instance_ids = []
@@ -129,15 +134,16 @@ def run_study(
         chunk_num_shards = list(map(lambda x: x["num_shards"], chunk.values()))
         logger.info(f"Start running instances {instance_ids}.")
         run_instances(
-            config,
-            instance_ids,
-            chunk_input_paths,
-            chunk_num_shards,
-            stage_flow,
-            logger,
-            num_tries,
-            dry_run,
-            result_visibility,
+            config=config,
+            instance_ids=instance_ids,
+            input_paths=chunk_input_paths,
+            num_shards_list=chunk_num_shards,
+            stage_flow=stage_flow,
+            logger=logger,
+            num_tries=num_tries,
+            dry_run=dry_run,
+            result_visibility=result_visibility,
+            pcs_features=pcs_features,
         )
         logger.info(f"Finished running instances {instance_ids}.")
 
@@ -431,6 +437,21 @@ def _check_versions(
                     raise IncorrectVersionError.make_error(
                         instance_id, expected_tier, config_tier
                     )
+
+
+def _get_pcs_features(
+    cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
+    client: PCGraphAPIClient,
+) -> Optional[List[str]]:
+    for cell_id in cell_obj_instances:
+        for objective_id in cell_obj_instances[cell_id]:
+            instance_data = cell_obj_instances[cell_id][objective_id]
+            instance_id = instance_data["instance_id"]
+            feature_list = json.loads(client.get_instance(instance_id).text).get(
+                "feature_list"
+            )
+            if feature_list:
+                return feature_list
 
 
 def _date_to_timestamp(time_str: str) -> int:

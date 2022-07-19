@@ -74,6 +74,7 @@ def run_instance(
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
     result_visibility: Optional[ResultVisibility] = None,
+    pcs_features: Optional[List[str]] = None,
 ) -> None:
     num_tries = num_tries if num_tries is not None else MAX_TRIES
     if num_tries < MIN_TRIES or num_tries > MAX_TRIES:
@@ -83,23 +84,24 @@ def run_instance(
         )
     client = PCGraphAPIClient(config, logger)
     instance_runner = PLInstanceRunner(
-        config,
-        instance_id,
-        input_path,
-        num_mpc_containers,
-        num_pid_containers,
-        logger,
-        client,
-        num_tries,
-        game_type,
-        dry_run,
-        stage_flow,
-        attribution_rule,
-        aggregation_type,
-        concurrency,
-        num_files_per_mpc_container,
-        k_anonymity_threshold,
-        result_visibility,
+        config=config,
+        instance_id=instance_id,
+        input_path=input_path,
+        num_mpc_containers=num_mpc_containers,
+        num_pid_containers=num_pid_containers,
+        logger=logger,
+        client=client,
+        num_tries=num_tries,
+        game_type=game_type,
+        dry_run=dry_run,
+        stage_flow=stage_flow,
+        attribution_rule=attribution_rule,
+        aggregation_type=aggregation_type,
+        concurrency=concurrency,
+        num_files_per_mpc_container=num_files_per_mpc_container,
+        k_anonymity_threshold=k_anonymity_threshold,
+        result_visibility=result_visibility,
+        pcs_features=pcs_features,
     )
     logger.info(f"Running private {game_type.name.lower()} for instance {instance_id}")
     instance_runner.run()
@@ -115,6 +117,7 @@ def run_instances(
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     dry_run: Optional[bool] = False,
     result_visibility: Optional[ResultVisibility] = None,
+    pcs_features: Optional[List[str]] = None,
 ) -> None:
     if len(instance_ids) is not len(input_paths):
         raise PCStudyValidationException(
@@ -147,6 +150,7 @@ def run_instances(
                     "num_tries": num_tries,
                     "dry_run": dry_run,
                     "result_visibility": result_visibility,
+                    "pcs_features": pcs_features,
                 },
             ),
             instance_ids,
@@ -186,6 +190,7 @@ class PLInstanceRunner:
         num_files_per_mpc_container: Optional[int] = None,
         k_anonymity_threshold: Optional[int] = None,
         result_visibility: Optional[ResultVisibility] = None,
+        pcs_features: Optional[List[str]] = None,
     ) -> None:
         self.logger = logger
         self.instance_id = instance_id
@@ -207,6 +212,7 @@ class PLInstanceRunner:
             num_pid_containers=num_pid_containers,
             logger=logger,
             result_visibility=result_visibility,
+            pcs_features=pcs_features,
         )
         self.num_tries = num_tries
         self.dry_run = dry_run
