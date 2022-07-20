@@ -40,6 +40,7 @@ class TerraformCommand(str, Enum):
     APPLY: str = "apply"
     DESTROY: str = "destroy"
     PLAN: str = "plan"
+    OUTPUT: str = "output"
 
 
 class TerraformOptionFlag:

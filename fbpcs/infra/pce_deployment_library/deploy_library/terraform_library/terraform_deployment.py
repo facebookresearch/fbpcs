@@ -33,7 +33,7 @@ class TerraformDeployment(DeployBase):
         self,
         state_file_path: Optional[str] = None,
         terraform_variables: Optional[Dict[str, str]] = None,
-        parallelism: int = TERRAFORM_DEFAULT_PARALLELISM,
+        parallelism: Optional[int] = None,
         resource_targets: Optional[List[str]] = None,
         var_definition_file: Optional[str] = None,
     ) -> None:
@@ -161,13 +161,31 @@ class TerraformDeployment(DeployBase):
         options = self.utils.get_default_options(TerraformCommand.PLAN, options)
         return self.run_command("terraform plan", **options)
 
+    def terraform_output(
+        self,
+        json_format: Type[FlaggedOption] = FlaggedOption,
+        variable: Optional[str] = None,
+        **kwargs: Dict[str, Any],
+    ) -> RunCommandResult:
+        options: Dict[str, Any] = kwargs.copy()
+        options["json"] = json_format
+        options["input"] = None
+        options = self.utils.get_default_options(TerraformCommand.OUTPUT, options)
+        options_list = (variable,)
+        return self.run_command("terraform output", *options_list, **options)
+
     def run_command(
-        self, command: str, capture_output: bool = True, **kwargs: Dict[str, Any]
+        self,
+        command: str,
+        *args: Optional[str],
+        **kwargs: Dict[str, Any],
     ) -> RunCommandResult:
         """
         Executes Terraform CLIs apply/destroy/init/plan
         """
         options: Dict[str, Any] = kwargs.copy()
+
+        capture_output: bool = options.get("capture_output", True)
 
         if capture_output:
             stderr = PIPE
@@ -176,7 +194,7 @@ class TerraformDeployment(DeployBase):
             stderr = sys.stderr
             stdout = sys.stdout
 
-        command_list = self.utils.get_command_list(command, **options)
+        command_list = self.utils.get_command_list(command, *args, **options)
         command_str = " ".join(command_list)
         self.log.info(f"Command: {command_str}")
         out, err = None, None

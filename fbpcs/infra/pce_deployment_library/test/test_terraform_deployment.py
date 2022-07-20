@@ -8,6 +8,7 @@
 
 import unittest
 from subprocess import PIPE, Popen
+from typing import Any, Dict
 
 from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandResult
 
@@ -32,9 +33,7 @@ class TestTerraformDeployment(unittest.TestCase):
                 output=test_stdout.decode("utf-8"),
                 error=test_error if test_error else "",
             )
-            func_ret = self.terraform.run_command(
-                command=command, capture_output=capture_output
-            )
+            func_ret = self.terraform.run_command(command=command)
             self.assertEqual(test_command_return.return_code, func_ret.return_code)
             self.assertEqual(test_command_return.output, func_ret.output)
             self.assertEqual(test_command_return.error, func_ret.error)
@@ -51,10 +50,8 @@ class TestTerraformDeployment(unittest.TestCase):
                 output=test_stdout,
                 error=test_stdout,
             )
-
-            func_ret = self.terraform.run_command(
-                command=command, capture_output=capture_output
-            )
+            kwargs: Dict[str, Any] = {"capture_output": capture_output}
+            func_ret = self.terraform.run_command(command=command, **kwargs)
             self.assertEqual(test_command_return.return_code, func_ret.return_code)
             self.assertEqual(test_command_return.output, func_ret.output)
             self.assertEqual(test_command_return.error, func_ret.error)
@@ -63,9 +60,7 @@ class TestTerraformDeployment(unittest.TestCase):
             command = "cp"
             capture_output = True
 
-            func_ret = self.terraform.run_command(
-                command=command, capture_output=capture_output
-            )
+            func_ret = self.terraform.run_command(command=command)
             test_command_return = RunCommandResult(
                 return_code=1,
                 output="",
@@ -78,10 +73,9 @@ class TestTerraformDeployment(unittest.TestCase):
         with self.subTest("TestStdErrWithoutCaptureOutput"):
             command = "cp"
             capture_output = False
+            kwargs: Dict[str, Any] = {"capture_output": capture_output}
 
-            func_ret = self.terraform.run_command(
-                command=command, capture_output=capture_output
-            )
+            func_ret = self.terraform.run_command(command=command, **kwargs)
             test_command_return = RunCommandResult(
                 return_code=1,
                 output=None,
