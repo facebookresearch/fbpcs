@@ -85,8 +85,11 @@ class AggMetrics {
 
   // Adds rhs to self. this is the main function that performs the job of
   // combining. Also, see `accumulateFinal()` for the complete understanding.
-  void accumulate(const std::shared_ptr<
-                  AggMetrics<schedulerId, usingBatch, inputEncryption>>& rhs);
+  static void accumulate(
+      std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>&
+          lhs,
+      const std::shared_ptr<
+          AggMetrics<schedulerId, usingBatch, inputEncryption>>& rhs);
 
   AggMetricType getType() const {
     return type_;
@@ -173,7 +176,9 @@ class AggMetrics {
   // This is the actual accumulate operation that gets called on the leaf node.
   // Reason for writing this function separately is that, newer backends
   // can be easily configured. (like Arithemetic-SS for instance).
-  void accumulateFinal(
+  static void accumulateFinal(
+      std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>&
+          lhs,
       const std::shared_ptr<
           AggMetrics<schedulerId, usingBatch, inputEncryption>>& rhs);
 
