@@ -89,4 +89,13 @@ class TestTerraformDeployment(unittest.TestCase):
         pass
 
     def test_create(self) -> None:
+        # T126572515
+        pass
+
+    def test_destory(self) -> None:
+        # T126573127
+        pass
+
+    def test_plan(self) -> None:
+        # T126574725
         pass
