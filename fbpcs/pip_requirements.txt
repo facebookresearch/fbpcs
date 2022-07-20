@@ -4,6 +4,7 @@ cython==0.29.30 # required by thriftpy2 setup
 dataclasses-json==0.5.2 # fbpcp requires this version, so we must as well
 docopt>=0.6.2
 fbpcp>=0.2.2 # depending on: boto3, botocore
+marshmallow==3.5.1
 networkx>=2.6.3
 requests>=2.26.0
 schema==0.7.0 # fbpcp requires this version, so we must as well

@@ -85,7 +85,7 @@ class PrivateComputationInstance(InstanceBase):
         # create infra config
         infra_config: InfraConfig = InfraConfig.schema().loads(
             json.dumps(json_object["infra_config"]),
-            unknown="EXCLUDE",
+            unknown=marshmallow.utils.EXCLUDE,
             many=None,
         )
 
@@ -100,7 +100,7 @@ class PrivateComputationInstance(InstanceBase):
             try:
                 product_config = cls._product_map(json_object).loads(
                     json.dumps(product_json),
-                    unknown="EXCLUDE",
+                    unknown=marshmallow.utils.EXCLUDE,
                     many=None,
                 )
                 product_cleaned_json = True
