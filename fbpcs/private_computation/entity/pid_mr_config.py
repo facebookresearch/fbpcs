@@ -9,7 +9,7 @@
 
 from dataclasses import dataclass
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import dataclass_json, DataClassJsonMixin
 
 
 @dataclass_json
@@ -37,9 +37,8 @@ class SparkConfigs:
     masterInstanceType: str
 
 
-@dataclass_json
 @dataclass
-class PidMrConfig:
+class PidMrConfig(DataClassJsonMixin):
     runConfigs: PidRunConfigs
     workflowConfigs: PidWorkflowConfigs
     sparkConfigs: SparkConfigs
