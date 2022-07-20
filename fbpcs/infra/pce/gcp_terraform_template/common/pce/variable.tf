@@ -18,10 +18,10 @@ variable "subnet_primary_cidr" {
 
 variable "subnet_secondary_cidr" {
   description = "the secondary CIDR block of a subnet"
-  default     = "10.0.0.0/20"
+  default     = "10.1.0.0/20"
 }
 
 variable "otherparty_subnet_cidr" {
   description = "Other party's subnet's secondary CIDR block, it should not overlap with existing subnets' 2nd CIDR"
-  default     = "10.1.0.0/20"
+  default     = "10.0.0.0/20"
 }
