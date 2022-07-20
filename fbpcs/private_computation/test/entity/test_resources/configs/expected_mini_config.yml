@@ -34,12 +34,9 @@ private_computation:
       constructor:
         ### AWS region - ex. us-west-2
         region: TODO
+
 pid:
   dependency:
-    PIDInstanceRepository:
-      class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
-      constructor:
-        base_dir: TODO
 mpc:
   dependency:
     MPCGameService:

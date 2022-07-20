@@ -32,10 +32,6 @@ private_computation:
         region: TODO
 pid:
   dependency:
-    PIDInstanceRepository:
-      class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
-      constructor:
-        base_dir: TODO
 mpc:
   dependency:
     MPCGameService:
