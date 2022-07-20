@@ -32,6 +32,75 @@ template <
     int schedulerId,
     bool usingBatch,
     common::InputEncryption inputEncryption>
+void AggMetrics<schedulerId, usingBatch, inputEncryption>::accumulateFinal(
+    std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>& lhs,
+    const std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>&
+        rhs) {
+  if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+    lhs->setValue(lhs->getValue() + rhs->getValue());
+  } else {
+    throw common::exceptions::NotImplementedError(
+        "This method will patched with tests in the future.");
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+void AggMetrics<schedulerId, usingBatch, inputEncryption>::accumulate(
+    std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>& lhs,
+    const std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>&
+        rhs) {
+  if (lhs->getType() != rhs->getType()) {
+    throw common::exceptions::InvalidAccessError(
+        "Rhs and lhs has to be of the same type");
+  }
+
+  using AggMetric_sp =
+      std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>;
+  std::queue<std::pair<AggMetric_sp, AggMetric_sp>> q_;
+
+  q_.push(std::make_pair(lhs, rhs));
+
+  while (!q_.empty()) {
+    auto [aggMetric, metric] = q_.front();
+    q_.pop();
+    switch (metric->getType()) {
+      case AggMetricType::kDict: {
+        auto aggMetricMap = aggMetric->getAsDict();
+        for (const auto& [key, innerMetrics] : metric->getAsDict()) {
+          auto innerAggMetrics = aggMetricMap.at(key);
+          q_.push(make_pair(innerAggMetrics, innerMetrics));
+        }
+        break;
+      }
+      case AggMetricType::kList: {
+        auto aggMetricList = aggMetric->getAsList();
+        auto metricList = metric->getAsList();
+
+        if (aggMetricList.size() != metricList.size()) {
+          XLOG(ERR) << "Rhs and Lhs list do not match in size";
+          throw common::exceptions::SchemaTraceError(
+              "Rhs and Lhs list do not match in size");
+        }
+        for (size_t i = 0; i != aggMetricList.size(); ++i) {
+          q_.push(std::make_pair(aggMetricList.at(i), metricList.at(i)));
+        }
+        break;
+      }
+      case AggMetricType::kValue: {
+        accumulateFinal(aggMetric, metric);
+        break;
+      }
+    }
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
 typename AggMetrics<schedulerId, usingBatch, inputEncryption>::MetricsValue
 AggMetrics<schedulerId, usingBatch, inputEncryption>::getValue() const {
   return std::get<MetricsValue>(val_);
@@ -145,6 +214,60 @@ void AggMetrics<schedulerId, usingBatch, inputEncryption>::appendAtKey(
     /*v*/) {
   throw common::exceptions::NotImplementedError(
       "This method needs to be implemented");
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>
+AggMetrics<schedulerId, usingBatch, inputEncryption>::newLike(
+    const std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>&
+        rhs) {
+  using AggMetric_sp =
+      std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>;
+  std::queue<std::pair<AggMetric_sp, AggMetric_sp>> q_; // pair of src, dst.
+
+  std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>> retObj =
+      std::make_shared<AggMetrics<schedulerId, usingBatch, inputEncryption>>(
+          rhs->getType());
+  q_.push(std::make_pair(retObj, rhs));
+
+  while (!q_.empty()) {
+    auto [dst, src] = q_.front();
+    q_.pop();
+
+    switch (src->getType()) {
+      case AggMetricType::kList: {
+        for (const auto& srcMetric : src->getAsList()) {
+          auto newObj = std::make_shared<
+              AggMetrics<schedulerId, usingBatch, inputEncryption>>(
+              srcMetric->getType());
+          dst->pushBack(newObj);
+          q_.push(std::make_pair(newObj, srcMetric));
+        }
+        break;
+      }
+      case AggMetricType::kDict: {
+        for (const auto& [k, srcMetric] : src->getAsDict()) {
+          auto newObj = std::make_shared<
+              AggMetrics<schedulerId, usingBatch, inputEncryption>>(
+              srcMetric->getType());
+          dst->insert(std::make_pair(k, newObj));
+          q_.push(make_pair(newObj, srcMetric));
+        }
+        break;
+      }
+      case AggMetricType::kValue: {
+        dst->setValue(0);
+        if constexpr (inputEncryption == common::InputEncryption::Xor) {
+          dst->setSecValXor(SecInt<schedulerId, usingBatch>(0));
+        }
+        break;
+      }
+    }
+  }
+  return retObj;
 }
 
 template <

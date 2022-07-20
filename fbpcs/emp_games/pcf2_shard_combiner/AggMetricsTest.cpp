@@ -151,4 +151,25 @@ TEST_F(AggMetricsTest, TestParseInvalidMap) {
       common::exceptions::NotImplementedError);
 }
 
+TEST_F(AggMetricsTest, AccumulatePlainTextTest) {
+  auto inputPath1 =
+      baseDir_ + "test_new_parser/accumulate_test_input_plaintext_1.json";
+  auto inputPath2 =
+      baseDir_ + "test_new_parser/accumulate_test_input_plaintext_2.json";
+  auto expectedResultPath =
+      baseDir_ + "test_new_parser/accumulate_test_result_plaintext.json";
+
+  auto input1 = AggMetrics<>::fromJson(inputPath1);
+  auto input2 = AggMetrics<>::fromJson(inputPath2);
+  auto expectedResultDynObj =
+      folly::parseJson(fbpcf::io::read(expectedResultPath));
+
+  auto result = AggMetrics<>::newLike(input1);
+
+  AggMetrics<>::accumulate(result, input1);
+  AggMetrics<>::accumulate(result, input2);
+
+  EXPECT_EQ(result->toDynamic(), expectedResultDynObj);
+}
+
 } // namespace shard_combiner
