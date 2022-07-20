@@ -8,9 +8,14 @@
 
 import unittest
 from subprocess import PIPE, Popen
-from typing import Any, Dict
+from typing import Any, Dict, Type
 
-from fbpcs.infra.pce_deployment_library.deploy_library.models import RunCommandResult
+from fbpcs.infra.pce_deployment_library.deploy_library.models import (
+    FlaggedOption,
+    NotFlaggedOption,
+    RunCommandResult,
+    TerraformOptionFlag,
+)
 
 from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_deployment import (
     TerraformDeployment,
@@ -19,7 +24,7 @@ from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terrafo
 
 class TestTerraformDeployment(unittest.TestCase):
     def setUp(self) -> None:
-        self.terraform = TerraformDeployment()
+        self.terraform_deployment = TerraformDeployment()
 
     def test_run_command(self) -> None:
         with self.subTest("basicCaptureTrue"):
@@ -86,7 +91,42 @@ class TestTerraformDeployment(unittest.TestCase):
             self.assertEqual(test_command_return.error, func_ret.error)
 
     def test_terraform_init(self) -> None:
-        pass
+        kwargs: Dict[str, Any] = {"dry_run": True}
+        with self.subTest("BackendConig"):
+            backend_config = {
+                "region": "fake_region",
+                "access_key": "fake_access_key",
+            }
+            expected_command = "terraform init -input=false -dry-run=true -backend-config region=fake_region -backend-config access_key=fake_access_key -reconfigure"
+            expected_value = RunCommandResult(
+                return_code=0, output=f"Dry run command: {expected_command}", error=""
+            )
+            return_value = self.terraform_deployment.terraform_init(
+                backend_config=backend_config, **kwargs
+            )
+            self.assertEquals(expected_value, return_value)
+
+        with self.subTest("UnsetReconfigureNoBackendConfig"):
+            expected_command = "terraform init -input=false -dry-run=true"
+            expected_value = RunCommandResult(
+                return_code=0, output=f"Dry run command: {expected_command}", error=""
+            )
+            reconfigure: Type[TerraformOptionFlag] = NotFlaggedOption
+            return_value = self.terraform_deployment.terraform_init(
+                reconfigure=reconfigure, **kwargs
+            )
+            self.assertEquals(expected_value, return_value)
+
+        with self.subTest("SetReconfigure"):
+            expected_command = "terraform init -input=false -dry-run=true -reconfigure"
+            expected_value = RunCommandResult(
+                return_code=0, output=f"Dry run command: {expected_command}", error=""
+            )
+            reconfigure = FlaggedOption
+            return_value = self.terraform_deployment.terraform_init(
+                reconfigure=reconfigure, **kwargs
+            )
+            self.assertEquals(expected_value, return_value)
 
     def test_create(self) -> None:
         pass
