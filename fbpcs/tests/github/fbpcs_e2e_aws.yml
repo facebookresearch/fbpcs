@@ -32,10 +32,6 @@ private_computation:
         task_definition: fbpcs-github-cicd:4#fbpcs-github-cicd
 pid:
   dependency:
-    PIDInstanceRepository:
-      class: fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository
-      constructor:
-        base_dir: /instances
   skip_aggregation_step: true
   task_definition:
 mpc:

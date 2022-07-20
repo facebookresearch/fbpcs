@@ -65,9 +65,6 @@ class PrivateComputationInfraConfig:
                             dep_key
                         ] = dep_value
 
-                    elif dep_key in yml_config["pid"]["dependency"]:
-                        yml_config["pid"]["dependency"][dep_key] = dep_value
-
                     elif dep_key in yml_config["mpc"]["dependency"]:
                         yml_config["mpc"]["dependency"][dep_key] = dep_value
 
@@ -126,14 +123,7 @@ class PrivateComputationInfraConfig:
 
     def _generate_pid(self) -> Dict[str, Any]:
         pid = {}
-        pid["dependency"] = {}
-
-        self._generate_dependency(
-            pid,
-            "PIDInstanceRepository",
-            PrivateComputationInfraConfigInfo.PID_INSTANCE_REPO,
-        )
-
+        pid["dependency"] = None
         return pid
 
     def _generate_mpc(self) -> Dict[str, Any]:

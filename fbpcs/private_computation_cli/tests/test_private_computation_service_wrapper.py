@@ -85,11 +85,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
                 "MPCInstanceRepository": None,
             }
         },
-        "pid": {
-            "dependency": {
-                "PIDInstanceRepository": None,
-            }
-        },
+        "pid": {"dependency": {}},
     }
 
     def setUp(self) -> None:
@@ -162,7 +158,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
             padding_size=None,
             k_anonymity_threshold=None,
             stage_flow_cls=None,
-            pid_configs={"dependency": {"PIDInstanceRepository": None}},
+            pid_configs={"dependency": {}},
             result_visibility=None,
             pcs_features=None,
         )

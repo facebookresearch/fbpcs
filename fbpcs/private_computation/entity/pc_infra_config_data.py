@@ -36,11 +36,6 @@ class PrivateComputationInfraConfigInfo(Enum):
         {"region"},
     )
 
-    PID_INSTANCE_REPO = PrivateComputationInfraConfigData(
-        "fbpcs.pid.repository.pid_instance_local.LocalPIDInstanceRepository",
-        {"base_dir"},
-    )
-
     MPC_GAME_SERVICE = PrivateComputationInfraConfigData(
         "fbpcp.service.mpc_game.MPCGameService",
         set(),
