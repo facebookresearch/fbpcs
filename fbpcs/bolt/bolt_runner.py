@@ -99,22 +99,6 @@ class BoltRunner:
     ) -> List[bool]:
         return list(await asyncio.gather(*[self.run_one(job=job) for job in jobs]))
 
-    async def is_finished(
-        self,
-        publisher_id: str,
-        partner_id: str,
-        final_stage: PrivateComputationBaseStageFlow,
-    ) -> bool:
-        publisher_status = (
-            await self.publisher_client.update_instance(publisher_id)
-        ).pc_instance_status
-        partner_status = (
-            await self.partner_client.update_instance(partner_id)
-        ).pc_instance_status
-        return (publisher_status is final_stage.completed_status) and (
-            partner_status is final_stage.completed_status
-        )
-
     async def run_one(self, job: BoltJob) -> bool:
         async with self.semaphore:
             try:
@@ -127,14 +111,7 @@ class BoltRunner:
                     while tries < max_tries:
                         tries += 1
                         try:
-                            final_stage = (
-                                job.final_stage or job.stage_flow.get_last_stage()
-                            )
-                            if await self.is_finished(
-                                publisher_id=publisher_id,
-                                partner_id=partner_id,
-                                final_stage=final_stage,
-                            ):
+                            if await self.job_is_finished(job=job):
                                 self.logger.info(
                                     # pyre-fixme: Undefined attribute [16]: `BoltCreateInstanceArgs` has no attribute `output_dir`
                                     f"Run for {job.job_name} completed. View results at {job.partner_bolt_args.create_instance_args.output_dir}"
@@ -373,3 +350,20 @@ class BoltRunner:
                     job.partner_bolt_args.create_instance_args
                 )
         return publisher_id, partner_id
+
+    async def job_is_finished(
+        self,
+        job: BoltJob,
+    ) -> bool:
+        publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
+        partner_id = job.partner_bolt_args.create_instance_args.instance_id
+        publisher_status, partner_status = (
+            state.pc_instance_status
+            for state in await asyncio.gather(
+                self.publisher_client.update_instance(publisher_id),
+                self.partner_client.update_instance(partner_id),
+            )
+        )
+        return job.is_finished(
+            publisher_status=publisher_status, partner_status=partner_status
+        )
