@@ -14,8 +14,8 @@ from typing import Any, Dict, List, Optional, Type
 
 from dataclasses_json import config, DataClassJsonMixin
 
+from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
-from fbpcs.bolt.bolt_runner import BoltClient, BoltState
 from fbpcs.bolt.constants import DEFAULT_ATTRIBUTION_STAGE_FLOW, DEFAULT_LIFT_STAGE_FLOW
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.infra_config import (
