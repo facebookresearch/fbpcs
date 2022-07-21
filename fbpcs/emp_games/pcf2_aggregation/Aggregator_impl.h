@@ -54,12 +54,11 @@ class MeasurementAggregator : public Aggregator<schedulerId> {
  public:
   explicit MeasurementAggregator(
       const std::vector<uint64_t>& validOriginalAdIds,
-      const common::Visibility& outputVisibility,
       const int myRole,
       const int concurrency,
       std::unique_ptr<fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<
           fbpcf::mpc_std_lib::util::AggregationValue>> writeOnlyOramFactory)
-      : Aggregator<schedulerId>{outputVisibility} {
+      : Aggregator<schedulerId>{} {
     _validOriginalAdIds = validOriginalAdIds;
     size_t oramSize = _validOriginalAdIds.size() + 1;
     // Note that oramSize must be nonzero because
@@ -236,37 +235,27 @@ class MeasurementAggregator : public Aggregator<schedulerId> {
       const auto rAdId = _validOriginalAdIds.at(i - 1);
       XLOGF(DBG, "Revealing measurement metrics for adId={}", rAdId);
       fbpcf::mpc_std_lib::util::AggregationValue aggregationValue;
-      if (Aggregator<schedulerId>::outputVisibility_ ==
-          common::Visibility::Publisher) {
-        aggregationValue = _writeOnlyOram->publicRead(
-            i,
-            fbpcf::mpc_std_lib::oram::IWriteOnlyOram<
-                fbpcf::mpc_std_lib::util::AggregationValue>::Alice);
-        out.metrics[rAdId] = ConvMetrics{
-            aggregationValue.conversionCount, aggregationValue.conversionValue};
-      } else {
-        auto additiveAggregationValue = _writeOnlyOram->secretRead(i);
+      auto additiveAggregationValue = _writeOnlyOram->secretRead(i);
 
-        // Convert additive shares to secret shares by inputting them into MPC
-        // and adding them, then extracting the secret shares.
-        auto publisherConvs = SecConvValue<schedulerId>(
-            additiveAggregationValue.conversionCount, common::PUBLISHER);
-        auto partnerConvs = SecConvValue<schedulerId>(
-            additiveAggregationValue.conversionCount, common::PARTNER);
-        auto convs = publisherConvs + partnerConvs;
-        auto extractedConvs = convs.extractIntShare().getValue();
+      // Convert additive shares to secret shares by inputting them into MPC
+      // and adding them, then extracting the secret shares.
+      auto publisherConvs = SecConvValue<schedulerId>(
+          additiveAggregationValue.conversionCount, common::PUBLISHER);
+      auto partnerConvs = SecConvValue<schedulerId>(
+          additiveAggregationValue.conversionCount, common::PARTNER);
+      auto convs = publisherConvs + partnerConvs;
+      auto extractedConvs = convs.extractIntShare().getValue();
 
-        auto publisherSales = SecSalesValue<schedulerId>(
-            additiveAggregationValue.conversionValue, common::PUBLISHER);
-        auto partnerSales = SecSalesValue<schedulerId>(
-            additiveAggregationValue.conversionValue, common::PARTNER);
-        auto sales = publisherSales + partnerSales;
-        auto extractedSales = sales.extractIntShare().getValue();
+      auto publisherSales = SecSalesValue<schedulerId>(
+          additiveAggregationValue.conversionValue, common::PUBLISHER);
+      auto partnerSales = SecSalesValue<schedulerId>(
+          additiveAggregationValue.conversionValue, common::PARTNER);
+      auto sales = publisherSales + partnerSales;
+      auto extractedSales = sales.extractIntShare().getValue();
 
-        out.metrics[rAdId] = ConvMetrics{
-            static_cast<uint32_t>(extractedConvs),
-            static_cast<uint32_t>(extractedSales)};
-      }
+      out.metrics[rAdId] = ConvMetrics{
+          static_cast<uint32_t>(extractedConvs),
+          static_cast<uint32_t>(extractedSales)};
     }
     return out.toDynamic();
   }
@@ -288,7 +277,6 @@ static const std::vector<AggregationFormat<schedulerId>>
         /* name */ common::MEASUREMENT,
         /* newAggregator */
         [](AggregationContext ctx,
-           common::Visibility outputVisibility,
            int myRole,
            int concurrency,
            std::unique_ptr<fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<
@@ -297,7 +285,6 @@ static const std::vector<AggregationFormat<schedulerId>>
             -> std::unique_ptr<Aggregator<schedulerId>> {
           return std::make_unique<MeasurementAggregator<schedulerId>>(
               ctx.validOriginalAdIds,
-              outputVisibility,
               myRole,
               concurrency,
               std::move(writeOnlyOramFactory));
