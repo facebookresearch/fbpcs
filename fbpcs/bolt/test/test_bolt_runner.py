@@ -13,6 +13,7 @@ from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner, BoltState
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
 from fbpcs.bolt.exceptions import StageFailedException
+from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -36,18 +37,18 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         self.test_runner = BoltRunner(
             publisher_client=mock_publisher_client,
             partner_client=mock_partner_client,
+            skip_publisher_creation=False,
         )
         self.test_runner.is_finished = mock.AsyncMock(return_value=False)
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._get_or_create_instances")
     async def test_joint_stage(
-        self,
-        mock_publisher_args,
-        mock_partner_args,
-        mock_sleep,
+        self, mock_get_or_create, mock_publisher_args, mock_partner_args, mock_sleep
     ) -> None:
+        mock_get_or_create.return_value = ("test_pub_id", "test_part_id")
         # testing that the correct server ips are used when a joint stage is run
         test_publisher_id = "test_pub_id"
         test_partner_id = "test_part_id"
@@ -77,9 +78,11 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._get_or_create_instances")
     async def test_non_joint_stage(
-        self, mock_publisher_args, mock_partner_args, mock_sleep
+        self, mock_get_or_create, mock_publisher_args, mock_partner_args, mock_sleep
     ):
+        mock_get_or_create.return_value = ("test_pub_id", "test_part_id")
         # testing that server ips are not used when non-joint stage is run
         test_publisher_id = "test_pub_id"
         test_partner_id = "test_part_id"
@@ -130,7 +133,11 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(mock_run_next_stage.call_count, 1)
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
-    async def test_auto_stage_retry_one_sided_failure(self, mock_sleep) -> None:
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._get_or_create_instances")
+    async def test_auto_stage_retry_one_sided_failure(
+        self, mock_get_or_create, mock_sleep
+    ) -> None:
+        mock_get_or_create.return_value = ("test_pub_id", "test_part_id")
         for failing_side in ("publisher", "partner"):
             (
                 mock_publisher_run_stage,
@@ -197,6 +204,49 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                         poll_interval=5,
                     )
                     self.test_runner.partner_client.cancel_current_stage.assert_not_called()
+
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltState")
+    async def test_is_existing_instance(self, mock_state) -> None:
+        for role in (PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER):
+            self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+                side_effect=[mock_state, Exception()]
+            )
+            self.test_runner.partner_client.update_instance = mock.AsyncMock(
+                side_effect=[mock_state, Exception()]
+            )
+            for expected_result in (True, False):
+                with self.subTest(role=role, expected_result=expected_result):
+                    actual_result = await self.test_runner._is_existing_instance(
+                        "test", role
+                    )
+                    self.assertEqual(actual_result, expected_result)
+
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._is_existing_instance")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltJob")
+    async def test_get_or_create_instance(
+        self, mock_job, mock_existing_instance
+    ) -> None:
+        for skip_publisher_creation in (True, False):
+            self.test_runner.publisher_client.create_instance = mock.AsyncMock()
+            self.test_runner.partner_client.create_instance = mock.AsyncMock()
+            self.test_runner.skip_publisher_creation = skip_publisher_creation
+            for exists in (True, False):
+                mock_existing_instance.return_value = exists
+                with self.subTest(
+                    skip_publisher_creation=skip_publisher_creation, exists=exists
+                ):
+                    await self.test_runner._get_or_create_instances(mock_job)
+                    if exists:
+                        self.test_runner.publisher_client.create_instance.assert_not_called()
+                        self.test_runner.partner_client.create_instance.assert_not_called()
+                    else:
+                        self.test_runner.partner_client.create_instance.assert_called_once()
+                        if skip_publisher_creation:
+                            self.test_runner.publisher_client.create_instance.assert_not_called()
+                        else:
+                            self.test_runner.publisher_client.create_instance.assert_called_once()
+        # reset test_runner
+        self.test_runner.skip_publisher_creation = False
 
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
