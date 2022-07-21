@@ -7,7 +7,7 @@
       "Parameters": {
         "Name": "MetaWorkflowCluster",
         "VisibleToAllUsers": true,
-        "ReleaseLabel": "emr-6.4.0",
+        "ReleaseLabel": "emr-6.6.0",
         "Applications": [
           {
             "Name": "Hadoop"
@@ -150,7 +150,7 @@
       "Type": "Task",
       "Parameters": {
         "Bucket.$": "$.advBucketName",
-        "Key.$": "States.Format('{}/step_3_meta_all_enc_kc_kp_rc_rp/_SUCCESS', $.instanceId)"
+        "Key.$": "States.Format('{}/step_3_meta_all_enc_kc_kp_rc_sc_rp/_SUCCESS', $.instanceId)"
       },
       "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
       "ResultPath": null,
