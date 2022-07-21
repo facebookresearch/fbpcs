@@ -17,13 +17,16 @@ from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.constants import (
     DEFAULT_MAX_PARALLEL_RUNS,
     DEFAULT_NUM_TRIES,
+    INVALID_STATUS_LIST,
     RETRY_INTERVAL,
+    WAIT_VALID_STATUS_TIMEOUT,
 )
 from fbpcs.bolt.exceptions import (
     IncompatibleStageError,
     NoServerIpsException,
     StageFailedException,
     StageTimeoutException,
+    WaitValidStatusTimeout,
 )
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -66,10 +69,15 @@ class BoltRunner:
         async with self.semaphore:
             try:
                 publisher_id, partner_id = await self._get_or_create_instances(job)
-
+                await self.wait_valid_publisher_status(
+                    instance_id=publisher_id,
+                    poll_interval=job.poll_interval,
+                    timeout=WAIT_VALID_STATUS_TIMEOUT,
+                )
+                stage = await self.get_next_valid_stage(job)
                 # hierarchy: BoltJob num_tries --> BoltRunner num_tries --> default
                 max_tries = job.num_tries or self.num_tries
-                for stage in list(job.stage_flow)[1:]:
+                while stage is not None:
                     tries = 0
                     while tries < max_tries:
                         tries += 1
@@ -104,6 +112,8 @@ class BoltRunner:
                                 f"Error: type: {type(e)}, message: {e}. Retries left: {self.num_tries - tries}."
                             )
                             await asyncio.sleep(RETRY_INTERVAL)
+                    # update stage
+                    stage = await self.get_next_valid_stage(job)
                 results = await asyncio.gather(
                     *[
                         self.publisher_client.validate_results(
@@ -256,7 +266,8 @@ class BoltRunner:
                 await self.partner_client.update_instance(instance_id)
             self.logger.info(f"{instance_id} found.")
             return True
-        except Exception:
+        except Exception as e:
+            self.logger.exception(e)
             self.logger.info(f"{instance_id} not found.")
             return False
 
@@ -405,3 +416,41 @@ class BoltRunner:
                 f"Could not get next stage: Publisher status is {publisher_stage.name}, Partner status is {partner_stage.name}"
             )
         return None
+
+    async def wait_valid_publisher_status(
+        self, instance_id: str, poll_interval: int, timeout: int
+    ) -> None:
+        """Waits for publisher status to be valid
+
+        Sometimes when resuming a run, the publisher status is TIMEOUT,
+        UNKNOWN, or PROCESSING_REQUEST. We will try to run the stage
+        to get a different status. This is a GraphAPI-only issue
+
+        Args:
+            - instance_id: Publisher instance_id
+            - poll_interval: time in seconds between polls
+            - timeout: timeout in seconds
+        """
+
+        status = (
+            await self.publisher_client.update_instance(instance_id=instance_id)
+        ).pc_instance_status
+        if status in INVALID_STATUS_LIST:
+            if status is PrivateComputationInstanceStatus.TIMEOUT:
+                # no stage argument necessary for graphAPI
+                await self.publisher_client.run_stage(instance_id=instance_id)
+            start_time = time()
+            while time() < start_time + timeout:
+                status = (
+                    await self.publisher_client.update_instance(instance_id)
+                ).pc_instance_status
+                if status not in INVALID_STATUS_LIST:
+                    self.logger.info(f"Publisher instance has valid status: {status}.")
+                    return
+                self.logger.info(
+                    f"Publisher instance status {status} invalid for calculation.\nPolling publisher instance expecting valid status."
+                )
+                await asyncio.sleep(poll_interval)
+            raise WaitValidStatusTimeout(
+                f"Timed out waiting for publisher {instance_id} valid status. Status: {status}"
+            )

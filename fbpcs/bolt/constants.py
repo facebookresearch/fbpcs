@@ -6,6 +6,11 @@
 
 # pyre-strict
 
+from typing import List
+
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
+)
 from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
     PrivateComputationPCF2StageFlow,
 )
@@ -20,3 +25,9 @@ DEFAULT_MAX_PARALLEL_RUNS = 10
 DEFAULT_NUM_TRIES = 2
 TIMEOUT_SEC = 1200
 RETRY_INTERVAL = 60
+INVALID_STATUS_LIST: List[PrivateComputationInstanceStatus] = [
+    PrivateComputationInstanceStatus.TIMEOUT,
+    PrivateComputationInstanceStatus.UNKNOWN,
+    PrivateComputationInstanceStatus.PROCESSING_REQUEST,
+]
+WAIT_VALID_STATUS_TIMEOUT = 600
