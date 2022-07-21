@@ -15,6 +15,7 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.service.mpc import MPCService
 
 from fbpcp.service.onedocker import OneDockerService
+from fbpcs.bolt.bolt_client import BoltState
 
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.common.entity.stage_state_instance import (
@@ -50,6 +51,9 @@ from fbpcs.private_computation.service.errors import (
 from fbpcs.private_computation.service.private_computation import (
     NUM_NEW_SHARDS_PER_FILE,
     PrivateComputationService,
+)
+from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
 )
 
 
@@ -218,3 +222,22 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             self.test_instance_id, expected_result_path="test/path"
         )
         self.assertTrue(result)
+
+    async def test_get_valid_stage(self) -> None:
+        stage = PrivateComputationStageFlow.ID_MATCH
+        for status, expected_stage in [
+            # pyre-fixme: Undefined attribute [16]: Optional type has no attribute `completed_status`.
+            (stage.previous_stage.completed_status, stage),
+            (stage.started_status, stage),
+            (stage.completed_status, stage.next_stage),
+            (stage.failed_status, stage),
+            (PrivateComputationStageFlow.get_last_stage().completed_status, None),
+        ]:
+            with self.subTest(status=status, expected_stage=expected_stage):
+                self.bolt_pcs_client.update_instance = mock.AsyncMock(
+                    return_value=BoltState(status)
+                )
+                valid_stage = await self.bolt_pcs_client.get_valid_stage(
+                    "test_id", PrivateComputationStageFlow
+                )
+                self.assertEqual(valid_stage, expected_stage)
