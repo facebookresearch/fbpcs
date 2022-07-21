@@ -45,8 +45,11 @@ class AggregationApp {
         schedulerStatistics_{0, 0, 0, 0} {}
 
   void run() {
-    auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
-        MY_ROLE, *communicationAgentFactory_);
+    auto scheduler = outputVisibility_ == common::Visibility::Publisher
+        ? fbpcf::scheduler::createNetworkPlaintextScheduler<false>(
+              MY_ROLE, *communicationAgentFactory_)
+        : fbpcf::scheduler::createLazySchedulerWithRealEngine(
+              MY_ROLE, *communicationAgentFactory_);
     auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
     AggregationGame<schedulerId> game(
@@ -64,8 +67,7 @@ class AggregationApp {
           inputEncryption_,
           inputSecretShareFilePaths_.at(i),
           inputClearTextFilePaths_.at(i));
-      auto output =
-          game.computeAggregations(MY_ROLE, inputData, outputVisibility_);
+      auto output = game.computeAggregations(MY_ROLE, inputData);
       putOutputData(output, outputFilePaths_.at(i));
     }
 

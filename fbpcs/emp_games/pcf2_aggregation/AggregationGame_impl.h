@@ -155,8 +155,7 @@ AggregationGame<schedulerId>::shareAggregationFormats(
 template <int schedulerId>
 AggregationOutputMetrics AggregationGame<schedulerId>::computeAggregations(
     const int myRole,
-    const AggregationInputMetrics& inputData,
-    common::Visibility outputVisibility) {
+    const AggregationInputMetrics& inputData) {
   XLOG(INFO, "Running private aggregation");
 
   auto ids = inputData.getIds();
@@ -205,7 +204,6 @@ AggregationOutputMetrics AggregationGame<schedulerId>::computeAggregations(
   PrivateAggregationMetrics<schedulerId> aggregationMetrics{
       aggregationFormats,
       AggregationContext{validOriginalAdIds},
-      outputVisibility,
       myRole,
       concurrency_,
       // linear ORAM will be less efficient theoretically if ORAM size is larger

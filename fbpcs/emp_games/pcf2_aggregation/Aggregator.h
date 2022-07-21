@@ -64,8 +64,7 @@ struct ConvMetrics {
 template <int schedulerId>
 class Aggregator {
  public:
-  explicit Aggregator(const common::Visibility& outputVisibility)
-      : outputVisibility_{outputVisibility} {}
+  explicit Aggregator() {}
 
   virtual ~Aggregator() {}
 
@@ -73,9 +72,6 @@ class Aggregator {
       const PrivateAggregation<schedulerId>& privateAggregation) = 0;
 
   virtual AggregationOutput reveal() const = 0;
-
- protected:
-  const common::Visibility outputVisibility_;
 };
 
 struct AggregationContext {
@@ -91,7 +87,6 @@ class AggregationFormat {
 
   std::function<std::unique_ptr<Aggregator<schedulerId>>(
       AggregationContext,
-      common::Visibility,
       int myRole,
       int concurrency,
       std::unique_ptr<fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<

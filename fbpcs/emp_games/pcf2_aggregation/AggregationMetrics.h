@@ -210,7 +210,6 @@ class PrivateAggregationMetrics {
   PrivateAggregationMetrics(
       std::vector<AggregationFormat<schedulerId>> aggregationFormats_,
       const AggregationContext& ctx,
-      const common::Visibility& outputVisibility,
       const int myRole,
       const int concurrency,
       std::unique_ptr<fbpcf::mpc_std_lib::oram::IWriteOnlyOramFactory<
@@ -218,11 +217,7 @@ class PrivateAggregationMetrics {
     for (auto aggregationFormat : aggregationFormats_) {
       formatToAggregator[aggregationFormat.name] =
           aggregationFormat.newAggregator(
-              ctx,
-              outputVisibility,
-              myRole,
-              concurrency,
-              std::move(writeOnlyOramFactory));
+              ctx, myRole, concurrency, std::move(writeOnlyOramFactory));
     }
   }
 

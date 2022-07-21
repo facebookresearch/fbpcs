@@ -294,20 +294,18 @@ AggregationOutputMetrics computeAggregationsWithScheduler(
     int myId,
     AggregationInputMetrics inputData,
     common::InputEncryption inputEncryption,
-    common::Visibility outputVisibility,
     std::shared_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
     fbpcf::SchedulerCreator schedulerCreator) {
   auto scheduler = schedulerCreator(myId, *factory);
   auto game = std::make_unique<AggregationGame<schedulerId>>(
       std::move(scheduler), std::move(factory), inputEncryption);
-  return game->computeAggregations(myId, inputData, outputVisibility);
+  return game->computeAggregations(myId, inputData);
 }
 
 // Test cases are from https://fb.quip.com/IUHDApxKEAli
 void testCorrectnessWithScheduler(
     common::InputEncryption inputEncryption,
-    common::Visibility outputVisibility,
     fbpcf::SchedulerCreator schedulerCreator) {
   std::string baseDir_ =
       private_measurement::test_util::getBaseDirFromPath(__FILE__);
@@ -362,7 +360,6 @@ void testCorrectnessWithScheduler(
           0,
           publisherInputData,
           inputEncryption,
-          outputVisibility,
           std::move(factories[0]),
           schedulerCreator);
 
@@ -371,7 +368,6 @@ void testCorrectnessWithScheduler(
           1,
           partnerInputData,
           inputEncryption,
-          outputVisibility,
           std::move(factories[1]),
           schedulerCreator);
 
@@ -379,30 +375,22 @@ void testCorrectnessWithScheduler(
       auto res1 = future1.get();
 
       // check against expected output
-      if (outputVisibility == common::Visibility::Publisher) {
-        verifyOutput(res0, outputJsonFileName);
-      } else {
-        // Xor visibility
-        auto output =
-            revealXORedResult(res0, res1, aggregationFormat, attributionRule);
-        verifyOutput(output, outputJsonFileName);
-      }
+      auto output =
+          revealXORedResult(res0, res1, aggregationFormat, attributionRule);
+      verifyOutput(output, outputJsonFileName);
     }
   }
 }
 
-class AggregationGameTestFixture : public ::testing::TestWithParam<std::tuple<
-                                       common::SchedulerType,
-                                       common::Visibility,
-                                       common::InputEncryption>> {};
+class AggregationGameTestFixture
+    : public ::testing::TestWithParam<
+          std::tuple<common::SchedulerType, common::InputEncryption>> {};
 
 TEST_P(AggregationGameTestFixture, TestCorrectness) {
-  auto [schedulerType, visibility, inputEncryption] = GetParam();
+  auto [schedulerType, inputEncryption] = GetParam();
 
   testCorrectnessWithScheduler(
-      inputEncryption,
-      visibility,
-      fbpcf::getSchedulerCreator<unsafe>(schedulerType));
+      inputEncryption, fbpcf::getSchedulerCreator<unsafe>(schedulerType));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -414,20 +402,15 @@ INSTANTIATE_TEST_SUITE_P(
             common::SchedulerType::Eager,
             common::SchedulerType::Lazy),
         ::testing::Values(
-            common::Visibility::Publisher,
-            common::Visibility::Xor),
-        ::testing::Values(
             common::InputEncryption::Plaintext,
             common::InputEncryption::PartnerXor,
             common::InputEncryption::Xor)),
     [](const testing::TestParamInfo<AggregationGameTestFixture::ParamType>&
            info) {
       auto schedulerType = std::get<0>(info.param);
-      auto visibility = std::get<1>(info.param);
-      auto inputEncryption = std::get<2>(info.param);
+      auto inputEncryption = std::get<1>(info.param);
 
       return getSchedulerName(schedulerType) +
-          getInputEncryptionString(inputEncryption) + "_" +
-          getVisibilityString(visibility);
+          getInputEncryptionString(inputEncryption);
     });
 } // namespace pcf2_aggregation

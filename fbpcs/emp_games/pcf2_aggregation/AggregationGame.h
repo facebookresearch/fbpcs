@@ -86,8 +86,7 @@ class AggregationGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   AggregationOutputMetrics computeAggregations(
       const int myRole,
-      const AggregationInputMetrics& inputData,
-      common::Visibility outputVisibility);
+      const AggregationInputMetrics& inputData);
 
  private:
   std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
