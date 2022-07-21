@@ -16,3 +16,7 @@ class StageTimeoutException(RuntimeError):
 
 class NoServerIpsException(ValueError):
     pass
+
+
+class IncompatibleStageError(RuntimeError):
+    pass

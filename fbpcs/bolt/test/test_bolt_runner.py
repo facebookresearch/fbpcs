@@ -13,8 +13,9 @@ from fbpcs.bolt.bolt_client import BoltState
 from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
-from fbpcs.bolt.exceptions import StageFailedException
+from fbpcs.bolt.exceptions import IncompatibleStageError, StageFailedException
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
+
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -251,6 +252,74 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
 
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    async def test_get_next_valid_stage(
+        self, mock_publisher_args, mock_partner_args
+    ) -> None:
+        test_job = BoltJob(
+            job_name="test",
+            publisher_bolt_args=mock_publisher_args,
+            partner_bolt_args=mock_partner_args,
+            stage_flow=PrivateComputationStageFlow,
+            final_stage=PrivateComputationStageFlow.AGGREGATE,
+        )
+        for (
+            publisher_status,
+            publisher_next_stage,
+            partner_status,
+            partner_next_stage,
+            expected_next_stage,
+        ) in self._get_valid_stage_data():
+            with self.subTest(
+                publisher_status=publisher_status,
+                partner_status=partner_status,
+                expected_next_stage=expected_next_stage,
+            ):
+                self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+                    return_value=BoltState(publisher_status)
+                )
+                self.test_runner.partner_client.update_instance = mock.AsyncMock(
+                    return_value=BoltState(partner_status)
+                )
+                self.test_runner.publisher_client.get_valid_stage = mock.AsyncMock(
+                    return_value=publisher_next_stage
+                )
+                self.test_runner.partner_client.get_valid_stage = mock.AsyncMock(
+                    return_value=partner_next_stage
+                )
+                next_valid_stage = await self.test_runner.get_next_valid_stage(
+                    job=test_job
+                )
+                self.assertEqual(next_valid_stage, expected_next_stage)
+        for (
+            publisher_status,
+            publisher_next_stage,
+            partner_status,
+            partner_next_stage,
+        ) in self._get_incompatible_stage_data():
+            with self.subTest(
+                "Testing incompatible stages",
+                publisher_status=publisher_status,
+                partner_status=partner_status,
+            ):
+                self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+                    return_value=BoltState(publisher_status)
+                )
+                self.test_runner.partner_client.update_instance = mock.AsyncMock(
+                    return_value=BoltState(partner_status)
+                )
+                self.test_runner.publisher_client.get_valid_stage = mock.AsyncMock(
+                    return_value=publisher_next_stage
+                )
+                self.test_runner.partner_client.get_valid_stage = mock.AsyncMock(
+                    return_value=partner_next_stage
+                )
+                with self.assertRaises(IncompatibleStageError):
+                    next_valid_stage = await self.test_runner.get_next_valid_stage(
+                        job=test_job
+                    )
+
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     def _prepare_one_sided_failure_retry(
         self, mock_publisher_args, mock_partner_args, failing_side: str
     ) -> Tuple[mock.AsyncMock, mock.AsyncMock, BoltJob]:
@@ -429,6 +498,231 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
                 ],
                 False,
+            ),
+        ]
+
+    def _get_valid_stage_data(
+        self,
+    ) -> List[
+        Tuple[
+            PrivateComputationInstanceStatus,
+            Optional[PrivateComputationBaseStageFlow],
+            PrivateComputationInstanceStatus,
+            Optional[PrivateComputationBaseStageFlow],
+            Optional[PrivateComputationBaseStageFlow],
+        ]
+    ]:
+        """
+        Tuple represents:
+            * publisher status
+            * next valid publisher stage
+            * partner status
+            * next valid partner stage
+            * next expected valid stage
+        """
+        return [
+            (
+                PrivateComputationInstanceStatus.CREATED,
+                PrivateComputationStageFlow.CREATED.next_stage,
+                PrivateComputationInstanceStatus.CREATED,
+                PrivateComputationStageFlow.CREATED.next_stage,
+                PrivateComputationStageFlow.CREATED.next_stage,
+            ),
+            (
+                PrivateComputationStageFlow.ID_MATCH.started_status,
+                PrivateComputationStageFlow.ID_MATCH,
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
+                PrivateComputationStageFlow.ID_MATCH.previous_stage.completed_status,
+                PrivateComputationStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
+            ),
+            (
+                PrivateComputationStageFlow.ID_MATCH.started_status,
+                PrivateComputationStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH.started_status,
+                PrivateComputationStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
+            ),
+            (
+                PrivateComputationStageFlow.ID_MATCH.failed_status,
+                PrivateComputationStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH.failed_status,
+                PrivateComputationStageFlow.ID_MATCH,
+                PrivateComputationStageFlow.ID_MATCH,
+            ),
+            (
+                PrivateComputationStageFlow.ID_MATCH.completed_status,
+                PrivateComputationStageFlow.ID_MATCH.next_stage,
+                PrivateComputationStageFlow.ID_MATCH.completed_status,
+                PrivateComputationStageFlow.ID_MATCH.next_stage,
+                PrivateComputationStageFlow.ID_MATCH.next_stage,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.started_status,
+                PrivateComputationStageFlow.COMPUTE,
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
+                PrivateComputationStageFlow.COMPUTE.previous_stage.completed_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.started_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE.started_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.failed_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE.failed_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.completed_status,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
+                PrivateComputationStageFlow.COMPUTE.started_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.started_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE.completed_status,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
+                PrivateComputationStageFlow.COMPUTE,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.completed_status,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
+                PrivateComputationStageFlow.COMPUTE.completed_status,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
+            ),
+            (
+                PrivateComputationStageFlow.AGGREGATE.started_status,
+                PrivateComputationStageFlow.AGGREGATE,
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
+                PrivateComputationStageFlow.AGGREGATE.previous_stage.completed_status,
+                PrivateComputationStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
+            ),
+            (
+                PrivateComputationStageFlow.AGGREGATE.started_status,
+                PrivateComputationStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE.started_status,
+                PrivateComputationStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
+            ),
+            (
+                PrivateComputationStageFlow.AGGREGATE.failed_status,
+                PrivateComputationStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE.failed_status,
+                PrivateComputationStageFlow.AGGREGATE,
+                PrivateComputationStageFlow.AGGREGATE,
+            ),
+            (
+                PrivateComputationStageFlow.AGGREGATE.completed_status,
+                None,
+                PrivateComputationStageFlow.AGGREGATE.completed_status,
+                None,
+                None,
+            ),
+            ####################### NON JOINT STAGE TEST #################################3
+            (
+                # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.previous_stage.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.previous_stage.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+            ),
+            (
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.started_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.previous_stage.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+            ),
+            (
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.started_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.started_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+            ),
+            (
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.next_stage,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.started_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+            ),
+            (
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.next_stage,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.failed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+            ),
+            (
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.started_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+            ),
+            (
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.failed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.next_stage,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER,
+            ),
+            (
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.next_stage,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.completed_status,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.next_stage,
+                PrivateComputationStageFlow.ID_SPINE_COMBINER.next_stage,
+            ),
+        ]
+
+    def _get_incompatible_stage_data(
+        self,
+    ) -> List[
+        Tuple[
+            PrivateComputationInstanceStatus,
+            Optional[PrivateComputationBaseStageFlow],
+            PrivateComputationInstanceStatus,
+            Optional[PrivateComputationBaseStageFlow],
+        ]
+    ]:
+        return [
+            (
+                PrivateComputationStageFlow.PID_PREPARE.completed_status,
+                PrivateComputationStageFlow.PID_PREPARE.next_stage,
+                PrivateComputationInstanceStatus.CREATED,
+                PrivateComputationStageFlow.CREATED.next_stage,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.completed_status,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
+                PrivateComputationStageFlow.RESHARD.completed_status,
+                PrivateComputationStageFlow.RESHARD.next_stage,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.completed_status,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
+                PrivateComputationStageFlow.COMPUTE.failed_status,
+                PrivateComputationStageFlow.COMPUTE,
+            ),
+            (
+                PrivateComputationStageFlow.COMPUTE.failed_status,
+                PrivateComputationStageFlow.COMPUTE,
+                PrivateComputationStageFlow.COMPUTE.completed_status,
+                PrivateComputationStageFlow.COMPUTE.next_stage,
             ),
         ]
 
