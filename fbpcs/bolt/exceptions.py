@@ -14,6 +14,10 @@ class StageTimeoutException(RuntimeError):
     pass
 
 
+class WaitValidStatusTimeout(RuntimeError):
+    pass
+
+
 class NoServerIpsException(ValueError):
     pass
 

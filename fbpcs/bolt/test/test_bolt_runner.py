@@ -42,13 +42,20 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             skip_publisher_creation=False,
         )
         self.test_runner.job_is_finished = mock.AsyncMock(return_value=False)
+        self.test_runner.wait_valid_publisher_status = mock.AsyncMock()
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._get_or_create_instances")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
     async def test_joint_stage(
-        self, mock_get_or_create, mock_publisher_args, mock_partner_args, mock_sleep
+        self,
+        mock_next_stage,
+        mock_get_or_create,
+        mock_publisher_args,
+        mock_partner_args,
+        mock_sleep,
     ) -> None:
         mock_get_or_create.return_value = ("test_pub_id", "test_part_id")
         # testing that the correct server ips are used when a joint stage is run
@@ -68,6 +75,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             partner_bolt_args=mock_partner_args,
             stage_flow=DummyJointStageFlow,
         )
+        mock_next_stage.return_value = DummyJointStageFlow.JOINT_STAGE
 
         await self.test_runner.run_async([test_job])
 
@@ -81,8 +89,14 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._get_or_create_instances")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
     async def test_non_joint_stage(
-        self, mock_get_or_create, mock_publisher_args, mock_partner_args, mock_sleep
+        self,
+        mock_next_stage,
+        mock_get_or_create,
+        mock_publisher_args,
+        mock_partner_args,
+        mock_sleep,
     ):
         mock_get_or_create.return_value = ("test_pub_id", "test_part_id")
         # testing that server ips are not used when non-joint stage is run
@@ -98,6 +112,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             partner_bolt_args=mock_partner_args,
             stage_flow=DummyNonJointStageFlow,
         )
+        mock_next_stage.return_value = DummyNonJointStageFlow.NON_JOINT_STAGE
         await self.test_runner.run_async([test_job])
 
         mock_partner_run_stage.assert_called_with(
@@ -112,8 +127,14 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
     @mock.patch(
         "fbpcs.bolt.bolt_runner.BoltRunner.run_next_stage", new_callable=mock.AsyncMock
     )
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
     async def test_auto_stage_retry(
-        self, mock_run_next_stage, mock_publisher_args, mock_partner_args, mock_sleep
+        self,
+        mock_next_stage,
+        mock_run_next_stage,
+        mock_publisher_args,
+        mock_partner_args,
+        mock_sleep,
     ) -> None:
         for is_retryable in (True, False):
             with self.subTest(is_retryable=is_retryable):
@@ -128,6 +149,11 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     if is_retryable
                     else DummyNonRetryableStageFlow,
                 )
+                mock_next_stage.return_value = (
+                    DummyRetryableStageFlow.RETRYABLE_STAGE
+                    if is_retryable
+                    else DummyNonRetryableStageFlow.NON_RETRYABLE_STAGE
+                )
                 await self.test_runner.run_async([test_job])
                 if is_retryable:
                     self.assertEqual(mock_run_next_stage.call_count, DEFAULT_NUM_TRIES)
@@ -136,8 +162,9 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._get_or_create_instances")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
     async def test_auto_stage_retry_one_sided_failure(
-        self, mock_get_or_create, mock_sleep
+        self, mock_next_stage, mock_get_or_create, mock_sleep
     ) -> None:
         mock_get_or_create.return_value = ("test_pub_id", "test_part_id")
         for failing_side in ("publisher", "partner"):
@@ -146,6 +173,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                 mock_partner_run_stage,
                 test_job,
             ) = self._prepare_one_sided_failure_retry(failing_side=failing_side)
+            mock_next_stage.return_value = list(test_job.stage_flow)[1]
             with self.subTest(failing_side=failing_side):
                 # if one side fails but the other doesn't and it's not a joint stage,
                 # only the failing side should retry. The joint stage case involves cancelling,

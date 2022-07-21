@@ -142,12 +142,19 @@ class BoltPCSClient(BoltClient):
     async def run_stage(
         self,
         instance_id: str,
-        stage: PrivateComputationBaseStageFlow,
+        stage: Optional[PrivateComputationBaseStageFlow] = None,
         server_ips: Optional[List[str]] = None,
     ) -> None:
-        await self.pcs.run_stage_async(
-            instance_id=instance_id, stage=stage, server_ips=server_ips
-        )
+        if stage:
+            self.logger.info(f"Running stage {stage.name}")
+            await self.pcs.run_stage_async(
+                instance_id=instance_id, stage=stage, server_ips=server_ips
+            )
+        else:
+            self.logger.info("Running next stage")
+            await self.pcs.run_next_async(
+                instance_id=instance_id, server_ips=server_ips
+            )
 
     async def update_instance(self, instance_id: str) -> BoltState:
         loop = asyncio.get_running_loop()

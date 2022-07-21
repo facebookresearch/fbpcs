@@ -40,7 +40,7 @@ class BoltClient(ABC):
     async def run_stage(
         self,
         instance_id: str,
-        stage: PrivateComputationBaseStageFlow,
+        stage: Optional[PrivateComputationBaseStageFlow] = None,
         server_ips: Optional[List[str]] = None,
     ) -> None:
         pass
