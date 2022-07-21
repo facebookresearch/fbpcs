@@ -8,8 +8,8 @@ import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
+from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
-from fbpcs.bolt.bolt_runner import BoltClient, BoltState
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )

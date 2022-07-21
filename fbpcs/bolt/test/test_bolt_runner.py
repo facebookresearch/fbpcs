@@ -9,8 +9,9 @@ import unittest
 from typing import List, Optional, Tuple
 from unittest import mock
 
+from fbpcs.bolt.bolt_client import BoltState
 from fbpcs.bolt.bolt_job import BoltJob
-from fbpcs.bolt.bolt_runner import BoltRunner, BoltState
+from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
 from fbpcs.bolt.exceptions import StageFailedException
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
@@ -205,7 +206,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     )
                     self.test_runner.partner_client.cancel_current_stage.assert_not_called()
 
-    @mock.patch("fbpcs.bolt.bolt_runner.BoltState")
+    @mock.patch("fbpcs.bolt.bolt_client.BoltState")
     async def test_is_existing_instance(self, mock_state) -> None:
         for role in (PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER):
             self.test_runner.publisher_client.update_instance = mock.AsyncMock(
