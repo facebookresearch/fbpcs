@@ -13,6 +13,9 @@ from typing import Optional, Type
 
 from dataclasses_json import config, DataClassJsonMixin
 from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
+)
 
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -61,3 +64,15 @@ class BoltJob(DataClassJsonMixin):
             )
         if self.final_stage is None:
             self.final_stage = self.stage_flow.get_last_stage()
+
+    def is_finished(
+        self,
+        publisher_status: PrivateComputationInstanceStatus,
+        partner_status: PrivateComputationInstanceStatus,
+    ) -> bool:
+        final_status = (
+            self.final_stage.completed_status
+            if self.final_stage
+            else self.stage_flow.get_last_stage().completed_status
+        )
+        return publisher_status is final_status and partner_status is final_status
