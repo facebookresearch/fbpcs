@@ -7,7 +7,7 @@
       "Parameters": {
         "Name": "AdvWorkflowCluster",
         "VisibleToAllUsers": true,
-        "ReleaseLabel": "emr-6.4.0",
+        "ReleaseLabel": "emr-6.6.0",
         "Applications": [
           {
             "Name": "Hadoop"
