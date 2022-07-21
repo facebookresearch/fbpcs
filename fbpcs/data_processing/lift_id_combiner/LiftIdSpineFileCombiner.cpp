@@ -114,6 +114,14 @@ void LiftIdSpineFileCombiner::combineFile() {
     std::vector<std::string> aggregatedCols = idSwapOutFileHeader;
     aggregatedCols.erase(
         std::find(aggregatedCols.begin(), aggregatedCols.end(), "id_"));
+    // cohort_id is an optional field that may be provided in the partner data.
+    // If used, the following compute stage expects that only one cohort id is
+    // provided per user. Thus, remove this column from being aggregated on if
+    // present. In theory, a user should only belong to one cohort, so grabbing
+    // a random cohort per user should be sufficient.
+    aggregatedCols.erase(
+        std::remove(aggregatedCols.begin(), aggregatedCols.end(), "cohort_id"),
+        aggregatedCols.end());
 
     std::stringstream groupByOutFile;
     std::stringstream groupByUnsortedOutFile;

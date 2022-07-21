@@ -426,3 +426,60 @@ TEST_F(LiftIdSpineFileCombinerTest, MultiKeyWithMaxThree) {
   FLAGS_max_id_column_cnt = 3;
   runTest(dataInput, spineInput, expectedOutput);
 }
+
+// Test handling of cohort id column when provided for partner data with only
+// one user
+TEST_F(LiftIdSpineFileCombinerTest, CohortIdOneUser) {
+  FLAGS_multi_conversion_limit = 4;
+  std::vector<std::string> dataInput = {
+      "id_,event_timestamp,value,cohort_id", "111,100,10,1"};
+  std::vector<std::string> spineInput = {"AAA,111"};
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values,cohort_id", "AAA,[0,0,0,100],[0,0,0,10],1"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+// Test handling of cohort id column when provided for partner data with only
+// one event per user
+TEST_F(LiftIdSpineFileCombinerTest, CohortIdOnePerUser) {
+  FLAGS_multi_conversion_limit = 4;
+  std::vector<std::string> dataInput = {
+      "id_,event_timestamp,value,cohort_id",
+      "111,100,10,1",
+      "222,200,20,2",
+      "444,400,40,4",
+      "555,500,50,5"};
+  std::vector<std::string> spineInput = {
+      "AAA,111", "BBB,222,", "CCC,", "DDD,444", "EEE,555"};
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values,cohort_id",
+      "AAA,[0,0,0,100],[0,0,0,10],1",
+      "BBB,[0,0,0,200],[0,0,0,20],2",
+      "CCC,[0,0,0,0],[0,0,0,0],0",
+      "DDD,[0,0,0,400],[0,0,0,40],4",
+      "EEE,[0,0,0,500],[0,0,0,50],5"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+// Test handling of cohort id column when provided for partner data with
+// multiple events per user
+TEST_F(LiftIdSpineFileCombinerTest, CohortIdMultiplePerUser) {
+  FLAGS_multi_conversion_limit = 4;
+  std::vector<std::string> dataInput = {
+      "id_,event_timestamp,value,cohort_id",
+      "111,100,10,1",
+      "222,200,20,2",
+      "444,400,40,4",
+      "222,201,21,2",
+      "444,401,41,4",
+      "444,402,42,4"};
+  std::vector<std::string> spineInput = {
+      "AAA,111", "BBB,222,", "CCC,", "DDD,444"};
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values,cohort_id",
+      "AAA,[0,0,0,100],[0,0,0,10],1",
+      "BBB,[0,0,200,201],[0,0,20,21],2",
+      "CCC,[0,0,0,0],[0,0,0,0],0",
+      "DDD,[0,400,401,402],[0,40,41,42],4"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
