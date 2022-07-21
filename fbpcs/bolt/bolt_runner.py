@@ -20,6 +20,7 @@ from fbpcs.bolt.constants import (
     RETRY_INTERVAL,
 )
 from fbpcs.bolt.exceptions import (
+    IncompatibleStageError,
     NoServerIpsException,
     StageFailedException,
     StageTimeoutException,
@@ -329,3 +330,78 @@ class BoltRunner:
         return job.is_finished(
             publisher_status=publisher_status, partner_status=partner_status
         )
+
+    async def get_next_valid_stage(
+        self, job: BoltJob
+    ) -> Optional[PrivateComputationBaseStageFlow]:
+        """Gets the next stage that should be run.
+
+        Throws an IncompatibleStageError exception if stages are not
+        compatible, e.g. partner is CREATED, publisher is PID_PREPARE_COMPLETED
+
+        Args:
+            - job: the job being run
+
+        Returns:
+            The next stage to be run, or None if the job is finished
+        """
+
+        if not await self.job_is_finished(job):
+            publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
+            publisher_stage = await self.publisher_client.get_valid_stage(
+                instance_id=publisher_id, stage_flow=job.stage_flow
+            )
+            partner_id = job.partner_bolt_args.create_instance_args.instance_id
+            partner_stage = await self.partner_client.get_valid_stage(
+                instance_id=partner_id, stage_flow=job.stage_flow
+            )
+
+            # this is expected for all joint stages
+            if publisher_stage is partner_stage:
+                return publisher_stage
+
+            elif publisher_stage is None:
+                return partner_stage
+            elif partner_stage is None:
+                return publisher_stage
+
+            elif publisher_stage is partner_stage.previous_stage:
+                publisher_status = (
+                    await self.publisher_client.update_instance(publisher_id)
+                ).pc_instance_status
+                partner_status = (
+                    await self.partner_client.update_instance(partner_id)
+                ).pc_instance_status
+                # if it's not a joint stage, the statuses don't matter at all since
+                # each party operates independently
+                # Example: publisher is RESHARD_FAILED, partner is RESHARD_COMPLETED
+                if not publisher_stage.is_joint_stage or (
+                    # it's fine if one party is completed and the other is started
+                    # because the one with the started status just needs to call
+                    # update_instance one more time
+                    # Example: publisher is COMPUTATION_STARTED, partner is COMPUTATION_COMPLETED
+                    job.stage_flow.is_started_status(publisher_status)
+                    and job.stage_flow.is_completed_status(partner_status)
+                ):
+                    return publisher_stage
+            elif partner_stage is publisher_stage.previous_stage:
+                publisher_status = (
+                    await self.publisher_client.update_instance(publisher_id)
+                ).pc_instance_status
+                partner_status = (
+                    await self.partner_client.update_instance(partner_id)
+                ).pc_instance_status
+                # Example: publisher is RESHARD_COMPLETED, partner is RESHARD_FAILED
+                if not partner_stage.is_joint_stage or (
+                    # Example: publisher is COMPUTATION_COMPLETED, partner is COMPUTATION_STARTED
+                    job.stage_flow.is_started_status(partner_status)
+                    and job.stage_flow.is_completed_status(publisher_status)
+                ):
+                    return partner_stage
+            # Example: partner is CREATED, publisher is PID_PREPARE_COMPLETED
+            # Example: publisher is COMPUTATION COMPLETED, partner is PREPARE_COMPLETED
+            # Example: publisher is COMPUTATION_COMPLETED, partner is COMPUTATION_FAILED
+            raise IncompatibleStageError(
+                f"Could not get next stage: Publisher status is {publisher_stage.name}, Partner status is {partner_stage.name}"
+            )
+        return None

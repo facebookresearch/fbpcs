@@ -75,4 +75,4 @@ class BoltJob(DataClassJsonMixin):
             if self.final_stage
             else self.stage_flow.get_last_stage().completed_status
         )
-        return publisher_status is final_status and partner_status is final_status
+        return (publisher_status is final_status) and (partner_status is final_status)
