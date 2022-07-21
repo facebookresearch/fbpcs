@@ -11,7 +11,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from time import time
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
 from fbpcs.bolt.constants import (
@@ -24,6 +24,7 @@ from fbpcs.bolt.exceptions import (
     StageFailedException,
     StageTimeoutException,
 )
+from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -78,6 +79,7 @@ class BoltRunner:
         partner_client: BoltClient,
         max_parallel_runs: Optional[int] = None,
         num_tries: Optional[int] = None,
+        skip_publisher_creation: Optional[bool] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.publisher_client = publisher_client
@@ -89,6 +91,7 @@ class BoltRunner:
             logging.getLogger(__name__) if logger is None else logger
         )
         self.num_tries: int = num_tries or DEFAULT_NUM_TRIES
+        self.skip_publisher_creation = skip_publisher_creation
 
     async def run_async(
         self,
@@ -115,15 +118,8 @@ class BoltRunner:
     async def run_one(self, job: BoltJob) -> bool:
         async with self.semaphore:
             try:
-                self.logger.info(f"[{job.job_name}] Creating instances...")
-                publisher_id, partner_id = await asyncio.gather(
-                    self.publisher_client.create_instance(
-                        instance_args=job.publisher_bolt_args.create_instance_args
-                    ),
-                    self.partner_client.create_instance(
-                        instance_args=job.partner_bolt_args.create_instance_args
-                    ),
-                )
+                publisher_id, partner_id = await self._get_or_create_instances(job)
+
                 # hierarchy: BoltJob num_tries --> BoltRunner num_tries --> default
                 max_tries = job.num_tries or self.num_tries
                 for stage in list(job.stage_flow)[1:]:
@@ -299,3 +295,81 @@ class BoltRunner:
         raise StageTimeoutException(
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
         )
+
+    async def _is_existing_instance(
+        self, instance_id: str, role: PrivateComputationRole
+    ) -> bool:
+        """Returns whether instance_id already exists for the given role
+
+        Args:
+            - instance_id: the id to be checked
+            - role: publisher or partner
+
+        Returns:
+            True if there is an instance with instance_id for the given role, False otherwise
+        """
+        self.logger.info(f"Checking if {instance_id} exists...")
+        try:
+            if role is PrivateComputationRole.PUBLISHER:
+                await self.publisher_client.update_instance(instance_id)
+            else:
+                await self.partner_client.update_instance(instance_id)
+            self.logger.info(f"{instance_id} found.")
+            return True
+        except Exception:
+            self.logger.info(f"{instance_id} not found.")
+            return False
+
+    async def _get_or_create_instances(self, job: BoltJob) -> Tuple[str, str]:
+        """Checks to see if a job is new or being resumed
+
+        If the job is new, it creates new instances and returns their IDs. If the job
+        is being resumed, it returns the existing IDs.
+
+        Args:
+            - job: The job being run
+
+        Returns:
+            The existing publisher and partner IDs if the job is being resumed,
+            or newly created publisher and partner IDs if the job is new.
+        """
+        if not self.skip_publisher_creation:
+            resume_publisher_id = (
+                job.publisher_bolt_args.create_instance_args.instance_id
+            )
+            resume_partner_id = job.partner_bolt_args.create_instance_args.instance_id
+            if await self._is_existing_instance(
+                instance_id=resume_publisher_id, role=PrivateComputationRole.PUBLISHER
+            ) and await self._is_existing_instance(
+                instance_id=resume_partner_id, role=PrivateComputationRole.PARTNER
+            ):
+                # instance id already exists, we are resuming a run.
+                publisher_id = resume_publisher_id
+                partner_id = resume_partner_id
+            else:
+                # instance id does not exist, we should create new instances
+                self.logger.info(f"[{job.job_name}] Creating instances...")
+                publisher_id, partner_id = await asyncio.gather(
+                    self.publisher_client.create_instance(
+                        instance_args=job.publisher_bolt_args.create_instance_args
+                    ),
+                    self.partner_client.create_instance(
+                        instance_args=job.partner_bolt_args.create_instance_args
+                    ),
+                )
+        else:
+            # GraphAPI client doesn't have access to instance_id before creation,
+            # so for now we assume publisher is created/gotten by pl_study_runner
+            # and an instance_id was passed into the job args
+            publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
+            # check if partner should be created
+            # note: publisher and partner should have the same id
+            if await self._is_existing_instance(
+                publisher_id, PrivateComputationRole.PARTNER
+            ):
+                partner_id = publisher_id
+            else:
+                partner_id = await self.partner_client.create_instance(
+                    job.partner_bolt_args.create_instance_args
+                )
+        return publisher_id, partner_id
