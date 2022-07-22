@@ -90,6 +90,20 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>&
           thresholds,
       size_t batchSize);
+
+  const std::vector<AttributionReformattedOutputFmt<schedulerId, usingBatch>>
+  computeAttributionsHelperV2(
+      const std::vector<
+          PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>>&
+          touchpoints,
+      const std::vector<
+          PrivateConversion<schedulerId, usingBatch, inputEncryption>>&
+          conversions,
+      const AttributionRule<schedulerId, usingBatch, inputEncryption>&
+          attributionRule,
+      const std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>&
+          thresholds,
+      size_t batchSize);
 };
 
 } // namespace pcf2_attribution
