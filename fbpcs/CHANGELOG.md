@@ -15,6 +15,8 @@ Types of changes
 
 ## [Unreleased]
 
+## [1.8.0] - 2022-07-22
+
 ### Added
 - Added optional new argument --padding_size which is passed as multi_conversion_limit to the lift id spine combiner and as num_conversions_per_user to the pcf2 private lift stage
 
