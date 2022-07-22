@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <exception>
 #include "fbpcs/emp_games/pcf2_attribution/AttributionGame.h"
+#include "fbpcs/emp_games/pcf2_attribution/AttributionOptions.h"
 #include "fbpcs/emp_games/pcf2_attribution/Constants.h"
 
 namespace pcf2_attribution {
@@ -208,82 +209,87 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
   // know that it is the preferred touchpoint as well.
   // Thus at the end we will get the fully reversed attribution match vector of
   // conversions and touchpoints.
-  for (auto conversion = conversions.rbegin(); conversion != conversions.rend();
-       ++conversion) {
-    auto conv = *conversion;
-
-    if constexpr (usingBatch) {
-      OMNISCIENT_ONLY_XLOGF(
-          DBG,
-          "Computing attributions for conversions: {}",
-          common::vecToString(
-              conv.ts.openToParty(common::PUBLISHER).getValue()));
-    } else {
-      OMNISCIENT_ONLY_XLOGF(
-          DBG,
-          "Computing attributions for conversion: {}",
-          conv.ts.openToParty(common::PUBLISHER).getValue());
-    }
-
-    // store if conversion has already been attributed
-    SecBit<schedulerId, usingBatch> hasAttributedTouchpoint;
-    if constexpr (usingBatch) {
-      hasAttributedTouchpoint = SecBit<schedulerId, usingBatch>{
-          std::vector<bool>(batchSize, false), common::PUBLISHER};
-    } else {
-      hasAttributedTouchpoint =
-          SecBit<schedulerId, usingBatch>{false, common::PUBLISHER};
-    }
-
-    CHECK_EQ(touchpoints.size(), thresholds.size())
-        << "touchpoints and thresholds are not the same length.";
-
-    for (size_t i = touchpoints.size(); i >= 1; --i) {
-      auto tp = touchpoints.at(i - 1);
-      auto threshold = thresholds.at(i - 1);
+  if (FLAGS_use_new_output_format) {
+    // ToDo: Implement logic for generating attribution output in new format.
+  } else {
+    for (auto conversion = conversions.rbegin();
+         conversion != conversions.rend();
+         ++conversion) {
+      auto conv = *conversion;
 
       if constexpr (usingBatch) {
         OMNISCIENT_ONLY_XLOGF(
             DBG,
-            "Checking touchpoints: {}",
+            "Computing attributions for conversions: {}",
             common::vecToString(
-                tp.ts.openToParty(common::PUBLISHER).getValue()));
+                conv.ts.openToParty(common::PUBLISHER).getValue()));
       } else {
         OMNISCIENT_ONLY_XLOGF(
             DBG,
-            "Checking touchpoint: {}",
-            tp.ts.openToParty(common::PUBLISHER).getValue());
+            "Computing attributions for conversion: {}",
+            conv.ts.openToParty(common::PUBLISHER).getValue());
       }
 
-      auto isTouchpointAttributable =
-          attributionRule.isAttributable(tp, conv, threshold);
-
-      auto isAttributed = isTouchpointAttributable & !hasAttributedTouchpoint;
-
-      hasAttributedTouchpoint = isAttributed | hasAttributedTouchpoint;
-
+      // store if conversion has already been attributed
+      SecBit<schedulerId, usingBatch> hasAttributedTouchpoint;
       if constexpr (usingBatch) {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
-            common::vecToString(
-                isTouchpointAttributable.extractBit().getValue()),
-            common::vecToString(isAttributed.extractBit().getValue()),
-            common::vecToString(
-                hasAttributedTouchpoint.extractBit().getValue()));
+        hasAttributedTouchpoint = SecBit<schedulerId, usingBatch>{
+            std::vector<bool>(batchSize, false), common::PUBLISHER};
       } else {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
-            isTouchpointAttributable.extractBit().getValue(),
-            isAttributed.extractBit().getValue(),
-            hasAttributedTouchpoint.extractBit().getValue());
+        hasAttributedTouchpoint =
+            SecBit<schedulerId, usingBatch>{false, common::PUBLISHER};
       }
 
-      attributions.push_back(isAttributed);
+      CHECK_EQ(touchpoints.size(), thresholds.size())
+          << "touchpoints and thresholds are not the same length.";
+
+      for (size_t i = touchpoints.size(); i >= 1; --i) {
+        auto tp = touchpoints.at(i - 1);
+        auto threshold = thresholds.at(i - 1);
+
+        if constexpr (usingBatch) {
+          OMNISCIENT_ONLY_XLOGF(
+              DBG,
+              "Checking touchpoints: {}",
+              common::vecToString(
+                  tp.ts.openToParty(common::PUBLISHER).getValue()));
+        } else {
+          OMNISCIENT_ONLY_XLOGF(
+              DBG,
+              "Checking touchpoint: {}",
+              tp.ts.openToParty(common::PUBLISHER).getValue());
+        }
+
+        auto isTouchpointAttributable =
+            attributionRule.isAttributable(tp, conv, threshold);
+
+        auto isAttributed = isTouchpointAttributable & !hasAttributedTouchpoint;
+
+        hasAttributedTouchpoint = isAttributed | hasAttributedTouchpoint;
+
+        if constexpr (usingBatch) {
+          OMNISCIENT_ONLY_XLOGF(
+              DBG,
+              "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
+              common::vecToString(
+                  isTouchpointAttributable.extractBit().getValue()),
+              common::vecToString(isAttributed.extractBit().getValue()),
+              common::vecToString(
+                  hasAttributedTouchpoint.extractBit().getValue()));
+        } else {
+          OMNISCIENT_ONLY_XLOGF(
+              DBG,
+              "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
+              isTouchpointAttributable.extractBit().getValue(),
+              isAttributed.extractBit().getValue(),
+              hasAttributedTouchpoint.extractBit().getValue());
+        }
+
+        attributions.push_back(isAttributed);
+      }
     }
+    std::reverse(attributions.begin(), attributions.end());
   }
-  std::reverse(attributions.begin(), attributions.end());
   return attributions;
 }
 

@@ -28,3 +28,4 @@ DECLARE_int32(input_encryption);
 DECLARE_bool(log_cost);
 DECLARE_string(log_cost_s3_bucket);
 DECLARE_string(log_cost_s3_region);
+DECLARE_bool(use_new_output_format);

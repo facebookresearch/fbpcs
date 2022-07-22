@@ -245,6 +245,23 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
       thresholdsLastTouch1D,
       1);
 
+  FLAGS_use_new_output_format = true;
+  auto computeAttributionLastClick1DNewOutputFormat =
+      game.computeAttributionsHelper(
+          privateTouchpoints.at(0),
+          privateConversions.at(0),
+          *lastClick1D,
+          thresholdsLastClick1D,
+          1);
+
+  auto computeAttributionLastTouch1DNewOutputFormat =
+      game.computeAttributionsHelper(
+          privateTouchpoints.at(0),
+          privateConversions.at(0),
+          *lastTouch1D,
+          thresholdsLastTouch1D,
+          1);
+
   for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
     EXPECT_EQ(
         computeAttributionLastClick1D.at(i)
@@ -260,6 +277,10 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
             .getValue(),
         attributionResultsLastTouch1D.at(i));
   }
+
+  EXPECT_EQ(computeAttributionLastClick1DNewOutputFormat.size(), 0);
+
+  EXPECT_EQ(computeAttributionLastTouch1DNewOutputFormat.size(), 0);
 }
 
 TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
@@ -333,6 +354,23 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
       thresholdsLastTouch1D,
       batchSize);
 
+  FLAGS_use_new_output_format = true;
+  auto computeAttributionLastClick1DNewOutputFormat =
+      game.computeAttributionsHelper(
+          privateTouchpoints,
+          privateConversions,
+          *lastClick1D,
+          thresholdsLastClick1D,
+          batchSize);
+
+  auto computeAttributionLastTouch1DNewOutputFormat =
+      game.computeAttributionsHelper(
+          privateTouchpoints,
+          privateConversions,
+          *lastTouch1D,
+          thresholdsLastTouch1D,
+          batchSize);
+
   for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
     for (size_t j = 0; j < batchSize; ++j) {
       EXPECT_EQ(
@@ -354,6 +392,10 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
           attributionResultsLastTouch1D.at(i));
     }
   }
+
+  EXPECT_EQ(computeAttributionLastClick1DNewOutputFormat.size(), 0);
+
+  EXPECT_EQ(computeAttributionLastTouch1DNewOutputFormat.size(), 0);
 }
 
 template <
