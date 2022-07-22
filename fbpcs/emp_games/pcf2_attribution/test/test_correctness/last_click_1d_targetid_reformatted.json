@@ -1,0 +1,424 @@
+{
+    "last_click_1d_targetid": {
+        "default": {
+            "0": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "1": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "2": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "3": [
+                {
+                    "ad_id": 1,
+                    "conv_value": 1001,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "4": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "5": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "6": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "7": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "8": [
+                {
+                    "ad_id": 1,
+                    "conv_value": 1001,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "9": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 1,
+                    "conv_value": 200,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "10": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 88,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "11": [
+                {
+                    "ad_id": 1,
+                    "conv_value": 1001,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 1,
+                    "conv_value": 88,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "12": [
+                {
+                    "ad_id": 1,
+                    "conv_value": 1001,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 88,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "13": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 88,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "14": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1021,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 2021,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 2,
+                    "conv_value": 3021,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "15": [
+                {
+                    "ad_id": 2,
+                    "conv_value": 1022,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 3,
+                    "conv_value": 2022,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 3022,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "16": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 5,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 5,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "17": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 1001,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "18": [
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 0,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ]
+        }
+    }
+}
