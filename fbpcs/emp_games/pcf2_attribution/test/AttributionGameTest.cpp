@@ -262,6 +262,106 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
   }
 }
 
+TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintext) {
+  std::vector<std::vector<Touchpoint<false>>> touchpoints{
+      std::vector<Touchpoint<false>>{
+          Touchpoint<false>{.id = 0, .isClick = false, .ts = 125, .adId = 1},
+          Touchpoint<false>{.id = 1, .isClick = true, .ts = 100, .adId = 2},
+          Touchpoint<false>{.id = 2, .isClick = true, .ts = 200, .adId = 3}}};
+
+  std::vector<std::vector<Conversion<false>>> conversions{
+      std::vector<Conversion<false>>{
+          Conversion<false>{.ts = 50, .convValue = 20},
+          Conversion<false>{.ts = 150, .convValue = 40},
+          Conversion<false>{.ts = 87000, .convValue = 60}}};
+
+  AttributionGame<common::PUBLISHER, false, common::InputEncryption::Plaintext>
+      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
+          fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
+
+  auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints);
+  auto privateConversions = game.privatelyShareConversions(conversions);
+
+  std::vector<bool> attributionResultsLastClick1D{false, true, false};
+  std::vector<int> adIdsLastClick1D{0, 2, 0};
+  std::vector<int> convValuesLastClick1D{20, 40, 60};
+
+  std::vector<bool> attributionResultsLastTouch1D{false, true, false};
+  std::vector<int> adIdsLastTouch1D{0, 2, 0};
+  std::vector<int> convValuesLastTouch1D{20, 40, 60};
+
+  auto lastClick1D = AttributionRule<
+      common::PUBLISHER,
+      false,
+      common::InputEncryption::Plaintext>::
+      fromNameOrThrow(common::LAST_CLICK_1D);
+  auto thresholdsLastClick1D =
+      game.privatelyShareThresholds(
+              touchpoints, privateTouchpoints, *lastClick1D, 0)
+          .at(0);
+  auto lastTouch1D = AttributionRule<
+      common::PUBLISHER,
+      false,
+      common::InputEncryption::Plaintext>::
+      fromNameOrThrow(common::LAST_TOUCH_1D);
+  auto thresholdsLastTouch1D =
+      game.privatelyShareThresholds(
+              touchpoints, privateTouchpoints, *lastTouch1D, 0)
+          .at(0);
+
+  auto computeAttributionLastClick1DReformattedOutputFormat =
+      game.computeAttributionsHelperV2(
+          privateTouchpoints.at(0),
+          privateConversions.at(0),
+          *lastClick1D,
+          thresholdsLastClick1D,
+          1);
+
+  auto computeAttributionLastTouch1DReformattedOutputFormat =
+      game.computeAttributionsHelperV2(
+          privateTouchpoints.at(0),
+          privateConversions.at(0),
+          *lastTouch1D,
+          thresholdsLastTouch1D,
+          1);
+
+  for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
+    EXPECT_EQ(
+        computeAttributionLastClick1DReformattedOutputFormat.at(i)
+            .is_attributed.openToParty(common::PUBLISHER)
+            .getValue(),
+        attributionResultsLastClick1D.at(i));
+    EXPECT_EQ(
+        computeAttributionLastClick1DReformattedOutputFormat.at(i)
+            .ad_id.openToParty(common::PUBLISHER)
+            .getValue(),
+        adIdsLastClick1D.at(i));
+    EXPECT_EQ(
+        computeAttributionLastClick1DReformattedOutputFormat.at(i)
+            .conv_value.openToParty(common::PUBLISHER)
+            .getValue(),
+        convValuesLastClick1D.at(i));
+  }
+
+  for (size_t i = 0; i < attributionResultsLastTouch1D.size(); ++i) {
+    EXPECT_EQ(
+        computeAttributionLastTouch1DReformattedOutputFormat.at(i)
+            .is_attributed.openToParty(common::PUBLISHER)
+            .getValue(),
+        attributionResultsLastTouch1D.at(i));
+    EXPECT_EQ(
+        computeAttributionLastTouch1DReformattedOutputFormat.at(i)
+            .ad_id.openToParty(common::PUBLISHER)
+            .getValue(),
+        adIdsLastTouch1D.at(i));
+    EXPECT_EQ(
+        computeAttributionLastTouch1DReformattedOutputFormat.at(i)
+            .conv_value.openToParty(common::PUBLISHER)
+            .getValue(),
+        convValuesLastTouch1D.at(i));
+  }
+}
+
 TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
   int batchSize = 2;
 
@@ -352,6 +452,128 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
               .getValue()
               .at(j),
           attributionResultsLastTouch1D.at(i));
+    }
+  }
+}
+
+TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintextBatch) {
+  int batchSize = 2;
+
+  std::vector<Touchpoint<true>> touchpoints{
+      Touchpoint<true>{
+          .id = {0, 0},
+          .isClick = {false, false},
+          .ts = {125, 125},
+          .adId = {1, 1}},
+      Touchpoint<true>{
+          .id = {1, 1},
+          .isClick = {true, true},
+          .ts = {100, 100},
+          .adId = {2, 2}},
+      Touchpoint<true>{
+          .id = {2, 2},
+          .isClick = {true, true},
+          .ts = {200, 200},
+          .adId = {3, 3}}};
+
+  std::vector<Conversion<true>> conversions{
+      Conversion<true>{.ts = {50, 50}, .convValue = {20, 20}},
+      Conversion<true>{.ts = {150, 150}, .convValue = {40, 40}},
+      Conversion<true>{.ts = {87000, 87000}, .convValue = {60, 60}}};
+
+  AttributionGame<common::PUBLISHER, true, common::InputEncryption::Plaintext>
+      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
+          fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
+
+  auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints);
+  auto privateConversions = game.privatelyShareConversions(conversions);
+
+  std::vector<std::vector<bool>> attributionResultsLastClick1D{
+      {false, false}, {true, true}, {false, false}};
+  std::vector<std::vector<int>> adIdsLastClick1D{{0, 0}, {2, 2}, {0, 0}};
+  std::vector<std::vector<int>> convValuesLastClick1D{
+      {20, 20}, {40, 40}, {60, 60}};
+
+  std::vector<std::vector<bool>> attributionResultsLastTouch1D{
+      {false, false}, {true, true}, {false, false}};
+  std::vector<std::vector<int>> adIdsLastTouch1D{{0, 0}, {2, 2}, {0, 0}};
+  std::vector<std::vector<int>> convValuesLastTouch1D{
+      {20, 20}, {40, 40}, {60, 60}};
+
+  auto lastClick1D = AttributionRule<
+      common::PUBLISHER,
+      true,
+      common::InputEncryption::Plaintext>::
+      fromNameOrThrow(common::LAST_CLICK_1D);
+  auto lastTouch1D = AttributionRule<
+      common::PUBLISHER,
+      true,
+      common::InputEncryption::Plaintext>::
+      fromNameOrThrow(common::LAST_TOUCH_1D);
+  auto thresholdsLastClick1D = game.privatelyShareThresholds(
+      touchpoints, privateTouchpoints, *lastClick1D, 2);
+  auto thresholdsLastTouch1D = game.privatelyShareThresholds(
+      touchpoints, privateTouchpoints, *lastTouch1D, 2);
+
+  auto computeAttributionLastClick1DReformattedOutputFormat =
+      game.computeAttributionsHelperV2(
+          privateTouchpoints,
+          privateConversions,
+          *lastClick1D,
+          thresholdsLastClick1D,
+          batchSize);
+
+  auto computeAttributionLastTouch1DReformattedOutputFormat =
+      game.computeAttributionsHelperV2(
+          privateTouchpoints,
+          privateConversions,
+          *lastTouch1D,
+          thresholdsLastTouch1D,
+          batchSize);
+
+  for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
+    for (size_t j = 0; j < batchSize; ++j) {
+      EXPECT_EQ(
+          computeAttributionLastClick1DReformattedOutputFormat.at(i)
+              .is_attributed.openToParty(common::PUBLISHER)
+              .getValue()
+              .at(j),
+          attributionResultsLastClick1D.at(i).at(j));
+      EXPECT_EQ(
+          computeAttributionLastClick1DReformattedOutputFormat.at(i)
+              .ad_id.openToParty(common::PUBLISHER)
+              .getValue()
+              .at(j),
+          adIdsLastClick1D.at(i).at(j));
+      EXPECT_EQ(
+          computeAttributionLastClick1DReformattedOutputFormat.at(i)
+              .conv_value.openToParty(common::PUBLISHER)
+              .getValue()
+              .at(j),
+          convValuesLastClick1D.at(i).at(j));
+    }
+  }
+
+  for (size_t i = 0; i < attributionResultsLastTouch1D.size(); ++i) {
+    for (size_t j = 0; j < batchSize; ++j) {
+      EXPECT_EQ(
+          computeAttributionLastTouch1DReformattedOutputFormat.at(i)
+              .is_attributed.openToParty(common::PUBLISHER)
+              .getValue()
+              .at(j),
+          attributionResultsLastTouch1D.at(i).at(j));
+      EXPECT_EQ(
+          computeAttributionLastTouch1DReformattedOutputFormat.at(i)
+              .ad_id.openToParty(common::PUBLISHER)
+              .getValue()
+              .at(j),
+          adIdsLastTouch1D.at(i).at(j));
+      EXPECT_EQ(
+          computeAttributionLastTouch1DReformattedOutputFormat.at(i)
+              .conv_value.openToParty(common::PUBLISHER)
+              .getValue()
+              .at(j),
+          convValuesLastTouch1D.at(i).at(j));
     }
   }
 }
