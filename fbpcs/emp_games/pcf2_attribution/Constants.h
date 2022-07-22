@@ -15,6 +15,8 @@ const int kMaxConcurrency = 16;
 const size_t timeStampWidth = 32;
 const size_t targetIdWidth = 64;
 const size_t actionTypeWidth = 16;
+const size_t adIdWidth = 64;
+const size_t convValueWidth = 32;
 
 template <int schedulerId, bool usingBatch = true>
 using PubBit =
@@ -44,6 +46,20 @@ template <int schedulerId, bool usingBatch = true>
 using SecActionType = typename fbpcf::frontend::MpcGame<
     schedulerId>::template SecUnsignedInt<actionTypeWidth, usingBatch>;
 
+template <int schedulerId, bool usingBatch = true>
+using PubAdId = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template PubUnsignedInt<adIdWidth, usingBatch>;
+template <int schedulerId, bool usingBatch = true>
+using SecAdId = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template SecUnsignedInt<adIdWidth, usingBatch>;
+
+template <int schedulerId, bool usingBatch = true>
+using PubConvValue = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template PubUnsignedInt<convValueWidth, usingBatch>;
+template <int schedulerId, bool usingBatch = true>
+using SecConvValue = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template SecUnsignedInt<convValueWidth, usingBatch>;
+
 template <typename T, bool useVector>
 using ConditionalVector =
     typename std::conditional<useVector, std::vector<T>, T>::type;
@@ -59,5 +75,11 @@ using SecTargetIdT =
 template <int schedulerId, bool usingBatch = true>
 using SecActionTypeT =
     ConditionalVector<SecActionType<schedulerId, usingBatch>, !usingBatch>;
+template <int schedulerId, bool usingBatch = true>
+using SecAdIdT =
+    ConditionalVector<SecAdId<schedulerId, usingBatch>, !usingBatch>;
+template <int schedulerId, bool usingBatch = true>
+using SecConvValueT =
+    ConditionalVector<SecConvValue<schedulerId, usingBatch>, !usingBatch>;
 
 } // namespace pcf2_attribution
