@@ -122,6 +122,34 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         )
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
+    async def test_joint_stage_retry_gets_ips(self, mock_sleep) -> None:
+        # test that server ips are gotten when a joint stage is retried with STARTED status
+        # specifically, publisher status STARTED and partner status FAILED
+        server_ips = ["1.1.1.1"]
+        self.test_runner.get_server_ips_after_start = mock.AsyncMock(
+            return_value=server_ips
+        )
+        self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+            return_value=BoltState(DummyJointStageFlow.JOINT_STAGE.started_status)
+        )
+        self.test_runner.partner_client.update_instance = mock.AsyncMock(
+            return_value=BoltState(DummyJointStageFlow.JOINT_STAGE.failed_status)
+        )
+        mock_partner_run_stage = mock.AsyncMock()
+        self.test_runner.partner_client.run_stage = mock_partner_run_stage
+        await self.test_runner.run_next_stage(
+            publisher_id="publisher_id",
+            partner_id="partner_id",
+            stage=DummyJointStageFlow.JOINT_STAGE,
+            poll_interval=5,
+        )
+        mock_partner_run_stage.assert_called_once_with(
+            instance_id="partner_id",
+            stage=DummyJointStageFlow.JOINT_STAGE,
+            server_ips=server_ips,
+        )
+
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
     @mock.patch(
