@@ -113,9 +113,8 @@ function parse_args() {
   done
 
   if [ -z ${real_config_path+x} ]; then
-    echo >&2 "--config=<path to config> not specified in coordinator command."
-    usage
-    exit 1
+    # hack to support PC-CLI endpoints that do not require --config
+    real_config_path=$(mktemp)
   fi
 
   # run_fbpcs.sh specific arguments
