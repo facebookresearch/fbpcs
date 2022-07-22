@@ -28,6 +28,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   std::vector<bool> isClicks;
   std::vector<uint64_t> targetId;
   std::vector<uint64_t> actionType;
+  std::vector<uint64_t> adId;
   bool targetIdPresent = false;
   bool actionTypePresent = false;
 
@@ -54,6 +55,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
     } else if (column == "action_type") {
       actionTypePresent = true;
       actionType = common::getInnerArray<uint64_t>(value);
+    } else if (column == "ad_ids") {
+      adId = common::getInnerArray<uint64_t>(value);
     }
   }
 
@@ -61,6 +64,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
       << "timestamps arrays and is_click arrays are not the same length.";
   CHECK_LE(timestamps.size(), FLAGS_max_num_touchpoints)
       << "Number of touchpoints exceeds the maximum allowed value.";
+  CHECK_EQ(timestamps.size(), adId.size())
+      << "timestamps arrays and ad ID arrays are not the same length.";
 
   if (!timestamps.empty()) {
     if (targetIdPresent) {
@@ -82,7 +87,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
         /* isClick */ isClicks.at(i) == 1,
         /* ts */ timestamps.at(i),
         /* targetId */ !targetId.empty() ? targetId.at(i) : 0ULL,
-        /* actionType */ !actionType.empty() ? actionType.at(i) : 0ULL});
+        /* actionType */ !actionType.empty() ? actionType.at(i) : 0ULL,
+        /* adId */ adId.at(i)});
   }
 
   // The input received by attribution game from data processing is sorted by
@@ -111,6 +117,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
   std::vector<uint64_t> convTimestamps;
   std::vector<uint64_t> targetId;
   std::vector<uint64_t> actionType;
+  std::vector<uint64_t> convValue;
   bool targetIdPresent = false;
   bool actionTypePresent = false;
 
@@ -126,11 +133,15 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
     } else if (column == "conversion_action_type") {
       actionTypePresent = true;
       actionType = common::getInnerArray<uint64_t>(value);
+    } else if (column == "conversion_values") {
+      convValue = common::getInnerArray<uint64_t>(value);
     }
   }
 
   CHECK_LE(convTimestamps.size(), FLAGS_max_num_conversions)
       << "Number of conversions exceeds the maximum allowed value.";
+  CHECK_EQ(convTimestamps.size(), convValue.size())
+      << "Conversion timestamps arrays and converison value arrays are not the same length.";
 
   if (convTimestamps.size() != 0) {
     if (targetIdPresent) {
@@ -148,7 +159,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
     convs.push_back(ParsedConversion{
         /* ts */ convTimestamps.at(i),
         /* targetId */ !targetId.empty() ? targetId.at(i) : 0ULL,
-        /* actionType */ !actionType.empty() ? actionType.at(i) : 0ULL});
+        /* actionType */ !actionType.empty() ? actionType.at(i) : 0ULL,
+        /* convValue */ convValue.at(i)});
   }
 
   // Sorting conversions based on timestamp. If the input is encrypted, this has
@@ -183,6 +195,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
     std::vector<std::vector<uint64_t>> actionTypes(
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+    std::vector<std::vector<uint64_t>> adIds(
+        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
 
     // The touchpoints are parsed row by row, whereas the batches are across
     // rows.
@@ -194,6 +208,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         timestamps.at(j).push_back(parsedTouchpoint.ts);
         targetIds.at(j).push_back(parsedTouchpoint.targetId);
         actionTypes.at(j).push_back(parsedTouchpoint.actionType);
+        adIds.at(j).push_back(parsedTouchpoint.adId);
       }
     }
     for (size_t i = 0; i < FLAGS_max_num_touchpoints; ++i) {
@@ -202,7 +217,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
           isClicks.at(i),
           timestamps.at(i),
           targetIds.at(i),
-          actionTypes.at(i)});
+          actionTypes.at(i),
+          adIds.at(i)});
     }
   } else {
     for (size_t i = 0; i < parsedTouchpoints.size(); ++i) {
@@ -213,7 +229,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
             parsedTouchpoint.isClick,
             parsedTouchpoint.ts,
             parsedTouchpoint.targetId,
-            parsedTouchpoint.actionType});
+            parsedTouchpoint.actionType,
+            parsedTouchpoint.adId});
       }
       touchpoints.push_back(std::move(touchpointRow));
     }
@@ -235,6 +252,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
     std::vector<std::vector<uint64_t>> actionTypes(
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+    std::vector<std::vector<uint64_t>> values(
+        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
 
     // The conversions are parsed row by row, whereas the batches are across
     // rows.
@@ -244,11 +263,12 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         targetIds.at(j).push_back(oneBatchedParsedConversions.at(j).targetId);
         actionTypes.at(j).push_back(
             oneBatchedParsedConversions.at(j).actionType);
+        values.at(j).push_back(oneBatchedParsedConversions.at(j).convValue);
       }
     }
     for (size_t i = 0; i < timestamps.size(); ++i) {
       conversions.push_back(Conversion<true>{
-          timestamps.at(i), targetIds.at(i), actionTypes.at(i)});
+          timestamps.at(i), targetIds.at(i), actionTypes.at(i), values.at(i)});
     }
   } else {
     for (const auto& parsedRow : parsedConversions) {
@@ -257,7 +277,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         conversionRow.push_back(Conversion<false>{
             parsedConversion.ts,
             parsedConversion.targetId,
-            parsedConversion.actionType});
+            parsedConversion.actionType,
+            parsedConversion.convValue});
       }
       conversions.push_back(std::move(conversionRow));
     }
