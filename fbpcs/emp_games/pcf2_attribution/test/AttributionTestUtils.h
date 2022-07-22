@@ -85,4 +85,60 @@ inline AttributionOutputMetrics revealXORedResult(
   return AttributionOutputMetrics::fromDynamic(revealedAttributionMetrics);
 }
 
+inline AttributionOutputMetrics revealXORedReformattedResult(
+    AttributionOutputMetrics resAlice,
+    AttributionOutputMetrics resBob,
+    std::string attributionRule) {
+  auto aliceAttributionOutput =
+      resAlice.ruleToMetrics.at(attributionRule).formatToAttribution;
+  auto bobAttributionOutput =
+      resBob.ruleToMetrics.at(attributionRule).formatToAttribution;
+  auto attributionFormat = "default";
+
+  // initiate new objects to store revealed data
+  // use std::move to ensure no memory leak
+  folly::dynamic revealedAttributionMetrics = folly::dynamic::object;
+  folly::dynamic revealedMetricsMap = folly::dynamic::object;
+  folly::dynamic revealedAttributionResultsPerId = folly::dynamic::object;
+
+  // Attribution output contains results based on attribution format (currently
+  // only "default").
+  AttributionResult aliceAttribution =
+      aliceAttributionOutput.at(attributionFormat);
+  AttributionResult bobAttribution = bobAttributionOutput.at(attributionFormat);
+
+  // first sort the keys so that alice and bob are reading
+  // corresponding rows
+  std::vector<std::string> sortedIds;
+  for (const auto& id : aliceAttribution.keys()) {
+    sortedIds.push_back(id.asString());
+  }
+  std::sort(sortedIds.begin(), sortedIds.end());
+
+  for (const auto& adId : sortedIds) {
+    auto& aliceResults = aliceAttribution.at(adId);
+    auto& bobResults = bobAttribution.at(adId);
+    folly::dynamic revealedResults = folly::dynamic::array;
+    for (auto i = 0; i < aliceResults.size(); i++) {
+      const auto& aliceResult =
+          OutputMetricReformatted::fromDynamic(aliceResults.at(i));
+      const auto& bobResult =
+          OutputMetricReformatted::fromDynamic(bobResults.at(i));
+
+      revealedResults.push_back(OutputMetricReformatted{
+          aliceResult.ad_id ^ bobResult.ad_id,
+          aliceResult.conv_value ^ bobResult.conv_value,
+          aliceResult.is_attributed != bobResult.is_attributed}
+                                    .toDynamic());
+    }
+    revealedAttributionResultsPerId[adId] = revealedResults;
+  }
+  revealedMetricsMap[attributionFormat] =
+      std::move(revealedAttributionResultsPerId);
+  revealedAttributionMetrics[attributionRule] = std::move(revealedMetricsMap);
+
+  // return Json format
+  return AttributionOutputMetrics::fromDynamic(revealedAttributionMetrics);
+}
+
 } // namespace pcf2_attribution
