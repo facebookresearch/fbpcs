@@ -138,25 +138,25 @@ class BoltRunner:
         stage: PrivateComputationBaseStageFlow,
         poll_interval: int,
     ) -> None:
+        server_ips = None
+        if stage.is_joint_stage:
+            server_ips = await self.get_server_ips_after_start(
+                instance_id=publisher_id,
+                stage=stage,
+                timeout=stage.timeout,
+                poll_interval=poll_interval,
+            )
+            if server_ips is None:
+                raise NoServerIpsException(
+                    f"{stage.name} requires server ips but got none."
+                )
         publisher_status = (
             await self.publisher_client.update_instance(publisher_id)
         ).pc_instance_status
-        server_ips = None
         if publisher_status not in [stage.started_status, stage.completed_status]:
             # don't retry if started or completed status
             self.logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
-            if stage.is_joint_stage:
-                server_ips = await self.get_server_ips_after_start(
-                    instance_id=publisher_id,
-                    stage=stage,
-                    timeout=stage.timeout,
-                    poll_interval=poll_interval,
-                )
-                if server_ips is None:
-                    raise NoServerIpsException(
-                        f"{stage.name} requires server ips but got none."
-                    )
         partner_status = (
             await self.partner_client.update_instance(partner_id)
         ).pc_instance_status
