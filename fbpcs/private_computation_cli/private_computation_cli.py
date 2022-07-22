@@ -29,6 +29,7 @@ Usage:
     pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [options]
     pc-cli pre_validate --config=<config_file> [--dataset_id=<dataset_id>] --input_path=<input_path> [--timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>] [options]
     pc-cli bolt_e2e --bolt_config=<bolt_config_file>
+    pc-cli secret_scrubber <secret_input_path> <scrubbed_output_path>
 
 
 Options:
@@ -70,6 +71,10 @@ from fbpcs.private_computation.pc_attribution_runner import (
 )
 from fbpcs.private_computation.service.constants import FBPCS_BUNDLE_ID
 from fbpcs.private_computation.service.pre_validate_service import PreValidateService
+from fbpcs.private_computation.service.secret_scrubber import (
+    LoggingSecretScrubber,
+    SecretScrubber,
+)
 from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
@@ -191,9 +196,14 @@ def main(argv: Optional[List[str]] = None) -> None:
             "print_log_urls": bool,
             "get_attribution_dataset_info": bool,
             "bolt_e2e": bool,
+            "secret_scrubber": bool,
             "<instance_id>": schema.Or(None, str),
             "<instance_ids>": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "<study_id>": schema.Or(None, str),
+            "<secret_input_path>": schema.Or(
+                None, schema.And(schema.Use(PurePath), os.path.exists)
+            ),
+            "<scrubbed_output_path>": schema.Or(None, str),
             "--config": schema.Or(
                 None, schema.And(schema.Use(PurePath), os.path.exists)
             ),
@@ -268,9 +278,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     config = {}
     if arguments["--config"]:
         config = ConfigYamlDict.from_file(arguments["--config"])
-    # if no --config given and endpoint isn't bolt_e2e, raise exception
-    # bolt_e2e endpoint needs --bolt_config argument
-    elif not arguments["bolt_e2e"]:
+    # if no --config given and endpoint isn't bolt_e2e or secret_scrubber, raise
+    # exception. All other endpoints need --config.
+    elif not arguments["bolt_e2e"] and not arguments["secret_scrubber"]:
         raise ValueError("--config is a required argument")
 
     log_path = arguments["--log_path"]
@@ -284,8 +294,13 @@ def main(argv: Optional[List[str]] = None) -> None:
         # contain PII.
         level=logging.INFO,
         handlers=[log_handler],
-        format="%(asctime)sZ %(levelname)s t:%(threadName)s n:%(name)s ! %(message)s",
     )
+
+    log_format = "%(asctime)sZ %(levelname)s t:%(threadName)s n:%(name)s ! %(message)s"
+    log_scrubber = LoggingSecretScrubber(log_format)
+    for handler in logging.root.handlers:
+        handler.setFormatter(log_scrubber)
+
     logger = logging.getLogger(__name__)
     log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
     logger.setLevel(log_level)
@@ -481,6 +496,16 @@ def main(argv: Optional[List[str]] = None) -> None:
             raise RuntimeError(f"Jobs failed: {failed_job_names}")
         else:
             print("Jobs succeeded")
+    elif arguments["secret_scrubber"]:
+        with open(arguments["<secret_input_path>"]) as f:
+            file_content = f.read()
+
+        secret_scrubber = SecretScrubber()
+        scrub_summary = secret_scrubber.scrub(file_content)
+        scrubbed_output_path = arguments["<scrubbed_output_path>"]
+        with open(scrubbed_output_path, "w") as f:
+            f.write(scrub_summary.scrubbed_output)
+        print(scrub_summary.get_report())
 
 
 if __name__ == "__main__":
