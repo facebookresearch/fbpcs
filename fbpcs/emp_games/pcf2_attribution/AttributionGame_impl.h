@@ -456,77 +456,39 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
     CHECK_EQ(thresholdArrays.size(), tpArrays.size())
         << "threshold arrays and touchpoint arrays are not the same length.";
 
-    if (FLAGS_use_new_output_format) {
-      std::vector<AttributionReformattedOutputFmtT<schedulerId, usingBatch>>
-          attributionsReformatted;
+    std::vector<SecBitT<schedulerId, usingBatch>> attributions;
 
-      if constexpr (usingBatch) {
-        attributionsReformatted = computeAttributionsHelperV2(
-            tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
-
-      } else {
-        // Compute row by row if not using batch
-        for (size_t i = 0; i < numIds; ++i) {
-          auto attributionReformattedRow = computeAttributionsHelperV2(
-              tpArrays.at(i),
-              convArrays.at(i),
-              *attributionRule,
-              thresholdArrays.at(i),
-              numIds);
-          attributionsReformatted.push_back(
-              std::move(attributionReformattedRow));
-        }
-      }
-      AttributionReformattedOutput<schedulerId, usingBatch>
-          attributionReformattedOutput{ids, attributionsReformatted};
-      XLOGF(
-          INFO,
-          "Retrieving attribution results for rule {}.",
-          attributionRule->name);
-      attributionMetrics.formatToAttribution[attributionFormat] =
-          attributionReformattedOutput.reveal();
-      out.ruleToMetrics[attributionRule->name] = attributionMetrics;
-
-      XLOGF(
-          INFO,
-          "Done computing attributions for rule {}.",
-          attributionRule->name);
-
+    if constexpr (usingBatch) {
+      attributions = computeAttributionsHelper(
+          tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
     } else {
-      std::vector<SecBitT<schedulerId, usingBatch>> attributions;
-
-      if constexpr (usingBatch) {
-        attributions = computeAttributionsHelper(
-            tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
-      } else {
-        // Compute row by row if not using batch
-        for (size_t i = 0; i < numIds; ++i) {
-          auto attributionRow = computeAttributionsHelper(
-              tpArrays.at(i),
-              convArrays.at(i),
-              *attributionRule,
-              thresholdArrays.at(i),
-              numIds);
-          attributions.push_back(std::move(attributionRow));
-        }
+      // Compute row by row if not using batch
+      for (size_t i = 0; i < numIds; ++i) {
+        auto attributionRow = computeAttributionsHelper(
+            tpArrays.at(i),
+            convArrays.at(i),
+            *attributionRule,
+            thresholdArrays.at(i),
+            numIds);
+        attributions.push_back(std::move(attributionRow));
       }
-
-      AttributionOutput<schedulerId, usingBatch> attributionOutput{
-          ids, attributions};
-
-      XLOGF(
-          INFO,
-          "Retrieving attribution results for rule {}.",
-          attributionRule->name);
-      attributionMetrics.formatToAttribution[attributionFormat] =
-          attributionOutput.reveal();
-      out.ruleToMetrics[attributionRule->name] = attributionMetrics;
-
-      XLOGF(
-          INFO,
-          "Done computing attributions for rule {}.",
-          attributionRule->name);
     }
+
+    AttributionOutput<schedulerId, usingBatch> attributionOutput{
+        ids, attributions};
+
+    XLOGF(
+        INFO,
+        "Retrieving attribution results for rule {}.",
+        attributionRule->name);
+    attributionMetrics.formatToAttribution[attributionFormat] =
+        attributionOutput.reveal();
+    out.ruleToMetrics[attributionRule->name] = attributionMetrics;
+
+    XLOGF(
+        INFO,
+        "Done computing attributions for rule {}.",
+        attributionRule->name);
   }
   return out;
 }
