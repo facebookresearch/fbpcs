@@ -598,11 +598,16 @@ AttributionOutputMetrics computeAttributionsWithScheduler(
 template <bool usingBatch, common::InputEncryption inputEncryption>
 void testCorrectnessWithScheduler(
     string attributionRule,
-    fbpcf::SchedulerCreator schedulerCreator) {
+    fbpcf::SchedulerCreator schedulerCreator,
+    bool useNewOutputFormat) {
   std::string baseDir_ =
       private_measurement::test_util::getBaseDirFromPath(__FILE__);
   std::string filePrefix = baseDir_ + "test_correctness/" + attributionRule;
   std::string outputJsonFileName = filePrefix + ".json";
+
+  std::string reformattedOutputJsonFileName =
+      baseDir_ + "test_correctness/" + attributionRule + "_reformatted.json";
+
   if constexpr (inputEncryption == common::InputEncryption::PartnerXor) {
     filePrefix = filePrefix + ".partner_xor";
   } else if constexpr (inputEncryption == common::InputEncryption::Xor) {
@@ -620,6 +625,8 @@ void testCorrectnessWithScheduler(
   // compute attributions
   auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
 
+  FLAGS_use_new_output_format = useNewOutputFormat;
+
   auto future0 = std::async(
       computeAttributionsWithScheduler<0, usingBatch, inputEncryption>,
       0,
@@ -628,7 +635,6 @@ void testCorrectnessWithScheduler(
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>(
           *factories[0]),
       schedulerCreator);
-
   auto future1 = std::async(
       computeAttributionsWithScheduler<1, usingBatch, inputEncryption>,
       1,
@@ -641,20 +647,32 @@ void testCorrectnessWithScheduler(
   auto res0 = future0.get();
   auto res1 = future1.get();
 
-  // check against expected output
-  auto output = revealXORedResult(res0, res1, attributionRule);
-  verifyOutput(output, outputJsonFileName);
+  if (useNewOutputFormat) {
+    // check against expected output for reformatted output
+    auto outputReformatted =
+        revealXORedReformattedResult(res0, res1, attributionRule);
+    verifyOutput(outputReformatted, reformattedOutputJsonFileName);
+  } else {
+    // check against expected output
+    auto output = revealXORedResult(res0, res1, attributionRule);
+    verifyOutput(output, outputJsonFileName);
+  }
 }
 
 template <bool usingBatch, common::InputEncryption inputEncryption>
 void testInputColumnsWithScheduler(
     string attributionRule,
     fbpcf::SchedulerCreator schedulerCreator,
-    string columnName) {
+    string columnName,
+    bool useNewOutputFormat) {
   std::string baseDir_ =
       private_measurement::test_util::getBaseDirFromPath(__FILE__);
   std::string filePrefix = baseDir_ + "test_correctness/" + attributionRule;
   std::string outputJsonFileName = filePrefix + ".json";
+
+  std::string reformattedOutputJsonFileName =
+      baseDir_ + "test_correctness/" + attributionRule + "_reformatted.json";
+
   filePrefix = filePrefix + "." + columnName;
   std::string publisherInputFileName = filePrefix + ".publisher.csv";
   std::string partnerInputFileName = filePrefix + ".partner.csv";
@@ -668,6 +686,8 @@ void testInputColumnsWithScheduler(
   // compute attributions
   auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
 
+  FLAGS_use_new_output_format = useNewOutputFormat;
+
   auto future0 = std::async(
       computeAttributionsWithScheduler<0, usingBatch, inputEncryption>,
       0,
@@ -689,20 +709,32 @@ void testInputColumnsWithScheduler(
   auto res0 = future0.get();
   auto res1 = future1.get();
 
-  // check against expected output
-  auto output = revealXORedResult(res0, res1, attributionRule);
-  verifyOutput(output, outputJsonFileName);
+  if (useNewOutputFormat) {
+    // check against expected reformatted output
+    auto outputReformatted =
+        revealXORedReformattedResult(res0, res1, attributionRule);
+    verifyOutput(outputReformatted, reformattedOutputJsonFileName);
+  } else {
+    // check against expected output
+    auto output = revealXORedResult(res0, res1, attributionRule);
+    verifyOutput(output, outputJsonFileName);
+  }
 }
 
 class AttributionGameTestFixture : public ::testing::TestWithParam<std::tuple<
                                        common::SchedulerType,
                                        bool,
                                        common::InputEncryption,
-                                       string>> {};
+                                       string,
+                                       bool>> {};
 
 TEST_P(AttributionGameTestFixture, TestCorrectness) {
-  auto [schedulerType, usingBatch, inputEncryption, attributionRule] =
-      GetParam();
+  auto
+      [schedulerType,
+       usingBatch,
+       inputEncryption,
+       attributionRule,
+       useNewOutputFormat] = GetParam();
 
   fbpcf::SchedulerCreator schedulerCreator =
       fbpcf::getSchedulerCreator<unsafe>(schedulerType);
@@ -711,36 +743,36 @@ TEST_P(AttributionGameTestFixture, TestCorrectness) {
     switch (inputEncryption) {
       case common::InputEncryption::Plaintext:
         testCorrectnessWithScheduler<true, common::InputEncryption::Plaintext>(
-            attributionRule, schedulerCreator);
+            attributionRule, schedulerCreator, useNewOutputFormat);
         break;
 
       case common::InputEncryption::PartnerXor:
         testCorrectnessWithScheduler<true, common::InputEncryption::PartnerXor>(
-            attributionRule, schedulerCreator);
+            attributionRule, schedulerCreator, useNewOutputFormat);
         break;
 
       case common::InputEncryption::Xor:
         testCorrectnessWithScheduler<true, common::InputEncryption::Xor>(
-            attributionRule, schedulerCreator);
+            attributionRule, schedulerCreator, useNewOutputFormat);
         break;
     }
   } else {
     switch (inputEncryption) {
       case common::InputEncryption::Plaintext:
         testCorrectnessWithScheduler<false, common::InputEncryption::Plaintext>(
-            attributionRule, schedulerCreator);
+            attributionRule, schedulerCreator, useNewOutputFormat);
         break;
 
       case common::InputEncryption::PartnerXor:
         testCorrectnessWithScheduler<
             false,
             common::InputEncryption::PartnerXor>(
-            attributionRule, schedulerCreator);
+            attributionRule, schedulerCreator, useNewOutputFormat);
         break;
 
       case common::InputEncryption::Xor:
         testCorrectnessWithScheduler<false, common::InputEncryption::Xor>(
-            attributionRule, schedulerCreator);
+            attributionRule, schedulerCreator, useNewOutputFormat);
         break;
     }
   }
@@ -764,7 +796,8 @@ INSTANTIATE_TEST_SUITE_P(
             common::LAST_TOUCH_1D,
             common::LAST_CLICK_2_7D,
             common::LAST_TOUCH_2_7D,
-            common::LAST_CLICK_1D_TARGETID)),
+            common::LAST_CLICK_1D_TARGETID),
+        ::testing::Bool()),
 
     [](const testing::TestParamInfo<AttributionGameTestFixture::ParamType>&
            info) {
@@ -772,9 +805,11 @@ INSTANTIATE_TEST_SUITE_P(
       auto batch = std::get<1>(info.param) ? "Batch" : "";
       auto inputEncryption = std::get<2>(info.param);
       auto attributionRule = std::get<3>(info.param);
+      auto newOutputFormat = std::get<4>(info.param) ? "NewOutputFormat" : "";
 
       return getSchedulerName(schedulerType) + batch +
-          getInputEncryptionString(inputEncryption) + "_" + attributionRule;
+          getInputEncryptionString(inputEncryption) + "_" + attributionRule +
+          "_" + newOutputFormat;
     });
 
 class AttributionGameInputTestFixture
@@ -782,17 +817,22 @@ class AttributionGameInputTestFixture
           common::SchedulerType,
           common::InputEncryption,
           string,
-          string>> {};
+          string,
+          bool>> {};
 
 TEST_P(AttributionGameInputTestFixture, TestCorrectness) {
-  auto [schedulerType, inputEncryption, attributionRule, inputColumn] =
-      GetParam();
+  auto
+      [schedulerType,
+       inputEncryption,
+       attributionRule,
+       inputColumn,
+       useNewOutputFormat] = GetParam();
 
   fbpcf::SchedulerCreator schedulerCreator =
       fbpcf::getSchedulerCreator<unsafe>(schedulerType);
 
   testInputColumnsWithScheduler<true, common::InputEncryption::Plaintext>(
-      attributionRule, schedulerCreator, inputColumn);
+      attributionRule, schedulerCreator, inputColumn, useNewOutputFormat);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -805,17 +845,19 @@ INSTANTIATE_TEST_SUITE_P(
             common::SchedulerType::Lazy),
         ::testing::Values(common::InputEncryption::Plaintext),
         ::testing::Values(common::LAST_CLICK_1D),
-        ::testing::Values(common::TARGET_ID, common::TARGET_ID_ACTION_TYPE)),
+        ::testing::Values(common::TARGET_ID, common::TARGET_ID_ACTION_TYPE),
+        ::testing::Bool()),
     [](const testing::TestParamInfo<AttributionGameInputTestFixture::ParamType>&
            info) {
       auto schedulerType = std::get<0>(info.param);
       auto inputEncryption = std::get<1>(info.param);
       auto attributionRule = std::get<2>(info.param);
       auto inputColumn = std::get<3>(info.param);
+      auto newOutputFormat = std::get<4>(info.param) ? "NewOutputFormat" : "";
 
       return fbpcf::getSchedulerName(schedulerType) +
           getInputEncryptionString(inputEncryption) + "_" + attributionRule +
-          "_" + inputColumn;
+          "_" + inputColumn + "_" + newOutputFormat;
       return inputColumn;
     });
 
