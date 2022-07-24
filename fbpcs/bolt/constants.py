@@ -31,3 +31,5 @@ INVALID_STATUS_LIST: List[PrivateComputationInstanceStatus] = [
     PrivateComputationInstanceStatus.PROCESSING_REQUEST,
 ]
 WAIT_VALID_STATUS_TIMEOUT = 600
+
+FBPCS_GRAPH_API_TOKEN = "FBPCS_GRAPH_API_TOKEN"
