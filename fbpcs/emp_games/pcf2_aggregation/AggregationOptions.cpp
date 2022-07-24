@@ -69,3 +69,4 @@ DEFINE_string(
     log_cost_s3_region,
     ".s3.us-west-2.amazonaws.com/",
     "s3 region name");
+DEFINE_bool(use_new_output_format, false, "New Format of Attribution output");
