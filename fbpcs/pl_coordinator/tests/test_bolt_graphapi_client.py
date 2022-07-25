@@ -6,7 +6,10 @@
 
 import json
 import unittest
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+
+import requests
 
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
 
@@ -16,6 +19,9 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltPLGraphAPICreateInstanceArgs,
 )
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
+)
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
@@ -119,8 +125,32 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             await self.test_client.run_stage(instance_id="id", stage=stage)
             mock_post.assert_called_once_with(f"{URL}/id", params=expected_params)
 
-    async def test_update_instance(self) -> None:
-        pass
+    @patch(
+        "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient.get_instance",
+        new_callable=AsyncMock,
+    )
+    async def test_bolt_update_instance(self, mock_get_instance) -> None:
+        mock_get_instance.return_value = self._get_graph_api_output(
+            {"id": "id", "status": "COMPUTATION_STARTED", "server_ips": "1.1.1.1"}
+        )
+        state = await self.test_client.update_instance("id")
+        self.assertEqual(
+            state.pc_instance_status,
+            PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+        )
+        self.assertEqual(state.server_ips, "1.1.1.1")
 
     async def test_validate_results(self) -> None:
         pass
+
+    def _get_graph_api_output(self, text: Any) -> requests.Response:
+        r = requests.Response()
+        r.status_code = 200
+        # pyre-ignore
+        type(r).text = PropertyMock(return_value=json.dumps(text))
+
+        def json_func(**kwargs) -> Any:
+            return text
+
+        r.json = json_func
+        return r
