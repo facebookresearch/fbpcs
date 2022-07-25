@@ -92,7 +92,6 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             "use_xor_encryption": True,
             "use_postfix": True,
             "log_cost": True,
-            "use_new_output_format": False,
         }
         test_game_args = [
             {
