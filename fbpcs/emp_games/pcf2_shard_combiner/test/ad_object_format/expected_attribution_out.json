@@ -1,0 +1,34 @@
+{
+  "last_click_1d": {
+    "measurement": {
+      "0": {
+        "convs": 2,
+        "sales": 102
+      },
+      "1": {
+        "convs": 2,
+        "sales": 3
+      },
+      "2": {
+        "convs": 0,
+        "sales": 0
+      },
+      "3": {
+        "convs": 0,
+        "sales": 0
+      },
+      "4": {
+        "convs": 0,
+        "sales": 0
+      },
+      "5": {
+        "convs": 1,
+        "sales": 100
+      },
+      "6": {
+        "convs": 0,
+        "sales": 0
+      }
+    }
+  }
+}
