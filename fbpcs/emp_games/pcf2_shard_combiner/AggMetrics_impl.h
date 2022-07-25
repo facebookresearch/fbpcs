@@ -13,11 +13,13 @@
 #include <utility>
 
 #include <folly/FBString.h>
+#include <folly/Format.h>
 #include <folly/dynamic.h>
 #include <folly/json.h>
 
 #include <fbpcf/exception/exceptions.h>
 #include <fbpcf/io/FileManagerUtil.h>
+
 #include <fbpcs/emp_games/common/Constants.h>
 #include <fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h>
 
@@ -38,6 +40,9 @@ void AggMetrics<schedulerId, usingBatch, inputEncryption>::accumulateFinal(
         rhs) {
   if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
     lhs->setValue(lhs->getValue() + rhs->getValue());
+  } else if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    auto res = lhs->getSecValueXor() + rhs->getSecValueXor();
+    lhs->setSecValueXor(res);
   } else {
     throw common::exceptions::NotImplementedError(
         "This method will patched with tests in the future.");
@@ -153,6 +158,35 @@ template <
 void AggMetrics<schedulerId, usingBatch, inputEncryption>::setValue(
     AggMetrics<schedulerId, usingBatch, inputEncryption>::MetricsValue v) {
   this->val_ = v;
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+void AggMetrics<schedulerId, usingBatch, inputEncryption>::
+    updateSecValueFromRawInt() {
+  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    if constexpr (usingBatch) {
+      std::vector<int64_t> val{getValue()};
+      typename SecInt<schedulerId, usingBatch>::ExtractedInt extractedInt(val);
+      SecInt<schedulerId, usingBatch> secInt =
+          SecInt<schedulerId, usingBatch>(std::move(extractedInt));
+      this->setSecValueXor(secInt);
+    } else {
+      auto errStr = folly::sformat(
+          "Only batch mode is supported, got: usingBatch = {}", usingBatch);
+      throw common::exceptions::NotImplementedError(
+          "Only batch mode is supported currently.");
+    }
+  } else if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+    // if plaintext do nothing.
+  } else {
+    auto errStr = folly::sformat(
+        "Encryption type({}) is not supported.", (int)inputEncryption);
+    XLOG(ERR, errStr);
+    throw common::exceptions::NotImplementedError(errStr);
+  }
 }
 
 template <
@@ -341,6 +375,7 @@ AggMetrics<schedulerId, usingBatch, inputEncryption>::fromJson(
       }
       case folly::dynamic::INT64: {
         dst->setValue(src.asInt());
+        dst->updateSecValueFromRawInt();
         break;
       }
       default: {
@@ -400,7 +435,11 @@ void AggMetrics<schedulerId, usingBatch, inputEncryption>::print(
       break;
     }
     case AggMetricType::kValue: {
-      os << '<' << getValue() << ">\n";
+      os << "<" << getValue();
+      if constexpr (inputEncryption == common::InputEncryption::Xor) {
+        os << "> secretXor<" << schedulerId << "><";
+      }
+      os << ">\n";
       break;
     }
     default: {
@@ -442,6 +481,53 @@ folly::dynamic AggMetrics<schedulerId, usingBatch, inputEncryption>::toDynamic()
       XLOG(ERR) << "Metric values should be maps, lists, or integers here";
       throw common::exceptions::NotImplementedError(
           "Metric values should be maps, lists, or integers here.");
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+folly::dynamic
+AggMetrics<schedulerId, usingBatch, inputEncryption>::toRevealedDynamic(
+    int party) const {
+  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    switch (getType()) {
+      case AggMetricType::kDict: {
+        folly::dynamic container = folly::dynamic::object();
+        for (const auto& [key, value] : getAsDict()) {
+          container.insert(key, value->toRevealedDynamic(party));
+        }
+        return container;
+      }
+      case AggMetricType::kList: {
+        folly::dynamic container = folly::dynamic::array();
+        std::transform(
+            getAsList().begin(),
+            getAsList().end(),
+            std::back_inserter(container),
+            [party](auto m) { return m->toRevealedDynamic(party); });
+        return container;
+      }
+      case AggMetricType::kValue: {
+        if constexpr (inputEncryption == common::InputEncryption::Xor) {
+          if constexpr (usingBatch)
+            return getSecValueXor().openToParty(party).getValue().at(0);
+          else
+            return getSecValueXor().openToParty(party).getValue();
+        } else {
+          return getValue();
+        }
+      }
+      default:
+        XLOG(ERR) << "Metric values should be maps, lists, or integers here";
+        throw common::exceptions::NotImplementedError(
+            "Metric values should be maps, lists, or integers here.");
+    }
+  } else {
+    XLOG(ERR, "To reveal metrics it has to be encrypted as a Xor-SS");
+    throw common::exceptions::InvalidAccessError(
+        "To reveal metrics it has to be encrypted as a Xor-SS");
   }
 }
 
