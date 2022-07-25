@@ -85,7 +85,18 @@ class BoltGraphAPIClient(BoltClient):
         stage: Optional[PrivateComputationBaseStageFlow] = None,
         server_ips: Optional[List[str]] = None,
     ) -> None:
-        pass
+        params = self.params.copy()
+        if stage:
+            if await self.should_invoke_stage(instance_id=instance_id, stage=stage):
+                params["operation"] = "NEXT"
+                r = requests.post(f"{URL}/{instance_id}", params=params)
+                self._check_err(r, f"running stage {stage}")
+            else:
+                raise RuntimeError(f"{instance_id} should not invoke stage {stage}")
+        else:
+            params["operation"] = "NEXT"
+            r = requests.post(f"{URL}/{instance_id}", params=params)
+            self._check_err(r, f"running stage {stage}")
 
     async def update_instance(self, instance_id: str) -> BoltState:
         pass
@@ -94,6 +105,18 @@ class BoltGraphAPIClient(BoltClient):
         self, instance_id: str, expected_result_path: Optional[str] = None
     ) -> bool:
         pass
+
+    async def should_invoke_stage(
+        self, instance_id: str, stage: PrivateComputationBaseStageFlow
+    ) -> bool:
+        status = (
+            await self.update_instance(instance_id=instance_id)
+        ).pc_instance_status
+        # should only run this stage if previous one is finished or
+        # stage is failed (retrying)
+        return (
+            self.ready_for_stage(status, stage) and status is not stage.started_status
+        )
 
     def _get_graph_api_token(self, config: Dict[str, Any]) -> str:
         """Get graph API token from config.yml or the {FBPCS_GRAPH_API_TOKEN} env var
