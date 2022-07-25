@@ -4,21 +4,30 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
 
-from fbpcs.pl_coordinator.bolt_graphapi_client import BoltGraphAPIClient
+from fbpcs.pl_coordinator.bolt_graphapi_client import (
+    BoltGraphAPIClient,
+    BoltPAGraphAPICreateInstanceArgs,
+    BoltPLGraphAPICreateInstanceArgs,
+)
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
 
 ACCESS_TOKEN = "access_token"
+URL = "https://graph.facebook.com/v13.0"
 
 
 class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
     @patch("logging.Logger")
     def setUp(self, mock_logger) -> None:
         self.mock_logger = mock_logger
+        config = {"access_token": ACCESS_TOKEN}
+        self.test_client = BoltGraphAPIClient(config, mock_logger)
+        self.test_client._check_err = MagicMock()
 
     def test_get_graph_api_token_from_dict(self) -> None:
         expected_token = "from_dict"
@@ -57,8 +66,43 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(GraphAPITokenNotFound):
             BoltGraphAPIClient(config, self.mock_logger).access_token
 
-    async def test_create_instance(self) -> None:
-        pass
+    @patch("fbpcs.pl_coordinator.bolt_graphapi_client.requests.post")
+    async def test_bolt_create_lift_instance(self, mock_post) -> None:
+        test_pl_args = BoltPLGraphAPICreateInstanceArgs(
+            instance_id="test_pl",
+            study_id="study_id",
+            breakdown_key={
+                "cell_id": "cell_id",
+                "objective_id": "obj_id",
+            },
+        )
+        await self.test_client.create_instance(test_pl_args)
+        mock_post.assert_called_once_with(
+            f"{URL}/study_id/instances",
+            params={
+                "access_token": ACCESS_TOKEN,
+                "breakdown_key": json.dumps(test_pl_args.breakdown_key),
+            },
+        )
+
+    @patch("fbpcs.pl_coordinator.bolt_graphapi_client.requests.post")
+    async def test_bolt_create_attribution_instance(self, mock_post) -> None:
+        test_pa_args = BoltPAGraphAPICreateInstanceArgs(
+            instance_id="test_pa",
+            dataset_id="dataset_id",
+            timestamp="0",
+            attribution_rule="attribution_rule",
+            num_containers="1",
+        )
+        await self.test_client.create_instance(test_pa_args)
+        mock_post.assert_called_once_with(
+            f"{URL}/dataset_id/instance",
+            params={
+                "access_token": ACCESS_TOKEN,
+                "attribution_rule": "attribution_rule",
+                "timestamp": "0",
+            },
+        )
 
     async def test_run_stage(self) -> None:
         pass

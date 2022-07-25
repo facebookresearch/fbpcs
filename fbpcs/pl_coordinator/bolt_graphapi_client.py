@@ -4,10 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
+
 import logging
 import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+
+import requests
 
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
@@ -55,7 +59,25 @@ class BoltGraphAPIClient(BoltClient):
         self.params = {"access_token": self.access_token}
 
     async def create_instance(self, instance_args: BoltCreateInstanceArgs) -> str:
-        pass
+        params = self.params.copy()
+        if isinstance(instance_args, BoltPLGraphAPICreateInstanceArgs):
+            params["breakdown_key"] = json.dumps(instance_args.breakdown_key)
+            r = requests.post(
+                f"{URL}/{instance_args.study_id}/instances", params=params
+            )
+            self._check_err(r, "creating fb pl instance")
+            return r.json().id
+        elif isinstance(instance_args, BoltPAGraphAPICreateInstanceArgs):
+            params["attribution_rule"] = instance_args.attribution_rule
+            params["timestamp"] = instance_args.timestamp
+            r = requests.post(
+                f"{URL}/{instance_args.dataset_id}/instance", params=params
+            )
+            self._check_err(r, "creating fb pa instance")
+            return r.json().id
+        raise TypeError(
+            f"Instance args must be of type {BoltPLGraphAPICreateInstanceArgs} or {BoltPAGraphAPICreateInstanceArgs}"
+        )
 
     async def run_stage(
         self,
@@ -104,3 +126,9 @@ class BoltGraphAPIClient(BoltClient):
                 f"successfully read graph api token from {FBPCS_GRAPH_API_TOKEN} env var"
             )
         return token
+
+    def _check_err(self, r: requests.Response, msg: str) -> None:
+        if r.status_code != 200:
+            err_msg = f"Error {msg}: {r.content}"
+            self.logger.error(err_msg)
+            raise RuntimeError(err_msg)
