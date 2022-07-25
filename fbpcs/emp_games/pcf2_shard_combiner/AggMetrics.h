@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -83,6 +84,8 @@ class AggMetrics {
     }
   }
 
+  ~AggMetrics() {}
+
   // Adds rhs to self. this is the main function that performs the job of
   // combining. Also, see `accumulateFinal()` for the complete understanding.
   static void accumulate(
@@ -105,9 +108,11 @@ class AggMetrics {
   void setValue(MetricsValue v);
 
   // setter for XorSecretShareValue
-  void setSecValueXor(SecInt<schedulerId, usingBatch> v) {
+  void setSecValueXor(SecInt<schedulerId, usingBatch>& v) {
     secVal_ = std::move(v);
   }
+
+  void updateSecValueFromRawInt();
 
   // Value is moved to val_.
   void setList(MetricsList& v);
@@ -153,6 +158,7 @@ class AggMetrics {
 
   // Emits dynamic object which can be converted to json
   folly::dynamic toDynamic() const;
+  folly::dynamic toRevealedDynamic(int party) const;
 
   // writes object with indentation to the ostream obj.
   void print(std::ostream& os, int32_t tabstop) const;
