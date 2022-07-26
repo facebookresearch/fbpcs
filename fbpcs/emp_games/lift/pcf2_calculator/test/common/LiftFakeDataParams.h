@@ -21,6 +21,8 @@ class LiftFakeDataParams {
   int32_t epoch_ = 0;
   int32_t numConversions_ = 4;
   bool omitValuesColumn_ = false;
+  int32_t numBreakdowns_ = 0;
+  int32_t numCohorts_ = 0;
 
   LiftFakeDataParams& setNumRows(size_t numRows);
   LiftFakeDataParams& setOpportunityRate(double opportunityRate);
@@ -30,6 +32,8 @@ class LiftFakeDataParams {
   LiftFakeDataParams& setEpoch(int32_t epoch);
   LiftFakeDataParams& setNumConversions(int32_t numConversions);
   LiftFakeDataParams& setOmitValuesColumn(bool omitValuesColumn);
+  LiftFakeDataParams& setNumBreakdowns(int32_t numBreakdowns);
+  LiftFakeDataParams& setNumCohorts(int32_t numCohorts);
 };
 
 } // namespace private_lift

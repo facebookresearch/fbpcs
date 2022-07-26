@@ -53,4 +53,15 @@ LiftFakeDataParams& LiftFakeDataParams::setOmitValuesColumn(
   return *this;
 }
 
+LiftFakeDataParams& LiftFakeDataParams::setNumBreakdowns(
+    int32_t numBreakdowns) {
+  numBreakdowns_ = numBreakdowns;
+  return *this;
+}
+
+LiftFakeDataParams& LiftFakeDataParams::setNumCohorts(int32_t numCohorts) {
+  numCohorts_ = numCohorts;
+  return *this;
+}
+
 } // namespace private_lift

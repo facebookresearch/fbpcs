@@ -25,9 +25,9 @@ class GenFakeData {
  private:
   struct LiftInputColumns {
     // publisher header:
-    //   id_,opportunity,test_flag,opportunity_timestamp,num_impressions,num_clicks,total_spend
+    //   id_,opportunity,test_flag,opportunity_timestamp,num_impressions,num_clicks,total_spend,breakdown_id
 
-    // partner header: id_,event_timestamps,values
+    // partner header: id_,event_timestamps,values,cohort_id
     std::string id;
     bool opportunity;
     bool test_flag;
@@ -35,6 +35,8 @@ class GenFakeData {
     int32_t num_impressions;
     int32_t num_clicks;
     int32_t total_spend;
+    int32_t breakdown_id;
+    int32_t cohort_id;
     std::vector<int32_t> event_timestamps;
     std::vector<int32_t> values;
   };
