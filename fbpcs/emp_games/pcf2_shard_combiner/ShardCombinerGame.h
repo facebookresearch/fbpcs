@@ -96,9 +96,11 @@ class ShardCombinerGame : public fbpcf::frontend::MpcGame<schedulerId> {
     shards_.clear();
     for (int i = 0; i < numShards; i++) {
       std::string fullPath = folly::sformat("{}/{}_{}", inputDir, filename, i);
-      shards_.push_back(
+      auto shard =
           AggMetrics<schedulerId, usingBatch, inputEncryption>::fromJson(
-              fullPath));
+              fullPath);
+      shard->updateAllSecVals();
+      shards_.push_back(shard);
     }
     return shards_;
   }

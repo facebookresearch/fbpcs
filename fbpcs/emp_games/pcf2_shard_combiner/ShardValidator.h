@@ -12,7 +12,7 @@
 
 namespace shard_combiner {
 
-enum class ShardSchemaType { kAdObjFormat, kGroupedLiftMetrics };
+enum class ShardSchemaType { kTest, kAdObjFormat, kGroupedLiftMetrics };
 
 template <
     ShardSchemaType shardSchemaType,
