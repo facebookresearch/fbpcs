@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import asyncio
 import json
 import logging
 from datetime import datetime, timedelta, timezone
@@ -12,10 +13,21 @@ from typing import Any, Dict, List, Optional, Type
 
 import dateutil.parser
 import pytz
+from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
+from fbpcs.bolt.bolt_runner import BoltRunner
+from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
+from fbpcs.pl_coordinator.bolt_graphapi_client import (
+    BoltGraphAPIClient,
+    BoltPAGraphAPICreateInstanceArgs,
+)
 from fbpcs.pl_coordinator.exceptions import IncorrectVersionError, sys_exit_after
 from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.pl_instance_runner import run_instance
-from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
+from fbpcs.private_computation.entity.infra_config import (
+    PrivateComputationGameType,
+    PrivateComputationRole,
+)
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
@@ -24,7 +36,10 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
-from fbpcs.private_computation_cli.private_computation_service_wrapper import get_tier
+from fbpcs.private_computation_cli.private_computation_service_wrapper import (
+    _build_private_computation_service,
+    get_tier,
+)
 
 
 class LoggerAdapter(logging.LoggerAdapter):
@@ -79,6 +94,7 @@ def run_attribution(
     stage_flow: Type[PrivateComputationBaseStageFlow],
     logger: logging.Logger,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
+    final_stage: Optional[PrivateComputationBaseStageFlow] = None,
 ) -> None:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
@@ -149,32 +165,97 @@ def run_attribution(
     _check_version(instance_data, config)
     # get the enabled features
     pcs_features = _get_pcs_features(instance_data)
+    pcs_feature_enums = []
     if pcs_features:
         logger.info(f"Enabled features: {pcs_features}")
+        pcs_feature_enums = [PCSFeature.from_str(feature) for feature in pcs_features]
     num_pid_containers = instance_data[NUM_SHARDS]
     num_mpc_containers = instance_data[NUM_CONTAINERS]
 
-    ## Step 3. Run Instances. Run maximum number of instances in parallel
-    logger.info(f"Start running instance {instance_id}.")
-    instance_parameters = {
-        "config": config,
-        "instance_id": instance_id,
-        "input_path": input_path,
-        "num_mpc_containers": num_mpc_containers,
-        "num_pid_containers": num_pid_containers,
-        "stage_flow": stage_flow,
-        "logger": logger,
-        "game_type": PrivateComputationGameType.ATTRIBUTION,
-        "attribution_rule": attribution_rule,
-        "aggregation_type": AggregationType.MEASUREMENT,
-        "concurrency": concurrency,
-        "num_files_per_mpc_container": num_files_per_mpc_container,
-        "k_anonymity_threshold": k_anonymity_threshold,
-        "num_tries": num_tries,
-        "pcs_features": pcs_features,
-    }
-    run_instance(**instance_parameters)
-    logger.info(f"Finished running instances {instance_id}.")
+    if PCSFeature.BOLT_RUNNER in pcs_feature_enums:
+        # using bolt runner
+
+        ## Step 3. Populate instance args and create Bolt jobs
+        publisher_args = BoltPlayerArgs(
+            create_instance_args=BoltPAGraphAPICreateInstanceArgs(
+                instance_id=instance_id,
+                dataset_id=dataset_id,
+                timestamp=str(dt_arg),
+                attribution_rule=attribution_rule.name,
+                num_containers=num_mpc_containers,
+            )
+        )
+        partner_args = BoltPlayerArgs(
+            create_instance_args=BoltPCSCreateInstanceArgs(
+                instance_id=instance_id,
+                role=PrivateComputationRole.PARTNER,
+                game_type=PrivateComputationGameType.ATTRIBUTION,
+                input_path=input_path,
+                num_pid_containers=num_pid_containers,
+                num_mpc_containers=num_mpc_containers,
+                stage_flow_cls=stage_flow,
+                concurrency=concurrency,
+                attribution_rule=attribution_rule,
+                aggregation_type=aggregation_type,
+                num_files_per_mpc_container=num_files_per_mpc_container,
+                k_anonymity_threshold=k_anonymity_threshold,
+                pcs_features=pcs_features,
+            )
+        )
+        job = BoltJob(
+            job_name=f"Job [dataset_id: {dataset_id}][timestamp: {dt_arg}",
+            publisher_bolt_args=publisher_args,
+            partner_bolt_args=partner_args,
+            stage_flow=stage_flow,
+            num_tries=num_tries,
+            final_stage=final_stage,
+        )
+        runner = BoltRunner(
+            publisher_client=BoltGraphAPIClient(
+                config=config["graphapi"], logger=logger
+            ),
+            partner_client=BoltPCSClient(
+                _build_private_computation_service(
+                    config["private_computation"],
+                    config["mpc"],
+                    config["pid"],
+                    config.get("post_processing_handlers", {}),
+                    config.get("pid_post_processing_handlers", {}),
+                )
+            ),
+            num_tries=num_tries,
+            skip_publisher_creation=True,
+            logger=logger,
+        )
+
+        # Step 4. Run instances async
+
+        logger.info(f"Started running instance {instance_id}.")
+        asyncio.run(runner.run_async([job]))
+        logger.info(f"Finished running instance {instance_id}.")
+    else:
+        # using existing runner
+        ## Step 3. Run Instances. Run maximum number of instances in parallel
+        logger.info(f"Start running instance {instance_id}.")
+        instance_parameters = {
+            "config": config,
+            "instance_id": instance_id,
+            "input_path": input_path,
+            "num_mpc_containers": num_mpc_containers,
+            "num_pid_containers": num_pid_containers,
+            "stage_flow": stage_flow,
+            "logger": logger,
+            "game_type": PrivateComputationGameType.ATTRIBUTION,
+            "attribution_rule": attribution_rule,
+            "aggregation_type": AggregationType.MEASUREMENT,
+            "concurrency": concurrency,
+            "num_files_per_mpc_container": num_files_per_mpc_container,
+            "k_anonymity_threshold": k_anonymity_threshold,
+            "num_tries": num_tries,
+            "pcs_features": pcs_features,
+        }
+        run_instance(**instance_parameters)
+        logger.info(f"Finished running instances {instance_id}.")
 
 
 def _create_new_instance(
