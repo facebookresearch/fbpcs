@@ -81,6 +81,7 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
     pid_use_row_numbers: bool = True
     post_processing_data_optional: Optional[PostProcessingData] = None
     pid_configs: Optional[Dict[str, Any]] = None
+    pcs_features: Optional[List[str]] = None
 
     def __post_init__(self) -> None:
         if self.stage_flow_cls is PrivateComputationBaseStageFlow:
@@ -105,9 +106,13 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
 
 
 class BoltPCSClient(BoltClient):
-    def __init__(self, pcs: PrivateComputationService) -> None:
+    def __init__(
+        self, pcs: PrivateComputationService, logger: Optional[logging.Logger] = None
+    ) -> None:
         self.pcs = pcs
-        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.logger: logging.Logger = (
+            logging.getLogger(__name__) if logger is None else logger
+        )
 
     async def create_instance(self, instance_args: BoltCreateInstanceArgs) -> str:
         assert isinstance(
@@ -136,6 +141,7 @@ class BoltPCSClient(BoltClient):
             pid_use_row_numbers=instance_args.pid_use_row_numbers,
             post_processing_data_optional=instance_args.post_processing_data_optional,
             pid_configs=instance_args.pid_configs,
+            pcs_features=instance_args.pcs_features,
         )
         return instance.infra_config.instance_id
 

@@ -13,6 +13,7 @@ from enum import Enum
 class PCSFeature(Enum):
     UNKNOWN = "unknown"
     PCS_DUMMY = "pcs_dummy_feature"
+    BOLT_RUNNER = "bolt_runner"
 
     @staticmethod
     def from_str(feature_str: str) -> "PCSFeature":
@@ -20,6 +21,8 @@ class PCSFeature(Enum):
         feature_str = feature_str.casefold()
         if feature_str == PCSFeature.PCS_DUMMY.value:
             return PCSFeature.PCS_DUMMY
+        elif feature_str == PCSFeature.BOLT_RUNNER.value:
+            return PCSFeature.BOLT_RUNNER
         else:
             logging.warning(f"can't map {feature_str} to pre-defined PCSFeature")
             return PCSFeature.UNKNOWN
