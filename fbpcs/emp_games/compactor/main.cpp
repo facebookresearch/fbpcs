@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
            {PARTNER_ROLE, {FLAGS_host, FLAGS_port}}}};
   auto commAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      FLAGS_party, std::move(partyInfos));
+      FLAGS_party, std::move(partyInfos), "compactor_traffic");
 
   XLOG(INFO) << "Creating scheduler\n";
   auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
