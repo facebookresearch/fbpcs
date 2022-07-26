@@ -38,7 +38,7 @@ class PrivateComputationDecoupledLocalTestStageFlow(PrivateComputationBaseStageF
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED ID_SPINE_COMBINER RESHARD DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE"
+    _order_ = "CREATED PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD DECOUPLED_ATTRIBUTION DECOUPLED_AGGREGATION AGGREGATE"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -46,6 +46,31 @@ class PrivateComputationDecoupledLocalTestStageFlow(PrivateComputationBaseStageF
         PrivateComputationInstanceStatus.CREATION_STARTED,
         PrivateComputationInstanceStatus.CREATED,
         PrivateComputationInstanceStatus.CREATION_FAILED,
+        False,
+    )
+    PID_SHARD = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PID_SHARD_STARTED,
+        PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
+        PrivateComputationInstanceStatus.PID_SHARD_FAILED,
+        False,
+    )
+    PID_PREPARE = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PID_PREPARE_STARTED,
+        PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
+        PrivateComputationInstanceStatus.PID_PREPARE_FAILED,
+        False,
+    )
+    ID_MATCH = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+        PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+        PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+        True,
+        is_retryable=False,
+    )
+    ID_MATCH_POST_PROCESS = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_STARTED,
+        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_COMPLETED,
+        PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_FAILED,
         False,
     )
     ID_SPINE_COMBINER = PrivateComputationStageFlowData(
