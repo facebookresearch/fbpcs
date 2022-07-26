@@ -106,8 +106,14 @@ void GenFakeData::genFakePublisherInputFile(
 
   // publisher header: id_,opportunity,test_flag,opportunity_timestamp,
   //   num_impressions,num_clicks
-  publisherFile
-      << "id_,opportunity,test_flag,opportunity_timestamp,num_impressions,num_clicks,total_spend\n";
+  if (!params.numBreakdowns_) {
+    publisherFile
+        << "id_,opportunity,test_flag,opportunity_timestamp,num_impressions,num_clicks,total_spend\n";
+  } else {
+    // only include breakdown_id if numBreakdowns_ is present
+    publisherFile
+        << "id_,opportunity,test_flag,opportunity_timestamp,num_impressions,num_clicks,total_spend,breakdown_id\n";
+  }
 
   for (std::size_t i = 0; i < params.numRows_; i++) {
     // generate one row of fake data
@@ -128,6 +134,13 @@ void GenFakeData::genFakePublisherInputFile(
         std::to_string(oneLine.num_impressions) + "," +
         std::to_string(oneLine.num_clicks) + "," +
         std::to_string(oneLine.total_spend);
+
+    if (params.numBreakdowns_) {
+      // generate a random breakdown id between 0 and numBreakdown - 1
+      int32_t randomBreakdownId =
+          folly::Random::secureRand32(0, params.numBreakdowns_);
+      publisherRow += "," + std::to_string(randomBreakdownId);
+    }
     publisherFile << publisherRow << '\n';
   }
 }
@@ -137,12 +150,18 @@ void GenFakeData::genFakePartnerInputFile(
     const LiftFakeDataParams& params) {
   std::ofstream partnerFile{filename};
 
-  // partner header: id_,event_timestamps,values
+  // partner header: id_,event_timestamps,values,cohort_id
+  std::string partnerFileHeader = "id_,event_timestamps";
   if (!params.omitValuesColumn_) {
-    partnerFile << "id_,event_timestamps,values\n";
-  } else {
-    partnerFile << "id_,event_timestamps\n";
+    partnerFileHeader += ",values";
   }
+
+  if (params.numCohorts_) {
+    partnerFileHeader += ",cohort_id";
+  }
+
+  partnerFile << partnerFileHeader;
+  partnerFile << '\n';
 
   for (std::size_t i = 0; i < params.numRows_; i++) {
     // generate one row of fake data
@@ -170,12 +189,19 @@ void GenFakeData::genFakePartnerInputFile(
       }
     }
     if (!params.omitValuesColumn_) {
-      partnerFile << oneLine.id << "," << eventTSString << "," << valuesString
-                  << "\n";
+      partnerFile << oneLine.id << "," << eventTSString << "," << valuesString;
     } else {
       // Again, skip "values" column if this is a valueless objective
-      partnerFile << oneLine.id << "," << eventTSString << "\n";
+      partnerFile << oneLine.id << "," << eventTSString;
     }
+
+    if (params.numCohorts_) {
+      // generate a random cohort id between 0 and numCohorts - 1
+      int32_t randomCohortId =
+          folly::Random::secureRand32(0, params.numCohorts_);
+      partnerFile << "," + std::to_string(randomCohortId);
+    }
+    partnerFile << '\n';
   }
 }
 } // namespace private_lift

@@ -11,6 +11,7 @@
 #include <thread>
 #include <unordered_map>
 
+#include <fbpcs/emp_games/lift/common/GroupedLiftMetrics.h>
 #include <gtest/gtest.h>
 #include "folly/Random.h"
 
@@ -98,6 +99,70 @@ class CalculatorGameTestFixture
     GroupedLiftMetrics resSecond = future1.get();
 
     return resFirst ^ resSecond;
+  }
+
+  GroupedLiftMetrics runTestWithCohortAndBreakdown(
+      int numCohort,
+      int numBreakdown) {
+    // Generate test input files with random data
+    int numConversionsPerUser = 25;
+    bool computePublisherBreakdowns = std::get<1>(GetParam());
+
+    GenFakeData testDataGenerator;
+    LiftFakeDataParams params;
+    params.setNumRows(15)
+        .setOpportunityRate(0.5)
+        .setTestRate(0.5)
+        .setPurchaseRate(0.5)
+        .setIncrementalityRate(0.0)
+        .setEpoch(1546300800)
+        .setNumBreakdowns(numBreakdown)
+        .setNumCohorts(numCohort);
+    testDataGenerator.genFakePublisherInputFile(
+        publisherInputFilename_, params);
+    params.setNumConversions(numConversionsPerUser).setOmitValuesColumn(false);
+    testDataGenerator.genFakePartnerInputFile(partnerInputFilename_, params);
+    CalculatorGameConfig publisherConfig =
+        CalculatorGameTestFixture::getInputData(
+            publisherInputFilename_,
+            numConversionsPerUser,
+            computePublisherBreakdowns);
+    CalculatorGameConfig partnerConfig =
+        CalculatorGameTestFixture::getInputData(
+            partnerInputFilename_,
+            numConversionsPerUser,
+            computePublisherBreakdowns);
+
+    // Run calculator game with test input
+    const bool unsafe = true;
+    auto schedulerType = std::get<0>(GetParam());
+    fbpcf::SchedulerCreator schedulerCreator =
+        fbpcf::getSchedulerCreator<unsafe>(schedulerType);
+    auto res = runGameWithScheduler(
+        schedulerCreator, std::move(publisherConfig), std::move(partnerConfig));
+
+    return res;
+  }
+
+  GroupedLiftMetrics computeExpectedResult(int numCohort, int numBreakdown) {
+    LiftCalculator liftCalculator(numCohort, numBreakdown, 0);
+    std::ifstream inFilePublisher{publisherInputFilename_};
+    std::ifstream inFilePartner{partnerInputFilename_};
+    int32_t tsOffset = 10;
+    std::string linePublisher;
+    std::string linePartner;
+    getline(inFilePublisher, linePublisher);
+    getline(inFilePartner, linePartner);
+    auto headerPublisher =
+        private_measurement::csv::splitByComma(linePublisher, false);
+    auto headerPartner =
+        private_measurement::csv::splitByComma(linePartner, false);
+    std::unordered_map<std::string, int> colNameToIndex =
+        liftCalculator.mapColToIndex(headerPublisher, headerPartner);
+    GroupedLiftMetrics expectedResult = liftCalculator.compute(
+        inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
+
+    return expectedResult;
   }
 };
 
@@ -191,6 +256,69 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
       liftCalculator.mapColToIndex(headerPublisher, headerPartner);
   GroupedLiftMetrics expectedResult = liftCalculator.compute(
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
+  EXPECT_EQ(expectedResult, res);
+}
+
+TEST_P(CalculatorGameTestFixture, TestCorrectnessWithBreakdown) {
+  int numCohort = 0;
+  int numBreakdown = 2;
+  bool computePublisherBreakdowns = std::get<1>(GetParam());
+
+  GroupedLiftMetrics res =
+      runTestWithCohortAndBreakdown(numCohort, numBreakdown);
+
+  // Calculate expected results with simple lift calculator
+  GroupedLiftMetrics expectedResult =
+      computeExpectedResult(numCohort, numBreakdown);
+
+  // No publisher breakdown computation required, remove the
+  // breakdown data from the expected output before result validation
+  if (!computePublisherBreakdowns) {
+    expectedResult.publisherBreakdowns.clear();
+  }
+
+  EXPECT_EQ(expectedResult, res);
+}
+
+TEST_P(CalculatorGameTestFixture, TestCorrectnessWithCohort) {
+  int numCohort = 4;
+  int numBreakdown = 0;
+  bool computePublisherBreakdowns = std::get<1>(GetParam());
+
+  GroupedLiftMetrics res =
+      runTestWithCohortAndBreakdown(numCohort, numBreakdown);
+
+  // Calculate expected results with simple lift calculator
+  GroupedLiftMetrics expectedResult =
+      computeExpectedResult(numCohort, numBreakdown);
+
+  // No publisher breakdown computation required, remove the
+  // breakdown data from the expected output before result validation
+  if (!computePublisherBreakdowns) {
+    expectedResult.publisherBreakdowns.clear();
+  }
+
+  EXPECT_EQ(expectedResult, res);
+}
+
+TEST_P(CalculatorGameTestFixture, TestCorrectnessWithCohortAndBreakdown) {
+  int numCohort = 4;
+  int numBreakdown = 2;
+  bool computePublisherBreakdowns = std::get<1>(GetParam());
+
+  GroupedLiftMetrics res =
+      runTestWithCohortAndBreakdown(numCohort, numBreakdown);
+
+  // Calculate expected results with simple lift calculator
+  GroupedLiftMetrics expectedResult =
+      computeExpectedResult(numCohort, numBreakdown);
+
+  // No publisher breakdown computation required, remove the
+  // breakdown data from the expected output before result validation
+  if (!computePublisherBreakdowns) {
+    expectedResult.publisherBreakdowns.clear();
+  }
+
   EXPECT_EQ(expectedResult, res);
 }
 
