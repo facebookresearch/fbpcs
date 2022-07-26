@@ -171,7 +171,15 @@ class BoltGraphAPIClient(BoltClient):
     async def validate_results(
         self, instance_id: str, expected_result_path: Optional[str] = None
     ) -> bool:
-        pass
+        if not expected_result_path:
+            self.logger.info(
+                "No expected result path was given, so result validation was skipped."
+            )
+            return True
+        else:
+            raise NotImplementedError(
+                "This method should not be called with expected results"
+            )
 
     async def get_instance(self, instance_id: str) -> requests.Response:
         r = requests.get(f"{URL}/{instance_id}", self.params)

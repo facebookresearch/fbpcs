@@ -139,8 +139,14 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(state.server_ips, "1.1.1.1")
 
-    async def test_validate_results(self) -> None:
-        pass
+    async def test_validate_results_without_path(self) -> None:
+        valid = await self.test_client.validate_results("id")
+        self.assertEqual(valid, True)
+
+    async def test_validate_results_with_path(self) -> None:
+        expected_result_path = "test/path"
+        with self.assertRaises(NotImplementedError):
+            await self.test_client.validate_results("id", expected_result_path)
 
     def _get_graph_api_output(self, text: Any) -> requests.Response:
         r = requests.Response()
