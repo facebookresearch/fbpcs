@@ -209,6 +209,7 @@ def run_attribution(
             stage_flow=stage_flow,
             num_tries=num_tries,
             final_stage=final_stage,
+            poll_interval=60,
         )
         runner = BoltRunner(
             publisher_client=BoltGraphAPIClient(
