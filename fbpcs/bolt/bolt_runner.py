@@ -108,8 +108,9 @@ class BoltRunner:
                             if tries >= max_tries:
                                 self.logger.exception(e)
                                 return False
-                            self.logger.error(
-                                f"Error: type: {type(e)}, message: {e}. Retries left: {self.num_tries - tries}."
+                            self.logger.error(f"Error: type: {type(e)}, message: {e}")
+                            self.logger.info(
+                                f"Retrying stage {stage}, Retries left: {self.num_tries - tries}."
                             )
                             await asyncio.sleep(RETRY_INTERVAL)
                     # update stage
