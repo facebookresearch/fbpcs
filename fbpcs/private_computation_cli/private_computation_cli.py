@@ -424,6 +424,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
             result_visibility=arguments["--result_visibility"],
+            final_stage=PrivateComputationStageFlow.AGGREGATE,
         )
     elif arguments["run_attribution"]:
         stage_flow = PrivateComputationPCF2StageFlow
