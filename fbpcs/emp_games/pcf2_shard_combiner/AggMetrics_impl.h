@@ -16,6 +16,7 @@
 #include <folly/Format.h>
 #include <folly/dynamic.h>
 #include <folly/json.h>
+#include <folly/logging/xlog.h>
 
 #include <fbpcf/exception/exceptions.h>
 #include <fbpcf/io/FileManagerUtil.h>
@@ -69,20 +70,27 @@ void AggMetrics<schedulerId, usingBatch, inputEncryption>::accumulate(
   q_.push(std::make_pair(lhs, rhs));
 
   while (!q_.empty()) {
-    auto [aggMetric, metric] = q_.front();
+    auto [lhsMetric, rhsMetric] = q_.front();
     q_.pop();
-    switch (metric->getType()) {
+    switch (rhsMetric->getType()) {
       case AggMetricType::kDict: {
-        auto aggMetricMap = aggMetric->getAsDict();
-        for (const auto& [key, innerMetrics] : metric->getAsDict()) {
-          auto innerAggMetrics = aggMetricMap.at(key);
-          q_.push(make_pair(innerAggMetrics, innerMetrics));
+        auto lhsMetricMap = lhsMetric->getAsDict();
+        for (const auto& [key, innerMetricsRhs] : rhsMetric->getAsDict()) {
+          if (lhsMetricMap.find(key) != lhsMetricMap.end()) {
+            auto innerMetricLhs = lhsMetricMap.at(key);
+            q_.push(std::make_pair(innerMetricLhs, innerMetricsRhs));
+          } else {
+            // rhs has a key that lhs does not. We can simply assign it to lhs
+            // as rhs usually used only once, so no need to copy. Also, no need
+            // to traverse because we don't have add to rhs down that path.
+            lhsMetric->insert(std::make_pair(key, innerMetricsRhs));
+          }
         }
         break;
       }
       case AggMetricType::kList: {
-        auto aggMetricList = aggMetric->getAsList();
-        auto metricList = metric->getAsList();
+        auto aggMetricList = lhsMetric->getAsList();
+        auto metricList = rhsMetric->getAsList();
 
         if (aggMetricList.size() != metricList.size()) {
           XLOG(ERR) << "Rhs and Lhs list do not match in size";
@@ -95,7 +103,7 @@ void AggMetrics<schedulerId, usingBatch, inputEncryption>::accumulate(
         break;
       }
       case AggMetricType::kValue: {
-        accumulateFinal(aggMetric, metric);
+        accumulateFinal(lhsMetric, rhsMetric);
         break;
       }
     }
@@ -174,10 +182,11 @@ void AggMetrics<schedulerId, usingBatch, inputEncryption>::
           SecInt<schedulerId, usingBatch>(std::move(extractedInt));
       this->setSecValueXor(secInt);
     } else {
-      auto errStr = folly::sformat(
-          "Only batch mode is supported, got: usingBatch = {}", usingBatch);
-      throw common::exceptions::NotImplementedError(
-          "Only batch mode is supported currently.");
+      int64_t val = getValue();
+      typename SecInt<schedulerId, usingBatch>::ExtractedInt extractedInt(val);
+      SecInt<schedulerId, usingBatch> secInt =
+          SecInt<schedulerId, usingBatch>(std::move(extractedInt));
+      this->setSecValueXor(secInt);
     }
   } else if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
     // if plaintext do nothing.
@@ -295,7 +304,7 @@ AggMetrics<schedulerId, usingBatch, inputEncryption>::newLike(
       case AggMetricType::kValue: {
         dst->setValue(0);
         if constexpr (inputEncryption == common::InputEncryption::Xor) {
-          dst->setSecValXor(SecInt<schedulerId, usingBatch>(0));
+          dst->updateSecValueFromRawInt();
         }
         break;
       }
@@ -375,7 +384,6 @@ AggMetrics<schedulerId, usingBatch, inputEncryption>::fromJson(
       }
       case folly::dynamic::INT64: {
         dst->setValue(src.asInt());
-        dst->updateSecValueFromRawInt();
         break;
       }
       default: {
@@ -511,9 +519,9 @@ AggMetrics<schedulerId, usingBatch, inputEncryption>::toRevealedDynamic(
       }
       case AggMetricType::kValue: {
         if constexpr (inputEncryption == common::InputEncryption::Xor) {
-          if constexpr (usingBatch)
+          if constexpr (usingBatch) {
             return getSecValueXor().openToParty(party).getValue().at(0);
-          else
+          } else
             return getSecValueXor().openToParty(party).getValue();
         } else {
           return getValue();
@@ -528,6 +536,38 @@ AggMetrics<schedulerId, usingBatch, inputEncryption>::toRevealedDynamic(
     XLOG(ERR, "To reveal metrics it has to be encrypted as a Xor-SS");
     throw common::exceptions::InvalidAccessError(
         "To reveal metrics it has to be encrypted as a Xor-SS");
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+void AggMetrics<schedulerId, usingBatch, inputEncryption>::updateAllSecVals() {
+  switch (getType()) {
+    case AggMetricType::kDict: {
+      for (auto [k, v] : getAsDict()) {
+        v->updateAllSecVals();
+      }
+      break;
+    }
+    case AggMetricType::kList: {
+      for (auto v : getAsList()) {
+        v->updateAllSecVals();
+      }
+      break;
+    }
+    case AggMetricType::kValue: {
+      updateSecValueFromRawInt();
+      break;
+    }
+    default: {
+      std::string errStr =
+          folly::sformat("Note match type received: {}", (int)getType());
+      XLOG(ERR) << errStr;
+      throw common::exceptions::SchemaTraceError(errStr);
+      break;
+    }
   }
 }
 

@@ -8,10 +8,10 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <string>
-#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -52,7 +52,7 @@ class AggMetrics {
   using MetricsValue = int64_t;
   using MetricsList = std::vector<
       std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>>;
-  using MetricsDict = std::unordered_map<
+  using MetricsDict = std::map<
       std::string,
       std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>>;
   using MetricsVariant = std::variant<MetricsValue, MetricsList, MetricsDict>;
@@ -112,7 +112,11 @@ class AggMetrics {
     secVal_ = std::move(v);
   }
 
+  // inits secretValue holding data structure SecMetricVariant.
   void updateSecValueFromRawInt();
+
+  // Traverses through all children and calls updateSecValueFromRawInt.
+  void updateAllSecVals();
 
   // Value is moved to val_.
   void setList(MetricsList& v);
@@ -158,6 +162,9 @@ class AggMetrics {
 
   // Emits dynamic object which can be converted to json
   folly::dynamic toDynamic() const;
+
+  // Emits dynamic object which can be converted to json.
+  // Note: use this method reveal final output metric.
   folly::dynamic toRevealedDynamic(int party) const;
 
   // writes object with indentation to the ostream obj.
