@@ -266,8 +266,7 @@ class BoltRunner:
                 await self.partner_client.update_instance(instance_id)
             self.logger.info(f"{instance_id} found.")
             return True
-        except Exception as e:
-            self.logger.exception(e)
+        except Exception:
             self.logger.info(f"{instance_id} not found.")
             return False
 
