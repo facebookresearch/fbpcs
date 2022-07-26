@@ -6,7 +6,7 @@
 
 import json
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
 
@@ -16,6 +16,9 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltPLGraphAPICreateInstanceArgs,
 )
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
+from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
+    PrivateComputationStageFlow,
+)
 
 ACCESS_TOKEN = "access_token"
 URL = "https://graph.facebook.com/v13.0"
@@ -104,8 +107,16 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-    async def test_run_stage(self) -> None:
-        pass
+    @patch("fbpcs.pl_coordinator.bolt_graphapi_client.requests.post")
+    async def test_bolt_run_stage(self, mock_post) -> None:
+        expected_params = {
+            "access_token": ACCESS_TOKEN,
+            "operation": "NEXT",
+        }
+        for stage in PrivateComputationStageFlow.ID_MATCH, None:
+            mock_post.reset_mock()
+            await self.test_client.run_stage(instance_id="id", stage=stage)
+            mock_post.assert_called_once_with(f"{URL}/id", params=expected_params)
 
     async def test_update_instance(self) -> None:
         pass

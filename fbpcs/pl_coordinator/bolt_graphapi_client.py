@@ -85,7 +85,14 @@ class BoltGraphAPIClient(BoltClient):
         stage: Optional[PrivateComputationBaseStageFlow] = None,
         server_ips: Optional[List[str]] = None,
     ) -> None:
-        pass
+        params = self.params.copy()
+        params["operation"] = "NEXT"
+        r = requests.post(f"{URL}/{instance_id}", params=params)
+        if stage:
+            msg = f"running stage {stage}"
+        else:
+            msg = "running next stage"
+        self._check_err(r, msg)
 
     async def update_instance(self, instance_id: str) -> BoltState:
         pass
