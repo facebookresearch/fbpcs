@@ -441,6 +441,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             logger=logger,
             stage_flow=stage_flow,
             num_tries=2,
+            final_stage=PrivateComputationPCF2StageFlow.AGGREGATE,
         )
 
     elif arguments["cancel_current_stage"]:
