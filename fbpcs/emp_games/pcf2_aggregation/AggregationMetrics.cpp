@@ -20,6 +20,7 @@
 
 #include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include <fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h>
 #include "folly/json.h"
 #include "folly/logging/xlog.h"
 
@@ -206,8 +207,10 @@ AggregationInputMetrics::AggregationInputMetrics(
 
         touchpointMetadataArrays_.push_back(parseTouchpointMetadata(
             myRole, inputEncryption, lineNo, header, parts));
-        conversionMetadataArrays_.push_back(
-            parseConversionMetadata(myRole, inputEncryption, header, parts));
+        if (!FLAGS_use_new_output_format) {
+          conversionMetadataArrays_.push_back(
+              parseConversionMetadata(myRole, inputEncryption, header, parts));
+        }
 
         lineNo++;
       });
@@ -227,13 +230,19 @@ AggregationInputMetrics::AggregationInputMetrics(
   // an unordered_map.
   auto attributionResultJson = folly::parseJson(
       fbpcf::io::FileIOWrappers::readFile(inputSecretShareFilePath));
-
   for (const auto& [rule, formatters] : attributionResultJson.items()) {
     attributionRules_.push_back(rule.asString());
   }
 
-  attributionSecretShare_ = AggregationMetrics::getAttributionsArrayfromDynamic(
-      attributionResultJson);
+  if (FLAGS_use_new_output_format) {
+    attributionReformattedSecretShare_ =
+        AggregationMetrics::getAttributionsReformattedArrayfromDynamic(
+            attributionResultJson);
+  } else {
+    attributionSecretShare_ =
+        AggregationMetrics::getAttributionsArrayfromDynamic(
+            attributionResultJson);
+  }
 }
 
 } // namespace pcf2_aggregation
