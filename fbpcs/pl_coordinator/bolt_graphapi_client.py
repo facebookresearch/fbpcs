@@ -9,20 +9,26 @@ import json
 import logging
 import os
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
+
+import dateutil
 
 import requests
 
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
-from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
+from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound, IncorrectVersionError
+from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.entity.product_config import AttributionRule
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.private_computation_cli.private_computation_service_wrapper import get_tier
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 from fbpcs.utils.config_yaml.exceptions import ConfigYamlBaseException
 
@@ -86,6 +92,11 @@ GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     "PID_MR_COMPLETED": PrivateComputationInstanceStatus.PID_MR_COMPLETED,
     "PID_MR_FAILED": PrivateComputationInstanceStatus.PID_MR_FAILED,
 }
+TERMINAL_STATUSES = [
+    "POST_PROCESSING_HANDLERS_COMPLETED",
+    "RESULT_READY",
+    "INSTANCE_FAILURE",
+]
 
 
 @dataclass
@@ -114,32 +125,33 @@ class BoltGraphAPIClient(BoltClient):
             - config: the graphapi section of the larger config dictionary: config["graphapi"]
             - logger: logger
         """
+        self.config = config
         self.logger: logging.Logger = (
             logging.getLogger(__name__) if logger is None else logger
         )
-        self.access_token = self._get_graph_api_token(config)
+        self.access_token = self._get_graph_api_token(config["graphapi"])
         self.params = {"access_token": self.access_token}
 
     async def create_instance(self, instance_args: BoltCreateInstanceArgs) -> str:
-        params = self.params.copy()
         if isinstance(instance_args, BoltPLGraphAPICreateInstanceArgs):
-            params["breakdown_key"] = json.dumps(instance_args.breakdown_key)
-            r = requests.post(
-                f"{URL}/{instance_args.study_id}/instances", params=params
-            )
-            self._check_err(r, "creating fb pl instance")
-            return r.json().id
+            response = await self._create_instance(instance_args)
+            return response.json().id
         elif isinstance(instance_args, BoltPAGraphAPICreateInstanceArgs):
-            params["attribution_rule"] = instance_args.attribution_rule
-            params["timestamp"] = instance_args.timestamp
-            r = requests.post(
-                f"{URL}/{instance_args.dataset_id}/instance", params=params
+            instance_id = await self._get_existing_pa_instance_id(instance_args)
+            if instance_id:
+                instance_args.instance_id = instance_id
+            else:
+                response = await self._create_instance(instance_args)
+                instance_id = response.json().id
+                instance_args.instance_id = instance_id
+
+            instance_data = await self._get_pa_instance_info(instance_id)
+            self._check_version(instance_data, self.config)
+            return instance_id
+        else:
+            raise TypeError(
+                f"Instance args must be of type {BoltPLGraphAPICreateInstanceArgs} or {BoltPAGraphAPICreateInstanceArgs}"
             )
-            self._check_err(r, "creating fb pa instance")
-            return r.json().id
-        raise TypeError(
-            f"Instance args must be of type {BoltPLGraphAPICreateInstanceArgs} or {BoltPAGraphAPICreateInstanceArgs}"
-        )
 
     async def run_stage(
         self,
@@ -201,6 +213,64 @@ class BoltGraphAPIClient(BoltClient):
         self._check_err(r, "getting fb instance")
         return r
 
+    async def _create_instance(
+        self, instance_args: BoltCreateInstanceArgs
+    ) -> requests.Response:
+        if isinstance(instance_args, BoltPLGraphAPICreateInstanceArgs):
+            self.logger.info("Creating new PL instance...")
+            params = self.params.copy()
+            params["breakdown_key"] = json.dumps(instance_args.breakdown_key)
+            r = requests.post(
+                f"{URL}/{instance_args.study_id}/instances", params=params
+            )
+            self._check_err(r, "creating fb pl instance")
+            return r
+        elif isinstance(instance_args, BoltPAGraphAPICreateInstanceArgs):
+            self.logger.info("Creating new PA instance...")
+            params = self.params.copy()
+            params["attribution_rule"] = instance_args.attribution_rule
+            params["timestamp"] = instance_args.timestamp
+            r = requests.post(
+                f"{URL}/{instance_args.dataset_id}/instance", params=params
+            )
+            self._check_err(r, "creating fb pa instance")
+            return r
+        else:
+            raise TypeError(
+                f"Instance args must be of type {BoltPLGraphAPICreateInstanceArgs} or {BoltPAGraphAPICreateInstanceArgs}"
+            )
+
+    async def _get_existing_pa_instance_id(
+        self, instance_args: BoltPAGraphAPICreateInstanceArgs
+    ) -> Optional[str]:
+        self.logger.info("Getting valid PA instance ids...")
+        params = self.params.copy()
+        r = requests.get(f"{URL}/{instance_args.dataset_id}/instances", params=params)
+        self._check_err(r, "getting attribution instances tied to the dataset")
+        dataset_instance_data = json.loads(r.text)
+        existing_instances = dataset_instance_data["data"]
+        for inst in existing_instances:
+            inst_time = dateutil.parser.parse(inst["timestamp"])
+            creation_time = dateutil.parser.parse(inst["created_time"])
+            exp_time = datetime.now(tz=timezone.utc) - timedelta(days=1)
+            expired = exp_time > creation_time
+            if (
+                inst["attribution_rule"]
+                == AttributionRule[instance_args.attribution_rule].value
+                and inst_time == datetime.fromtimestamp(int(instance_args.timestamp))
+                and inst["status"] not in TERMINAL_STATUSES
+                and not expired
+            ):
+                instance_id = inst["id"]
+                self.logger.info(f"Valid PA instance id found: {instance_id}")
+                return instance_id
+        self.logger.info("No valid PA instance id found.")
+        return None
+
+    async def _get_pa_instance_info(self, instance_id: str) -> Any:
+        response = await self.get_instance(instance_id)
+        return json.loads(response.text)
+
     def _get_graph_api_token(self, config: Dict[str, Any]) -> str:
         """Get graph API token from config.yml or the {FBPCS_GRAPH_API_TOKEN} env var
 
@@ -232,6 +302,34 @@ class BoltGraphAPIClient(BoltClient):
                 f"successfully read graph api token from {FBPCS_GRAPH_API_TOKEN} env var"
             )
         return token
+
+    def _check_version(
+        self,
+        instance: Dict[str, Any],
+        config: Dict[str, Any],
+    ) -> None:
+        """Checks that the publisher version (graph api) and the partner version (config.yml) are the same
+
+        Arguments:
+            instances: theoretically is dict representing the PA instance fields.
+            config: The dict representation of a config.yml file
+
+        Raises:
+            IncorrectVersionError: the publisher and partner are running with different versions
+        """
+
+        instance_tier_str = instance.get("tier")
+        # if there is no tier for some reason, let's just assume
+        # the tier is correct
+        if not instance_tier_str:
+            return
+
+        config_tier = get_tier(config)
+        expected_tier = PCSTier.from_str(instance_tier_str)
+        if expected_tier is not config_tier:
+            raise IncorrectVersionError.make_error(
+                instance["id"], expected_tier, config_tier
+            )
 
     def _check_err(self, r: requests.Response, msg: str) -> None:
         if r.status_code != 200:

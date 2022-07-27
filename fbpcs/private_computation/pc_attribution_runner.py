@@ -212,9 +212,7 @@ def run_attribution(
             poll_interval=60,
         )
         runner = BoltRunner(
-            publisher_client=BoltGraphAPIClient(
-                config=config["graphapi"], logger=logger
-            ),
+            publisher_client=BoltGraphAPIClient(config=config, logger=logger),
             partner_client=BoltPCSClient(
                 _build_private_computation_service(
                     config["private_computation"],

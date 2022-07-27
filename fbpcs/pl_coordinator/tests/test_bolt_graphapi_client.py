@@ -34,49 +34,50 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
     @patch("logging.Logger")
     def setUp(self, mock_logger) -> None:
         self.mock_logger = mock_logger
-        config = {"access_token": ACCESS_TOKEN}
+        config = {"graphapi": {"access_token": ACCESS_TOKEN}}
         self.test_client = BoltGraphAPIClient(config, mock_logger)
         self.test_client._check_err = MagicMock()
 
     def test_get_graph_api_token_from_dict(self) -> None:
         expected_token = "from_dict"
-        config = {"access_token": expected_token}
+        config = {"graphapi": {"access_token": expected_token}}
         actual_token = BoltGraphAPIClient(config, self.mock_logger).access_token
         self.assertEqual(expected_token, actual_token)
 
     def test_get_graph_api_token_from_env_config_todo(self) -> None:
         expected_token = "from_env"
         with patch.dict("os.environ", {FBPCS_GRAPH_API_TOKEN: expected_token}):
-            config = {"access_token": "TODO"}
+            config = {"graphapi": {"access_token": "TODO"}}
             actual_token = BoltGraphAPIClient(config, self.mock_logger).access_token
             self.assertEqual(expected_token, actual_token)
 
     def test_get_graph_api_token_from_env_config_no_field(self) -> None:
         expected_token = "from_env"
         with patch.dict("os.environ", {FBPCS_GRAPH_API_TOKEN: expected_token}):
-            config = {"random_field": "not_a_token"}
+            config = {"graphapi": {"random_field": "not_a_token"}}
             actual_token = BoltGraphAPIClient(config, self.mock_logger).access_token
             self.assertEqual(expected_token, actual_token)
 
     def test_get_graph_api_token_dict_and_env(self) -> None:
         expected_token = "from_dict"
         with patch.dict("os.environ", {FBPCS_GRAPH_API_TOKEN: "from_env"}):
-            config = {"access_token": expected_token}
+            config = {"graphapi": {"access_token": expected_token}}
             actual_token = BoltGraphAPIClient(config, self.mock_logger).access_token
             self.assertEqual(expected_token, actual_token)
 
     def test_get_graph_api_token_no_token_todo(self) -> None:
-        config = {"access_token": "TODO"}
+        config = {"graphapi": {"access_token": "TODO"}}
         with self.assertRaises(GraphAPITokenNotFound):
             BoltGraphAPIClient(config, self.mock_logger).access_token
 
     def test_get_graph_api_token_no_field(self) -> None:
-        config = {"random_field": "not_a_token"}
+        config = {"graphapi": {"random_field": "not_a_token"}}
         with self.assertRaises(GraphAPITokenNotFound):
             BoltGraphAPIClient(config, self.mock_logger).access_token
 
     @patch("fbpcs.pl_coordinator.bolt_graphapi_client.requests.post")
     async def test_bolt_create_lift_instance(self, mock_post) -> None:
+        # tests BoltGraphAPIClient._create_instance
         test_pl_args = BoltPLGraphAPICreateInstanceArgs(
             instance_id="test_pl",
             study_id="study_id",
@@ -85,7 +86,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
                 "objective_id": "obj_id",
             },
         )
-        await self.test_client.create_instance(test_pl_args)
+        await self.test_client._create_instance(test_pl_args)
         mock_post.assert_called_once_with(
             f"{URL}/study_id/instances",
             params={
@@ -96,6 +97,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
 
     @patch("fbpcs.pl_coordinator.bolt_graphapi_client.requests.post")
     async def test_bolt_create_attribution_instance(self, mock_post) -> None:
+        # tests BoltGraphAPIClient._create_instance
         test_pa_args = BoltPAGraphAPICreateInstanceArgs(
             instance_id="test_pa",
             dataset_id="dataset_id",
@@ -103,7 +105,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             attribution_rule="attribution_rule",
             num_containers="1",
         )
-        await self.test_client.create_instance(test_pa_args)
+        await self.test_client._create_instance(test_pa_args)
         mock_post.assert_called_once_with(
             f"{URL}/dataset_id/instance",
             params={
@@ -129,7 +131,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
         new_callable=AsyncMock,
     )
     async def test_bolt_update_instance(self, mock_get_instance) -> None:
-        mock_get_instance.return_value = self._get_graph_api_output(
+        mock_get_instance.return_value = self._get_graph_api_text_output(
             {"id": "id", "status": "COMPUTATION_STARTED", "server_ips": "1.1.1.1"}
         )
         state = await self.test_client.update_instance("id")
@@ -175,7 +177,37 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
                 if not instance_id:
                     mock_update.assert_not_called()
 
-    def _get_graph_api_output(self, text: Any) -> requests.Response:
+    @patch(
+        "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient._create_instance",
+        new_callable=AsyncMock,
+    )
+    @patch(
+        "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient._get_existing_pa_instance_id",
+        new_callable=AsyncMock,
+    )
+    async def test_attribution_create_instance_logic(
+        self, mock_get_existing_pa_id, mock_create
+    ) -> None:
+        pa_args = BoltPAGraphAPICreateInstanceArgs(
+            instance_id="id",
+            dataset_id="data_id",
+            timestamp="0",
+            attribution_rule="rule",
+            num_containers="1",
+        )
+        self.test_client._get_pa_instance_info = AsyncMock()
+        self.test_client._check_version = MagicMock()
+        for id_exists in (True, False):
+            mock_get_existing_pa_id.return_value = "existing_id" if id_exists else None
+            mock_create.return_value = self._get_graph_api_id_output("created_id")
+            with self.subTest(id_exists=id_exists):
+                actual_id = await self.test_client.create_instance(pa_args)
+                if id_exists:
+                    self.assertEqual(actual_id, "existing_id")
+                else:
+                    self.assertEqual(actual_id, "created_id")
+
+    def _get_graph_api_text_output(self, text: Any) -> requests.Response:
         r = requests.Response()
         r.status_code = 200
         # pyre-ignore
@@ -183,6 +215,18 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
 
         def json_func(**kwargs) -> Any:
             return text
+
+        r.json = json_func
+        return r
+
+    def _get_graph_api_id_output(self, instance_id: Any) -> requests.Response:
+        r = requests.Response()
+        r.status_code = 200
+        # pyre-ignore
+        type(r).id = PropertyMock(return_value=json.dumps(instance_id))
+
+        def json_func(**kwargs) -> Any:
+            return MagicMock(id=instance_id)
 
         r.json = json_func
         return r
