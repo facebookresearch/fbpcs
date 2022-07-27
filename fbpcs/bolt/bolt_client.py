@@ -6,6 +6,7 @@
 
 # pyre-strict
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional, Type
@@ -29,8 +30,14 @@ class BoltState:
 
 class BoltClient(ABC):
     """
-    Exposes async methods for creating instances, running stages, updating instances, and validating the correctness of a computation
+    Exposes async methods for creating instances, running stages, updating instances,
+    and validating the correctness of a computation
     """
+
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+        self.logger: logging.Logger = (
+            logging.getLogger(__name__) if logger is None else logger
+        )
 
     @abstractmethod
     async def create_instance(self, instance_args: BoltCreateInstanceArgs) -> str:
@@ -80,3 +87,23 @@ class BoltClient(ABC):
             if self.ready_for_stage(status, stage):
                 return stage
         return None
+
+    async def is_existing_instance(self, instance_args: BoltCreateInstanceArgs) -> bool:
+        """Returns whether the instance with instance_args exists
+
+        Args:
+            - instance_args: The arguments for creating the instance
+
+        Returns:
+            True if there is an instance with these instance_args, False otherwise
+        """
+
+        instance_id = instance_args.instance_id
+        try:
+            self.logger.info(f"Checking if {instance_id} exists...")
+            await self.update_instance(instance_id=instance_id)
+            self.logger.info(f"{instance_id} found.")
+            return True
+        except Exception:
+            self.logger.info(f"{instance_id} not found.")
+            return False
