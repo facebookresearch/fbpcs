@@ -243,30 +243,41 @@ class ShardCombinerGameTestFixture
   std::string baseDir_;
 };
 
-// This test check if 2 shards containing 1 metric (clicks)
-// can be combined. Basically checks if 100 + 90 = 190
+// This test checks if the combiner logic works as expected.
+// There are 2 main tests,
+//    1. Add 2 shards (even number of shards): 100+90 == 190? "PASS":"FAIL"
+//    2. Add 3 shards (odd number of shards): 100+90+10 == 200? "PASS":"FAIL"
 TEST_P(ShardCombinerGameTestFixture, TestAggLogic) {
   auto [schedulerType, usingBatch] = GetParam();
   std::string partnerFileName = "input_partner.json";
   std::string publisherFileName = "input_publisher.json";
-  std::string expectedOutFileName = "expected_out.json";
-  if (usingBatch) {
-    runTestWithParams<true>(
-        schedulerType,
-        baseDir_ + "combiner_logic_test/",
-        partnerFileName,
-        publisherFileName,
-        2,
-        expectedOutFileName);
-  } else {
-    runTestWithParams<false>(
-        schedulerType,
-        baseDir_ + "combiner_logic_test/",
-        partnerFileName,
-        publisherFileName,
-        2,
-        expectedOutFileName);
-  }
+  std::string expectedOutFileNamePrefix = "expected_out_shards_";
+  auto testFn = [&](int32_t numShards,
+                    bool usingBatch,
+                    common::SchedulerType schedulerType) {
+    std::string expectedOutFileName =
+        folly::sformat("{}{}.json", expectedOutFileNamePrefix, numShards);
+    if (usingBatch) {
+      runTestWithParams<true>(
+          schedulerType,
+          baseDir_ + "combiner_logic_test/",
+          partnerFileName,
+          publisherFileName,
+          numShards,
+          expectedOutFileName);
+    } else {
+      runTestWithParams<false>(
+          schedulerType,
+          baseDir_ + "combiner_logic_test/",
+          partnerFileName,
+          publisherFileName,
+          numShards,
+          expectedOutFileName);
+    }
+  };
+
+  testFn(2, usingBatch, schedulerType);
+  testFn(3, usingBatch, schedulerType);
 }
 
 // This test checks if 2 shards that have different attribution
