@@ -394,13 +394,21 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             private_computation_instance.elapsed_time,
         )
 
-        expected_end_ts = time.time() + 1
+        before_end_time = time.time()
         private_computation_instance.update_status(
             private_computation_instance.stage_flow.get_last_stage().completed_status,
             logging.getLogger(),
         )
-        self.assertEqual(
-            expected_end_ts, private_computation_instance.infra_config.end_ts
+        after_end_time = time.time()
+        # We have this somewhat complicated assert because `time.time` will be called
+        # multiple times inside the `update_status` statement and don't want any
+        # *really* specific testing like "end_ts = time.time() + 2" since that would
+        # be testing a side-effect rather than actual usage. Instead, we just check
+        # that the end time happened in between the time before and after the call.
+        self.assertTrue(
+            before_end_time
+            < private_computation_instance.infra_config.end_ts
+            < after_end_time
         )
         expected_elapsed_time = (
             private_computation_instance.infra_config.end_ts

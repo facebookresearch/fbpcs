@@ -5,7 +5,6 @@
 
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Set, Type, TYPE_CHECKING, Union
 
@@ -70,8 +69,7 @@ class StatusUpdate:
 # called in post_status_hook
 # happens whenever status is updated
 def post_update_status(obj: "InfraConfig") -> None:
-    # TODO:T126122461 uniform time assignment for `status_update_ts` and `end_ts`
-    obj.status_update_ts = int(datetime.now(tz=timezone.utc).timestamp())
+    obj.status_update_ts = int(time.time())
     append_status_updates(obj)
     if obj.is_stage_flow_completed():
         obj.end_ts = int(time.time())
