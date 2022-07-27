@@ -36,6 +36,9 @@ struct PrivateMeasurementConversionMetadata {
       convValue = SecConvValue<schedulerId>(std::move(extractedConvValue));
     }
   }
+  explicit PrivateMeasurementConversionMetadata(
+      const SecConvValue<schedulerId>& secConvValue)
+      : convValue(secConvValue) {}
 
   SecConvValue<schedulerId> convValue;
 };
