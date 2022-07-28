@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h>
+#include <fbpcs/emp_games/pcf2_aggregation/AttributionReformattedResult.h>
 #include "fbpcf/engine/util/AesPrgFactory.h"
 #include "fbpcf/mpc_std_lib/oram/DifferenceCalculatorFactory.h"
 #include "fbpcf/mpc_std_lib/oram/LinearOramFactory.h"
@@ -42,6 +44,17 @@ AggregationGame<schedulerId>::privatelyShareAttributionResults(
   return common::privatelyShareArrays<
       AttributionResult,
       PrivateAttributionResult<schedulerId>>(attributionResults);
+}
+
+template <int schedulerId>
+std::vector<std::vector<PrivateAttributionReformattedResult<schedulerId>>>
+AggregationGame<schedulerId>::privatelyShareAttributionReformattedResults(
+    const std::vector<std::vector<AttributionReformattedResult>>&
+        attributionReformattedResults) {
+  return common::privatelyShareArrays<
+      AttributionReformattedResult,
+      PrivateAttributionReformattedResult<schedulerId>>(
+      attributionReformattedResults);
 }
 
 template <int schedulerId>
@@ -180,6 +193,9 @@ AggregationOutputMetrics AggregationGame<schedulerId>::computeAggregations(
   MeasurementCvmArrays<schedulerId> privateCvmArrays;
   std::vector<std::vector<PrivateAttributionResult<schedulerId>>>
       privateAttributionResult;
+  std::vector<std::vector<PrivateAttributionReformattedResult<schedulerId>>>
+      privateAttributionReformattedResults;
+
   for (const auto& aggregationFormat : aggregationFormats) {
     switch (aggregationFormat.id) {
       case AGGREGATION_FORMAT::AD_OBJECT_FORMAT:
@@ -222,41 +238,80 @@ AggregationOutputMetrics AggregationGame<schedulerId>::computeAggregations(
 
   AggregationOutputMetrics out;
   const auto& attributionRules = inputData.getAttributionRules();
-  const auto& attributionSecretShares = inputData.getAttributionSecretShares();
 
-  for (size_t i = 0; i < attributionRules.size(); ++i) {
-    // share secret shares computed for each attribution Rule
-    std::vector<std::vector<AttributionResult>> attributionResultsPerRule;
-    // We will share attribution results per attribution rule.
-    for (const auto& entries : attributionSecretShares.at(i)) {
-      std::vector<AttributionResult> results;
-      for (const auto& entry : entries) {
-        results.push_back(AttributionResult{entry.isAttributed});
+  if (FLAGS_use_new_output_format) {
+    const auto& attributionReformattedSecretShares =
+        inputData.getAttributionReformattedSecretShares();
+    for (size_t i = 0; i < attributionRules.size(); ++i) {
+      // share secret shares computed for each attribution Rule
+      std::vector<std::vector<AttributionReformattedResult>>
+          attributionReformattedResultsPerRule;
+      // We will share attribution results per attribution rule.
+      for (const auto& entries : attributionReformattedSecretShares.at(i)) {
+        std::vector<AttributionReformattedResult> results;
+        for (const auto& entry : entries) {
+          results.push_back(AttributionReformattedResult{
+              entry.adId, entry.convValue, entry.isAttributed});
+        }
+        attributionReformattedResultsPerRule.push_back(results);
       }
-      attributionResultsPerRule.push_back(results);
+
+      XLOG(INFO, "Sharing reformatted attribution results...");
+      auto secretReformattedSharePerRule = AggregationGame<schedulerId>::
+          privatelyShareAttributionReformattedResults(
+              attributionReformattedResultsPerRule);
+
+      PrivateAggregationReformatted<schedulerId> privateAggregationReformatted{
+          secretReformattedSharePerRule};
+
+      aggregationMetrics.computeAggregationsReformattedPerFormat(
+          privateAggregationReformatted);
+
+      // currently we only support one aggregation format
+      XLOGF(
+          INFO,
+          "Done computing aggregation for {} and {}.",
+          aggregationFormats.at(0).name,
+          attributionRules.at(i));
+
+      out.ruleToMetrics[attributionRules.at(i)] = aggregationMetrics.reveal();
     }
+  } else {
+    const auto& attributionSecretShares =
+        inputData.getAttributionSecretShares();
 
-    XLOG(INFO, "Sharing attribution results...");
-    auto secretSharePerRule =
-        AggregationGame<schedulerId>::privatelyShareAttributionResults(
-            attributionResultsPerRule);
+    for (size_t i = 0; i < attributionRules.size(); ++i) {
+      // share secret shares computed for each attribution Rule
+      std::vector<std::vector<AttributionResult>> attributionResultsPerRule;
+      // We will share attribution results per attribution rule.
+      for (const auto& entries : attributionSecretShares.at(i)) {
+        std::vector<AttributionResult> results;
+        for (const auto& entry : entries) {
+          results.push_back(AttributionResult{entry.isAttributed});
+        }
+        attributionResultsPerRule.push_back(results);
+      }
 
-    PrivateAggregation<schedulerId> privateAggregation{
-        secretSharePerRule, privateTpmArrays, privateCvmArrays};
+      XLOG(INFO, "Sharing attribution results...");
+      auto secretSharePerRule =
+          AggregationGame<schedulerId>::privatelyShareAttributionResults(
+              attributionResultsPerRule);
 
-    aggregationMetrics.computeAggregationsPerFormat(privateAggregation);
+      PrivateAggregation<schedulerId> privateAggregation{
+          secretSharePerRule, privateTpmArrays, privateCvmArrays};
 
-    // currently we only support one aggregation format
-    XLOGF(
-        INFO,
-        "Done computing aggregation for {} and {}.",
-        aggregationFormats.at(0).name,
-        attributionRules.at(i));
+      aggregationMetrics.computeAggregationsPerFormat(privateAggregation);
 
-    out.ruleToMetrics[attributionRules.at(i)] = aggregationMetrics.reveal();
+      // currently we only support one aggregation format
+      XLOGF(
+          INFO,
+          "Done computing aggregation for {} and {}.",
+          aggregationFormats.at(0).name,
+          attributionRules.at(i));
+
+      out.ruleToMetrics[attributionRules.at(i)] = aggregationMetrics.reveal();
+    }
   }
-
   return out;
 }
-
 } // namespace pcf2_aggregation

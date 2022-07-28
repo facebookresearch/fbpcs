@@ -67,6 +67,11 @@ class AggregationGame : public fbpcf::frontend::MpcGame<schedulerId> {
   privatelyShareAttributionResults(
       const std::vector<std::vector<AttributionResult>>& attributionResults);
 
+  std::vector<std::vector<PrivateAttributionReformattedResult<schedulerId>>>
+  privatelyShareAttributionReformattedResults(
+      const std::vector<std::vector<AttributionReformattedResult>>&
+          attributionReformattedResults);
+
   /**
    * Both parties share and retrieve valid original ad ids.
    */
