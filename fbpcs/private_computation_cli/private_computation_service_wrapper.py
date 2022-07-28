@@ -17,7 +17,10 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
+
+from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.pcs_container_service import PCSContainerService
+from fbpcs.common.service.simple_metric_service import SimpleMetricService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
@@ -404,6 +407,12 @@ def _build_mpc_service(
     )
 
 
+def _build_metric_service(config: Optional[Dict[str, Any]]) -> MetricService:
+    if config is None:
+        return SimpleMetricService()
+    return reflect.get_instance(config, MetricService)
+
+
 def _build_private_computation_service(
     pc_config: Dict[str, Any],
     mpc_config: Dict[str, Any],
@@ -436,18 +445,22 @@ def _build_private_computation_service(
         )
     else:
         workflow_service = None
+
+    metric_svc = _build_metric_service(pc_config["dependency"].get("MetricService"))
+
     return PrivateComputationService(
-        repository_service,
-        storage_service,
-        _build_mpc_service(
+        instance_repository=repository_service,
+        storage_svc=storage_service,
+        mpc_svc=_build_mpc_service(
             mpc_config, onedocker_service_config, container_service, storage_service
         ),
-        onedocker_service,
-        onedocker_binary_config_map,
-        _parse_pc_validator_config(pc_config),
-        _get_post_processing_handlers(pph_config),
-        _get_post_processing_handlers(pid_pph_config),
+        onedocker_svc=onedocker_service,
+        onedocker_binary_config_map=onedocker_binary_config_map,
+        pc_validator_config=_parse_pc_validator_config(pc_config),
+        post_processing_handlers=_get_post_processing_handlers(pph_config),
+        pid_post_processing_handlers=_get_post_processing_handlers(pid_pph_config),
         workflow_svc=workflow_service,
+        metric_svc=metric_svc,
     )
 
 
