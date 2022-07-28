@@ -1,0 +1,864 @@
+{
+    "last_touch_2_7d": {
+        "default": {
+            "0": [
+                {
+                    "ad_id": -6190390937636831253,
+                    "conv_value": 4155339604,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -8150345712875944988,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -8992018324336903576,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -5710861084732712476,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "1": [
+                {
+                    "ad_id": 1333792640801127575,
+                    "conv_value": 1455314836,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -3592742550085523201,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 2838253996036260702,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -1391963782551952540,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "10": [
+                {
+                    "ad_id": -6012091562499531842,
+                    "conv_value": 631065289,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -2668572974321653377,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 4464006890081059796,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 3253503397427059027,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "11": [
+                {
+                    "ad_id": -7504639399683563574,
+                    "conv_value": 692682125,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 8795564330099487410,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -7555784886583868928,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 5107391652482781336,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "12": [
+                {
+                    "ad_id": 863485829736735061,
+                    "conv_value": 133778401,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -1778174207337929044,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -733161806291663533,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 979792295330158107,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "13": [
+                {
+                    "ad_id": -9078450409617942286,
+                    "conv_value": 2033937132,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4720067105702946025,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -6199940105159701703,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 4114895117923616436,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "14": [
+                {
+                    "ad_id": 6027923280196357073,
+                    "conv_value": 1862471039,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 1227406233737116837,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -4522634896085161116,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -7001931513741305004,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "15": [
+                {
+                    "ad_id": -5416266608054704094,
+                    "conv_value": 3585708171,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 411157494772096032,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -938826313737985698,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 6989985274074124880,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "16": [
+                {
+                    "ad_id": -67145287730774009,
+                    "conv_value": 3555635677,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -2258175133829066246,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 4719884397523721822,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -673308183793841973,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "17": [
+                {
+                    "ad_id": 5951458473298586476,
+                    "conv_value": 1852299892,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -3548756178699466113,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 412864189446607556,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -7459804906685708325,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "18": [
+                {
+                    "ad_id": -8533548835412082725,
+                    "conv_value": 1920927326,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 6188979969047454499,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -2157408752295984585,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -4596233405358573803,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "19": [
+                {
+                    "ad_id": 1124382964864299450,
+                    "conv_value": 1346092403,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 6335022093873598857,
+                    "conv_value": 1994388325,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 4598915712989484354,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 8817397786556873625,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "2": [
+                {
+                    "ad_id": -7520363025367078570,
+                    "conv_value": 4178271483,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 1524161502910887541,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 8134365393088448616,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -2027554033640605579,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "20": [
+                {
+                    "ad_id": 6242573528651707184,
+                    "conv_value": 294924103,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -3692867940480435971,
+                    "conv_value": 1752720484,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -343830297622987483,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 7122382731842903093,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "21": [
+                {
+                    "ad_id": 550863969851670381,
+                    "conv_value": 2375351603,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 5812114948392374471,
+                    "conv_value": 3484481484,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 6158384216616309156,
+                    "conv_value": 386515156,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -4189932381945311828,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "22": [
+                {
+                    "ad_id": 6484811169371529423,
+                    "conv_value": 4039591709,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 6763445353958107947,
+                    "conv_value": 2341518249,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -6517932533165090740,
+                    "conv_value": 1325196048,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 3027711410441634627,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "23": [
+                {
+                    "ad_id": -1650756172099708851,
+                    "conv_value": 1271230539,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 6887250141632680691,
+                    "conv_value": 827705425,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -8866287514081236988,
+                    "conv_value": 4282043361,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 759983030644335043,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "24": [
+                {
+                    "ad_id": 8846031244765797253,
+                    "conv_value": 3181888196,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4943256644312734132,
+                    "conv_value": 439004431,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 234194101518787087,
+                    "conv_value": 2702598384,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 4914663330276775332,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "25": [
+                {
+                    "ad_id": -1268546348171372444,
+                    "conv_value": 2785802030,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4472134081835567079,
+                    "conv_value": 3728143461,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4239139193752869101,
+                    "conv_value": 3501789611,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 180816275687205441,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "26": [
+                {
+                    "ad_id": 2958503356719078113,
+                    "conv_value": 3899414055,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 2653647875755043575,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 7988875928646012011,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -3483484374339246132,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "27": [
+                {
+                    "ad_id": 1015126928838461579,
+                    "conv_value": 1997701591,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 184752791702872970,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -3979212855046301251,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 5659761367185197154,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "28": [
+                {
+                    "ad_id": -2391520763407526398,
+                    "conv_value": 3006099430,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 8410742902183025930,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -7277769178127860486,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -5044319690487717954,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "29": [
+                {
+                    "ad_id": -4658316406261032624,
+                    "conv_value": 1652624023,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -7185714325371979040,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -5291833224170807161,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -784041700352572261,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "3": [
+                {
+                    "ad_id": 8079353045951038902,
+                    "conv_value": 1963026766,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 3998796300240712717,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -1774049580768589877,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 3376601989983498216,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "30": [
+                {
+                    "ad_id": 2850651601690590779,
+                    "conv_value": 3907127794,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 3598470599126699089,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 9014699232717062973,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 1313454587627554199,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "31": [
+                {
+                    "ad_id": 1095598890541646569,
+                    "conv_value": 2630141820,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -6057895292012622949,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 6525143348630767397,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4739709426516178493,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "32": [
+                {
+                    "ad_id": 3416350191066393288,
+                    "conv_value": 3645581755,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 3327464847192347013,
+                    "conv_value": 2521189132,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 261564209867764275,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 5769708750771480936,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "33": [
+                {
+                    "ad_id": 1142800397047306767,
+                    "conv_value": 2425086095,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 7572174068738587084,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -3802190202915293254,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -4507083517557384591,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "34": [
+                {
+                    "ad_id": -4806519776852603354,
+                    "conv_value": 2256457122,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 708754534642021214,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -1593305829530821988,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 2083136656207272610,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "35": [
+                {
+                    "ad_id": -1617356331918899692,
+                    "conv_value": 3365699522,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -5627944234901142442,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 1427267504254829326,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -2605884094433666041,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "36": [
+                {
+                    "ad_id": 3452338450022894608,
+                    "conv_value": 2192978846,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 2184722879428144234,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 9138199464248294340,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -1291229083690032002,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "37": [
+                {
+                    "ad_id": -4820112763494910251,
+                    "conv_value": 3334006204,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 8097407637129379543,
+                    "conv_value": 2632500962,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 2817180549646121996,
+                    "conv_value": 3807817555,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -1753100521284164807,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "38": [
+                {
+                    "ad_id": 3539522575297572907,
+                    "conv_value": 210539070,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 2399068208157050182,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 7373613169109216763,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -5589776731131538421,
+                    "conv_value": 0,
+                    "is_attributed": true
+                }
+            ],
+            "4": [
+                {
+                    "ad_id": 6298039807120940580,
+                    "conv_value": 402598600,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 4314381985640743386,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -2745608489609140172,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -5068664929244641652,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "5": [
+                {
+                    "ad_id": 7697217966426229037,
+                    "conv_value": 572567502,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 5112033711159110407,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 5596715388057312538,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 3624276036808716774,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "6": [
+                {
+                    "ad_id": 3701865920789194069,
+                    "conv_value": 4142050548,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 7917223896351303397,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4012233070060848269,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": 8204564699355269479,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "7": [
+                {
+                    "ad_id": -3481273019752038158,
+                    "conv_value": 4060696719,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 7033503046339697810,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 2781738120383948825,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4821225503190555623,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "8": [
+                {
+                    "ad_id": -720486299094999394,
+                    "conv_value": 494078986,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 8846923642454722506,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 2840157383472102767,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": 7020816278473217125,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ],
+            "9": [
+                {
+                    "ad_id": -4685346819053082417,
+                    "conv_value": 2043332253,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -1890802016160969848,
+                    "conv_value": 0,
+                    "is_attributed": false
+                },
+                {
+                    "ad_id": -2708219979109736154,
+                    "conv_value": 0,
+                    "is_attributed": true
+                },
+                {
+                    "ad_id": -4358564984694489465,
+                    "conv_value": 0,
+                    "is_attributed": false
+                }
+            ]
+        }
+    }
+}
