@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h>
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -111,6 +112,37 @@ class MeasurementAggregator : public Aggregator<schedulerId> {
     aggregateUsingOram(touchpointConversionResults);
   }
 
+  virtual void aggregateReformattedAttributions(
+      const PrivateAggregationReformatted<schedulerId>&
+          privateAggregationReformatted) override {
+    XLOG(
+        INFO,
+        "Computing measurement aggregation based on reformatted attributions...");
+    const auto& privateAttributionReformattedArrays =
+        privateAggregationReformatted.attributionReformattedResults;
+    XLOGF(
+        DBG,
+        "For measurement aggregator, size of reformatted attribution: {}",
+        privateAttributionReformattedArrays.size());
+
+    std::vector<std::vector<typename MeasurementAggregation<
+        schedulerId>::PrivateMeasurementAggregationResult>>
+        touchpointConversionResults;
+    for (size_t i = 0; i < privateAttributionReformattedArrays.size(); ++i) {
+      // Retrieve the touchpoint-conversion metadata pairs based on
+      // attribution results.
+      auto touchpointConversionResultsPerId =
+          retrieveTouchpointForConversionPerIDReformatted(
+              privateAttributionReformattedArrays.at(i));
+      touchpointConversionResults.push_back(touchpointConversionResultsPerId);
+    }
+
+    XLOG(INFO, "Retrieved touchpoint-conversion metadata");
+
+    // Use ORAM for aggregation
+    aggregateUsingOram(touchpointConversionResults);
+  }
+
   const std::vector<typename MeasurementAggregation<
       schedulerId>::PrivateMeasurementAggregationResult>
   retrieveTouchpointForConversionPerID(
@@ -147,6 +179,39 @@ class MeasurementAggregator : public Aggregator<schedulerId> {
           schedulerId>::PrivateMeasurementAggregationResult aggregationResult{
           /* hasAttributedTouchpoint */ hasAttributedTouchpoint,
           /* conv */ privateCvmArray.at(convIndex),
+          /* tp */
+          PrivateMeasurementTouchpointMetadata<schedulerId>{attributedAdId}};
+
+      aggregationResults.push_back(aggregationResult);
+    }
+    return aggregationResults;
+  }
+
+  const std::vector<typename MeasurementAggregation<
+      schedulerId>::PrivateMeasurementAggregationResult>
+  retrieveTouchpointForConversionPerIDReformatted(
+      const std::vector<PrivateAttributionReformattedResult<schedulerId>>&
+          attributionReformattedResults) {
+    std::vector<typename MeasurementAggregation<
+        schedulerId>::PrivateMeasurementAggregationResult>
+        aggregationResults;
+
+    int numOfResults = attributionReformattedResults.size() - 1;
+
+    for (auto atIndex = numOfResults; atIndex >= 0; atIndex--) {
+      SecBit<schedulerId> hasAttributedTouchpoint;
+      SecConvValue<schedulerId> conversionValue;
+      SecAdId<schedulerId> attributedAdId;
+      hasAttributedTouchpoint =
+          attributionReformattedResults.at(atIndex).isAttributed;
+      attributedAdId = attributionReformattedResults.at(atIndex).adId;
+      conversionValue = attributionReformattedResults.at(atIndex).convValue;
+
+      typename MeasurementAggregation<
+          schedulerId>::PrivateMeasurementAggregationResult aggregationResult{
+          /* hasAttributedTouchpoint */ hasAttributedTouchpoint,
+          /* conv */
+          PrivateMeasurementConversionMetadata<schedulerId>{conversionValue},
           /* tp */
           PrivateMeasurementTouchpointMetadata<schedulerId>{attributedAdId}};
 
