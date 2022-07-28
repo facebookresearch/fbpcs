@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h>
+#include <fbpcs/emp_games/pcf2_aggregation/AttributionReformattedResult.h>
 #include "fbpcf/engine/util/AesPrgFactory.h"
 #include "fbpcf/mpc_std_lib/oram/DifferenceCalculatorFactory.h"
 #include "fbpcf/mpc_std_lib/oram/LinearOramFactory.h"
@@ -42,6 +44,17 @@ AggregationGame<schedulerId>::privatelyShareAttributionResults(
   return common::privatelyShareArrays<
       AttributionResult,
       PrivateAttributionResult<schedulerId>>(attributionResults);
+}
+
+template <int schedulerId>
+std::vector<std::vector<PrivateAttributionReformattedResult<schedulerId>>>
+AggregationGame<schedulerId>::privatelyShareAttributionReformattedResults(
+    const std::vector<std::vector<AttributionReformattedResult>>&
+        attributionReformattedResults) {
+  return common::privatelyShareArrays<
+      AttributionReformattedResult,
+      PrivateAttributionReformattedResult<schedulerId>>(
+      attributionReformattedResults);
 }
 
 template <int schedulerId>
@@ -206,9 +219,9 @@ AggregationOutputMetrics AggregationGame<schedulerId>::computeAggregations(
       AggregationContext{validOriginalAdIds},
       myRole,
       concurrency_,
-      // linear ORAM will be less efficient theoretically if ORAM size is larger
-      // than 4. Since ORAM size is adid size + 1, we use 3 as the threshold
-      // here.
+      // linear ORAM will be less efficient theoretically if ORAM size is
+      // larger than 4. Since ORAM size is adid size + 1, we use 3 as the
+      // threshold here.
       std::move(
           validOriginalAdIds.size() > 3
               ? fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
@@ -259,4 +272,92 @@ AggregationOutputMetrics AggregationGame<schedulerId>::computeAggregations(
   return out;
 }
 
+template <int schedulerId>
+AggregationOutputMetrics
+AggregationGame<schedulerId>::computeAggregationsReformatted(
+    const int myRole,
+    const AggregationInputMetrics& inputData) {
+  XLOG(INFO, "Running private aggregation");
+
+  auto ids = inputData.getIds();
+  uint32_t numIds = ids.size();
+  XLOGF(INFO, "Have {} ids", numIds);
+
+  // Send over all of the data needed for this computation
+  XLOG(INFO, "Sharing aggregation formats...");
+  const auto aggregationFormats =
+      shareAggregationFormats(myRole, inputData.getAggregationFormats());
+  auto touchpointMetadataArrays = inputData.getTouchpointMetadata();
+  XLOG(INFO, "Sharing original Ad Ids...");
+  auto validOriginalAdIds =
+      retrieveValidOriginalAdIds(myRole, touchpointMetadataArrays);
+
+  const int64_t indicatorSumWidth = adIdWidth;
+  bool isPublisher = (myRole == common::PUBLISHER);
+  auto oramRole = isPublisher
+      ? fbpcf::mpc_std_lib::oram::IWriteOnlyOram<
+            fbpcf::mpc_std_lib::util::AggregationValue>::Alice
+      : fbpcf::mpc_std_lib::oram::IWriteOnlyOram<
+            fbpcf::mpc_std_lib::util::AggregationValue>::Bob;
+
+  PrivateAggregationMetrics<schedulerId> aggregationMetrics{
+      aggregationFormats,
+      AggregationContext{validOriginalAdIds},
+      myRole,
+      concurrency_,
+      // linear ORAM will be less efficient theoretically if ORAM size is
+      // larger than 4. Since ORAM size is adid size + 1, we use 3 as the
+      // threshold here.
+      std::move(
+          validOriginalAdIds.size() > 3
+              ? fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
+                    fbpcf::mpc_std_lib::util::AggregationValue,
+                    indicatorSumWidth,
+                    schedulerId>(isPublisher, 0, 1, *communicationAgentFactory_)
+              : fbpcf::mpc_std_lib::oram::getSecureLinearOramFactory<
+                    fbpcf::mpc_std_lib::util::AggregationValue,
+                    schedulerId>(
+                    isPublisher, 0, 1, *communicationAgentFactory_))};
+
+  AggregationOutputMetrics out;
+  const auto& attributionRules = inputData.getAttributionRules();
+  const auto& attributionReformattedSecretShares =
+      inputData.getAttributionReformattedSecretShares();
+
+  for (size_t i = 0; i < attributionRules.size(); ++i) {
+    // share secret shares computed for each attribution Rule
+    std::vector<std::vector<AttributionReformattedResult>>
+        attributionReformattedResultsPerRule;
+    // We will share attribution results per attribution rule.
+    for (const auto& entries : attributionReformattedSecretShares.at(i)) {
+      std::vector<AttributionReformattedResult> results;
+      for (const auto& entry : entries) {
+        results.push_back(AttributionReformattedResult{
+            entry.adId, entry.convValue, entry.isAttributed});
+      }
+      attributionReformattedResultsPerRule.push_back(results);
+    }
+
+    XLOG(INFO, "Sharing reformatted attribution results...");
+    auto secretReformattedSharePerRule = AggregationGame<schedulerId>::
+        privatelyShareAttributionReformattedResults(
+            attributionReformattedResultsPerRule);
+
+    PrivateAggregationReformatted<schedulerId> privateAggregationReformatted{
+        secretReformattedSharePerRule};
+
+    aggregationMetrics.computeAggregationsReformattedPerFormat(
+        privateAggregationReformatted);
+
+    // currently we only support one aggregation format
+    XLOGF(
+        INFO,
+        "Done computing aggregation for {} and {}.",
+        aggregationFormats.at(0).name,
+        attributionRules.at(i));
+
+    out.ruleToMetrics[attributionRules.at(i)] = aggregationMetrics.reveal();
+  }
+  return out;
+}
 } // namespace pcf2_aggregation
