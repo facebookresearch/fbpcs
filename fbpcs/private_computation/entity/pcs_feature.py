@@ -11,18 +11,18 @@ from enum import Enum
 
 
 class PCSFeature(Enum):
-    UNKNOWN = "unknown"
-    PCS_DUMMY = "pcs_dummy_feature"
+
     BOLT_RUNNER = "bolt_runner"
+    PCS_DUMMY = "pcs_dummy_feature"
+    PRIVATE_LIFT_PCF2_RELEASE = "private_lift_pcf2_release"
+    UNKNOWN = "unknown"
 
     @staticmethod
     def from_str(feature_str: str) -> "PCSFeature":
         """maps str (possibly feature name defined in SV) to a PCSFeature."""
         feature_str = feature_str.casefold()
-        if feature_str == PCSFeature.PCS_DUMMY.value:
-            return PCSFeature.PCS_DUMMY
-        elif feature_str == PCSFeature.BOLT_RUNNER.value:
-            return PCSFeature.BOLT_RUNNER
-        else:
+        try:
+            return PCSFeature(feature_str)
+        except ValueError:
             logging.warning(f"can't map {feature_str} to pre-defined PCSFeature")
             return PCSFeature.UNKNOWN
