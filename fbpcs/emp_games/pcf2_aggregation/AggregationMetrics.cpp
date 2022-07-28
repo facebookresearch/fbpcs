@@ -227,13 +227,19 @@ AggregationInputMetrics::AggregationInputMetrics(
   // an unordered_map.
   auto attributionResultJson = folly::parseJson(
       fbpcf::io::FileIOWrappers::readFile(inputSecretShareFilePath));
-
   for (const auto& [rule, formatters] : attributionResultJson.items()) {
     attributionRules_.push_back(rule.asString());
   }
 
-  attributionSecretShare_ = AggregationMetrics::getAttributionsArrayfromDynamic(
-      attributionResultJson);
+  if (FLAGS_use_new_output_format) {
+    attributionReformattedSecretShare_ =
+        AggregationMetrics::getAttributionsReformattedArrayfromDynamic(
+            attributionResultJson);
+  } else {
+    attributionSecretShare_ =
+        AggregationMetrics::getAttributionsArrayfromDynamic(
+            attributionResultJson);
+  }
 }
 
 } // namespace pcf2_aggregation

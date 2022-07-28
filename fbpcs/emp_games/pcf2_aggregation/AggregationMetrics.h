@@ -15,6 +15,7 @@
 #include "fbpcs/emp_games/common/Csv.h"
 
 #include "fbpcs/emp_games/pcf2_aggregation/Aggregator.h"
+#include "fbpcs/emp_games/pcf2_aggregation/AttributionReformattedResult.h"
 #include "fbpcs/emp_games/pcf2_aggregation/AttributionResult.h"
 #include "fbpcs/emp_games/pcf2_aggregation/ConversionMetadata.h"
 #include "fbpcs/emp_games/pcf2_aggregation/TouchpointMetadata.h"
@@ -26,9 +27,17 @@ struct AggregationMetrics {
       std::vector<std::map<int64_t, std::vector<AttributionResult>>>;
   using AttributionResultsList =
       std::vector<std::vector<std::vector<AttributionResult>>>;
+
+  using AttributionReformattedResultsMap =
+      std::vector<std::map<int64_t, std::vector<AttributionReformattedResult>>>;
+  using AttributionReformattedResultsList =
+      std::vector<std::vector<std::vector<AttributionReformattedResult>>>;
+
   AttributionResultsList attributionPidVector;
+  AttributionReformattedResultsList attributionReformattedPidVector;
 
   std::vector<std::string> attributionList;
+  std::vector<std::string> attributionReformattedList;
   std::unordered_map<std::string, AggregationOutput> formatToAggregation;
 
   folly::dynamic toDynamic() const {
@@ -98,6 +107,47 @@ struct AggregationMetrics {
 
     return attributionResultsList;
   }
+
+  static AggregationMetrics::AttributionReformattedResultsList
+  getAttributionsReformattedArrayfromDynamic(const folly::dynamic& obj) {
+    AttributionReformattedResultsMap attributionReformattedPidVectorMap;
+    std::vector<std::string>
+        attributionReformattedList; // list of attribution rules
+    // For now, I am not using the rule name or formatter name in the logic as
+    // the aggregation behaviour is not affected by different attribution rules.
+    AttributionReformattedResultsList attributionReformattedResultsList;
+    for (const auto& [rule, formatters] : obj.items()) {
+      attributionReformattedList.push_back(rule.asString());
+      for (const auto& [formatter, resultPerPID] : formatters.items()) {
+        std::map<int64_t, std::vector<AttributionReformattedResult>>
+            attributionsReformattedPerPidMap;
+        for (const auto& [pid, results] : resultPerPID.items()) {
+          std::vector<AttributionReformattedResult>
+              attributionReformattedResults;
+          for (const auto& result : results) {
+            attributionReformattedResults.push_back(
+                AttributionReformattedResult::fromDynamic(result));
+          }
+          attributionsReformattedPerPidMap.emplace(
+              pid.asInt(), attributionReformattedResults);
+        }
+        attributionReformattedPidVectorMap.push_back(
+            attributionsReformattedPerPidMap);
+      }
+
+      for (const auto& attributionsPerPidMap :
+           attributionReformattedPidVectorMap) {
+        std::vector<std::vector<AttributionReformattedResult>>
+            attributionPidVector;
+        for (const auto& attributionResults : attributionsPerPidMap) {
+          attributionPidVector.push_back(attributionResults.second);
+        }
+        attributionReformattedResultsList.push_back(attributionPidVector);
+      }
+    }
+
+    return attributionReformattedResultsList;
+  }
 };
 
 struct AggregationOutputMetrics {
@@ -159,12 +209,15 @@ class AggregationInputMetrics {
       std::vector<std::string> attributionRules,
       std::vector<std::string> aggregationFormats,
       AggregationMetrics::AttributionResultsList attributionSecretShare,
+      AggregationMetrics::AttributionReformattedResultsList
+          attributionReformattedSecretShare,
       std::vector<std::vector<TouchpointMetadata>> touchpointMetadataArrays,
       std::vector<std::vector<ConversionMetadata>> conversionMetadataArrays)
       : ids_{ids},
         attributionRules_{attributionRules},
         aggregationFormats_{aggregationFormats},
         attributionSecretShare_{attributionSecretShare},
+        attributionReformattedSecretShare_{attributionReformattedSecretShare},
         touchpointMetadataArrays_{touchpointMetadataArrays},
         conversionMetadataArrays_{conversionMetadataArrays} {}
 
@@ -179,6 +232,11 @@ class AggregationInputMetrics {
   const AggregationMetrics::AttributionResultsList& getAttributionSecretShares()
       const {
     return attributionSecretShare_;
+  }
+
+  const AggregationMetrics::AttributionReformattedResultsList&
+  getAttributionReformattedSecretShares() const {
+    return attributionReformattedSecretShare_;
   }
 
   const std::vector<std::vector<TouchpointMetadata>>& getTouchpointMetadata()
@@ -200,6 +258,8 @@ class AggregationInputMetrics {
   std::vector<std::string> attributionRules_;
   std::vector<std::string> aggregationFormats_;
   AggregationMetrics::AttributionResultsList attributionSecretShare_;
+  AggregationMetrics::AttributionReformattedResultsList
+      attributionReformattedSecretShare_;
   std::vector<std::vector<TouchpointMetadata>> touchpointMetadataArrays_;
   std::vector<std::vector<ConversionMetadata>> conversionMetadataArrays_;
 };
@@ -225,6 +285,15 @@ class PrivateAggregationMetrics {
       const PrivateAggregation<schedulerId>& privateAggregation) {
     for (const auto& [format, aggregator] : formatToAggregator) {
       aggregator->aggregateAttributions(privateAggregation);
+    }
+  }
+
+  void computeAggregationsReformattedPerFormat(
+      const PrivateAggregationReformatted<schedulerId>&
+          privateAggregationReformatted) {
+    for (const auto& [format, aggregator] : formatToAggregator) {
+      aggregator->aggregateReformattedAttributions(
+          privateAggregationReformatted);
     }
   }
 
