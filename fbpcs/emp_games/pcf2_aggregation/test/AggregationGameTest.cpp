@@ -9,6 +9,7 @@
 #include <memory>
 #include <set>
 
+#include <fbpcs/emp_games/pcf2_aggregation/AttributionReformattedResult.h>
 #include "folly/test/JsonTestUtil.h"
 
 #include "fbpcf/engine/communication/InMemoryPartyCommunicationAgentFactory.h"
@@ -21,6 +22,7 @@
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
 #include "fbpcs/emp_games/pcf2_aggregation/AggregationGame.h"
+#include "fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h"
 #include "fbpcs/emp_games/pcf2_aggregation/test/AggregationTestUtils.h"
 
 namespace pcf2_aggregation {
@@ -145,6 +147,45 @@ std::vector<std::vector<bool>> shareAttributionResultsWithScheduler(
   return output;
 }
 
+template <int schedulerId>
+std::vector<std::vector<AttributionReformattedResult>>
+shareAttributionReformattedResultsWithScheduler(
+    int myId,
+    std::vector<std::vector<AttributionReformattedResult>>
+        attributionReformattedResults,
+    std::shared_ptr<
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
+    fbpcf::SchedulerCreator schedulerCreator) {
+  FLAGS_use_new_output_format = true;
+  // share attribution results
+  auto scheduler = schedulerCreator(myId, *factory);
+  auto game = std::make_unique<AggregationGame<schedulerId>>(
+      std::move(scheduler),
+      std::move(factory),
+      common::InputEncryption::Plaintext);
+  auto privateAttributionReformattedResults =
+      game->privatelyShareAttributionReformattedResults(
+              attributionReformattedResults)
+          .at(0);
+
+  // open results
+  std::vector<std::vector<AttributionReformattedResult>>
+      attributionReformattedResult{std::vector<AttributionReformattedResult>{}};
+  for (size_t i = 0; i < privateAttributionReformattedResults.size(); ++i) {
+    attributionReformattedResult.at(0).push_back(AttributionReformattedResult{
+        privateAttributionReformattedResults.at(i)
+            .adId.openToParty(common::PUBLISHER)
+            .getValue(),
+        privateAttributionReformattedResults.at(i)
+            .convValue.openToParty(common::PUBLISHER)
+            .getValue(),
+        privateAttributionReformattedResults.at(i)
+            .isAttributed.openToParty(common::PUBLISHER)
+            .getValue()});
+  }
+  return attributionReformattedResult;
+}
+
 void testAttributionResultWithScheduler(
     fbpcf::SchedulerCreator schedulerCreator) {
   std::vector<std::vector<AttributionResult>> publisherAttributionResult{
@@ -204,6 +245,76 @@ TEST(AggregationGameTest, TestAttributionResultEagerScheduler) {
 
 TEST(AggregationGameTest, TestAttributionResultLazyScheduler) {
   testAttributionResultWithScheduler(
+      fbpcf::scheduler::createLazySchedulerWithInsecureEngine<unsafe>);
+}
+
+void testAttributionReformattedResultWithScheduler(
+    fbpcf::SchedulerCreator schedulerCreator) {
+  std::vector<std::vector<AttributionReformattedResult>>
+      publisherAttributionResult{std::vector<AttributionReformattedResult>{
+          AttributionReformattedResult{1, 20, true},
+          AttributionReformattedResult{2, 20, true},
+          AttributionReformattedResult{0, 40, false},
+          AttributionReformattedResult{0, 60, false}}};
+
+  std::vector<std::vector<AttributionReformattedResult>>
+      partnerAttributionResult{std::vector<AttributionReformattedResult>{
+          AttributionReformattedResult{1, 20, true},
+          AttributionReformattedResult{0, 30, false},
+          AttributionReformattedResult{3, 60, true},
+          AttributionReformattedResult{0, 60, false}}};
+
+  // share results and open to one party
+  auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
+
+  auto future0 = std::async(
+      shareAttributionReformattedResultsWithScheduler<common::PUBLISHER>,
+      common::PUBLISHER,
+      publisherAttributionResult,
+      std::move(factories[common::PUBLISHER]),
+      schedulerCreator);
+
+  auto future1 = std::async(
+      shareAttributionReformattedResultsWithScheduler<common::PARTNER>,
+      common::PARTNER,
+      partnerAttributionResult,
+      std::move(factories[common::PARTNER]),
+      schedulerCreator);
+
+  auto res0 = future0.get().at(0);
+  auto res1 = future1.get().at(0);
+
+  // check against expected output
+  std::vector<AttributionReformattedResult> expectedOutput{
+      AttributionReformattedResult{0, 0, false},
+      AttributionReformattedResult{2, 10, true},
+      AttributionReformattedResult{3, 20, true},
+      AttributionReformattedResult{0, 0, false}};
+
+  ASSERT_EQ(res0.size(), 4);
+  ASSERT_EQ(res1.size(), 4);
+
+  for (size_t i = 0; i < res0.size(); ++i) {
+    EXPECT_EQ(res0.at(i).adId, expectedOutput.at(i).adId);
+    EXPECT_EQ(res0.at(i).convValue, expectedOutput.at(i).convValue);
+    EXPECT_EQ(res0.at(i).isAttributed, expectedOutput.at(i).isAttributed);
+  }
+}
+
+TEST(
+    AggregationGameTest,
+    TestAttributionReformattedResultNetworkPlaintextScheduler) {
+  testAttributionReformattedResultWithScheduler(
+      fbpcf::scheduler::createNetworkPlaintextScheduler<unsafe>);
+}
+
+TEST(AggregationGameTest, TestAttributionReformattedResultEagerScheduler) {
+  testAttributionReformattedResultWithScheduler(
+      fbpcf::scheduler::createEagerSchedulerWithInsecureEngine<unsafe>);
+}
+
+TEST(AggregationGameTest, TestAttributionReformattedResultLazyScheduler) {
+  testAttributionReformattedResultWithScheduler(
       fbpcf::scheduler::createLazySchedulerWithInsecureEngine<unsafe>);
 }
 
