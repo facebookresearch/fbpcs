@@ -10,8 +10,9 @@ import json
 import logging
 from unittest import mock, TestCase
 
-from fbpcs.common.service.trace_logging_service import CheckpointStatus
 from fbpcs.common.service.simple_trace_logging_service import SimpleTraceLoggingService
+
+from fbpcs.common.service.trace_logging_service import CheckpointStatus
 
 
 class TestSimpleTraceLoggingService(TestCase):
