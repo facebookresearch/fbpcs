@@ -13,6 +13,8 @@ from typing import DefaultDict, Dict, List, Optional
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
+
+from fbpcs.common.service.metric_service import MetricService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
@@ -38,6 +40,7 @@ class PrivateComputationStageServiceArgs:
     onedocker_svc: OneDockerService
     pc_validator_config: PCValidatorConfig
     workflow_svc: Optional[WorkflowService]
+    metric_svc: MetricService
 
 
 class PrivateComputationStageService(abc.ABC):
