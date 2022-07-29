@@ -13,6 +13,7 @@
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 #include "fbpcs/emp_games/pcf2_aggregation/AggregationGame.h"
+#include "fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h"
 
 namespace pcf2_aggregation {
 
@@ -67,7 +68,12 @@ class AggregationApp {
           inputEncryption_,
           inputSecretShareFilePaths_.at(i),
           inputClearTextFilePaths_.at(i));
-      auto output = game.computeAggregations(MY_ROLE, inputData);
+      AggregationOutputMetrics output;
+      if (FLAGS_use_new_output_format) {
+        output = game.computeAggregationsReformatted(MY_ROLE, inputData);
+      } else {
+        output = game.computeAggregations(MY_ROLE, inputData);
+      }
       putOutputData(output, outputFilePaths_.at(i));
     }
 
