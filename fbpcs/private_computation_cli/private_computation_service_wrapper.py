@@ -21,6 +21,8 @@ from fbpcp.service.storage import StorageService
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.pcs_container_service import PCSContainerService
 from fbpcs.common.service.simple_metric_service import SimpleMetricService
+from fbpcs.common.service.simple_trace_logging_service import SimpleTraceLoggingService
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
@@ -413,6 +415,14 @@ def _build_metric_service(config: Optional[Dict[str, Any]]) -> MetricService:
     return reflect.get_instance(config, MetricService)
 
 
+def _build_trace_logging_service(
+    config: Optional[Dict[str, Any]]
+) -> TraceLoggingService:
+    if config is None:
+        return SimpleTraceLoggingService()
+    return reflect.get_instance(config, TraceLoggingService)
+
+
 def _build_private_computation_service(
     pc_config: Dict[str, Any],
     mpc_config: Dict[str, Any],
@@ -447,6 +457,9 @@ def _build_private_computation_service(
         workflow_service = None
 
     metric_svc = _build_metric_service(pc_config["dependency"].get("MetricService"))
+    trace_logging_svc = _build_trace_logging_service(
+        pc_config["dependency"].get("TraceLoggingService")
+    )
 
     return PrivateComputationService(
         instance_repository=repository_service,
@@ -461,6 +474,7 @@ def _build_private_computation_service(
         pid_post_processing_handlers=_get_post_processing_handlers(pid_pph_config),
         workflow_svc=workflow_service,
         metric_svc=metric_svc,
+        trace_logging_svc=trace_logging_svc,
     )
 
 
