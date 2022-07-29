@@ -31,7 +31,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict, List, Match, Optional, Set
+from typing import Callable, Dict, List, Match, Optional, Pattern, Set
 
 import schema
 from docopt import docopt
@@ -55,8 +55,8 @@ class ParsingState:
 
 
 @dataclass
-class PatternAndHandler:
-    pattern: str
+class MatcherAndHandler:
+    matcher: Pattern[str]
     handler: Callable[
         [LogContext, Match[str], Optional[List[str]]],
         Optional[ParsingState],
@@ -74,6 +74,65 @@ class LogDigest:
         self.run_study: RunStudy = RunStudy(0)
         self.start_epoch_time: str = ""
         self.container_ids: Dict[str, Set[str]] = {}
+
+        self.re_error: Pattern[str] = re.compile(
+            r"^(.{16}:\d{2},\d{3}Z ERROR t:[^!]+! |ERROR:[^:]+:)(.+)$"
+        )
+        # Pattern to match whole log line
+        self.re_whole_line: Pattern[str] = re.compile(r".*")
+        # Pattern to match UTC timestamps
+        self.re_utc_ts: Pattern[str] = re.compile(
+            r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)Z "
+        )
+        # Pattern to match instance ID
+        self.re_instance_id: Pattern[str] = re.compile(r"^\[(\d+)\] ")
+        # Pattern to match the containers in "stages_containers" in the ADV_RUN_PID stage
+        self.re_stages_containers: Pattern[str] = re.compile(
+            r"\"stages_containers\": {\"ADV_SHARD\": \[([^\]]+)\]"
+        )
+        self.re_adv_prepare: Pattern[str] = re.compile(r"\"ADV_PREPARE\": \[([^\]]+)\]")
+        self.re_adv_run_pid: Pattern[str] = re.compile(r"\"ADV_RUN_PID\": \[([^\]]+)\]")
+
+        self.matcher_handlers = [
+            MatcherAndHandler(
+                # E.g. Created instance 252502207342908 for cell 451002203420028 and objective 159502204793395
+                re.compile(
+                    r"Created instance ([^ ]+) for cell ([^ ]+) and objective ([^ ]+)$"
+                ),
+                self._add_created_instance_objective_cell,
+            ),
+            MatcherAndHandler(
+                # E.g.: ... Instances to run for cell-obj pairs:
+                # {
+                #     "7595610074714724": {
+                #         "25065264566973790": {
+                #             "input_path": "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv",
+                #             "instance_id": "7540993020268572",
+                #             "latest_data_ts": 1647202674,
+                #             "num_shards": 1,
+                #             "status": "CREATED"
+                #         }
+                #     }
+                # }
+                re.compile(r"Instances to run for cell-obj pairs:"),
+                self._add_existing_instance,
+            ),
+            MatcherAndHandler(
+                # E.g. [252502207342908] Valid stage found: PrivateComputationStageFlow.PID_SHARD
+                re.compile(
+                    r"\[([^ ]+)\] Valid stage found: PrivateComputationStageFlow\.([^ ]+)$"
+                ),
+                self._add_flow_stage,
+            ),
+            MatcherAndHandler(
+                # E.g. [4547351303806882] {"input_path": ... "status_update_ts": 1648146505, ... }
+                # Also have to contain like: "role": "PARTNER"
+                re.compile(
+                    r"\[([^ ]+)\] {(?=.*\"role\": \"PARTNER\".*)(\".*status_update_ts\": (\d+).+)}$"
+                ),
+                self._add_containers_from_status_update,
+            ),
+        ]
 
     def analyze_logs(
         self,
@@ -125,40 +184,6 @@ class LogDigest:
         log_line: str,
         parsing_state: Optional[ParsingState],
     ) -> Optional[ParsingState]:
-        pattern_handlers = [
-            PatternAndHandler(
-                # E.g. Created instance 252502207342908 for cell 451002203420028 and objective 159502204793395
-                r"Created instance ([^ ]+) for cell ([^ ]+) and objective ([^ ]+)$",
-                self._add_created_instance_objective_cell,
-            ),
-            PatternAndHandler(
-                # E.g.: ... Instances to run for cell-obj pairs:
-                # {
-                #     "7595610074714724": {
-                #         "25065264566973790": {
-                #             "input_path": "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv",
-                #             "instance_id": "7540993020268572",
-                #             "latest_data_ts": 1647202674,
-                #             "num_shards": 1,
-                #             "status": "CREATED"
-                #         }
-                #     }
-                # }
-                r"Instances to run for cell-obj pairs:",
-                self._add_existing_instance,
-            ),
-            PatternAndHandler(
-                # E.g. [252502207342908] Valid stage found: PrivateComputationStageFlow.PID_SHARD
-                r"\[([^ ]+)\] Valid stage found: PrivateComputationStageFlow\.([^ ]+)$",
-                self._add_flow_stage,
-            ),
-            PatternAndHandler(
-                # E.g. [4547351303806882] {"input_path": ... "status_update_ts": 1648146505, ... }
-                # Also have to contain like: "role": "PARTNER"
-                r"\[([^ ]+)\] {(?=.*\"role\": \"PARTNER\".*)(\".*status_update_ts\": (\d+).+)}$",
-                self._add_containers_from_status_update,
-            ),
-        ]
 
         if line_num == 1:
             context = self._parse_line_context(log_line)
@@ -170,30 +195,28 @@ class LogDigest:
         # 2022-06-06 20:16:23,432Z ERROR t:MainThread n:root ! instance_id='7540993020268572' FAILED.
         # ERROR:__main__:[15398047007316153] Error: type: ...
         # ERROR:__main__:instance_id='15398047007316153' FAILED.
-        if match := re.search(
-            r"^(.{16}:\d{2},\d{3}Z ERROR t:[^!]+! |ERROR:[^:]+:)(.+)$", log_line
-        ):
+        if match := self.re_error.search(log_line):
             self._add_line_with_error_log_level(line_num, match)
 
         if parsing_state:
             # Match the whole log line
-            match = re.search(r".*", log_line)
+            match = self.re_whole_line.search(log_line)
             return parsing_state.handler(
                 parsing_state.context, match or Match(), parsing_state.last_lines
             )
 
-        for pattern_handler in pattern_handlers:
-            if match := re.search(pattern_handler.pattern, log_line):
+        for matcher_handler in self.matcher_handlers:
+            if match := matcher_handler.matcher.search(log_line):
                 context = self._parse_line_context(log_line)
                 context.line_num = line_num
-                return pattern_handler.handler(context, match, None)
+                return matcher_handler.handler(context, match, None)
 
     def _parse_line_context(
         self,
         log_line: str,
     ) -> LogContext:
         # A log line might start with UTC timestamp, e.g. "2022-05-31 20:59:25,169Z ..."
-        match = re.search(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)Z ", log_line)
+        match = self.re_utc_ts.search(log_line)
         if not match:
             return LogContext(line_num=0)
         # like "2022-05-31 20:59:25.169"
@@ -223,7 +246,7 @@ class LogDigest:
             f"Adding error line: line_num={line_num}, error_text={log_line}"
         )
         # Try to extract instance ID
-        match_instance_id = re.search(r"^\[(\d+)\] ", error_text)
+        match_instance_id = self.re_instance_id.search(error_text)
         instance_id = match_instance_id.group(1) if match_instance_id else None
         instance_flow = (
             self.run_study.instances.get(instance_id) if instance_id else None
@@ -371,10 +394,7 @@ class LogDigest:
         instance_data: str,
     ) -> None:
         # try to find the containers in "stages_containers" in the ADV_RUN_PID stage
-        if match := re.search(
-            r"\"stages_containers\": {\"ADV_SHARD\": \[([^\]]+)\]",
-            instance_data,
-        ):
+        if match := self.re_stages_containers.search(instance_data):
             self._add_containers_to_last_stage(
                 instance_id,
                 self._extract_new_containers(
@@ -385,7 +405,7 @@ class LogDigest:
                 ["ADV_SHARD"],
             )
 
-            match = re.search(r"\"ADV_PREPARE\": \[([^\]]+)\]", instance_data)
+            match = self.re_adv_prepare.search(instance_data)
             if match:
                 self._add_containers_to_last_stage(
                     instance_id,
@@ -397,7 +417,7 @@ class LogDigest:
                     ["ADV_PREPARE"],
                 )
 
-            match = re.search(r"\"ADV_RUN_PID\": \[([^\]]+)\]", instance_data)
+            match = self.re_adv_run_pid.search(instance_data)
             if match:
                 self._add_containers_to_last_stage(
                     instance_id,
