@@ -14,7 +14,6 @@ from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
 from fbpcs.bolt.exceptions import IncompatibleStageError, StageFailedException
-from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -263,33 +262,19 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     )
                     self.test_runner.partner_client.cancel_current_stage.assert_not_called()
 
-    @mock.patch("fbpcs.bolt.bolt_client.BoltState")
-    async def test_is_existing_instance(self, mock_state) -> None:
-        for role in (PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER):
-            self.test_runner.publisher_client.update_instance = mock.AsyncMock(
-                side_effect=[mock_state, Exception()]
-            )
-            self.test_runner.partner_client.update_instance = mock.AsyncMock(
-                side_effect=[mock_state, Exception()]
-            )
-            for expected_result in (True, False):
-                with self.subTest(role=role, expected_result=expected_result):
-                    actual_result = await self.test_runner._is_existing_instance(
-                        "test", role
-                    )
-                    self.assertEqual(actual_result, expected_result)
-
-    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner._is_existing_instance")
     @mock.patch("fbpcs.bolt.bolt_job.BoltJob")
-    async def test_get_or_create_instance(
-        self, mock_job, mock_existing_instance
-    ) -> None:
+    async def test_get_or_create_instance(self, mock_job) -> None:
         for skip_publisher_creation in (True, False):
             self.test_runner.publisher_client.create_instance = mock.AsyncMock()
             self.test_runner.partner_client.create_instance = mock.AsyncMock()
             self.test_runner.skip_publisher_creation = skip_publisher_creation
             for exists in (True, False):
-                mock_existing_instance.return_value = exists
+                self.test_runner.publisher_client.is_existing_instance = mock.AsyncMock(
+                    return_value=exists
+                )
+                self.test_runner.partner_client.is_existing_instance = mock.AsyncMock(
+                    return_value=exists
+                )
                 with self.subTest(
                     skip_publisher_creation=skip_publisher_creation, exists=exists
                 ):

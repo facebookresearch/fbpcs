@@ -241,3 +241,16 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
                     "test_id", PrivateComputationStageFlow
                 )
                 self.assertEqual(valid_stage, expected_stage)
+
+    @mock.patch("fbpcs.bolt.bolt_job.BoltCreateInstanceArgs")
+    @mock.patch("fbpcs.bolt.bolt_client.BoltState")
+    async def test_is_existing_instance(self, mock_state, mock_instance_args) -> None:
+        self.bolt_pcs_client.update_instance = mock.AsyncMock(
+            side_effect=[mock_state, Exception()]
+        )
+        for expected_result in (True, False):
+            with self.subTest(expected_result=expected_result):
+                actual_result = await self.bolt_pcs_client.is_existing_instance(
+                    instance_args=mock_instance_args
+                )
+                self.assertEqual(actual_result, expected_result)
