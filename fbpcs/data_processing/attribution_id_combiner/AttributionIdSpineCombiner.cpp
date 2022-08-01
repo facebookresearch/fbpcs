@@ -13,8 +13,6 @@
 #include <signal.h>
 
 #include <fbpcf/aws/AwsSdk.h>
-#include <fbpcf/io/FileManagerUtil.h>
-#include <fbpcf/io/IInputStream.h>
 #include <folly/Format.h>
 #include <folly/Random.h>
 #include <folly/init/Init.h>
@@ -28,7 +26,6 @@
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerUtil.h"
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineFileCombiner.h"
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
-#include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
 
 int main(int argc, char** argv) {
   folly::init(&argc, &argv);

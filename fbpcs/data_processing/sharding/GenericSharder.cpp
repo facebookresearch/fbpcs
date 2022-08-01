@@ -20,7 +20,6 @@
 #include <vector>
 
 #include <fbpcf/aws/S3Util.h>
-#include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/io/api/BufferedReader.h>
 #include <fbpcf/io/api/BufferedWriter.h>
 #include <fbpcf/io/api/FileReader.h>
@@ -34,7 +33,6 @@
 #include <folly/json.h>
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
 #include "fbpcs/data_processing/common/Logging.h"
-#include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
 #include "folly/String.h"
 
 namespace data_processing::sharder {

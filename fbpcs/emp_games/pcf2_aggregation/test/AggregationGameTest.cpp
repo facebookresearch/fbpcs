@@ -13,7 +13,6 @@
 
 #include "fbpcf/engine/communication/InMemoryPartyCommunicationAgentFactory.h"
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
-#include "fbpcf/io/FileManagerUtil.h"
 #include "fbpcf/scheduler/PlaintextScheduler.h"
 #include "fbpcf/scheduler/WireKeeper.h"
 #include "fbpcs/emp_games/common/TestUtil.h"

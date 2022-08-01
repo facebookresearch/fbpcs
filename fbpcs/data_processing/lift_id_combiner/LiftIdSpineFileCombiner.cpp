@@ -25,7 +25,6 @@
 
 // TODO: Rewrite for OSS?
 #include "../common/FilepathHelpers.h"
-#include "../common/S3CopyFromLocalUtil.h"
 #include "../id_combiner/AddPaddingToCols.h"
 #include "../id_combiner/DataPreparationHelpers.h"
 #include "../id_combiner/DataValidation.h"
@@ -33,8 +32,6 @@
 #include "../id_combiner/IdSwapMultiKey.h"
 #include "../id_combiner/SortIds.h"
 #include "../id_combiner/SortIntegralValues.h"
-#include "fbpcf/io/FileManagerUtil.h"
-#include "fbpcf/io/IInputStream.h"
 #include "fbpcf/io/api/BufferedReader.h"
 #include "fbpcf/io/api/FileIOWrappers.h"
 #include "fbpcf/io/api/FileReader.h"

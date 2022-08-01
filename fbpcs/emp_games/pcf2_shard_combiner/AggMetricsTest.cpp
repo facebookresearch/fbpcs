@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <fbpcf/exception/exceptions.h>
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcs/emp_games/common/Constants.h>
 #include <fbpcs/emp_games/common/TestUtil.h>
 #include <fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h>
@@ -29,7 +30,8 @@ TEST_F(AggMetricsTest, TestParseAttribution) {
   auto inputPath =
       baseDir_ + "shard_validation_test/valid_measurement_shard.json";
 
-  auto parsedInput = folly::parseJson(fbpcf::io::read(inputPath));
+  auto parsedInput =
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(inputPath));
 
   constexpr int schedulerId = 0;
   constexpr bool usingBatch = false;
@@ -73,7 +75,8 @@ TEST_F(AggMetricsTest, TestParseAttribution) {
 
 TEST_F(AggMetricsTest, TestParseLift) {
   auto inputPath = baseDir_ + "shard_validation_test/valid_lift_input.json";
-  auto parsedInput = folly::parseJson(fbpcf::io::read(inputPath));
+  auto parsedInput =
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(inputPath));
 
   constexpr int schedulerId = 0;
   constexpr bool usingBatch = false;
@@ -162,7 +165,7 @@ TEST_F(AggMetricsTest, AccumulatePlainTextTest) {
   auto input1 = AggMetrics<>::fromJson(inputPath1);
   auto input2 = AggMetrics<>::fromJson(inputPath2);
   auto expectedResultDynObj =
-      folly::parseJson(fbpcf::io::read(expectedResultPath));
+      folly::parseJson(fbpcf::io::FileIOWrappers::readFile(expectedResultPath));
 
   auto result = AggMetrics<>::newLike(input1);
 

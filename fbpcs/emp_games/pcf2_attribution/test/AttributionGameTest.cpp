@@ -15,8 +15,6 @@
 #include "folly/logging/xlog.h"
 #include "folly/test/JsonTestUtil.h"
 
-#include "fbpcf/io/FileManagerUtil.h"
-
 #include "fbpcf/engine/communication/InMemoryPartyCommunicationAgentFactory.h"
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/scheduler/PlaintextScheduler.h"

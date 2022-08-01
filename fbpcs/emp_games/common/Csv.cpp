@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 
-#include <fbpcf/io/FileManagerUtil.h>
 #include "fbpcf/io/api/BufferedReader.h"
 #include "fbpcf/io/api/FileReader.h"
 

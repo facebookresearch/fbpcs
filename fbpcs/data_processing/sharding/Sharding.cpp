@@ -15,7 +15,6 @@
 
 #include "fbpcs/data_processing/common/FilepathHelpers.h"
 #include "fbpcs/data_processing/common/Logging.h"
-#include "fbpcs/data_processing/common/S3CopyFromLocalUtil.h"
 namespace data_processing::sharder {
 void runShard(
     const std::string& inputFilename,
