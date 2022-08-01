@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include <fbpcf/io/FileManagerUtil.h>
-
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include <string>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"

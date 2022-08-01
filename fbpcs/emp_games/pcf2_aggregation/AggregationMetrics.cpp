@@ -18,7 +18,6 @@
 #include <utility>
 #include <vector>
 
-#include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include "folly/json.h"
 #include "folly/logging/xlog.h"

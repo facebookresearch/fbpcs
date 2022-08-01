@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 
-#include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/mpc/EmpApp.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include "fbpcs/emp_games/attribution/decoupled_aggregation/Aggregation.hpp"

@@ -19,8 +19,7 @@
 #include <folly/logging/xlog.h>
 
 #include <fbpcf/exception/exceptions.h>
-#include <fbpcf/io/FileManagerUtil.h>
-
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcs/emp_games/common/Constants.h>
 #include <fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h>
 
@@ -320,7 +319,7 @@ template <
 std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>
 AggMetrics<schedulerId, usingBatch, inputEncryption>::fromJson(
     std::string filePath) {
-  auto dynObj = folly::parseJson(fbpcf::io::read(filePath));
+  auto dynObj = folly::parseJson(fbpcf::io::FileIOWrappers::readFile(filePath));
 
   using AggMetric_sp =
       std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>;

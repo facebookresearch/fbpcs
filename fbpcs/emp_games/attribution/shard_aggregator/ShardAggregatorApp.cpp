@@ -18,7 +18,6 @@
 #include "folly/Conv.h"
 
 #include <fbpcf/common/FunctionalUtil.h>
-#include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/mpc/EmpGame.h>
 #include "AggMetrics.h"
