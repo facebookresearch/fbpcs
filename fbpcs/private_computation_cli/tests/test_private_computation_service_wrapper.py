@@ -140,6 +140,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
             output_dir="output_path",
             num_pid_containers=1,
             num_mpc_containers=1,
+            run_id="2621fda2-0eca-11ed-861d-0242ac120003",
         )
         self.mock_pcs.create_instance.assert_called_once_with(
             instance_id=self.test_instance_id,
@@ -161,6 +162,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
             pid_configs={"dependency": {}},
             result_visibility=None,
             pcs_features=None,
+            run_id="2621fda2-0eca-11ed-861d-0242ac120003",
         )
 
     @patch(
