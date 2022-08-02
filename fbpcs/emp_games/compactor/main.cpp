@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <folly/init/Init.h>
+#include <folly/logging/xlog.h>
 #include <glog/logging.h>
 #include <signal.h>
 #include <filesystem>
@@ -12,10 +14,9 @@
 #include <sstream>
 #include <string>
 
-#include "folly/init/Init.h"
-#include "folly/logging/xlog.h"
-
+#include "fbpcf/aws/AwsSdk.h"
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
+#include "fbpcf/io/api/FileIOWrappers.h"
 #include "fbpcs/emp_games/compactor/AttributionOutput.h"
 #include "fbpcs/emp_games/compactor/CompactorGame.h"
 
@@ -45,7 +46,18 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
+  XLOG(INFO) << "Party:" << FLAGS_party << "\n";
+  XLOG(INFO) << "Host:" << FLAGS_host << "\n";
+  XLOG(INFO) << "port:" << FLAGS_port << "\n";
+  XLOG(INFO) << "Input file:" << FLAGS_input_file_path << "\n";
+  XLOG(INFO) << "Output file:" << FLAGS_output_file_path << "\n";
+
+  fbpcf::AwsSdk::aquire();
+
+  XLOG(INFO) << "Reading input file: " << FLAGS_input_file_path << "\n";
   auto input = compactor::readXORShareInput(FLAGS_input_file_path);
+  XLOG(INFO) << "Finished reading " << FLAGS_input_file_path
+             << ", size: " << input.size() << "\n";
 
   XLOG(INFO) << "Creating communication agent factory\n";
   std::map<
@@ -76,13 +88,13 @@ int main(int argc, char** argv) {
   auto rstLabel = rst.isAttributed.extractBit().getValue();
 
   // write output into file
-  std::ofstream outputFile(FLAGS_output_file_path);
-  outputFile << "AdId,conversionValue,isAttributed\n";
+  std::stringstream content;
+  content << "adId,conversionValue,isAttributed\n";
   for (size_t i = 0; i < rstAd.size(); i++) {
-    outputFile << rstAd.at(i) << "," << rstConv.at(i) << "," << rstLabel.at(i)
-               << "\n";
+    content << rstAd.at(i) << "," << rstConv.at(i) << "," << rstLabel.at(i)
+            << "\n";
   }
-  outputFile.close();
+  fbpcf::io::FileIOWrappers::writeFile(FLAGS_output_file_path, content.str());
 
   XLOG(INFO) << "output size:" << rstAd.size() << std::endl;
 

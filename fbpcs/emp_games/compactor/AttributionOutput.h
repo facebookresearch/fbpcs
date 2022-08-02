@@ -8,6 +8,7 @@
 #pragma once
 #include "fbpcf/frontend/Bit.h"
 #include "fbpcf/frontend/Int.h"
+#include "fbpcs/emp_games/common/Csv.h"
 
 namespace compactor {
 template <int schedulerId>
@@ -93,23 +94,18 @@ struct SecretAttributionOutput {
 // Read XOR share from CSV file, where each row has a format of <adId,
 // conversionValue, isAttributed>.
 inline std::vector<AttributionOutputShare> readXORShareInput(
-    const std::string& filename) {
-  std::ifstream ifs(filename);
-  if (!ifs.is_open()) {
-    throw std::runtime_error("file is not opened");
-  }
-  std::string line, word;
+    std::filesystem::path filepath) {
   std::vector<AttributionOutputShare> res;
-  std::vector<uint64_t> row;
 
-  std::getline(ifs, line); // read header
-  while (std::getline(ifs, line)) {
-    row.clear();
-    std::stringstream s(line);
-    while (std::getline(s, word, ',')) {
-      row.push_back(std::stoul(word));
-    }
-    res.push_back(AttributionOutputShare(row[0], row[1], row[2]));
+  bool success = private_measurement::csv::readCsv(
+      filepath,
+      [&](const std::vector<std::string>& /* header */,
+          const std::vector<std::string>& row) {
+        res.push_back(AttributionOutputShare(
+            std::stoul(row[0]), std::stoul(row[1]), std::stoul(row[2])));
+      });
+  if (!success) {
+    throw std::runtime_error("Failed to read input file " + filepath.string());
   }
   return res;
 }
