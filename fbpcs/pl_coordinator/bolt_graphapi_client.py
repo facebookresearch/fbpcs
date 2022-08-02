@@ -181,6 +181,21 @@ class BoltGraphAPIClient(BoltClient):
                 "This method should not be called with expected results"
             )
 
+    async def is_existing_instance(self, instance_args: BoltCreateInstanceArgs) -> bool:
+        instance_id = instance_args.instance_id
+        self.logger.info(f"Checking if {instance_id} exists...")
+        if instance_id:
+            try:
+                await self.update_instance(instance_id)
+                self.logger.info(f"{instance_id} found.")
+                return True
+            except Exception:
+                self.logger.info(f"{instance_id} not found.")
+                return False
+        else:
+            self.logger.info("instance_id is empty, fetching a valid one")
+            return False
+
     async def get_instance(self, instance_id: str) -> requests.Response:
         r = requests.get(f"{URL}/{instance_id}", self.params)
         self._check_err(r, "getting fb instance")
