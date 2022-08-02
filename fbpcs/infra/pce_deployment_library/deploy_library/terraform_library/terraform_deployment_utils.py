@@ -59,7 +59,9 @@ class TerraformDeploymentUtils:
         """
         self.input = False
 
-    def get_command_list(self, command: str, *args: Any, **kwargs: str) -> List[str]:
+    def get_command_list(
+        self, command: str, *args: Any, **kwargs: Dict[str, Any]
+    ) -> List[str]:
         """
         Converts command string to list and updates commands with terraform options provided through kwargs and args.
         """
@@ -77,7 +79,6 @@ class TerraformDeploymentUtils:
             # terraform CLI accepts options with "-" using "_" will results in error
             key = key.replace("_", "-")
 
-            # pyre-fixme
             func = type_to_func_dict.get(type(value), self.add_other_options)
 
             # pyre-fixme
