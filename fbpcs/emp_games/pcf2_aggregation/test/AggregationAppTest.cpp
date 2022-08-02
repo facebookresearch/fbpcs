@@ -22,6 +22,7 @@
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
 #include "fbpcs/emp_games/pcf2_aggregation/AggregationApp.h"
+#include "fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h"
 #include "fbpcs/emp_games/pcf2_aggregation/test/AggregationTestUtils.h"
 
 namespace pcf2_aggregation {
@@ -39,7 +40,9 @@ static void runGame(
     const std::filesystem::path& inputClearTextPath,
     const std::string& outputPath,
     bool useTls,
-    const std::string& tlsDir) {
+    const std::string& tlsDir,
+    bool useNewOutputFormat) {
+  FLAGS_use_new_output_format = useNewOutputFormat;
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -73,36 +76,52 @@ inline void testCorrectnessAggregationAppHelper(
     std::vector<std::string> attributionRules,
     std::string aggregationFormat,
     std::vector<std::string> inputSecretSharePathAlice,
+    std::vector<std::string> inputReformattedSecretSharePathAlice,
     std::vector<std::string> inputClearTextPathAlice,
     std::vector<std::string> outputPathAlice,
     std::string serverIpBob,
     int16_t portBob,
     std::vector<std::string> inputSecretSharePathBob,
+    std::vector<std::string> inputReformattedSecretSharePathBob,
     std::vector<std::string> inputClearTextPathBob,
     std::vector<std::string> outputPathBob,
     std::vector<std::string> expectedOutputFilePaths,
     bool useTls,
-    std::string& tlsDir) {
+    std::string& tlsDir,
+    bool useNewOutputFormat) {
+  FLAGS_use_new_output_format = useNewOutputFormat;
+  std::string alice_secret_input;
+  std::string bob_secret_input;
+  if (FLAGS_use_new_output_format) {
+    alice_secret_input = inputReformattedSecretSharePathAlice.at(id);
+    bob_secret_input = inputReformattedSecretSharePathBob.at(id);
+  } else {
+    alice_secret_input = inputSecretSharePathAlice.at(id);
+    bob_secret_input = inputSecretSharePathBob.at(id);
+  }
+
   auto futureAlice = std::async(
       runGame<common::PUBLISHER, 2 * id, outputVisibility, inputEncryption>,
       serverIpAlice,
       portAlice + 100 * id,
       aggregationFormat,
-      inputSecretSharePathAlice.at(id),
+      alice_secret_input,
       inputClearTextPathAlice.at(id),
       outputPathAlice.at(id),
       useTls,
-      tlsDir);
+      tlsDir,
+      useNewOutputFormat);
   auto futureBob = std::async(
       runGame<common::PARTNER, 2 * id + 1, outputVisibility, inputEncryption>,
       serverIpBob,
       portBob + 100 * id,
       "",
-      inputSecretSharePathBob.at(id),
+      bob_secret_input,
       inputClearTextPathBob.at(id),
       outputPathBob.at(id),
       useTls,
-      tlsDir);
+      tlsDir,
+      useNewOutputFormat);
 
   futureAlice.get();
   futureBob.get();
@@ -133,22 +152,26 @@ inline void testCorrectnessAggregationAppHelper(
           attributionRules,
           aggregationFormat,
           inputSecretSharePathAlice,
+          inputReformattedSecretSharePathAlice,
           inputClearTextPathAlice,
           outputPathAlice,
           serverIpBob,
           portBob,
           inputSecretSharePathBob,
+          inputReformattedSecretSharePathBob,
           inputClearTextPathBob,
           outputPathBob,
           expectedOutputFilePaths,
           useTls,
-          tlsDir);
+          tlsDir,
+          useNewOutputFormat);
     }
   }
 }
 
-class AggregationAppTest : public ::testing::TestWithParam<
-                               std::tuple<int, common::Visibility, bool>> {
+class AggregationAppTest
+    : public ::testing::TestWithParam<
+          std::tuple<int, common::Visibility, bool, bool>> {
  protected:
   void SetUp() override {
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
@@ -181,17 +204,24 @@ class AggregationAppTest : public ::testing::TestWithParam<
           ".";
       std::string attributionOutputFilePrefix =
           baseDir_ + "test_correctness/" + attributionRule + ".";
+      std::string attributionReformattedOutputFilePrefix = baseDir_ +
+          "test_correctness/" + attributionRule + "_reformatted" + ".";
       inputSecretShareFilePathsAlice_.push_back(
           attributionOutputFilePrefix + "publisher.json");
+      inputReformattedSecretShareFilePathsAlice_.push_back(
+          attributionReformattedOutputFilePrefix + "publisher.json");
       inputClearTextFilePathsAlice_.push_back(
           rawInputFilePrefix + "publisher.csv");
       inputSecretShareFilePathsBob_.push_back(
           attributionOutputFilePrefix + "partner.json");
+      inputReformattedSecretShareFilePathsBob_.push_back(
+          attributionReformattedOutputFilePrefix + "partner.json");
       inputClearTextFilePathsBob_.push_back(rawInputFilePrefix + "partner.csv");
       outputFilePathsAlice_.push_back(outputPathAlice_ + attributionRule);
       outputFilePathsBob_.push_back(outputPathBob_ + attributionRule);
       expectedOutputFilePaths_.push_back(
-          attributionOutputFilePrefix + aggregationFormat_ + ".json");
+          baseDir_ + "test_correctness/" + attributionRule + "." +
+          aggregationFormat_ + ".json");
     }
   }
 
@@ -202,7 +232,9 @@ class AggregationAppTest : public ::testing::TestWithParam<
   }
 
   template <int id, common::Visibility visibility>
-  void testCorrectnessAggregationAppWrapper(bool useTls) {
+  void testCorrectnessAggregationAppWrapper(
+      bool useTls,
+      bool useNewOutputFormat) {
     testCorrectnessAggregationAppHelper<
         id,
         visibility,
@@ -213,16 +245,19 @@ class AggregationAppTest : public ::testing::TestWithParam<
         attributionRules_,
         aggregationFormat_,
         inputSecretShareFilePathsAlice_,
+        inputReformattedSecretShareFilePathsAlice_,
         inputClearTextFilePathsAlice_,
         outputFilePathsAlice_,
         serverIpBob_,
         port_,
         inputSecretShareFilePathsBob_,
+        inputReformattedSecretShareFilePathsBob_,
         inputClearTextFilePathsBob_,
         outputFilePathsBob_,
         expectedOutputFilePaths_,
         useTls,
-        tlsDir_);
+        tlsDir_,
+        useNewOutputFormat);
   }
 
   std::string serverIpAlice_;
@@ -233,8 +268,10 @@ class AggregationAppTest : public ::testing::TestWithParam<
   std::string aggregationFormat_;
   std::vector<std::string> attributionRules_;
   std::vector<std::string> inputSecretShareFilePathsAlice_;
+  std::vector<std::string> inputReformattedSecretShareFilePathsAlice_;
   std::vector<std::string> inputClearTextFilePathsAlice_;
   std::vector<std::string> inputSecretShareFilePathsBob_;
+  std::vector<std::string> inputReformattedSecretShareFilePathsBob_;
   std::vector<std::string> inputClearTextFilePathsBob_;
   std::vector<std::string> outputFilePathsAlice_;
   std::vector<std::string> outputFilePathsBob_;
@@ -243,19 +280,19 @@ class AggregationAppTest : public ::testing::TestWithParam<
 };
 
 TEST_P(AggregationAppTest, TestCorrectness) {
-  auto [id, visibility, useTls] = GetParam();
-
+  auto [id, visibility, useTls, useNewOutputFormat] = GetParam();
+  FLAGS_use_new_output_format = useNewOutputFormat;
   switch (id) {
     case 0:
       switch (visibility) {
         case common::Visibility::Publisher:
           testCorrectnessAggregationAppWrapper<
               0,
-              common::Visibility::Publisher>(useTls);
+              common::Visibility::Publisher>(useTls, useNewOutputFormat);
           break;
         case common::Visibility::Xor:
           testCorrectnessAggregationAppWrapper<0, common::Visibility::Xor>(
-              useTls);
+              useTls, useNewOutputFormat);
           break;
       }
       break;
@@ -273,15 +310,17 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(
             common::Visibility::Publisher,
             common::Visibility::Xor),
+        ::testing::Bool(),
         ::testing::Bool()),
 
     [](const testing::TestParamInfo<AggregationAppTest::ParamType>& info) {
       auto id = std::to_string(std::get<0>(info.param));
       auto visibility = common::getVisibilityString(std::get<1>(info.param));
       auto tls = std::get<2>(info.param) ? "True" : "False";
+      auto reformatted = std::get<3>(info.param) ? "True" : "False";
 
-      std::string name =
-          "ID_" + id + "_Visibility_" + visibility + "_TLS_" + tls;
+      std::string name = "ID_" + id + "_Visibility_" + visibility + "_TLS_" +
+          tls + "_Reformatted_" + reformatted;
       return name;
     });
 
