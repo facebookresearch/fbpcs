@@ -19,6 +19,7 @@
 #include "fbpcf/io/api/FileIOWrappers.h"
 #include "fbpcs/emp_games/compactor/AttributionOutput.h"
 #include "fbpcs/emp_games/compactor/CompactorGame.h"
+#include "fbpcs/performance_tools/CostEstimation.h"
 
 constexpr int32_t PUBLISHER_ROLE = 0;
 constexpr int32_t PARTNER_ROLE = 1;
@@ -41,16 +42,37 @@ DEFINE_string(
     output_file_path,
     "",
     "Local or s3 base path where output files are written to");
-
+DEFINE_string(
+    run_name,
+    "",
+    "A user given run name that will be used in s3 filename");
+DEFINE_bool(
+    log_cost,
+    false,
+    "Log cost info into cloud which will be used for dashboard");
+DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
+DEFINE_string(
+    log_cost_s3_region,
+    ".s3.us-west-2.amazonaws.com/",
+    "s3 region name");
 int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  fbpcs::performance_tools::CostEstimation cost =
+      fbpcs::performance_tools::CostEstimation(
+          "compactor",
+          FLAGS_log_cost_s3_bucket,
+          FLAGS_log_cost_s3_region,
+          "pcf2");
+  cost.start();
 
   XLOG(INFO) << "Party:" << FLAGS_party << "\n";
   XLOG(INFO) << "Host:" << FLAGS_host << "\n";
   XLOG(INFO) << "port:" << FLAGS_port << "\n";
   XLOG(INFO) << "Input file:" << FLAGS_input_file_path << "\n";
   XLOG(INFO) << "Output file:" << FLAGS_output_file_path << "\n";
+  XLOG(INFO) << " Log cost:" << FLAGS_log_cost << "\n";
 
   fbpcf::AwsSdk::aquire();
 
@@ -96,6 +118,9 @@ int main(int argc, char** argv) {
   }
   fbpcf::io::FileIOWrappers::writeFile(FLAGS_output_file_path, content.str());
 
+  cost.end();
+  XLOG(INFO, cost.getEstimatedCostString());
+
   XLOG(INFO) << "output size:" << rstAd.size() << std::endl;
 
   auto gateStats = fbpcf::scheduler::SchedulerKeeper<0>::getGateStatistics();
@@ -106,6 +131,33 @@ int main(int argc, char** argv) {
       fbpcf::scheduler::SchedulerKeeper<0>::getTrafficStatistics();
   XLOG(INFO) << "Tx bytes: " << trafficStats.first << '\n';
   XLOG(INFO) << "Rx bytes: " << trafficStats.second << '\n';
+
+  if (FLAGS_log_cost) {
+    bool run_name_specified = FLAGS_run_name != "";
+    auto run_name = run_name_specified ? FLAGS_run_name : "temp_run_name";
+    auto party = (FLAGS_party == PUBLISHER_ROLE) ? "Publisher" : "Partner";
+
+    folly::dynamic extra_info = folly::dynamic::object(
+        "publisher_input_path", (FLAGS_party == PUBLISHER_ROLE) ? FLAGS_input_file_path : "")
+        ("partner_input_basepath", (FLAGS_party == PARTNER_ROLE) ? FLAGS_input_file_path : "")
+        ("publisher_output_basepath", (FLAGS_party == PUBLISHER_ROLE) ? FLAGS_output_file_path : "")
+        ("partner_output_basepath", (FLAGS_party == PARTNER_ROLE) ? FLAGS_output_file_path : "")
+        ("non_free_gates", gateStats.first)
+        ("free_gates", gateStats.second)
+        ("scheduler_transmitted_network", trafficStats.first)
+        ("scheduler_received_network", trafficStats.second)
+        ("mpc_traffic_details", commAgentFactory->getMetricsCollector()->collectMetrics());
+
+    folly::dynamic costDict =
+        cost.getEstimatedCostDynamic(run_name, party, extra_info);
+
+    auto objectName = run_name_specified
+        ? run_name
+        : folly::to<std::string>(
+              run_name, '_', costDict["timestamp"].asString());
+
+    XLOGF(INFO, "{}", cost.writeToS3(party, objectName, costDict));
+  }
 
   return 0;
 }
