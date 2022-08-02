@@ -40,15 +40,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
     get_tier,
 )
-
-
-class LoggerAdapter(logging.LoggerAdapter):
-    def __init__(self, logger: logging.Logger, prefix: str) -> None:
-        super(LoggerAdapter, self).__init__(logger, {})
-        self.prefix = prefix
-
-    def process(self, msg, kwargs):
-        return "[%s] %s" % (self.prefix, msg), kwargs
+from fbpcs.utils.logger_adapter import LoggerAdapter
 
 
 # dataset information fields
@@ -245,7 +237,7 @@ def run_attribution(
             "num_mpc_containers": num_mpc_containers,
             "num_pid_containers": num_pid_containers,
             "stage_flow": stage_flow,
-            "logger": logger,
+            "logger": LoggerAdapter(logger=logger, prefix=instance_id),
             "game_type": PrivateComputationGameType.ATTRIBUTION,
             "attribution_rule": attribution_rule,
             "aggregation_type": AggregationType.MEASUREMENT,
