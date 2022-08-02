@@ -7,6 +7,7 @@
 # pyre-strict
 
 from collections import defaultdict
+from typing import Set
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -18,6 +19,7 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -53,30 +55,50 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
         )
 
     async def test_compute_metrics(self) -> None:
-        private_computation_instance = self._create_pc_instance()
-        mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=private_computation_instance.infra_config.instance_id
-            + "_compute_metrics0",
-            game_name=GameNames.LIFT.value,
-            mpc_party=MPCParty.CLIENT,
-            num_workers=private_computation_instance.infra_config.num_mpc_containers,
-        )
+        for stage_service_name, pcs_feature_set in (
+            (
+                "compute_metrics",
+                {PCSFeature.PCS_DUMMY},
+            ),
+            (
+                "pcf2_lift",
+                {PCSFeature.PRIVATE_LIFT_PCF2_RELEASE},
+            ),
+        ):
+            with self.subTest(
+                stage_service_name=stage_service_name, pcs_feature_set=pcs_feature_set
+            ):
+                private_computation_instance = self._create_pc_instance(pcs_feature_set)
+                mpc_instance = PCSMPCInstance.create_instance(
+                    instance_id=private_computation_instance.infra_config.instance_id
+                    + "_{stage_service_name}0",
+                    game_name=GameNames.LIFT.value,
+                    mpc_party=MPCParty.CLIENT,
+                    num_workers=private_computation_instance.infra_config.num_mpc_containers,
+                )
 
-        self.mock_mpc_svc.start_instance_async = AsyncMock(return_value=mpc_instance)
+                self.mock_mpc_svc.start_instance_async = AsyncMock(
+                    return_value=mpc_instance
+                )
 
-        test_server_ips = [
-            f"192.0.2.{i}"
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
-        ]
-        await self.stage_svc.run_async(private_computation_instance, test_server_ips)
+                test_server_ips = [
+                    f"192.0.2.{i}"
+                    for i in range(
+                        private_computation_instance.infra_config.num_mpc_containers
+                    )
+                ]
+                await self.stage_svc.run_async(
+                    private_computation_instance, test_server_ips
+                )
 
-        self.assertEqual(
-            mpc_instance, private_computation_instance.infra_config.instances[0]
-        )
+                self.assertEqual(
+                    mpc_instance, private_computation_instance.infra_config.instances[0]
+                )
 
     def test_get_game_args(self) -> None:
         # TODO: add game args test for attribution args
-        private_computation_instance = self._create_pc_instance()
+        pcs_feature = {PCSFeature.PCS_DUMMY}
+        private_computation_instance = self._create_pc_instance(pcs_feature)
         test_game_args = [
             {
                 "input_base_path": private_computation_instance.data_processing_output_path,
@@ -99,7 +121,9 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
             self.stage_svc._get_compute_metrics_game_args(private_computation_instance),
         )
 
-    def _create_pc_instance(self) -> PrivateComputationInstance:
+    def _create_pc_instance(
+        self, pcs_features: Set[PCSFeature]
+    ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
@@ -111,6 +135,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
+            pcs_features=pcs_features,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
