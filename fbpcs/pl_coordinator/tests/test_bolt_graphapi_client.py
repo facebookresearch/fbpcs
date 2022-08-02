@@ -84,6 +84,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
                 "cell_id": "cell_id",
                 "objective_id": "obj_id",
             },
+            run_id="run_id",
         )
         await self.test_client.create_instance(test_pl_args)
         mock_post.assert_called_once_with(
@@ -91,6 +92,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             params={
                 "access_token": ACCESS_TOKEN,
                 "breakdown_key": json.dumps(test_pl_args.breakdown_key),
+                "run_id": "run_id",
             },
         )
 

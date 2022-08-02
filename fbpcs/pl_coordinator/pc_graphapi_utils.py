@@ -133,10 +133,14 @@ class PCGraphAPIClient:
 
     # TODO rename to create_pl_instance since we now have a create_pa_instance function
     def create_instance(
-        self, study_id: str, breakdown_key: Dict[str, str]
+        self,
+        study_id: str,
+        breakdown_key: Dict[str, str],
+        run_id: str,
     ) -> requests.Response:
         params = self.params.copy()
         params["breakdown_key"] = json.dumps(breakdown_key)
+        params["run_id"] = run_id
         r = requests.post(f"{URL}/{study_id}/instances", params=params)
         self._check_err(r, "creating fb instance")
         return r
