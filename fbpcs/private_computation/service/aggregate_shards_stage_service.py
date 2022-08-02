@@ -14,6 +14,7 @@ from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -108,7 +109,10 @@ class AggregateShardsStageService(PrivateComputationStageService):
         ]:
             input_stage_path = pc_instance.pcf2_lift_stage_output_base_path
         else:
-            input_stage_path = pc_instance.compute_stage_output_base_path
+            if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_PCF2_RELEASE):
+                input_stage_path = pc_instance.pcf2_lift_stage_output_base_path
+            else:
+                input_stage_path = pc_instance.compute_stage_output_base_path
 
         if self._log_cost_to_s3:
             run_name = pc_instance.infra_config.instance_id

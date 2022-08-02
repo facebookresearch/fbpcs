@@ -15,6 +15,7 @@ from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -25,6 +26,9 @@ from fbpcs.private_computation.entity.product_config import (
     AttributionRule,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.pcf2_lift_stage_service import (
+    PCF2LiftStageService,
+)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -59,6 +63,10 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         self._mpc_service = mpc_service
         self._log_cost_to_s3 = log_cost_to_s3
         self._container_timeout = container_timeout
+        self._pcf2_lift_service = PCF2LiftStageService(
+            onedocker_binary_config_map=onedocker_binary_config_map,
+            mpc_service=mpc_service,
+        )
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of run_async() so that it can be called by Thrift
@@ -76,6 +84,20 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         Returns:
             An updated version of pc_instance that stores an MPCInstance
         """
+
+        # The only difference between PL on PCF 1.0 and PL on PCF 2.0 is the computation stage.
+        # i.e. PCF 1.0 using compute_metrics_stage, while PCF 2.0 uses pcf2_lift_stage.
+        # Adding this logic, to control which of the two stages to call based on the flag.
+
+        # If the PRIVATE_LIFT_PCF2_RELEASE feature is present toggled on, then instead
+        # of compute stage, return an instance of pcf2_lift stage.
+        if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_PCF2_RELEASE):
+            logging.info(
+                "As private_lift_pcf2_release feature is enabled, running PCF2 lift stage, instead of compute stage."
+            )
+            return await self._pcf2_lift_service.run_async(
+                pc_instance=pc_instance, server_ips=server_ips
+            )
 
         # Prepare arguments for lift game
         game_args = self._get_compute_metrics_game_args(
@@ -137,6 +159,9 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         Returns:
             The latest status for private_computation_instance
         """
+        if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_PCF2_RELEASE):
+            return self._pcf2_lift_service.get_status(pc_instance)
+
         return get_updated_pc_status_mpc_game(pc_instance, self._mpc_service)
 
     # TODO: Make an entity representation for game args that can dump a dict to pass
