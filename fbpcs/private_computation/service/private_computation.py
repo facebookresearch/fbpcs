@@ -20,6 +20,8 @@ from fbpcp.service.storage import StorageService
 
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.simple_metric_service import SimpleMetricService
+from fbpcs.common.service.simple_trace_logging_service import SimpleTraceLoggingService
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -100,6 +102,7 @@ class PrivateComputationService:
         pid_post_processing_handlers: Optional[Dict[str, PostProcessingHandler]] = None,
         workflow_svc: Optional[WorkflowService] = None,
         metric_svc: Optional[MetricService] = None,
+        trace_logging_svc: Optional[TraceLoggingService] = None,
     ) -> None:
         """Constructor of PrivateComputationService
         instance_repository -- repository to CRUD PrivateComputationInstance
@@ -113,6 +116,10 @@ class PrivateComputationService:
         # If a metric service isn't provided, just use a SimpleMetricService
         # so a caller will never have to worry about this being None
         self.metric_svc: MetricService = metric_svc or SimpleMetricService()
+        # Same deal with trace_logging_svc
+        self.trace_logging_svc: TraceLoggingService = (
+            trace_logging_svc or SimpleTraceLoggingService()
+        )
         self.post_processing_handlers: Dict[str, PostProcessingHandler] = (
             post_processing_handlers or {}
         )
@@ -130,6 +137,7 @@ class PrivateComputationService:
             self.pc_validator_config,
             self.workflow_svc,
             self.metric_svc,
+            self.trace_logging_svc,
         )
         self.logger: logging.Logger = logging.getLogger(__name__)
 

@@ -15,6 +15,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 
 from fbpcs.common.service.metric_service import MetricService
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
@@ -41,6 +42,7 @@ class PrivateComputationStageServiceArgs:
     pc_validator_config: PCValidatorConfig
     workflow_svc: Optional[WorkflowService]
     metric_svc: MetricService
+    trace_logging_svc: TraceLoggingService
 
 
 class PrivateComputationStageService(abc.ABC):
