@@ -44,16 +44,8 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.utils.logger_adapter import LoggerAdapter
 from termcolor import colored
-
-
-class LoggerAdapter(logging.LoggerAdapter):
-    def __init__(self, logger: logging.Logger, prefix: str) -> None:
-        super(LoggerAdapter, self).__init__(logger, {})
-        self.prefix = prefix
-
-    def process(self, msg, kwargs):
-        return "[%s] %s" % (self.prefix, msg), kwargs
 
 
 def run_instance(
