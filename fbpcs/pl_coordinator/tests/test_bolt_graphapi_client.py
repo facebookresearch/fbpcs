@@ -148,6 +148,33 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NotImplementedError):
             await self.test_client.validate_results("id", expected_result_path)
 
+    @patch("fbpcs.bolt.bolt_job.BoltCreateInstanceArgs")
+    @patch("fbpcs.bolt.bolt_client.BoltState")
+    @patch(
+        "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient.update_instance",
+        new_callable=AsyncMock,
+    )
+    async def test_is_existing_instance(
+        self, mock_update, mock_state, mock_args
+    ) -> None:
+        for instance_id, update_successful, expected_result in [
+            ("", True, False),
+            ("", False, False),
+            ("id", True, True),
+            ("id", False, False),
+        ]:
+            mock_update.side_effect = mock_state if update_successful else Exception()
+            mock_args.instance_id = instance_id
+            with self.subTest(
+                instance_id=instance_id,
+                update_successful=update_successful,
+                expected_result=expected_result,
+            ):
+                actual_result = await self.test_client.is_existing_instance(mock_args)
+                self.assertEqual(actual_result, expected_result)
+                if not instance_id:
+                    mock_update.assert_not_called()
+
     def _get_graph_api_output(self, text: Any) -> requests.Response:
         r = requests.Response()
         r.status_code = 200

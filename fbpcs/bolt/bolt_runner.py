@@ -28,7 +28,6 @@ from fbpcs.bolt.exceptions import (
     StageTimeoutException,
     WaitValidStatusTimeout,
 )
-from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -247,30 +246,6 @@ class BoltRunner:
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
         )
 
-    async def _is_existing_instance(
-        self, instance_id: str, role: PrivateComputationRole
-    ) -> bool:
-        """Returns whether instance_id already exists for the given role
-
-        Args:
-            - instance_id: the id to be checked
-            - role: publisher or partner
-
-        Returns:
-            True if there is an instance with instance_id for the given role, False otherwise
-        """
-        self.logger.info(f"Checking if {instance_id} exists...")
-        try:
-            if role is PrivateComputationRole.PUBLISHER:
-                await self.publisher_client.update_instance(instance_id)
-            else:
-                await self.partner_client.update_instance(instance_id)
-            self.logger.info(f"{instance_id} found.")
-            return True
-        except Exception:
-            self.logger.info(f"{instance_id} not found.")
-            return False
-
     async def _get_or_create_instances(self, job: BoltJob) -> Tuple[str, str]:
         """Checks to see if a job is new or being resumed
 
@@ -289,10 +264,10 @@ class BoltRunner:
                 job.publisher_bolt_args.create_instance_args.instance_id
             )
             resume_partner_id = job.partner_bolt_args.create_instance_args.instance_id
-            if await self._is_existing_instance(
-                instance_id=resume_publisher_id, role=PrivateComputationRole.PUBLISHER
-            ) and await self._is_existing_instance(
-                instance_id=resume_partner_id, role=PrivateComputationRole.PARTNER
+            if await self.publisher_client.is_existing_instance(
+                instance_args=job.publisher_bolt_args.create_instance_args
+            ) and await self.partner_client.is_existing_instance(
+                instance_args=job.partner_bolt_args.create_instance_args
             ):
                 # instance id already exists, we are resuming a run.
                 publisher_id = resume_publisher_id
@@ -315,8 +290,8 @@ class BoltRunner:
             publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
             # check if partner should be created
             # note: publisher and partner should have the same id
-            if await self._is_existing_instance(
-                publisher_id, PrivateComputationRole.PARTNER
+            if await self.partner_client.is_existing_instance(
+                instance_args=job.partner_bolt_args.create_instance_args
             ):
                 partner_id = publisher_id
             else:
