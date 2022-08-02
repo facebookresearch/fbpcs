@@ -143,6 +143,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
         creation_ts: the time of the creation of this PrivateComputationInstance
         end_ts: the time of the the end when finishing a computation run
         mpc_compute_concurrency: number of threads to run per container at the MPC compute metrics stage
+        run_id: field that can be used to identify all the logs for a run.
 
     Private attributes:
         _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
@@ -180,6 +181,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
         },
     )
     pce_config: Optional[PCEConfig] = None
+    run_id: Optional[str] = immutable_field(default=None)
 
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name

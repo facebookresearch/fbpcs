@@ -65,7 +65,6 @@ class CommonProductConfig(DataclassMutabilityMixin):
     result_visibility: ResultVisibility = immutable_field(
         default=ResultVisibility.PUBLIC
     )
-
     pid_use_row_numbers: bool = immutable_field(default=True)
     multikey_enabled: bool = immutable_field(default=True)
     pid_protocol: PIDProtocol = immutable_field(default=DEFAULT_PID_PROTOCOL)

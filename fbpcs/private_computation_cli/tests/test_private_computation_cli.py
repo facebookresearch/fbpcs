@@ -343,6 +343,7 @@ class TestPrivateComputationCli(TestCase):
             "12345",
             f"--config={self.temp_filename}",
             "--objective_ids=12,34,56,78,90",
+            "--run_id=2621fda2-0eca-11ed-861d-0242ac120003",
             f"--input_paths={','.join(self.temp_files_paths)},",
         ]
         pc_cli.main(argv)
