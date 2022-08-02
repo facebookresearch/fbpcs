@@ -14,6 +14,13 @@ Types of changes
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+  - Created interface for logging debug metrics for counter-based alerting
+  - Created interface for writing checkpoints to track computation progress
+
+### Changed
+
+### Removed
 
 ## [1.8.0] - 2022-07-22
 
