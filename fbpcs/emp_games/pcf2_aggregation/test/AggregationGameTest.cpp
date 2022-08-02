@@ -413,6 +413,20 @@ AggregationOutputMetrics computeAggregationsWithScheduler(
   return game->computeAggregations(myId, inputData);
 }
 
+template <int schedulerId>
+AggregationOutputMetrics computeAggregationsReformattedWithScheduler(
+    int myId,
+    AggregationInputMetrics inputData,
+    common::InputEncryption inputEncryption,
+    std::shared_ptr<
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
+    fbpcf::SchedulerCreator schedulerCreator) {
+  auto scheduler = schedulerCreator(myId, *factory);
+  auto game = std::make_unique<AggregationGame<schedulerId>>(
+      std::move(scheduler), std::move(factory), inputEncryption);
+  return game->computeAggregationsReformatted(myId, inputData);
+}
+
 // Test cases are from https://fb.quip.com/IUHDApxKEAli
 void testCorrectnessWithScheduler(
     common::InputEncryption inputEncryption,
@@ -492,6 +506,87 @@ void testCorrectnessWithScheduler(
   }
 }
 
+void testCorrectnessReformattedWithScheduler(
+    common::InputEncryption inputEncryption,
+    fbpcf::SchedulerCreator schedulerCreator) {
+  FLAGS_use_new_output_format = true;
+  std::string baseDir_ =
+      private_measurement::test_util::getBaseDirFromPath(__FILE__);
+  // Attribution rules to test
+  std::vector<std::string> attributionRules{
+      common::LAST_CLICK_1D,
+      common::LAST_TOUCH_1D,
+      common::LAST_CLICK_2_7D,
+      common::LAST_TOUCH_2_7D};
+  // Currently only one aggregation format - measurement.
+  std::vector<std::string> aggregationFormats{common::MEASUREMENT};
+
+  for (auto attributionRule : attributionRules) {
+    for (auto aggregationFormat : aggregationFormats) {
+      std::string filePrefix = baseDir_ + "test_correctness/" + attributionRule;
+      std::string outputJsonFileName =
+          filePrefix + "." + aggregationFormat + ".json";
+      std::string publisherSecretShareFileName =
+          filePrefix + "_reformatted.publisher.json";
+      std::string partnerSecretShareFileName =
+          filePrefix + "_reformatted.partner.json";
+      std::string clearTextFilePrefix = baseDir_ +
+          "../../pcf2_attribution/test/test_correctness/" + attributionRule +
+          ".";
+      if (inputEncryption == common::InputEncryption::PartnerXor) {
+        clearTextFilePrefix = clearTextFilePrefix + "partner_xor.";
+      } else if (inputEncryption == common::InputEncryption::Xor) {
+        clearTextFilePrefix = clearTextFilePrefix + "xor.";
+      }
+      std::string publisherClearTextFileName =
+          clearTextFilePrefix + "publisher.csv";
+      std::string partnerClearTextFileName =
+          clearTextFilePrefix + "partner.csv";
+
+      // read input files
+      AggregationInputMetrics publisherInputData{
+          common::PUBLISHER,
+          inputEncryption,
+          publisherSecretShareFileName,
+          publisherClearTextFileName,
+          aggregationFormat};
+      AggregationInputMetrics partnerInputData{
+          common::PARTNER,
+          inputEncryption,
+          partnerSecretShareFileName,
+          partnerClearTextFileName,
+          ""};
+
+      // compute aggregations
+      auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
+
+      auto future0 = std::async(
+          computeAggregationsReformattedWithScheduler<0>,
+          0,
+          publisherInputData,
+          inputEncryption,
+          std::move(factories[0]),
+          schedulerCreator);
+
+      auto future1 = std::async(
+          computeAggregationsReformattedWithScheduler<1>,
+          1,
+          partnerInputData,
+          inputEncryption,
+          std::move(factories[1]),
+          schedulerCreator);
+
+      auto res0 = future0.get();
+      auto res1 = future1.get();
+
+      // check against expected output
+      auto output =
+          revealXORedResult(res0, res1, aggregationFormat, attributionRule);
+      verifyOutput(output, outputJsonFileName);
+    }
+  }
+}
+
 class AggregationGameTestFixture
     : public ::testing::TestWithParam<
           std::tuple<common::SchedulerType, common::InputEncryption>> {};
@@ -500,6 +595,13 @@ TEST_P(AggregationGameTestFixture, TestCorrectness) {
   auto [schedulerType, inputEncryption] = GetParam();
 
   testCorrectnessWithScheduler(
+      inputEncryption, fbpcf::getSchedulerCreator<unsafe>(schedulerType));
+}
+
+TEST_P(AggregationGameTestFixture, TestCorrectnessReformatted) {
+  auto [schedulerType, inputEncryption] = GetParam();
+
+  testCorrectnessReformattedWithScheduler(
       inputEncryption, fbpcf::getSchedulerCreator<unsafe>(schedulerType));
 }
 
