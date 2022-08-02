@@ -95,6 +95,7 @@ def run_attribution(
     logger: logging.Logger,
     num_tries: Optional[int] = 2,  # this is number of tries per stage
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
+    run_id: Optional[str] = None,
 ) -> None:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
@@ -200,6 +201,7 @@ def run_attribution(
                 num_files_per_mpc_container=num_files_per_mpc_container,
                 k_anonymity_threshold=k_anonymity_threshold,
                 pcs_features=pcs_features,
+                run_id=run_id,
             )
         )
         job = BoltJob(
@@ -254,6 +256,7 @@ def run_attribution(
             "k_anonymity_threshold": k_anonymity_threshold,
             "num_tries": num_tries,
             "pcs_features": pcs_features,
+            "run_id": run_id,
         }
         run_instance(**instance_parameters)
         logger.info(f"Finished running instances {instance_id}.")

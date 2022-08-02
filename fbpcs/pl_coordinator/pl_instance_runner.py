@@ -75,6 +75,7 @@ def run_instance(
     dry_run: Optional[bool] = False,
     result_visibility: Optional[ResultVisibility] = None,
     pcs_features: Optional[List[str]] = None,
+    run_id: Optional[str] = None,
 ) -> None:
     num_tries = num_tries if num_tries is not None else MAX_TRIES
     if num_tries < MIN_TRIES or num_tries > MAX_TRIES:
@@ -102,6 +103,7 @@ def run_instance(
         k_anonymity_threshold=k_anonymity_threshold,
         result_visibility=result_visibility,
         pcs_features=pcs_features,
+        run_id=run_id,
     )
     logger.info(f"Running private {game_type.name.lower()} for instance {instance_id}")
     instance_runner.run()
@@ -191,6 +193,7 @@ class PLInstanceRunner:
         k_anonymity_threshold: Optional[int] = None,
         result_visibility: Optional[ResultVisibility] = None,
         pcs_features: Optional[List[str]] = None,
+        run_id: Optional[str] = None,
     ) -> None:
         self.logger = logger
         self.instance_id = instance_id
@@ -213,6 +216,7 @@ class PLInstanceRunner:
             logger=logger,
             result_visibility=result_visibility,
             pcs_features=pcs_features,
+            run_id=run_id,
         )
         self.num_tries = num_tries
         self.dry_run = dry_run

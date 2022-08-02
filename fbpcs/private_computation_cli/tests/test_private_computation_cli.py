@@ -201,6 +201,7 @@ class TestPrivateComputationCli(TestCase):
             f"--config={self.temp_filename}",
             "--timestamp=1646870400",
             "--k_anonymity_threshold=0",
+            "--run_id=123",
         ]
         pc_cli.main(argv)
         create_mock.assert_called_once()
