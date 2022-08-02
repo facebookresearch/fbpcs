@@ -16,6 +16,7 @@
 #include "fbpcf/mpc_std_lib/oram/IWriteOnlyOramFactory.h"
 #include "fbpcf/mpc_std_lib/util/util.h"
 #include "fbpcs/emp_games/common/Constants.h"
+#include "fbpcs/emp_games/pcf2_aggregation/AttributionReformattedResult.h"
 #include "fbpcs/emp_games/pcf2_aggregation/AttributionResult.h"
 #include "fbpcs/emp_games/pcf2_aggregation/Constants.h"
 #include "fbpcs/emp_games/pcf2_aggregation/ConversionMetadata.h"
@@ -25,6 +26,8 @@ namespace pcf2_aggregation {
 
 using AttributionResultsList =
     std::vector<std::vector<std::vector<AttributionResult>>>;
+using AttributionReformattedResultsList =
+    std::vector<std::vector<std::vector<AttributionReformattedResult>>>;
 
 template <int schedulerId>
 using MeasurementTpmArrays =
@@ -42,6 +45,13 @@ struct PrivateAggregation {
       attributionResults;
   MeasurementTpmArrays<schedulerId> privateTpm;
   MeasurementCvmArrays<schedulerId> privateCvm;
+  // TODO: Add fields for additional aggregators to PrivateAggregation.
+};
+
+template <int schedulerId>
+struct PrivateAggregationReformatted {
+  std::vector<std::vector<PrivateAttributionReformattedResult<schedulerId>>>
+      attributionReformattedResults;
   // TODO: Add fields for additional aggregators to PrivateAggregation.
 };
 
@@ -70,6 +80,10 @@ class Aggregator {
 
   virtual void aggregateAttributions(
       const PrivateAggregation<schedulerId>& privateAggregation) = 0;
+
+  virtual void aggregateReformattedAttributions(
+      const PrivateAggregationReformatted<schedulerId>&
+          privateAggregationReformatted) = 0;
 
   virtual AggregationOutput reveal() const = 0;
 };
