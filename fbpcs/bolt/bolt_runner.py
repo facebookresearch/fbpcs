@@ -35,6 +35,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.utils.logger_adapter import LoggerAdapter
 
 
 class BoltRunner:
@@ -68,6 +69,7 @@ class BoltRunner:
         async with self.semaphore:
             try:
                 publisher_id, partner_id = await self._get_or_create_instances(job)
+                logger = LoggerAdapter(logger=self.logger, prefix=partner_id)
                 await self.wait_valid_publisher_status(
                     instance_id=publisher_id,
                     poll_interval=job.poll_interval,
@@ -82,7 +84,7 @@ class BoltRunner:
                         tries += 1
                         try:
                             if await self.job_is_finished(job=job):
-                                self.logger.info(
+                                logger.info(
                                     # pyre-fixme: Undefined attribute [16]: `BoltCreateInstanceArgs` has no attribute `output_dir`
                                     f"Run for {job.job_name} completed. View results at {job.partner_bolt_args.create_instance_args.output_dir}"
                                 )
@@ -95,20 +97,22 @@ class BoltRunner:
                                 partner_id=partner_id,
                                 stage=stage,
                                 poll_interval=job.poll_interval,
+                                logger=logger,  # pyre-ignore
                             )
                             await self.wait_stage_complete(
                                 publisher_id=publisher_id,
                                 partner_id=partner_id,
                                 stage=stage,
                                 poll_interval=job.poll_interval,
+                                logger=logger,  # pyre-ignore
                             )
                             break
                         except Exception as e:
                             if tries >= max_tries:
-                                self.logger.exception(e)
+                                logger.exception(e)
                                 return False
-                            self.logger.error(f"Error: type: {type(e)}, message: {e}")
-                            self.logger.info(
+                            logger.error(f"Error: type: {type(e)}, message: {e}")
+                            logger.info(
                                 f"Retrying stage {stage}, Retries left: {self.num_tries - tries}."
                             )
                             await asyncio.sleep(RETRY_INTERVAL)
@@ -137,13 +141,15 @@ class BoltRunner:
         partner_id: str,
         stage: PrivateComputationBaseStageFlow,
         poll_interval: int,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
+        logger = logger or self.logger
         publisher_status = (
             await self.publisher_client.update_instance(publisher_id)
         ).pc_instance_status
         if publisher_status not in [stage.started_status, stage.completed_status]:
             # don't retry if started or completed status
-            self.logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
+            logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
         server_ips = None
         if stage.is_joint_stage:
@@ -162,7 +168,7 @@ class BoltRunner:
         ).pc_instance_status
         if partner_status not in [stage.started_status, stage.completed_status]:
             # don't retry if started or completed status
-            self.logger.info(f"Partner {partner_id} starting stage {stage.name}.")
+            logger.info(f"Partner {partner_id} starting stage {stage.name}.")
             await self.partner_client.run_stage(
                 instance_id=partner_id, stage=stage, server_ips=server_ips
             )
@@ -199,7 +205,9 @@ class BoltRunner:
         partner_id: str,
         stage: PrivateComputationBaseStageFlow,
         poll_interval: int,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
+        logger = logger or self.logger
         fail_status = stage.failed_status
         complete_status = stage.completed_status
         timeout = stage.timeout
@@ -224,20 +232,20 @@ class BoltRunner:
                 # stage failed, cancel partner side only in joint stage
                 if stage.is_joint_stage:
                     try:
-                        self.logger.error(
+                        logger.error(
                             f"Publisher status: {publisher_state.pc_instance_status}. Canceling partner stage {stage.name}."
                         )
                         await self.partner_client.cancel_current_stage(
                             instance_id=partner_id
                         )
                     except Exception as e:
-                        self.logger.error(
+                        logger.error(
                             f"Unable to cancel current stage {stage.name}. Error: type: {type(e)}, message: {e}."
                         )
                 raise StageFailedException(
                     f"Stage {stage.name} failed. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
                 )
-            self.logger.info(
+            logger.info(
                 f"Publisher {publisher_id} status is {publisher_state.pc_instance_status}, Partner {partner_id} status is {partner_state.pc_instance_status}. Waiting for status {complete_status}."
             )
             # keep polling
