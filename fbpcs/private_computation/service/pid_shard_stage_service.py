@@ -116,7 +116,12 @@ class PIDShardStageService(PrivateComputationStageService):
         )
         # start containers
         logging.info(f"{pc_role} spinning up containers")
-        env_vars = {ONEDOCKER_REPOSITORY_PATH: onedocker_binary_config.repository_path}
+        env_vars = {}
+        if onedocker_binary_config.repository_path:
+            env_vars[
+                ONEDOCKER_REPOSITORY_PATH
+            ] = onedocker_binary_config.repository_path
+
         return await sharding_binary_service.start_containers(
             cmd_args_list=[args],
             onedocker_svc=self._onedocker_svc,

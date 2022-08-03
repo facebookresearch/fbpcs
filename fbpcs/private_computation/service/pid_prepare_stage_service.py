@@ -125,7 +125,12 @@ class PIDPrepareStageService(PrivateComputationStageService):
         # start containers
         logging.info(f"{pc_role} spinning up containers")
 
-        env_vars = {ONEDOCKER_REPOSITORY_PATH: onedocker_binary_config.repository_path}
+        env_vars = {}
+        if onedocker_binary_config.repository_path:
+            env_vars[
+                ONEDOCKER_REPOSITORY_PATH
+            ] = onedocker_binary_config.repository_path
+
         pid_prepare_binary_service = PIDPrepareBinaryService()
         return await pid_prepare_binary_service.start_containers(
             cmd_args_list=args_list,

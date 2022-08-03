@@ -39,7 +39,9 @@ class PreValidateService:
         onedocker_svc = pc_service.onedocker_svc
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = pc_service.onedocker_binary_config_map[binary_name]
-        env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
+        env_vars = {}
+        if binary_config.repository_path:
+            env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
 
         cmd_args = [
             get_cmd_args(input_path, region, binary_config)

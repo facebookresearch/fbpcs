@@ -93,9 +93,12 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 return_value=containers
             )
             updated_pc_instance = await stage_svc.run_async(pc_instance=pc_instance)
-            env_vars = {
-                "ONEDOCKER_REPOSITORY_PATH": self.onedocker_binary_config.repository_path
-            }
+            env_vars = {}
+            if self.onedocker_binary_config.repository_path:
+                env_vars[
+                    "ONEDOCKER_REPOSITORY_PATH"
+                ] = self.onedocker_binary_config.repository_path
+
             args_ls_expect = self.get_args_expected(
                 pc_role, test_num_containers, max_col_cnt_expect
             )

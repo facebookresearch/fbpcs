@@ -86,10 +86,9 @@ async def create_and_start_mpc_instance(
         num_workers=num_containers,
         game_args=game_args,
     )
-
     env_vars = {}
     if repository_path:
-        env_vars["ONEDOCKER_REPOSITORY_PATH"] = repository_path
+        env_vars[ONEDOCKER_REPOSITORY_PATH] = repository_path
 
     return await mpc_svc.start_instance_async(
         instance_id=instance_id,
@@ -282,7 +281,10 @@ async def start_combiner_service(
         multi_conversion_limit=multi_conversion_limit,
         log_cost=log_cost,
     )
-    env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
+    env_vars = {}
+    if binary_config.repository_path:
+        env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
+
     return await combiner_service.start_containers(
         cmd_args_list=args,
         onedocker_svc=onedocker_svc,
@@ -348,7 +350,10 @@ async def start_sharder_service(
         args_list.append(args_per_shard)
 
     binary_name = sharder.get_binary_name(ShardType.ROUND_ROBIN)
-    env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
+    env_vars = {}
+    if binary_config.repository_path:
+        env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
+
     return await sharder.start_containers(
         cmd_args_list=args_list,
         onedocker_svc=onedocker_svc,

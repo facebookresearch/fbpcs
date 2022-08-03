@@ -95,8 +95,10 @@ class PCPreValidationStageService(PrivateComputationStageService):
             region,
             binary_config,
         )
+        env_vars = {}
+        if binary_config.repository_path:
+            env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
 
-        env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
         container_instances = await RunBinaryBaseService().start_containers(
             [cmd_args],
             self._onedocker_svc,
