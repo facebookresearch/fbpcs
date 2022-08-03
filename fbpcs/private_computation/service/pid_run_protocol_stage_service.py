@@ -138,7 +138,12 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             pid_protocol, pc_role
         )
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
-        env_vars = {ONEDOCKER_REPOSITORY_PATH: onedocker_binary_config.repository_path}
+        env_vars = {}
+        if onedocker_binary_config.repository_path:
+            env_vars[
+                ONEDOCKER_REPOSITORY_PATH
+            ] = onedocker_binary_config.repository_path
+
         return await pid_run_protocol_binary_service.start_containers(
             cmd_args_list=args_list,
             onedocker_svc=self._onedocker_svc,

@@ -7,10 +7,14 @@
 # pyre-strict
 
 from dataclasses import dataclass
+from typing import Optional
 
 from dataclasses_json import dataclass_json
 
 ONEDOCKER_REPOSITORY_PATH = "ONEDOCKER_REPOSITORY_PATH"
+DEFAULT_BINARY_REPOSITORY = (
+    "https://one-docker-repository-prod.s3.us-west-2.amazonaws.com/"
+)
 
 
 @dataclass_json
@@ -18,6 +22,4 @@ ONEDOCKER_REPOSITORY_PATH = "ONEDOCKER_REPOSITORY_PATH"
 class OneDockerBinaryConfig:
     tmp_directory: str
     binary_version: str
-    repository_path: str = (
-        "https://one-docker-repository-prod.s3.us-west-2.amazonaws.com/"
-    )
+    repository_path: Optional[str] = None

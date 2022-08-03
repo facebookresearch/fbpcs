@@ -109,7 +109,10 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 pid_protocol, pc_role
             )
             binary_config = self.onedocker_binary_config_map[binary_name]
-            env_vars = {ONEDOCKER_REPOSITORY_PATH: binary_config.repository_path}
+            env_vars = {}
+            if binary_config.repository_path:
+                env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
+
             args_str_expect = self.get_args_expect(
                 pc_role, pid_protocol, self.use_row_numbers
             )
