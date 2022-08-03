@@ -1,0 +1,31 @@
+name: Build OneDocker image
+
+on:
+  schedule:
+    - cron: '0 0,15-23/3 * * *'
+
+env:
+  DISTRO: ubuntu
+  IMAGE_TAG: latest-build
+  TIME_RANGE: 24 hours
+
+jobs:
+  ### Build onedocker image
+  build_image:
+    name: Build Image
+    runs-on: self-hosted
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash }}
+
+      - name: Remove unused images
+        run: |
+          docker image prune -af
+
+      - name: Build onedocker image
+        run: |
+          ./build-docker.sh onedocker -t ${{ env.IMAGE_TAG }} -f
