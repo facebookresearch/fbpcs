@@ -19,6 +19,7 @@ from fbpcs.infra.pce_deployment_library.deploy_library.models import (
     RunCommandResult,
     TerraformCliOptions,
     TerraformCommand,
+    TerraformOptionFlag,
 )
 from fbpcs.infra.pce_deployment_library.deploy_library.terraform_library.terraform_deployment_utils import (
     TerraformDeploymentUtils,
@@ -111,7 +112,7 @@ class TerraformDeployment(DeployBase):
     def terraform_init(
         self,
         backend_config: Optional[Dict[str, str]] = None,
-        reconfigure: Type[FlaggedOption] = FlaggedOption,
+        reconfigure: Type[TerraformOptionFlag] = FlaggedOption,
         **kwargs: Dict[str, Any],
     ) -> RunCommandResult:
         """
@@ -182,8 +183,12 @@ class TerraformDeployment(DeployBase):
     ) -> RunCommandResult:
         """
         Executes Terraform CLIs apply/destroy/init/plan
+
+        Set `dry_run` flag in `kwargs` to test the function.
+        `dry_run` returns the command that will be run in shell for a given input
         """
         options: Dict[str, Any] = kwargs.copy()
+        dry_run: bool = options.get("dry_run", False)
 
         capture_output: bool = options.get("capture_output", True)
 
@@ -198,6 +203,14 @@ class TerraformDeployment(DeployBase):
         command_str = " ".join(command_list)
         self.log.info(f"Command: {command_str}")
         out, err = None, None
+
+        if dry_run:
+            # Adding dryrun flag for tests. It returns the command that will be executed for given input
+            self.log.info("Dry run: will not actually execute command")
+            self.log.info(f"Running command: {command_str}")
+            return RunCommandResult(
+                return_code=0, output=f"Dry run command: {command_str}", error=""
+            )
 
         with Popen(command_list, stdout=stdout, stderr=stderr) as p:
             out, err = p.communicate()
