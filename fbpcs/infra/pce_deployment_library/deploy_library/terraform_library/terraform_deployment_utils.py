@@ -118,10 +118,10 @@ class TerraformDeploymentUtils:
         t.get_command_list("terraform apply")
 
         Returns:
-        => ['terraform', 'apply', '-backend-config region=us-west-2', '-backend-config access_key=fake_access_key']
+        => ['terraform', 'apply', '-backend-config "region=us-west-2"', '-backend-config "access_key=fake_access_key"']
         """
         commands_list: List[str] = []
-        commands_list.extend([f"-{key} {k}={v}" for k, v in value.items()])
+        commands_list.extend([f'-{key} "{k}={v}"' for k, v in value.items()])
         return commands_list
 
     def add_list_options(self, key: str, value: List[str]) -> List[str]:
@@ -132,11 +132,11 @@ class TerraformDeploymentUtils:
         t.get_command_list("terraform apply")
 
         Returns:
-        => ['terraform', 'apply', '-target=aws_s3_bucket_object.objects[2]', '-target=aws_s3_bucket_object.objects[3]']
+        => ['terraform', 'apply', '-target="aws_s3_bucket_object.objects[2]"', '-target="aws_s3_bucket_object.objects[3]"']
         """
         commands_list: List[str] = []
         for val in value:
-            commands_list.append(f"-{key}={val}")
+            commands_list.append(f'-{key}="{val}"')
         return commands_list
 
     def add_bool_options(self, key: str, value: bool) -> List[str]:
@@ -177,9 +177,9 @@ class TerraformDeploymentUtils:
         t.get_command_list("terraform init")
 
         Returns:
-        => ['terraform', 'init', '-target=aws_s3_bucket_object.objects[2]']
+        => ['terraform', 'init', '-target="aws_s3_bucket_object.objects[2]"']
         """
         commands_list: List[str] = []
         if value is not None:
-            commands_list.append(f"-{key}={value}")
+            commands_list.append(f'-{key}="{value}"')
         return commands_list

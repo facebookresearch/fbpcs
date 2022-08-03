@@ -97,7 +97,7 @@ class TestTerraformDeployment(unittest.TestCase):
                 "region": "fake_region",
                 "access_key": "fake_access_key",
             }
-            expected_command = "terraform init -input=false -dry-run=true -backend-config region=fake_region -backend-config access_key=fake_access_key -reconfigure"
+            expected_command = 'terraform init -input=false -dry-run=true -backend-config "region=fake_region" -backend-config "access_key=fake_access_key" -reconfigure'
             expected_value = RunCommandResult(
                 return_code=0, output=f"Dry run command: {expected_command}", error=""
             )
@@ -111,7 +111,7 @@ class TestTerraformDeployment(unittest.TestCase):
                 "region": "fake_region ",
                 "access_key": "fake_access_key ",
             }
-            expected_command = "terraform init -input=false -dry-run=true -backend-config region=fake_region  -backend-config access_key=fake_access_key  -reconfigure"
+            expected_command = 'terraform init -input=false -dry-run=true -backend-config "region=fake_region " -backend-config "access_key=fake_access_key " -reconfigure'
             expected_value = RunCommandResult(
                 return_code=0, output=f"Dry run command: {expected_command}", error=""
             )
