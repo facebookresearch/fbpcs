@@ -9,6 +9,10 @@ from typing import Dict, List, Optional
 
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.storage_s3 import S3StorageService
+from fbpcs.onedocker_binary_config import (
+    DEFAULT_BINARY_REPOSITORY,
+    ONEDOCKER_REPOSITORY_PATH,
+)
 from fbpcs.pc_pre_validation.binary_path import (
     BinaryInfo,
     LocalBinaryPath,
@@ -17,11 +21,9 @@ from fbpcs.pc_pre_validation.binary_path import (
 from fbpcs.pc_pre_validation.constants import (
     BINARY_FILE_VALIDATOR_NAME,
     BINARY_INFOS,
-    DEFAULT_BINARY_REPOSITORY,
     DEFAULT_BINARY_VERSION,
     DEFAULT_EXE_FOLDER,
     ONEDOCKER_EXE_PATH,
-    ONEDOCKER_REPOSITORY_PATH,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.validation_report import ValidationReport
