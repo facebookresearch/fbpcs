@@ -42,6 +42,10 @@ class CalculatorAppTest : public ::testing::Test {
     outputPathBob_ =
         folly::sformat("{}/res_bob_{}", tempDir, folly::Random::secureRand64());
 
+    generateFakeData();
+  }
+
+  virtual void generateFakeData() {
     GenFakeData testDataGenerator;
     LiftFakeDataParams params;
 
@@ -130,4 +134,70 @@ TEST_F(CalculatorAppTest, RandomInputTestVisibilityPublic) {
   EXPECT_EQ(expectedRes, resAlice);
   EXPECT_EQ(expectedRes, resBob);
 }
+
+class ZeroRowsCalculatorAppTest : public CalculatorAppTest {
+ public:
+  void generateFakeData() override {
+    GenFakeData testDataGenerator;
+    LiftFakeDataParams params;
+
+    params.setNumRows(0)
+        .setOpportunityRate(0.5)
+        .setTestRate(0.5)
+        .setPurchaseRate(0.5)
+        .setIncrementalityRate(0.0)
+        .setEpoch(1546300800);
+    testDataGenerator.genFakePublisherInputFile(inputPathAlice_, params);
+    testDataGenerator.genFakePartnerInputFile(inputPathBob_, params);
+  }
+};
+
+TEST_F(ZeroRowsCalculatorAppTest, ZeroRowsTestVisibilityPublic) {
+  auto futureAlice = std::async(
+      runGame,
+      fbpcf::Party::Alice,
+      "",
+      port_,
+      inputPathAlice_,
+      outputPathAlice_,
+      false /* useXorEncryption */);
+  auto futureBob = std::async(
+      runGame,
+      fbpcf::Party::Bob,
+      "127.0.0.1",
+      port_,
+      inputPathBob_,
+      outputPathBob_,
+      false /* useXorEncryption */);
+
+  futureAlice.wait();
+  futureBob.wait();
+
+  LiftCalculator liftCalculator;
+  std::ifstream inFileAlice{inputPathAlice_};
+  std::ifstream inFileBob{inputPathBob_};
+  std::string linePublisher;
+  std::string linePartner;
+  getline(inFileAlice, linePublisher);
+  getline(inFileBob, linePartner);
+  auto headerPublisher =
+      private_measurement::csv::splitByComma(linePublisher, false);
+  auto headerPartner =
+      private_measurement::csv::splitByComma(linePartner, false);
+  auto colNameToIndex =
+      liftCalculator.mapColToIndex(headerPublisher, headerPartner);
+  OutputMetricsData computedResult =
+      liftCalculator.compute(inFileAlice, inFileBob, colNameToIndex, tsOffset);
+  GroupedLiftMetrics expectedRes;
+  expectedRes.metrics = computedResult.toLiftMetrics();
+
+  auto resAlice = GroupedLiftMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathAlice_));
+  auto resBob = GroupedLiftMetrics::fromJson(
+      fbpcf::io::FileIOWrappers::readFile(outputPathBob_));
+
+  EXPECT_EQ(expectedRes, resAlice);
+  EXPECT_EQ(expectedRes, resBob);
+}
+
 } // namespace private_lift

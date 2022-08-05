@@ -18,6 +18,7 @@
 #include "CalculatorGame.h"
 #include "CalculatorGameConfig.h"
 #include "InputData.h"
+#include "fbpcs/emp_games/lift/calculator/OutputMetrics.h"
 
 namespace private_lift {
 void CalculatorApp::run() {
@@ -26,15 +27,36 @@ void CalculatorApp::run() {
     int32_t numValues = static_cast<int32_t>(config.inputData.getNumRows());
     XLOG(INFO) << "Have " << numValues << " values in inputData.";
 
-    XLOG(INFO) << "connecting...";
-    std::unique_ptr<emp::NetIO> io = std::make_unique<emp::NetIO>(
-        party_ == fbpcf::Party::Alice ? nullptr : serverIp_.c_str(), port_);
+    if (numValues > 0) {
+      XLOG(INFO) << "connecting...";
+      std::unique_ptr<emp::NetIO> io = std::make_unique<emp::NetIO>(
+          party_ == fbpcf::Party::Alice ? nullptr : serverIp_.c_str(), port_);
 
-    CalculatorGame game{std::move(io), party_, visibility_};
-    auto output = game.perfPlay(config);
-    XLOG(INFO) << "done calculating";
+      CalculatorGame game{std::move(io), party_, visibility_};
+      auto output = game.perfPlay(config);
+      XLOG(INFO) << "done calculating";
 
-    putOutputData(output);
+      putOutputData(output);
+    } else {
+      XLOG(INFO) << "skipped calculating as numValues==0.";
+      // skip game::run(), just output the default metrics.
+      if (party_ == fbpcf::Party::Alice) {
+        putOutputData(OutputMetrics<PUBLISHER>{
+            config.inputData,
+            config.isConversionLift,
+            false,
+            config.numConversionsPerUser}
+                          .toJson());
+      } else {
+        putOutputData(OutputMetrics<PARTNER>{
+            config.inputData,
+            config.isConversionLift,
+            false,
+            config.numConversionsPerUser}
+                          .toJson());
+      }
+    }
+
   } catch (const std::exception& e) {
     auto path = inputPath_.u8string();
     XLOGF(
