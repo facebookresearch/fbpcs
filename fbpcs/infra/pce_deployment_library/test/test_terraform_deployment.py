@@ -36,6 +36,8 @@ class TestTerraformDeployment(unittest.TestCase):
             test_command_return = RunCommandResult(
                 return_code=test_return_code,
                 output=test_stdout.decode("utf-8"),
+                # pyre-fixme[6]: For 3rd param expected `Optional[str]` but got
+                #  `Union[bytes, str]`.
                 error=test_error if test_error else "",
             )
             func_ret = self.terraform_deployment.run_command(command=command)
@@ -52,7 +54,9 @@ class TestTerraformDeployment(unittest.TestCase):
             test_return_code = test_obj.returncode
             test_command_return = RunCommandResult(
                 return_code=test_return_code,
+                # pyre-fixme[6]: For 2nd param expected `Optional[str]` but got `bytes`.
                 output=test_stdout,
+                # pyre-fixme[6]: For 3rd param expected `Optional[str]` but got `bytes`.
                 error=test_stdout,
             )
             kwargs: Dict[str, Any] = {"capture_output": capture_output}
