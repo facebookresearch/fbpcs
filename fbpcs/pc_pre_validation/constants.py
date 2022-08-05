@@ -9,11 +9,6 @@
 import re
 from typing import Dict, List, Pattern
 
-from fbpcs.onedocker_binary_config import (
-    DEFAULT_BINARY_REPOSITORY,
-    ONEDOCKER_REPOSITORY_PATH,
-)
-
 from fbpcs.pc_pre_validation.binary_path import BinaryInfo
 
 INPUT_DATA_VALIDATOR_NAME = "Input Data Validator"
@@ -72,7 +67,6 @@ VALIDATION_REGEXES: Dict[str, Pattern[str]] = {
 
 VALID_LINE_ENDING_REGEX: Pattern[str] = re.compile(r".*(\S|\S\n)$")
 
-DEFAULT_BINARY_REPOSITORY = DEFAULT_BINARY_REPOSITORY
 DEFAULT_BINARY_VERSION = "latest"
 DEFAULT_EXE_FOLDER = "/root/onedocker/package/"
 BINARY_INFOS: List[BinaryInfo] = [
@@ -90,5 +84,4 @@ BINARY_INFOS: List[BinaryInfo] = [
     BinaryInfo("private_attribution/shard-aggregator"),
     BinaryInfo("private_lift/lift"),
 ]
-ONEDOCKER_REPOSITORY_PATH = ONEDOCKER_REPOSITORY_PATH
 ONEDOCKER_EXE_PATH = "ONEDOCKER_EXE_PATH"
