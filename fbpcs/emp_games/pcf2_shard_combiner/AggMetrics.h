@@ -42,6 +42,13 @@ template <int schedulerId, bool usingBatch = true>
 using SecInt = typename fbpcf::frontend::MpcGame<
     schedulerId>::template SecSignedInt<kMetricBitWidth, usingBatch>;
 
+template <int schedulerId, bool usingBatch = true>
+using SecBit =
+    typename fbpcf::frontend::MpcGame<schedulerId>::template SecBit<usingBatch>;
+
+template <int schedulerId, bool usingBatch = true>
+using BitVariant = std::variant<bool, SecBit<schedulerId, usingBatch>>;
+
 template <
     int schedulerId = 0,
     bool usingBatch = false,
@@ -94,6 +101,16 @@ class AggMetrics {
       const std::shared_ptr<
           AggMetrics<schedulerId, usingBatch, inputEncryption>>& rhs);
 
+  // checks if *this >= rhs metrics and returns a variant which could be
+  // bool or SecBit<> based on the instantiation.
+  BitVariant<schedulerId, usingBatch> isGreaterOrEqual(const AggMetrics& rhs);
+
+  // if the condition is evaluates to be logic '1' then retains current
+  // value, else chooses newVal.
+  void mux(
+      const BitVariant<schedulerId, usingBatch>& condition,
+      std::shared_ptr<AggMetrics>& newVal);
+
   AggMetricType getType() const {
     return type_;
   }
@@ -112,8 +129,14 @@ class AggMetrics {
     secVal_ = std::move(v);
   }
 
-  // inits secretValue holding data structure SecMetricVariant.
+  // reads val_ that contains the intShare and inits secretValue holding data
+  // structure SecMetricVariant.
   void updateSecValueFromRawInt();
+
+  // reads val_ that contains the publicValue (k-anon threshold, sentinel
+  // values, etc.,) and inits secretValue holding data structure
+  // SecMetricVariant.
+  void updateSecValueFromPublicInt();
 
   // Traverses through all children and calls updateSecValueFromRawInt.
   void updateAllSecVals();
@@ -206,5 +229,14 @@ class AggMetrics {
   // interface like XOR-SS, Arithmetic, etc.
   SecMetricVariant secVal_;
 };
+
+// AggMetrics shared pointer.
+template <
+    int schedulerId = 0,
+    bool usingBatch = false,
+    common::InputEncryption inputEncryption =
+        common::InputEncryption::Plaintext>
+using AggMetrics_sp =
+    std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>;
 
 } // namespace shard_combiner

@@ -53,6 +53,26 @@ template <
     int schedulerId,
     bool usingBatch,
     common::InputEncryption inputEncryption>
+BitVariant<schedulerId, usingBatch>
+AggMetrics<schedulerId, usingBatch, inputEncryption>::isGreaterOrEqual(
+    const AggMetrics<schedulerId, usingBatch, inputEncryption>& val) {
+  if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+    return this->getValue() >= val.getValue();
+  } else if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    auto condition = this->getSecValueXor() >= val.getSecValueXor();
+    return condition;
+  } else {
+    std::string errStr = folly::sformat(
+        "This method is not implemented for type: {}.", (int32_t)getType());
+    XLOG(ERR) << errStr;
+    throw common::exceptions::NotImplementedError(errStr);
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
 void AggMetrics<schedulerId, usingBatch, inputEncryption>::accumulate(
     std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>& lhs,
     const std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>&
@@ -194,6 +214,59 @@ void AggMetrics<schedulerId, usingBatch, inputEncryption>::
         "Encryption type({}) is not supported.", (int)inputEncryption);
     XLOG(ERR, errStr);
     throw common::exceptions::NotImplementedError(errStr);
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+void AggMetrics<schedulerId, usingBatch, inputEncryption>::
+    updateSecValueFromPublicInt() {
+  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    if constexpr (usingBatch) {
+      std::vector<int64_t> val{getValue()};
+      SecInt<schedulerId, usingBatch> secInt = SecInt<schedulerId, usingBatch>(
+          std::vector<int64_t>(1, getValue()), common::PUBLISHER);
+      this->setSecValueXor(secInt);
+    } else {
+      int64_t val = getValue();
+      SecInt<schedulerId, usingBatch> secInt =
+          SecInt<schedulerId, usingBatch>(val, common::PUBLISHER);
+      this->setSecValueXor(secInt);
+    }
+  } else if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+    // if plaintext do nothing.
+  } else {
+    auto errStr = folly::sformat(
+        "Encryption type({}) is not supported.", (int)inputEncryption);
+    XLOG(ERR, errStr);
+    throw common::exceptions::NotSupportedError(errStr);
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+void AggMetrics<schedulerId, usingBatch, inputEncryption>::mux(
+    const BitVariant<schedulerId, usingBatch>& condition,
+    std::shared_ptr<AggMetrics<schedulerId, usingBatch, inputEncryption>>&
+        newVal) {
+  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    auto condition_ = std::get<SecBit<schedulerId, usingBatch>>(condition);
+    auto newSecVal = newVal->getSecValueXor().mux(condition_, getSecValueXor());
+    this->setSecValueXor(newSecVal);
+  } else if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+    auto condition_ = std::get<bool>(condition);
+    if (condition_) {
+      this->setValue(newVal->getValue());
+    }
+  } else {
+    auto errStr = folly::sformat(
+        "Encryption type({}) is not supported.", (int)inputEncryption);
+    XLOG(ERR, errStr);
+    throw common::exceptions::NotSupportedError(errStr);
   }
 }
 
