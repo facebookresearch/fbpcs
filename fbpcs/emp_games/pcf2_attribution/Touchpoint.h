@@ -19,6 +19,7 @@ struct Touchpoint {
   ConditionalVector<uint64_t, usingBatch> ts;
   ConditionalVector<uint64_t, usingBatch> targetId;
   ConditionalVector<uint64_t, usingBatch> actionType;
+  ConditionalVector<uint64_t, usingBatch> originalAdId;
   ConditionalVector<uint64_t, usingBatch> adId;
 };
 
@@ -34,6 +35,7 @@ struct PrivateTouchpoint {
   SecTimestamp<schedulerId, usingBatch> ts;
   SecTargetId<schedulerId, usingBatch> targetId;
   SecActionType<schedulerId, usingBatch> actionType;
+  SecOriginalAdId<schedulerId, usingBatch> originalAdId;
   SecAdId<schedulerId, usingBatch> adId;
 
   explicit PrivateTouchpoint(const Touchpoint<usingBatch>& touchpoint)
@@ -49,10 +51,10 @@ struct PrivateTouchpoint {
           extractedAids(touchpoint.actionType);
       actionType =
           SecActionType<schedulerId, usingBatch>(std::move(extractedAids));
-      typename SecAdId<schedulerId, usingBatch>::ExtractedInt extractedAdIds(
-          touchpoint.adId);
-      adId = SecAdId<schedulerId, usingBatch>(std::move(extractedAdIds));
-
+      typename SecOriginalAdId<schedulerId, usingBatch>::ExtractedInt
+          extractedOriginalAdIds(touchpoint.originalAdId);
+      originalAdId = SecOriginalAdId<schedulerId, usingBatch>(
+          std::move(extractedOriginalAdIds));
     } else {
       ts = SecTimestamp<schedulerId, usingBatch>(
           touchpoint.ts, common::PUBLISHER);
@@ -60,9 +62,10 @@ struct PrivateTouchpoint {
           touchpoint.targetId, common::PUBLISHER);
       actionType = SecActionType<schedulerId, usingBatch>(
           touchpoint.actionType, common::PUBLISHER);
-      adId =
-          SecAdId<schedulerId, usingBatch>(touchpoint.adId, common::PUBLISHER);
+      originalAdId = SecOriginalAdId<schedulerId, usingBatch>(
+          touchpoint.originalAdId, common::PUBLISHER);
     }
+    adId = SecAdId<schedulerId, usingBatch>(touchpoint.adId, common::PUBLISHER);
   }
 };
 
@@ -93,6 +96,7 @@ struct ParsedTouchpoint {
   uint64_t ts = 0U;
   uint64_t targetId = 0U;
   uint64_t actionType = 0U;
+  uint64_t originalAdId = 0U;
   uint64_t adId = 0U;
 
   /**

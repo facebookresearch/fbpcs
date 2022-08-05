@@ -15,7 +15,8 @@ const int kMaxConcurrency = 16;
 const size_t timeStampWidth = 32;
 const size_t targetIdWidth = 64;
 const size_t actionTypeWidth = 16;
-const size_t adIdWidth = 64;
+const size_t originalAdIdWidth = 64;
+const size_t adIdWidth = 16;
 const size_t convValueWidth = 32;
 
 template <int schedulerId, bool usingBatch = true>
@@ -47,6 +48,13 @@ using SecActionType = typename fbpcf::frontend::MpcGame<
     schedulerId>::template SecUnsignedInt<actionTypeWidth, usingBatch>;
 
 template <int schedulerId, bool usingBatch = true>
+using PubOriginalAdId = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template PubUnsignedInt<originalAdIdWidth, usingBatch>;
+template <int schedulerId, bool usingBatch = true>
+using SecOriginalAdId = typename fbpcf::frontend::MpcGame<
+    schedulerId>::template SecUnsignedInt<originalAdIdWidth, usingBatch>;
+
+template <int schedulerId, bool usingBatch = true>
 using PubAdId = typename fbpcf::frontend::MpcGame<
     schedulerId>::template PubUnsignedInt<adIdWidth, usingBatch>;
 template <int schedulerId, bool usingBatch = true>
@@ -75,6 +83,9 @@ using SecTargetIdT =
 template <int schedulerId, bool usingBatch = true>
 using SecActionTypeT =
     ConditionalVector<SecActionType<schedulerId, usingBatch>, !usingBatch>;
+template <int schedulerId, bool usingBatch = true>
+using SecOriginalAdIdT =
+    ConditionalVector<SecOriginalAdId<schedulerId, usingBatch>, !usingBatch>;
 template <int schedulerId, bool usingBatch = true>
 using SecAdIdT =
     ConditionalVector<SecAdId<schedulerId, usingBatch>, !usingBatch>;

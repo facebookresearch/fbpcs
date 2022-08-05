@@ -28,7 +28,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   std::vector<bool> isClicks;
   std::vector<uint64_t> targetId;
   std::vector<uint64_t> actionType;
-  std::vector<uint64_t> adId;
+  std::vector<uint64_t> adIds;
   bool targetIdPresent = false;
   bool actionTypePresent = false;
 
@@ -56,7 +56,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
       actionTypePresent = true;
       actionType = common::getInnerArray<uint64_t>(value);
     } else if (column == "ad_ids") {
-      adId = common::getInnerArray<uint64_t>(value);
+      adIds = common::getInnerArray<uint64_t>(value);
     }
   }
 
@@ -64,8 +64,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
       << "timestamps arrays and is_click arrays are not the same length.";
   CHECK_LE(timestamps.size(), FLAGS_max_num_touchpoints)
       << "Number of touchpoints exceeds the maximum allowed value.";
-  CHECK_EQ(timestamps.size(), adId.size())
-      << "timestamps arrays and ad ID arrays are not the same length.";
+  CHECK_EQ(timestamps.size(), adIds.size())
+      << "timestamps arrays and original ad ID arrays are not the same length.";
 
   if (!timestamps.empty()) {
     if (targetIdPresent) {
@@ -88,7 +88,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
         /* ts */ timestamps.at(i),
         /* targetId */ !targetId.empty() ? targetId.at(i) : 0ULL,
         /* actionType */ !actionType.empty() ? actionType.at(i) : 0ULL,
-        /* adId */ adId.at(i)});
+        /* original adId */ adIds.at(i),
+        /* compressed adId */ 0});
   }
 
   // The input received by attribution game from data processing is sorted by
@@ -195,6 +196,8 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
     std::vector<std::vector<uint64_t>> actionTypes(
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+    std::vector<std::vector<uint64_t>> originalAdIds(
+        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
     std::vector<std::vector<uint64_t>> adIds(
         FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
 
@@ -208,6 +211,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
         timestamps.at(j).push_back(parsedTouchpoint.ts);
         targetIds.at(j).push_back(parsedTouchpoint.targetId);
         actionTypes.at(j).push_back(parsedTouchpoint.actionType);
+        originalAdIds.at(j).push_back(parsedTouchpoint.originalAdId);
         adIds.at(j).push_back(parsedTouchpoint.adId);
       }
     }
@@ -218,6 +222,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
           timestamps.at(i),
           targetIds.at(i),
           actionTypes.at(i),
+          originalAdIds.at(i),
           adIds.at(i)});
     }
   } else {
@@ -230,6 +235,7 @@ AttributionInputMetrics<usingBatch, inputEncryption>::
             parsedTouchpoint.ts,
             parsedTouchpoint.targetId,
             parsedTouchpoint.actionType,
+            parsedTouchpoint.originalAdId,
             parsedTouchpoint.adId});
       }
       touchpoints.push_back(std::move(touchpointRow));
