@@ -51,12 +51,17 @@ void ShardAggregatorApp::run() {
                 << " passed to aggregator";
   }
 
-  ShardAggregatorGame game{
-      std::move(io), party_, thresholdChecker, visibility_};
-  auto encryptedResult = game.perfPlay(inputData);
+  if (!inputData.empty()) {
+    ShardAggregatorGame game{
+        std::move(io), party_, thresholdChecker, visibility_};
+    auto encryptedResult = game.perfPlay(inputData);
 
-  auto result = revealMetrics(encryptedResult);
-  putOutputData(result);
+    auto result = revealMetrics(encryptedResult);
+    putOutputData(result);
+  } else {
+    XLOG(INFO) << "inputData is empty().";
+    putOutputData(nullptr);
+  }
 };
 
 std::vector<std::string> ShardAggregatorApp::getInputPaths(
@@ -79,12 +84,19 @@ std::vector<std::shared_ptr<AggMetrics>> ShardAggregatorApp::getInputData() {
 
   auto inputData =
       fbpcf::functional::map<std::string, std::shared_ptr<AggMetrics>>(
-          inputPaths, [](const auto& inputPath) {
+          inputPaths, [](const auto& inputPath) -> std::shared_ptr<AggMetrics> {
             XLOG(INFO) << "Opening file at <" << inputPath << ">";
+            auto contents = fbpcf::io::FileIOWrappers::readFile(inputPath);
+            if (contents.empty()) {
+              XLOG(INFO) << "Empty file: <" << inputPath << ">";
+              return nullptr;
+            }
             return std::make_shared<AggMetrics>(
-                AggMetrics::fromDynamic(folly::parseJson(
-                    fbpcf::io::FileIOWrappers::readFile(inputPath))));
+                AggMetrics::fromDynamic(folly::parseJson(std::move(contents))));
           });
+  std::remove_if(
+      inputData.begin(), inputData.end(), [](auto& x) { return x == nullptr; });
+
   validateInputDataAggMetrics(inputData, metricsFormatType_);
   return inputData;
 }
@@ -92,8 +104,9 @@ std::vector<std::shared_ptr<AggMetrics>> ShardAggregatorApp::getInputData() {
 void ShardAggregatorApp::putOutputData(
     const std::shared_ptr<AggMetrics>& metrics) {
   XLOG(INFO) << "putting out data ...";
-  fbpcf::io::FileIOWrappers::writeFile(
-      outputPath_, folly::toJson(metrics->toDynamic()));
+
+  auto json = (metrics != nullptr) ? folly::toJson(metrics->toDynamic()) : "";
+  fbpcf::io::FileIOWrappers::writeFile(outputPath_, std::move(json));
 }
 
 std::shared_ptr<AggMetrics> ShardAggregatorApp::revealMetrics(
