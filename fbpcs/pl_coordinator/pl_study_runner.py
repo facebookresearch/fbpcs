@@ -56,6 +56,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 # study information fields
 TYPE = "type"
 STATUS = "status"
+RUN_ID = "run_id"
 START_TIME = "start_time"
 OBSERVATION_END_TIME = "observation_end_time"
 OBJECTIVES = "objectives"
@@ -88,6 +89,7 @@ def run_study(
     dry_run: Optional[bool] = False,  # if set to true, it will only run one stage
     result_visibility: Optional[ResultVisibility] = None,
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
+    run_id: Optional[str] = None,
 ) -> None:
 
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
@@ -117,6 +119,7 @@ def run_study(
         study_data,
         objective_ids,
         input_paths,
+        run_id,
     )
     _print_json(
         "Existing valid instances for cell-obj pairs", cell_obj_instance, logger
@@ -156,6 +159,7 @@ def run_study(
             num_shards = data["num_shards"]
             cell_id = data["cell_id"]
             obj_id = data["objective_id"]
+            run_id = data["run_id"]
             publisher_args = BoltPlayerArgs(
                 create_instance_args=BoltPLGraphAPICreateInstanceArgs(
                     instance_id=instance_id,
@@ -164,6 +168,7 @@ def run_study(
                         "cell_id": cell_id,
                         "objective_id": obj_id,
                     },
+                    run_id=run_id,
                 )
             )
             partner_args = BoltPlayerArgs(
@@ -177,6 +182,7 @@ def run_study(
                     stage_flow_cls=stage_flow,
                     result_visibility=result_visibility or ResultVisibility.PUBLIC,
                     pcs_features=pcs_features,
+                    run_id=run_id,
                 )
             )
             job = BoltJob(
@@ -236,7 +242,10 @@ def run_study(
 
     ## Step 4: Print out the initial and end states
     new_cell_obj_instances = _get_cell_obj_instance(
-        _get_study_data(study_id, client), objective_ids, input_paths
+        _get_study_data(study_id, client),
+        objective_ids,
+        input_paths,
+        run_id,
     )
     _print_json(
         "Pre-run statuses for instance of each cell-objective pair",
@@ -367,6 +376,7 @@ def _get_cell_obj_instance(
     study_data: Dict[str, Any],
     objective_ids: List[str],
     input_paths: List[str],
+    run_id: Optional[str],
 ) -> Dict[str, Dict[str, Dict[str, Any]]]:
     # only consider cells in OPP_DATA_INFORMATION (opportunity datasets available).
     cells_data: List[str] = study_data[OPP_DATA_INFORMATION]
@@ -396,6 +406,7 @@ def _get_cell_obj_instance(
         breakdown_key = json.loads(instance_data["breakdown_key"])
         cell_id = str(breakdown_key["cell_id"])
         objective_id = str(breakdown_key["objective_id"])
+
         # If to-be-calculated cell-obj pairs does not include this instance's
         # cell-obj pair, skip.
         if (
@@ -415,6 +426,9 @@ def _get_cell_obj_instance(
                 "id"
             ]
             cell_obj_instance[cell_id][objective_id][STATUS] = status.value
+            # Same run_id needs to be present in all instances of the PL run.
+            # Thus adding run_id to each cell_id*object_id pair.
+            cell_obj_instance[cell_id][objective_id][RUN_ID] = run_id
 
     return cell_obj_instance
 
@@ -429,10 +443,11 @@ def _create_new_instances(
         for objective_id in cell_obj_instances[cell_id]:
             # Create new instance for cell_obj pairs which has no valid instance.
             if "instance_id" not in cell_obj_instances[cell_id][objective_id]:
+                run_id = cell_obj_instances[cell_id][objective_id][RUN_ID]
                 cell_obj_instances[cell_id][objective_id][
                     "instance_id"
                 ] = _create_instance_retry(
-                    client, study_id, cell_id, objective_id, logger
+                    client, study_id, cell_id, objective_id, run_id, logger
                 )
                 cell_obj_instances[cell_id][objective_id][
                     STATUS
@@ -444,6 +459,7 @@ def _create_instance_retry(
     study_id: str,
     cell_id: str,
     objective_id: str,
+    run_id: Optional[str],
     logger: logging.Logger,
 ) -> str:
     tries = 0
@@ -452,7 +468,9 @@ def _create_instance_retry(
         try:
             instance_id = json.loads(
                 client.create_instance(
-                    study_id, {"cell_id": cell_id, "objective_id": objective_id}
+                    study_id,
+                    {"cell_id": cell_id, "objective_id": objective_id},
+                    run_id,
                 ).text
             )["id"]
             logger.info(
