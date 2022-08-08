@@ -77,6 +77,10 @@ DEFINE_string(
     run_name,
     "",
     "A user given run name that will be used in s3 filename");
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL run.");
 DEFINE_bool(
     log_cost,
     false,
@@ -140,7 +144,8 @@ int main(int argc, char** argv) {
                << "\tnumber of conversions per user: "
                << FLAGS_num_conversions_per_user << "\n"
                << "\tinput: " << inputFileLogList.str()
-               << "\toutput: " << outputFileLogList.str();
+               << "\toutput: " << outputFileLogList.str() << "\n"
+               << "\trun_id: " << FLAGS_run_id;
   }
 
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner

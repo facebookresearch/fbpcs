@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
   XLOGF(INFO, "Port: {}", FLAGS_port);
   XLOGF(INFO, "Base input path: {}", FLAGS_input_base_path);
   XLOGF(INFO, "Base output path: {}", FLAGS_output_base_path);
+  XLOGF(INFO, "Run Id: {}", FLAGS_run_id);
 
   common::SchedulerStatistics schedulerStatistics;
 
