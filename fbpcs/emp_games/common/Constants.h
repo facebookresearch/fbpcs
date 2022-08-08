@@ -29,6 +29,12 @@ enum class InputEncryption {
   Xor // both publisher and partner inputs are XOR secret shared
 };
 
+enum class ResultVisibility {
+  kPublic, // everyone can see the output result
+  kPartner, // result is revealed to partner only
+  kPublisher // result is revealed to publisher only
+};
+
 /*
   ATTRIBUTION RULE NAMES
 */
