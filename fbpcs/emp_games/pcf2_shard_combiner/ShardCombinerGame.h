@@ -23,6 +23,7 @@
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/ShardValidator.h"
+#include "fbpcs/emp_games/pcf2_shard_combiner/ShardValidator_impl.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/util/AggMetricsThresholdCheckers.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/util/AggMetricsThresholdCheckers_impl.h"
 
@@ -107,6 +108,7 @@ class ShardCombinerGame : public fbpcf::frontend::MpcGame<schedulerId> {
       auto shard =
           AggMetrics<schedulerId, usingBatch, inputEncryption>::fromJson(
               fullPath);
+      validateShardSchema<shardSchemaType>(*shard);
       shard->updateAllSecVals();
       shards_.push_back(shard);
     }
