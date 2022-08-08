@@ -92,7 +92,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             params={
                 "access_token": ACCESS_TOKEN,
                 "breakdown_key": json.dumps(test_pl_args.breakdown_key),
-                "run_id": "run_id",
+                "run_id": test_pl_args.run_id,
             },
         )
 

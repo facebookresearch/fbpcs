@@ -59,6 +59,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
         k_anonymity_threshold: Optional[int] = None,
         result_visibility: Optional[ResultVisibility] = None,
         pcs_features: Optional[List[str]] = None,
+        run_id: Optional[str] = None,
     ) -> None:
         super().__init__(instance_id, logger, PrivateComputationRole.PARTNER)
         self.config: Dict[str, Any] = config
@@ -88,6 +89,7 @@ class PrivateComputationPartnerInstance(PrivateComputationCalcInstance):
                 k_anonymity_threshold=k_anonymity_threshold,
                 result_visibility=result_visibility,
                 pcs_features=pcs_features,
+                run_id=run_id,
             )
 
         self.status = pc_instance.infra_config.status
