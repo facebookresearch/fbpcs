@@ -93,6 +93,7 @@ class BoltPLGraphAPICreateInstanceArgs(BoltCreateInstanceArgs):
     instance_id: str  # used for temporary resuming solution
     study_id: str
     breakdown_key: Dict[str, str]
+    run_id: Optional[str]
 
 
 @dataclass
@@ -124,6 +125,8 @@ class BoltGraphAPIClient(BoltClient):
         params = self.params.copy()
         if isinstance(instance_args, BoltPLGraphAPICreateInstanceArgs):
             params["breakdown_key"] = json.dumps(instance_args.breakdown_key)
+            if instance_args.run_id is not None:
+                params["run_id"] = instance_args.run_id
             r = requests.post(
                 f"{URL}/{instance_args.study_id}/instances", params=params
             )
