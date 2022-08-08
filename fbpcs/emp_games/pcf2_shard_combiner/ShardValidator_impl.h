@@ -14,13 +14,16 @@
   do {                                                                 \
     if (test_param operator expected) {                                \
     } else {                                                           \
+      XLOG(ERR) << msg;                                                \
       throw throw_(msg);                                               \
     }                                                                  \
   } while (0)
 
 #include <fbpcf/exception/exceptions.h>
-#include <fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h>
-#include <fbpcs/emp_games/pcf2_shard_combiner/ShardValidator.h>
+
+#include "fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h"
+#include "fbpcs/emp_games/pcf2_shard_combiner/AggMetrics_impl.h"
+#include "fbpcs/emp_games/pcf2_shard_combiner/ShardValidator.h"
 
 namespace shard_combiner {
 
@@ -36,6 +39,8 @@ void validateShardSchema(
   } else if constexpr (
       shardSchemaType == ShardSchemaType::kGroupedLiftMetrics) {
     validateGroupedLiftMetrics(metrics);
+  } else if constexpr (shardSchemaType == ShardSchemaType::kTest) {
+    /* Do nothing for test shards */
   } else {
     throw common::exceptions::SchemaTraceError(folly::sformat(
         "This [{}] schema is currently not supported in pcf2_shard_combiner.",
