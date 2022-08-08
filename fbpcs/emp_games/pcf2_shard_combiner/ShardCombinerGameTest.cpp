@@ -16,7 +16,6 @@
 
 #include <fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h>
 #include <fbpcf/engine/communication/test/AgentFactoryCreationHelper.h>
-#include <fbpcf/io/FileManagerUtil.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
 
 #include "fbpcs/emp_games/common/Constants.h"
@@ -83,7 +82,9 @@ std::unordered_map<int32_t, folly::dynamic> runGameTest(
   return ret;
 }
 
-template <bool usingBatch>
+template <
+    bool usingBatch,
+    ShardSchemaType shardSchemaType = ShardSchemaType::kTest>
 void runTestWithParams(
     common::SchedulerType schedulerType,
     std::string baseDir,
@@ -102,7 +103,7 @@ void runTestWithParams(
   auto gamePartner = std::async(
       std::launch::async,
       runGameTest<
-          ShardSchemaType::kTest,
+          shardSchemaType,
           common::PARTNER,
           usingBatch,
           inputEncryption>,
@@ -115,7 +116,7 @@ void runTestWithParams(
   auto gamePublisher = std::async(
       std::launch::async,
       runGameTest<
-          ShardSchemaType::kTest,
+          shardSchemaType,
           common::PUBLISHER,
           usingBatch,
           inputEncryption>,
@@ -128,8 +129,8 @@ void runTestWithParams(
   auto f1 = gamePartner.get();
   auto f2 = gamePublisher.get();
 
-  auto expectedObj =
-      folly::parseJson(fbpcf::io::read(baseDir + expectedOutFileName));
+  auto expectedObj = folly::parseJson(
+      fbpcf::io::FileIOWrappers::readFile(baseDir + expectedOutFileName));
 
   EXPECT_EQ(f1.at(common::PARTNER), expectedObj);
   EXPECT_EQ(f2.at(common::PUBLISHER), expectedObj);
@@ -220,8 +221,8 @@ void runTestReadFiles(
           if (kp.second == party) {
             std::string expectedShardFilePath = folly::sformat(
                 "{}/{}_{}", baseDir, expectedOutFileName, kp.first);
-            auto expectedObj =
-                folly::parseJson(fbpcf::io::read(expectedShardFilePath));
+            auto expectedObj = folly::parseJson(
+                fbpcf::io::FileIOWrappers::readFile(expectedShardFilePath));
             EXPECT_EQ(v, expectedObj);
           }
           std::cout << "f <" << kp.first << "><" << kp.second << ">: " << v
@@ -331,6 +332,40 @@ TEST_P(ShardCombinerGameTestFixture, TestReadOpenToParty) {
         2,
         expectedOutFileName);
   }
+}
+
+// This test verifies if the threshold checker works or not.
+// tests on odd and even number of shards.
+TEST_P(ShardCombinerGameTestFixture, TestThresholdChecker) {
+  auto [schedulerType, usingBatch] = GetParam();
+  std::string partnerFileName = "partner_lift_input_shard.json";
+  std::string publisherFileName = "publisher_lift_input_shard.json";
+  std::string expectedOutFileNamePrefix = "lift_expected_output_shards_";
+  auto testFn = [&](int32_t numShards,
+                    bool usingBatch,
+                    common::SchedulerType schedulerType) {
+    std::string expectedOutFileName =
+        folly::sformat("{}{}.json", expectedOutFileNamePrefix, numShards);
+    if (usingBatch) {
+      runTestWithParams<true, ShardSchemaType::kGroupedLiftMetrics>(
+          schedulerType,
+          baseDir_ + "lift_threshold_test/",
+          partnerFileName,
+          publisherFileName,
+          numShards,
+          expectedOutFileName);
+    } else {
+      runTestWithParams<false, ShardSchemaType::kGroupedLiftMetrics>(
+          schedulerType,
+          baseDir_ + "lift_threshold_test/",
+          partnerFileName,
+          publisherFileName,
+          numShards,
+          expectedOutFileName);
+    }
+  };
+  testFn(2, usingBatch, schedulerType);
+  testFn(3, usingBatch, schedulerType);
 }
 
 INSTANTIATE_TEST_SUITE_P(
