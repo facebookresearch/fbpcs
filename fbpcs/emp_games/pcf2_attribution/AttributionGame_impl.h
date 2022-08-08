@@ -483,14 +483,8 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
           INFO,
           "Retrieving attribution results for rule {}.",
           attributionRule->name);
-      attributionMetrics.formatToAttribution[attributionFormat] =
+      attributionMetrics.attributionResult =
           attributionReformattedOutput.reveal();
-      out.ruleToMetrics[attributionRule->name] = attributionMetrics;
-
-      XLOGF(
-          INFO,
-          "Done computing attributions for rule {}.",
-          attributionRule->name);
 
     } else {
       std::vector<SecBitT<schedulerId, usingBatch>> attributions;
@@ -520,13 +514,13 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
           attributionRule->name);
       attributionMetrics.formatToAttribution[attributionFormat] =
           attributionOutput.reveal();
-      out.ruleToMetrics[attributionRule->name] = attributionMetrics;
-
-      XLOGF(
-          INFO,
-          "Done computing attributions for rule {}.",
-          attributionRule->name);
     }
+
+    out.ruleToMetrics[attributionRule->name] = attributionMetrics;
+    XLOGF(
+        INFO,
+        "Done computing attributions for rule {}.",
+        attributionRule->name);
   }
   return out;
 }

@@ -13,6 +13,7 @@
 
 #include "fbpcs/emp_games/common/Csv.h"
 
+#include "fbpcs/emp_games/pcf2_attribution/AttributionOptions.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionOutput.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionReformattedOutput.h"
 #include "fbpcs/emp_games/pcf2_attribution/Conversion.h"
@@ -102,31 +103,40 @@ class AttributionInputMetrics {
  */
 struct AttributionMetrics {
   std::unordered_map<std::string, AttributionResult> formatToAttribution;
+  AttributionResult attributionResult;
 
   folly::dynamic toDynamic() const {
-    folly::dynamic res = folly::dynamic::object();
-    for (auto kv : formatToAttribution) {
-      auto attributionName = kv.first;
-      auto attributionMetrics = kv.second;
-      res.insert(attributionName, attributionMetrics);
+    if (FLAGS_use_new_output_format) {
+      return attributionResult;
+    } else {
+      folly::dynamic res = folly::dynamic::object();
+      for (auto kv : formatToAttribution) {
+        auto attributionName = kv.first;
+        auto attributionMetrics = kv.second;
+        res.insert(attributionName, attributionMetrics);
+      }
+      return res;
     }
-    return res;
   }
 
   static AttributionMetrics fromDynamic(const folly::dynamic& obj) {
-    std::unordered_map<std::string, AttributionResult> formatToAttribution;
-    for (auto& pair : obj.items()) {
-      auto attributionName = pair.first.asString();
-      auto attributionMetrics = pair.second;
-      std::pair<std::string, AttributionResult> t{
-          attributionName, attributionMetrics};
-      formatToAttribution.insert(t);
-    }
-
     AttributionMetrics metrics{};
-    metrics.formatToAttribution = formatToAttribution;
+    if (FLAGS_use_new_output_format) {
+      metrics.attributionResult = obj;
+      return metrics;
+    } else {
+      std::unordered_map<std::string, AttributionResult> formatToAttribution;
+      for (auto& pair : obj.items()) {
+        auto attributionName = pair.first.asString();
+        auto attributionMetrics = pair.second;
+        std::pair<std::string, AttributionResult> t{
+            attributionName, attributionMetrics};
+        formatToAttribution.insert(t);
+      }
+      metrics.formatToAttribution = formatToAttribution;
 
-    return metrics;
+      return metrics;
+    }
   }
 
   std::string toJson() {

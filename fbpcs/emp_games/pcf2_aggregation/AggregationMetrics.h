@@ -39,30 +39,37 @@ struct AggregationMetrics {
   std::vector<std::string> attributionList;
   std::vector<std::string> attributionReformattedList;
   std::unordered_map<std::string, AggregationOutput> formatToAggregation;
+  AggregationOutput aggregationResult;
 
   folly::dynamic toDynamic() const {
-    folly::dynamic res = folly::dynamic::object();
-    for (auto kv : formatToAggregation) {
-      auto aggregationName = kv.first;
-      auto aggregationMetrics = kv.second;
-      res.insert(aggregationName, aggregationMetrics);
+    if (FLAGS_use_new_output_format) {
+      return aggregationResult;
+    } else {
+      folly::dynamic res = folly::dynamic::object();
+      for (auto kv : formatToAggregation) {
+        auto aggregationName = kv.first;
+        auto aggregationMetrics = kv.second;
+        res.insert(aggregationName, aggregationMetrics);
+      }
+      return res;
     }
-
-    return res;
   }
 
   static AggregationMetrics fromDynamic(const folly::dynamic& obj) {
-    std::unordered_map<std::string, AggregationOutput> formatToAggregation;
-    for (auto& pair : obj.items()) {
-      auto aggregationName = pair.first.asString();
-      auto aggregationMetrics = pair.second;
-      std::pair<std::string, AggregationOutput> t{
-          aggregationName, aggregationMetrics};
-      formatToAggregation.insert(t);
-    }
-
     AggregationMetrics metrics{};
-    metrics.formatToAggregation = formatToAggregation;
+    if (FLAGS_use_new_output_format) {
+      metrics.aggregationResult = obj;
+    } else {
+      std::unordered_map<std::string, AggregationOutput> formatToAggregation;
+      for (auto& pair : obj.items()) {
+        auto aggregationName = pair.first.asString();
+        auto aggregationMetrics = pair.second;
+        std::pair<std::string, AggregationOutput> t{
+            aggregationName, aggregationMetrics};
+        formatToAggregation.insert(t);
+      }
+      metrics.formatToAggregation = formatToAggregation;
+    }
 
     return metrics;
   }
@@ -112,28 +119,25 @@ struct AggregationMetrics {
   getAttributionsReformattedArrayfromDynamic(const folly::dynamic& obj) {
     AttributionReformattedResultsMap attributionReformattedPidVectorMap;
     // list of attribution rules
-    // For now, I am not using the rule name or formatter name in the logic as
+    // For now, I am not using the rule name in the logic as
     // the aggregation behaviour is not affected by different attribution rules.
     std::vector<std::string> attributionReformattedList;
     AttributionReformattedResultsList attributionReformattedResultsList;
-    for (const auto& [rule, formatters] : obj.items()) {
+    for (const auto& [rule, resultPerPID] : obj.items()) {
       attributionReformattedList.push_back(rule.asString());
-      for (const auto& [formatter, resultPerPID] : formatters.items()) {
-        std::map<int64_t, std::vector<AttributionReformattedResult>>
-            attributionsReformattedPerPidMap;
-        for (const auto& [pid, results] : resultPerPID.items()) {
-          std::vector<AttributionReformattedResult>
-              attributionReformattedResults;
-          for (const auto& result : results) {
-            attributionReformattedResults.push_back(
-                AttributionReformattedResult::fromDynamic(result));
-          }
-          attributionsReformattedPerPidMap.emplace(
-              pid.asInt(), attributionReformattedResults);
+      std::map<int64_t, std::vector<AttributionReformattedResult>>
+          attributionsReformattedPerPidMap;
+      for (const auto& [pid, results] : resultPerPID.items()) {
+        std::vector<AttributionReformattedResult> attributionReformattedResults;
+        for (const auto& result : results) {
+          attributionReformattedResults.push_back(
+              AttributionReformattedResult::fromDynamic(result));
         }
-        attributionReformattedPidVectorMap.push_back(
-            attributionsReformattedPerPidMap);
+        attributionsReformattedPerPidMap.emplace(
+            pid.asInt(), attributionReformattedResults);
       }
+      attributionReformattedPidVectorMap.push_back(
+          attributionsReformattedPerPidMap);
 
       for (const auto& attributionsPerPidMap :
            attributionReformattedPidVectorMap) {

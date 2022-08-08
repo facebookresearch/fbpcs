@@ -36,10 +36,9 @@ inline AttributionOutputMetrics revealXORedResult(
     AttributionOutputMetrics resAlice,
     AttributionOutputMetrics resBob,
     std::string attributionRule) {
-  auto aliceAttributionOutput =
-      resAlice.ruleToMetrics.at(attributionRule).formatToAttribution;
-  auto bobAttributionOutput =
-      resBob.ruleToMetrics.at(attributionRule).formatToAttribution;
+  auto aliceAttributionOutput = resAlice.ruleToMetrics.at(attributionRule);
+  auto bobAttributionOutput = resBob.ruleToMetrics.at(attributionRule);
+
   auto attributionFormat = "default";
 
   // initiate new objects to store revealed data
@@ -48,11 +47,19 @@ inline AttributionOutputMetrics revealXORedResult(
   folly::dynamic revealedMetricsMap = folly::dynamic::object;
   folly::dynamic revealedAttributionResultsPerId = folly::dynamic::object;
 
-  // Attribution output contains results based on attribution format (currently
-  // only "default").
-  AttributionResult aliceAttribution =
-      aliceAttributionOutput.at(attributionFormat);
-  AttributionResult bobAttribution = bobAttributionOutput.at(attributionFormat);
+  AttributionResult aliceAttribution;
+  AttributionResult bobAttribution;
+  if (FLAGS_use_new_output_format) {
+    aliceAttribution = aliceAttributionOutput.attributionResult;
+    bobAttribution = bobAttributionOutput.attributionResult;
+  } else {
+    // Attribution output contains results based on attribution format
+    // (currently only "default").
+    aliceAttribution =
+        aliceAttributionOutput.formatToAttribution.at(attributionFormat);
+    bobAttribution =
+        bobAttributionOutput.formatToAttribution.at(attributionFormat);
+  }
 
   // first sort the keys so that alice and bob are reading
   // corresponding rows
@@ -77,8 +84,14 @@ inline AttributionOutputMetrics revealXORedResult(
     }
     revealedAttributionResultsPerId[adId] = revealedResults;
   }
-  revealedMetricsMap[attributionFormat] =
-      std::move(revealedAttributionResultsPerId);
+
+  if (FLAGS_use_new_output_format) {
+    revealedMetricsMap = std::move(revealedAttributionResultsPerId);
+
+  } else {
+    revealedMetricsMap[attributionFormat] =
+        std::move(revealedAttributionResultsPerId);
+  }
   revealedAttributionMetrics[attributionRule] = std::move(revealedMetricsMap);
 
   // return Json format
@@ -89,10 +102,8 @@ inline AttributionOutputMetrics revealXORedReformattedResult(
     AttributionOutputMetrics resAlice,
     AttributionOutputMetrics resBob,
     std::string attributionRule) {
-  auto aliceAttributionOutput =
-      resAlice.ruleToMetrics.at(attributionRule).formatToAttribution;
-  auto bobAttributionOutput =
-      resBob.ruleToMetrics.at(attributionRule).formatToAttribution;
+  auto aliceAttributionOutput = resAlice.ruleToMetrics.at(attributionRule);
+  auto bobAttributionOutput = resBob.ruleToMetrics.at(attributionRule);
   auto attributionFormat = "default";
 
   // initiate new objects to store revealed data
@@ -100,12 +111,19 @@ inline AttributionOutputMetrics revealXORedReformattedResult(
   folly::dynamic revealedAttributionMetrics = folly::dynamic::object;
   folly::dynamic revealedMetricsMap = folly::dynamic::object;
   folly::dynamic revealedAttributionResultsPerId = folly::dynamic::object;
-
-  // Attribution output contains results based on attribution format (currently
-  // only "default").
-  AttributionResult aliceAttribution =
-      aliceAttributionOutput.at(attributionFormat);
-  AttributionResult bobAttribution = bobAttributionOutput.at(attributionFormat);
+  AttributionResult aliceAttribution;
+  AttributionResult bobAttribution;
+  if (FLAGS_use_new_output_format) {
+    aliceAttribution = aliceAttributionOutput.attributionResult;
+    bobAttribution = bobAttributionOutput.attributionResult;
+  } else {
+    // Attribution output contains results based on attribution format
+    // (currently only "default").
+    aliceAttribution =
+        aliceAttributionOutput.formatToAttribution.at(attributionFormat);
+    bobAttribution =
+        bobAttributionOutput.formatToAttribution.at(attributionFormat);
+  }
 
   // first sort the keys so that alice and bob are reading
   // corresponding rows
@@ -133,8 +151,13 @@ inline AttributionOutputMetrics revealXORedReformattedResult(
     }
     revealedAttributionResultsPerId[adId] = revealedResults;
   }
-  revealedMetricsMap[attributionFormat] =
-      std::move(revealedAttributionResultsPerId);
+  if (FLAGS_use_new_output_format) {
+    revealedMetricsMap = std::move(revealedAttributionResultsPerId);
+
+  } else {
+    revealedMetricsMap[attributionFormat] =
+        std::move(revealedAttributionResultsPerId);
+  }
   revealedAttributionMetrics[attributionRule] = std::move(revealedMetricsMap);
 
   // return Json format
