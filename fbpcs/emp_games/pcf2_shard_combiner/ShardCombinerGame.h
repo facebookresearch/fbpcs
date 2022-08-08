@@ -20,9 +20,11 @@
 #include <fbpcf/engine/communication/IPartyCommunicationAgentFactory.h>
 #include <fbpcf/frontend/mpcGame.h>
 
-#include <fbpcs/emp_games/common/Constants.h>
-#include <fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h>
-#include <fbpcs/emp_games/pcf2_shard_combiner/ShardValidator.h>
+#include "fbpcs/emp_games/common/Constants.h"
+#include "fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h"
+#include "fbpcs/emp_games/pcf2_shard_combiner/ShardValidator.h"
+#include "fbpcs/emp_games/pcf2_shard_combiner/util/AggMetricsThresholdCheckers.h"
+#include "fbpcs/emp_games/pcf2_shard_combiner/util/AggMetricsThresholdCheckers_impl.h"
 
 namespace shard_combiner {
 
@@ -44,7 +46,11 @@ class ShardCombinerGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const int concurrency = 1)
       : fbpcf::frontend::MpcGame<schedulerId>(std::move(scheduler)),
         communicationAgentFactory_(std::move(communicationAgentFactory)),
-        concurrency_(concurrency) {}
+        concurrency_(concurrency) {
+    thresholdFn_ =
+        checkThresholdAndUpdateMetric<schedulerId, usingBatch, inputEncryption>(
+            shardSchemaType, kAnonymityThreshold, kHiddenMetricConstant);
+  }
 
   static constexpr int64_t kHiddenMetricConstant = -1;
   static constexpr int64_t kAnonymityThreshold = 100;
@@ -53,6 +59,8 @@ class ShardCombinerGame : public fbpcf::frontend::MpcGame<schedulerId> {
     reducer(inputData);
 
     auto result = inputData.at(0); // reduced output is in the zeroth element.
+
+    thresholdFn_(result);
 
     return result;
   }
@@ -111,5 +119,7 @@ class ShardCombinerGame : public fbpcf::frontend::MpcGame<schedulerId> {
       communicationAgentFactory_;
   int concurrency_;
   std::vector<AggMetrics_sp> shards_;
+
+  std::function<void(AggMetrics_sp)> thresholdFn_;
 };
 } // namespace shard_combiner
