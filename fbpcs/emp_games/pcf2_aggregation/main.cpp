@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
       INFO, "Input secret share path: {}", FLAGS_input_base_path_secret_share);
   XLOGF(INFO, "Input clear text path: {}", FLAGS_input_base_path);
   XLOGF(INFO, "Base output path: {}", FLAGS_output_base_path);
+  XLOGF(INFO, "Run Id: {}", FLAGS_run_id);
 
   common::SchedulerStatistics schedulerStatistics;
 

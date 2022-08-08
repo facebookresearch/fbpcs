@@ -70,3 +70,7 @@ DEFINE_string(
     ".s3.us-west-2.amazonaws.com/",
     "s3 region name");
 DEFINE_bool(use_new_output_format, false, "New Format of Attribution output");
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL/PA run.");
