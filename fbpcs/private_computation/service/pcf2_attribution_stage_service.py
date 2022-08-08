@@ -184,6 +184,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             "attribution_rules": attribution_rule.value,
             "use_xor_encryption": True,
             "use_postfix": True,
+            "run_id": private_computation_instance.infra_config.run_id,
         }
 
         game_args = [

@@ -137,6 +137,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
                 else pc_instance.product_config.k_anonymity_threshold,
                 "run_name": run_name,
                 "log_cost": self._log_cost_to_s3,
+                "run_id": pc_instance.infra_config.run_id,
             },
         ]
         # We should only export visibility to scribe when it's set

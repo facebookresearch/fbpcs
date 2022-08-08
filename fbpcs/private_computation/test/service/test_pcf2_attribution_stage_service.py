@@ -39,6 +39,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
     def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
+        self.run_id = "681ba82c-16d9-11ed-861d-0242ac120002"
 
         onedocker_binary_config_map = defaultdict(
             lambda: OneDockerBinaryConfig(
@@ -92,6 +93,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             "use_xor_encryption": True,
             "use_postfix": True,
             "log_cost": True,
+            "run_id": self.run_id,
         }
         test_game_args = [
             {
@@ -121,6 +123,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
+            run_id=self.run_id,
         )
 
         common: CommonProductConfig = CommonProductConfig(

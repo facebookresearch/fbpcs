@@ -42,6 +42,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
     def setUp(self, mock_mpc_svc: MPCService) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
+        self.run_id = "681ba82c-16d9-11ed-861d-0242ac120002"
 
         onedocker_binary_config_map = defaultdict(
             lambda: OneDockerBinaryConfig(
@@ -106,6 +107,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                 "file_start_index": 0,
                 "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
                 "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
+                "run_id": self.run_id,
             },
             {
                 "input_base_path": private_computation_instance.data_processing_output_path,
@@ -113,6 +115,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                 "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
                 "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
                 "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
+                "run_id": self.run_id,
             },
         ]
 
@@ -136,6 +139,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
             pcs_features=pcs_features,
+            run_id=self.run_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
