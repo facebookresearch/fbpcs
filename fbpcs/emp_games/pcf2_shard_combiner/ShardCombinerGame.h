@@ -108,8 +108,11 @@ class ShardCombinerGame : public fbpcf::frontend::MpcGame<schedulerId> {
       auto shard =
           AggMetrics<schedulerId, usingBatch, inputEncryption>::fromJson(
               fullPath);
+      XLOG(INFO) << "parsed: " << fullPath;
       validateShardSchema<shardSchemaType>(*shard);
+      XLOG(INFO) << "validated: " << fullPath;
       shard->updateAllSecVals();
+      XLOG(INFO) << "updatedSecVals: " << fullPath;
       shards_.push_back(shard);
     }
     return shards_;
