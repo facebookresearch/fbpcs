@@ -75,6 +75,7 @@ def create_instance(
     stage_flow_cls: Optional[Type[PrivateComputationBaseStageFlow]] = None,
     result_visibility: Optional[ResultVisibility] = None,
     pcs_features: Optional[List[str]] = None,
+    run_id: Optional[str] = None,
 ) -> PrivateComputationInstance:
     pc_service = _build_private_computation_service(
         config["private_computation"],
@@ -107,6 +108,7 @@ def create_instance(
         pid_configs=config["pid"],
         result_visibility=result_visibility,
         pcs_features=pcs_features,
+        run_id=run_id,
     )
 
     logger.info(instance)
