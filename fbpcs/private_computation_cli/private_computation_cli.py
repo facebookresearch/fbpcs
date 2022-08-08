@@ -10,7 +10,7 @@ CLI for running a Private Lift study
 
 
 Usage:
-    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --stage_flow=<stage_flow> --result_visibility=<result_visibility>] [options]
+    pc-cli create_instance <instance_id> --config=<config_file> --role=<pl_role> --game_type=<game_type> --input_path=<input_path> --output_dir=<output_dir> --num_pid_containers=<num_pid_containers> --num_mpc_containers=<num_mpc_containers> [--attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --padding_size=<padding_size> --k_anonymity_threshold=<k_anonymity_threshold> --hmac_key=<base64_key> --stage_flow=<stage_flow> --result_visibility=<result_visibility> --run_id=<run_id>] [options]
     pc-cli validate <instance_id> --config=<config_file> --expected_result_path=<expected_result_path> [--aggregated_result_path=<aggregated_result_path>] [options]
     pc-cli run_next <instance_id> --config=<config_file> [--server_ips=<server_ips>] [options]
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
@@ -19,7 +19,7 @@ Usage:
     pc-cli get_mpc <instance_id> --config=<config_file> [options]
     pc-cli run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --dry_run] [options]
+    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --dry_run] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
@@ -268,6 +268,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                 None,
                 schema.Use(lambda arg: ResultVisibility[arg.upper()]),
             ),
+            "--run_id": schema.Or(None, str),
             "--stage": schema.Or(None, str),
             "--verbose": bool,
             "--help": bool,
@@ -345,6 +346,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             k_anonymity_threshold=arguments["--k_anonymity_threshold"],
             stage_flow_cls=arguments["--stage_flow"],
             result_visibility=arguments["--result_visibility"],
+            run_id=arguments["--run_id"],
         )
     elif arguments["run_next"]:
         logger.info(f"run_next instance: {instance_id}")
@@ -424,6 +426,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
             result_visibility=arguments["--result_visibility"],
+            run_id=arguments["--run_id"],
             final_stage=PrivateComputationStageFlow.AGGREGATE,
         )
     elif arguments["run_attribution"]:
