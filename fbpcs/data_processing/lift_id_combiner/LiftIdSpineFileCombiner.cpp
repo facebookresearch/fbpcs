@@ -81,13 +81,25 @@ void LiftIdSpineFileCombiner::combineFile() {
   // TODO: Switch from stringstreams to a real random filename
   std::stringstream idSwapOutFile;
   std::stringstream idMappedOutFile;
-  pid::combiner::idSwapMultiKey(
-      bufferedDataReader,
-      bufferedSpineReader,
-      idSwapOutFile,
-      FLAGS_max_id_column_cnt,
-      headerLine,
-      spinePath_);
+  if (isPartnerDataset) {
+    pid::combiner::idSwapMultiKey(
+        bufferedDataReader,
+        bufferedSpineReader,
+        idSwapOutFile,
+        FLAGS_max_id_column_cnt,
+        headerLine,
+        spinePath_);
+  } else if (isPublisherDataset) {
+    pid::combiner::idSwapMultiKey(
+        bufferedDataReader,
+        bufferedSpineReader,
+        idSwapOutFile,
+        FLAGS_max_id_column_cnt,
+        headerLine,
+        spinePath_,
+        true);
+  }
+
   bufferedDataReader->close();
   bufferedSpineReader->close();
 

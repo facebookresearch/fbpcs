@@ -195,6 +195,30 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePublisher) {
   runTest(dataInput, spineInput, expectedOutput);
 }
 
+TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePublisherWithDup) {
+  // FLAGS_sort_strategy is "sort" by default
+  // So testing keep_original will require over write it.
+  FLAGS_sort_strategy = "keep_original";
+  std::vector<std::string> dataInput = {
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,unregistered",
+      "123,100,1,1,3,200,0,2",
+      "123,120,1,2,4,300,1,3",
+      "456,150,0,2,2,150,0,4",
+      "456,160,0,3,3,250,1,5",
+      "789,200,0,2,2,100,0,6"};
+  std::vector<std::string> spineInput = {
+      "FFFF,", "EEEE,", "DDDD,789", "CCCC,456", "BBBB,", "AAAA,123"};
+  std::vector<std::string> expectedOutput = {
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,opportunity,unregistered",
+      "FFFF,0,0,0,0,0,0,0,0",
+      "EEEE,0,0,0,0,0,0,0,0",
+      "DDDD,200,0,2,2,100,0,1,6",
+      "CCCC,150,0,5,5,400,1,1,4",
+      "BBBB,0,0,0,0,0,0,0,0",
+      "AAAA,100,1,3,7,500,1,1,2"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
 TEST_F(LiftIdSpineFileCombinerTest, ValidSortedSpinePublisher) {
   std::vector<std::string> dataInput = {
       "id_,opportunity_timestamp,test_flag",
@@ -213,6 +237,29 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSortedSpinePublisher) {
       "123,0,0,0",
       "2,0,0,0",
       "3,150,1,0"};
+  runTest(dataInput, spineInput, expectedOutput);
+}
+
+TEST_F(LiftIdSpineFileCombinerTest, ValidSortedSpinePublisherWithDup) {
+  std::vector<std::string> dataInput = {
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,unregistered",
+      "aaa,100,1,1,3,200,0,2",
+      "aaa,120,1,2,4,300,1,3",
+      "bbb,150,0,2,2,150,0,4",
+      "bbb,160,0,3,3,250,1,5",
+      "ccc,200,0,2,2,100,0,6"};
+  std::vector<std::string> spineInput = {
+      "1,aaa", "2,", "3,bbb", "10,ccc", "100,", "123,"};
+  // We tread id_ column as a string
+  // so the sort will based on lexicographical order.
+  std::vector<std::string> expectedOutput = {
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,opportunity,unregistered",
+      "1,100,1,3,7,500,1,1,2",
+      "10,200,0,2,2,100,0,1,6",
+      "100,0,0,0,0,0,0,0,0",
+      "123,0,0,0,0,0,0,0,0",
+      "2,0,0,0,0,0,0,0,0",
+      "3,150,0,5,5,400,1,1,4"};
   runTest(dataInput, spineInput, expectedOutput);
 }
 
