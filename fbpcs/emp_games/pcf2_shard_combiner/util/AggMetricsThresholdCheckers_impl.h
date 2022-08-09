@@ -90,10 +90,9 @@ ThresholdFn<schedulerId, usingBatch, inputEncryption> getGroupLiftChecker(
 }
 
 template <
-    int schedulerId = 0,
-    bool usingBatch = false,
-    common::InputEncryption inputEncryption =
-        common::InputEncryption::Plaintext>
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
 void applyLiftMetricsThreshold(
     AggMetrics_sp<schedulerId, usingBatch, inputEncryption> aggMetrics,
     AggMetrics_sp<schedulerId, usingBatch, inputEncryption> sentinelMetric,
@@ -114,18 +113,9 @@ void applyLiftMetricsThreshold(
 }
 
 template <
-    int schedulerId = 0,
-    bool usingBatch = false,
-    common::InputEncryption inputEncryption =
-        common::InputEncryption::Plaintext>
-bool checkGroupedLiftMetricsThresholdPlaintext(
-    AggMetrics_sp<schedulerId, usingBatch, inputEncryption> aggMetrics) {}
-
-template <
-    int schedulerId = 0,
-    bool usingBatch = false,
-    common::InputEncryption inputEncryption =
-        common::InputEncryption::Plaintext>
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
 BitVariant<schedulerId, usingBatch> checkLiftMetricsThreshold(
     AggMetrics_sp<schedulerId, usingBatch, inputEncryption> aggMetrics,
     AggMetrics_sp<schedulerId, usingBatch, inputEncryption> thresholdMetric) {
