@@ -46,7 +46,8 @@ class IdSwapMultiKeyTest : public testing::Test {
       std::vector<std::string>& dataInput,
       std::vector<std::string>& spineInput,
       std::vector<std::string>& expectedOutput,
-      std::int32_t maxIdColumnCnt) {
+      std::int32_t maxIdColumnCnt,
+      bool isPublisherLift = false) {
     // Execute the union pid combiner with the pre-created files
     auto randStart = folly::Random::secureRand64();
     std::string dataInputPath =
@@ -71,7 +72,8 @@ class IdSwapMultiKeyTest : public testing::Test {
         outputStream_,
         maxIdColumnCnt,
         headerLine,
-        spineInputPath);
+        spineInputPath,
+        isPublisherLift);
     bufferedDataReader->close();
     bufferedSpineReader->close();
     validateOutputContent(expectedOutput);
@@ -288,6 +290,55 @@ TEST_F(IdSwapMultiKeyTest, DuplicateIdsData) {
   };
   int32_t maxIdColumnCnt = 1;
   runTest(dataInput, spineInput, expectedOutput, maxIdColumnCnt);
+}
+
+// Aggregate rows with duplicate ids
+// We would expect the data to flow down as the same
+TEST_F(IdSwapMultiKeyTest, AggregateDuplicateIdsData) {
+  std::vector<std::string> dataInput = {
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,unregistered",
+      "123,100,1,1,3,200,0,2",
+      "123,120,1,2,4,300,1,3",
+      "456,150,0,2,2,150,0,4",
+      "456,160,0,3,3,250,1,5",
+      "789,200,0,2,2,100,0,6"};
+  std::vector<std::string> spineInput = {
+      "AAAA,123", "BBBB,", "CCCC,456", "DDDD,789", "EEEE,", "FFFF,"};
+  std::vector<std::string> expectedOutput = {
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,unregistered",
+      "AAAA,100,1,3,7,500,1,2",
+      "BBBB,0,0,0,0,0,0,0",
+      "CCCC,150,0,5,5,400,1,4",
+      "DDDD,200,0,2,2,100,0,6",
+      "EEEE,0,0,0,0,0,0,0",
+      "FFFF,0,0,0,0,0,0,0",
+  };
+  int32_t maxIdColumnCnt = 1;
+  runTest(dataInput, spineInput, expectedOutput, maxIdColumnCnt, true);
+}
+
+// Fail when non-id column cannot be casted to int
+TEST_F(IdSwapMultiKeyTest, NonIntCastableColumns) {
+  std::vector<std::string> header{
+      "id_", "opportunity_timestamp", "test_flag", "num_impressions"};
+  std::vector<std::vector<std::string>> dRows{
+      std::vector<std::string>{"abc", "0", "1"},
+  };
+  ASSERT_DEATH(
+      pid::combiner::aggregateLiftNonIdColumns(header, dRows),
+      "Error: Exception caught during casting string to int.");
+}
+
+// Fail when non-id column cannot be casted to int
+TEST_F(IdSwapMultiKeyTest, MismatchBetweenHeaderAndRows) {
+  std::vector<std::string> header{
+      "id_", "opportunity_timestamp", "test_flag", "num_impressions"};
+  std::vector<std::vector<std::string>> dRows{
+      std::vector<std::string>{"111", "0"},
+  };
+  ASSERT_DEATH(
+      pid::combiner::aggregateLiftNonIdColumns(header, dRows),
+      "Error: number of non-id columns not consistent with header.");
 }
 
 // three id keys but only single key would be used
