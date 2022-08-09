@@ -31,4 +31,24 @@ ThresholdFn<schedulerId, usingBatch, inputEncryption>
 checkThresholdAndUpdateMetric(
     ShardSchemaType shardSchemaType,
     int64_t threshold);
+
+template <
+    int schedulerId = 0,
+    bool usingBatch = false,
+    common::InputEncryption inputEncryption =
+        common::InputEncryption::Plaintext>
+void applyLiftMetricsThreshold(
+    AggMetrics_sp<schedulerId, usingBatch, inputEncryption> aggMetrics,
+    AggMetrics_sp<schedulerId, usingBatch, inputEncryption> sentinelMetric,
+    const BitVariant<schedulerId, usingBatch>& condition);
+
+template <
+    int schedulerId = 0,
+    bool usingBatch = false,
+    common::InputEncryption inputEncryption =
+        common::InputEncryption::Plaintext>
+BitVariant<schedulerId, usingBatch> checkLiftMetricsThreshold(
+    AggMetrics_sp<schedulerId, usingBatch, inputEncryption> aggMetrics,
+    AggMetrics_sp<schedulerId, usingBatch, inputEncryption> thresholdMetric);
+
 } // namespace shard_combiner
