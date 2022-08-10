@@ -14,6 +14,8 @@
 #include "fbpcf/io/api/FileReader.h"
 
 namespace pid::combiner {
+extern const std::string PROTOCOL_PID;
+extern const std::string PROTOCOL_MRPID;
 /**
  * attributionIdSpineFileCombiner() will run executeStrategy() according to
  *FLAGS_protocol_type. If protocol type is PID, run PidAttributionIdComibiner

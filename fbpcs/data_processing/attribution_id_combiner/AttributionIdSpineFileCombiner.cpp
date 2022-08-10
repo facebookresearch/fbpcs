@@ -11,8 +11,11 @@
 #include <folly/logging/xlog.h>
 
 #include "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerOptions.h"
+#include "fbpcs/data_processing/attribution_id_combiner/MrPidAttributionIdCombiner.h"
 #include "fbpcs/data_processing/attribution_id_combiner/PidAttributionIdCombiner.h"
 namespace pid::combiner {
+const std::string PROTOCOL_PID = "PID";
+const std::string PROTOCOL_MRPID = "MR_PID";
 
 void attributionIdSpineFileCombiner() {
   XLOG(INFO) << "Started.";
@@ -21,8 +24,11 @@ void attributionIdSpineFileCombiner() {
 }
 
 void executeStrategy(std::string protocol) {
-  if (protocol == "PID") {
+  if (protocol == PROTOCOL_PID) {
     PidAttributionIdCombiner p;
+    p.run();
+  } else if (protocol == PROTOCOL_MRPID) {
+    MrPidAttributionIdCombiner p;
     p.run();
   } else {
     XLOG(FATAL) << "Invalid FLAGS_protocol_type '" << FLAGS_protocol_type
