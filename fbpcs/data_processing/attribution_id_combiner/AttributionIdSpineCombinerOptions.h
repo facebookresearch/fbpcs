@@ -20,3 +20,4 @@ DECLARE_bool(log_cost);
 DECLARE_string(log_cost_s3_bucket);
 DECLARE_string(log_cost_s3_region);
 DECLARE_int32(max_id_column_cnt);
+DECLARE_string(protocol_type);

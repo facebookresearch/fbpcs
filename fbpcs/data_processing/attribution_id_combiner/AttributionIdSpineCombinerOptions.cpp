@@ -35,3 +35,4 @@ DEFINE_string(
     log_cost_s3_region,
     ".s3.us-west-2.amazonaws.com/",
     "s3 region name");
+DEFINE_string(protocol_type, "PID", "protocol type");
