@@ -79,6 +79,8 @@ class BoltRunner:
                 # hierarchy: BoltJob num_tries --> BoltRunner num_tries --> default
                 max_tries = job.num_tries or self.num_tries
                 while stage is not None:
+                    # the following log is used by log_analyzer
+                    logger.info(f"Valid stage found: {stage}")
                     tries = 0
                     while tries < max_tries:
                         tries += 1
