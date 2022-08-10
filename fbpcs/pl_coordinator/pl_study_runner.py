@@ -190,26 +190,8 @@ def run_study(
             )
             job_list.append(job)
 
-        # create the runner
-        runner = BoltRunner(
-            publisher_client=BoltGraphAPIClient(
-                config=config["graphapi"], logger=logger
-            ),
-            partner_client=BoltPCSClient(
-                _build_private_computation_service(
-                    config["private_computation"],
-                    config["mpc"],
-                    config["pid"],
-                    config.get("post_processing_handlers", {}),
-                    config.get("pid_post_processing_handlers", {}),
-                )
-            ),
-            skip_publisher_creation=True,
-            logger=logger,
-        )
+        asyncio.run(run_bolt(config, logger, job_list))
 
-        # run all jobs
-        asyncio.run(runner.run_async(job_list))
     else:
         # using existing runner
         all_instance_ids = []
@@ -259,6 +241,38 @@ def run_study(
                 "Status is not aggregation completed",
                 "Check logs for more information",
             )
+
+
+async def run_bolt(
+    config: Dict[str, Any], logger: logging.Logger, job_list: List[BoltJob]
+) -> None:
+    """Run private lift with the BoltRunner in a dedicated function to ensure that
+    the BoltRunner semaphore and runner.run_async share the same event loop.
+
+    Arguments:
+        config: The dict representation of a config.yml file
+        logger: logger client
+        job_list: The BoltJobs to execute
+    """
+    # create the runner
+    runner = BoltRunner(
+        publisher_client=BoltGraphAPIClient(config=config["graphapi"], logger=logger),
+        partner_client=BoltPCSClient(
+            _build_private_computation_service(
+                config["private_computation"],
+                config["mpc"],
+                config["pid"],
+                config.get("post_processing_handlers", {}),
+                config.get("pid_post_processing_handlers", {}),
+            )
+        ),
+        skip_publisher_creation=True,
+        logger=logger,
+        max_parallel_runs=MAX_NUM_INSTANCES,
+    )
+
+    # run all jobs
+    await runner.run_async(job_list)
 
 
 def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
