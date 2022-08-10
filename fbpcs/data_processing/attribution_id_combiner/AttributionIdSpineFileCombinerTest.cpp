@@ -33,9 +33,10 @@ class AttributionIdSpineFileCombinerTest : public testing::Test {
 
   void validateOutputFile(std::vector<std::string>& expectedOutput) {
     // Validate the output with what is expected
+    std::ifstream outputFile{outputFilePath_};
     uint64_t lineIndex = 0;
     std::string outputString;
-    while (getline(outputStream_, outputString)) {
+    while (getline(outputFile, outputString)) {
       EXPECT_EQ(outputString, expectedOutput.at(lineIndex));
       ++lineIndex;
     }
@@ -59,25 +60,17 @@ class AttributionIdSpineFileCombinerTest : public testing::Test {
     data_processing::test_utils::writeVecToFile(dataContent, dataContentPath);
     data_processing::test_utils::writeVecToFile(
         spineIdContent, spineIdContentPath);
-    auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataContentPath);
-    auto spineReader =
-        std::make_unique<fbpcf::io::FileReader>(spineIdContentPath);
-    auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
-        std::move(dataReader), kBufferedReaderChunkSize);
-    auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
-        std::move(spineReader), kBufferedReaderChunkSize);
-    attributionIdSpineFileCombiner(
-        bufferedDataReader,
-        bufferedSpineReader,
-        outputStream_,
-        spineIdContentPath);
-    bufferedDataReader->close();
-    bufferedSpineReader->close();
+    FLAGS_data_path = dataContentPath;
+    FLAGS_spine_path = spineIdContentPath;
+    FLAGS_output_path = "/tmp/AttributionIdSpineFileCombinerTestOutputContent" +
+        std::to_string(randStart);
+    outputFilePath_ = FLAGS_output_path;
+    executeStrategy(FLAGS_protocol_type);
     validateOutputFile(expectedOutput);
   }
 
  protected:
-  std::stringstream outputStream_;
+  std::string outputFilePath_;
 };
 
 // test basic padding
