@@ -48,7 +48,9 @@ class AttributionIdSpineFileCombinerTest : public testing::Test {
   void runTest(
       std::vector<std::string>& dataContent,
       std::vector<std::string>& spineIdContent,
-      std::vector<std::string>& expectedOutput) {
+      std::vector<std::string>& expectedOutput,
+      std::string protocol = PROTOCOL_PID) {
+    FLAGS_protocol_type = protocol;
     auto randStart = folly::Random::secureRand64();
     std::string dataContentPath =
         "/tmp/AttributionIdSpineFileCombinerTestDataContent" +
@@ -175,6 +177,31 @@ TEST_F(AttributionIdSpineFileCombinerTest, TestPublisherTargetIdBasic) {
       "EEEE,[0,0,0,2],[0,0,0,1656361300],[0,0,0,0],[0,0,0,4],[0,0,0,54321],[0,0,0,4]",
       "FFFF,[0,0,1,2],[0,0,1656361400,1656361500],[0,0,0,0],[0,0,5,6],[0,0,54321,0],[0,0,0,4]"};
   runTest(dataInput, spineInput, expectedOutput);
+}
+
+// test basic padding for target_id and action_type
+TEST_F(AttributionIdSpineFileCombinerTest, TestMrPIDPublisherTargetIdBasic) {
+  std::vector<std::string> dataInput = {};
+  std::vector<std::string> spineInput = {
+      "id_,ad_id,timestamp,is_click,campaign_metadata,target_id,action_type",
+      "AAAA,1,1656361100,1,1,54321,4",
+      "AAAA,2,1656361200,1,2,12345,4",
+      "BBBB,1,1656361200,1,3,12345,4",
+      "EEEE,2,1656361300,0,4,54321,4",
+      "CCCC,0,0,0,0,0,0 ",
+      "DDDD,0,0,0,0,0,0 ",
+      "FFFF,1,1656361400,0,5,54321,",
+      "FFFF,2,1656361500,0,6,,4"};
+
+  std::vector<std::string> expectedOutput = {
+      "id_,ad_ids,timestamps,is_click,campaign_metadata,target_id,action_type",
+      "AAAA,[0,0,1,2],[0,0,1656361100,1656361200],[0,0,1,1],[0,0,1,2],[0,0,54321,12345],[0,0,4,4]",
+      "BBBB,[0,0,0,1],[0,0,0,1656361200],[0,0,0,1],[0,0,0,3],[0,0,0,12345],[0,0,0,4]",
+      "CCCC,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "DDDD,[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]",
+      "EEEE,[0,0,0,2],[0,0,0,1656361300],[0,0,0,0],[0,0,0,4],[0,0,0,54321],[0,0,0,4]",
+      "FFFF,[0,0,1,2],[0,0,1656361400,1656361500],[0,0,0,0],[0,0,5,6],[0,0,54321,0],[0,0,0,4]"};
+  runTest(dataInput, spineInput, expectedOutput, PROTOCOL_MRPID);
 }
 
 // test validation header with \r\n as new line include target_id
