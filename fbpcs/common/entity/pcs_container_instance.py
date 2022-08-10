@@ -23,8 +23,8 @@ class PCSContainerInstance(ContainerInstance):
         cls, container_instance: ContainerInstance, log_url: Optional[str] = None
     ) -> "PCSContainerInstance":
         return cls(
-            container_instance.instance_id,
-            container_instance.ip_address,
-            container_instance.status,
-            log_url,
+            instance_id=container_instance.instance_id,
+            ip_address=container_instance.ip_address,
+            status=container_instance.status,
+            log_url=log_url,
         )
