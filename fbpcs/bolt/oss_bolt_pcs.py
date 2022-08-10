@@ -167,6 +167,9 @@ class BoltPCSClient(BoltClient):
         pc_instance = await loop.run_in_executor(
             None, self.pcs.update_instance, instance_id
         )
+        # the following log is used by log_analyzer
+        self.logger.info(f"[{instance_id}] {pc_instance}")
+
         state = BoltState(
             pc_instance_status=pc_instance.infra_config.status,
             server_ips=pc_instance.server_ips,
