@@ -123,7 +123,9 @@ add_executable(
   attribution_id_combiner
   "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombiner.cpp"
   "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineCombinerOptions.cpp"
-  "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineFileCombiner.cpp")
+  "fbpcs/data_processing/attribution_id_combiner/AttributionIdSpineFileCombiner.cpp"
+  "fbpcs/data_processing/attribution_id_combiner/PidAttributionIdCombiner.cpp"
+  "fbpcs/data_processing/attribution_id_combiner/AttributionStrategy.cpp")
 target_link_libraries(
   attribution_id_combiner
   idcombiner

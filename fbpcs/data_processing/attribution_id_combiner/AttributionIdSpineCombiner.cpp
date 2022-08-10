@@ -39,45 +39,7 @@ int main(int argc, char** argv) {
 
   signal(SIGPIPE, SIG_IGN);
 
-  std::filesystem::path outputPath{FLAGS_output_path};
-  std::filesystem::path tmpDirectory{FLAGS_tmp_directory};
-
-  XLOG(INFO) << "Starting data_processing run on: data_path:" << FLAGS_data_path
-             << ", spine_path: " << FLAGS_spine_path
-             << ", output_path: " << FLAGS_output_path
-             << ", tmp_directory: " << FLAGS_tmp_directory
-             << ", sorting_strategy: " << FLAGS_sort_strategy
-             << ", max_id_column_cnt: " << FLAGS_max_id_column_cnt;
-
-  auto dataReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_data_path);
-  auto spineReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_spine_path);
-  auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(dataReader),
-      measurement::private_attribution::kBufferedReaderChunkSize);
-  auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(spineReader),
-      measurement::private_attribution::kBufferedReaderChunkSize);
-
-  // Get a random ID to avoid potential name collisions if multiple
-  // runs at the same time point to the same input file
-  auto randomId = std::to_string(folly::Random::secureRand64());
-  std::string tmpFilename = randomId + "_" +
-      private_lift::filepath_helpers::getBaseFilename(outputPath);
-  std::filesystem::path tmpFilepath = (tmpDirectory / tmpFilename);
-  XLOG(INFO) << "Writing temporary file to " << tmpFilepath;
-  std::ofstream tmpFile{tmpFilepath};
-
-  pid::combiner::attributionIdSpineFileCombiner(
-      bufferedDataReader, bufferedSpineReader, tmpFile, FLAGS_spine_path);
-  tmpFile.close();
-  bufferedDataReader->close();
-  bufferedSpineReader->close();
-
-  if (outputPath != tmpFilepath) {
-    fbpcf::io::FileIOWrappers::transferFileInParts(tmpFilepath, outputPath);
-    // We need to make sure we clean up the tmpfiles now
-    std::remove(tmpFilepath.c_str());
-  }
+  pid::combiner::attributionIdSpineFileCombiner();
 
   cost.end();
   XLOG(INFO) << cost.getEstimatedCostString();
