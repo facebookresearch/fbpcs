@@ -87,6 +87,8 @@ from fbpcs.utils.optional import unwrap_or_default
 
 T = TypeVar("T")
 
+PCSERVICE_ENTITY_NAME = "pcservice"
+
 
 class PrivateComputationService:
     # TODO(T103302669): [BE] Add documentation to PrivateComputationService class
@@ -169,6 +171,7 @@ class PrivateComputationService:
         pcs_features: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "create_instance")
 
         # For Private Attribution daily recurrent runs, we would need dataset_timestamp of data used for computation.
         # Assigning a default value of day before the computation for dataset_timestamp.
@@ -283,6 +286,7 @@ class PrivateComputationService:
 
     # TODO T88759390: make an async version of this function
     def get_instance(self, instance_id: str) -> PrivateComputationInstance:
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "get_instance")
         return self.instance_repository.read(instance_id=instance_id)
 
     def update_input_path(
@@ -291,6 +295,7 @@ class PrivateComputationService:
         """
         override input path only allow partner side
         """
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "update_input_path")
         pc_instance = self.get_instance(instance_id)
         if pc_instance.infra_config.role is PrivateComputationRole.PARTNER:
             pc_instance.product_config.common.input_path = input_path
@@ -300,6 +305,7 @@ class PrivateComputationService:
 
     # TODO T88759390: make an async version of this function
     def update_instance(self, instance_id: str) -> PrivateComputationInstance:
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "update_instance")
         private_computation_instance = self.instance_repository.read(instance_id)
         # if the status is started, then we need to update the instance
         # to either failed, started, or completed
@@ -342,12 +348,14 @@ class PrivateComputationService:
     def run_next(
         self, instance_id: str, server_ips: Optional[List[str]] = None
     ) -> PrivateComputationInstance:
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_next")
         return asyncio.run(self.run_next_async(instance_id, server_ips))
 
     async def run_next_async(
         self, instance_id: str, server_ips: Optional[List[str]] = None
     ) -> PrivateComputationInstance:
         """Fetches the next eligible stage in the instance's stage flow and runs it"""
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_next_async")
         pc_instance = self.get_instance(instance_id)
         if pc_instance.is_stage_flow_completed():
             raise PrivateComputationServiceInvalidStageError(
@@ -372,6 +380,7 @@ class PrivateComputationService:
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> PrivateComputationInstance:
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_stage")
         return asyncio.run(
             self.run_stage_async(instance_id, stage, stage_svc, server_ips, dry_run)
         )
@@ -432,6 +441,7 @@ class PrivateComputationService:
         an exception will be thrown.
         """
 
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_stage_async")
         pc_instance = self._get_validated_instance(
             instance_id, stage, server_ips, dry_run
         )
@@ -467,6 +477,7 @@ class PrivateComputationService:
         expected_result_path: str,
         aggregated_result_path: Optional[str] = None,
     ) -> None:
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "validate_metrics")
         private_computation_instance = self.get_instance(instance_id)
         expected_results_dict = json.loads(self.storage_svc.read(expected_result_path))
         aggregated_results_dict = json.loads(
@@ -488,6 +499,7 @@ class PrivateComputationService:
         self,
         instance_id: str,
     ) -> PrivateComputationInstance:
+        self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "cancel_current_stage")
         private_computation_instance = self.get_instance(instance_id)
 
         # pre-checks to make sure it's in a cancel-able state
