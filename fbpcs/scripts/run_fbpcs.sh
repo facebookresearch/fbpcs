@@ -147,6 +147,7 @@ function run_fbpcs() {
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
     -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
     "${docker_image}" "${docker_cmd[@]}"
+  docker wait "${docker_image}"
 
   echo "Checking the folder /fbpcs_instances"
   docker run -e FBPCS_GRAPH_API_TOKEN \
