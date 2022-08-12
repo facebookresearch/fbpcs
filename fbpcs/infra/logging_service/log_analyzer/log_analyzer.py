@@ -18,6 +18,7 @@ Options:
     -h --help                       Show this help
     --log_path=<path>               Override the default path where logs are saved
     --out=<output_json_file>        Output the digest to a JSON file. By default the summary is written to the log.
+    --validate_one_runner_logs      Validate the logs from one_command_runner test, for regression test
     --verbose                       Set logging level to DEBUG
 """
 
@@ -494,6 +495,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "<logs_file_to_analyze>": schema.Use(Path),
             "--log_path": schema.Or(None, schema.Use(Path)),
             "--out": schema.Or(None, schema.Use(Path)),
+            "--validate_one_runner_logs": bool,
             "--verbose": bool,
             "--help": bool,
         }
@@ -519,19 +521,108 @@ def main(argv: Optional[List[str]] = None) -> None:
     # Concatenate all arguments to a string, with every argument wrapped by quotes.
     all_options = f"{sys.argv[1:]}"[1:-1].replace("', '", "' '")
     # E.g. Command line: log_analyzer 'sample_log/intern-output.txt' '--log_path=a.intern.log' ...
-    logging.info(f"Command line: {Path(__file__).stem} {all_options}")
+    logger.info(f"Command line: {Path(__file__).stem} {all_options}")
 
     digest = LogDigest(logs_file, logger)
     run_study = digest.analyze_logs()
     logger.info(f"Parsed log line count: {run_study.total_line_num}")
-    # pyre-ignore
-    summary_json = run_study.to_json(indent=4)
-    if output_json_path:
-        with open(output_json_path, "w") as outfile:
-            outfile.write(summary_json)
+    if arguments["--validate_one_runner_logs"]:
+        validate_one_runner_logs(run_study, logger)
     else:
-        logger.info(f"Generated run study digest:\n{summary_json}")
+        # pyre-ignore
+        summary_json = run_study.to_json(indent=4)
+        if output_json_path:
+            with open(output_json_path, "w") as outfile:
+                outfile.write(summary_json)
+        else:
+            logger.info(f"Generated run study digest:\n{summary_json}")
     logger.info(f"Done. Instance count: {len(run_study.instances)}")
+
+
+def validate_one_runner_logs(
+    run_study: RunStudy,
+    logger: logging.Logger,
+) -> None:
+    logger.info("Validating summary output ...")
+    assert run_study
+    assert run_study.total_line_num > 200
+    assert run_study.first_log
+    assert run_study.start_epoch_time
+    assert run_study.summary_instances
+    assert len(run_study.summary_instances) == 1
+    assert run_study.summary_instances[0]
+    assert run_study.summary_instances[0].endswith(
+        "last_stages=['RESHARD', 'COMPUTE', 'AGGREGATE']"
+    )
+    assert run_study.error_line_count == 0
+    assert not run_study.error_lines
+    assert run_study.instances
+    assert len(run_study.instances) == 1
+    # Validate the summary of the instance
+    instance_id = list(run_study.instances.keys())[0]
+    instance = run_study.instances[instance_id]
+    assert instance.instance_id == instance_id
+    validate_log_instance(instance, run_study)
+
+
+def validate_log_instance(
+    instance: InstanceFlow,
+    run_study: RunStudy,
+) -> None:
+    validate_log_context(instance.context)
+    assert instance.objective_id
+    assert instance.cell_id
+    assert run_study.summary_instances[0].startswith(
+        f"i={instance.instance_id}/o={instance.objective_id}/c={instance.cell_id}"
+    )
+    assert instance.instance_container_count > 5
+    assert instance.instance_failed_container_count == 0
+    assert instance.summary_stages
+    assert len(instance.summary_stages) >= 7
+    assert not instance.instance_error_line_count
+    assert not instance.instance_error_lines
+    assert instance.stages
+    assert len(instance.summary_stages) == len(instance.stages)
+    # Validate the summary of the stages
+    count_stage_with_container = 0
+    for stage in instance.stages:
+        validate_log_stage(stage)
+        count_stage_with_container += 1 if stage.container_count else 0
+    assert count_stage_with_container >= 5
+
+
+def validate_log_stage(
+    stage: FlowStage,
+) -> None:
+    validate_log_context(stage.context)
+    assert stage.stage_id
+    assert stage.failed_container_count == 0
+    assert stage.container_count == len(stage.containers)
+    # Validate the summary of containers
+    for container in stage.containers:
+        validate_log_context(container.context)
+        assert container.container_id
+        # container_id is like:
+        # arn:aws:ecs:us-west-2:592513842793:task/onedocker-cluster-pc-e2e-test/6c2f2c23eace439b9631cbcc99363aa0
+        assert re.match(
+            r"^arn:aws:ecs:[^:]+:\d+:[^:]+/[a-z\d]{32}$", container.container_id
+        )
+        # log_url is like:
+        # https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/$252Fecs$252Fonedocker-container-pc-e2e-test/log-events/ecs$252Fonedocker-container-pc-e2e-test$252F6c2f2c23eace439b9631cbcc99363aa0
+        assert container.log_url
+        assert re.match(
+            r"^https://.+/cloudwatch/home.+\$252F[a-z\d]{32}$", container.log_url
+        )
+        assert container.status
+
+
+def validate_log_context(
+    context: LogContext,
+) -> None:
+    assert context.line_num > 0
+    assert float(str(context.elapsed_second))
+    assert float(str(context.epoch_time))
+    assert context.utc_time
 
 
 if __name__ == "__main__":

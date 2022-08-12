@@ -56,7 +56,8 @@ jobs:
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \
-          --version=${{ github.event.inputs.tag }}
+          --version=${{ github.event.inputs.tag }} \
+          --log_path=/fbpcs_instances/output.txt
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
@@ -70,3 +71,9 @@ jobs:
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }}
+
+      - name: Validate Logs
+        run: |
+          ./fbpcs/infra/logging_service/log_analyzer/log_analyzer.sh \
+          /fbpcs_instances/output.txt \
+          --validate_one_runner_logs
