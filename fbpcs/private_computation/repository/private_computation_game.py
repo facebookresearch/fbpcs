@@ -20,6 +20,7 @@ class GameNames(Enum):
     LIFT = "lift"
     PCF2_LIFT = "pcf2_lift"
     SHARD_AGGREGATOR = "shard_aggregator"
+    PCF2_SHARD_COMBINER = "pcf2_shard_combiner"
     DECOUPLED_ATTRIBUTION = "decoupled_attribution"
     DECOUPLED_AGGREGATION = "decoupled_aggregation"
     PCF2_ATTRIBUTION = "pcf2_attribution"
@@ -63,6 +64,20 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
     },
     GameNames.SHARD_AGGREGATOR.value: {
         "onedocker_package_name": OneDockerBinaryNames.SHARD_AGGREGATOR.value,
+        "arguments": [
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="num_shards", required=True),
+            OneDockerArgument(name="output_path", required=True),
+            OneDockerArgument(name="metrics_format_type", required=True),
+            OneDockerArgument(name="threshold", required=True),
+            OneDockerArgument(name="first_shard_index", required=False),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="visibility", required=False),
+        ],
+    },
+    GameNames.PCF2_SHARD_COMBINER.value: {
+        "onedocker_package_name": OneDockerBinaryNames.PCF2_SHARD_COMBINER.value,
         "arguments": [
             OneDockerArgument(name="input_base_path", required=True),
             OneDockerArgument(name="num_shards", required=True),

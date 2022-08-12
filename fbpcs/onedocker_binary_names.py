@@ -21,6 +21,7 @@ class OneDockerBinaryNames(Enum):
     PCF2_ATTRIBUTION = "private_attribution/pcf2_attribution"
     PCF2_AGGREGATION = "private_attribution/pcf2_aggregation"
     SHARD_AGGREGATOR = "private_attribution/shard-aggregator"
+    PCF2_SHARD_COMBINER = "private_attribution/pcf2_shard-combiner"
 
     PID_CLIENT = "pid/private-id-client"
     PID_SERVER = "pid/private-id-server"
