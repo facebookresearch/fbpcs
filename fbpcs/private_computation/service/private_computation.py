@@ -169,6 +169,7 @@ class PrivateComputationService:
         post_processing_data_optional: Optional[PostProcessingData] = None,
         pid_configs: Optional[Dict[str, Any]] = None,
         pcs_features: Optional[List[str]] = None,
+        run_id: Optional[str] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "create_instance")
@@ -209,6 +210,7 @@ class PrivateComputationService:
             ),
             mpc_compute_concurrency=concurrency or DEFAULT_CONCURRENCY,
             status_updates=[],
+            run_id=run_id,
         )
         multikey_enabled = True
         if pid_configs and "multikey_enabled" in pid_configs.keys():
