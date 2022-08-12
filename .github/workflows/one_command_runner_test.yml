@@ -71,9 +71,3 @@ jobs:
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }}
-
-      - name: Validate Logs
-        run: |
-          ./fbpcs/infra/logging_service/log_analyzer/log_analyzer.sh \
-          /fbpcs_instances/output.txt \
-          --validate_one_runner_logs
