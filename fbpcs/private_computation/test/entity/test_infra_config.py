@@ -45,7 +45,11 @@ class TestInfraConfigFreeFunctions(unittest.TestCase):
             status_updates=[],
         )
         original_end_ts = config.end_ts
-        expected_status_updates = [StatusUpdate(config.status, 444)]
+        expected_status_updates = [
+            StatusUpdate(
+                status=config.status, status_update_ts=444, status_update_ts_delta=0
+            )
+        ]
 
         # Act
         post_update_status(config)
@@ -70,7 +74,11 @@ class TestInfraConfigFreeFunctions(unittest.TestCase):
             num_files_per_mpc_container=100,
             status_updates=[],
         )
-        expected_status_updates = [StatusUpdate(config.status, 555)]
+        expected_status_updates = [
+            StatusUpdate(
+                status=config.status, status_update_ts=555, status_update_ts_delta=0
+            )
+        ]
 
         # Act
         post_update_status(config)
