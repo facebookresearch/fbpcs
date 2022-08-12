@@ -147,6 +147,7 @@ function run_fbpcs() {
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
     -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
     "${docker_image}" "${docker_cmd[@]}"
+  docker ps
   docker wait "${docker_image}"
 
   echo "Checking the folder /fbpcs_instances"
@@ -155,6 +156,7 @@ function run_fbpcs() {
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
     -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
     "${docker_image}" "ls -l /fbpcs_instances ; cat /fbpcs_instances/output.txt"
+  docker ps
   docker wait "${docker_image}"
 
   echo "Validating output.txt logs"
@@ -163,6 +165,7 @@ function run_fbpcs() {
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
     -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
     "${docker_image}" "./fbpcs/infra/logging_service/log_analyzer/log_analyzer.sh /fbpcs_instances/output.txt --validate_one_runner_logs"
+  docker ps
 }
 
 retry_run_fbpcs() {
