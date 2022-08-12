@@ -15,6 +15,13 @@ Types of changes
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Removed
+
+## [1.10.0] - 2022-08-12
+### Added
   - Created interface for logging debug metrics for counter-based alerting
   - Created interface for writing checkpoints to track computation progress
 
