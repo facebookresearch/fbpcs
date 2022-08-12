@@ -155,6 +155,7 @@ function run_fbpcs() {
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
     -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
     "${docker_image}" "ls -l /fbpcs_instances ; cat /fbpcs_instances/output.txt"
+  docker wait "${docker_image}"
 
   echo "Validating output.txt logs"
   docker run -e FBPCS_GRAPH_API_TOKEN --rm \
