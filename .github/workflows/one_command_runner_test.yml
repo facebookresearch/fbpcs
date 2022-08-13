@@ -75,4 +75,4 @@ jobs:
       - name: Validate logs
         run: |
           docker images \
-          ; docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "ls -l /fbpcs_instances ; cat /fbpcs_instances/output.txt"
+          ; docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "ls -l fbpcs_instances ; cat fbpcs_instances/output.txt"
