@@ -71,3 +71,8 @@ jobs:
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }}
+
+      - name: Validate logs
+        run: |
+          docker images \
+          ; docker run --rm coordinator:${{ github.event.inputs.tag }} bash -c "ls -l /fbpcs_instances ; cat /fbpcs_instances/output.txt"
