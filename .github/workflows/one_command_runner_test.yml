@@ -50,7 +50,8 @@ jobs:
 
       - name: One command runner
         run: |
-          ./fbpcs/scripts/run_fbpcs.sh run_study \
+          docker image prune \
+          ; ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ github.event.inputs.study_id }} \
           --objective_ids=${{ github.event.inputs.objective_id }} \
           --input_paths=${{ github.event.inputs.input_path }} \
