@@ -59,6 +59,9 @@ jobs:
           docker image ls | grep ago > /dev/null && docker rmi -f $(docker image ls -aq)
           echo "Done cleaning up"
           docker image ls
+          sudo systemctl stop docker
+          sudo systemctl daemon-reload
+          sudo systemctl start docker
           df -h
 
       - name: One command runner
