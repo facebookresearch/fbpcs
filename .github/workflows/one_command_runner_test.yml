@@ -48,10 +48,18 @@ jobs:
       - name: Print Tracker Hash
         run: echo ${{ github.event.inputs.tracker_hash}}
 
+      - name: free disk space
+        run: |
+          uname -a
+          df -h
+          ls -l /
+          sudo apt clean
+          docker image ls -aq
+          df -h
+
       - name: One command runner
         run: |
-          uname -a \
-          ; ./fbpcs/scripts/run_fbpcs.sh run_study \
+          ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ github.event.inputs.study_id }} \
           --objective_ids=${{ github.event.inputs.objective_id }} \
           --input_paths=${{ github.event.inputs.input_path }} \
