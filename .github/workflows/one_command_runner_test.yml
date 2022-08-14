@@ -52,9 +52,11 @@ jobs:
         run: |
           uname -a
           df -h
-          ls -l /
+          free -m
           sudo apt clean
           docker image ls
+          echo "Cleaning up docker images ..."
+          docker rmi $(docker image ls -aq)
           df -h
 
       - name: One command runner
@@ -83,5 +85,4 @@ jobs:
 
       - name: Validate logs
         run: |
-          docker images \
-          ; docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "pwd ; ls -l"
+          docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "pwd ; ls -l ; echo root/ ; ls -l /"
