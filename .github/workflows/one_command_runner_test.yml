@@ -56,16 +56,16 @@ jobs:
           sudo apt clean
           docker image ls
           echo "Cleaning up docker images ..."
-          docker image ls | grep ago > /dev/null && docker rmi -f $(docker image ls -aq)
+          bash -c "docker rmi -f $(docker image ls -aq) ; exit 0"
           echo "Done cleaning up"
           docker image ls
           sudo systemctl stop docker
           sudo systemctl daemon-reload
           sudo systemctl start docker
-          echo 1.. ; du -sk /usr/share/dotnet
-          echo 2.. ; du -sk /opt/ghc
-          echo 3.. ; du -sk "/usr/local/share/boost"
-          echo 4.. ; du -sk "$AGENT_TOOLSDIRECTORY"
+          bach -c "echo 1.. ; du -sk /usr/share/dotnet ; exit 0"
+          bach -c "echo 2.. ; du -sk /opt/ghc ; exit 0"
+          bach -c "echo 3.. ; du -sk /usr/local/share/boost ; exit 0"
+          bach -c "echo 4.. ; du -sk ""'"$AGENT_TOOLSDIRECTORY"'"" ; exit 0"
           df -h
 
       - name: One command runner
