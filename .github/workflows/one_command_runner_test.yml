@@ -62,10 +62,12 @@ jobs:
           sudo systemctl stop docker
           sudo systemctl daemon-reload
           sudo systemctl start docker
-          bach -c "echo 1.. ; du -sk /usr/share/dotnet ; exit 0"
-          bach -c "echo 2.. ; du -sk /opt/ghc ; exit 0"
-          bach -c "echo 3.. ; du -sk /usr/local/share/boost ; exit 0"
-          bach -c "echo 4.. ; du -sk ""'"$AGENT_TOOLSDIRECTORY"'"" ; exit 0"
+          bash -c "echo ls daemon.json ; ls -l /etc/docker/daemon.json ; exit 0"
+          bash -c "echo 1.. ; du -sk /mnt/var/lib/docker ; exit 0"
+          bash -c "echo 2.. ; du -sk /usr/share/dotnet ; exit 0"
+          bash -c "echo 3.. ; du -sk /opt/ghc ; exit 0"
+          bash -c "echo 4.. ; du -sk /usr/local/share/boost ; exit 0"
+          bash -c "echo 5.. ; du -sk ""'"$AGENT_TOOLSDIRECTORY"'"" ; exit 0"
           df -h
 
       - name: One command runner
