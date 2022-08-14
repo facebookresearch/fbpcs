@@ -54,7 +54,7 @@ jobs:
           df -h
           ls -l /
           sudo apt clean
-          docker image ls -aq
+          docker image ls
           df -h
 
       - name: One command runner
