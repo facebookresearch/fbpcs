@@ -62,6 +62,10 @@ jobs:
           sudo systemctl stop docker
           sudo systemctl daemon-reload
           sudo systemctl start docker
+          echo 1.. ; du -sk /usr/share/dotnet
+          echo 2.. ; du -sk /opt/ghc
+          echo 3.. ; du -sk "/usr/local/share/boost"
+          echo 4.. ; du -sk "$AGENT_TOOLSDIRECTORY"
           df -h
 
       - name: One command runner
