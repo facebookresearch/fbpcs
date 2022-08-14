@@ -51,12 +51,12 @@ jobs:
       - name: free disk space
         run: |
           uname -a
-          df -h
           free -m
+          df -h
           sudo apt clean
           docker image ls
           echo "Cleaning up docker images ..."
-          docker image ls && docker rmi -f $(docker image ls -aq)
+          docker image ls | grep ago > /dev/null && docker rmi -f $(docker image ls -aq)
           echo "Done cleaning up"
           docker image ls
           df -h
