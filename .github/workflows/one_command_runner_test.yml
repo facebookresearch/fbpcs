@@ -56,6 +56,9 @@ jobs:
           sudo apt clean
           docker image ls
           echo "Cleaning up docker images ..."
+          docker image ls && docker rmi -f $(docker image ls -aq)
+          echo "Done cleaning up"
+          docker image ls
           df -h
 
       - name: One command runner
