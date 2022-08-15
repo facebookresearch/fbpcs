@@ -52,7 +52,7 @@ jobs:
         run: |
           uname -a
           free -m
-          ./fbpcs/scripts/run_fbpcs.sh ; exit 0
+          bash -c ./fbpcs/scripts/run_fbpcs.sh ; exit 0
           df -h
 
       - name: One command runner
