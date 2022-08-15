@@ -52,7 +52,6 @@ jobs:
         run: |
           uname -a
           free -m
-          ls /adfasfsafdsafsd
           df -h
 
       - name: One command runner
@@ -66,7 +65,7 @@ jobs:
           --log_path=/fbpcs_instances/output.txt \
           -- \
           --version=${{ github.event.inputs.tag }} ; exit 0
-          ldocker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "pwd ; ls -l ; echo root/ ; ls -l /"
+          docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "pwd ; ls -l ; echo root/ ; ls -l /"
 
 
       - name: Validate Results
