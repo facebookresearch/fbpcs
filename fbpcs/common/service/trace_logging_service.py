@@ -28,7 +28,7 @@ class TraceLoggingService(abc.ABC):
     @abc.abstractmethod
     def write_checkpoint(
         self,
-        run_id: str,
+        run_id: Optional[str],
         instance_id: str,
         checkpoint_name: str,
         status: CheckpointStatus,
