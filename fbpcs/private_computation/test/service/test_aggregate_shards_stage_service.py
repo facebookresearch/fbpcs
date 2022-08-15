@@ -38,6 +38,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
     def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
+        self.run_id = "681ba82c-16d9-11ed-861d-0242ac120002"
 
         onedocker_binary_config_map = defaultdict(
             lambda: OneDockerBinaryConfig(
@@ -84,6 +85,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
                 if self.stage_svc._log_cost_to_s3
                 else "",
                 "log_cost": True,
+                "run_id": self.run_id,
             }
         ]
 
@@ -112,6 +114,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
+            run_id=self.run_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",

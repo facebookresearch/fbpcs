@@ -182,6 +182,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
             "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
             "run_name": run_name,
             "log_cost": self._log_cost_to_s3,
+            "run_id": private_computation_instance.infra_config.run_id,
         }
 
         game_args = []

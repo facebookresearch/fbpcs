@@ -41,6 +41,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
     def setUp(self, mock_mpc_svc: MPCService) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()
+        self.run_id = "681ba82c-16d9-11ed-861d-0242ac120002"
 
         onedocker_binary_config_map = defaultdict(
             lambda: OneDockerBinaryConfig(
@@ -94,6 +95,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
             "run_name": run_name,
             "log_cost": True,
+            "run_id": self.run_id,
         }
         test_game_args = [
             {
@@ -123,6 +125,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
+            run_id=self.run_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
