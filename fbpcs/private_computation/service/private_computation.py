@@ -90,7 +90,6 @@ from fbpcs.utils.optional import unwrap_or_default
 
 T = TypeVar("T")
 
-MISSING_RUN_ID_PLACEHOLDER = "unknown"
 PCSERVICE_ENTITY_NAME = "pcservice"
 
 
@@ -180,7 +179,7 @@ class PrivateComputationService:
 
         checkpoint_name = f"{role.value}_CREATE"
         self.trace_logging_svc.write_checkpoint(
-            run_id=run_id or MISSING_RUN_ID_PLACEHOLDER,
+            run_id=run_id,
             instance_id=instance_id,
             checkpoint_name=checkpoint_name,
             status=CheckpointStatus.STARTED,
@@ -281,7 +280,7 @@ class PrivateComputationService:
         self.instance_repository.create(instance)
 
         self.trace_logging_svc.write_checkpoint(
-            run_id=instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+            run_id=instance.infra_config.run_id,
             instance_id=instance_id,
             checkpoint_name=checkpoint_name,
             status=CheckpointStatus.COMPLETED,
@@ -473,7 +472,7 @@ class PrivateComputationService:
 
         checkpoint_name = f"{pc_instance.infra_config.role.value}_{stage.name}"
         self.trace_logging_svc.write_checkpoint(
-            run_id=pc_instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+            run_id=pc_instance.infra_config.run_id,
             instance_id=instance_id,
             checkpoint_name=checkpoint_name,
             status=CheckpointStatus.STARTED,
@@ -485,7 +484,7 @@ class PrivateComputationService:
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage}\n{e}")
             self.trace_logging_svc.write_checkpoint(
-                run_id=pc_instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+                run_id=pc_instance.infra_config.run_id,
                 instance_id=instance_id,
                 checkpoint_name=checkpoint_name,
                 status=CheckpointStatus.FAILED,
@@ -505,7 +504,7 @@ class PrivateComputationService:
             self.logger.warning("Failed to retrieve log URLs for instance")
 
         self.trace_logging_svc.write_checkpoint(
-            run_id=pc_instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+            run_id=pc_instance.infra_config.run_id,
             instance_id=instance_id,
             checkpoint_name=checkpoint_name,
             status=CheckpointStatus.COMPLETED,
