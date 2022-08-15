@@ -52,7 +52,7 @@ jobs:
         run: |
           uname -a
           free -m
-          bash -c ./fbpcs/scripts/run_fbpcs.sh ; exit 0
+          bash -c "./fbpcs/scripts/run_fbpcs.sh ; exit ${{ github.event.inputs.input_path }}"
           df -h
 
       - name: One command runner
