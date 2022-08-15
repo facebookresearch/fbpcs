@@ -13,7 +13,7 @@ GITHUB_PACKAGES="ghcr.io/facebookresearch"
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-g] [-t TAG]
+Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-g] [-t TAG] [-p PLATFORM]
 
 package:
   emp_games - builds the emp-games docker image
@@ -24,6 +24,7 @@ package:
 -f: force use of latest fbpcf from ghcr.io/facebookresearch
 -g Only used for the pce_deployment package to build the GCP docker image instead of the AWS image
 -t TAG: tags the image with the given tag (default: latest)
+-p PLATFORM: builds the image to target the given platform (default depends on local system) - requires Docker Engine API 1.40+
 EOF
   exit 1
 }
@@ -42,7 +43,8 @@ DOCKER_EXTENSION=".ubuntu"
 TAG="latest"
 FORCE_EXTERNAL=false
 USE_GCP=false
-while getopts "u,f,g,t:" o; do
+PLATFORM=""
+while getopts "u,f,g,t:,p:" o; do
   case $o in
     (u) OS_VARIANT="ubuntu"
         OS_RELEASE=${UBUNTU_RELEASE}
@@ -50,6 +52,7 @@ while getopts "u,f,g,t:" o; do
     (f) FORCE_EXTERNAL=true;;
     (g) USE_GCP=true;;
     (t) TAG=$OPTARG;;
+    (p) PLATFORM=$OPTARG;;
     (*) usage
   esac
 done
@@ -84,6 +87,12 @@ if [ "$PACKAGE" = "onedocker" ]; then
  PACKAGE="emp_games data_processing onedocker"
 fi
 
+# Include optional parameters
+opt_params=()
+if [ "$PLATFORM" != "" ]; then
+    opt_params+=(--platform "$PLATFORM")
+fi
+
 for P in $PACKAGE; do
   DOCKER_PACKAGE=${P/_/-}
   if [[ "$P" == "pce_deployment" && "$USE_GCP" == true ]]; then
@@ -97,5 +106,6 @@ for P in $PACKAGE; do
     --build-arg os_release="${OS_RELEASE}" \
     --build-arg fbpcf_image="${FBPCF_IMAGE}" \
     --compress \
-    -t "${IMAGE_PREFIX}${DOCKER_PACKAGE}:${TAG}" -f "docker/${P}/Dockerfile${DOCKER_EXTENSION}" .
+    -t "${IMAGE_PREFIX}${DOCKER_PACKAGE}:${TAG}" -f "docker/${P}/Dockerfile${DOCKER_EXTENSION}" \
+    "${opt_params[@]}" .
 done
