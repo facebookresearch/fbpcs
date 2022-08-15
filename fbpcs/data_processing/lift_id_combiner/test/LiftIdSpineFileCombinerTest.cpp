@@ -6,18 +6,17 @@
  */
 
 #include "../LiftIdSpineFileCombiner.h"
-
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
 
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
 
-using namespace ::pid;
+using namespace ::pid::combiner;
 using namespace std::chrono;
-
 class LiftIdSpineFileCombinerTest : public testing::Test {
  public:
   void writeToFile(
@@ -47,8 +46,12 @@ class LiftIdSpineFileCombinerTest : public testing::Test {
     outputFilePath_ = std::to_string(timestamp) + "output.txt";
 
     // Create, open and write to the data and spine file
-    writeToFile(dataFilePath_, dataContent);
-    writeToFile(spineFilePath_, idSpineContent);
+    data_processing::test_utils::writeVecToFile(dataContent, dataFilePath_);
+    data_processing::test_utils::writeVecToFile(idSpineContent, spineFilePath_);
+
+    FLAGS_data_path = dataFilePath_;
+    FLAGS_spine_path = spineFilePath_;
+    FLAGS_output_path = outputFilePath_;
   }
 
   void validateOutputFile(std::vector<std::string>& expectedOutput) {
@@ -69,12 +72,14 @@ class LiftIdSpineFileCombinerTest : public testing::Test {
       std::vector<std::string>& idSpineContent,
       std::vector<std::string>& expectedOutput) {
     setUpFiles(dataContent, idSpineContent);
-    // Execute the union pid combiner with the pre-created files
-    std::filesystem::path dataPath{dataFilePath_};
-    std::filesystem::path spinePath{spineFilePath_};
-    std::filesystem::path outPath{outputFilePath_};
-    LiftIdSpineFileCombiner combiner{dataPath, spinePath, outPath, "/tmp/"};
-    combiner.combineFile();
+    combineFile(
+        FLAGS_data_path,
+        FLAGS_spine_path,
+        FLAGS_output_path,
+        FLAGS_tmp_directory,
+        FLAGS_sort_strategy,
+        FLAGS_max_id_column_cnt,
+        FLAGS_protocol_type);
     validateOutputFile(expectedOutput);
   }
 
@@ -104,9 +109,17 @@ TEST_F(LiftIdSpineFileCombinerTest, InvalidHeader) {
   std::filesystem::path dataPath{dataFilePath_};
   std::filesystem::path spinePath{spineFilePath_};
   std::filesystem::path outPath{outputFilePath_};
-  LiftIdSpineFileCombiner combiner{dataPath, spinePath, outPath, "/tmp/"};
 
-  ASSERT_DEATH(combiner.combineFile(), "Invalid headers for dataset");
+  ASSERT_DEATH(
+      combineFile(
+          FLAGS_data_path,
+          FLAGS_spine_path,
+          FLAGS_output_path,
+          FLAGS_tmp_directory,
+          FLAGS_sort_strategy,
+          FLAGS_max_id_column_cnt,
+          FLAGS_protocol_type),
+      "Invalid headers for dataset");
 }
 
 // partner header is missing "event_timestamp" column
@@ -120,9 +133,17 @@ TEST_F(LiftIdSpineFileCombinerTest, InvalidPartnerHeader) {
   std::filesystem::path dataPath{dataFilePath_};
   std::filesystem::path spinePath{spineFilePath_};
   std::filesystem::path outPath{outputFilePath_};
-  LiftIdSpineFileCombiner combiner{dataPath, spinePath, outPath, "/tmp/"};
 
-  ASSERT_DEATH(combiner.combineFile(), "Invalid headers for dataset");
+  ASSERT_DEATH(
+      combineFile(
+          FLAGS_data_path,
+          FLAGS_spine_path,
+          FLAGS_output_path,
+          FLAGS_tmp_directory,
+          FLAGS_sort_strategy,
+          FLAGS_max_id_column_cnt,
+          FLAGS_protocol_type),
+      "Invalid headers for dataset");
 }
 
 TEST_F(LiftIdSpineFileCombinerTest, RowLengthMismatch) {
@@ -135,7 +156,6 @@ TEST_F(LiftIdSpineFileCombinerTest, RowLengthMismatch) {
   std::filesystem::path dataPath{dataFilePath_};
   std::filesystem::path spinePath{spineFilePath_};
   std::filesystem::path outPath{outputFilePath_};
-  LiftIdSpineFileCombiner combiner{dataPath, spinePath, outPath, "/tmp/"};
 
   // TODO T86923630: Uncomment this once data validation supports hashed ids
   // This assertion is temporary disabled because there's a workaround in the
@@ -160,7 +180,6 @@ TEST_F(LiftIdSpineFileCombinerTest, ParseFailure) {
   std::filesystem::path dataPath{dataFilePath_};
   std::filesystem::path spinePath{spineFilePath_};
   std::filesystem::path outPath{outputFilePath_};
-  LiftIdSpineFileCombiner combiner{dataPath, spinePath, outPath, "/tmp/"};
 
   // TODO T86923630: Uncomment this once data validation supports hashed ids
   // This assertion is temporary disabled because there's a workaround in the

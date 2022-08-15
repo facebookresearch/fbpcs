@@ -16,3 +16,4 @@ DECLARE_string(tmp_directory);
 DECLARE_int32(multi_conversion_limit);
 DECLARE_string(sort_strategy);
 DECLARE_int32(max_id_column_cnt);
+DECLARE_string(protocol_type);
