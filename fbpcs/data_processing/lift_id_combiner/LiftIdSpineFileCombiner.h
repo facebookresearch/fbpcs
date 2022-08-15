@@ -13,6 +13,8 @@
 #include "LiftIdSpineMultiConversionInput.h"
 
 namespace pid::combiner {
+extern const std::string PROTOCOL_PID;
+extern const std::string PROTOCOL_MRPID;
 /*
  * This chunk size has to be large enough that we don't make
  * unnecessary trips to cloud storage but small enough that

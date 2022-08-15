@@ -114,6 +114,7 @@ add_executable(
   "fbpcs/data_processing/lift_id_combiner/LiftIdSpineCombinerOptions.cpp"
   "fbpcs/data_processing/lift_id_combiner/LiftIdSpineFileCombiner.cpp"
   "fbpcs/data_processing/lift_id_combiner/PidLiftIdCombiner.cpp"
+  "fbpcs/data_processing/lift_id_combiner/MrPidLiftIdCombiner.cpp"
   "fbpcs/data_processing/lift_id_combiner/LiftStrategy.cpp")
 target_link_libraries(
   lift_id_combiner
