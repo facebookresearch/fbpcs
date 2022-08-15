@@ -21,7 +21,10 @@ from fbpcp.service.storage import StorageService
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.simple_metric_service import SimpleMetricService
 from fbpcs.common.service.simple_trace_logging_service import SimpleTraceLoggingService
-from fbpcs.common.service.trace_logging_service import TraceLoggingService
+from fbpcs.common.service.trace_logging_service import (
+    CheckpointStatus,
+    TraceLoggingService,
+)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -87,6 +90,7 @@ from fbpcs.utils.optional import unwrap_or_default
 
 T = TypeVar("T")
 
+MISSING_RUN_ID_PLACEHOLDER = "unknown"
 PCSERVICE_ENTITY_NAME = "pcservice"
 
 
@@ -173,6 +177,14 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "create_instance")
+
+        checkpoint_name = f"{role.value}_CREATE"
+        self.trace_logging_svc.write_checkpoint(
+            run_id=run_id or MISSING_RUN_ID_PLACEHOLDER,
+            instance_id=instance_id,
+            checkpoint_name=checkpoint_name,
+            status=CheckpointStatus.STARTED,
+        )
 
         # For Private Attribution daily recurrent runs, we would need dataset_timestamp of data used for computation.
         # Assigning a default value of day before the computation for dataset_timestamp.
@@ -267,6 +279,14 @@ class PrivateComputationService:
         )
 
         self.instance_repository.create(instance)
+
+        self.trace_logging_svc.write_checkpoint(
+            run_id=instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+            instance_id=instance_id,
+            checkpoint_name=checkpoint_name,
+            status=CheckpointStatus.COMPLETED,
+        )
+
         return instance
 
     def _get_number_of_mpc_containers(
@@ -450,11 +470,26 @@ class PrivateComputationService:
 
         pc_instance.update_status(new_status=stage.started_status, logger=self.logger)
         self.logger.info(repr(stage))
+
+        checkpoint_name = f"{pc_instance.infra_config.role.value}_{stage.name}"
+        self.trace_logging_svc.write_checkpoint(
+            run_id=pc_instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+            instance_id=instance_id,
+            checkpoint_name=checkpoint_name,
+            status=CheckpointStatus.STARTED,
+        )
+
         try:
             stage_svc = stage_svc or stage.get_stage_service(self.stage_service_args)
             pc_instance = await stage_svc.run_async(pc_instance, server_ips)
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage}\n{e}")
+            self.trace_logging_svc.write_checkpoint(
+                run_id=pc_instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+                instance_id=instance_id,
+                checkpoint_name=checkpoint_name,
+                status=CheckpointStatus.FAILED,
+            )
             pc_instance.update_status(
                 new_status=stage.failed_status, logger=self.logger
             )
@@ -469,6 +504,12 @@ class PrivateComputationService:
         except Exception:
             self.logger.warning("Failed to retrieve log URLs for instance")
 
+        self.trace_logging_svc.write_checkpoint(
+            run_id=pc_instance.infra_config.run_id or MISSING_RUN_ID_PLACEHOLDER,
+            instance_id=instance_id,
+            checkpoint_name=checkpoint_name,
+            status=CheckpointStatus.COMPLETED,
+        )
         return pc_instance
 
     # TODO T88759390: make an async version of this function
