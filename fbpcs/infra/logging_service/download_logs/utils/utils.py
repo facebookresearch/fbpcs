@@ -10,6 +10,7 @@ import os
 import shutil
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import List
 
 
@@ -96,6 +97,19 @@ class Utils:
             ) from err
         except PermissionError as err:
             raise PermissionError("Permission denied") from err
+
+    @staticmethod
+    def string_formatter(preset_string: str, *args: str) -> str:
+        return preset_string.format(*args)
+
+
+class StringFormatter(str, Enum):
+    LOG_GROUP = "/{}/{}"
+    LOG_STREAM = "{}/{}/{}"
+    LOCAL_FOLDER_LOCATION = "/tmp/{}"
+    LOCAL_ZIP_FOLDER_LOCATION = "{}.zip"
+    FILE_LOCATION = "{}/{}"
+    ZIPPED_FOLDER_NAME = "{}.zip"
 
 
 @dataclass
