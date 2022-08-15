@@ -53,6 +53,7 @@ jobs:
           uname -a
           free -m
           bash -c "./fbpcs/scripts/run_fbpcs.sh ; echo ${{ github.event.inputs.input_path }}"
+          ./fbpcs/scripts/run_fbpcs.sh ; echo ${{ github.event.inputs.input_path }}
           df -h
 
       - name: One command runner
