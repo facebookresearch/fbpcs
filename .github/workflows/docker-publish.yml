@@ -64,7 +64,7 @@ jobs:
           # (fbpcs-github-cicd:4 https://us-west-2.console.aws.amazon.com/ecs/home?region=us-west-2#/taskDefinitions/fbpcs-github-cicd/4)
           # points at :rc instead of latest-build
           docker tag ${{ env.LOCAL_IMAGE_NAME }}:${{github.event.inputs.new_tag}} ${{ env.RC_REGISTRY_IMAGE_NAME }}:rc
-      - name: Push image with to rc registry
+      - name: Push image to rc registry
         run: |
           docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
 
