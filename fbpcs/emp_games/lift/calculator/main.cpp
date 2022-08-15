@@ -78,6 +78,10 @@ DEFINE_int32(
     concurrency,
     1,
     "max number of game(s) that will run concurrently?");
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL run.");
 
 using namespace private_lift;
 
@@ -143,7 +147,7 @@ int main(int argc, char** argv) {
                << "\tport: " << FLAGS_port << "\n"
                << "\tconcurrency: " << FLAGS_concurrency << "\n"
                << "\tinput: " << inputFileLogList.str() << "\n"
-               << "\toutput: " << outputFileLogList.str();
+               << "\trun_id: " << FLAGS_run_id;
   }
 
   auto party = static_cast<fbpcf::Party>(FLAGS_party);

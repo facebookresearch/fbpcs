@@ -40,6 +40,10 @@ DEFINE_string(
     "ad_object",
     "Options are 'ad_object' or 'lift'");
 DEFINE_string(run_name, "", "User given name used to write cost info in S3");
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL/PA run.");
 DEFINE_bool(
     log_cost,
     false,
@@ -69,6 +73,7 @@ int main(int argc, char* argv[]) {
   XLOGF(INFO, "Number of shards: {}", FLAGS_num_shards);
   XLOGF(INFO, "Output path: {}", FLAGS_output_path);
   XLOGF(INFO, "K-anonymity threshold: {}", FLAGS_threshold);
+  XLOGF(INFO, "Run Id: {}", FLAGS_run_id);
 
   XLOG(INFO) << "Start aggregating...";
 
