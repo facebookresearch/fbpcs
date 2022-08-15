@@ -52,7 +52,7 @@ jobs:
         run: |
           uname -a
           free -m
-          ls /adfasfsafdsafsd ; exit 0
+          ls /adfasfsafdsafsd
           df -h
 
       - name: One command runner
