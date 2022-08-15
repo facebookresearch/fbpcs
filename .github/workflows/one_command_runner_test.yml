@@ -55,13 +55,13 @@ jobs:
           df -h
 
       - name: One command runner
+        ###           --log_path=/fbpcs_instances/output.txt \
         run: |
           ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ github.event.inputs.study_id }} \
           --objective_ids=${{ github.event.inputs.objective_id }} \
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
-          --log_path=/fbpcs_instances/output.txt \
           -- \
           --version=${{ github.event.inputs.tag }}
 
