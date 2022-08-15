@@ -22,14 +22,16 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   fbpcf::AwsSdk::aquire();
-
   signal(SIGPIPE, SIG_IGN);
 
-  std::filesystem::path tmpDirectory{FLAGS_tmp_directory};
-
-  pid::LiftIdSpineFileCombiner combiner{
-      FLAGS_data_path, FLAGS_spine_path, FLAGS_output_path, tmpDirectory};
-  combiner.combineFile();
+  pid::combiner::combineFile(
+      FLAGS_data_path,
+      FLAGS_spine_path,
+      FLAGS_output_path,
+      FLAGS_tmp_directory,
+      FLAGS_sort_strategy,
+      FLAGS_max_id_column_cnt,
+      FLAGS_protocol_type);
 
   return 0;
 }
