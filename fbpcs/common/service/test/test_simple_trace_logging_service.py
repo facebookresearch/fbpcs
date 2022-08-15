@@ -21,6 +21,19 @@ class TestSimpleTraceLoggingService(TestCase):
         self.svc = SimpleTraceLoggingService()
         self.svc.logger = self.logger
 
+    def test_write_checkpoint_no_run_id(self) -> None:
+        # Act
+        self.svc.write_checkpoint(
+            run_id=None,
+            instance_id="instance456",
+            checkpoint_name="foo",
+            status=CheckpointStatus.STARTED,
+        )
+
+        # Assert
+        self.logger.debug.assert_called_once()
+        self.logger.info.assert_not_called()
+
     def test_write_checkpoint_simple(self) -> None:
         # Arrange
         expected_dump = json.dumps(
