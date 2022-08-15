@@ -64,6 +64,7 @@ UnionedPCInstance = Union[
 class StatusUpdate:
     status: PrivateComputationInstanceStatus
     status_update_ts: int
+    status_update_ts_delta: int
 
 
 # called in post_status_hook
@@ -77,11 +78,16 @@ def post_update_status(obj: "InfraConfig") -> None:
 
 # called in post_status_hook
 def append_status_updates(obj: "InfraConfig") -> None:
-    pair: StatusUpdate = StatusUpdate(
-        obj.status,
-        obj.status_update_ts,
+    ts_delta = 0
+    if obj.status_updates:
+        ts_delta = obj.status_update_ts - obj.status_updates[-1].status_update_ts
+
+    update_entity = StatusUpdate(
+        status=obj.status,
+        status_update_ts=obj.status_update_ts,
+        status_update_ts_delta=ts_delta,
     )
-    obj.status_updates.append(pair)
+    obj.status_updates.append(update_entity)
 
 
 # create update_generic_hook for status
