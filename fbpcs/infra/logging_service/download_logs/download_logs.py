@@ -17,6 +17,7 @@ from botocore.exceptions import ClientError
 from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
 from fbpcs.infra.logging_service.download_logs.utils.utils import (
     ContainerDetails,
+    StringFormatter,
     Utils,
 )
 
@@ -26,15 +27,9 @@ class AwsContainerLogs(AwsCloud):
     Fetches container logs from the cloudwatch
     """
 
-    LOG_GROUP = "/{}/{}"
-    LOG_STREAM = "{}/{}/{}"
     ARN_PARSE_LENGTH = 6
     S3_LOGGING_FOLDER = "logging"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
-    LOCAL_FOLDER_LOCATION = "/tmp/{}"
-    LOCAL_ZIP_FOLDER_LOCATION = "{}.zip"
-    LOCAL_FILE_LOCATION = "{}/{}"
-    ZIPPED_FOLDER_NAME = "{}.zip"
     MAX_THREADS = 500
     THREADS_PER_CORE = 20
 
@@ -124,8 +119,22 @@ class AwsContainerLogs(AwsCloud):
         with tempfile.TemporaryDirectory(prefix=self.tag_name) as tempdir:
             self.log.info(f"Created temperory directory to store logs {tempdir}")
 
+            local_folder_location = self.utils.string_formatter(
+                StringFormatter.FILE_LOCATION, tempdir, self.tag_name
+            )
+            zipped_file_path = self.utils.string_formatter(
+                StringFormatter.LOCAL_ZIP_FOLDER_LOCATION, local_folder_location
+            )
+
+            zipped_folder = self.utils.string_formatter(
+                StringFormatter.ZIPPED_FOLDER_NAME, self.tag_name
+            )
+
+            s3_file_path = self.utils.string_formatter(
+                StringFormatter.FILE_LOCATION, self.S3_LOGGING_FOLDER, zipped_folder
+            )
+
             # store logs in local
-            local_folder_location = f"{tempdir}/{self.tag_name}"
             self.utils.create_folder(folder_location=local_folder_location)
 
             # Call threading function to download logs locally and upload to S3
@@ -147,13 +156,9 @@ class AwsContainerLogs(AwsCloud):
             self.utils.compress_downloaded_logs(folder_location=local_folder_location)
             self.log.info("Compressed download log folder.")
 
-            zipped_file_path = self.LOCAL_ZIP_FOLDER_LOCATION.format(
-                local_folder_location
-            )
-
             self.upload_file_to_s3(
                 s3_bucket_name=s3_bucket_name,
-                s3_file_path=f"{self.S3_LOGGING_FOLDER}/{self.ZIPPED_FOLDER_NAME.format(self.tag_name)}",
+                s3_file_path=s3_file_path,
                 file_name=zipped_file_path,
             )
 
@@ -263,10 +268,14 @@ class AwsContainerLogs(AwsCloud):
         container_name = container_details.container_name
         container_id = container_details.container_id
 
-        # T122923883 - for better formatting of the strings
-        log_group_name = self.LOG_GROUP.format(service_name, container_name)
-        log_stream_name = self.LOG_STREAM.format(
-            service_name, container_name, container_id
+        log_group_name = self.utils.string_formatter(
+            StringFormatter.LOG_GROUP, service_name, container_name
+        )
+        log_stream_name = self.utils.string_formatter(
+            StringFormatter.LOG_STREAM, service_name, container_name, container_id
+        )
+        local_file_location = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION, local_folder_location, container_id
         )
 
         # Check if logs are missing for any containers
@@ -284,13 +293,11 @@ class AwsContainerLogs(AwsCloud):
             )
 
             self.log.info(
-                f"Creating file to store log locally in location {self.LOCAL_FILE_LOCATION.format(local_folder_location, container_id)}"
+                f"Creating file to store log locally in location {local_file_location}"
             )
             with self.write_to_file_lock:
                 self.utils.create_file(
-                    file_location=self.LOCAL_FILE_LOCATION.format(
-                        local_folder_location, container_id
-                    ),
+                    file_location=local_file_location,
                     content=message_events,
                 )
 
