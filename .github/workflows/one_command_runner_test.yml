@@ -56,8 +56,6 @@ jobs:
           docker images
 
       - name: One command runner
-        ###           --log_path=/fbpcs_instances/output.txt
-        ###           docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c 'pwd ; cat /fbpcs_instances/output.txt' ; \
         run: |
           bash -c "./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ github.event.inputs.study_id }} \
@@ -65,10 +63,10 @@ jobs:
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \
-          --version=${{ github.event.inputs.tag }} > /tmp/output.txt ; \
+          --version=${{ github.event.inputs.tag }} > /tmp/output.txt 2> /tmp/output.txt ; \
           ret=$? ; \
           cat /tmp/output.txt ; \
-          echo $ret "
+          echo ret=$ret"
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
