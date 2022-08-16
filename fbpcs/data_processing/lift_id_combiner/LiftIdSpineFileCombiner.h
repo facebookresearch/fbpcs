@@ -12,7 +12,7 @@
 
 #include "LiftIdSpineMultiConversionInput.h"
 
-namespace pid {
+namespace pid::combiner {
 /*
  * This chunk size has to be large enough that we don't make
  * unnecessary trips to cloud storage but small enough that
@@ -21,28 +21,20 @@ namespace pid {
  * of our files to fit the aforementioned constraints.
  */
 constexpr size_t kBufferedReaderChunkSize = 1073741824; // 2^30
-/*
-This class implements the combiner that is used to combine the output of pid
-partner and publisher files with the help of an identity spine from union pid
-*/
-class LiftIdSpineFileCombiner {
- public:
-  LiftIdSpineFileCombiner(
-      std::filesystem::path dataPath,
-      std::filesystem::path spinePath,
-      std::filesystem::path outputPath,
-      std::filesystem::path tmpDirectory)
-      : dataPath_{dataPath},
-        spinePath_{spinePath},
-        outputPath_{outputPath},
-        tmpDirectory_{tmpDirectory} {}
-
-  void combineFile();
-
- private:
-  std::filesystem::path dataPath_;
-  std::filesystem::path spinePath_;
-  std::filesystem::path outputPath_;
-  std::filesystem::path tmpDirectory_;
-};
-} // namespace pid
+void combineFile(
+    std::string dataPath,
+    std::string spineIdFilePath,
+    std::string outputStr,
+    std::string tmpDirectory,
+    std::string sortStrategy,
+    int maxIdColumnCnt,
+    std::string protocolType);
+void executeStrategy(
+    std::string dataPath,
+    std::string spineIdFilePath,
+    std::string outputStr,
+    std::string tmpDirectory,
+    std::string sortStrategy,
+    int maxIdColumnCnt,
+    std::string protocolType);
+} // namespace pid::combiner
