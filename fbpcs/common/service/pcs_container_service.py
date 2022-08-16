@@ -15,6 +15,8 @@ from fbpcp.service.container_aws import AWSContainerService
 from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 
+from fbpcs.private_computation.service.utils import deprecated
+
 
 class PCSContainerService(ContainerService):
     def __init__(self, inner_container_service: ContainerService) -> None:
@@ -80,7 +82,8 @@ class PCSContainerService(ContainerService):
     def get_current_instances_count(self) -> int:
         return self.inner_container_service.get_current_instances_count()
 
+    @deprecated(
+        "validate_container_definition is no longer a public method in container service"
+    )
     def validate_container_definition(self, container_definition: str) -> None:
-        return self.inner_container_service.validate_container_definition(
-            container_definition
-        )
+        pass
