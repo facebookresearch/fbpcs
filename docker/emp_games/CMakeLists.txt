@@ -12,6 +12,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include("common.cmake")
 include("perf_tools.cmake")
 
+message(STATUS "Summary:")
+message(STATUS "  CMake version        : ${CMAKE_VERSION}")
+message(STATUS "  CMake command        : ${CMAKE_COMMAND}")
+message(STATUS "  System name          : ${CMAKE_SYSTEM_NAME}")
+message(STATUS "  C++ compiler         : ${CMAKE_CXX_COMPILER}")
+message(STATUS "  C++ compiler version : ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "  CXX flags            : ${CMAKE_CXX_FLAGS}")
+
 # lift
 add_executable(
   lift_calculator
