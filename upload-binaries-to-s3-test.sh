@@ -38,6 +38,7 @@ decoupled_aggregation="$attribution_repo/decoupled_aggregation/${TAG}/decoupled_
 pcf2_attribution="$attribution_repo/pcf2_attribution/${TAG}/pcf2_attribution"
 pcf2_aggregation="$attribution_repo/pcf2_aggregation/${TAG}/pcf2_aggregation"
 shard_aggregator_package="$attribution_repo/shard-aggregator/${TAG}/shard-aggregator"
+pcf2_shard_combiner_package="$attribution_repo/pcf2_shard-combiner/${TAG}/pcf2_shard-combiner"
 data_processing_repo="s3://$one_docker_repo/data_processing"
 private_id_repo="s3://$one_docker_repo/pid"
 validation_repo="s3://$one_docker_repo/validation"
@@ -51,6 +52,7 @@ aws s3 cp decoupled_aggregation_calculator "$decoupled_aggregation"
 aws s3 cp pcf2_attribution_calculator "$pcf2_attribution"
 aws s3 cp pcf2_aggregation_calculator "$pcf2_aggregation"
 aws s3 cp shard_aggregator "$shard_aggregator_package"
+aws s3 cp pcf2_shard_combiner "$pcf2_shard_combiner_package"
 cd .. || exit
 fi
 

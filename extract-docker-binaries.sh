@@ -70,6 +70,7 @@ docker cp temp_container:/usr/local/bin/decoupled_aggregation_calculator "$SCRIP
 docker cp temp_container:/usr/local/bin/pcf2_attribution_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/pcf2_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/shard_aggregator "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/usr/local/bin/pcf2_shard_combiner "$SCRIPT_DIR/binaries_out/."
 docker rm -f temp_container
 fi
 

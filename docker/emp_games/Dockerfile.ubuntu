@@ -19,6 +19,7 @@ COPY fbpcs/performance_tools/ ./fbpcs/performance_tools
 COPY fbpcs/emp_games/attribution/ ./fbpcs/emp_games/attribution
 COPY fbpcs/emp_games/pcf2_attribution/ ./fbpcs/emp_games/pcf2_attribution
 COPY fbpcs/emp_games/pcf2_aggregation/ ./fbpcs/emp_games/pcf2_aggregation
+COPY fbpcs/emp_games/pcf2_shard_combiner/ ./fbpcs/emp_games/pcf2_shard_combiner
 COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
 
