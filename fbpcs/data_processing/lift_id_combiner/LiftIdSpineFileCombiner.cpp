@@ -7,26 +7,16 @@
 
 #include "LiftIdSpineFileCombiner.h"
 
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
-#include <folly/Random.h>
 #include <folly/String.h>
 #include <folly/logging/xlog.h>
-#include <re2/re2.h>
 
 // TODO: Rewrite for OSS?
+#include "fbpcs/data_processing/lift_id_combiner/MrPidLiftIdCombiner.h"
 #include "fbpcs/data_processing/lift_id_combiner/PidLiftIdCombiner.h"
 
 namespace pid::combiner {
+const std::string PROTOCOL_PID = "PID";
+const std::string PROTOCOL_MRPID = "MR_PID";
 void combineFile(
     std::string dataPath,
     std::string spineIdFilePath,
@@ -58,6 +48,15 @@ void executeStrategy(
   if (protocolType == "PID") {
     PidLiftIdCombiner p(
         dataPath,
+        spineIdFilePath,
+        outputStr,
+        tmpDirectory,
+        sortStrategy,
+        maxIdColumnCnt,
+        protocolType);
+    p.run();
+  } else if (protocolType == PROTOCOL_MRPID) {
+    MrPidLiftIdCombiner p(
         spineIdFilePath,
         outputStr,
         tmpDirectory,

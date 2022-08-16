@@ -70,7 +70,9 @@ class LiftIdSpineFileCombinerTest : public testing::Test {
   void runTest(
       std::vector<std::string>& dataContent,
       std::vector<std::string>& idSpineContent,
-      std::vector<std::string>& expectedOutput) {
+      std::vector<std::string>& expectedOutput,
+      std::string protocol = PROTOCOL_PID) {
+    FLAGS_protocol_type = protocol;
     setUpFiles(dataContent, idSpineContent);
     combineFile(
         FLAGS_data_path,
@@ -162,8 +164,8 @@ TEST_F(LiftIdSpineFileCombinerTest, RowLengthMismatch) {
   // source code to disable data validation
   // ASSERT_DEATH(
   //     combiner.combineFile(),
-  //     ".*Row at index <2> and header sizes mismatch. Row size is 3 and header
-  //     size is .*");
+  //     ".*Row at index <2> and header sizes mismatch. Row size is 3 and
+  //     header size is .*");
 }
 
 TEST_F(LiftIdSpineFileCombinerTest, ParseFailure) {
@@ -282,6 +284,29 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSortedSpinePublisherWithDup) {
   runTest(dataInput, spineInput, expectedOutput);
 }
 
+TEST_F(LiftIdSpineFileCombinerTest, ValidMrPidSortedSpinePublisher) {
+  std::vector<std::string> dataInput = {};
+  std::vector<std::string> spineInput = {
+      "id_,opportunity_timestamp,test_flag",
+      "1,100,1",
+      "2,0,0",
+      "3,150,0",
+      "10,200,0",
+      "100,0,0",
+      "123,0,0"};
+  // We tread id_ column as a string
+  // so the sort will based on lexicographical order.
+  std::vector<std::string> expectedOutput = {
+      "id_,opportunity_timestamp,opportunity,test_flag",
+      "1,100,1,1",
+      "10,200,1,0",
+      "100,0,0,0",
+      "123,0,0,0",
+      "2,0,0,0",
+      "3,150,1,0"};
+  runTest(dataInput, spineInput, expectedOutput, PROTOCOL_MRPID);
+}
+
 // Valid spine with some amount of overlap for partner
 // No opp_flag flag needed at the output level
 TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartner) {
@@ -305,6 +330,32 @@ TEST_F(LiftIdSpineFileCombinerTest, ValidSpinePartner) {
       "EEEE,[0,0,0,375],[0,0,0,300]",
       "FFFF,[0,0,0,400],[0,0,0,400]"};
   runTest(dataInput, spineInput, expectedOutput);
+}
+
+// Valid spine with some amount of overlap for partner
+// No opp_flag flag needed at the output level
+TEST_F(LiftIdSpineFileCombinerTest, ValidMrPidSpinePartner) {
+  FLAGS_multi_conversion_limit = 4;
+  std::vector<std::string> dataInput = {};
+  std::vector<std::string> spineInput = {
+      "id_,event_timestamp,value",
+      "1,125,100",
+      "2,0,0",
+      "10,200,200",
+      "DDDD,0,0",
+      "EEEE,375,300",
+      "FFFF,400,400"};
+  // We tread id_ column as a string
+  // so the sort will based on lexicographical order.
+  std::vector<std::string> expectedOutput = {
+      "id_,event_timestamps,values",
+      "1,[0,0,0,125],[0,0,0,100]",
+      "10,[0,0,0,200],[0,0,0,200]",
+      "2,[0,0,0,0],[0,0,0,0]",
+      "DDDD,[0,0,0,0],[0,0,0,0]",
+      "EEEE,[0,0,0,375],[0,0,0,300]",
+      "FFFF,[0,0,0,400],[0,0,0,400]"};
+  runTest(dataInput, spineInput, expectedOutput, PROTOCOL_MRPID);
 }
 
 // Valid spine with some amount of overlap for partner, using hashed ids
