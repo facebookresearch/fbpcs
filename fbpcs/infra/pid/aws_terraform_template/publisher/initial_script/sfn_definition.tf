@@ -1,3 +1,5 @@
+data "template_file" "publisher_sfn_definition" {
+  template = <<EOF
 {
   "StartAt": "Create_A_Cluster",
   "States": {
@@ -5,7 +7,7 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
       "Parameters": {
-        "Name": "AdvWorkflowCluster",
+        "Name": "MetaWorkflowCluster",
         "VisibleToAllUsers": true,
         "ReleaseLabel": "emr-6.6.0",
         "Applications": [
@@ -16,9 +18,8 @@
             "Name": "Spark"
           }
         ],
-        "ServiceRole": "EMR_DefaultRole",
-        "JobFlowRole": "EMR_EC2_PID_ADV",
-        "LogUri.$": "States.Format('s3://{}/elasticmapreduce/', $.logBucketName)",
+        "ServiceRole": "${aws_iam_role.mrpid_publisher_emr_role.id}",
+        "JobFlowRole": "${aws_iam_role.mrpid_publisher_ec2_role.id}",
         "Instances": {
           "KeepJobFlowAliveWhenNoSteps": true,
           "InstanceFleets": [
@@ -41,7 +42,16 @@
               ]
             }
           ]
-        }
+        },
+        "BootstrapActions": [
+          {
+            "Name": "install-cloudwatch-agent",
+            "ScriptBootstrapAction": {
+              "Path": "s3://mrpid-publisher-${var.md5hash_partner_account_id}-confs/cloudwatch_agent/cloudwatch_agent_install.sh",
+              "Args": []
+            }
+          }
+        ]
       },
       "ResultPath": "$.CreateClusterResult",
       "Next": "Enable_Termination_Protection"
@@ -63,35 +73,6 @@
           "Next": "Error_Terminate_Cluster"
         }
       ],
-      "Next": "Wait_for_stage_one_ready"
-    },
-    "Wait_for_stage_one_ready": {
-      "Type": "Task",
-      "Parameters": {
-        "Bucket.$": "$.metaBucketName",
-        "Key.$": "States.Format('{}/step_1_meta_enc_kc/_SUCCESS', $.instanceId)"
-      },
-      "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
-      "ResultPath": null,
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "IntervalSeconds": 30,
-          "MaxAttempts": 360,
-          "BackoffRate": 1
-        }
-      ],
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "ResultPath": "$.error",
-          "Next": "Error_Disable_Termination_Protection"
-        }
-      ],
       "Next": "Stage_One"
     },
     "Stage_One": {
@@ -104,7 +85,7 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', States.Format('{}', $.numExecutors), '--executor-cores', States.Format('{}', $.executorCores), '--executor-memory', $.executorMemory, '--conf', States.Format('spark.driver.memory={}', $.driverMemory), '--conf', States.Format('spark.sql.shuffle.partitions={}', $.sqlShufflePartitions), '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.partner.PartnerStageOne', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), States.Format('s3://{}/{}', $.advBucketName, $.instanceId), $.outputPath, $.inputPath)"
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageOne {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageOne.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.inputPath))"
           }
         }
       },
@@ -123,21 +104,21 @@
     "Wait_for_stage_two_ready": {
       "Type": "Task",
       "Parameters": {
-        "Bucket.$": "$.metaBucketName",
-        "Key.$": "States.Format('{}/step_2_adv_unmatched_enc_kc_kp/_SUCCESS', $.instanceId)"
+        "Bucket": "mrpid-partner-${var.md5hash_partner_account_id}",
+        "Key.$": "States.Format('{}/step_1_meta_enc_kc_kp/_SUCCESS', $.instanceId)"
       },
       "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
+      "ResultPath": null,
       "Retry": [
         {
           "ErrorEquals": [
             "States.ALL"
           ],
           "IntervalSeconds": 30,
-          "MaxAttempts": 360,
+          "MaxAttempts": 180,
           "BackoffRate": 1
         }
       ],
-      "ResultPath": null,
       "Catch": [
         {
           "ErrorEquals": [
@@ -159,7 +140,62 @@
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', '--master', 'yarn', '--jars', $.pidMrMultikeyJarPath, '--num-executors', States.Format('{}', $.numExecutors), '--executor-cores', States.Format('{}', $.executorCores), '--executor-memory', $.executorMemory, '--conf', States.Format('spark.driver.memory={}', $.driverMemory), '--conf', States.Format('spark.sql.shuffle.partitions={}', $.sqlShufflePartitions), '--conf', 'spark.yarn.maxAppAttempts=1', '--class', 'com.meta.mr.multikey.partner.PartnerStageTwo', $.pidMrMultikeyJarPath, States.Format('s3://{}/{}', $.metaBucketName, $.instanceId), States.Format('s3://{}/{}', $.advBucketName, $.instanceId), $.outputPath)"
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageTwo {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageTwo.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.instanceId))"
+          }
+        }
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Wait_for_stage_three_ready"
+    },
+    "Wait_for_stage_three_ready": {
+      "Type": "Task",
+      "Parameters": {
+        "Bucket": "mrpid-partner-${var.md5hash_partner_account_id}",
+        "Key.$": "States.Format('{}/step_3_meta_all_enc_kc_kp_rc_sc_rp/_SUCCESS', $.instanceId)"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
+      "ResultPath": null,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 360,
+          "BackoffRate": 1
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Error_Disable_Termination_Protection"
+        }
+      ],
+      "Next": "Stage_Three"
+    },
+    "Stage_Three": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
+      "Parameters": {
+        "ClusterId.$": "$.CreateClusterResult.Cluster.Id",
+        "Step": {
+          "Name": "The third stage",
+          "ActionOnFailure": "TERMINATE_JOB_FLOW",
+          "HadoopJarStep": {
+            "Jar": "command-runner.jar",
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageThree {} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageThree.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.outputPath, $.instanceId))"
           }
         }
       },
@@ -233,4 +269,6 @@
       "Type": "Fail"
     }
   }
+}
+EOF
 }
