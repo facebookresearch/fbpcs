@@ -198,9 +198,22 @@ class TestDownloadLogs(unittest.TestCase):
         # T124204521
         pass
 
+    @staticmethod
+    def _test_lambda(_: str, container: str) -> None:
+        if container == "throw":
+            raise Exception("")
+
     def test_run_threaded_download(self) -> None:
-        # T124197675
-        pass
+        self.aws_container_logs.containers_download_logs_failed.clear()
+
+        res = self.aws_container_logs.run_threaded_download(
+            TestDownloadLogs._test_lambda, ["success", "throw"], "/tmp", 1
+        )
+
+        self.assertEqual(len(res), 1)
+        self.assertEqual(
+            len(self.aws_container_logs.containers_download_logs_failed), 1
+        )
 
     def test_copy_logs_for_debug(self) -> None:
         # T124216294
