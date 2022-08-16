@@ -48,14 +48,15 @@ jobs:
       - name: Print Tracker Hash
         run: echo ${{ github.event.inputs.tracker_hash}}
 
-      - name: free disk space
+      - name: Check disk space
         run: |
           uname -a
           free -m
           df -h
 
       - name: One command runner
-        ###           --log_path=/fbpcs_instances/output.txt \
+        ###           --log_path=/fbpcs_instances/output.txt
+        ###           docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c 'pwd ; cat /fbpcs_instances/output.txt' ; \
         run: |
           bash -c "./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ github.event.inputs.study_id }} \
@@ -66,7 +67,7 @@ jobs:
           -- \
           --version=${{ github.event.inputs.tag }} ; \
           run_fbpcs_exit_code=$? ; \
-          docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c 'pwd ; cat /fbpcs_instances/output.txt' ; \
+          docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c 'pwd ; ls -l /fbpcs_instances' ; \
           echo run_fbpcs_exit_code=$run_fbpcs_exit_code "
 
       - name: Validate Results
