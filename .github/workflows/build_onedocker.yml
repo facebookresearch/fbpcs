@@ -1,0 +1,29 @@
+name: Build OneDocker image
+
+on:
+  schedule:
+    - cron: '0 0,15-23 * * 1-5'
+
+env:
+  DISTRO: ubuntu
+  TIME_RANGE: 24 hours
+
+jobs:
+  ### Build onedocker image
+  build_image:
+    name: Build Image
+    runs-on: self-hosted
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Remove unused images
+        run: |
+          df -h
+          docker image prune -af
+          df -h
+
+      - name: Build onedocker image
+        run: |
+          ./build-docker.sh onedocker -f
