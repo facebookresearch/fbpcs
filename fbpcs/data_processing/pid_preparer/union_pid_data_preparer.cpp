@@ -24,6 +24,11 @@ DEFINE_string(
     "/tmp/",
     "Directory where temporary files should be saved before final write");
 DEFINE_int32(max_column_cnt, 1, "Number of columns to write");
+
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL/PA run.");
 DEFINE_int32(log_every_n, 1'000'000, "How frequently to log updates");
 
 int main(int argc, char** argv) {
