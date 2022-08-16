@@ -52,7 +52,7 @@ jobs:
         run: |
           uname -a
           free -m
-          bach -c "pwd ; ./fbpcs/scripts/run_fbpcs.sh ; ret=$? ; echo ret=$ret"
+          bash -c "pwd ; ./fbpcs/scripts/run_fbpcs.sh ; ret=$? ; echo ret=$ret"
           df -h
 
       - name: One command runner
