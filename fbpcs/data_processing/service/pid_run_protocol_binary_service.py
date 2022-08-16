@@ -26,6 +26,7 @@ class PIDRunProtocolBinaryService(RunBinaryBaseService):
         use_row_numbers: bool = False,
         server_hostname: Optional[str] = None,
         metric_path: Optional[str] = None,
+        run_id: Optional[str] = None,
     ) -> str:
 
         cmd_ls = []
@@ -49,6 +50,9 @@ class PIDRunProtocolBinaryService(RunBinaryBaseService):
         # later will support use-rowk-number feature
         if use_row_numbers:
             cmd_ls.append("--use-row-numbers")
+
+        if run_id is not None:
+            cmd_ls.append(f"--run_id {run_id}")
 
         return " ".join(cmd_ls)
 
