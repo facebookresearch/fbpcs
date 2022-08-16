@@ -52,6 +52,30 @@ jobs:
       concurrency: 4
       # partner visibility
       result_visibility: 2
+  pcf2_lift:
+    # publisher player args
+    publisher:
+      # required args #
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input.csv
+      # optional args #
+      output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
+      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/publisher_expected_result.json
+    # partner player args
+    partner:
+      # required args #
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      # optional args #
+      output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
+      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
+    # args shared by both publisher and partner
+    shared:
+      # required args #
+      game_type: lift
+      # optional args #
+      num_mpc_containers: 2
+      num_pid_containers: 2
+      pcs_features: [private_lift_pcf2_release]
+      concurrency: 4
   attribution:
     # publisher player args
     publisher:
