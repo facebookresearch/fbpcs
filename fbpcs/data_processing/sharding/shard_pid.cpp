@@ -22,6 +22,10 @@ DEFINE_string(
     output_base_path,
     "",
     "Local or s3 base path where output files are written to");
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL/PA run.");
 DEFINE_int32(
     file_start_index,
     0,
