@@ -86,7 +86,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             else "ad_object"
         )
 
-        binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
+        binary_name = self.get_onedocker_binary_name(pc_instance)
         binary_config = self._onedocker_binary_config_map[binary_name]
 
         # Get output path of previous stage depending on what stage flow we are using
@@ -117,9 +117,15 @@ class AggregateShardsStageService(PrivateComputationStageService):
         if self._log_cost_to_s3:
             run_name = pc_instance.infra_config.instance_id
 
+            log_name = (
+                "sc-logs"
+                if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE)
+                else "sa-logs"
+            )
+
             if pc_instance.product_config.common.post_processing_data:
                 pc_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
-                    f"sa-logs/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
+                    f"{log_name}/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
                 )
         else:
             run_name = ""
@@ -154,7 +160,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             instance_id=pc_instance.infra_config.instance_id
             + "_aggregate_shards"
             + str(pc_instance.infra_config.retry_counter),
-            game_name=GameNames.SHARD_AGGREGATOR.value,
+            game_name=self.get_game_name(pc_instance),
             mpc_party=map_private_computation_role_to_mpc_party(
                 pc_instance.infra_config.role
             ),
@@ -170,6 +176,20 @@ class AggregateShardsStageService(PrivateComputationStageService):
             PCSMPCInstance.from_mpc_instance(mpc_instance)
         )
         return pc_instance
+
+    @staticmethod
+    def get_game_name(pc_instance: PrivateComputationInstance) -> str:
+        if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
+            return GameNames.PCF2_SHARD_COMBINER.value
+
+        return GameNames.SHARD_AGGREGATOR.value
+
+    @staticmethod
+    def get_onedocker_binary_name(pc_instance: PrivateComputationInstance) -> str:
+        if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
+            return OneDockerBinaryNames.PCF2_SHARD_COMBINER.value
+
+        return OneDockerBinaryNames.SHARD_AGGREGATOR.value
 
     def get_status(
         self,
