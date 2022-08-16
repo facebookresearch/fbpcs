@@ -120,7 +120,7 @@ class ShardCombinerStageService(PrivateComputationStageService):
 
             if pc_instance.product_config.common.post_processing_data:
                 pc_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
-                    f"sa-logs/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
+                    f"sc-logs/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
                 )
         else:
             run_name = ""
