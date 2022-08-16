@@ -120,6 +120,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
                 output_path=get_sharded_filepath(output_path, shard),
                 tmp_directory=onedocker_binary_config.tmp_directory,
                 max_column_count=pc_instance.product_config.common.pid_max_column_count,
+                run_id=pc_instance.infra_config.run_id,
             )
             args_list.append(args_per_shard)
         # start containers

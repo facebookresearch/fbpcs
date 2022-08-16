@@ -130,6 +130,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
                 metric_path=metric_paths[shard] if metric_paths else None,
                 use_row_numbers=use_row_numbers,
                 server_hostname=server_hostnames[shard] if server_hostnames else None,
+                run_id=pc_instance.infra_config.run_id,
             )
             args_list.append(args_per_shard)
         # start containers

@@ -27,6 +27,7 @@ PIDMR = "pid_mr"
 INTPUT = "inputPath"
 OUTPUT = "outputPath"
 INSTANCE = "instanceId"
+RUNID = "run_id"
 SPARK_CONFIGS = "sparkConfigs"
 S3URIFORMAT = "s3://{bucket}/{key}"
 PUB_PREFIX = "publisher_"
@@ -76,6 +77,7 @@ class PIDMRStageService(PrivateComputationStageService):
                 INSTANCE: self.removePrefixForInstance(
                     pc_instance.infra_config.instance_id
                 ),
+                RUNID: pc_instance.infra_config.run_id,
             }
             pid_overall_configs = {
                 **pid_configs[PIDMR][PID_RUN_CONFIGS],

@@ -5,6 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from typing import Optional
+
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
@@ -18,6 +20,7 @@ class PIDPrepareBinaryService(RunBinaryBaseService):
         output_path: str,
         tmp_directory: str = "/tmp/",
         max_column_count: int = 1,
+        run_id: Optional[str] = None,
     ) -> str:
         cmd_args = " ".join(
             [
@@ -27,6 +30,13 @@ class PIDPrepareBinaryService(RunBinaryBaseService):
                 f"--max_column_cnt={max_column_count}",
             ]
         )
+        if run_id is not None:
+            cmd_args = " ".join(
+                [
+                    cmd_args,
+                    f"--run_id={run_id}",
+                ]
+            )
         return cmd_args
 
     @staticmethod

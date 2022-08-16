@@ -6,7 +6,7 @@
 
 import itertools
 from collections import defaultdict
-from typing import List
+from typing import List, Optional
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -70,7 +70,9 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
 
     async def test_pid_run_protocol_stage(self) -> None:
         async def _run_sub_test(
-            pc_role: PrivateComputationRole, multikey_enabled: bool
+            pc_role: PrivateComputationRole,
+            multikey_enabled: bool,
+            run_id: Optional[str] = None,
         ) -> None:
             pid_protocol = (
                 PIDProtocol.UNION_PID_MULTIKEY
@@ -85,6 +87,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 pid_use_row_numbers=use_row_number,
                 pid_protocol=pid_protocol,
                 multikey_enabled=multikey_enabled,
+                run_id=run_id,
             )
             stage_svc = PIDRunProtocolStageService(
                 storage_svc=self.mock_storage_svc,
@@ -114,7 +117,10 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
 
             args_str_expect = self.get_args_expect(
-                pc_role, pid_protocol, self.use_row_numbers
+                pc_role,
+                pid_protocol,
+                self.use_row_numbers,
+                run_id,
             )
             # test the start_containers is called with expected parameters
             self.mock_onedocker_svc.start_containers.assert_called_with(
@@ -145,15 +151,18 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         data_tests = itertools.product(
             [PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER],
             [True, False],
+            [None, "2621fda2-0eca-11ed-861d-0242ac120002"],
         )
-        for pc_role, multikey_enabled in data_tests:
+        for pc_role, multikey_enabled, test_run_id in data_tests:
             with self.subTest(
                 pc_role=pc_role,
                 multikey_enabled=multikey_enabled,
+                test_run_id=test_run_id,
             ):
                 await _run_sub_test(
                     pc_role=pc_role,
                     multikey_enabled=multikey_enabled,
+                    run_id=test_run_id,
                 )
 
     def create_sample_pc_instance(
@@ -163,6 +172,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         multikey_enabled: bool = False,
         pid_use_row_numbers: bool = True,
         pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
+        run_id: Optional[str] = None,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.pc_instance_id,
@@ -175,6 +185,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=self.test_num_containers,
             status_updates=[],
+            run_id=run_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
@@ -207,6 +218,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         pc_role: PrivateComputationRole,
         protocol: PIDProtocol,
         use_row_numbers: bool,
+        test_run_id: Optional[str] = None,
     ) -> List[str]:
         arg_ls = []
         if (
@@ -237,4 +249,20 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             arg_ls.append(
                 "--company http://192.0.2.0:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_pid_matched_0 --no-tls"
             )
+
+        modified_arg_ls = []
+        for arg in arg_ls:
+            modified_arg = arg
+            if test_run_id is not None:
+                modified_arg = " ".join(
+                    [
+                        arg,
+                        f"--run_id {test_run_id}",
+                    ]
+                )
+            else:
+                modified_arg = arg
+            modified_arg_ls.append(modified_arg)
+        return modified_arg_ls
+
         return arg_ls

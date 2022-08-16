@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-from typing import List
+from typing import List, Optional
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -61,6 +61,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             pc_role: PrivateComputationRole,
             multikey_enabled: bool,
             test_num_containers: int,
+            test_run_id: Optional[str] = None,
         ) -> None:
             pid_protocol = (
                 PIDProtocol.UNION_PID_MULTIKEY
@@ -77,6 +78,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 test_num_containers=test_num_containers,
                 multikey_enabled=multikey_enabled,
                 pid_max_column_count=max_col_cnt_expect,
+                run_id=test_run_id,
             )
             stage_svc = PIDPrepareStageService(
                 storage_svc=self.mock_storage_svc,
@@ -100,7 +102,10 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 ] = self.onedocker_binary_config.repository_path
 
             args_ls_expect = self.get_args_expected(
-                pc_role, test_num_containers, max_col_cnt_expect
+                pc_role,
+                test_num_containers,
+                max_col_cnt_expect,
+                test_run_id,
             )
             # test the start_containers is called with expected parameters
             self.mock_onedocker_svc.start_containers.assert_called_with(
@@ -132,17 +137,20 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             [PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER],
             [True, False],
             [1, 2],
+            [None, "2621fda2-0eca-11ed-861d-0242ac120002"],
         )
-        for pc_role, multikey_enabled, test_num_containers in data_tests:
+        for pc_role, multikey_enabled, test_num_containers, test_run_id in data_tests:
             with self.subTest(
                 pc_role=pc_role,
                 multikey_enabled=multikey_enabled,
                 test_num_containers=test_num_containers,
+                test_run_id=test_run_id,
             ):
                 await _run_sub_test(
                     pc_role=pc_role,
                     multikey_enabled=multikey_enabled,
                     test_num_containers=test_num_containers,
+                    test_run_id=test_run_id,
                 )
 
     def create_sample_pc_instance(
@@ -152,6 +160,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         pid_max_column_count: int = 1,
         multikey_enabled: bool = False,
         status: PrivateComputationInstanceStatus = PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
+        run_id: Optional[str] = None,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.pc_instance_id,
@@ -164,6 +173,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=test_num_containers,
             num_files_per_mpc_container=test_num_containers,
             status_updates=[],
+            run_id=run_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
@@ -196,6 +206,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         pc_role: PrivateComputationRole,
         test_num_containers: int,
         max_col_cnt_expected: int,
+        test_run_id: Optional[str] = None,
     ) -> List[str]:
         arg_ls = []
         if pc_role is PrivateComputationRole.PUBLISHER:
@@ -208,4 +219,18 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 f"--input_path=out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_sharded_{i} --output_path=out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_{i} --tmp_directory=/tmp --max_column_cnt={max_col_cnt_expected}"
                 for i in range(test_num_containers)
             ]
-        return arg_ls
+
+        modified_arg_ls = []
+        for arg in arg_ls:
+            modified_arg = arg
+            if test_run_id is not None:
+                modified_arg = " ".join(
+                    [
+                        arg,
+                        f"--run_id={test_run_id}",
+                    ]
+                )
+            else:
+                modified_arg = arg
+            modified_arg_ls.append(modified_arg)
+        return modified_arg_ls
