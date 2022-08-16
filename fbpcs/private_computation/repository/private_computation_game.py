@@ -93,6 +93,20 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="visibility", required=False),
         ],
     },
+    GameNames.PCF2_SHARD_COMBINER.value: {
+        "onedocker_package_name": OneDockerBinaryNames.PCF2_SHARD_COMBINER.value,
+        "arguments": [
+            OneDockerArgument(name="input_base_path", required=True),
+            OneDockerArgument(name="num_shards", required=True),
+            OneDockerArgument(name="output_path", required=True),
+            OneDockerArgument(name="metrics_format_type", required=True),
+            OneDockerArgument(name="threshold", required=True),
+            OneDockerArgument(name="first_shard_index", required=False),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="visibility", required=False),
+        ],
+    },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
         "onedocker_package_name": OneDockerBinaryNames.DECOUPLED_ATTRIBUTION.value,
         "arguments": [
