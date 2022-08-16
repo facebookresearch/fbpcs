@@ -113,3 +113,11 @@ resource "aws_default_security_group" "default" {
     Name = "onedocker-security-group${var.tag_postfix}"
   }
 }
+
+resource "aws_flow_log" "onedocker_vpc" {
+  count                = var.vpc_logging.enabled ? 1 : 0
+  log_destination      = var.vpc_logging.bucket_arn
+  log_destination_type = "s3"
+  traffic_type         = "ALL"
+  vpc_id               = aws_vpc.main.id
+}
