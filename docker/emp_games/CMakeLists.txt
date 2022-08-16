@@ -144,3 +144,18 @@ target_link_libraries(
   empgamecommon
   perftools)
 install(TARGETS pcf2_lift_calculator DESTINATION bin)
+
+# pcf2_shard_combiner
+file(GLOB pcf2_shard_combiner_src
+  "fbpcs/emp_games/pcf2_shard_combiner/**.cpp"
+  "fbpcs/emp_games/pcf2_shard_combiner/**.h"
+  "fbpcs/emp_games/pcf2_shard_combiner/util/**.h")
+list(FILTER pcf2_shard_combiner_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  pcf2_shard_combiner
+  ${pcf2_shard_combiner_src})
+target_link_libraries(
+  pcf2_shard_combiner
+  empgamecommon
+  perftools)
+install(TARGETS pcf2_shard_combiner DESTINATION bin)

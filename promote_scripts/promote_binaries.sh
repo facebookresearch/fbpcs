@@ -27,6 +27,7 @@ binary_names=(
     'private_attribution/pcf2_attribution'
     'private_attribution/pcf2_aggregation'
     'private_attribution/shard-aggregator'
+    'private_attribution/pcf2_shard-combiner'
     'pid/private-id-client'
     'pid/private-id-server'
     'pid/private-id-multi-key-client'
