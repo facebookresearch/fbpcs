@@ -68,8 +68,7 @@ jobs:
           -- \
           --version=${{ github.event.inputs.tag }} ; echo "
           docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "pwd ; ls -l ; echo root/ ; ls -l / ; exit 0"
-          docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "pwd ; ls -l ; echo root/ ; ls -l / ; exit 0"
-find . -iname log_analyzer.sh
+          docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "find / -iname output.txt"
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
