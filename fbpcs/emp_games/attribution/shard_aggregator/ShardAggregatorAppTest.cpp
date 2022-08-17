@@ -198,6 +198,28 @@ TEST_F(ShardAggregatorAppTest, TestGenericShardAggSimpleAdObject) {
       false);
 }
 
+TEST_F(ShardAggregatorAppTest, TestGenericShardAggCompressedSimpleAdObject) {
+  const std::string inputPathAlice =
+      baseDir_ + "ad_object_format/publisher_attribution_out.json";
+  const std::string inputPathBob =
+      baseDir_ + "ad_object_format/partner_attribution_out.json";
+  const std::string expectedOutPath = baseDir_ +
+      "expected_shard_aggregator_correctness_test/expected_reformatted_shard_aggregator_out.json";
+  const std::string inputMappingPath =
+      baseDir_ + "ad_object_format/compressed_mapping.json";
+
+  runAppTest(
+      2, // numShards
+      100, // kanonymityThreshold
+      inputPathAlice,
+      inputPathBob,
+      "ad_object", // metricsFormatType
+      expectedOutPath,
+      expectedOutPath,
+      inputMappingPath,
+      true);
+}
+
 TEST_F(ShardAggregatorAppTest, TestGenericShardAggCorrectnessLift) {
   const std::string liftDir = "lift/";
   const std::string inputPathAlice = baseDir_ + liftDir + "aggregator_alice";
