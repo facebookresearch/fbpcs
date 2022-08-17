@@ -51,11 +51,11 @@ jobs:
 
       - name: Check disk space and docker images
         run: |
-          echo "pwd:" ; pwd
-          echo "uname -a:" ; uname -a
-          echo "free -m:" ; free -m
-          echo "df -h:" ; df -h
-          echo "docker images:" ; docker images
+          pwd ; \
+          uname -a ; \
+          free -m ; \
+          df -h ; \
+          docker images
 
       - name: One command runner
         id: runner
@@ -78,11 +78,12 @@ jobs:
       - name: Check runner failure
         if: steps.runner.outcome != 'failure'
         run: |
-          echo "Please check the runner console output in the above step."
+          echo "Please check the runner console output in the above step." ; \
           exit 1
 
       - name: Validate logs
         run: |
+          docker images ; \
           docker run --rm ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
           python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer /fbpcs_instances/out.txt
 
