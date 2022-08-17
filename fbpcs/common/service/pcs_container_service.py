@@ -8,6 +8,8 @@
 
 from typing import Dict, List, Optional
 
+from fbpcp.entity.cluster_instance import Cluster
+
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.container import ContainerService
@@ -87,3 +89,6 @@ class PCSContainerService(ContainerService):
     )
     def validate_container_definition(self, container_definition: str) -> None:
         pass
+
+    def get_cluster_instance(self) -> Cluster:
+        raise NotImplementedError
