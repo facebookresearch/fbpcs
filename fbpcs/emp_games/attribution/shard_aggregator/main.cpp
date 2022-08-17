@@ -53,6 +53,11 @@ DEFINE_string(
     log_cost_s3_region,
     ".s3.us-west-2.amazonaws.com/",
     "s3 regioni name");
+DEFINE_bool(use_new_output_format, false, "New Format of Attribution output");
+DEFINE_string(
+    input_ad_id_mapping_path,
+    "",
+    "Input path where the compressed adId mapping files are located");
 
 int main(int argc, char* argv[]) {
   folly::init(&argc, &argv);
@@ -73,7 +78,7 @@ int main(int argc, char* argv[]) {
   XLOGF(INFO, "Number of shards: {}", FLAGS_num_shards);
   XLOGF(INFO, "Output path: {}", FLAGS_output_path);
   XLOGF(INFO, "K-anonymity threshold: {}", FLAGS_threshold);
-  XLOGF(INFO, "Run Id: {}", FLAGS_run_id);
+  XLOGF(INFO, "Input ad id mapping path: {}", FLAGS_input_ad_id_mapping_path);
 
   XLOG(INFO) << "Start aggregating...";
 
@@ -91,6 +96,8 @@ int main(int argc, char* argv[]) {
         FLAGS_threshold,
         FLAGS_input_base_path,
         FLAGS_output_path,
+        FLAGS_input_ad_id_mapping_path,
+        FLAGS_use_new_output_format,
         FLAGS_metrics_format_type)
         .run();
   } catch (const fbpcf::ExceptionBase& e) {

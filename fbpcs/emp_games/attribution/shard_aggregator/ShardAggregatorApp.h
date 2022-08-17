@@ -33,6 +33,8 @@ class ShardAggregatorApp
       int64_t threshold,
       const std::string& inputPath,
       const std::string& outputPath,
+      const std::string& inputMappingPath,
+      const bool useNewOutputFormat,
       const std::string& metricsFormatType = "ad_object")
       : fbpcf::EmpApp<
             ShardAggregatorGame<emp::NetIO>,
@@ -45,13 +47,18 @@ class ShardAggregatorApp
         inputPath_{inputPath},
         outputPath_{outputPath},
         visibility_{visibility},
-        metricsFormatType_{metricsFormatType} {}
+        metricsFormatType_{metricsFormatType},
+        inputMappingPath_{inputMappingPath},
+        useNewOutputFormat_{useNewOutputFormat} {}
 
   void run() override;
 
  protected:
   std::vector<std::shared_ptr<private_measurement::AggMetrics>> getInputData()
       override;
+
+  private_measurement::CompressedAdIdToOriginalAdId getCompressedMapping();
+
   void putOutputData(const std::shared_ptr<private_measurement::AggMetrics>&
                          outputData) override;
 
@@ -71,5 +78,7 @@ class ShardAggregatorApp
   std::string outputPath_;
   fbpcf::Visibility visibility_;
   std::string metricsFormatType_;
+  std::string inputMappingPath_;
+  bool useNewOutputFormat_;
 };
 } // namespace measurement::private_attribution
