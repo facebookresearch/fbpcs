@@ -10,7 +10,7 @@ import tempfile
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from threading import Lock
 
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from botocore.exceptions import ClientError
 
@@ -29,6 +29,7 @@ class AwsContainerLogs(AwsCloud):
 
     ARN_PARSE_LENGTH = 6
     S3_LOGGING_FOLDER = "logging"
+    COMPUTATION_RUN_CONTAINER_LOG_FOLDER = "container_logs"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
     MAX_THREADS = 500
     THREADS_PER_CORE = 20
@@ -73,6 +74,7 @@ class AwsContainerLogs(AwsCloud):
         container_arn_list: List[str],
         copy_debug_logs: bool = False,
         copy_debug_logs_location: str = DEFAULT_DOWNLOAD_LOCATION,
+        **kwargs: Dict[str, bool],
     ) -> None:
         """
         Umbrella function to call other functions to upload the logs from cloudwatch to S3
@@ -90,6 +92,8 @@ class AwsContainerLogs(AwsCloud):
         Returns:
             None
         """
+
+        enable_data_pipeline_logs = kwargs.get("enable_data_pipeline_logs", True)
 
         # take only unique entries of container ARNs to avoid downloading duplicate logs
         container_arn_list = list(set(container_arn_list))
@@ -137,19 +141,12 @@ class AwsContainerLogs(AwsCloud):
             # store logs in local
             self.utils.create_folder(folder_location=local_folder_location)
 
-            # Call threading function to download logs locally and upload to S3
-            self.run_threaded_download(
-                func=self.store_container_logs_locally,
-                container_arn_list=container_arn_list,
-                local_folder_location=local_folder_location,
-            )
-
-            # List all the containers with no cloudwatch logs
-            self.log_containers_without_logs()
-
-            # List all containers for which download failed because of thread crash
-            # TODO: T123687467: add retry logic to download logs for the failed cases of download
-            self.log_containers_download_log_failed()
+            if enable_data_pipeline_logs:
+                # upload computation run container logs
+                self.upload_computation_run_container_logs(
+                    container_arn_list=container_arn_list,
+                    local_log_folder_location=local_folder_location,
+                )
 
             # compressing the folder before uploading it to S3
             self.log.info("Compressing downloaded logs folder")
@@ -168,6 +165,30 @@ class AwsContainerLogs(AwsCloud):
                 )
 
             self.log.info("Removing logs locally.")
+
+    def upload_computation_run_container_logs(
+        self, container_arn_list: List[str], local_log_folder_location: str
+    ) -> None:
+        # Call threading function to download logs locally and upload to S3
+        computaion_run_container_log_folder = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            local_log_folder_location,
+            self.COMPUTATION_RUN_CONTAINER_LOG_FOLDER,
+        )
+
+        self.utils.create_folder(folder_location=computaion_run_container_log_folder)
+        self.run_threaded_download(
+            func=self.store_container_logs_locally,
+            container_arn_list=container_arn_list,
+            local_folder_location=computaion_run_container_log_folder,
+        )
+
+        # List all the containers with no cloudwatch logs
+        self.log_containers_without_logs()
+
+        # List all containers for which download failed because of thread crash
+        # TODO: T123687467: add retry logic to download logs for the failed cases of download
+        self.log_containers_download_log_failed()
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:
         """
