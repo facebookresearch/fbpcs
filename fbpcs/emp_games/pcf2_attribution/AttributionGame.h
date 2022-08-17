@@ -76,6 +76,20 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       size_t batchSize);
 
   /**
+   * Retrieve the original Ad Ids from touchpoint data
+   */
+  const std::vector<uint64_t> retrieveValidOriginalAdIds(
+      const int myRole,
+      std::vector<TouchpointT<usingBatch>>& touchpoints);
+  /**
+   * Create a compression map of the original Ad Id with the compressed Ad ID
+   */
+
+  void replaceAdIdWithCompressedAdId(
+      std::vector<TouchpointT<usingBatch>>& touchpoints,
+      std::vector<uint64_t>& validOriginalAdIds);
+
+  /**
    * Helper method for computing attributions.
    */
   const std::vector<SecBit<schedulerId, usingBatch>> computeAttributionsHelper(

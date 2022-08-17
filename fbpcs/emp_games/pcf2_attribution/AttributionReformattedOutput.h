@@ -17,7 +17,7 @@ namespace pcf2_attribution {
  * Store plaintext attribution result
  */
 struct OutputMetricReformatted {
-  uint64_t ad_id;
+  uint16_t ad_id;
   uint64_t conv_value;
   bool is_attributed;
 
@@ -160,7 +160,7 @@ class AttributionReformattedOutput {
       if constexpr (usingBatch) {
         for (size_t j = 0; j < revealedAdId.size(); ++j) {
           OutputMetricReformatted outputMetric{
-              revealedAdId.at(j).at(i),
+              static_cast<uint16_t>(revealedAdId.at(j).at(i)),
               revealedConvValue.at(j).at(i),
               revealedAttribution.at(j).at(i)};
           revealedMetric.emplace_back(outputMetric);
@@ -178,7 +178,7 @@ class AttributionReformattedOutput {
         // revealedAttribution for non-batch is related to batch by transposing
         for (size_t j = 0; j < revealedAdId.at(i).size(); ++j) {
           OutputMetricReformatted outputMetric{
-              revealedAdId.at(i).at(j),
+              static_cast<uint16_t>(revealedAdId.at(i).at(j)),
               revealedConvValue.at(i).at(j),
               revealedAttribution.at(i).at(j)};
           revealedMetric.emplace_back(outputMetric);

@@ -126,7 +126,7 @@ inline AttributionOutputMetrics revealXORedReformattedResult(
           OutputMetricReformatted::fromDynamic(bobResults.at(i));
 
       revealedResults.push_back(OutputMetricReformatted{
-          aliceResult.ad_id ^ bobResult.ad_id,
+          static_cast<uint16_t>(aliceResult.ad_id ^ bobResult.ad_id),
           aliceResult.conv_value ^ bobResult.conv_value,
           aliceResult.is_attributed != bobResult.is_attributed}
                                     .toDynamic());

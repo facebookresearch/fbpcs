@@ -179,6 +179,106 @@ template <
     int schedulerId,
     bool usingBatch,
     common::InputEncryption inputEncryption>
+const std::vector<uint64_t>
+AttributionGame<schedulerId, usingBatch, inputEncryption>::
+    retrieveValidOriginalAdIds(
+        const int myRole,
+        std::vector<TouchpointT<usingBatch>>& touchpoints) {
+  std::unordered_set<uint64_t> adIdSet;
+  for (auto& touchpoint : touchpoints) {
+    if constexpr (usingBatch) {
+      SecOriginalAdId<schedulerId, usingBatch> secAdId;
+      if (inputEncryption == common::InputEncryption::Xor) {
+        typename SecOriginalAdId<schedulerId, usingBatch>::ExtractedInt
+            extractedAdIds(touchpoint.originalAdId);
+        secAdId =
+            SecOriginalAdId<schedulerId, usingBatch>(std::move(extractedAdIds));
+        // Reveal ad id to publisher
+        auto publisherAdId = secAdId.openToParty(common::PUBLISHER).getValue();
+        touchpoint.originalAdId = publisherAdId;
+      }
+      for (auto& adId : touchpoint.originalAdId) {
+        if (adId > 0) {
+          adIdSet.insert(adId);
+        }
+      }
+    } else {
+      for (auto& tp : touchpoint) {
+        SecOriginalAdId<schedulerId, usingBatch> secAdId;
+        if (inputEncryption == common::InputEncryption::Xor) {
+          // the compression logic should be moved to UDP layer,
+          // before we enable XOR input in attribution game.
+          typename SecOriginalAdId<schedulerId, usingBatch>::ExtractedInt
+              extractedAdIds(tp.originalAdId);
+          secAdId = SecOriginalAdId<schedulerId, usingBatch>(
+              std::move(extractedAdIds));
+          // Reveal ad id to publisher
+          auto publisherAdId =
+              secAdId.openToParty(common::PUBLISHER).getValue();
+          tp.originalAdId = publisherAdId;
+        }
+
+        if (tp.originalAdId > 0) {
+          adIdSet.insert(tp.originalAdId);
+        }
+      }
+    }
+  }
+  XLOGF(INFO, "Number of Ad Ids: {}", adIdSet.size());
+  // Added a check here to make sure that number of ad Ids never exceed 65,536
+  // (8 unsigned bit)
+  CHECK_LE(adIdSet.size(), 65536)
+      << "Number of ad Ids cannot be more than 65,536.";
+
+  std::vector<uint64_t> validOriginalAdIds;
+  validOriginalAdIds.insert(
+      validOriginalAdIds.end(), adIdSet.begin(), adIdSet.end());
+  std::sort(validOriginalAdIds.begin(), validOriginalAdIds.end());
+  return validOriginalAdIds;
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
+void AttributionGame<schedulerId, usingBatch, inputEncryption>::
+    replaceAdIdWithCompressedAdId(
+        std::vector<TouchpointT<usingBatch>>& touchpoints,
+        std::vector<uint64_t>& validOriginalAdIds) {
+  uint16_t compressedAdId = 1;
+  std::unordered_map<uint64_t, uint16_t> adIdToCompressedAdIdMap;
+
+  for (auto adId : validOriginalAdIds) {
+    adIdToCompressedAdIdMap.insert({adId, compressedAdId});
+    compressedAdId++;
+  }
+
+  for (auto& touchpoint : touchpoints) {
+    if constexpr (usingBatch) {
+      std::vector<uint64_t> adIds;
+      uint16_t defaultAdId = 0;
+      for (auto& originalAdId : touchpoint.originalAdId) {
+        if (originalAdId > 0) {
+          adIds.push_back(adIdToCompressedAdIdMap.at(originalAdId));
+        } else {
+          adIds.push_back(defaultAdId);
+        }
+      }
+      touchpoint.adId = adIds;
+    } else {
+      for (auto& tp : touchpoint) {
+        if (tp.originalAdId > 0) {
+          tp.adId = adIdToCompressedAdIdMap.at(tp.originalAdId);
+        }
+      }
+    }
+  }
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
 const std::vector<SecBit<schedulerId, usingBatch>>
 AttributionGame<schedulerId, usingBatch, inputEncryption>::
     computeAttributionsHelper(
@@ -430,9 +530,17 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
   uint32_t numIds = ids.size();
   XLOGF(INFO, "Have {} ids", numIds);
 
+  // Compress the original ad id when new format is used:
+  auto touchpoints = inputData.getTouchpointArrays();
+  if (FLAGS_use_new_output_format) {
+    XLOG(INFO, "Retrieving original Ad Ids...");
+    auto validOriginalAdIds = retrieveValidOriginalAdIds(myRole, touchpoints);
+    XLOG(INFO, "Replacing original ad Ids with compressed ad Ids");
+    replaceAdIdWithCompressedAdId(touchpoints, validOriginalAdIds);
+  }
   // Send over all of the data needed for this computation
   XLOG(INFO, "Privately sharing touchpoints...");
-  auto tpArrays = privatelyShareTouchpoints(inputData.getTouchpointArrays());
+  auto tpArrays = privatelyShareTouchpoints(touchpoints);
   XLOG(INFO, "Privately sharing conversions...");
   auto convArrays = privatelyShareConversions(inputData.getConversionArrays());
 
@@ -452,7 +560,7 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
 
     // Share touchpoint threshold information for computing attributions
     auto thresholdArrays = privatelyShareThresholds(
-        inputData.getTouchpointArrays(), tpArrays, *attributionRule, numIds);
+        touchpoints, tpArrays, *attributionRule, numIds);
     CHECK_EQ(thresholdArrays.size(), tpArrays.size())
         << "threshold arrays and touchpoint arrays are not the same length.";
 
