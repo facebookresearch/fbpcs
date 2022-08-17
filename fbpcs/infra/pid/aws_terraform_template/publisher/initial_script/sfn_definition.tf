@@ -9,7 +9,7 @@ data "template_file" "publisher_sfn_definition" {
       "Parameters": {
         "Name": "MetaWorkflowCluster",
         "VisibleToAllUsers": true,
-        "ReleaseLabel": "emr-6.6.0",
+        "ReleaseLabel": "emr-6.7.0",
         "Applications": [
           {
             "Name": "Hadoop"
@@ -20,6 +20,13 @@ data "template_file" "publisher_sfn_definition" {
         ],
         "ServiceRole": "${aws_iam_role.mrpid_publisher_emr_role.id}",
         "JobFlowRole": "${aws_iam_role.mrpid_publisher_ec2_role.id}",
+        "ManagedScalingPolicy": {
+          "ComputeLimits": {
+            "MinimumCapacityUnits": 2,
+            "MaximumCapacityUnits": 20,
+            "UnitType": "InstanceFleetUnits"
+          }
+        },
         "Instances": {
           "KeepJobFlowAliveWhenNoSteps": true,
           "InstanceFleets": [
@@ -28,16 +35,16 @@ data "template_file" "publisher_sfn_definition" {
               "TargetOnDemandCapacity": 1,
               "InstanceTypeConfigs": [
                 {
-                  "InstanceType.$": "$.masterInstanceType"
+                  "InstanceType": "m6g.xlarge"
                 }
               ]
             },
             {
               "InstanceFleetType": "CORE",
-              "TargetOnDemandCapacity.$": "$.coreTargetOnDemandCapacity",
+              "TargetOnDemandCapacity": 3,
               "InstanceTypeConfigs": [
                 {
-                  "InstanceType.$": "$.coreInstanceType"
+                  "InstanceType": "m6g.8xlarge"
                 }
               ]
             }
@@ -85,7 +92,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageOne {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageOne.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.inputPath))"
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageOne {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageOne.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.inputPath))"
           }
         }
       },
@@ -140,7 +147,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageTwo {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageTwo.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.instanceId))"
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageTwo {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageTwo.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.instanceId))"
           }
         }
       },
@@ -195,7 +202,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageThree {} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageThree.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.outputPath, $.instanceId))"
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageThree {} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageThree.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.outputPath, $.instanceId))"
           }
         }
       },
