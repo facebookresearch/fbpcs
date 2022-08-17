@@ -75,8 +75,8 @@ jobs:
           cat ${{env.CONSOLE_OUTPUT_FILE}}
 
       - name: Check runner failure
+        if: steps.runner.outcome != 'failure'
         run: |
-          if: "${{ steps.runner.outcome }}" != "failure"
           run: exit 1
 
       - name: Validate logs
