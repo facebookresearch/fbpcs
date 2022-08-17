@@ -33,9 +33,6 @@ using CompressedAdIdToOriginalAdId =
 
 void ShardAggregatorApp::run() {
   auto inputData = getInputData();
-  if (useNewOutputFormat_) {
-    auto compressedAdIdMapping = getCompressedMapping();
-  }
 
   auto io = std::make_unique<emp::NetIO>(
       party_ == fbpcf::Party::Alice ? nullptr : serverIp_.c_str(),
@@ -62,7 +59,14 @@ void ShardAggregatorApp::run() {
     auto encryptedResult = game.perfPlay(inputData);
 
     auto result = revealMetrics(encryptedResult);
-    putOutputData(result);
+    if (useNewOutputFormat_) {
+      auto compressedAdIdMapping = getCompressedMapping();
+      auto newResult =
+          replaceCompressedAdIdWithAdId(compressedAdIdMapping, result);
+      putOutputData(newResult);
+    } else {
+      putOutputData(result);
+    }
   } else {
     XLOG(INFO) << "inputData is empty().";
     putOutputData(nullptr);
@@ -148,5 +152,31 @@ std::shared_ptr<AggMetrics> ShardAggregatorApp::revealMetrics(
           << "AggMetrics should only store a map, list, or emp::Integer at this point";
     }
   }
+}
+std::shared_ptr<AggMetrics> ShardAggregatorApp::replaceCompressedAdIdWithAdId(
+    const CompressedAdIdToOriginalAdId& compressedAdIdMapping,
+    std::shared_ptr<AggMetrics> result) {
+  auto map = compressedAdIdMapping.compressedAdIdToAdIdMap;
+
+  auto originalAdIdResult = std::make_shared<AggMetrics>(AggMetricsTag::Map);
+
+  for (auto& [rule, resultMap] : result->getAsMap()) {
+    auto compressedResultMap = std::make_shared<AggMetrics>(AggMetricsTag::Map);
+    originalAdIdResult->emplace(rule, compressedResultMap);
+
+    for (auto& [aggregationName, aggregationData] : resultMap->getAsMap()) {
+      auto compressedAggregationData =
+          std::make_shared<AggMetrics>(AggMetricsTag::Map);
+      compressedResultMap->emplace(aggregationName, compressedAggregationData);
+      for (auto [id, metrics] : aggregationData->getAsMap()) {
+        if (map.find(id) != map.end()) {
+          auto new_id = std::to_string(
+              compressedAdIdMapping.compressedAdIdToAdIdMap.at(id));
+          compressedAggregationData->emplace(new_id, metrics);
+        }
+      }
+    }
+  }
+  return originalAdIdResult;
 }
 } // namespace measurement::private_attribution

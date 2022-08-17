@@ -59,6 +59,12 @@ class ShardAggregatorApp
 
   private_measurement::CompressedAdIdToOriginalAdId getCompressedMapping();
 
+  std::shared_ptr<private_measurement::AggMetrics>
+  replaceCompressedAdIdWithAdId(
+      const private_measurement::CompressedAdIdToOriginalAdId&
+          compressedAdIdMapping,
+      std::shared_ptr<private_measurement::AggMetrics> result);
+
   void putOutputData(const std::shared_ptr<private_measurement::AggMetrics>&
                          outputData) override;
 
