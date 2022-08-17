@@ -66,6 +66,7 @@ jobs:
           --objective_ids=${{ github.event.inputs.objective_id }} \
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
+          --log_path=/fbpcs_instances/out.txt \
           -- \
           --version=${{ github.event.inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2> ${{env.CONSOLE_OUTPUT_FILE}}
 
@@ -82,7 +83,8 @@ jobs:
 
       - name: Validate logs
         run: |
-          python3.8 -m fbpcs.infra.logging_service.log_analyzer.log_analyzer ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
+          docker run --rm ${{FBPCS_CONTAINER_REPO_URL}}/${{FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
+          python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer fbpcs_instances/out.txt
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
