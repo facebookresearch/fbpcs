@@ -9,7 +9,7 @@ data "template_file" "partner_sfn_definition" {
       "Parameters": {
         "Name": "AdvWorkflowCluster",
         "VisibleToAllUsers": true,
-        "ReleaseLabel": "emr-6.6.0",
+        "ReleaseLabel": "emr-6.7.0",
         "Applications": [
           {
             "Name": "Hadoop"
@@ -20,6 +20,13 @@ data "template_file" "partner_sfn_definition" {
         ],
         "ServiceRole": "${aws_iam_role.mrpid_partner_emr_role.id}",
         "JobFlowRole": "${aws_iam_role.mrpid_partner_ec2_role.id}",
+        "ManagedScalingPolicy": {
+          "ComputeLimits": {
+            "MinimumCapacityUnits": 2,
+            "MaximumCapacityUnits": 20,
+            "UnitType": "InstanceFleetUnits"
+          }
+        },
         "Instances": {
           "KeepJobFlowAliveWhenNoSteps": true,
           "InstanceFleets": [
@@ -28,16 +35,16 @@ data "template_file" "partner_sfn_definition" {
               "TargetOnDemandCapacity": 1,
               "InstanceTypeConfigs": [
                 {
-                  "InstanceType.$": "$.masterInstanceType"
+                  "InstanceType": "m6g.xlarge"
                 }
               ]
             },
             {
               "InstanceFleetType": "CORE",
-              "TargetOnDemandCapacity.$": "$.coreTargetOnDemandCapacity",
+              "TargetOnDemandCapacity": 3,
               "InstanceTypeConfigs": [
                 {
-                  "InstanceType.$": "$.coreInstanceType"
+                  "InstanceType": "m6g.8xlarge"
                 }
               ]
             }
@@ -114,7 +121,7 @@ data "template_file" "partner_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageOne {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageOne.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath, $.inputPath))"
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageOne {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageOne.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath, $.inputPath))"
           }
         }
       },
@@ -169,7 +176,7 @@ data "template_file" "partner_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors {} --executor-cores {} --executor-memory {} --conf spark.driver.memory={} --conf spark.sql.shuffle.partitions={} --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageTwo {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageTwo.log', $.pidMrMultikeyJarPath, $.numExecutors, $.executorCores, $.executorMemory, $.driverMemory, $.sqlShufflePartitions, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath))"
+            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageTwo {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageTwo.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath))"
           }
         }
       },
