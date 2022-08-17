@@ -81,7 +81,7 @@ jobs:
 
       - name: Validate logs
         run: |
-          ./fbpcs/infra/logging_service/log_analyzer/log_analyzer.sh ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
+          python3.8 -m ./fbpcs/infra/logging_service/log_analyzer/log_analyzer ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
