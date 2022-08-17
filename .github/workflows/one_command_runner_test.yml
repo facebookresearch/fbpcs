@@ -76,8 +76,12 @@ jobs:
 
       - name: Check runner failure
         run: |
-          if: ${{ steps.runner.outcome }} != 'success'
+          if: ${{ steps.runner.outcome }} != 'failure'
           run: exit 1
+
+      - name: Validate logs
+        run: |
+          ./fbpcs/infra/logging_service/log_analyzer/log_analyzer.sh ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
@@ -91,7 +95,3 @@ jobs:
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }}
-
-      - name: Validate logs
-        run: |
-          ./fbpcs/infra/logging_service/log_analyzer/log_analyzer.sh ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
