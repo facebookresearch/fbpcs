@@ -76,7 +76,7 @@ jobs:
 
       - name: Check runner failure
         run: |
-          if: ${{ steps.runner.outcome }} != 'failure'
+          if: ${{ steps.runner.outcome }} != failure
           run: exit 1
 
       - name: Validate logs
