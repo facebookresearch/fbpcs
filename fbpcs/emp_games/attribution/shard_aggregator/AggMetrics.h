@@ -89,4 +89,23 @@ class AggMetrics {
 
   void checkMyType(AggMetricsTag tag) const;
 };
+
+struct CompressedAdIdToOriginalAdId {
+  std::unordered_map<std::string, uint64_t> compressedAdIdToAdIdMap;
+
+  static CompressedAdIdToOriginalAdId fromDynamic(const folly::dynamic& obj) {
+    CompressedAdIdToOriginalAdId map;
+    std::unordered_map<std::string, uint64_t> compressedAdIdToAdIdMap;
+
+    for (auto& pair : obj.items()) {
+      std::string compressedAdId = pair.first.asString();
+      uint64_t originalAdId = pair.second.asInt();
+      std::pair<std::string, uint64_t> t{compressedAdId, originalAdId};
+      compressedAdIdToAdIdMap.insert(t);
+    }
+
+    map.compressedAdIdToAdIdMap = compressedAdIdToAdIdMap;
+    return map;
+  }
+};
 } // namespace private_measurement
