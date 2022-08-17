@@ -32,6 +32,7 @@ env:
   FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
   FBPCS_IMAGE_NAME: coordinator
   FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_GRAPH_API_TOKEN }}
+  CONSOLE_OUTPUT_FILE: /tmp/output.txt
 
 jobs:
   ### Private Lift E2E tests
@@ -48,12 +49,13 @@ jobs:
       - name: Print Tracker Hash
         run: echo ${{ github.event.inputs.tracker_hash}}
 
-      - name: Check disk space
+      - name: Check disk space and docker images
         run: |
-          uname -a
-          free -m
-          df -h
-          docker images
+          echo "pwd:" ; pwd
+          echo "uname -a:" ; uname -a
+          echo "free -m:" ; free -m
+          echo "df -h:" ; df -h
+          echo "docker images:" ; docker images
 
       - name: One command runner
         id: runner
@@ -65,12 +67,12 @@ jobs:
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \
-          --version=${{ github.event.inputs.tag }} > /tmp/output.txt 2> /tmp/output.txt
+          --version=${{ github.event.inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2> ${{env.CONSOLE_OUTPUT_FILE}}
 
       - name: Print runner console output
         continue-on-error: true
         run: |
-          cat /tmp/output.txt
+          cat ${{env.CONSOLE_OUTPUT_FILE}}
 
       - name: Check runner failure
         run: |
@@ -92,4 +94,4 @@ jobs:
 
       - name: Validate logs
         run: |
-          docker run --rm ${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${{ github.event.inputs.tag }} bash -c "pwd ; ls -l ; echo root/ ; ls -l /"
+          ./fbpcs/infra/logging_service/log_analyzer/log_analyzer.sh ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
