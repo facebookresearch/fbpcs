@@ -83,7 +83,7 @@ jobs:
 
       - name: Validate logs
         run: |
-          docker run --rm ${{FBPCS_CONTAINER_REPO_URL}}/${{FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
+          docker run --rm ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
           python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer /fbpcs_instances/out.txt
 
       - name: Validate Results
