@@ -119,13 +119,12 @@ def run_study(
         study_data,
         objective_ids,
         input_paths,
-        run_id,
     )
     _print_json(
         "Existing valid instances for cell-obj pairs", cell_obj_instance, logger
     )
     # create new instances
-    _create_new_instances(cell_obj_instance, study_id, client, logger)
+    _create_new_instances(cell_obj_instance, study_id, client, logger, run_id)
     _print_json("Instances to run for cell-obj pairs", cell_obj_instance, logger)
     # create a dict with {instance_id, input_path} pairs
     instances_input_path = _instance_to_input_path(cell_obj_instance)
@@ -159,7 +158,6 @@ def run_study(
             num_shards = data["num_shards"]
             cell_id = data["cell_id"]
             obj_id = data["objective_id"]
-            run_id = data["run_id"]
             publisher_args = BoltPlayerArgs(
                 create_instance_args=BoltPLGraphAPICreateInstanceArgs(
                     instance_id=instance_id,
@@ -227,7 +225,6 @@ def run_study(
         _get_study_data(study_id, client),
         objective_ids,
         input_paths,
-        run_id,
     )
     _print_json(
         "Pre-run statuses for instance of each cell-objective pair",
@@ -390,7 +387,6 @@ def _get_cell_obj_instance(
     study_data: Dict[str, Any],
     objective_ids: List[str],
     input_paths: List[str],
-    run_id: Optional[str],
 ) -> Dict[str, Dict[str, Dict[str, Any]]]:
     # only consider cells in OPP_DATA_INFORMATION (opportunity datasets available).
     cells_data: List[str] = study_data[OPP_DATA_INFORMATION]
@@ -440,9 +436,6 @@ def _get_cell_obj_instance(
                 "id"
             ]
             cell_obj_instance[cell_id][objective_id][STATUS] = status.value
-            # Same run_id needs to be present in all instances of the PL run.
-            # Thus adding run_id to each cell_id*object_id pair.
-            cell_obj_instance[cell_id][objective_id][RUN_ID] = run_id
 
     return cell_obj_instance
 
@@ -452,12 +445,12 @@ def _create_new_instances(
     study_id: str,
     client: PCGraphAPIClient,
     logger: logging.Logger,
+    run_id: Optional[str] = None,
 ) -> None:
     for cell_id in cell_obj_instances:
         for objective_id in cell_obj_instances[cell_id]:
             # Create new instance for cell_obj pairs which has no valid instance.
             if "instance_id" not in cell_obj_instances[cell_id][objective_id]:
-                run_id = cell_obj_instances[cell_id][objective_id][RUN_ID]
                 cell_obj_instances[cell_id][objective_id][
                     "instance_id"
                 ] = _create_instance_retry(
