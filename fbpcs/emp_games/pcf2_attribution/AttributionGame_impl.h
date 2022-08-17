@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <algorithm>
 #include <exception>
 #include "fbpcs/emp_games/pcf2_attribution/AttributionGame.h"
@@ -279,6 +280,18 @@ template <
     int schedulerId,
     bool usingBatch,
     common::InputEncryption inputEncryption>
+void AttributionGame<schedulerId, usingBatch, inputEncryption>::
+    putAdIdMappingJson(
+        const CompressedAdIdToOriginalAdId& maps,
+        std::string outputPath) {
+  std::string content = maps.toJson();
+  fbpcf::io::FileIOWrappers::writeFile(outputPath, content);
+}
+
+template <
+    int schedulerId,
+    bool usingBatch,
+    common::InputEncryption inputEncryption>
 const std::vector<SecBit<schedulerId, usingBatch>>
 AttributionGame<schedulerId, usingBatch, inputEncryption>::
     computeAttributionsHelper(
@@ -536,6 +549,19 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
     XLOG(INFO, "Retrieving original Ad Ids...");
     auto validOriginalAdIds = retrieveValidOriginalAdIds(myRole, touchpoints);
     XLOG(INFO, "Replacing original ad Ids with compressed ad Ids");
+
+    CompressedAdIdToOriginalAdId map;
+    uint16_t compressedAdId = 1;
+    for (auto originalAdId : validOriginalAdIds) {
+      map.compressedAdIdToAdIdMap[std::to_string(compressedAdId)] =
+          originalAdId;
+      compressedAdId++;
+    }
+    std::string outputJsonFilename =
+        FLAGS_output_base_path + "compressionMapping.json";
+    putAdIdMappingJson(map, outputJsonFilename);
+
+    // replace adId with compressed adId:
     replaceAdIdWithCompressedAdId(touchpoints, validOriginalAdIds);
   }
   // Send over all of the data needed for this computation

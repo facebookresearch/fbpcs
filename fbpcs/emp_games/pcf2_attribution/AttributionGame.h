@@ -89,6 +89,10 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       std::vector<TouchpointT<usingBatch>>& touchpoints,
       std::vector<uint64_t>& validOriginalAdIds);
 
+  void putAdIdMappingJson(
+      const CompressedAdIdToOriginalAdId& maps,
+      std::string outputPath);
+
   /**
    * Helper method for computing attributions.
    */

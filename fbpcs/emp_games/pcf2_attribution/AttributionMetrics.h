@@ -184,6 +184,23 @@ struct AttributionOutputMetrics {
   }
 };
 
+struct CompressedAdIdToOriginalAdId {
+  std::unordered_map<std::string, uint64_t> compressedAdIdToAdIdMap;
+
+  folly::dynamic toDynamic() const {
+    folly::dynamic res = folly::dynamic::object();
+    for (auto& compressedAdIdToAdId : compressedAdIdToAdIdMap) {
+      res.insert(compressedAdIdToAdId.first, compressedAdIdToAdId.second);
+    }
+    return res;
+  }
+
+  std::string toJson() const {
+    auto obj = toDynamic();
+    return folly::toPrettyJson(obj);
+  }
+};
+
 } // namespace pcf2_attribution
 
 #include "fbpcs/emp_games/pcf2_attribution/AttributionMetrics_impl.h"
