@@ -66,11 +66,15 @@ jobs:
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \
           --version=${{ github.event.inputs.tag }} > /tmp/output.txt 2> /tmp/output.txt
-          echo "Console logs:" ; cat /tmp/output.txt
+
+      - name: Print runner console output
+        continue-on-error: true
+        run: |
+          cat /tmp/output.txt
 
       - name: Check runner failure
         run: |
-          if: steps.runner.outcome != 'success'
+          if: ${{ steps.runner.outcome }} != 'success'
           run: exit 1
 
       - name: Validate Results
