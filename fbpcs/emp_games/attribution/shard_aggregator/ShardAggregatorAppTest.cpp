@@ -51,6 +51,8 @@ class ShardAggregatorAppTest : public ::testing::Test {
       int64_t threshold,
       const std::string& inputPath,
       const std::string& outputPath,
+      const std::string& inputMappingPath,
+      const bool useNewOutputFormat,
       const std::string& metricsFormatType) {
     ShardAggregatorApp(
         party,
@@ -62,6 +64,8 @@ class ShardAggregatorAppTest : public ::testing::Test {
         threshold,
         inputPath,
         outputPath,
+        inputMappingPath,
+        useNewOutputFormat,
         metricsFormatType)
         .run();
   }
@@ -74,6 +78,8 @@ class ShardAggregatorAppTest : public ::testing::Test {
       const std::string& metricsFormatType,
       const std::string& expectedAliceOutPath,
       const std::string& expectedBobOutPath,
+      const std::string& inputMappingPath,
+      const bool useNewOutputFormat,
       const fbpcf::Visibility visibility = fbpcf::Visibility::Public) {
     auto futureAlice = std::async(
         runGame,
@@ -86,6 +92,8 @@ class ShardAggregatorAppTest : public ::testing::Test {
         threshold,
         inputPathAlice,
         outputPathAlice_,
+        inputMappingPath,
+        useNewOutputFormat,
         metricsFormatType);
     auto futureBob = std::async(
         runGame,
@@ -98,6 +106,8 @@ class ShardAggregatorAppTest : public ::testing::Test {
         threshold,
         inputPathBob,
         outputPathBob_,
+        inputMappingPath,
+        useNewOutputFormat,
         metricsFormatType);
 
     futureAlice.wait();
@@ -162,7 +172,9 @@ TEST_F(ShardAggregatorAppTest, TestGenericShardAggCorrectnessAdObject) {
         inputPathBob,
         "ad_object", // metricsFormatType
         expectedOutPath,
-        expectedOutPath);
+        expectedOutPath,
+        "",
+        false);
   }
 }
 
@@ -181,7 +193,9 @@ TEST_F(ShardAggregatorAppTest, TestGenericShardAggSimpleAdObject) {
       inputPathBob,
       "ad_object", // metricsFormatType
       expectedOutPath,
-      expectedOutPath);
+      expectedOutPath,
+      "",
+      false);
 }
 
 TEST_F(ShardAggregatorAppTest, TestGenericShardAggCorrectnessLift) {
@@ -198,7 +212,9 @@ TEST_F(ShardAggregatorAppTest, TestGenericShardAggCorrectnessLift) {
       inputPathBob,
       "lift", // metricsFormatType
       expectedOutPath,
-      expectedOutPath);
+      expectedOutPath,
+      "",
+      false);
 }
 
 TEST_F(
@@ -218,7 +234,9 @@ TEST_F(
       inputPathBob,
       "lift", // metricsFormatType
       expectedOutPath,
-      expectedOutPath);
+      expectedOutPath,
+      "",
+      false);
 }
 
 TEST_F(
@@ -240,6 +258,8 @@ TEST_F(
       "lift", // metricsFormatType
       zeroMetrics,
       expectedOutPath,
+      "",
+      false,
       fbpcf::Visibility::Bob);
 }
 
@@ -258,6 +278,8 @@ TEST_F(ShardAggregatorAppTest, TestGenericShardAggCorrectnessLiftAnonymous) {
       inputPathBob,
       "lift", // metricsFormatType
       expectedOutPath,
-      expectedOutPath);
+      expectedOutPath,
+      "",
+      false);
 }
 } // namespace measurement::private_attribution

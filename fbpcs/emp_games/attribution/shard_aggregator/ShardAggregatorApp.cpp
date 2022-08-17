@@ -28,9 +28,14 @@
 namespace measurement::private_attribution {
 using AggMetrics = private_measurement::AggMetrics;
 using AggMetricsTag = private_measurement::AggMetricsTag;
+using CompressedAdIdToOriginalAdId =
+    private_measurement::CompressedAdIdToOriginalAdId;
 
 void ShardAggregatorApp::run() {
   auto inputData = getInputData();
+  if (useNewOutputFormat_) {
+    auto compressedAdIdMapping = getCompressedMapping();
+  }
 
   auto io = std::make_unique<emp::NetIO>(
       party_ == fbpcf::Party::Alice ? nullptr : serverIp_.c_str(),
@@ -101,6 +106,13 @@ std::vector<std::shared_ptr<AggMetrics>> ShardAggregatorApp::getInputData() {
   return inputData;
 }
 
+CompressedAdIdToOriginalAdId ShardAggregatorApp::getCompressedMapping() {
+  XLOG(INFO) << "getting compressed Ad Id mapping ...";
+  auto contents = fbpcf::io::FileIOWrappers::readFile(inputMappingPath_);
+  CompressedAdIdToOriginalAdId inputMapping =
+      CompressedAdIdToOriginalAdId::fromDynamic(folly::parseJson(contents));
+  return inputMapping;
+}
 void ShardAggregatorApp::putOutputData(
     const std::shared_ptr<AggMetrics>& metrics) {
   XLOG(INFO) << "putting out data ...";
