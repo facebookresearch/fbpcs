@@ -34,3 +34,20 @@ variable "pce_id" {
   type        = string
   description = "The identifier for marking the cloud resources are in PCE"
 }
+
+variable "vpc_logging" {
+  description = "An object which configures VPC logging"
+  type = object({
+    enabled    = bool
+    bucket_arn = string
+  })
+  default = {
+    enabled    = false
+    bucket_arn = ""
+  }
+
+  validation {
+    condition     = var.vpc_logging.enabled == false || var.vpc_logging.bucket_arn != ""
+    error_message = "An S3 bucket ARN must be provided if VPC logging is enabled (ex. 'arn:aws:s3:::YOUR-BUCKET-NAME')."
+  }
+}
