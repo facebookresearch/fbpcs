@@ -142,7 +142,9 @@ function run_fbpcs() {
     aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin "$FBPCS_CONTAINER_REPO_URL"
   fi
   docker pull "$docker_image"
-  docker run "${docker_image}" mkdir /fbpcs_instances
+  echo Before docker run mkdir -p /fbpcs_instances
+  docker run --rm "${docker_image}" mkdir -p /fbpcs_instances
+  echo Before running pc-cli
   docker run -e FBPCS_GRAPH_API_TOKEN --rm \
     -v "$real_config_path":"$DOCKER_CONFIG_PATH" \
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
