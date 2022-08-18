@@ -26,7 +26,10 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
+from fbpcs.private_computation.service.constants import (
+    NUM_NEW_SHARDS_PER_FILE,
+    Protocol,
+)
 from fbpcs.private_computation.service.prepare_data_stage_service import (
     PrepareDataStageService,
 )
@@ -71,6 +74,7 @@ class TestPrepareDataStageService(IsolatedAsyncioTestCase):
                 + "_combine",
                 num_shards=self.test_num_containers,
                 tmp_directory=binary_config.tmp_directory,
+                protocol_type=Protocol.PidProtocal.value,
             )
             # pyre-fixme[20]: Argument `self` expected.
             IdSpineCombinerService.start_containers(

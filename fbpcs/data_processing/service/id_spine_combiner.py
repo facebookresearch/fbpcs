@@ -27,6 +27,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
         output_path: str,
         num_shards: int,
         tmp_directory: str,
+        protocol_type: str,
         max_id_column_cnt: int = 1,
         sort_strategy: str = DEFAULT_SORT_STRATEGY,
         # TODO T106159008: padding_size and run_name are only temporarily optional
@@ -57,6 +58,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
                 sort_strategy=sort_strategy,
                 log_cost=log_cost,
                 run_id=run_id,
+                protocol_type=protocol_type,
             )
             cmd_args_list.append(cmd_args)
         return cmd_args_list
