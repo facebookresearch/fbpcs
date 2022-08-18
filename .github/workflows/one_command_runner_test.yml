@@ -83,11 +83,8 @@ jobs:
 
       - name: Validate logs
         run: |
-          docker images ; \
-          docker run --rm ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
-          ls -l /fbpcs_instances ; \
-          docker run --rm ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
-          python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer /fbpcs_instances/out.txt
+          docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}:/output.txt" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
+          python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer /output.txt
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
