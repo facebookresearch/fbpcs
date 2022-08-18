@@ -66,7 +66,6 @@ jobs:
           --objective_ids=${{ github.event.inputs.objective_id }} \
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
-          --log_path=/fbpcs_instances/out.txt \
           -- \
           --version=${{ github.event.inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2> ${{env.CONSOLE_OUTPUT_FILE}}
 
