@@ -233,8 +233,8 @@ void testAttributionResultWithScheduler(
 }
 
 TEST(AggregationGameTest, TestAttributionResultNetworkPlaintextScheduler) {
-  testAttributionResultWithScheduler(fbpcf::getSchedulerCreator<unsafe>(
-      fbpcf::SchedulerType::NetworkPlaintext));
+  testAttributionResultWithScheduler(
+      fbpcf::scheduler::createNetworkPlaintextScheduler<unsafe>);
 }
 
 TEST(AggregationGameTest, TestAttributionResultEagerScheduler) {
@@ -304,8 +304,7 @@ TEST(
     AggregationGameTest,
     TestAttributionReformattedResultNetworkPlaintextScheduler) {
   testAttributionReformattedResultWithScheduler(
-      fbpcf::getSchedulerCreator<unsafe>(
-          fbpcf::SchedulerType::NetworkPlaintext));
+      fbpcf::scheduler::createNetworkPlaintextScheduler<unsafe>);
 }
 
 TEST(AggregationGameTest, TestAttributionReformattedResultEagerScheduler) {
@@ -336,7 +335,10 @@ std::vector<uint64_t> retrieveValidAdIdsWithSchedulerAndRealEngine(
 }
 
 void testRetrieveValidAdIdsWithScheduler(
-    fbpcf::SchedulerCreator schedulerCreator) {
+    std::unique_ptr<fbpcf::scheduler::IScheduler> schedulerCreator(
+        int myId,
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory&
+            communicationAgentFactory)) {
   std::vector<std::vector<TouchpointMetadata>> publisherTouchpointMetadata{
       std::vector<TouchpointMetadata>{
           TouchpointMetadata{0, 8000, true, 100, 0},
@@ -383,8 +385,8 @@ void testRetrieveValidAdIdsWithScheduler(
 }
 
 TEST(AggregationGameTest, TestRetrieveValidAdIdsNetworkPlaintextScheduler) {
-  testRetrieveValidAdIdsWithScheduler(fbpcf::getSchedulerCreator<unsafe>(
-      fbpcf::SchedulerType::NetworkPlaintext));
+  testRetrieveValidAdIdsWithScheduler(
+      fbpcf::scheduler::createNetworkPlaintextScheduler<unsafe>);
 }
 
 TEST(AggregationGameTest, TestRetrieveValidAdIdsEagerScheduler) {

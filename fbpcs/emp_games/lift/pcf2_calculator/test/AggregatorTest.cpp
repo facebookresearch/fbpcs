@@ -26,9 +26,8 @@ Aggregator<schedulerId> createAggregatorWithScheduler(
     int numConversionsPerUser,
     std::shared_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
-    std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>
-        schedulerFactory) {
-  auto scheduler = schedulerFactory.get().create();
+    fbpcf::SchedulerCreator schedulerCreator) {
+  auto scheduler = schedulerCreator(myRole, *factory);
   fbpcf::scheduler::SchedulerKeeper<schedulerId>::setScheduler(
       std::move(scheduler));
   auto inputProcessor =
@@ -71,15 +70,9 @@ class AggregatorTest : public ::testing::Test {
         epoch,
         numConversionsPerUser);
 
+    auto schedulerCreator =
+        fbpcf::scheduler::createNetworkPlaintextScheduler<unsafe>;
     auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
-
-    auto schedulerFactory0 =
-        fbpcf::scheduler::NetworkPlaintextSchedulerFactory<unsafe>(
-            0, *factories[0]);
-
-    auto schedulerFactory1 =
-        fbpcf::scheduler::NetworkPlaintextSchedulerFactory<unsafe>(
-            1, *factories[1]);
 
     auto future0 = std::async(
         createAggregatorWithScheduler<0>,
@@ -87,8 +80,7 @@ class AggregatorTest : public ::testing::Test {
         publisherInputData,
         numConversionsPerUser,
         std::move(factories[0]),
-        std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>(
-            schedulerFactory0));
+        schedulerCreator);
 
     auto future1 = std::async(
         createAggregatorWithScheduler<1>,
@@ -96,8 +88,7 @@ class AggregatorTest : public ::testing::Test {
         partnerInputData,
         numConversionsPerUser,
         std::move(factories[1]),
-        std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>(
-            schedulerFactory1));
+        schedulerCreator);
 
     publisherAggregator_ = std::make_unique<Aggregator<0>>(future0.get());
     partnerAggregator_ = std::make_unique<Aggregator<1>>(future1.get());

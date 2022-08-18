@@ -18,7 +18,6 @@
 #include <fbpcf/engine/communication/IPartyCommunicationAgentFactory.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/scheduler/IScheduler.h>
-#include <fbpcf/scheduler/NetworkPlaintextSchedulerFactory.h>
 #include <fbpcf/scheduler/SchedulerHelper.h>
 
 #include "fbpcs/emp_games/common/Constants.h"
@@ -67,9 +66,8 @@ class ShardCombinerApp {
     auto scheduler = useXorEncryption_
         ? fbpcf::scheduler::createLazySchedulerWithRealEngine(
               schedulerId, *communicationAgentFactory_)
-        : fbpcf::scheduler::NetworkPlaintextSchedulerFactory<true /*unsafe*/>(
-              schedulerId, *communicationAgentFactory_)
-              .create();
+        : fbpcf::scheduler::createNetworkPlaintextScheduler<true /*unsafe*/>(
+              schedulerId, *communicationAgentFactory_);
     auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
     XLOG(INFO) << "Made scheduler: " << schedulerId;
