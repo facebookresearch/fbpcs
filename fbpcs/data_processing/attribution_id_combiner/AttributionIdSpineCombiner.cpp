@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     folly::dynamic extra_info = folly::dynamic::object(
         "padding_size", FLAGS_padding_size)("spine_path", FLAGS_spine_path)(
         "data_path",
-        FLAGS_data_path)("output_path", FLAGS_output_path)("sort_strategy", FLAGS_sort_strategy);
+        FLAGS_data_path)("output_path", FLAGS_output_path)("sort_strategy", FLAGS_sort_strategy)("run_id", FLAGS_run_id);
 
     XLOGF(
         INFO,
