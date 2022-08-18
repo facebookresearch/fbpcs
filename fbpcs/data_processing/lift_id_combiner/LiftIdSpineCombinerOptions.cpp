@@ -30,3 +30,7 @@ DEFINE_string(
     "Sorting strategy selected for the output data - options: (sort|keep_original)");
 DEFINE_int32(max_id_column_cnt, 1, "Maximum number of id columns to use as id");
 DEFINE_string(protocol_type, "PID", "protocol type");
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL/PA run.");
