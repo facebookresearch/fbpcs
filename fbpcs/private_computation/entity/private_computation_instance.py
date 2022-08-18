@@ -24,6 +24,8 @@ if TYPE_CHECKING:
         PrivateComputationBaseStageFlow,
     )
 
+from pathlib import Path
+
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -190,6 +192,35 @@ class PrivateComputationInstance(InstanceBase):
             f"{self.infra_config.instance_id}_out_dir",
             "pid_mr",
         )
+
+    @property
+    def pid_mr_stage_output_spine_path(self) -> str:
+        # There are three kinds of paths:
+        # *. unix path
+        # *. windows path
+        # *. cloud path
+        # 1. create "pid_mr/matched_output" sub path
+        sub_path = Path(
+            "pid_mr",
+            "matched_output",
+        )
+        # _get_stage_output_path() will output path by join path_prefix, sub_path and file_name
+        # For example, “self.product_config.common.output_dir/f"{self.infra_config.instance_id}_out_dir”/pid_mr/matched_output/out.csv" is the base_path
+        # “self.product_config.common.output_dir/f"{self.infra_config.instance_id}_out_dir” is prefix
+        # sub_path is pid_mr/matched_output
+        # file_name is out.csv
+        base_path = self._get_stage_output_path(str(sub_path), "csv")
+        # suffix is created according to the type of user
+        # publisher suffix:  _publiser_mr_pid_matched_
+        # partner suffix: _advertiser_mr_pid_matched_
+        data_path_suffix = (
+            STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.PUBLISHER_RUN_MR_PID]
+            if self.infra_config.role is PrivateComputationRole.PUBLISHER
+            else STAGE_TO_FILE_FORMAT_MAP[UnionPIDStage.ADV_RUN_MR_PID]
+        )
+
+        # concatenate base_path and suffix
+        return f"{base_path}{data_path_suffix}"
 
     @property
     def data_processing_output_path(self) -> str:
