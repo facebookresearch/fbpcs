@@ -74,3 +74,7 @@ DEFINE_string(
     run_id,
     "",
     "A run_id used to identify all the logs in a PL/PA run.");
+DEFINE_string(
+    pc_feature_flags,
+    "",
+    "A String of PC Feature Flags passing from PCS, separated by comma");

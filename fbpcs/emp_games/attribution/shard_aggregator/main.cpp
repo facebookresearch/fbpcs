@@ -22,6 +22,10 @@
 
 DEFINE_int32(party, 1, "1 = publisher, 2 = partner");
 DEFINE_int32(visibility, 0, "0 = public, 1 = publisher, 2 = partner");
+DEFINE_string(
+    pc_feature_flags,
+    "",
+    "A String of PC Feature Flags passing from PCS, separated by comma");
 DEFINE_string(server_ip, "", "Server's IP address");
 DEFINE_int32(port, 15200, "Server's port");
 DEFINE_string(input_base_path, "", "Input path where input files are located");
@@ -72,6 +76,7 @@ int main(int argc, char* argv[]) {
 
   XLOGF(INFO, "Party: {}", FLAGS_party);
   XLOGF(INFO, "Visibility: {}", FLAGS_visibility);
+  XLOGF(INFO, "PC Feature Flags: {}", FLAGS_pc_feature_flags);
   XLOGF(INFO, "Server IP: {}", FLAGS_server_ip);
   XLOGF(INFO, "Port: {}", FLAGS_port);
   XLOGF(INFO, "Input path: {}", FLAGS_input_base_path);
