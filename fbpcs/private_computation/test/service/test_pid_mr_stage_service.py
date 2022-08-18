@@ -22,6 +22,7 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
+from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.pid_mr_stage_service import (
     PID_RUN_CONFIGS,
     PID_WORKFLOW_CONFIGS,
@@ -37,6 +38,10 @@ from fbpcs.service.workflow_sfn import SfnWorkflowService
 
 
 class TestPIDMRStageService(IsolatedAsyncioTestCase):
+    @patch("fbpcp.service.onedocker.OneDockerService")
+    def setUp(self, onedocker_service) -> None:
+        self.test_num_containers = 2
+
     @patch("fbpcs.private_computation.service.pid_mr_stage_service.PIDMRStageService")
     async def test_run_async(self, pid_mr_svc_mock) -> None:
         for test_run_id in (None, "2621fda2-0eca-11ed-861d-0242ac120002"):
@@ -91,8 +96,8 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.PID_MR_COMPLETED,
                 )
                 self.assertEqual(
-                    pc_instance.pid_mr_stage_output_data_path,
-                    "https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output/publisher_123_out_dir/pid_mr",
+                    pc_instance.pid_mr_stage_output_spine_path,
+                    "https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output/publisher_123_out_dir/pid_mr/matched_output/out.csv_publisher_mr_pid_matched",
                 )
                 self.assertEqual(
                     pc_instance.infra_config.instances[0].instance_id, "execution_arn"
@@ -100,3 +105,36 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
                 self.assertIsInstance(
                     pc_instance.infra_config.instances[0], StageStateInstance
                 )
+
+    def create_sample_instance(self) -> PrivateComputationInstance:
+        infra_config: InfraConfig = InfraConfig(
+            instance_id="test_instance_123",
+            role=PrivateComputationRole.PARTNER,
+            status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            status_update_ts=1600000000,
+            instances=[],
+            game_type=PrivateComputationGameType.LIFT,
+            num_pid_containers=self.test_num_containers,
+            num_mpc_containers=self.test_num_containers,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            status_updates=[],
+        )
+        common: CommonProductConfig = CommonProductConfig(
+            input_path="456",
+            output_dir="789",
+        )
+        product_config: ProductConfig = LiftConfig(
+            common=common,
+        )
+        return PrivateComputationInstance(
+            infra_config=infra_config,
+            product_config=product_config,
+        )
+
+    def test_mr_pid_output(self) -> None:
+        pc_instance = self.create_sample_instance()
+        expected_str = "789/test_instance_123_out_dir/pid_mr/matched_output/out.csv_advertiser_mr_pid_matched"
+        self.assertEqual(
+            pc_instance.pid_mr_stage_output_spine_path,
+            expected_str,
+        )
