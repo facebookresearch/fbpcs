@@ -9,4 +9,5 @@ package com.facebook.business.cloudbridge.pl.server;
 
 public final class Constants {
   public static final String DEPLOYMENT_STREAMING_LOG_FILE = "/tmp/deploymentStream.log";
+  public static final String PCE_VALIDATOR_LOG_STREAMING = "/tmp/pceValidatorStream.log";
 }
