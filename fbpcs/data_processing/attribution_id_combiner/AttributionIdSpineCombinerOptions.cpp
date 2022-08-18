@@ -36,3 +36,7 @@ DEFINE_string(
     ".s3.us-west-2.amazonaws.com/",
     "s3 region name");
 DEFINE_string(protocol_type, "PID", "protocol type");
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL/PA run.");
