@@ -110,6 +110,14 @@ class AwsParserBuilder:
             required=False,
             help="ECS task execution role name",
         )
+
+        iam_policy_command_group.add_argument(
+            "--data_ingestion_lambda_name",
+            type=str,
+            required=False,
+            help="Data ingestion Lambda name",
+        )
+
         return self
 
     def with_attach_iam_policy_parser_arguments(

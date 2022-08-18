@@ -294,6 +294,7 @@ class AwsDeploymentHelper:
             "FIREHOSE_STREAM_NAME": policy_params.firehose_stream_name,
             "DATEBASE_NAME": policy_params.database_name,
             "TABLE_NAME": policy_params.table_name,
+            "DATA_INGESTION_LAMBDA_NAME": policy_params.data_ingestion_lambda_name,
         }
 
         file_path = os.path.join(os.path.dirname(__file__), file_name)

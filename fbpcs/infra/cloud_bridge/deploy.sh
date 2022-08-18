@@ -291,6 +291,7 @@ deploy_aws_resources() {
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id" \
         -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
+        -var "data_ingestion_lambda_name=$data_ingestion_lambda_name" \
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip" \
         -var "data_upload_key_path=$data_upload_key_path" \
@@ -365,6 +366,7 @@ deploy_aws_resources() {
         --policy_name "$policy_name" \
         --region "$region" \
         --firehose_stream_name "$firehose_stream_name" \
+        --data_ingestion_lambda_name "$data_ingestion_lambda_name" \
         --data_bucket_name "$s3_bucket_data_pipeline" \
         --config_bucket_name "$s3_bucket_for_storage" \
         --database_name "$database_name" \
@@ -410,6 +412,7 @@ glue_crawler_name="mpc-events-crawler${tag_postfix}"
 table_name=${s3_bucket_data_pipeline//-/_}
 data_upload_key_path="semi-automated-data-ingestion"
 query_results_key_path="query-results"
+data_ingestion_lambda_name="cb-data-ingestion-stream-processor${tag_postfix}"
 
 if "$undeploy"
 then

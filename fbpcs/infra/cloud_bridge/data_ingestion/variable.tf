@@ -8,6 +8,11 @@ variable "data_processing_output_bucket" {
   default     = ""
 }
 
+variable "data_ingestion_lambda_name" {
+  description = "The data ingestion Lambda function name"
+  default     = ""
+}
+
 variable "data_processing_lambda_s3_bucket" {
   description = "Source S3 bucket for data processing lambda deployment file"
   default     = ""

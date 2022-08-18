@@ -17,3 +17,4 @@ class PolicyParams:
     table_name: str
     cluster_name: str
     ecs_task_execution_role_name: str
+    data_ingestion_lambda_name: str
