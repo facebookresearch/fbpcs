@@ -43,6 +43,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.service.constants import (
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     DEFAULT_LOG_COST_TO_S3,
+    Protocol,
 )
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_service_data import (
@@ -219,6 +220,7 @@ async def start_combiner_service(
     log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
     wait_for_containers: bool = False,
     max_id_column_count: int = 1,
+    protocol_type: str = Protocol.PidProtocal.value,
 ) -> List[ContainerInstance]:
     """Run combiner service and return those container instances
 
@@ -269,12 +271,20 @@ async def start_combiner_service(
         stage_data.service,
     )
 
+    if protocol_type == Protocol.MrPidProtocal.value:
+        spine_path = private_computation_instance.pid_mr_stage_output_spine_path
+        data_path = private_computation_instance.pid_mr_stage_output_data_path
+    else:
+        spine_path = private_computation_instance.pid_stage_output_spine_path
+        data_path = private_computation_instance.pid_stage_output_data_path
+
     args = combiner_service.build_args(
-        spine_path=private_computation_instance.pid_stage_output_spine_path,
-        data_path=private_computation_instance.pid_stage_output_data_path,
+        spine_path=spine_path,
+        data_path=data_path,
         output_path=combine_output_path,
         num_shards=private_computation_instance.infra_config.num_pid_containers,
         tmp_directory=binary_config.tmp_directory,
+        protocol_type=protocol_type,
         max_id_column_cnt=max_id_column_count,
         run_name=run_name,
         padding_size=padding_size,

@@ -17,7 +17,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3, Protocol
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -42,12 +42,14 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         padding_size: Optional[int] = None,
+        protocol_type: str = Protocol.PidProtocal.value,
     ) -> None:
         self._onedocker_svc = onedocker_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._log_cost_to_s3 = log_cost_to_s3
         self._logger: logging.Logger = logging.getLogger(__name__)
         self.padding_size = padding_size
+        self.protocol_type = protocol_type
 
     async def run_async(
         self,
@@ -78,6 +80,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             combine_output_path,
             log_cost_to_s3=self._log_cost_to_s3,
             max_id_column_count=pc_instance.product_config.common.pid_max_column_count,
+            protocol_type=self.protocol_type,
         )
         self._logger.info("Finished running CombinerService")
 

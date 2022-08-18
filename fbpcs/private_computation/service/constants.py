@@ -6,6 +6,8 @@
 
 # pyre-strict
 
+from enum import Enum
+
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 
 """
@@ -37,5 +39,9 @@ ATTRIBUTION_DEFAULT_PADDING_SIZE = 4
 DEFAULT_LOG_COST_TO_S3 = True
 DEFAULT_SORT_STRATEGY = "sort"
 DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT = 6
-
 FBPCS_BUNDLE_ID = "FBPCS_BUNDLE_ID"
+
+
+class Protocol(Enum):
+    PidProtocal = "PID"
+    MrPidProtocal = "MR_PID"
