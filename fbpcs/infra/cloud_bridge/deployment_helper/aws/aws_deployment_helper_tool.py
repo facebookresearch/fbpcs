@@ -48,6 +48,7 @@ class AwsDeploymentHelperTool:
                 table_name=self.cli_args.table_name,
                 cluster_name=self.cli_args.cluster_name,
                 ecs_task_execution_role_name=self.cli_args.ecs_task_execution_role_name,
+                data_ingestion_lambda_name=self.cli_args.data_ingestion_lambda_name,
             )
             self.aws_deployment_helper_obj.create_policy(
                 policy_name=self.cli_args.policy_name, policy_params=policy_params
