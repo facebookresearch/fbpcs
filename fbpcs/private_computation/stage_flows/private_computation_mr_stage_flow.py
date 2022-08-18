@@ -9,6 +9,16 @@ import logging
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import Protocol
+from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
+    IdSpineCombinerStageService,
+)
+from fbpcs.private_computation.service.pcf2_aggregation_stage_service import (
+    PCF2AggregationStageService,
+)
+from fbpcs.private_computation.service.pcf2_attribution_stage_service import (
+    PCF2AttributionStageService,
+)
 from fbpcs.private_computation.service.pid_mr_stage_service import PIDMRStageService
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -33,7 +43,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED PC_PRE_VALIDATION UNION_PID_MR_MULTIKEY"
+    _order_ = "CREATED PC_PRE_VALIDATION UNION_PID_MR_MULTIKEY ID_SPINE_COMBINER RESHARD PCF2_ATTRIBUTION PCF2_AGGREGATION AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -53,6 +63,42 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
         PrivateComputationInstanceStatus.PID_MR_STARTED,
         PrivateComputationInstanceStatus.PID_MR_COMPLETED,
         PrivateComputationInstanceStatus.PID_MR_FAILED,
+        False,
+    )
+    ID_SPINE_COMBINER = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_STARTED,
+        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_COMPLETED,
+        PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED,
+        False,
+    )
+    RESHARD = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.RESHARD_STARTED,
+        PrivateComputationInstanceStatus.RESHARD_COMPLETED,
+        PrivateComputationInstanceStatus.RESHARD_FAILED,
+        False,
+    )
+    PCF2_ATTRIBUTION = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_STARTED,
+        PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_COMPLETED,
+        PrivateComputationInstanceStatus.PCF2_ATTRIBUTION_FAILED,
+        True,
+    )
+    PCF2_AGGREGATION = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.PCF2_AGGREGATION_STARTED,
+        PrivateComputationInstanceStatus.PCF2_AGGREGATION_COMPLETED,
+        PrivateComputationInstanceStatus.PCF2_AGGREGATION_FAILED,
+        True,
+    )
+    AGGREGATE = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.AGGREGATION_STARTED,
+        PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
+        PrivateComputationInstanceStatus.AGGREGATION_FAILED,
+        True,
+    )
+    POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
+        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
+        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
+        PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,
         False,
     )
 
@@ -77,7 +123,22 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
                 raise NotImplementedError("workflow_svc is None")
 
             return PIDMRStageService(args.workflow_svc)
-
+        elif self is self.ID_SPINE_COMBINER:
+            return IdSpineCombinerStageService(
+                args.onedocker_svc,
+                args.onedocker_binary_config_map,
+                protocol_type=Protocol.MrPidProtocal.value,
+            )
+        elif self is self.PCF2_ATTRIBUTION:
+            return PCF2AttributionStageService(
+                args.onedocker_binary_config_map,
+                args.mpc_svc,
+            )
+        elif self is self.PCF2_AGGREGATION:
+            return PCF2AggregationStageService(
+                args.onedocker_binary_config_map,
+                args.mpc_svc,
+            )
         # TODO (pnethagani): enable the other stages after test
         # elif self is self.COMPUTE:
         #     return ComputeMetricsStageService(

@@ -67,6 +67,9 @@ class PIDMRStageService(PrivateComputationStageService):
             and PID_WORKFLOW_CONFIGS in pid_configs[PIDMR]
             and SPARK_CONFIGS in pid_configs[PIDMR]
         ):
+            pc_configs = {
+                "numPidContainers": pc_instance.infra_config.num_pid_containers
+            }
             data_configs = {
                 INTPUT: self.get_s3uri_from_url(
                     pc_instance.product_config.common.input_path
@@ -83,6 +86,7 @@ class PIDMRStageService(PrivateComputationStageService):
                 **pid_configs[PIDMR][PID_RUN_CONFIGS],
                 **pid_configs[PIDMR][SPARK_CONFIGS],
                 **data_configs,
+                **pc_configs,
             }
 
             stage_state.instance_id = self.workflow_svc.start_workflow(
