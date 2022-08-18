@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import dataclasses
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -69,3 +70,32 @@ class TestStageStateInstance(unittest.TestCase):
                 mock_onedocker_svc.stop_containers.assert_called_with(
                     ["test_container_instance_1", "test_container_instance_2"]
                 )
+
+    @patch("fbpcp.service.onedocker.OneDockerService")
+    def test_update_status(self, mock_onedocker_svc) -> None:
+        self.stage_state_instance.containers[0].status = ContainerInstanceStatus.FAILED
+
+        started_container = ContainerInstance(
+            instance_id="test_container_instance_100",
+            ip_address="192.0.2.100",
+            status=ContainerInstanceStatus.STARTED,
+        )
+        self.stage_state_instance.containers.append(started_container)
+        updated_container = dataclasses.replace(started_container)
+        updated_container.status = ContainerInstanceStatus.FAILED
+
+        mock_onedocker_svc.reset_mock()
+        mock_onedocker_svc.get_container = MagicMock(return_value=updated_container)
+        self.stage_state_instance.update_status(mock_onedocker_svc)
+
+        mock_onedocker_svc.get_container.assert_called_once_with(
+            started_container.instance_id
+        )
+        self.assertEqual(
+            [o.status for o in self.stage_state_instance.containers],
+            [
+                ContainerInstanceStatus.FAILED,
+                ContainerInstanceStatus.COMPLETED,
+                ContainerInstanceStatus.FAILED,
+            ],
+        )

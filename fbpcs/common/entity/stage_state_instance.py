@@ -12,7 +12,6 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcp.error.pcp import PcpError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.instance_base import InstanceBase
@@ -56,15 +55,7 @@ class StageStateInstance(InstanceBase):
         self,
         onedocker_svc: OneDockerService,
     ) -> StageStateInstanceStatus:
-        container_ids = [container.instance_id for container in self.containers]
-        containers = list(filter(None, onedocker_svc.get_containers(container_ids)))
-        if len(self.containers) != len(containers):
-            raise PcpError(
-                f"Instance {self.instance_id} has {len(containers)} containers after update, but expecting {len(self.containers)} containers!"
-            )
-
-        # replacing new containers to have it update to date
-        self.containers = containers
+        self.containers = self._update_containers(onedocker_svc)
         statuses = {container.status for container in self.containers}
         # updating stage state status based on containers status
         if ContainerInstanceStatus.FAILED in statuses:
@@ -78,6 +69,25 @@ class StageStateInstance(InstanceBase):
             self.status = StageStateInstanceStatus.UNKNOWN
 
         return self.status
+
+    def _update_containers(
+        self, onedocker_svc: OneDockerService
+    ) -> List[ContainerInstance]:
+        return [
+            self._update_container(onedocker_svc, container)
+            for container in self.containers
+        ]
+
+    def _update_container(
+        self, onedocker_svc: OneDockerService, container: ContainerInstance
+    ) -> ContainerInstance:
+        # Stop updating from OneDocker, when the container is already stopped.
+        if container.status in (
+            ContainerInstanceStatus.COMPLETED,
+            ContainerInstanceStatus.FAILED,
+        ):
+            return container
+        return onedocker_svc.get_container(container.instance_id) or container
 
     def stop_containers(self, onedocker_svc: OneDockerService) -> None:
         container_ids = [instance.instance_id for instance in self.containers]
