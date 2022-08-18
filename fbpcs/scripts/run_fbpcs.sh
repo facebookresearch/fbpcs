@@ -143,7 +143,9 @@ function run_fbpcs() {
   fi
   docker pull "$docker_image"
   echo Before docker run mkdir -p /fbpcs_instances
-  docker run --rm "${docker_image}" mkdir -p /fbpcs_instances
+  docker run --rm "${docker_image}" bash -c "ls -l / ; mkdir -p /fbpcs_instances"
+  echo Check docker run ls -l /
+  docker run --rm "${docker_image}" ls -l /
   echo Before running pc-cli
   docker run -e FBPCS_GRAPH_API_TOKEN --rm \
     -v "$real_config_path":"$DOCKER_CONFIG_PATH" \
