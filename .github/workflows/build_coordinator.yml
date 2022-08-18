@@ -1,0 +1,25 @@
+name: Build Coordinator image
+
+on:
+  schedule:
+    - cron: '0 0,15-23 * * 1-5'
+
+env:
+  DISTRO: ubuntu
+  LOCAL_IMAGE_NAME: coordinator-local
+  IMAGE_TAG: latest-build
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Coordinator image
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: |
+          docker build --build-arg FBPCS_BUNDLE_ID=${{ env.IMAGE_TAG }} -f ./fbpcs/Dockerfile -t ${{ env.LOCAL_IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
