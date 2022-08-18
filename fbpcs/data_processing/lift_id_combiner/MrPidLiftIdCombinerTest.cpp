@@ -211,7 +211,7 @@ TEST_F(MrPidLiftIdCombinerTest, TestRunValidSpinePublisherWithDup) {
   p.run();
   auto outputFile = readfile();
   std::string expectedStr =
-      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,opportunity,unregistered\nBBBB,0,0,0,0,0,0,0,0,0\nEEEE,0,0,0,0,0,0,0,0,0\nFFFF,0,0,0,0,0,0,0,0,0\nDDDD,200,0,2,2,100,0,1,6\nCCCC,150,0,5,5,400,1,1,4\nAAAA,100,1,3,7,500,1,1,2\n";
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,opportunity,unregistered\nAAAA,100,1,3,7,500,1,1,2\nCCCC,150,0,5,5,400,1,1,4\nDDDD,200,0,2,2,100,0,1,6\nFFFF,0,0,0,0,0,0,0,0,0\nEEEE,0,0,0,0,0,0,0,0,0\nBBBB,0,0,0,0,0,0,0,0,0\n";
   EXPECT_EQ(outputFile.str(), expectedStr);
 }
 

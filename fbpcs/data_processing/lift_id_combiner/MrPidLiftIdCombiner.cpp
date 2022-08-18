@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "fbpcf/io/api/BufferedReader.h"
@@ -59,13 +60,17 @@ MrPidLiftIdCombiner::~MrPidLiftIdCombiner() {
 }
 
 std::stringstream MrPidLiftIdCombiner::idSwap(FileMetaData meta) {
+  auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineIdFilePath);
+  auto spineIdFileDup = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), pid::combiner::kBufferedReaderChunkSize);
+
   std::stringstream idSwapOutFile;
   idSwapOutFile << meta.headerLine << "\n";
   if (meta.isPublisherDataset) {
     const std::string kCommaSplitRegex = ",";
     std::vector<std::string> header;
     folly::split(kCommaSplitRegex, meta.headerLine, header);
-    // Build a map for <pid to data> from data file
+    // Build a map for <pid to data> from spine file
     std::unordered_map<std::string, std::vector<std::vector<std::string>>>
         pidToDataMap;
 
@@ -79,16 +84,34 @@ std::stringstream MrPidLiftIdCombiner::idSwap(FileMetaData meta) {
       rowVec.erase(rowVec.begin());
       pidToDataMap[privId].push_back(rowVec);
     }
-    for (auto& [privId, dRows] : pidToDataMap) {
-      // For publisher lift dataset, duplicates would result in failure.
-      // We are aggregating columns here.
-      if (dRows.size() > 1) {
-        aggregateLiftNonIdColumns(header, dRows);
+    std::string row;
+    std::unordered_set<std::string> pidVisited;
+    while (!spineIdFileDup->eof()) {
+      row = spineIdFileDup->readLine();
+      std::vector<std::string> cols;
+      folly::split(kCommaSplitRegex, row, cols);
+
+      // for each row in spine id,
+      // look for the corresponding rows in spineFile and
+      // output the private_id, along with the data from spineFile
+      auto privId = cols.at(0);
+
+      if (pidVisited.find(privId) == pidVisited.end() &&
+          pidToDataMap.find(privId) != pidToDataMap.end()) {
+        auto& dRows = pidToDataMap.at(privId);
+
+        // For publisher lift dataset, duplicates would result in failure.
+        // We are aggregating columns here.
+        if (dRows.size() > 1) {
+          aggregateLiftNonIdColumns(header, dRows);
+        }
+        pidVisited.insert(privId);
+        if (dRows.size() > 0) {
+          idSwapOutFile << privId << "," << vectorToString(dRows[0]) << '\n';
+        }
       }
-
-      idSwapOutFile << privId << "," << vectorToString(dRows[0]) << '\n';
     }
-
+    spineIdFileDup->close();
   } else {
     while (!spineIdFile->eof()) {
       auto spineRow = spineIdFile->readLine();
