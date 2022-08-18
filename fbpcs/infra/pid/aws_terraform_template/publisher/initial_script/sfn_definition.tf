@@ -1,3 +1,11 @@
+# List each AZ`s default subnets, and use it in EMR cluster, therefore EMR will pick the largest capacity AZ to create EC2 instances
+data "aws_subnets" "default_subnets" {
+  filter {
+    name   = "default-for-az"
+    values = ["true"]
+  }
+}
+
 data "template_file" "publisher_sfn_definition" {
   template = <<EOF
 {
@@ -29,6 +37,7 @@ data "template_file" "publisher_sfn_definition" {
         },
         "Instances": {
           "KeepJobFlowAliveWhenNoSteps": true,
+          "Ec2SubnetIds": ["${join("\", \"", data.aws_subnets.default_subnets.ids)}"],
           "InstanceFleets": [
             {
               "InstanceFleetType": "MASTER",
@@ -61,6 +70,7 @@ data "template_file" "publisher_sfn_definition" {
         ]
       },
       "ResultPath": "$.CreateClusterResult",
+      "TimeoutSeconds": 600,
       "Next": "Enable_Termination_Protection"
     },
     "Enable_Termination_Protection": {
@@ -71,6 +81,7 @@ data "template_file" "publisher_sfn_definition" {
         "TerminationProtected": true
       },
       "ResultPath": null,
+      "TimeoutSeconds": 300,
       "Catch": [
         {
           "ErrorEquals": [
@@ -226,6 +237,7 @@ data "template_file" "publisher_sfn_definition" {
         "TerminationProtected": false
       },
       "ResultPath": null,
+      "TimeoutSeconds": 300,
       "Catch": [
         {
           "ErrorEquals": [
@@ -243,6 +255,7 @@ data "template_file" "publisher_sfn_definition" {
       "Parameters": {
         "ClusterId.$": "$.CreateClusterResult.Cluster.Id"
       },
+      "TimeoutSeconds": 600,
       "End": true
     },
     "Error_Disable_Termination_Protection": {
@@ -253,6 +266,7 @@ data "template_file" "publisher_sfn_definition" {
         "TerminationProtected": false
       },
       "ResultPath": null,
+      "TimeoutSeconds": 300,
       "Catch": [
         {
           "ErrorEquals": [
@@ -270,6 +284,7 @@ data "template_file" "publisher_sfn_definition" {
       "Parameters": {
         "ClusterId.$": "$.CreateClusterResult.Cluster.Id"
       },
+      "TimeoutSeconds": 600,
       "Next": "Fail"
     },
     "Fail": {
