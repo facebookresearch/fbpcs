@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from collections import defaultdict
+from typing import Optional
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
@@ -48,17 +49,25 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
         )
 
     async def test_id_spine_combiner(self) -> None:
-        private_computation_instance = self.create_sample_instance()
 
-        with patch.object(
-            IdSpineCombinerService,
-            "start_containers",
-        ) as mock_combine:
-            # call id_spine_combiner
-            await self.stage_svc.run_async(private_computation_instance)
-            mock_combine.assert_called()
+        for test_run_id in (None, "2621fda2-0eca-11ed-861d-0242ac120002"):
+            with self.subTest(test_run_id=test_run_id):
+                private_computation_instance = self.create_sample_instance(test_run_id)
 
-    def create_sample_instance(self) -> PrivateComputationInstance:
+                with patch.object(
+                    IdSpineCombinerService,
+                    "start_containers",
+                ) as mock_combine:
+                    # call id_spine_combiner
+                    pc_instance = await self.stage_svc.run_async(
+                        private_computation_instance
+                    )
+                    mock_combine.assert_called()
+                    self.assertEqual(pc_instance.infra_config.run_id, test_run_id)
+
+    def create_sample_instance(
+        self, test_run_id: Optional[str] = None
+    ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
@@ -70,6 +79,7 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
+            run_id=test_run_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
