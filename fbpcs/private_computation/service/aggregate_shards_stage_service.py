@@ -99,6 +99,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             input_stage_path = pc_instance.decoupled_aggregation_stage_output_base_path
         elif pc_instance.get_flow_cls_name in [
             "PrivateComputationPCF2StageFlow",
+            "PrivateComputationMRStageFlow",
             "PrivateComputationPCF2LocalTestStageFlow",
             "PrivateComputationPIDPATestStageFlow",
         ]:
