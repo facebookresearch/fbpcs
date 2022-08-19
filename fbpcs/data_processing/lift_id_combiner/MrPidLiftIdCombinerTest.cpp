@@ -243,3 +243,34 @@ TEST_F(MrPidLiftIdCombinerTest, TestRunValidSortedSpinePublisherWithDup) {
       "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,opportunity,unregistered\n1,100,1,3,7,500,1,1,2\n10,200,0,2,2,100,0,1,6\n100,0,0,0,0,0,0,0,0\n123,0,0,0,0,0,0,0,0\n2,0,0,0,0,0,0,0,0\n3,150,0,5,5,400,1,1,4\n";
   EXPECT_EQ(outputFile.str(), expectedStr);
 }
+
+TEST_F(
+    MrPidLiftIdCombinerTest,
+    TestRunValidSortedSpinePublisherWithDupWithLastId) {
+  std::vector<std::string> spineInput = {
+      "opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,unregistered,id_",
+      "100,1,1,3,200,0,2,1",
+      "120,1,2,4,300,1,3,1",
+      "150,0,2,2,150,0,4,3",
+      "160,0,3,3,250,1,5,3",
+      "200,0,2,2,100,0,6,10",
+      "0,0,0,0,0,0,0,100",
+      "0,0,0,0,0,0,0,123",
+      "0,0,0,0,0,0,0,2",
+  };
+
+  createData(spineInput);
+  MrPidLiftIdCombiner p(
+      FLAGS_spine_path,
+      FLAGS_output_path,
+      FLAGS_tmp_directory,
+      FLAGS_sort_strategy,
+      FLAGS_max_id_column_cnt,
+      FLAGS_protocol_type);
+
+  p.run();
+  auto outputFile = readfile();
+  std::string expectedStr =
+      "id_,opportunity_timestamp,test_flag,num_impressions,num_clicks,total_spend,breakdown_id,opportunity,unregistered\n1,100,1,3,7,500,1,1,2\n10,200,0,2,2,100,0,1,6\n100,0,0,0,0,0,0,0,0\n123,0,0,0,0,0,0,0,0\n2,0,0,0,0,0,0,0,0\n3,150,0,5,5,400,1,1,4\n";
+  EXPECT_EQ(outputFile.str(), expectedStr);
+}

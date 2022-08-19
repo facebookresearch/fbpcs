@@ -65,36 +65,48 @@ std::stringstream MrPidLiftIdCombiner::idSwap(FileMetaData meta) {
       std::move(spineReader), pid::combiner::kBufferedReaderChunkSize);
 
   std::stringstream idSwapOutFile;
-  idSwapOutFile << meta.headerLine << "\n";
+
   if (meta.isPublisherDataset) {
     const std::string kCommaSplitRegex = ",";
+    const std::string kIdColumnPrefix = "id_";
     std::vector<std::string> header;
     folly::split(kCommaSplitRegex, meta.headerLine, header);
     // Build a map for <pid to data> from spine file
     std::unordered_map<std::string, std::vector<std::vector<std::string>>>
         pidToDataMap;
+    // find id_ index in the header
+    auto idColumnIndices = headerIndices(header, kIdColumnPrefix);
+    if (idColumnIndices.size() == 0) {
+      XLOG(FATAL) << "Cannot find the id_ in the header.";
+    }
+    auto idx = idColumnIndices[0]; // NOLINT
+    // remove the id column and add pid column in the beginning
+    header.erase(header.begin() + idx);
+    header.insert(header.begin(), "id_");
 
+    idSwapOutFile << vectorToString(header) << "\n";
     while (!spineIdFile->eof()) {
       auto line = spineIdFile->readLine();
       std::vector<std::string> rowVec;
       folly::split(kCommaSplitRegex, line, rowVec);
+      // for each row in spine id,
+      // look for the corresponding rows in spineFile and
+      // output the private_id, along with the data from spineFile
+      auto privId = rowVec.at(idx);
+      rowVec.erase(rowVec.begin() + idx);
 
-      // expect col 1 in spineIdFile to contain the id_
-      auto privId = rowVec.at(0);
-      rowVec.erase(rowVec.begin());
       pidToDataMap[privId].push_back(rowVec);
     }
     std::string row;
     std::unordered_set<std::string> pidVisited;
+    // skip the header
+    spineIdFileDup->readLine();
     while (!spineIdFileDup->eof()) {
       row = spineIdFileDup->readLine();
       std::vector<std::string> cols;
       folly::split(kCommaSplitRegex, row, cols);
-
-      // for each row in spine id,
-      // look for the corresponding rows in spineFile and
-      // output the private_id, along with the data from spineFile
-      auto privId = cols.at(0);
+      // get private id from position idx
+      auto privId = cols.at(idx);
 
       if (pidVisited.find(privId) == pidVisited.end() &&
           pidToDataMap.find(privId) != pidToDataMap.end()) {
@@ -113,6 +125,7 @@ std::stringstream MrPidLiftIdCombiner::idSwap(FileMetaData meta) {
     }
     spineIdFileDup->close();
   } else {
+    idSwapOutFile << meta.headerLine << "\n";
     while (!spineIdFile->eof()) {
       auto spineRow = spineIdFile->readLine();
       idSwapOutFile << spineRow << "\n";
