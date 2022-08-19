@@ -7,6 +7,9 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
+import static com.facebook.business.cloudbridge.pl.server.Constants.DEPLOYMENT_STREAMING_LOG_FILE;
+import static com.facebook.business.cloudbridge.pl.server.Constants.PCE_VALIDATOR_LOG_STREAMING;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
@@ -144,6 +147,20 @@ public class DeployController {
     return result;
   }
 
+  @GetMapping(
+      path = "/v2/deployment/pceValidator",
+      produces = "application/json",
+      consumes = "application/json")
+  public PCEValidatorAPIReturn runPCEValidator(@RequestBody DeploymentParams deployment) {
+    logger.info("Received request to run PCE validator: ");
+    final Integer exitCode = new PCEValidatorRunner().start(deployment);
+    return new PCEValidatorAPIReturn(
+        exitCode == 0
+            ? PCEValidatorAPIReturn.Status.STATUS_SUCCESS
+            : PCEValidatorAPIReturn.Status.STATUS_FAIL,
+        "");
+  }
+
   @GetMapping(path = "/v1/deployment/logs")
   public byte[] downloadDeploymentLogs() {
     logger.info("Received logs request");
@@ -153,7 +170,8 @@ public class DeployController {
       compressIfExists("/tmp/server.log", "server.log", zout);
       compressIfExists("/tmp/deploy.log", "deploy.log", zout);
       compressIfExists("/tmp/terraform.log", "terraform.log", zout);
-      compressIfExists("/tmp/deploymentStream.log", "deploymentStream.log", zout);
+      compressIfExists(PCE_VALIDATOR_LOG_STREAMING, "pceValidatorStream.log", zout);
+      compressIfExists(DEPLOYMENT_STREAMING_LOG_FILE, "deploymentStream.log", zout);
       zout.close();
     } catch (IOException e) {
       logger.debug(

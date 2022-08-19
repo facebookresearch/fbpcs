@@ -54,6 +54,8 @@ COPY deploy.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
 COPY util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/util.sh
+COPY pceValidator.sh /terraform_deployment
+RUN chmod +x /terraform_deployment/pceValidator.sh
 COPY aws_terraform_template /terraform_deployment/terraform_scripts
 COPY data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
 COPY semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
