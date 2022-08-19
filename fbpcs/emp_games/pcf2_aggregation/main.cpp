@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
   XLOGF(INFO, "Input clear text path: {}", FLAGS_input_base_path);
   XLOGF(INFO, "Base output path: {}", FLAGS_output_base_path);
   XLOGF(INFO, "Run Id: {}", FLAGS_run_id);
+  XLOGF(INFO, "PC Feature Flags: {}", FLAGS_pc_feature_flags);
 
   common::SchedulerStatistics schedulerStatistics;
 

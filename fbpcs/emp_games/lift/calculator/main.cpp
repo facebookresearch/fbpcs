@@ -82,6 +82,10 @@ DEFINE_string(
     run_id,
     "",
     "A run_id used to identify all the logs in a PL run.");
+DEFINE_string(
+    pc_feature_flags,
+    "",
+    "A String of PC Feature Flags passing from PCS, separated by comma");
 
 using namespace private_lift;
 
@@ -146,6 +150,7 @@ int main(int argc, char** argv) {
                << "\tserver_ip_address: " << FLAGS_server_ip << "\n"
                << "\tport: " << FLAGS_port << "\n"
                << "\tconcurrency: " << FLAGS_concurrency << "\n"
+               << "\tpc_feature_flags:" << FLAGS_pc_feature_flags
                << "\tinput: " << inputFileLogList.str() << "\n"
                << "\trun_id: " << FLAGS_run_id;
   }

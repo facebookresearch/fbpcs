@@ -94,6 +94,10 @@ DEFINE_bool(
     compute_publisher_breakdowns,
     true,
     "To enable or disable computing publisher breakdown for result validation");
+DEFINE_string(
+    pc_feature_flags,
+    "",
+    "A String of PC Feature Flags passing from PCS, separated by comma");
 
 int main(int argc, char** argv) {
   folly::init(&argc, &argv);
@@ -143,6 +147,7 @@ int main(int argc, char** argv) {
                << "\tconcurrency: " << FLAGS_concurrency << "\n"
                << "\tnumber of conversions per user: "
                << FLAGS_num_conversions_per_user << "\n"
+               << "\tpc_feature_flags:" << FLAGS_pc_feature_flags
                << "\tinput: " << inputFileLogList.str()
                << "\toutput: " << outputFileLogList.str() << "\n"
                << "\trun_id: " << FLAGS_run_id;
