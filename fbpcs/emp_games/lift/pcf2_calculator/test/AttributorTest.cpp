@@ -25,8 +25,9 @@ Attributor<schedulerId> createAttributorWithScheduler(
     int numConversionsPerUser,
     std::reference_wrapper<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
-    fbpcf::SchedulerCreator schedulerCreator) {
-  auto scheduler = schedulerCreator(myRole, factory);
+    std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>
+        schedulerFactory) {
+  auto scheduler = schedulerFactory.get().create();
   fbpcf::scheduler::SchedulerKeeper<schedulerId>::setScheduler(
       std::move(scheduler));
   auto inputProcessor =
@@ -62,9 +63,15 @@ class AttributorTest : public ::testing::Test {
         epoch,
         numConversionsPerUser);
 
-    auto schedulerCreator =
-        fbpcf::scheduler::createNetworkPlaintextScheduler<unsafe>;
     auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
+
+    auto schedulerFactory0 =
+        fbpcf::scheduler::NetworkPlaintextSchedulerFactory<unsafe>(
+            0, *factories[0]);
+
+    auto schedulerFactory1 =
+        fbpcf::scheduler::NetworkPlaintextSchedulerFactory<unsafe>(
+            1, *factories[1]);
 
     auto future0 = std::async(
         createAttributorWithScheduler<0>,
@@ -74,7 +81,8 @@ class AttributorTest : public ::testing::Test {
         std::reference_wrapper<
             fbpcf::engine::communication::IPartyCommunicationAgentFactory>(
             *factories[0]),
-        schedulerCreator);
+        std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>(
+            schedulerFactory0));
 
     auto future1 = std::async(
         createAttributorWithScheduler<1>,
@@ -84,7 +92,8 @@ class AttributorTest : public ::testing::Test {
         std::reference_wrapper<
             fbpcf::engine::communication::IPartyCommunicationAgentFactory>(
             *factories[1]),
-        schedulerCreator);
+        std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>(
+            schedulerFactory1));
 
     publisherAttributor_ = std::make_unique<Attributor<0>>(future0.get());
     partnerAttributor_ = std::make_unique<Attributor<1>>(future1.get());
