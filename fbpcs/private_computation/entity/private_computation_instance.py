@@ -321,3 +321,12 @@ class PrivateComputationInstance(InstanceBase):
             return False
 
         return feature in self.infra_config.pcs_features
+
+    @property
+    def feature_flags(self) -> Optional[str]:
+        if self.infra_config.pcs_features:
+            return ",".join(
+                [feature.value for feature in self.infra_config.pcs_features]
+            )
+
+        return None
