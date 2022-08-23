@@ -64,7 +64,7 @@ UnionedPCInstance = Union[
 class StatusUpdate:
     status: PrivateComputationInstanceStatus
     status_update_ts: int
-    status_update_ts_delta: int
+    status_update_ts_delta: int = 0
 
 
 # called in post_status_hook
