@@ -75,7 +75,7 @@ class TestDownloadLogs(unittest.TestCase):
         # Error cases #
         ###############
         error_cases = [
-            ("head_bucket", "NoSuchBucket", "Couldn't find bucket.*"),
+            ("head_bucket", "NoSuchBucket", "Couldn't find the S3 bucket.*"),
             ("head_bucket", "SomethingElseHappenedException", "Couldn't find the S3.*"),
         ]
         for s3_endpoint, error_code, exc_regex in error_cases:

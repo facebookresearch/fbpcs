@@ -12,8 +12,6 @@ from threading import Lock
 
 from typing import Callable, Dict, List, Optional
 
-from botocore.exceptions import ClientError
-
 from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
 from fbpcs.infra.logging_service.download_logs.utils.utils import (
     ContainerDetails,
@@ -52,22 +50,6 @@ class AwsContainerLogs(AwsCloud):
         self.containers_download_logs_failed: List[str] = []
         self.write_to_file_lock = Lock()
 
-    def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
-        """
-        Verify if the folder is present in s3 bucket
-        Args:
-            bucket_name (string): Name of the s3 bucket where logs will be stored
-            folder_name (string): Name of folder for which verification is needed
-        Returns:
-            Boolean
-        """
-
-        response = self.get_s3_folder_contents(
-            bucket_name=bucket_name, folder_name=folder_name
-        )
-
-        return "Contents" in response
-
     def upload_logs_to_s3_from_cloudwatch(
         self,
         s3_bucket_name: str,
@@ -98,26 +80,14 @@ class AwsContainerLogs(AwsCloud):
         # take only unique entries of container ARNs to avoid downloading duplicate logs
         container_arn_list = list(set(container_arn_list))
 
-        # verify s3 bucket
-        try:
-            self.s3_client.head_bucket(Bucket=s3_bucket_name)
-        except ClientError as error:
-            if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
-                error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
-            else:
-                # TODO T122315973: This error message doesn't seem right
-                error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
-            # TODO T122315363: Raise more specific exception
-            raise Exception(f"{error_message}")
+        # verify if s3 bucket exists
+        self.verify_s3_bucket(s3_bucket_name=s3_bucket_name)
 
         # create logging folder
-        if not self.ensure_folder_exists(
-            bucket_name=s3_bucket_name, folder_name=f"{self.S3_LOGGING_FOLDER}/"
-        ):
-            self.create_s3_folder(
-                bucket_name=s3_bucket_name,
-                folder_name=f"{self.S3_LOGGING_FOLDER}/",
-            )
+        self.create_s3_folder(
+            bucket_name=s3_bucket_name,
+            folder_name=f"{self.S3_LOGGING_FOLDER}/",
+        )
 
         # creating temp directory to store logs locally
         with tempfile.TemporaryDirectory(prefix=self.tag_name) as tempdir:
@@ -143,7 +113,7 @@ class AwsContainerLogs(AwsCloud):
 
             if enable_data_pipeline_logs:
                 # upload computation run container logs
-                self.upload_computation_run_container_logs(
+                self._upload_computation_run_container_logs(
                     container_arn_list=container_arn_list,
                     local_log_folder_location=local_folder_location,
                 )
@@ -166,9 +136,12 @@ class AwsContainerLogs(AwsCloud):
 
             self.log.info("Removing logs locally.")
 
-    def upload_computation_run_container_logs(
+    def _upload_computation_run_container_logs(
         self, container_arn_list: List[str], local_log_folder_location: str
     ) -> None:
+        """
+        Uploads computation run stage container logs from AWS cloudwatch to S3
+        """
         # Call threading function to download logs locally and upload to S3
         computaion_run_container_log_folder = self.utils.string_formatter(
             StringFormatter.FILE_LOCATION,
