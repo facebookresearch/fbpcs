@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
+#include "fbpcf/scheduler/ISchedulerFactory.h"
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcf/test/TestHelper.h"
 
@@ -23,10 +24,9 @@ InputProcessor<schedulerId> createInputProcessorWithScheduler(
     int myRole,
     InputData inputData,
     int numConversionsPerUser,
-    std::reference_wrapper<
-        fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
-    fbpcf::SchedulerCreator schedulerCreator) {
-  auto scheduler = schedulerCreator(myRole, factory);
+    std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>
+        schedulerFactory) {
+  auto scheduler = schedulerFactory.get().create();
   fbpcf::scheduler::SchedulerKeeper<schedulerId>::setScheduler(
       std::move(scheduler));
   return InputProcessor<schedulerId>(myRole, inputData, numConversionsPerUser);
@@ -61,29 +61,31 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
         epoch,
         numConversionsPerUser);
 
-    auto schedulerCreator =
-        fbpcf::scheduler::createNetworkPlaintextScheduler<unsafe>;
     auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
+
+    auto schedulerFactory0 =
+        fbpcf::scheduler::NetworkPlaintextSchedulerFactory<unsafe>(
+            0, *factories[0]);
+
+    auto schedulerFactory1 =
+        fbpcf::scheduler::NetworkPlaintextSchedulerFactory<unsafe>(
+            1, *factories[1]);
 
     auto future0 = std::async(
         createInputProcessorWithScheduler<0>,
         0,
         publisherInputData,
         numConversionsPerUser,
-        std::reference_wrapper<
-            fbpcf::engine::communication::IPartyCommunicationAgentFactory>(
-            *factories[0]),
-        schedulerCreator);
+        std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>(
+            schedulerFactory0));
 
     auto future1 = std::async(
         createInputProcessorWithScheduler<1>,
         1,
         partnerInputData,
         numConversionsPerUser,
-        std::reference_wrapper<
-            fbpcf::engine::communication::IPartyCommunicationAgentFactory>(
-            *factories[1]),
-        schedulerCreator);
+        std::reference_wrapper<fbpcf::scheduler::ISchedulerFactory<unsafe>>(
+            schedulerFactory1));
 
     publisherInputProcessor_ = future0.get();
     partnerInputProcessor_ = future1.get();

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include <fbpcf/scheduler/NetworkPlaintextSchedulerFactory.h>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
@@ -46,8 +47,9 @@ class AggregationApp {
 
   void run() {
     auto scheduler = outputVisibility_ == common::Visibility::Publisher
-        ? fbpcf::scheduler::createNetworkPlaintextScheduler<false>(
+        ? fbpcf::scheduler::NetworkPlaintextSchedulerFactory<false>(
               MY_ROLE, *communicationAgentFactory_)
+              .create()
         : fbpcf::scheduler::createLazySchedulerWithRealEngine(
               MY_ROLE, *communicationAgentFactory_);
     auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
