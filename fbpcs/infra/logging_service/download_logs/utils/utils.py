@@ -11,7 +11,8 @@ import shutil
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 
 class Utils:
@@ -85,18 +86,32 @@ class Utils:
             )
 
     @staticmethod
-    def copy_file(source: str, destination: str) -> None:
+    def copy_file(source: str, destination: str) -> str:
         """
         Copys folder from source to destination path
         """
         try:
-            shutil.copy2(source, destination)
+            file_path = shutil.copy2(src=source, dst=destination)
         except shutil.SameFileError as err:
             raise shutil.SameFileError(
                 f"{source} and {destination} represents same file)"
             ) from err
         except PermissionError as err:
             raise PermissionError("Permission denied") from err
+        return file_path
+
+    @staticmethod
+    def get_file_name_from_path(file_path: str) -> str:
+        _, file_name = os.path.split(file_path)
+        return file_name
+
+    @staticmethod
+    def does_files_exists(files_path_list: List[str]) -> List[str]:
+        files_exists = []
+        for file_path in files_path_list:
+            if Path(file_path).is_file():
+                files_exists.append(file_path)
+        return files_exists
 
     @staticmethod
     def string_formatter(preset_string: str, *args: str) -> str:
@@ -117,3 +132,13 @@ class ContainerDetails:
     service_name: str
     container_name: str
     container_id: str
+
+
+class DeploymentLogFiles(str, Enum):
+    DEPLOY_LOG = "/tmp/deploy.log"
+    TERRAFORM_LOG = "/tmp/terraform.log"
+    SERVER_LOG = "/tmp/server.log"
+
+    @classmethod
+    def list(cls) -> List[str]:
+        return [e.value for e in DeploymentLogFiles]
