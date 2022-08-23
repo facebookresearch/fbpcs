@@ -108,7 +108,6 @@ def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
             job_name=job_name,
             publisher_bolt_args=publisher_bolt_args,
             partner_bolt_args=partner_bolt_args,
-            stage_flow=publisher_create_instance_args.stage_flow_cls,
             poll_interval=job_specific_args.get(
                 "poll_interval", DEFAULT_POLL_INTERVAL_SEC
             ),

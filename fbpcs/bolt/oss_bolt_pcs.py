@@ -147,6 +147,12 @@ class BoltPCSClient(BoltClient):
         )
         return instance.infra_config.instance_id
 
+    async def get_stage_flow(
+        self, instance_id: str
+    ) -> Optional[Type[PrivateComputationBaseStageFlow]]:
+        pc_instance = self.pcs.get_instance(instance_id)
+        return pc_instance.stage_flow
+
     async def run_stage(
         self,
         instance_id: str,

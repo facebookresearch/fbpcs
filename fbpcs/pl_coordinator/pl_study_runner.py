@@ -187,7 +187,6 @@ def run_study(
                 job_name=f"Job [cell_id: {cell_id}][obj_id: {obj_id}]",
                 publisher_bolt_args=publisher_args,
                 partner_bolt_args=partner_args,
-                stage_flow=stage_flow,
                 num_tries=num_tries,
                 final_stage=final_stage,
                 poll_interval=60,
