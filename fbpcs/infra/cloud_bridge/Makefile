@@ -41,6 +41,7 @@ image-build: $(SERVER_JAR) external_deps
 	@echo "\nCleaning up dependencies..."
 	$(RM) -r aws_terraform_template
 	$(RM) config.yml
+	$(RM) -r logging_service
 	@echo "Done"
 
 image-run: image-build
@@ -51,13 +52,14 @@ clean:
 	server/gradlew -p server clean
 	$(RM) -r aws_terraform_template
 	$(RM) config.yml
+	$(RM) -r logging_service
 
 distclean: clean
 	docker rmi $(CONTAINER_IMAGE)
 
 
 # Dockerfile will not accept these resources as links, so they need to be copied in
-external_deps: config.yml aws_terraform_template
+external_deps: config.yml aws_terraform_template logging_service
 	@echo "Dependencies Copied\n"
 
 config.yml:
@@ -65,3 +67,6 @@ config.yml:
 
 aws_terraform_template:
 	cp -r ../pce/aws_terraform_template .
+
+logging_service:
+	cp -r ../logging_service .
