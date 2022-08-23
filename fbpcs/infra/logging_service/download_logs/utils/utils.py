@@ -85,18 +85,30 @@ class Utils:
             )
 
     @staticmethod
-    def copy_file(source: str, destination: str) -> None:
+    def copy_file(source: str, destination: str) -> str:
         """
-        Copys folder from source to destination path
+        Copys folder from source to destination path.
+        Returns path of the new file (which is same as destiantion)
         """
         try:
-            shutil.copy2(source, destination)
+            file_path = shutil.copy2(src=source, dst=destination)
         except shutil.SameFileError as err:
             raise shutil.SameFileError(
                 f"{source} and {destination} represents same file)"
             ) from err
         except PermissionError as err:
             raise PermissionError("Permission denied") from err
+        return file_path
+
+    @staticmethod
+    def get_file_name_from_path(file_path: str) -> str:
+        """
+        Returns files name from a given filepath
+        Eg: /tmp/something/nothing/everything.log
+        Return: everything.log
+        """
+        _, file_name = os.path.split(file_path)
+        return file_name
 
     @staticmethod
     def string_formatter(preset_string: str, *args: str) -> str:
@@ -117,3 +129,13 @@ class ContainerDetails:
     service_name: str
     container_name: str
     container_id: str
+
+
+class DeploymentLogFiles(str, Enum):
+    DEPLOY_LOG = "/tmp/deploy.log"
+    TERRAFORM_LOG = "/tmp/terraform.log"
+    SERVER_LOG = "/tmp/server.log"
+
+    @classmethod
+    def list(cls) -> List[str]:
+        return [e.value for e in DeploymentLogFiles]
