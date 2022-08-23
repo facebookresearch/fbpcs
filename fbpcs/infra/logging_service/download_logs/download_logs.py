@@ -8,6 +8,7 @@
 import os
 import tempfile
 from concurrent.futures import as_completed, ThreadPoolExecutor
+from pathlib import Path
 from threading import Lock
 
 from typing import Callable, Dict, List, Optional
@@ -15,6 +16,7 @@ from typing import Callable, Dict, List, Optional
 from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
 from fbpcs.infra.logging_service.download_logs.utils.utils import (
     ContainerDetails,
+    DeploymentLogFiles,
     StringFormatter,
     Utils,
 )
@@ -28,6 +30,7 @@ class AwsContainerLogs(AwsCloud):
     ARN_PARSE_LENGTH = 6
     S3_LOGGING_FOLDER = "logging"
     COMPUTATION_RUN_CONTAINER_LOG_FOLDER = "container_logs"
+    DEPLOYMENT_LOGS_FOLDER = "deployment_logs"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
     MAX_THREADS = 500
     THREADS_PER_CORE = 20
@@ -76,6 +79,7 @@ class AwsContainerLogs(AwsCloud):
         """
 
         enable_data_pipeline_logs = kwargs.get("enable_data_pipeline_logs", True)
+        enable_deployment_logs = kwargs.get("enable_deployment_logs", True)
 
         # take only unique entries of container ARNs to avoid downloading duplicate logs
         container_arn_list = list(set(container_arn_list))
@@ -116,6 +120,11 @@ class AwsContainerLogs(AwsCloud):
                 self._upload_computation_run_container_logs(
                     container_arn_list=container_arn_list,
                     local_log_folder_location=local_folder_location,
+                )
+
+            if enable_deployment_logs:
+                self._upload_deployment_logs(
+                    local_log_folder_location=local_folder_location
                 )
 
             # compressing the folder before uploading it to S3
@@ -162,6 +171,32 @@ class AwsContainerLogs(AwsCloud):
         # List all containers for which download failed because of thread crash
         # TODO: T123687467: add retry logic to download logs for the failed cases of download
         self.log_containers_download_log_failed()
+
+    def _upload_deployment_logs(self, local_log_folder_location: str) -> None:
+        # check if file exists
+        deployment_logs = DeploymentLogFiles.list()
+        deployment_logs_exists = filter(lambda x: Path(x).is_file(), deployment_logs)
+
+        # create folder
+        deployment_log_folder = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            local_log_folder_location,
+            self.DEPLOYMENT_LOGS_FOLDER,
+        )
+        self.utils.create_folder(folder_location=deployment_log_folder)
+
+        # copy files to folder
+        for file_path in deployment_logs_exists:
+            file_name = self.utils.get_file_name_from_path(file_path=file_path)
+            file_location = self.utils.string_formatter(
+                StringFormatter.FILE_LOCATION,
+                deployment_log_folder,
+                file_name,
+            )
+
+            file_name = self.utils.copy_file(
+                source=file_path, destination=file_location
+            )
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:
         """
