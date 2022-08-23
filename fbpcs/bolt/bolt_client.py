@@ -44,6 +44,12 @@ class BoltClient(ABC):
         pass
 
     @abstractmethod
+    async def get_stage_flow(
+        self, instance_id: str
+    ) -> Optional[Type[PrivateComputationBaseStageFlow]]:
+        pass
+
+    @abstractmethod
     async def run_stage(
         self,
         instance_id: str,

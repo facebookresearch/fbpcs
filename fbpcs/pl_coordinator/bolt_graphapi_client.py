@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type
 
 import requests
 
@@ -143,6 +143,12 @@ class BoltGraphAPIClient(BoltClient):
         raise TypeError(
             f"Instance args must be of type {BoltPLGraphAPICreateInstanceArgs} or {BoltPAGraphAPICreateInstanceArgs}"
         )
+
+    async def get_stage_flow(
+        self, instance_id: str
+    ) -> Optional[Type[PrivateComputationBaseStageFlow]]:
+        """GraphAPI didn't return stageflow info"""
+        return None
 
     async def run_stage(
         self,

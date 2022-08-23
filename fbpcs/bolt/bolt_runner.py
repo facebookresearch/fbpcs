@@ -9,7 +9,7 @@
 import asyncio
 import logging
 from time import time
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Type
 
 from fbpcs.bolt.bolt_client import BoltClient
 
@@ -75,7 +75,8 @@ class BoltRunner:
                     poll_interval=job.poll_interval,
                     timeout=WAIT_VALID_STATUS_TIMEOUT,
                 )
-                stage = await self.get_next_valid_stage(job)
+                stage_flow = await self.get_stage_flow(job=job)
+                stage = await self.get_next_valid_stage(job=job, stage_flow=stage_flow)
                 # hierarchy: BoltJob num_tries --> BoltRunner num_tries --> default
                 max_tries = job.num_tries or self.num_tries
                 while stage is not None:
@@ -85,7 +86,9 @@ class BoltRunner:
                     while tries < max_tries:
                         tries += 1
                         try:
-                            if await self.job_is_finished(job=job):
+                            if await self.job_is_finished(
+                                job=job, stage_flow=stage_flow
+                            ):
                                 logger.info(
                                     # pyre-fixme: Undefined attribute [16]: `BoltCreateInstanceArgs` has no attribute `output_dir`
                                     f"Run for {job.job_name} completed. View results at {job.partner_bolt_args.create_instance_args.output_dir}"
@@ -119,7 +122,9 @@ class BoltRunner:
                             )
                             await asyncio.sleep(RETRY_INTERVAL)
                     # update stage
-                    stage = await self.get_next_valid_stage(job)
+                    stage = await self.get_next_valid_stage(
+                        job=job, stage_flow=stage_flow
+                    )
                 results = await asyncio.gather(
                     *[
                         self.publisher_client.validate_results(
@@ -313,6 +318,7 @@ class BoltRunner:
     async def job_is_finished(
         self,
         job: BoltJob,
+        stage_flow: Type[PrivateComputationBaseStageFlow],
     ) -> bool:
         publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
         partner_id = job.partner_bolt_args.create_instance_args.instance_id
@@ -324,11 +330,43 @@ class BoltRunner:
             )
         )
         return job.is_finished(
-            publisher_status=publisher_status, partner_status=partner_status
+            publisher_status=publisher_status,
+            partner_status=partner_status,
+            stage_flow=stage_flow,
         )
 
+    async def get_stage_flow(
+        self,
+        job: BoltJob,
+    ) -> Type[PrivateComputationBaseStageFlow]:
+        publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
+        partner_id = job.partner_bolt_args.create_instance_args.instance_id
+
+        publisher_stage_flow, partner_stage_flow = await asyncio.gather(
+            self.publisher_client.get_stage_flow(instance_id=publisher_id),
+            self.partner_client.get_stage_flow(instance_id=partner_id),
+        )
+        if (
+            publisher_stage_flow
+            and partner_stage_flow
+            and publisher_stage_flow != partner_stage_flow
+        ):
+            raise IncompatibleStageError(
+                f"Publisher and Partner should be running in same Stage flow: Publisher is {publisher_stage_flow.get_cls_name()}, Partner is {partner_stage_flow.get_cls_name()}"
+            )
+        elif publisher_stage_flow is None and partner_stage_flow is None:
+            # both stage flow are not exist
+            raise IncompatibleStageError(
+                f"Could not get stage flow: Publisher id is {publisher_id}, Partner id is {partner_id}"
+            )
+
+        # pyre-ignore Incompatible return type [7]
+        return partner_stage_flow or publisher_stage_flow
+
     async def get_next_valid_stage(
-        self, job: BoltJob
+        self,
+        job: BoltJob,
+        stage_flow: Type[PrivateComputationBaseStageFlow],
     ) -> Optional[PrivateComputationBaseStageFlow]:
         """Gets the next stage that should be run.
 
@@ -341,15 +379,14 @@ class BoltRunner:
         Returns:
             The next stage to be run, or None if the job is finished
         """
-
-        if not await self.job_is_finished(job):
+        if not await self.job_is_finished(job=job, stage_flow=stage_flow):
             publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
             publisher_stage = await self.publisher_client.get_valid_stage(
-                instance_id=publisher_id, stage_flow=job.stage_flow
+                instance_id=publisher_id, stage_flow=stage_flow
             )
             partner_id = job.partner_bolt_args.create_instance_args.instance_id
             partner_stage = await self.partner_client.get_valid_stage(
-                instance_id=partner_id, stage_flow=job.stage_flow
+                instance_id=partner_id, stage_flow=stage_flow
             )
 
             # this is expected for all joint stages
@@ -376,8 +413,8 @@ class BoltRunner:
                     # because the one with the started status just needs to call
                     # update_instance one more time
                     # Example: publisher is COMPUTATION_STARTED, partner is COMPUTATION_COMPLETED
-                    job.stage_flow.is_started_status(publisher_status)
-                    and job.stage_flow.is_completed_status(partner_status)
+                    stage_flow.is_started_status(publisher_status)
+                    and stage_flow.is_completed_status(partner_status)
                 ):
                     return publisher_stage
             elif partner_stage is publisher_stage.previous_stage:
@@ -390,8 +427,8 @@ class BoltRunner:
                 # Example: publisher is RESHARD_COMPLETED, partner is RESHARD_FAILED
                 if not partner_stage.is_joint_stage or (
                     # Example: publisher is COMPUTATION_COMPLETED, partner is COMPUTATION_STARTED
-                    job.stage_flow.is_started_status(partner_status)
-                    and job.stage_flow.is_completed_status(publisher_status)
+                    stage_flow.is_started_status(partner_status)
+                    and stage_flow.is_completed_status(publisher_status)
                 ):
                     return partner_stage
             # Example: partner is CREATED, publisher is PID_PREPARE_COMPLETED

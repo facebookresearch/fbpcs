@@ -200,7 +200,6 @@ def run_attribution(
             job_name=f"Job [dataset_id: {dataset_id}][timestamp: {dt_arg}",
             publisher_bolt_args=publisher_args,
             partner_bolt_args=partner_args,
-            stage_flow=stage_flow,
             num_tries=num_tries,
             final_stage=final_stage,
             poll_interval=60,
