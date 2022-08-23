@@ -119,12 +119,15 @@ class TestAwsCloud(unittest.TestCase):
             self.assertEqual(
                 expected,
                 self.aws_container_logs.get_s3_folder_contents(
-                    "bucket", "folder", "def678"
+                    bucket_name="bucket",
+                    folder_name="folder",
+                    next_continuation_token="def678",
                 ),
             )
             self.aws_container_logs.s3_client.list_objects_v2.assert_called_once_with(
                 Bucket="bucket",
                 Prefix="folder",
+                MaxKeys=1,
                 ContinuationToken="def678",
             )
 

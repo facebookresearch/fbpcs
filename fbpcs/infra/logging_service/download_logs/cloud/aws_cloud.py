@@ -170,6 +170,13 @@ class AwsCloud(CloudBaseClass):
             None
         """
 
+        if self.ensure_folder_exists(bucket_name=bucket_name, folder_name=folder_name):
+            self.log.info(
+                f"Folder {folder_name} in S3 bucket {bucket_name} already exists."
+            )
+            self.log.info("Skipping creating a new folder.")
+            return
+
         response = self.s3_client.put_object(Bucket=bucket_name, Key=folder_name)
 
         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
@@ -205,6 +212,7 @@ class AwsCloud(CloudBaseClass):
         self,
         bucket_name: str,
         folder_name: str,
+        max_items: int = 1,
         next_continuation_token: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
@@ -229,7 +237,7 @@ class AwsCloud(CloudBaseClass):
 
         try:
             response = self.s3_client.list_objects_v2(
-                Bucket=bucket_name, Prefix=folder_name, **kwargs
+                Bucket=bucket_name, Prefix=folder_name, MaxKeys=max_items, **kwargs
             )
         except ClientError as error:
             error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
@@ -361,3 +369,32 @@ class AwsCloud(CloudBaseClass):
             raise Exception(f"{error_message}")
 
         return len(response.get("logStreams", [])) == 1
+
+    def verify_s3_bucket(self, s3_bucket_name: str) -> None:
+        # verify s3 bucket
+        try:
+            self.s3_client.head_bucket(Bucket=s3_bucket_name)
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") == "404":
+                error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
+            else:
+                # TODO T122315973: This error message doesn't seem right
+                error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
+            # TODO T122315363: Raise more specific exception
+            raise Exception(f"{error_message}")
+
+    def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
+        """
+        Verify if the folder is present in s3 bucket
+        Args:
+            bucket_name (string): Name of the s3 bucket where logs will be stored
+            folder_name (string): Name of folder for which verification is needed
+        Returns:
+            Boolean
+        """
+
+        response = self.get_s3_folder_contents(
+            bucket_name=bucket_name, folder_name=folder_name
+        )
+
+        return "Contents" in response
