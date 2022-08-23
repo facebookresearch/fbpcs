@@ -63,8 +63,6 @@ COPY config.yml /terraform_deployment/config
 COPY cli.py /terraform_deployment
 RUN mkdir -p /terraform_deployment/fbpcs/infra/cloud_bridge
 COPY deployment_helper /terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper
-COPY logging_service /terraform_deployment/fbpcs/infra/logging_service
-
 # #########################################
 # Spring Boot
 # #########################################
