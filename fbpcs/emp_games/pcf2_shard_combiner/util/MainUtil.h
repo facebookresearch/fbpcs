@@ -52,6 +52,12 @@ common::SchedulerStatistics runApp(
       break;
   }
 
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = "";
+  tlsInfo.keyPath = "";
+  tlsInfo.passphrasePath = "";
+  tlsInfo.useTls = false;
+
   std::map<
       int32_t,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -61,7 +67,7 @@ common::SchedulerStatistics runApp(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      schedulerId, partyInfos, useTls, tlsDir, "shard_combiner_traffic");
+      schedulerId, partyInfos, tlsInfo, "shard_combiner_traffic");
 
   common::SchedulerStatistics schedulerStats;
   if (schedulerId == common::PUBLISHER) {

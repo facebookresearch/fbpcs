@@ -11,6 +11,7 @@
 #include <future>
 #include <memory>
 
+#include <fbpcf/engine/communication/SocketPartyCommunicationAgent.h>
 #include <folly/dynamic.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionApp.h"
@@ -85,12 +86,18 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
             {{0, {serverIp, port + static_cast<int>(index) * 100}},
              {1, {serverIp, port + static_cast<int>(index) * 100}}});
 
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
+        tlsInfo;
+    tlsInfo.certPath = "";
+    tlsInfo.keyPath = "";
+    tlsInfo.passphrasePath = "";
+    tlsInfo.useTls = false;
+
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
         PARTY,
         partyInfos,
-        false,
-        "",
+        tlsInfo,
         "attribution_traffic_for_thread_" + std::to_string(index));
 
     // Each AttributionApp runs numFiles sequentially on a single thread

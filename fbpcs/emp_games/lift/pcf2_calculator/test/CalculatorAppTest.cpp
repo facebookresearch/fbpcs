@@ -42,6 +42,12 @@ void runCalculatorApp(
     std::string tlsDir,
     bool useTls,
     bool useXorEncryption) {
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.useTls = useTls;
+
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -50,7 +56,7 @@ void runCalculatorApp(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      myId, partyInfos, useTls, tlsDir, "lift_test_traffic");
+      myId, partyInfos, tlsInfo, "lift_test_traffic");
 
   auto app = std::make_unique<CalculatorApp<schedulerId>>(
       myId,

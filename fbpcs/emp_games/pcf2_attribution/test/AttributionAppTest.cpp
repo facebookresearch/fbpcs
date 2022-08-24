@@ -37,6 +37,12 @@ static void runGame(
     const std::string& outputPath,
     bool useTls,
     const std::string& tlsDir) {
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.useTls = useTls;
+
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -45,7 +51,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, tlsDir, "attribution_test_traffic");
+      PARTY, partyInfos, tlsInfo, "attribution_test_traffic");
 
   AttributionApp<PARTY, schedulerId, usingBatch, inputEncryption>(
       std::move(communicationAgentFactory),

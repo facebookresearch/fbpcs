@@ -161,6 +161,13 @@ class ShardCombinerAppTestFixture
       const std::string& tlsDir,
       bool xorEncrypted,
       common::ResultVisibility resultVisibility) {
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
+        tlsInfo;
+    tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+    tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+    tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+    tlsInfo.useTls = useTls;
+
     std::map<
         int32_t,
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -171,7 +178,7 @@ class ShardCombinerAppTestFixture
 
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        schedulerId, partyInfos, useTls, tlsDir, "shard_combiner_test_traffic");
+        schedulerId, partyInfos, tlsInfo, "shard_combiner_test_traffic");
 
     ShardCombinerApp<shardSchemaType, schedulerId, usingBatch, inputEncryption>(
         std::move(communicationAgentFactory),

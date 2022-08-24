@@ -77,12 +77,18 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
             {{0, {serverIp, port + index * 100}},
              {1, {serverIp, port + index * 100}}});
 
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
+        tlsInfo;
+    tlsInfo.certPath = "";
+    tlsInfo.keyPath = "";
+    tlsInfo.passphrasePath = "";
+    tlsInfo.useTls = false;
+
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
         PARTY,
         partyInfos,
-        false,
-        "",
+        tlsInfo,
         "aggregation_traffic_for_thread_" + std::to_string(index));
 
     // Each AggregationApp runs numFiles sequentially on a single thread
