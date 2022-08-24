@@ -82,6 +82,13 @@ int main(int argc, char** argv) {
              << ", size: " << input.size() << "\n";
 
   XLOG(INFO) << "Creating communication agent factory\n";
+
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = "";
+  tlsInfo.keyPath = "";
+  tlsInfo.passphrasePath = "";
+  tlsInfo.useTls = false;
+
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -91,7 +98,7 @@ int main(int argc, char** argv) {
            {PARTNER_ROLE, {FLAGS_host, FLAGS_port}}}};
   auto commAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      FLAGS_party, std::move(partyInfos), "compactor_traffic");
+      FLAGS_party, std::move(partyInfos), tlsInfo, "compactor_traffic");
 
   XLOG(INFO) << "Creating scheduler\n";
   auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(

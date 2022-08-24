@@ -43,6 +43,13 @@ static void runGame(
     const std::string& tlsDir,
     bool useNewOutputFormat) {
   FLAGS_use_new_output_format = useNewOutputFormat;
+
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.useTls = useTls;
+
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -51,7 +58,7 @@ static void runGame(
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, tlsDir, "aggregation_test_traffic");
+      PARTY, partyInfos, tlsInfo, "aggregation_test_traffic");
 
   AggregationApp<PARTY, schedulerId>(
       inputEncryption,
