@@ -15,6 +15,8 @@ import re
 import warnings
 from typing import Any, DefaultDict, Dict, List, Optional
 
+from fbpcp.entity.certificate_request import CertificateRequest
+
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
@@ -62,6 +64,7 @@ async def create_and_start_mpc_instance(
     game_args: Optional[List[Dict[str, Any]]] = None,
     container_timeout: Optional[int] = None,
     repository_path: Optional[str] = None,
+    certificate_request: Optional[CertificateRequest] = None,
 ) -> MPCInstance:
     """Creates an MPC instance and runs MPC service with it
 
@@ -76,6 +79,7 @@ async def create_and_start_mpc_instance(
         game_args: arguments that are passed to game binaries by onedocker
         container_timeout: optional duration in seconds before cloud containers timeout
         repository_path: Path from where we can download the required executable.
+        certificate_request: Arguments to create a TLS certificate/key pair
 
     Returns:
         return: an mpc instance started by mpc service
@@ -97,6 +101,7 @@ async def create_and_start_mpc_instance(
         timeout=container_timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
         version=binary_version,
         env_vars=env_vars,
+        certificate_request=certificate_request,
     )
 
 

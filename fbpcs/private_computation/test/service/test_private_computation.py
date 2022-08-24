@@ -782,6 +782,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
                 version=binary_version,
                 env_vars=env_vars,
+                certificate_request=None,
             ),
             mock_mpc_svc.start_instance_async.call_args,
         )

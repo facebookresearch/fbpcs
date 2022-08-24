@@ -15,7 +15,7 @@ Types of changes
 
 ## [Unreleased]
 ### Added
-
+  - Added an option to specify a CertificateRequest when creating an mpc game instance
 ### Changed
   - Mark validate_container_definition as deprecated in PCSContainerService since it is no longer a public method in ContainerService in fbpcp
 ### Removed
