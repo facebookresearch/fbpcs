@@ -6,8 +6,8 @@
  */
 
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include <fbpcf/scheduler/LazySchedulerFactory.h>
 #include <fbpcf/scheduler/NetworkPlaintextSchedulerFactory.h>
-#include <fbpcf/scheduler/SchedulerHelper.h>
 #include <vector>
 
 namespace private_lift {
@@ -90,8 +90,9 @@ template <int schedulerId>
 std::unique_ptr<fbpcf::scheduler::IScheduler>
 CalculatorApp<schedulerId>::createScheduler() {
   return useXorEncryption_
-      ? fbpcf::scheduler::createLazySchedulerWithRealEngine(
+      ? fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
             party_, *communicationAgentFactory_)
+            ->create()
       : fbpcf::scheduler::NetworkPlaintextSchedulerFactory<false>(
             party_, *communicationAgentFactory_)
             .create();
