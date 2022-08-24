@@ -6,6 +6,11 @@ Install docker and Java
 1. Install docker here: https://www.docker.com/products/docker-desktop
 2. Install Java, and make sure using Java 11.
   1. go to: https://java.com/en/download/help/download_options.html and following the installation instruction there. Or Use Homebrew. Run the following command:
+
+  OR
+
+  On your Mac, open Managed Software Center -> Search for Java and select Java Runtime updater.
+
 ```
 brew install java11 `or` brew cask install java11
 ```
@@ -38,10 +43,17 @@ cd fbpcs/infra/cloud_bridge
 chmod +x server/gradlew
 ```
 4. build the image
-  * run the following command
+  * run the following command.
 ```
 make image-build
 ```
+
+In case of error - xcrun: error: invalid active developer path. Run command
+```
+xcode-select --install
+```
+
+
 5. find your image tag/id:
   * run one of the following commands
 ```
@@ -126,4 +138,5 @@ example: /bin/bash deploy.sh undeploy -r us-west-2 -t "your-tag-name" -a 5925138
 # Notes
  * parameter tag (`-t`) cannot be too long. AWS function/variable name must have length less than or equal to 64.
  * parameters p, v are the required cloud_account_id and vpc_id values from the existing PCE publisher-side deployment.
+ * parameter a stands for cloud_accoud_id where the deployment will take place.
  * parameter s, d, b are optional.
