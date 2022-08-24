@@ -29,7 +29,7 @@ if [[ ! " $PACKAGES " =~ $PACKAGE ]] || [[ ! " $TAG " =~ $TAG ]]; then
 fi
 shift
 
-one_docker_repo="one-docker-repository-test"
+one_docker_repo="one-docker-repository-custom"
 lift_package="s3://$one_docker_repo/private_lift/lift/${TAG}/lift"
 pcf2_lift_package="s3://$one_docker_repo/private_lift/pcf2_lift/${TAG}/pcf2_lift"
 attribution_repo="s3://$one_docker_repo/private_attribution"
