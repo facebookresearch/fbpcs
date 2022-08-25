@@ -7,9 +7,10 @@ fbpcp>=0.3.0 # depending on: boto3, botocore
 marshmallow==3.5.1
 networkx>=2.6.3
 requests>=2.26.0
-schema==0.7.0 # fbpcp requires this version, so we must as well
+schema==0.7.5 # fbpcp requires this version, so we must as well
 termcolor==1.1.0
 thriftpy2==0.4.14
 pytz>=2022.1
 thrift>=0.16.0 # logging_service client requires this
-tqdm>=4.55.1
+tqdm==4.55.1 # fbpcp requires this version, so we must as well
+urllib3==1.26.7 # fbpcp requires this version, so we must as well
