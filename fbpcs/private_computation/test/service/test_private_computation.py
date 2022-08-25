@@ -188,12 +188,22 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance(self) -> None:
         test_role = PrivateComputationRole.PUBLISHER
-        for test_game_type, expected_k_anon in (
-            (PrivateComputationGameType.LIFT, DEFAULT_K_ANONYMITY_THRESHOLD_PL),
-            (PrivateComputationGameType.ATTRIBUTION, DEFAULT_K_ANONYMITY_THRESHOLD_PA),
+        for test_game_type, expected_k_anon, pcs_features in (
+            (
+                PrivateComputationGameType.LIFT,
+                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                [PCSFeature.PCS_DUMMY.value, PCSFeature.UNKNOWN.value],
+            ),
+            (
+                PrivateComputationGameType.ATTRIBUTION,
+                DEFAULT_K_ANONYMITY_THRESHOLD_PA,
+                None,
+            ),
         ):
             with self.subTest(
-                test_game_type=test_game_type, expected_k_anon=expected_k_anon
+                test_game_type=test_game_type,
+                expected_k_anon=expected_k_anon,
+                pcs_features=pcs_features,
             ):
                 self.private_computation_service.create_instance(
                     instance_id=self.test_private_computation_id,
@@ -208,7 +218,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     hmac_key=self.test_hmac_key,
                     attribution_rule=AttributionRule.LAST_CLICK_1D,
                     aggregation_type=AggregationType.MEASUREMENT,
-                    pcs_features=[PCSFeature.PCS_DUMMY.value],
+                    pcs_features=pcs_features,
                 )
                 # check instance_repository.create is called with the correct arguments
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
@@ -238,7 +248,16 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     int(yesterday_timestamp),
                     args.product_config.common.post_processing_data.dataset_timestamp,
                 )
-                self.assertTrue(args.has_feature(PCSFeature.PCS_DUMMY))
+                if pcs_features is not None:
+                    self.assertTrue(args.has_feature(PCSFeature.PCS_DUMMY))
+                    # feature flags is unsorted
+                    self.assertEqual(
+                        set("pcs_dummy_feature,unknown".split(",")),
+                        set(args.feature_flags.split(",")),
+                    )
+                else:
+                    self.assertFalse(args.has_feature(PCSFeature.PCS_DUMMY))
+                    self.assertEqual(None, args.feature_flags)
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance_mr_workflow(self) -> None:
