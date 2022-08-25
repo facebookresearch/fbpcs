@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 from fbpcp.entity.cluster_instance import Cluster
 
 from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.container import ContainerService
 from fbpcp.service.container_aws import AWSContainerService
@@ -42,9 +43,12 @@ class PCSContainerService(ContainerService):
         container_definition: str,
         cmd: str,
         env_vars: Optional[Dict[str, str]] = None,
+        container_type: Optional[ContainerType] = None,
     ) -> ContainerInstance:
         instance = self.inner_container_service.create_instance(
-            container_definition, cmd, env_vars
+            container_definition=container_definition,
+            cmd=cmd,
+            env_vars=env_vars,
         )
         log_url = None
         if self.log_retriever:
@@ -57,9 +61,16 @@ class PCSContainerService(ContainerService):
         container_definition: str,
         cmds: List[str],
         env_vars: Optional[Dict[str, str]] = None,
+        container_type: Optional[ContainerType] = None,
     ) -> List[ContainerInstance]:
         return [
-            self.create_instance(container_definition, cmd, env_vars) for cmd in cmds
+            self.create_instance(
+                container_definition=container_definition,
+                cmd=cmd,
+                env_vars=env_vars,
+                container_type=container_type,
+            )
+            for cmd in cmds
         ]
 
     def get_instance(self, instance_id: str) -> Optional[ContainerInstance]:
