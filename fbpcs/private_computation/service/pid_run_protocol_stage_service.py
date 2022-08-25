@@ -139,7 +139,9 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             pid_protocol, pc_role
         )
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
-        env_vars = {}
+        env_vars = {
+            "RUST_LOG": "info",
+        }
         if onedocker_binary_config.repository_path:
             env_vars[
                 ONEDOCKER_REPOSITORY_PATH
