@@ -59,8 +59,8 @@ bool readCsv(
         readLine,
     std::function<void(const std::vector<std::string>&)> processHeader) {
   auto inlineReader = std::make_unique<fbpcf::io::FileReader>(fileName);
-  auto inlineBufferedReader =
-      std::make_unique<fbpcf::io::BufferedReader>(std::move(inlineReader));
+  auto inlineBufferedReader = std::make_unique<fbpcf::io::BufferedReader>(
+      std::move(inlineReader), common::kBufferedReaderChunkSize);
 
   std::string line = inlineBufferedReader->readLine();
   auto header = splitByComma(line, false);

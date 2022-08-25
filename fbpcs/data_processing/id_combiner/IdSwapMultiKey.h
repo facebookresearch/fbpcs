@@ -18,6 +18,15 @@
 namespace pid::combiner {
 
 /*
+ * This chunk size has to be large enough that we don't make
+ * unnecessary trips to cloud storage but small enough that
+ * we don't cause OOM issues. This chunk size was chosen based
+ * on the size of our containers as well as the expected size
+ * of our files to fit the aforementioned constraints.
+ */
+constexpr size_t kBufferedReaderChunkSize = 1073741824; // 2^30
+
+/*
  * This function implements the aggregation logic used by publisher PL run.
  * Currently, PL does not posses ability to handle duplicates. Multi-key
  * PID would introduce duplicates and this process would be required.
