@@ -117,8 +117,8 @@ TEST_F(PidAttributionIdCombinerTest, TestProcessPublisher) {
   PidAttributionIdCombiner p;
 
   auto dataReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_data_path);
-  auto dataFile =
-      std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
+  auto dataFile = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(dataReader), fbpcf::io::kBufferedReaderChunkSize);
   FileMetaData res = p.processHeader(dataFile);
 
   std::vector<std::string> col{
@@ -133,8 +133,8 @@ TEST_F(PidAttributionIdCombinerTest, TestProcessPartner) {
   PidAttributionIdCombiner p;
 
   auto dataReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_data_path);
-  auto dataFile =
-      std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
+  auto dataFile = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(dataReader), fbpcf::io::kBufferedReaderChunkSize);
   FileMetaData res = p.processHeader(dataFile);
 
   std::vector<std::string> col{

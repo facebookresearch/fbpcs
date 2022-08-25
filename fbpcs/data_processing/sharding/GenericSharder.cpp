@@ -87,16 +87,16 @@ std::vector<std::string> GenericSharder::genOutputPaths(
 void GenericSharder::shard() {
   std::size_t numShards = getOutputPaths().size();
   auto reader = std::make_unique<fbpcf::io::FileReader>(getInputPath());
-  auto bufferedReader =
-      std::make_unique<fbpcf::io::BufferedReader>(std::move(reader));
+  auto bufferedReader = std::make_unique<fbpcf::io::BufferedReader>(
+      std::move(reader), BUFFER_SIZE);
 
   std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>> outFiles(0);
 
   for (std::size_t i = 0; i < numShards; ++i) {
     auto fileWriter =
         std::make_unique<fbpcf::io::FileWriter>(getOutputPaths().at(i));
-    auto bufferedWriter =
-        std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter));
+    auto bufferedWriter = std::make_unique<fbpcf::io::BufferedWriter>(
+        std::move(fileWriter), kBufferedWriterChunkSize);
     outFiles.push_back(std::move(bufferedWriter));
     XLOG(INFO) << "Created buffered writer for shard " << std::to_string(i);
   }
@@ -212,8 +212,8 @@ void GenericSharder::logShardDistribution() {
   const std::string& shardDistributionPath =
       outputPath + '_' + "shardDistribution";
   auto fWriter = std::make_unique<fbpcf::io::FileWriter>(shardDistributionPath);
-  auto bWriter =
-      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fWriter));
+  auto bWriter = std::make_unique<fbpcf::io::BufferedWriter>(
+      std::move(fWriter), kBufferedWriterChunkSize);
   std::string shardDstributionJson = getShardDistributionJson();
   bWriter->writeString(shardDstributionJson);
   bWriter->close();

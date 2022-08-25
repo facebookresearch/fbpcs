@@ -51,8 +51,8 @@ MrPidLiftIdCombiner::MrPidLiftIdCombiner(
              << ", protocol_type: " << protocolType;
 
   auto spineReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_spine_path);
-  spineIdFile =
-      std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
+  spineIdFile = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), fbpcf::io::kBufferedReaderChunkSize);
 }
 
 MrPidLiftIdCombiner::~MrPidLiftIdCombiner() {
@@ -61,8 +61,8 @@ MrPidLiftIdCombiner::~MrPidLiftIdCombiner() {
 
 std::stringstream MrPidLiftIdCombiner::idSwap(FileMetaData meta) {
   auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineIdFilePath);
-  auto spineIdFileDup =
-      std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
+  auto spineIdFileDup = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), pid::combiner::kBufferedReaderChunkSize);
 
   std::stringstream idSwapOutFile;
 

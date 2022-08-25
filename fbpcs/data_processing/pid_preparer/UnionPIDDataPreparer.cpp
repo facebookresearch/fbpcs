@@ -40,8 +40,8 @@ static const std::string kIdColumnPrefix = "id_";
 UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   UnionPIDDataPreparerResults res;
   auto reader = std::make_unique<fbpcf::io::FileReader>(inputPath_);
-  auto bufferedReader =
-      std::make_unique<fbpcf::io::BufferedReader>(std::move(reader));
+  auto bufferedReader = std::make_unique<fbpcf::io::BufferedReader>(
+      std::move(reader), kBufferedReaderChunkSize);
 
   // Get a random ID to avoid potential name collisions if multiple
   // runs at the same time point to the same input file

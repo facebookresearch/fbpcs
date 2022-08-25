@@ -31,8 +31,8 @@ MrPidAttributionIdCombiner::MrPidAttributionIdCombiner()
              << ", protocol_type: " << FLAGS_protocol_type;
 
   auto spineReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_spine_path);
-  spineIdFile =
-      std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
+  spineIdFile = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), kBufferedReaderChunkSize);
 }
 MrPidAttributionIdCombiner::~MrPidAttributionIdCombiner() {
   spineIdFile->close();

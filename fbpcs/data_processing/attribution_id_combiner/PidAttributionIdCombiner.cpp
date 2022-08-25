@@ -30,9 +30,10 @@ PidAttributionIdCombiner::PidAttributionIdCombiner()
 
   auto dataReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_data_path);
   auto spineReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_spine_path);
-  dataFile = std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
-  spineIdFile =
-      std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
+  dataFile = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(dataReader), kBufferedReaderChunkSize);
+  spineIdFile = std::make_shared<fbpcf::io::BufferedReader>(
+      std::move(spineReader), kBufferedReaderChunkSize);
 }
 PidAttributionIdCombiner::~PidAttributionIdCombiner() {
   dataFile->close();
