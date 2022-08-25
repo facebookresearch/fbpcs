@@ -16,6 +16,7 @@ Types of changes
 ## [Unreleased]
 ### Added
   - Added an option to specify a CertificateRequest when creating an mpc game instance
+  - Upgrade fbpcp dependency to 0.3.0
 ### Changed
 
 ### Removed
