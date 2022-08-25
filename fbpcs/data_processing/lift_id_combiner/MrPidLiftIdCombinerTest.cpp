@@ -141,8 +141,8 @@ TEST_F(MrPidLiftIdCombinerTest, TestProcessPublisher) {
       FLAGS_protocol_type);
 
   auto dataReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_spine_path);
-  auto dataFile = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(dataReader), fbpcf::io::kBufferedReaderChunkSize);
+  auto dataFile =
+      std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
   FileMetaData res = p.processHeader(dataFile);
 
   EXPECT_EQ(res.headerLine, "id_,opportunity_timestamp,test_flag");
@@ -160,8 +160,8 @@ TEST_F(MrPidLiftIdCombinerTest, TestProcessPartner) {
       FLAGS_protocol_type);
 
   auto dataReader = std::make_unique<fbpcf::io::FileReader>(FLAGS_spine_path);
-  auto dataFile = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(dataReader), fbpcf::io::kBufferedReaderChunkSize);
+  auto dataFile =
+      std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
   FileMetaData res = p.processHeader(dataFile);
 
   EXPECT_EQ(res.headerLine, "id_,event_timestamp,value");
