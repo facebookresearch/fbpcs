@@ -18,6 +18,7 @@ Options:
     -h --help                       Show this help
     --log_path=<path>               Override the default path where logs are saved
     --out=<output_json_file>        Output the digest to a JSON file. By default the summary is written to the log.
+    --validate_one_runner_logs      Validate the logs from one_command_runner test, for regression test
     --verbose                       Set logging level to DEBUG
 """
 
@@ -43,6 +44,7 @@ from fbpcs.infra.logging_service.log_analyzer.entity.flow_stage import FlowStage
 from fbpcs.infra.logging_service.log_analyzer.entity.instance_flow import InstanceFlow
 from fbpcs.infra.logging_service.log_analyzer.entity.log_context import LogContext
 from fbpcs.infra.logging_service.log_analyzer.entity.run_study import RunStudy
+from fbpcs.infra.logging_service.log_analyzer.log_validation import LogValidation
 
 
 @dataclass
@@ -488,12 +490,13 @@ class LogDigest:
         return containers
 
 
-def main(argv: Optional[List[str]] = None) -> None:
+def log_analyzer_main(argv: Optional[List[str]] = None) -> None:
     s = schema.Schema(
         {
             "<logs_file_to_analyze>": schema.Use(Path),
             "--log_path": schema.Or(None, schema.Use(Path)),
             "--out": schema.Or(None, schema.Use(Path)),
+            "--validate_one_runner_logs": bool,
             "--verbose": bool,
             "--help": bool,
         }
@@ -519,20 +522,24 @@ def main(argv: Optional[List[str]] = None) -> None:
     # Concatenate all arguments to a string, with every argument wrapped by quotes.
     all_options = f"{sys.argv[1:]}"[1:-1].replace("', '", "' '")
     # E.g. Command line: log_analyzer 'sample_log/intern-output.txt' '--log_path=a.intern.log' ...
-    logging.info(f"Command line: {Path(__file__).stem} {all_options}")
+    logger.info(f"Command line: {Path(__file__).stem} {all_options}")
 
     digest = LogDigest(logs_file, logger)
     run_study = digest.analyze_logs()
     logger.info(f"Parsed log line count: {run_study.total_line_num}")
-    # pyre-ignore
-    summary_json = run_study.to_json(indent=4)
-    if output_json_path:
-        with open(output_json_path, "w") as outfile:
-            outfile.write(summary_json)
+    if arguments["--validate_one_runner_logs"]:
+        validation = LogValidation(logger)
+        validation.validate_one_runner_logs(run_study)
     else:
-        logger.info(f"Generated run study digest:\n{summary_json}")
+        # pyre-ignore
+        summary_json = run_study.to_json(indent=4)
+        if output_json_path:
+            with open(output_json_path, "w") as outfile:
+                outfile.write(summary_json)
+        else:
+            logger.info(f"Generated run study digest:\n{summary_json}")
     logger.info(f"Done. Instance count: {len(run_study.instances)}")
 
 
 if __name__ == "__main__":
-    main()
+    log_analyzer_main()
