@@ -180,6 +180,10 @@ class PCF2AggregationStageService(PrivateComputationStageService):
             "use_new_output_format": False,
             "run_id": private_computation_instance.infra_config.run_id,
         }
+        if private_computation_instance.feature_flags is not None:
+            common_game_args[
+                "pc_feature_flags"
+            ] = private_computation_instance.feature_flags
 
         game_args = [
             {

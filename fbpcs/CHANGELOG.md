@@ -26,6 +26,7 @@ Types of changes
 
 ### Changed
   - Mark validate_container_definition as deprecated in PCSContainerService since it is no longer a public method in ContainerService in fbpcp
+  - Set pc_feature_flags one docker args
 ### Removed
 
 ## [1.10.0] - 2022-08-12

@@ -15,6 +15,7 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -86,6 +87,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
                 else "",
                 "log_cost": True,
                 "run_id": self.run_id,
+                "pc_feature_flags": private_computation_instance.feature_flags,
             }
         ]
 
@@ -115,6 +117,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
             run_id=self.run_id,
+            pcs_features={PCSFeature.PCS_DUMMY},
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",

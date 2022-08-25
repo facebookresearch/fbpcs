@@ -147,6 +147,10 @@ class AggregateShardsStageService(PrivateComputationStageService):
                 "run_id": pc_instance.infra_config.run_id,
             },
         ]
+        if pc_instance.feature_flags is not None:
+            for arg in game_args:
+                arg["pc_feature_flags"] = pc_instance.feature_flags
+
         # We should only export visibility to scribe when it's set
         if (
             pc_instance.product_config.common.result_visibility

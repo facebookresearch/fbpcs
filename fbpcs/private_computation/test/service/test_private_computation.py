@@ -756,13 +756,15 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         input_directory = "input_directory"
         output_directory = "output_directory"
         server_ips = ["192.0.2.0", "192.0.2.1"]
-        game_args = {
-            "input_filenames": input_file,
-            "input_directory": input_directory,
-            "output_filenames": output_file,
-            "output_directory": output_directory,
-            "concurrency": 1,
-        }
+        game_args = [
+            {
+                "input_filenames": input_file,
+                "input_directory": input_directory,
+                "output_filenames": output_file,
+                "output_directory": output_directory,
+                "concurrency": 1,
+            }
+        ]
         binary_version = self.onedocker_binary_config_map[
             OneDockerBinaryNames.LIFT_COMPUTE.value
         ].binary_version
@@ -776,8 +778,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             binary_version=binary_version,
             container_timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
             server_ips=server_ips,
-            # pyre-fixme[6]: For 9th param expected `Optional[List[Dict[str,
-            #  typing.Any]]]` but got `Dict[str, Union[int, str]]`.
             game_args=game_args,
         )
 

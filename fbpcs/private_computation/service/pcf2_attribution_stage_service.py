@@ -186,6 +186,10 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             "use_postfix": True,
             "run_id": private_computation_instance.infra_config.run_id,
         }
+        if private_computation_instance.feature_flags is not None:
+            common_game_args[
+                "pc_feature_flags"
+            ] = private_computation_instance.feature_flags
 
         game_args = [
             {
