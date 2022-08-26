@@ -161,22 +161,28 @@ class BoltPCSClient(BoltClient):
     ) -> None:
         if stage:
             self.logger.info(f"Running stage {stage.name}")
-            await self.pcs.run_stage_async(
+            pc_instance = await self.pcs.run_stage_async(
                 instance_id=instance_id, stage=stage, server_ips=server_ips
             )
         else:
             self.logger.info("Running next stage")
-            await self.pcs.run_next_async(
+            pc_instance = await self.pcs.run_next_async(
                 instance_id=instance_id, server_ips=server_ips
             )
+
+        # the following log is used by log_analyzer
+        self.logger.info(f"[{instance_id}] {pc_instance}")
 
     async def update_instance(self, instance_id: str) -> BoltState:
         loop = asyncio.get_running_loop()
         pc_instance = await loop.run_in_executor(
             None, self.pcs.update_instance, instance_id
         )
-        # the following log is used by log_analyzer
-        self.logger.info(f"[{instance_id}] {pc_instance}")
+
+        # if the status just changed...
+        if time() - pc_instance.infra_config.status_update_ts < 2:
+            # the following log is used by log_analyzer
+            self.logger.info(f"[{instance_id}] {pc_instance}")
 
         state = BoltState(
             pc_instance_status=pc_instance.infra_config.status,
