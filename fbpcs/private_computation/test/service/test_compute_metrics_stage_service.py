@@ -108,6 +108,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                 "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
                 "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
                 "run_id": self.run_id,
+                "pc_feature_flags": PCSFeature.PCS_DUMMY.value,
             },
             {
                 "input_base_path": private_computation_instance.data_processing_output_path,
@@ -116,6 +117,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                 "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
                 "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
                 "run_id": self.run_id,
+                "pc_feature_flags": PCSFeature.PCS_DUMMY.value,
             },
         ]
 

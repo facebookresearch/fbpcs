@@ -48,6 +48,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="num_files", required=True),
             OneDockerArgument(name="concurrency", required=True),
             OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
         ],
     },
     GameNames.PCF2_LIFT.value: {
@@ -62,6 +63,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="log_cost", required=False),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
         ],
     },
     GameNames.SHARD_AGGREGATOR.value: {
@@ -77,6 +79,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="visibility", required=False),
             OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
         ],
     },
     GameNames.PCF2_SHARD_COMBINER.value: {
@@ -142,6 +145,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="use_new_output_format", required=False),
             OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
         ],
     },
     GameNames.PCF2_AGGREGATION.value: {
@@ -161,6 +165,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="use_new_output_format", required=False),
             OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
         ],
     },
 }
