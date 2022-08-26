@@ -15,6 +15,7 @@ class PCSFeature(Enum):
     BOLT_RUNNER = "bolt_runner"
     PCS_DUMMY = "pcs_dummy_feature"
     PRIVATE_LIFT_PCF2_RELEASE = "private_lift_pcf2_release"
+    PRIVATE_ATTRIBUTION_MR_PID = "private_attribution_with_mr_pid"
     SHARD_COMBINER_PCF2_RELEASE = "shard_combiner_pcf2_release"
     UNKNOWN = "unknown"
 

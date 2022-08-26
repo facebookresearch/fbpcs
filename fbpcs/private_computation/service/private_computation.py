@@ -17,6 +17,7 @@ from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
+from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.simple_metric_service import SimpleMetricService
@@ -78,12 +79,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
-)
-from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
-    PrivateComputationPCF2StageFlow,
-)
-from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
-    PrivateComputationStageFlow,
 )
 from fbpcs.service.workflow import WorkflowService
 from fbpcs.utils.optional import unwrap_or_default
@@ -193,6 +188,10 @@ class PrivateComputationService:
         post_processing_data = post_processing_data_optional or PostProcessingData(
             dataset_timestamp=int(yesterday_timestamp)
         )
+        pcs_feature_enums = {
+            PCSFeature.from_str(feature)
+            for feature in unwrap_or_default(optional=pcs_features, default=[])
+        }
         infra_config: InfraConfig = InfraConfig(
             instance_id=instance_id,
             role=role,
@@ -201,16 +200,12 @@ class PrivateComputationService:
             instances=[],
             game_type=game_type,
             tier=tier,
-            pcs_features={
-                PCSFeature.from_str(feature)
-                for feature in unwrap_or_default(optional=pcs_features, default=[])
-            },
+            pcs_features=pcs_feature_enums,
             pce_config=pce_config,
-            _stage_flow_cls_name=unwrap_or_default(
-                optional=stage_flow_cls,
-                default=PrivateComputationPCF2StageFlow
-                if game_type is PrivateComputationGameType.ATTRIBUTION
-                else PrivateComputationStageFlow,
+            _stage_flow_cls_name=get_stage_flow(
+                game_type=game_type,
+                pcs_feature_enums=pcs_feature_enums,
+                stage_flow_cls=stage_flow_cls,
             ).get_cls_name(),
             num_pid_containers=num_pid_containers,
             num_mpc_containers=self._get_number_of_mpc_containers(

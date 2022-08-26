@@ -6,6 +6,7 @@
 
 
 import asyncio
+
 import json
 import logging
 from datetime import datetime, timedelta, timezone
@@ -16,6 +17,7 @@ import pytz
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
+from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPAGraphAPICreateInstanceArgs,
@@ -156,12 +158,19 @@ def run_attribution(
         )
     instance_data = _get_pa_instance_info(client, instance_id, logger)
     _check_version(instance_data, config)
+    # override stage flow based on pcs feature gate. Please contact PSI team to have a similar adoption
+    stage_flow_override = stage_flow
     # get the enabled features
     pcs_features = _get_pcs_features(instance_data)
     pcs_feature_enums = []
     if pcs_features:
         logger.info(f"Enabled features: {pcs_features}")
         pcs_feature_enums = [PCSFeature.from_str(feature) for feature in pcs_features]
+        stage_flow_override = get_stage_flow(
+            game_type=PrivateComputationGameType.ATTRIBUTION,
+            pcs_feature_enums=set(pcs_feature_enums),
+            stage_flow_cls=stage_flow,
+        )
     num_pid_containers = instance_data[NUM_SHARDS]
     num_mpc_containers = instance_data[NUM_CONTAINERS]
 
@@ -186,7 +195,7 @@ def run_attribution(
                 input_path=input_path,
                 num_pid_containers=num_pid_containers,
                 num_mpc_containers=num_mpc_containers,
-                stage_flow_cls=stage_flow,
+                stage_flow_cls=stage_flow_override,
                 concurrency=concurrency,
                 attribution_rule=attribution_rule,
                 aggregation_type=aggregation_type,
@@ -201,7 +210,7 @@ def run_attribution(
             publisher_bolt_args=publisher_args,
             partner_bolt_args=partner_args,
             num_tries=num_tries,
-            final_stage=final_stage,
+            final_stage=stage_flow_override.get_last_stage().previous_stage,
             poll_interval=60,
         )
         runner = BoltRunner(
@@ -237,7 +246,7 @@ def run_attribution(
             "input_path": input_path,
             "num_mpc_containers": num_mpc_containers,
             "num_pid_containers": num_pid_containers,
-            "stage_flow": stage_flow,
+            "stage_flow": stage_flow_override,
             "logger": LoggerAdapter(logger=logger, prefix=instance_id),
             "game_type": PrivateComputationGameType.ATTRIBUTION,
             "attribution_rule": attribution_rule,
