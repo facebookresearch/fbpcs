@@ -9,6 +9,7 @@
 
 #include "folly/logging/xlog.h"
 
+#include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/InputProcessor.h"
 
 namespace private_lift {
@@ -16,8 +17,10 @@ namespace private_lift {
 template <int schedulerId>
 class Attributor {
  public:
-  Attributor(int myRole, InputProcessor<schedulerId> inputProcessor)
-      : myRole_{myRole}, inputProcessor_{inputProcessor} {
+  Attributor(
+      int myRole,
+      std::unique_ptr<InputProcessor<schedulerId>> inputProcessor)
+      : myRole_{myRole}, inputProcessor_{std::move(inputProcessor)} {
     calculateEvents();
     calculateNumConvSquaredAndValueSquaredAndConverters();
     calculateMatch();
@@ -78,7 +81,7 @@ class Attributor {
   void calculateValues();
 
   int32_t myRole_;
-  InputProcessor<schedulerId> inputProcessor_;
+  std::unique_ptr<InputProcessor<schedulerId>> inputProcessor_;
 
   std::vector<SecBit<schedulerId>> events_;
   SecBit<schedulerId> converters_;

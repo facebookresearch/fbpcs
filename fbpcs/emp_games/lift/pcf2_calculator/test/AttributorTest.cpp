@@ -30,9 +30,9 @@ Attributor<schedulerId> createAttributorWithScheduler(
   auto scheduler = schedulerFactory.get().create();
   fbpcf::scheduler::SchedulerKeeper<schedulerId>::setScheduler(
       std::move(scheduler));
-  auto inputProcessor =
-      InputProcessor<schedulerId>(myRole, inputData, numConversionsPerUser);
-  return Attributor<schedulerId>(myRole, inputProcessor);
+  auto inputProcessor = std::make_unique<InputProcessor<schedulerId>>(
+      myRole, inputData, numConversionsPerUser);
+  return Attributor<schedulerId>(myRole, std::move(inputProcessor));
 }
 
 class AttributorTest : public ::testing::Test {

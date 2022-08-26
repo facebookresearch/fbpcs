@@ -33,11 +33,12 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
   std::string play(const CalculatorGameConfig& config) {
     auto inputProcessor = InputProcessor<schedulerId>(
         party_, config.inputData, config.numConversionsPerUser);
-    auto attributor =
-        std::make_unique<Attributor<schedulerId>>(party_, inputProcessor);
+    auto attributor = std::make_unique<Attributor<schedulerId>>(
+        party_, std::make_unique<InputProcessor<schedulerId>>(inputProcessor));
     auto aggregator = Aggregator<schedulerId>(
         party_,
-        inputProcessor,
+        std::make_unique<InputProcessor<schedulerId>>(
+            std::move(inputProcessor)),
         std::move(attributor),
         config.numConversionsPerUser,
         communicationAgentFactory_);

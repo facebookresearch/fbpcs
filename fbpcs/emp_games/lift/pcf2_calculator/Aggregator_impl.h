@@ -16,7 +16,7 @@ template <int schedulerId>
 void Aggregator<schedulerId>::initOram() {
   // Initialize ORAM
   bool isPublisher = (myRole_ == common::PUBLISHER);
-  if (inputProcessor_.getNumGroups() > 4) {
+  if (inputProcessor_->getNumGroups() > 4) {
     // If the ORAM size is larger than 4, linear ORAM is less efficient
     // theoretically
     unsignedWriteOnlyOramFactory_ =
@@ -46,7 +46,7 @@ void Aggregator<schedulerId>::initOram() {
             isPublisher, 0, 1, *communicationAgentFactory_);
   }
 
-  if (inputProcessor_.getNumTestGroups() > 4) {
+  if (inputProcessor_->getNumTestGroups() > 4) {
     testUnsignedWriteOnlyOramFactory_ =
         fbpcf::mpc_std_lib::oram::getSecureWriteOnlyOramFactory<
             Intp<false, valueWidth>,
@@ -117,16 +117,16 @@ void Aggregator<schedulerId>::sumEvents() {
   std::vector<std::vector<std::vector<bool>>> valueSharesArray;
   for (auto events : attributor_->getEvents()) {
     std::vector<std::vector<bool>> valueShares(
-        valueWidth, std::vector<bool>(inputProcessor_.getNumRows(), 0));
+        valueWidth, std::vector<bool>(inputProcessor_->getNumRows(), 0));
     valueShares[0] = events.extractBit().getValue();
     valueSharesArray.push_back(std::move(valueShares));
   }
   auto oram =
-      unsignedWriteOnlyOramFactory_->create(inputProcessor_.getNumGroups());
+      unsignedWriteOnlyOramFactory_->create(inputProcessor_->getNumGroups());
   auto aggregationOutput = aggregate<false, valueWidth, true>(
-      inputProcessor_.getIndexShares(),
+      inputProcessor_->getIndexShares(),
       valueSharesArray,
-      inputProcessor_.getNumGroups(),
+      inputProcessor_->getNumGroups(),
       std::move(oram));
 
   // Extract metrics
@@ -134,12 +134,12 @@ void Aggregator<schedulerId>::sumEvents() {
   metrics_.testEvents = std::get<0>(populationOutput);
   metrics_.controlEvents = std::get<1>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].testEvents = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlEvents = std::get<1>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].testEvents = std::get<0>(breakdownOutput).at(i);
     publisherBreakdowns_[i].controlEvents = std::get<1>(breakdownOutput).at(i);
   }
@@ -150,14 +150,14 @@ void Aggregator<schedulerId>::sumConverters() {
   XLOG(INFO) << "Aggregate converters";
   // Aggregate across test/control and cohorts
   std::vector<std::vector<bool>> valueShares(
-      valueWidth, std::vector<bool>(inputProcessor_.getNumRows(), 0));
+      valueWidth, std::vector<bool>(inputProcessor_->getNumRows(), 0));
   valueShares[0] = attributor_->getConverters().extractBit().getValue();
   auto oram =
-      unsignedWriteOnlyOramFactory_->create(inputProcessor_.getNumGroups());
+      unsignedWriteOnlyOramFactory_->create(inputProcessor_->getNumGroups());
   auto aggregationOutput = aggregate<false, valueWidth, false>(
-      inputProcessor_.getIndexShares(),
+      inputProcessor_->getIndexShares(),
       valueShares,
-      inputProcessor_.getNumGroups(),
+      inputProcessor_->getNumGroups(),
       std::move(oram));
 
   // Extract metrics
@@ -165,12 +165,12 @@ void Aggregator<schedulerId>::sumConverters() {
   metrics_.testConverters = std::get<0>(populationOutput);
   metrics_.controlConverters = std::get<1>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].testConverters = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlConverters = std::get<1>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].testConverters = std::get<0>(breakdownOutput).at(i);
     publisherBreakdowns_[i].controlConverters =
         std::get<1>(breakdownOutput).at(i);
@@ -184,11 +184,11 @@ void Aggregator<schedulerId>::sumNumConvSquared() {
   auto valueShares =
       attributor_->getNumConvSquared().extractIntShare().getBooleanShares();
   auto oram =
-      unsignedWriteOnlyOramFactory_->create(inputProcessor_.getNumGroups());
+      unsignedWriteOnlyOramFactory_->create(inputProcessor_->getNumGroups());
   auto aggregationOutput = aggregate<false, valueWidth, false>(
-      inputProcessor_.getIndexShares(),
+      inputProcessor_->getIndexShares(),
       valueShares,
-      inputProcessor_.getNumGroups(),
+      inputProcessor_->getNumGroups(),
       std::move(oram));
 
   // Extract metrics
@@ -196,12 +196,12 @@ void Aggregator<schedulerId>::sumNumConvSquared() {
   metrics_.testNumConvSquared = std::get<0>(populationOutput);
   metrics_.controlNumConvSquared = std::get<1>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].testNumConvSquared = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlNumConvSquared = std::get<1>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].testNumConvSquared =
         std::get<0>(breakdownOutput).at(i);
     publisherBreakdowns_[i].controlNumConvSquared =
@@ -214,14 +214,14 @@ void Aggregator<schedulerId>::sumMatch() {
   XLOG(INFO) << "Aggregate matchCount";
   // Aggregate across test/control and cohorts
   std::vector<std::vector<bool>> valueShares(
-      valueWidth, std::vector<bool>(inputProcessor_.getNumRows(), 0));
+      valueWidth, std::vector<bool>(inputProcessor_->getNumRows(), 0));
   valueShares[0] = attributor_->getMatch().extractBit().getValue();
   auto oram =
-      unsignedWriteOnlyOramFactory_->create(inputProcessor_.getNumGroups());
+      unsignedWriteOnlyOramFactory_->create(inputProcessor_->getNumGroups());
   auto aggregationOutput = aggregate<false, valueWidth, false>(
-      inputProcessor_.getIndexShares(),
+      inputProcessor_->getIndexShares(),
       valueShares,
-      inputProcessor_.getNumGroups(),
+      inputProcessor_->getNumGroups(),
       std::move(oram));
 
   // Extract metrics
@@ -229,12 +229,12 @@ void Aggregator<schedulerId>::sumMatch() {
   metrics_.testMatchCount = std::get<0>(populationOutput);
   metrics_.controlMatchCount = std::get<1>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].testMatchCount = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlMatchCount = std::get<1>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].testMatchCount = std::get<0>(breakdownOutput).at(i);
     publisherBreakdowns_[i].controlMatchCount =
         std::get<1>(breakdownOutput).at(i);
@@ -248,27 +248,27 @@ void Aggregator<schedulerId>::sumReachedConversions() {
   std::vector<std::vector<std::vector<bool>>> valueSharesArray;
   for (auto events : attributor_->getReachedConversions()) {
     std::vector<std::vector<bool>> valueShares(
-        valueWidth, std::vector<bool>(inputProcessor_.getNumRows(), 0));
+        valueWidth, std::vector<bool>(inputProcessor_->getNumRows(), 0));
     valueShares[0] = events.extractBit().getValue();
     valueSharesArray.push_back(std::move(valueShares));
   }
   auto oram = testUnsignedWriteOnlyOramFactory_->create(
-      inputProcessor_.getNumTestGroups());
+      inputProcessor_->getNumTestGroups());
   auto aggregationOutput = aggregate<false, valueWidth, true>(
-      inputProcessor_.getTestIndexShares(),
+      inputProcessor_->getTestIndexShares(),
       valueSharesArray,
-      inputProcessor_.getNumTestGroups(),
+      inputProcessor_->getNumTestGroups(),
       std::move(oram));
 
   // Extract metrics
   auto populationOutput = revealPopulationOutput(aggregationOutput, true);
   metrics_.reachedConversions = std::get<0>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, true);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].reachedConversions = std::get<0>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, true);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].reachedConversions =
         std::get<0>(breakdownOutput).at(i);
   }
@@ -284,11 +284,11 @@ void Aggregator<schedulerId>::sumValues() {
     valueSharesArray.push_back(std::move(valueShares));
   }
   auto oram =
-      signedWriteOnlyOramFactory_->create(inputProcessor_.getNumGroups());
+      signedWriteOnlyOramFactory_->create(inputProcessor_->getNumGroups());
   auto aggregationOutput = aggregate<true, valueWidth, true>(
-      inputProcessor_.getIndexShares(),
+      inputProcessor_->getIndexShares(),
       valueSharesArray,
-      inputProcessor_.getNumGroups(),
+      inputProcessor_->getNumGroups(),
       std::move(oram));
 
   // Extract metrics
@@ -296,12 +296,12 @@ void Aggregator<schedulerId>::sumValues() {
   metrics_.testValue = std::get<0>(populationOutput);
   metrics_.controlValue = std::get<1>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].testValue = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlValue = std::get<1>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].testValue = std::get<0>(breakdownOutput).at(i);
     publisherBreakdowns_[i].controlValue = std::get<1>(breakdownOutput).at(i);
   }
@@ -317,22 +317,22 @@ void Aggregator<schedulerId>::sumReachedValues() {
     valueSharesArray.push_back(std::move(valueShares));
   }
   auto oram = testSignedWriteOnlyOramFactory_->create(
-      inputProcessor_.getNumTestGroups());
+      inputProcessor_->getNumTestGroups());
   auto aggregationOutput = aggregate<true, valueWidth, true>(
-      inputProcessor_.getTestIndexShares(),
+      inputProcessor_->getTestIndexShares(),
       valueSharesArray,
-      inputProcessor_.getNumTestGroups(),
+      inputProcessor_->getNumTestGroups(),
       std::move(oram));
 
   // Extract metrics
   auto populationOutput = revealPopulationOutput(aggregationOutput, true);
   metrics_.reachedValue = std::get<0>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, true);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].reachedValue = std::get<0>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, true);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].reachedValue = std::get<0>(breakdownOutput).at(i);
   }
 }
@@ -343,12 +343,12 @@ void Aggregator<schedulerId>::sumValueSquared() {
   // Aggregate across test/control and cohorts
   auto valueShares =
       attributor_->getValueSquared().extractIntShare().getBooleanShares();
-  auto oram =
-      valueSquaredWriteOnlyOramFactory_->create(inputProcessor_.getNumGroups());
+  auto oram = valueSquaredWriteOnlyOramFactory_->create(
+      inputProcessor_->getNumGroups());
   auto aggregationOutput = aggregate<false, valueSquaredWidth, false>(
-      inputProcessor_.getIndexShares(),
+      inputProcessor_->getIndexShares(),
       valueShares,
-      inputProcessor_.getNumGroups(),
+      inputProcessor_->getNumGroups(),
       std::move(oram));
 
   // Extract metrics
@@ -356,12 +356,12 @@ void Aggregator<schedulerId>::sumValueSquared() {
   metrics_.testValueSquared = std::get<0>(populationOutput);
   metrics_.controlValueSquared = std::get<1>(populationOutput);
   auto cohortOutput = revealCohortOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     cohortMetrics_[i].testValueSquared = std::get<0>(cohortOutput).at(i);
     cohortMetrics_[i].controlValueSquared = std::get<1>(cohortOutput).at(i);
   }
   auto breakdownOutput = revealBreakdownOutput(aggregationOutput, false);
-  for (size_t i = 0; i < inputProcessor_.getNumPublisherBreakdowns(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPublisherBreakdowns(); ++i) {
     publisherBreakdowns_[i].testValueSquared =
         std::get<0>(breakdownOutput).at(i);
     publisherBreakdowns_[i].controlValueSquared =
@@ -411,20 +411,20 @@ Aggregator<schedulerId>::revealCohortOutput(
     bool testOnly) const {
   std::vector<NativeIntp<isSigned, width>> testCohortOutput;
   std::vector<NativeIntp<isSigned, width>> controlCohortOutput;
-  for (size_t i = 0; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+  for (size_t i = 0; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
     auto test = aggregationOutput.at(i);
     SecInt<schedulerId, isSigned, width> control;
     if (!testOnly) {
-      control = aggregationOutput.at(i + inputProcessor_.getNumGroups() / 2);
+      control = aggregationOutput.at(i + inputProcessor_->getNumGroups() / 2);
     }
-    if (inputProcessor_.getNumPublisherBreakdowns() > 0) {
+    if (inputProcessor_->getNumPublisherBreakdowns() > 0) {
       test = test +
-          aggregationOutput.at(i + inputProcessor_.getNumPartnerCohorts());
+          aggregationOutput.at(i + inputProcessor_->getNumPartnerCohorts());
       if (!testOnly) {
         control = control +
             aggregationOutput.at(
-                i + inputProcessor_.getNumGroups() / 2 +
-                inputProcessor_.getNumPartnerCohorts());
+                i + inputProcessor_->getNumGroups() / 2 +
+                inputProcessor_->getNumPartnerCohorts());
       }
     }
     // Extract cohort metrics
@@ -446,11 +446,11 @@ Aggregator<schedulerId>::revealBreakdownOutput(
     bool testOnly) const {
   std::vector<NativeIntp<isSigned, width>> testBreakdownOutput;
   std::vector<NativeIntp<isSigned, width>> controlBreakdownOutput;
-  for (size_t j = 0; j < inputProcessor_.getNumPublisherBreakdowns(); ++j) {
+  for (size_t j = 0; j < inputProcessor_->getNumPublisherBreakdowns(); ++j) {
     // The order of the metrics are test and breakdown 0, test and
     // breakdown 1, control and breakdown 0, control and breakdown 1.
-    size_t testStartIndex = j * inputProcessor_.getNumGroups() / 4;
-    size_t controlStartIndex = (2 + j) * inputProcessor_.getNumGroups() / 4;
+    size_t testStartIndex = j * inputProcessor_->getNumGroups() / 4;
+    size_t controlStartIndex = (2 + j) * inputProcessor_->getNumGroups() / 4;
     // Initialize test/control metrics for the case where there are no partner
     // cohorts.
     auto test = aggregationOutput.at(testStartIndex);
@@ -458,7 +458,7 @@ Aggregator<schedulerId>::revealBreakdownOutput(
     if (!testOnly) {
       control = aggregationOutput.at(controlStartIndex);
     }
-    for (size_t i = 1; i < inputProcessor_.getNumPartnerCohorts(); ++i) {
+    for (size_t i = 1; i < inputProcessor_->getNumPartnerCohorts(); ++i) {
       test = test + aggregationOutput.at(i + testStartIndex);
       if (!testOnly) {
         control = control + aggregationOutput.at(i + controlStartIndex);
@@ -482,13 +482,13 @@ Aggregator<schedulerId>::revealPopulationOutput(
   // Initialize test/control metrics for the case where there are no partner
   // cohorts
   auto test = aggregationOutput.at(0);
-  auto control = aggregationOutput.at(inputProcessor_.getNumGroups() / 2);
-  for (size_t i = 1; i < inputProcessor_.getNumGroups() / 2; ++i) {
+  auto control = aggregationOutput.at(inputProcessor_->getNumGroups() / 2);
+  for (size_t i = 1; i < inputProcessor_->getNumGroups() / 2; ++i) {
     // Compute test/control metrics by summing up metrics for each population
     test = test + aggregationOutput.at(i);
     if (!testOnly) {
       control = control +
-          aggregationOutput.at(i + inputProcessor_.getNumGroups() / 2);
+          aggregationOutput.at(i + inputProcessor_->getNumGroups() / 2);
     }
   }
   auto testOutput = test.extractIntShare().getValue();
