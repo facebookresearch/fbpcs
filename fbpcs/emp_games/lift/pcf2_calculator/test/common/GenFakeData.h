@@ -9,7 +9,6 @@
 
 #include <vector>
 
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputData.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftFakeDataParams.h"
 
 namespace private_lift {
