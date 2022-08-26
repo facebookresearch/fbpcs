@@ -17,9 +17,7 @@ template <int schedulerId>
 class Attributor {
  public:
   Attributor(int myRole, InputProcessor<schedulerId> inputProcessor)
-      : myRole_{myRole},
-        inputProcessor_{inputProcessor},
-        numRows_{inputProcessor.getNumRows()} {
+      : myRole_{myRole}, inputProcessor_{inputProcessor} {
     calculateEvents();
     calculateNumConvSquaredAndValueSquaredAndConverters();
     calculateMatch();
@@ -81,7 +79,6 @@ class Attributor {
 
   int32_t myRole_;
   InputProcessor<schedulerId> inputProcessor_;
-  int64_t numRows_;
 
   std::vector<SecBit<schedulerId>> events_;
   SecBit<schedulerId> converters_;
