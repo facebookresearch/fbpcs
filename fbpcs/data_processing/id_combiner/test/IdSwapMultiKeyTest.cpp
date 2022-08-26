@@ -56,15 +56,14 @@ class IdSwapMultiKeyTest : public testing::Test {
     std::string spineInputPath =
         "/tmp/AttributionIdSpineFileCombinerTestSpineInputPath" +
         std::to_string(randStart);
-    constexpr size_t kBufferedReaderChunkSize = 4096;
     data_processing::test_utils::writeVecToFile(dataInput, dataInputPath);
     data_processing::test_utils::writeVecToFile(spineInput, spineInputPath);
     auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataInputPath);
     auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineInputPath);
-    auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
-        std::move(dataReader), kBufferedReaderChunkSize);
-    auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
-        std::move(spineReader), kBufferedReaderChunkSize);
+    auto bufferedDataReader =
+        std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
+    auto bufferedSpineReader =
+        std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
     std::string headerLine = bufferedDataReader->readLine();
     pid::combiner::idSwapMultiKey(
         bufferedDataReader,
@@ -223,15 +222,14 @@ TEST_F(IdSwapMultiKeyTest, MissingPrivateIdsSpine) {
   std::string spineInputPath =
       "/tmp/AttributionIdSpineFileCombinerTestSpineInputPath" +
       std::to_string(randStart);
-  constexpr size_t kBufferedReaderChunkSize = 4096;
   data_processing::test_utils::writeVecToFile(dataInput, dataInputPath);
   data_processing::test_utils::writeVecToFile(spineInput, spineInputPath);
   auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataInputPath);
   auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineInputPath);
-  auto bufferedDataReader = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(dataReader), kBufferedReaderChunkSize);
-  auto bufferedSpineReader = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(spineReader), kBufferedReaderChunkSize);
+  auto bufferedDataReader =
+      std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
+  auto bufferedSpineReader =
+      std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
   int32_t maxIdColumnCnt = 1;
   std::string headerLine = bufferedDataReader->readLine();
   ASSERT_DEATH(

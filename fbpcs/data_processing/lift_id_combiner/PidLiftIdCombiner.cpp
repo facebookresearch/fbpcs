@@ -50,10 +50,9 @@ PidLiftIdCombiner::PidLiftIdCombiner(
 
   auto dataReader = std::make_unique<fbpcf::io::FileReader>(dataPath);
   auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineIdFilePath);
-  dataFile = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(dataReader), kBufferedReaderChunkSize);
-  spineIdFile = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(spineReader), kBufferedReaderChunkSize);
+  dataFile = std::make_shared<fbpcf::io::BufferedReader>(std::move(dataReader));
+  spineIdFile =
+      std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
 }
 PidLiftIdCombiner::~PidLiftIdCombiner() {
   dataFile->close();
