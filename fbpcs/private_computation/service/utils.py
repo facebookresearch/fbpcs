@@ -37,6 +37,7 @@ from fbpcs.onedocker_binary_config import (
 )
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
+from fbpcs.private_computation.entity.pid_mr_config import Protocol
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -45,7 +46,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.service.constants import (
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     DEFAULT_LOG_COST_TO_S3,
-    Protocol,
 )
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_service_data import (
@@ -225,7 +225,7 @@ async def start_combiner_service(
     log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
     wait_for_containers: bool = False,
     max_id_column_count: int = 1,
-    protocol_type: str = Protocol.PidProtocal.value,
+    protocol_type: str = Protocol.PID_PROTOCOL.value,
 ) -> List[ContainerInstance]:
     """Run combiner service and return those container instances
 
@@ -276,7 +276,7 @@ async def start_combiner_service(
         stage_data.service,
     )
 
-    if protocol_type == Protocol.MrPidProtocal.value:
+    if protocol_type == Protocol.MR_PID_PROTOCOL.value:
         spine_path = private_computation_instance.pid_mr_stage_output_spine_path
         data_path = private_computation_instance.pid_mr_stage_output_data_path
     else:
