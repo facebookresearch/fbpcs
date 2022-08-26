@@ -17,7 +17,6 @@
 #include "fbpcf/aws/AwsSdk.h"
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcf/io/api/FileIOWrappers.h"
-#include "fbpcf/scheduler/LazySchedulerFactory.h"
 #include "fbpcs/emp_games/compactor/AttributionOutput.h"
 #include "fbpcs/emp_games/compactor/CompactorGame.h"
 #include "fbpcs/performance_tools/CostEstimation.h"
@@ -102,9 +101,8 @@ int main(int argc, char** argv) {
       FLAGS_party, std::move(partyInfos), tlsInfo, "compactor_traffic");
 
   XLOG(INFO) << "Creating scheduler\n";
-  auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-                       FLAGS_party, *commAgentFactory)
-                       ->create();
+  auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
+      FLAGS_party, *commAgentFactory);
 
   XLOG(INFO) << "Starting game\n";
   auto game = compactor::ShuffleBasedCompactorGame<AttributionValue, 0>(

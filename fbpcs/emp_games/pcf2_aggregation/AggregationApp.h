@@ -8,9 +8,9 @@
 #pragma once
 
 #include <fbpcf/io/api/FileIOWrappers.h>
-#include <fbpcf/scheduler/LazySchedulerFactory.h>
 #include <fbpcf/scheduler/NetworkPlaintextSchedulerFactory.h>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
+#include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 #include "fbpcs/emp_games/pcf2_aggregation/AggregationGame.h"
 #include "fbpcs/emp_games/pcf2_aggregation/AggregationOptions.h"
@@ -50,9 +50,8 @@ class AggregationApp {
         ? fbpcf::scheduler::NetworkPlaintextSchedulerFactory<false>(
               MY_ROLE, *communicationAgentFactory_)
               .create()
-        : fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-              MY_ROLE, *communicationAgentFactory_)
-              ->create();
+        : fbpcf::scheduler::createLazySchedulerWithRealEngine(
+              MY_ROLE, *communicationAgentFactory_);
     auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
     AggregationGame<schedulerId> game(

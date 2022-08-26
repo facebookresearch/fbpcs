@@ -16,7 +16,6 @@
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/scheduler/PlaintextScheduler.h"
 #include "fbpcf/scheduler/WireKeeper.h"
-#include "fbpcf/test/TestHelper.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
@@ -126,15 +125,13 @@ std::vector<std::vector<bool>> shareAttributionResultsWithScheduler(
     int myId,
     std::vector<std::vector<AttributionResult>> attributionResults,
     std::shared_ptr<
-        fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-        communicationAgentFactory,
-    std::shared_ptr<fbpcf::scheduler::ISchedulerFactory<unsafe>>
-        schedulerFactory) {
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
+    fbpcf::SchedulerCreator schedulerCreator) {
   // share attribution results
-  auto scheduler = schedulerFactory->create();
+  auto scheduler = schedulerCreator(myId, *factory);
   auto game = std::make_unique<AggregationGame<schedulerId>>(
       std::move(scheduler),
-      std::move(communicationAgentFactory),
+      std::move(factory),
       common::InputEncryption::Plaintext);
   auto privateAttributionResults =
       game->privatelyShareAttributionResults(attributionResults).at(0);
@@ -156,16 +153,14 @@ shareAttributionReformattedResultsWithScheduler(
     std::vector<std::vector<AttributionReformattedResult>>
         attributionReformattedResults,
     std::shared_ptr<
-        fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-        communicationAgentFactory,
-    std::shared_ptr<fbpcf::scheduler::ISchedulerFactory<unsafe>>
-        schedulerFactory) {
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
+    fbpcf::SchedulerCreator schedulerCreator) {
   FLAGS_use_new_output_format = true;
   // share attribution results
-  auto scheduler = schedulerFactory->create();
+  auto scheduler = schedulerCreator(myId, *factory);
   auto game = std::make_unique<AggregationGame<schedulerId>>(
       std::move(scheduler),
-      std::move(communicationAgentFactory),
+      std::move(factory),
       common::InputEncryption::Plaintext);
   auto privateAttributionReformattedResults =
       game->privatelyShareAttributionReformattedResults(
@@ -191,8 +186,7 @@ shareAttributionReformattedResultsWithScheduler(
 }
 
 void testAttributionResultWithScheduler(
-    fbpcf::SchedulerType schedulerType,
-    fbpcf::EngineType engineType) {
+    fbpcf::SchedulerCreator schedulerCreator) {
   std::vector<std::vector<AttributionResult>> publisherAttributionResult{
       std::vector<AttributionResult>{
           AttributionResult{true},
@@ -208,34 +202,21 @@ void testAttributionResultWithScheduler(
           AttributionResult{false}}};
 
   // share results and open to one party
-  auto communicationAgentFactories =
-      fbpcf::engine::communication::getInMemoryAgentFactory(2);
-
-  // Creating shared pointers to the communicationAgentFactories
-  std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-      factory0 = std::move(communicationAgentFactories[0]);
-
-  std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-      factory1 = std::move(communicationAgentFactories[1]);
-
-  auto schedulerFactory0 = fbpcf::getSchedulerFactory<unsafe>(
-      schedulerType, engineType, 0, *factory0);
-  auto schedulerFactory1 = fbpcf::getSchedulerFactory<unsafe>(
-      schedulerType, engineType, 1, *factory1);
+  auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
 
   auto future0 = std::async(
       shareAttributionResultsWithScheduler<common::PUBLISHER>,
       common::PUBLISHER,
       publisherAttributionResult,
-      factory0,
-      std::move(schedulerFactory0));
+      std::move(factories[common::PUBLISHER]),
+      schedulerCreator);
 
   auto future1 = std::async(
       shareAttributionResultsWithScheduler<common::PARTNER>,
       common::PARTNER,
       partnerAttributionResult,
-      factory1,
-      std::move(schedulerFactory1));
+      std::move(factories[common::PARTNER]),
+      schedulerCreator);
 
   auto res0 = future0.get().at(0);
   auto res1 = future1.get().at(0);
@@ -252,24 +233,22 @@ void testAttributionResultWithScheduler(
 }
 
 TEST(AggregationGameTest, TestAttributionResultNetworkPlaintextScheduler) {
-  testAttributionResultWithScheduler(
-      fbpcf::SchedulerType::NetworkPlaintext,
-      fbpcf::EngineType::EngineWithDummyTuple);
+  testAttributionResultWithScheduler(fbpcf::getSchedulerCreator<unsafe>(
+      fbpcf::SchedulerType::NetworkPlaintext));
 }
 
 TEST(AggregationGameTest, TestAttributionResultEagerScheduler) {
   testAttributionResultWithScheduler(
-      fbpcf::SchedulerType::Eager, fbpcf::EngineType::EngineWithDummyTuple);
+      fbpcf::scheduler::createEagerSchedulerWithInsecureEngine<unsafe>);
 }
 
 TEST(AggregationGameTest, TestAttributionResultLazyScheduler) {
   testAttributionResultWithScheduler(
-      fbpcf::SchedulerType::Lazy, fbpcf::EngineType::EngineWithDummyTuple);
+      fbpcf::scheduler::createLazySchedulerWithInsecureEngine<unsafe>);
 }
 
 void testAttributionReformattedResultWithScheduler(
-    fbpcf::SchedulerType schedulerType,
-    fbpcf::EngineType engineType) {
+    fbpcf::SchedulerCreator schedulerCreator) {
   std::vector<std::vector<AttributionReformattedResult>>
       publisherAttributionResult{std::vector<AttributionReformattedResult>{
           AttributionReformattedResult{1, 20, true},
@@ -285,34 +264,21 @@ void testAttributionReformattedResultWithScheduler(
           AttributionReformattedResult{0, 60, false}}};
 
   // share results and open to one party
-  auto communicationAgentFactories =
-      fbpcf::engine::communication::getInMemoryAgentFactory(2);
-
-  // Creating shared pointers to the communicationAgentFactories
-  std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-      communicationAgentFactory0 = std::move(communicationAgentFactories[0]);
-
-  std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-      communicationAgentFactory1 = std::move(communicationAgentFactories[1]);
-
-  auto schedulerFactory0 = fbpcf::getSchedulerFactory<unsafe>(
-      schedulerType, engineType, 0, *communicationAgentFactory0);
-  auto schedulerFactory1 = fbpcf::getSchedulerFactory<unsafe>(
-      schedulerType, engineType, 1, *communicationAgentFactory1);
+  auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
 
   auto future0 = std::async(
       shareAttributionReformattedResultsWithScheduler<common::PUBLISHER>,
       common::PUBLISHER,
       publisherAttributionResult,
-      communicationAgentFactory0,
-      std::move(schedulerFactory0));
+      std::move(factories[common::PUBLISHER]),
+      schedulerCreator);
 
   auto future1 = std::async(
       shareAttributionReformattedResultsWithScheduler<common::PARTNER>,
       common::PARTNER,
       partnerAttributionResult,
-      communicationAgentFactory1,
-      std::move(schedulerFactory1));
+      std::move(factories[common::PARTNER]),
+      schedulerCreator);
 
   auto res0 = future0.get().at(0);
   auto res1 = future1.get().at(0);
@@ -338,18 +304,18 @@ TEST(
     AggregationGameTest,
     TestAttributionReformattedResultNetworkPlaintextScheduler) {
   testAttributionReformattedResultWithScheduler(
-      fbpcf::SchedulerType::NetworkPlaintext,
-      fbpcf::EngineType::EngineWithDummyTuple);
+      fbpcf::getSchedulerCreator<unsafe>(
+          fbpcf::SchedulerType::NetworkPlaintext));
 }
 
 TEST(AggregationGameTest, TestAttributionReformattedResultEagerScheduler) {
   testAttributionReformattedResultWithScheduler(
-      fbpcf::SchedulerType::Eager, fbpcf::EngineType::EngineWithDummyTuple);
+      fbpcf::scheduler::createEagerSchedulerWithInsecureEngine<unsafe>);
 }
 
 TEST(AggregationGameTest, TestAttributionReformattedResultLazyScheduler) {
   testAttributionReformattedResultWithScheduler(
-      fbpcf::SchedulerType::Lazy, fbpcf::EngineType::EngineWithDummyTuple);
+      fbpcf::scheduler::createLazySchedulerWithInsecureEngine<unsafe>);
 }
 
 // Helper method to share attribution results and open to one party with
@@ -360,9 +326,8 @@ std::vector<uint64_t> retrieveValidAdIdsWithSchedulerAndRealEngine(
     std::vector<std::vector<TouchpointMetadata>> tpmArrays,
     std::shared_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
-    std::shared_ptr<fbpcf::scheduler::ISchedulerFactory<unsafe>>
-        schedulerFactory) {
-  auto scheduler = schedulerFactory->create();
+    fbpcf::SchedulerCreator schedulerCreator) {
+  auto scheduler = schedulerCreator(myId, *factory);
   auto game = std::make_unique<AggregationGame<schedulerId>>(
       std::move(scheduler),
       std::move(factory),
@@ -371,8 +336,7 @@ std::vector<uint64_t> retrieveValidAdIdsWithSchedulerAndRealEngine(
 }
 
 void testRetrieveValidAdIdsWithScheduler(
-    fbpcf::SchedulerType schedulerType,
-    fbpcf::EngineType engineType) {
+    fbpcf::SchedulerCreator schedulerCreator) {
   std::vector<std::vector<TouchpointMetadata>> publisherTouchpointMetadata{
       std::vector<TouchpointMetadata>{
           TouchpointMetadata{0, 8000, true, 100, 0},
@@ -390,34 +354,21 @@ void testRetrieveValidAdIdsWithScheduler(
           TouchpointMetadata{0, 0, false, 0, 0}}};
 
   // share results and open to one party
-  auto communicationAgentFactories =
-      fbpcf::engine::communication::getInMemoryAgentFactory(2);
-
-  // Creating shared pointers to the communicationAgentFactories
-  std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-      communicationAgentFactory0 = std::move(communicationAgentFactories[0]);
-
-  std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-      communicationAgentFactory1 = std::move(communicationAgentFactories[1]);
-
-  auto schedulerFactory0 = fbpcf::getSchedulerFactory<unsafe>(
-      schedulerType, engineType, 0, *communicationAgentFactory0);
-  auto schedulerFactory1 = fbpcf::getSchedulerFactory<unsafe>(
-      schedulerType, engineType, 1, *communicationAgentFactory1);
+  auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
 
   auto future0 = std::async(
       retrieveValidAdIdsWithSchedulerAndRealEngine<common::PUBLISHER>,
       common::PUBLISHER,
       publisherTouchpointMetadata,
-      communicationAgentFactory0,
-      std::move(schedulerFactory0));
+      std::move(factories[common::PUBLISHER]),
+      schedulerCreator);
 
   auto future1 = std::async(
       retrieveValidAdIdsWithSchedulerAndRealEngine<common::PARTNER>,
       common::PARTNER,
       partnerTouchpointMetadata,
-      communicationAgentFactory1,
-      std::move(schedulerFactory1));
+      std::move(factories[common::PARTNER]),
+      schedulerCreator);
 
   auto res0 = future0.get();
   auto res1 = future1.get();
@@ -432,19 +383,18 @@ void testRetrieveValidAdIdsWithScheduler(
 }
 
 TEST(AggregationGameTest, TestRetrieveValidAdIdsNetworkPlaintextScheduler) {
-  testRetrieveValidAdIdsWithScheduler(
-      fbpcf::SchedulerType::NetworkPlaintext,
-      fbpcf::EngineType::EngineWithDummyTuple);
+  testRetrieveValidAdIdsWithScheduler(fbpcf::getSchedulerCreator<unsafe>(
+      fbpcf::SchedulerType::NetworkPlaintext));
 }
 
 TEST(AggregationGameTest, TestRetrieveValidAdIdsEagerScheduler) {
   testRetrieveValidAdIdsWithScheduler(
-      fbpcf::SchedulerType::Eager, fbpcf::EngineType::EngineWithDummyTuple);
+      fbpcf::scheduler::createEagerSchedulerWithInsecureEngine<unsafe>);
 }
 
 TEST(AggregationGameTest, TestRetrieveValidAdIdsLazyScheduler) {
   testRetrieveValidAdIdsWithScheduler(
-      fbpcf::SchedulerType::Lazy, fbpcf::EngineType::EngineWithDummyTuple);
+      fbpcf::scheduler::createLazySchedulerWithInsecureEngine<unsafe>);
 }
 
 template <int schedulerId>
