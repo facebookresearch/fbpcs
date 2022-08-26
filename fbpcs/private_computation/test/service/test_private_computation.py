@@ -87,6 +87,9 @@ from fbpcs.private_computation.service.utils import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.private_computation.stage_flows.private_computation_mr_pid_pcf2_lift_stage_flow import (
+    PrivateComputationMrPidPCF2LiftStageFlow,
+)
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
 )
@@ -199,6 +202,24 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 DEFAULT_K_ANONYMITY_THRESHOLD_PA,
                 None,
             ),
+            # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for attribution
+            (
+                PrivateComputationGameType.ATTRIBUTION,
+                DEFAULT_K_ANONYMITY_THRESHOLD_PA,
+                [
+                    PCSFeature.PCS_DUMMY.value,
+                    PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
+                ],
+            ),
+            # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for lift
+            (
+                PrivateComputationGameType.LIFT,
+                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                [
+                    PCSFeature.PCS_DUMMY.value,
+                    PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
+                ],
+            ),
         ):
             with self.subTest(
                 test_game_type=test_game_type,
@@ -249,15 +270,39 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     args.product_config.common.post_processing_data.dataset_timestamp,
                 )
                 if pcs_features is not None:
-                    self.assertTrue(args.has_feature(PCSFeature.PCS_DUMMY))
-                    # feature flags is unsorted
-                    self.assertEqual(
-                        set("pcs_dummy_feature,unknown".split(",")),
-                        set(args.feature_flags.split(",")),
-                    )
+                    if PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value in pcs_features:
+                        self.assertTrue(
+                            args.has_feature(PCSFeature.PRIVATE_ATTRIBUTION_MR_PID)
+                        )
+                    else:
+                        self.assertTrue(args.has_feature(PCSFeature.PCS_DUMMY))
+                        # feature flags is unsorted
+                        self.assertEqual(
+                            set("pcs_dummy_feature,unknown".split(",")),
+                            set(args.feature_flags.split(",")),
+                        )
                 else:
                     self.assertFalse(args.has_feature(PCSFeature.PCS_DUMMY))
                     self.assertEqual(None, args.feature_flags)
+
+                # assert PCSFeature.PRIVATE_ATTRIBUTION_MR_PID will override stage flow cls
+                if (
+                    pcs_features is not None
+                    and PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value in pcs_features
+                ):
+                    self.assertEqual(
+                        args.stage_flow,
+                        PrivateComputationMRStageFlow
+                        if test_game_type is PrivateComputationGameType.ATTRIBUTION
+                        else PrivateComputationMrPidPCF2LiftStageFlow,
+                    )
+                elif test_game_type is PrivateComputationGameType.ATTRIBUTION:
+                    self.assertEqual(
+                        args.stage_flow,
+                        PrivateComputationPCF2StageFlow,
+                    )
+                else:
+                    self.assertEqual(args.stage_flow, PrivateComputationStageFlow)
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance_mr_workflow(self) -> None:

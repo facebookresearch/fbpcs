@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Type
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
+from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
@@ -136,13 +137,19 @@ def run_study(
 
     # check that the version in config.yml is same as from graph api
     _check_versions(cell_obj_instance, config, client)
-
+    # override stage flow based on pcs feature gate. Please contact PSI team to have a similar adoption
+    stage_flow_override = stage_flow
     # get the enabled features
     pcs_features = _get_pcs_features(cell_obj_instance, client)
-    pcs_feature_enums = []
+    pcs_feature_enums = set()
     if pcs_features:
         logger.info(f"Enabled features: {pcs_features}")
-        pcs_feature_enums = [PCSFeature.from_str(feature) for feature in pcs_features]
+        pcs_feature_enums = {PCSFeature.from_str(feature) for feature in pcs_features}
+        stage_flow_override = get_stage_flow(
+            game_type=PrivateComputationGameType.LIFT,
+            pcs_feature_enums=pcs_feature_enums,
+            stage_flow_cls=stage_flow,
+        )
 
     ## Step 3. Run Instances. Run maximum number of instances in parallel
 
@@ -177,7 +184,7 @@ def run_study(
                     input_path=input_path,
                     num_pid_containers=int(num_shards),
                     num_mpc_containers=int(num_shards),
-                    stage_flow_cls=stage_flow,
+                    stage_flow_cls=stage_flow_override,
                     result_visibility=result_visibility or ResultVisibility.PUBLIC,
                     pcs_features=pcs_features,
                     run_id=run_id,
@@ -188,7 +195,7 @@ def run_study(
                 publisher_bolt_args=publisher_args,
                 partner_bolt_args=partner_args,
                 num_tries=num_tries,
-                final_stage=final_stage,
+                final_stage=stage_flow_override.get_last_stage().previous_stage,
                 poll_interval=60,
             )
             job_list.append(job)
@@ -210,7 +217,7 @@ def run_study(
                 instance_ids=instance_ids,
                 input_paths=chunk_input_paths,
                 num_shards_list=chunk_num_shards,
-                stage_flow=stage_flow,
+                stage_flow=stage_flow_override,
                 logger=logger,
                 num_tries=num_tries,
                 dry_run=dry_run,
