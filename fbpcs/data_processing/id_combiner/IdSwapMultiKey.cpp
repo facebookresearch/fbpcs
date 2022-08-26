@@ -121,8 +121,8 @@ void idSwapMultiKey(
    * first read.
    */
   auto spineReader = std::make_unique<fbpcf::io::FileReader>(spineIdPath);
-  auto spineIdFileDup = std::make_shared<fbpcf::io::BufferedReader>(
-      std::move(spineReader), pid::combiner::kBufferedReaderChunkSize);
+  auto spineIdFileDup =
+      std::make_shared<fbpcf::io::BufferedReader>(std::move(spineReader));
   std::vector<std::string> header;
   folly::split(kCommaSplitRegex, headerLine, header);
 
