@@ -49,14 +49,6 @@ jobs:
       - name: Print Tracker Hash
         run: echo ${{ github.event.inputs.tracker_hash}}
 
-      - name: Check disk space and docker images
-        run: |
-          pwd ; \
-          uname -a ; \
-          free -m ; \
-          df -h ; \
-          docker images
-
       - name: One command runner
         id: runner
         continue-on-error: true
@@ -67,23 +59,23 @@ jobs:
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \
-          --version=${{ github.event.inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2> ${{env.CONSOLE_OUTPUT_FILE}}
+          --version=${{ github.event.inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2>&1
 
       - name: Print runner console output
         continue-on-error: true
         run: |
           cat ${{env.CONSOLE_OUTPUT_FILE}}
 
-      - name: Check runner failure
-        if: steps.runner.outcome != 'failure'
+      - name: Abort when runner failed
+        if: steps.runner.outcome != 'success'
         run: |
           echo "Please check the runner console output in the above step." ; \
           exit 1
 
-      - name: Validate logs
+      - name: Validate runner logs
         run: |
-          docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}:/output.txt" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
-          python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer /output.txt
+          docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}:${{env.CONSOLE_OUTPUT_FILE}}" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
+          python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
