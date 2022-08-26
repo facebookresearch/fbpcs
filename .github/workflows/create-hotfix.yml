@@ -43,4 +43,4 @@ jobs:
         run: git cherry-pick ${{ github.event.inputs.hotfix_commit }}
 
       - name: Push hotfix commit to origin
-        run: git push -u origin ${{ env.BRANCH_NAME }}
+        run: git push -f -u origin ${{ env.BRANCH_NAME }}
