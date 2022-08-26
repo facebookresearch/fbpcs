@@ -125,6 +125,60 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         )
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
+    async def test_get_server_ips_after_start(self, mock_sleep) -> None:
+        mock_server_ips = ["1.1.1.1"]
+        for (test_stage, test_publisher_status) in (
+            (  # test Non-joint stage should get None server ips
+                DummyNonJointStageFlow.NON_JOINT_STAGE,
+                DummyNonJointStageFlow.NON_JOINT_STAGE.completed_status,
+            ),
+            (
+                DummyJointStageFlow.JOINT_STAGE,
+                DummyJointStageFlow.JOINT_STAGE.started_status,
+            ),
+            (
+                DummyJointStageFlow.JOINT_STAGE,
+                DummyJointStageFlow.JOINT_STAGE.failed_status,
+            ),
+            (
+                DummyJointStageFlow.JOINT_STAGE,
+                DummyJointStageFlow.JOINT_STAGE.completed_status,
+            ),
+        ):
+            with self.subTest(
+                test_stage=test_stage,
+                test_publisher_status=test_publisher_status,
+            ):
+                self.test_runner.publisher_client.update_instance = mock.AsyncMock(
+                    return_value=BoltState(
+                        pc_instance_status=test_publisher_status,
+                        server_ips=mock_server_ips,
+                    )
+                )
+                if (
+                    test_publisher_status is test_stage.started_status
+                    or not test_stage.is_joint_stage
+                ):
+                    server_ips = await self.test_runner.get_server_ips_after_start(
+                        instance_id="publisher_id",
+                        stage=test_stage,
+                        timeout=10,
+                        poll_interval=5,
+                    )
+                    if test_stage.is_joint_stage:
+                        self.assertEqual(server_ips, mock_server_ips)
+                    else:
+                        self.assertEqual(server_ips, None)
+                else:
+                    with self.assertRaises(StageFailedException):
+                        await self.test_runner.get_server_ips_after_start(
+                            instance_id="publisher_id",
+                            stage=test_stage,
+                            timeout=10,
+                            poll_interval=5,
+                        )
+
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     async def test_joint_stage_retry_gets_ips(self, mock_sleep) -> None:
         # test that server ips are gotten when a joint stage is retried with STARTED status
         # specifically, publisher status STARTED and partner status FAILED

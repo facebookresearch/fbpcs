@@ -187,6 +187,10 @@ class BoltRunner:
         timeout: int,
         poll_interval: int,
     ) -> Optional[List[str]]:
+        # only joint stage need to get server ips
+        if not stage.is_joint_stage:
+            return None
+
         # Waits until stage has started status then updates stage and returns server ips
         start_time = time()
         while time() < start_time + timeout:
@@ -194,7 +198,8 @@ class BoltRunner:
             status = state.pc_instance_status
             if status is stage.started_status:
                 return state.server_ips
-            if status is stage.failed_status:
+            if status in [stage.failed_status, stage.completed_status]:
+                # fast-fail on completed stage
                 raise StageFailedException(
                     f"{instance_id} waiting for status {stage.started_status}, got {status} instead.",
                 )
