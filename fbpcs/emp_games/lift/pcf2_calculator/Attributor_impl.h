@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "fbpcs/emp_games/lift/pcf2_calculator/Attributor.h"
+
 namespace private_lift {
 
 template <int schedulerId>
@@ -41,24 +43,27 @@ void Attributor<
     auto numConv = events_.size() - i;
     auto convSquared = static_cast<uint32_t>(numConv * numConv);
     SecNumConvSquared<schedulerId> numConvSquared(
-        std::vector(numRows_, convSquared), common::PUBLISHER);
+        std::vector(inputProcessor_.getNumRows(), convSquared),
+        common::PUBLISHER);
     numConvSquaredArray.push_back(numConvSquared);
   }
   // The numConvSquared is zero if there are no valid events
   SecNumConvSquared<schedulerId> zero{
-      std::vector<uint32_t>(numRows_, 0), common::PUBLISHER};
+      std::vector<uint32_t>(inputProcessor_.getNumRows(), 0),
+      common::PUBLISHER};
   numConvSquaredArray.push_back(zero);
 
   std::vector<SecValueSquared<schedulerId>> valueSquaredArray =
       inputProcessor_.getPurchaseValueSquared();
   // The value squared is zero if there are no valid events
   SecValueSquared<schedulerId> zeroValueSquared{
-      std::vector<int64_t>(numRows_, 0), common::PUBLISHER};
+      std::vector<int64_t>(inputProcessor_.getNumRows(), 0), common::PUBLISHER};
   valueSquaredArray.push_back(zeroValueSquared);
 
   std::vector<SecBit<schedulerId>> eventArray = events_;
   SecBit<schedulerId> zeroBit{
-      std::vector<bool>(numRows_, false), common::PUBLISHER};
+      std::vector<bool>(inputProcessor_.getNumRows(), false),
+      common::PUBLISHER};
   eventArray.push_back(zeroBit);
 
   int stepSize = 1; // we process the array elements in pairs with indices
@@ -128,7 +133,8 @@ void Attributor<schedulerId>::calculateValues() {
     XLOG(FATAL)
         << "Numbers of event bits and/or purchase values are inconsistent.";
   }
-  auto zero = PubValue<schedulerId>(std::vector<int64_t>(numRows_, 0));
+  auto zero = PubValue<schedulerId>(
+      std::vector<int64_t>(inputProcessor_.getNumRows(), 0));
   for (size_t i = 0; i < events_.size(); ++i) {
     // The value is the purchase value if there is a valid event, otherwise it
     // is zero

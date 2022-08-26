@@ -48,15 +48,7 @@ class Aggregator {
       : myRole_{myRole},
         inputProcessor_{inputProcessor},
         attributor_{std::move(attributor)},
-        numRows_{inputProcessor.getNumRows()},
-        numPartnerCohorts_{inputProcessor.getNumPartnerCohorts()},
-        numPublisherBreakdowns_{inputProcessor.getNumPublisherBreakdowns()},
-        numGroups_{inputProcessor.getNumGroups()},
-        numTestGroups_{inputProcessor.getNumTestGroups()},
-        numConversionsPerUser_{numConversionsPerUser},
-        communicationAgentFactory_{communicationAgentFactory},
-        indexShares_{inputProcessor.getIndexShares()},
-        testIndexShares_{inputProcessor.getTestIndexShares()} {
+        communicationAgentFactory_{communicationAgentFactory} {
     initOram();
     sumEvents();
     sumConverters();
@@ -145,12 +137,6 @@ class Aggregator {
   int32_t myRole_;
   InputProcessor<schedulerId> inputProcessor_;
   std::unique_ptr<Attributor<schedulerId>> attributor_;
-  int64_t numRows_;
-  uint32_t numPartnerCohorts_;
-  uint32_t numPublisherBreakdowns_;
-  uint32_t numGroups_;
-  uint32_t numTestGroups_;
-  int32_t numConversionsPerUser_;
   OutputMetricsData metrics_;
 
   std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
@@ -171,8 +157,6 @@ class Aggregator {
       Intp<false, valueSquaredWidth>>>
       valueSquaredWriteOnlyOramFactory_;
 
-  std::vector<std::vector<bool>> indexShares_;
-  std::vector<std::vector<bool>> testIndexShares_;
   std::unordered_map<int64_t, OutputMetricsData> cohortMetrics_;
   std::unordered_map<int64_t, OutputMetricsData> publisherBreakdowns_;
 };
