@@ -8,6 +8,7 @@
 
 
 from dataclasses import dataclass
+from enum import Enum
 
 from dataclasses_json import dataclass_json, DataClassJsonMixin
 
@@ -42,3 +43,8 @@ class PidMrConfig(DataClassJsonMixin):
     runConfigs: PidRunConfigs
     workflowConfigs: PidWorkflowConfigs
     sparkConfigs: SparkConfigs
+
+
+class Protocol(Enum):
+    PID_PROTOCOL = "PID"
+    MR_PID_PROTOCOL = "MR_PID"
