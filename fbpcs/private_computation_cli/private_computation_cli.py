@@ -28,8 +28,8 @@ Usage:
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
     pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [--run_id=<run_id>] [options]
     pc-cli pre_validate --config=<config_file> [--dataset_id=<dataset_id>] --input_path=<input_path> [--timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>] [options]
-    pc-cli bolt_e2e --bolt_config=<bolt_config_file>
-    pc-cli secret_scrubber <secret_input_path> <scrubbed_output_path>
+    pc-cli bolt_e2e --bolt_config=<bolt_config_file> [options]
+    pc-cli secret_scrubber <secret_input_path> <scrubbed_output_path> [options]
 
 
 Options:
