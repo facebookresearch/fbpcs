@@ -42,3 +42,8 @@ variable "query_results_key_path" {
   description = "the object key where Athena query results are stored"
   default     = "query-results"
 }
+
+variable "events_data" {
+  description = "S3 prefix that Kinesis FH writes to and Glue crawler reads from"
+  default     = "events_data"
+}
