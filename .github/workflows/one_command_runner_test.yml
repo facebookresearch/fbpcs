@@ -86,7 +86,7 @@ jobs:
           --version=${{ github.event.inputs.tag }}
 
       - name: Validate runner logs
-        # First command will extract all log lines including and after "... ! Command line: " into a file.
+        # First command will extract all pc-cli log lines including and after "... ! Command line: " into a file.
         run: |
           sed -n '/^.* ! Command line: .*/,$p' < ${{env.CONSOLE_OUTPUT_FILE}} > ${{env.CONSOLE_OUTPUT_FILE}}.extracted
           docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}.extracted:${{env.CONSOLE_OUTPUT_FILE}}" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
