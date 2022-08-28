@@ -72,13 +72,6 @@ jobs:
           echo "Please check the runner console output in the above step." ; \
           exit 1
 
-      - name: Validate runner logs
-        # First command will extract all log lines including and after "... ! Command line: " into a file.
-        run: |
-          sed -n '/^.* ! Command line: .*/,$p' < ${{env.CONSOLE_OUTPUT_FILE}} > ${{env.CONSOLE_OUTPUT_FILE}}.extracted
-          docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}.extracted:${{env.CONSOLE_OUTPUT_FILE}}" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
-          python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
-
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
         # the fbpcs_instances directory is where instances are written to (feature of run_fbpcs.sh)
@@ -91,3 +84,10 @@ jobs:
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }}
+
+      - name: Validate runner logs
+        # First command will extract all log lines including and after "... ! Command line: " into a file.
+        run: |
+          sed -n '/^.* ! Command line: .*/,$p' < ${{env.CONSOLE_OUTPUT_FILE}} > ${{env.CONSOLE_OUTPUT_FILE}}.extracted
+          docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}.extracted:${{env.CONSOLE_OUTPUT_FILE}}" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
+          python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs
