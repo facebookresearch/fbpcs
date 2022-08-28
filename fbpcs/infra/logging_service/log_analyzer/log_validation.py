@@ -14,9 +14,12 @@ from fbpcs.infra.logging_service.log_analyzer.entity.flow_stage import FlowStage
 from fbpcs.infra.logging_service.log_analyzer.entity.instance_flow import InstanceFlow
 from fbpcs.infra.logging_service.log_analyzer.entity.log_context import LogContext
 from fbpcs.infra.logging_service.log_analyzer.entity.run_study import RunStudy
+from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES, MIN_NUM_INSTANCES
 
 # Minimum number of log lines expected
-MIN_LOG_LINE_COUNT = 200
+MIN_LOG_LINE_COUNT = 50
+MIN_NUM_STAGES = 2
+MIN_NUM_CONTAINERS = 1
 
 
 class LogValidation:
@@ -46,20 +49,20 @@ class LogValidation:
         assert run_study.first_log
         assert run_study.start_epoch_time
         assert run_study.summary_instances
-        assert len(run_study.summary_instances) == 1
-        assert run_study.summary_instances[0]
-        assert run_study.summary_instances[0].endswith(
-            "last_stages=['RESHARD', 'COMPUTE', 'AGGREGATE']"
-        )
+        instance_count = len(run_study.summary_instances)
+        assert instance_count >= MIN_NUM_INSTANCES
+        assert instance_count <= MAX_NUM_INSTANCES
         assert run_study.error_line_count == 0
         assert not run_study.error_lines
         assert run_study.instances
-        assert len(run_study.instances) == 1
+        assert len(run_study.instances) == instance_count
         # Validate the summary of the instance
-        instance_id = list(run_study.instances.keys())[0]
-        instance = run_study.instances[instance_id]
-        assert instance.instance_id == instance_id
-        self.validate_log_instance(instance, run_study)
+        for inst in range(instance_count):
+            instance_id = list(run_study.instances.keys())[inst]
+            instance = run_study.instances[instance_id]
+            assert instance.instance_id == instance_id
+            self.validate_log_instance(instance, run_study)
+            assert run_study.summary_instances[inst]
 
     def validate_log_instance(
         self,
@@ -72,20 +75,22 @@ class LogValidation:
         assert run_study.summary_instances[0].startswith(
             f"i={instance.instance_id}/o={instance.objective_id}/c={instance.cell_id}"
         )
-        assert instance.instance_container_count > 5
         assert instance.instance_failed_container_count == 0
-        assert instance.summary_stages
-        assert len(instance.summary_stages) >= 7
         assert not instance.instance_error_line_count
         assert not instance.instance_error_lines
-        assert instance.stages
-        assert len(instance.summary_stages) == len(instance.stages)
-        # Validate the summary of the stages
+        if not instance.existing_instance_status:
+            assert instance.instance_container_count >= MIN_NUM_CONTAINERS
+            assert instance.summary_stages
+            assert len(instance.summary_stages) >= MIN_NUM_STAGES
+            assert instance.stages
+            assert len(instance.summary_stages) == len(instance.stages)
+            # Validate the summary of the stages
         count_stage_with_container = 0
         for stage in instance.stages:
             self.validate_log_stage(stage)
             count_stage_with_container += 1 if stage.container_count else 0
-        assert count_stage_with_container >= 5
+        if not instance.existing_instance_status:
+            assert count_stage_with_container >= MIN_NUM_CONTAINERS
 
     def validate_log_stage(
         self,
