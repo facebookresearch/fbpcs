@@ -189,28 +189,23 @@ def get_pc_status_from_stage_state(
         The latest status for private_computation_instance
     """
     status = private_computation_instance.infra_config.status
-    if private_computation_instance.infra_config.instances:
-        # TODO: we should have some identifier or stage_name
-        # to pick up the right instance instead of the last one
-        last_instance = private_computation_instance.infra_config.instances[-1]
-        if not isinstance(last_instance, StageStateInstance):
-            raise ValueError(
-                f"The last instance type not StageStateInstance but {type(last_instance)}"
-            )
+    stage_instance = private_computation_instance.get_stage_instance()
+    if stage_instance is None:
+        raise ValueError(
+            f"The current instance type not StageStateInstance but {type(private_computation_instance.current_stage)}"
+        )
 
-        if stage_name is None:
-            stage_name = last_instance.stage_name
-
-        assert stage_name == private_computation_instance.current_stage.name
-        # calling onedocker_svc to update newest containers in StageState
-        stage_state_instance_status = last_instance.update_status(onedocker_svc)
-        current_stage = private_computation_instance.current_stage
-        if stage_state_instance_status is StageStateInstanceStatus.STARTED:
-            status = current_stage.started_status
-        elif stage_state_instance_status is StageStateInstanceStatus.COMPLETED:
-            status = current_stage.completed_status
-        elif stage_state_instance_status is StageStateInstanceStatus.FAILED:
-            status = current_stage.failed_status
+    stage_name = stage_name or stage_instance.stage_name
+    assert stage_name == private_computation_instance.current_stage.name
+    # calling onedocker_svc to update newest containers in StageState
+    stage_state_instance_status = stage_instance.update_status(onedocker_svc)
+    current_stage = private_computation_instance.current_stage
+    if stage_state_instance_status is StageStateInstanceStatus.STARTED:
+        status = current_stage.started_status
+    elif stage_state_instance_status is StageStateInstanceStatus.COMPLETED:
+        status = current_stage.completed_status
+    elif stage_state_instance_status is StageStateInstanceStatus.FAILED:
+        status = current_stage.failed_status
 
     return status
 
@@ -567,10 +562,8 @@ async def all_files_exist_on_cloud(
 def stop_stage_service(
     pc_instance: PrivateComputationInstance, onedocker_svc: OneDockerService
 ) -> None:
-    last_instance = pc_instance.infra_config.instances[-1]
-    # make sure the last instance is the StageStageInstance appended by current stage
-    if not isinstance(last_instance, StageStateInstance):
+    stage_instance = pc_instance.get_stage_instance()
+    if stage_instance is not None:
+        stage_instance.stop_containers(onedocker_svc)
+    else:
         raise ValueError("Have no StageState for stop_service")
-    assert last_instance.stage_name == pc_instance.current_stage.name
-    # stop containers
-    last_instance.stop_containers(onedocker_svc)

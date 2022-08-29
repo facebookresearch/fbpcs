@@ -54,6 +54,7 @@ class PrivateComputationGameType(Enum):
     ATTRIBUTION = "ATTRIBUTION"
 
 
+# TODO: T126201525 [BE] remove PIDInstance in FBPCS
 UnionedPCInstance = Union[
     PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
 ]

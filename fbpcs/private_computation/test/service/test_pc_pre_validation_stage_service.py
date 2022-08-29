@@ -254,7 +254,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         container_instance = ContainerInstance(instance_id=instance_id)
         stage_state_instance = StageStateInstance(
             instance_id="instance-id-0",
-            stage_name="stage-name-1",
+            stage_name="PC_PRE_VALIDATION",
             containers=[container_instance],
         )
         unioned_pc_instances = [stage_state_instance]

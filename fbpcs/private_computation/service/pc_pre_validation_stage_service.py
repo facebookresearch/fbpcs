@@ -132,15 +132,12 @@ class PCPreValidationStageService(PrivateComputationStageService):
             )
 
             task_id = ""
-            if pc_instance.infra_config.instances:
-                last_instance = pc_instance.infra_config.instances[-1]
-                if isinstance(last_instance, StageStateInstance):
-                    last_container = last_instance.containers[-1]
-                    task_id = (
-                        last_container.instance_id.split("/")[-1]
-                        if last_container
-                        else ""
-                    )
+            stage_instance = pc_instance.get_stage_instance()
+            if stage_instance is not None:
+                last_container = stage_instance.containers[-1]
+                task_id = (
+                    last_container.instance_id.split("/")[-1] if last_container else ""
+                )
 
             if instance_status == self._failed_status and task_id:
                 region = self._pc_validator_config.region
