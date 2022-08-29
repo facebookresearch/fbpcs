@@ -11,6 +11,7 @@ import base64
 import json
 import os
 import re
+from datetime import datetime
 from ipaddress import ip_address, IPv4Address, IPv6Address
 from typing import Dict, List, Tuple
 
@@ -180,6 +181,14 @@ def lambda_handler(
         data = json.dumps(data) + "\n"
         data = data.encode("utf-8")
         row["data"] = base64.b64encode(data)
+        date_time = datetime.fromtimestamp(int(timestamp))
+        partition_keys = {
+            "year": date_time.strftime("%Y"),
+            "month": date_time.strftime("%m"),
+            "day": date_time.strftime("%d"),
+            "hour": date_time.strftime("%H"),
+        }
+        row["metadata"] = {"partitionKeys": partition_keys}
         output.append(row)
 
     print("finished data transformation.")

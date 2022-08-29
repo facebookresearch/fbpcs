@@ -37,8 +37,11 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
     bucket_arn          = aws_s3_bucket.bucket.arn
     buffer_size         = 128
     buffer_interval     = 900
-    prefix              = "${var.events_data}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
+    prefix              = "${var.events_data}/year=!{partitionKeyFromLambda:year}/month=!{partitionKeyFromLambda:month}/day=!{partitionKeyFromLambda:day}/hour=!{partitionKeyFromLambda:hour}/"
     error_output_prefix = "!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
+    dynamic_partitioning_configuration {
+      enabled = "true"
+    }
     processing_configuration {
       enabled = "true"
 

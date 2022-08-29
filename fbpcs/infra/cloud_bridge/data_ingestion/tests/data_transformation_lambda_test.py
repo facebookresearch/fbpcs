@@ -5,7 +5,9 @@
 
 import base64
 import json
+from datetime import datetime
 from unittest import TestCase
+from unittest.mock import patch
 
 from data_transformation_lambda import (
     _parse_client_user_agent,
@@ -173,9 +175,10 @@ class TestDataIngestion(TestCase):
         for field in fields:
             record = {
                 "serverSideEvent": {
+                    "event_time": 1234,
                     "user_data": {
                         field: "test",
-                    }
+                    },
                 }
             }
             event = self.sample_event(record)
@@ -236,6 +239,33 @@ class TestDataIngestion(TestCase):
         invalid_ip_address = "192.162.0."
         processed_ip_address = _process_client_ip_address(invalid_ip_address)
         self.assertEqual(processed_ip_address, "")
+
+    @patch("data_transformation_lambda.datetime")
+    def test_dynamic_partition_keys(self, datetime_mock):
+        event_time = 1660031000
+        datetime_mock.fromtimestamp.return_value = datetime(2022, 8, 9, 7, 43, 20)
+        expected_partition_keys = {
+            "year": "2022",
+            "month": "08",
+            "day": "09",
+            "hour": "07",
+        }
+        record = {
+            "serverSideEvent": {
+                "event_time": event_time,
+                "user_data": {
+                    "em": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111111111111111",
+                },
+            }
+        }
+        event = self.sample_event(record)
+
+        result = lambda_handler(event, self.sample_context)
+
+        self.assertEqual(len(result["records"]), 1)
+        record = result["records"][0]
+        self.assertEqual(record["metadata"]["partitionKeys"], expected_partition_keys)
+        datetime_mock.fromtimestamp.assert_called_once_with(event_time)
 
     def sample_event(self, event):
         sample_encoded_data = base64.b64encode(json.dumps(event).encode("utf-8"))
