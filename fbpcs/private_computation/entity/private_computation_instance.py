@@ -313,6 +313,22 @@ class PrivateComputationInstance(InstanceBase):
             server_ips_list = last_instance.server_ips or []
         return server_ips_list
 
+    # TODO: T130501878 BE only support StageStateInstance for now, replace this to all self.infra_config.instances[-1] code
+    def get_stage_instance(
+        self, stage: Optional["PrivateComputationBaseStageFlow"] = None
+    ) -> Optional[StageStateInstance]:
+        if not self.infra_config.instances:
+            return None
+
+        stage = stage or self.current_stage
+        # reversed traverse from the last stage instance
+        for stage_instance in reversed(self.infra_config.instances):
+            if isinstance(stage_instance, StageStateInstance):
+                if stage.name == stage_instance.stage_name:
+                    return stage_instance
+
+        return None
+
     def has_feature(self, feature: PCSFeature) -> bool:
         if feature is PCSFeature.UNKNOWN:
             logging.warning(

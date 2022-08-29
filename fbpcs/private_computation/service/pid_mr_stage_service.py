@@ -110,17 +110,9 @@ class PIDMRStageService(PrivateComputationStageService):
             The latest status for private_computation_instance
         """
         status = pc_instance.infra_config.status
-        if pc_instance.infra_config.instances:
-            # TODO: we should have some identifier or stage_name
-            # to pick up the right instance instead of the last one
-            last_instance = pc_instance.infra_config.instances[-1]
-            if not isinstance(last_instance, StageStateInstance):
-                raise ValueError(
-                    f"The last instance type not StageStateInstance but {type(last_instance)}"
-                )
-            stage_name = last_instance.stage_name
-            stage_id = last_instance.instance_id
-            assert stage_name == pc_instance.current_stage.name
+        stage_instance = pc_instance.get_stage_instance()
+        if stage_instance is not None:
+            stage_id = stage_instance.instance_id
             pid_configs = pc_instance.product_config.common.pid_configs
             stage_state_instance_status = WorkflowStatus.STARTED
             if pid_configs:
