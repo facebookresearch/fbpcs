@@ -12,14 +12,10 @@ import time
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstanceStatus, MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
-from fbpcs.pid.entity.pid_instance import (
-    PIDInstance,
-    PIDInstanceStatus,
-    PIDProtocol,
-    PIDRole,
-    PIDStageStatus,
+from fbpcs.common.entity.stage_state_instance import (
+    StageStateInstance,
+    StageStateInstanceStatus,
 )
-from fbpcs.pid.entity.pid_stages import UnionPIDStage
 from fbpcs.post_processing_handler.post_processing_handler import (
     PostProcessingHandlerStatus,
 )
@@ -52,17 +48,17 @@ LIFT_PC_PATH: str = os.path.join(
     "serialized_instances",
     "lift_pc_instance.json",
 )
-LIFT_PID_PATH: str = os.path.join(
-    os.path.dirname(__file__),
-    "test_resources",
-    "serialized_instances",
-    "lift_pid_instance.json",
-)
 LIFT_MPC_PATH: str = os.path.join(
     os.path.dirname(__file__),
     "test_resources",
     "serialized_instances",
     "lift_mpc_instance.json",
+)
+STAGE_STATE_PATH: str = os.path.join(
+    os.path.dirname(__file__),
+    "test_resources",
+    "serialized_instances",
+    "stage_state_instance.json",
 )
 
 
@@ -76,32 +72,20 @@ def gen_dummy_container_instance() -> ContainerInstance:
     )
 
 
-def gen_dummy_pid_instance() -> PIDInstance:
-    """Creates a dummy pid instance to be used in unit tests"""
+def gen_dummy_stage_state_instance() -> StageStateInstance:
+    """Creates a dummy stage state instance to be used in unit tests"""
 
-    return PIDInstance(
-        instance_id="pid_instance_id",
-        protocol=PIDProtocol.UNION_PID,
-        pid_role=PIDRole.PUBLISHER,
-        num_shards=1,
-        input_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_e2e_input.csv",
-        output_path="https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_instance_1638998680_0_out_dir/pid_stage/out.csv",
-        status=PIDInstanceStatus.COMPLETED,
-        data_path="",
-        spine_path="",
-        hmac_key="",
-        stages_containers={
-            UnionPIDStage.PUBLISHER_SHARD: [gen_dummy_container_instance()],
-            UnionPIDStage.PUBLISHER_PREPARE: [gen_dummy_container_instance()],
-            UnionPIDStage.PUBLISHER_RUN_PID: [gen_dummy_container_instance()],
-        },
-        stages_status={
-            UnionPIDStage.PUBLISHER_SHARD: PIDStageStatus.COMPLETED,
-            UnionPIDStage.PUBLISHER_PREPARE: PIDStageStatus.COMPLETED,
-            UnionPIDStage.PUBLISHER_RUN_PID: PIDStageStatus.COMPLETED,
-        },
-        current_stage=UnionPIDStage.PUBLISHER_RUN_PID,
-        server_ips=["10.0.10.242"],
+    return StageStateInstance(
+        instance_id="stage_state_instance_id",
+        stage_name="PC_PRE_VALIDATION",
+        status=StageStateInstanceStatus.COMPLETED,
+        containers=[
+            ContainerInstance(
+                instance_id="test_container_instance_0",
+                ip_address="1.1.1.1",
+                status=ContainerInstanceStatus.COMPLETED,
+            )
+        ],
     )
 
 
@@ -145,7 +129,7 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
         status_update_ts=int(time.time()),
         instances=[
-            gen_dummy_pid_instance(),
+            gen_dummy_stage_state_instance(),
             gen_dummy_mpc_instance(),
             gen_dummy_post_processing_instance(),
         ],
@@ -184,8 +168,12 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
 
 if __name__ == "__main__":
     for path, instance in zip(
-        (LIFT_PID_PATH, LIFT_MPC_PATH, LIFT_PC_PATH),
-        (gen_dummy_pid_instance(), gen_dummy_mpc_instance(), gen_dummy_pc_instance()),
+        (STAGE_STATE_PATH, LIFT_MPC_PATH, LIFT_PC_PATH),
+        (
+            gen_dummy_stage_state_instance(),
+            gen_dummy_mpc_instance(),
+            gen_dummy_pc_instance(),
+        ),
     ):
         json_output = instance.dumps_schema()
         with open(path, "w") as f:

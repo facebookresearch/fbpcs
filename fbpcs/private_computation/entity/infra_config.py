@@ -30,7 +30,6 @@ from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.common.entity.update_generic_hook import UpdateGenericHook
-from fbpcs.pid.entity.pid_instance import PIDInstance
 from fbpcs.post_processing_handler.post_processing_instance import (
     PostProcessingInstance,
 )
@@ -54,10 +53,7 @@ class PrivateComputationGameType(Enum):
     ATTRIBUTION = "ATTRIBUTION"
 
 
-# TODO: T126201525 [BE] remove PIDInstance in FBPCS
-UnionedPCInstance = Union[
-    PIDInstance, PCSMPCInstance, PostProcessingInstance, StageStateInstance
-]
+UnionedPCInstance = Union[PCSMPCInstance, PostProcessingInstance, StageStateInstance]
 
 
 @dataclass_json
