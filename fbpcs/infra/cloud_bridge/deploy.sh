@@ -312,7 +312,7 @@ deploy_aws_resources() {
         cp template/lambda_trigger.py .
         echo "Updating trigger function configurations..."
         sed -i "s/glueJobName = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"/glueJobName = \"glue-ETL$tag_postfix\"/g" lambda_trigger.py
-        sed -i "s~s3_write_path = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"~s3_write_path = \"$app_data_input_bucket_id\"~g" lambda_trigger.py
+        sed -i "s~s3_write_path = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"~s3_write_path = \"$app_data_input_bucket_id/events_data/\"~g" lambda_trigger.py
 
         echo "######################## Initializing terraform working directory started ########################"
         terraform init -reconfigure \
