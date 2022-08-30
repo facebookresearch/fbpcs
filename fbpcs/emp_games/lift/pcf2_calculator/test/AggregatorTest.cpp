@@ -6,6 +6,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <memory>
 
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/scheduler/SchedulerHelper.h"
@@ -33,11 +34,11 @@ Aggregator<schedulerId> createAggregatorWithScheduler(
       std::move(scheduler));
   auto inputProcessor =
       InputProcessor<schedulerId>(myRole, inputData, numConversionsPerUser);
-  auto attributor =
-      std::make_unique<Attributor<schedulerId>>(myRole, inputProcessor);
+  auto attributor = std::make_unique<Attributor<schedulerId>>(
+      myRole, std::make_unique<InputProcessor<schedulerId>>(inputProcessor));
   return Aggregator<schedulerId>(
       myRole,
-      inputProcessor,
+      std::make_unique<InputProcessor<schedulerId>>(std::move(inputProcessor)),
       std::move(attributor),
       numConversionsPerUser,
       factory);

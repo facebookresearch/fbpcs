@@ -10,6 +10,8 @@
 #include <fbpcf/scheduler/SchedulerHelper.h>
 #include <vector>
 
+#include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorApp.h"
+
 namespace private_lift {
 
 template <int schedulerId>
