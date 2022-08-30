@@ -253,9 +253,10 @@ void InputProcessor<schedulerId>::privatelyShareTimestampsStep() {
 
   XLOG(INFO) << "Share if any purchase timestamp is valid";
   std::vector<bool> anyValidPurchaseTimestamp;
-  for (auto& purchaseTimestampArray : inputData_.getPurchaseTimestampArrays()) {
+  for (const std::vector<uint32_t>& purchaseTimestampArray :
+       inputData_.getPurchaseTimestampArrays()) {
     bool anyValidPurchaseTs = false;
-    for (auto purchaseTs : purchaseTimestampArray) {
+    for (uint32_t purchaseTs : purchaseTimestampArray) {
       // compute whether each row contains at least one valid (positive)
       // purchase timestamp
       anyValidPurchaseTs = anyValidPurchaseTs | (purchaseTs > 0);
