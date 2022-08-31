@@ -14,7 +14,7 @@
 #include "fbpcf/mpc_std_lib/oram/WriteOnlyOramFactory.h"
 #include "fbpcs/emp_games/lift/common/GroupedLiftMetrics.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Attributor.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/IInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/OutputMetricsData.h"
 
 namespace private_lift {
@@ -39,7 +39,7 @@ class Aggregator {
  public:
   Aggregator(
       int myRole,
-      std::unique_ptr<InputProcessor<schedulerId>> inputProcessor,
+      std::unique_ptr<IInputProcessor<schedulerId>> inputProcessor,
       std::unique_ptr<Attributor<schedulerId>> attributor,
       int32_t numConversionsPerUser,
       std::shared_ptr<
@@ -135,7 +135,7 @@ class Aggregator {
       bool testOnly) const;
 
   int32_t myRole_;
-  std::unique_ptr<InputProcessor<schedulerId>> inputProcessor_;
+  std::unique_ptr<IInputProcessor<schedulerId>> inputProcessor_;
   std::unique_ptr<Attributor<schedulerId>> attributor_;
   OutputMetricsData metrics_;
 
