@@ -16,6 +16,15 @@ from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 from fbpcs.infra.logging_service.download_logs.cloud.cloud_baseclass import (
     CloudBaseClass,
 )
+from fbpcs.infra.logging_service.download_logs.cloud_error.cloud_error import (
+    AwsCloudwatchLogGroupFetchException,
+    AwsCloudwatchLogsFetchException,
+    AwsCloudwatchLogStreamFetchException,
+    AwsS3BucketVerificationException,
+    AwsS3FolderContentFetchException,
+    AwsS3FolderCreationException,
+    AwsS3UploadFailedException,
+)
 from tqdm import tqdm
 
 # TODO: Convert this to factory
@@ -155,8 +164,7 @@ class AwsCloud(CloudBaseClass):
                     f"Unexpected error occured in fetching the log event log group {log_group_name} and log stream {log_stream_name}\n"
                     f"{error}\n"
                 )
-            # TODO T122315363: Raise more specific exception
-            raise Exception(f"{error_message}")
+            raise AwsCloudwatchLogsFetchException(f"{error_message}")
 
         return messages
 
@@ -187,8 +195,7 @@ class AwsCloud(CloudBaseClass):
             error_message = (
                 f"Failed to create folder {folder_name} in S3 bucket {bucket_name}\n"
             )
-            # TODO T122315363: Raise more specific exception
-            raise Exception(f"{error_message}")
+            raise AwsS3FolderCreationException(f"{error_message}")
 
     def _parse_log_events(self, log_events: List[Dict[str, Any]]) -> List[str]:
         """
@@ -243,8 +250,7 @@ class AwsCloud(CloudBaseClass):
             error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
             if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
                 error_message = f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n{error}"
-            # TODO T122315363: Raise more specific exception
-            raise Exception({error_message})
+            raise AwsS3FolderContentFetchException({error_message})
 
         return response
 
@@ -285,8 +291,7 @@ class AwsCloud(CloudBaseClass):
             except ClientError as error:
                 retries -= 1
                 if retries <= 0:
-                    # TODO T122315363: Raise more specific exception
-                    raise Exception(
+                    raise AwsS3UploadFailedException(
                         f"Couldn't upload file {file_name} to bucket {s3_bucket_name}."
                         f"Please check if right S3 bucket name and file path in S3 bucket {s3_file_path}."
                         f"{error}"
@@ -325,8 +330,7 @@ class AwsCloud(CloudBaseClass):
                     f"Unexpected error occurred in fetching log group name {log_group_name}.\n"
                     f"{error}\n"
                 )
-            # TODO T122315363: Raise more specific exception
-            raise Exception(f"{error_message}")
+            raise AwsCloudwatchLogGroupFetchException(f"{error_message}")
 
         return len(response.get("logGroups", [])) == 1
 
@@ -365,8 +369,7 @@ class AwsCloud(CloudBaseClass):
                     f"Unexpected error occurred in finding log stream name {log_stream_name} in log grpup {log_group_name}\n"
                     f"{error}\n"
                 )
-            # TODO T122315363: Raise more specific exception
-            raise Exception(f"{error_message}")
+            raise AwsCloudwatchLogStreamFetchException(f"{error_message}")
 
         return len(response.get("logStreams", [])) == 1
 
@@ -380,8 +383,7 @@ class AwsCloud(CloudBaseClass):
             else:
                 # TODO T122315973: This error message doesn't seem right
                 error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
-            # TODO T122315363: Raise more specific exception
-            raise Exception(f"{error_message}")
+            raise AwsS3BucketVerificationException(f"{error_message}")
 
     def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
         """
