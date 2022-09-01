@@ -8,6 +8,11 @@ variable "data_processing_output_bucket" {
   default     = ""
 }
 
+variable "data_processing_output_bucket_arn" {
+  description = "Amazon resource name of the data bucket"
+  default     = ""
+}
+
 variable "data_ingestion_lambda_name" {
   description = "The data ingestion Lambda function name"
   default     = ""
