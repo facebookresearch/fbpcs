@@ -10,6 +10,8 @@ from enum import Enum
 
 
 class PrivateComputationInstanceStatus(Enum):
+    # NOTE: If you add any more statuses, you should regenerate the test resources
+    # That file should be named gen_status_resources.py
     UNKNOWN = "UNKNOWN"
     CREATION_STARTED = "CREATION_STARTED"
     CREATED = "CREATED"
