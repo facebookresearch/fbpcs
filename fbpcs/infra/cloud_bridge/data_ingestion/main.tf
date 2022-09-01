@@ -34,7 +34,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
 
   extended_s3_configuration {
     role_arn            = aws_iam_role.firehose_role.arn
-    bucket_arn          = aws_s3_bucket.bucket.arn
+    bucket_arn          = var.data_processing_output_bucket_arn
     buffer_size         = 128
     buffer_interval     = 900
     prefix              = "${var.events_data}/year=!{partitionKeyFromLambda:year}/month=!{partitionKeyFromLambda:month}/day=!{partitionKeyFromLambda:day}/hour=!{partitionKeyFromLambda:hour}/"
@@ -55,44 +55,6 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
       }
     }
   }
-}
-
-resource "aws_s3_bucket" "bucket" {
-  bucket = var.data_processing_output_bucket
-  versioning {
-    enabled = true
-  }
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-
-}
-
-resource "aws_s3_bucket_policy" "bucket_policy" {
-  bucket = aws_s3_bucket.bucket.id
-
-  policy = <<EOF
-{
-  "Statement": [
-    {
-      "Effect": "Deny",
-      "Action": "s3:*",
-      "Principal": "*",
-      "Resource": [
-        "${aws_s3_bucket.bucket.arn}",
-        "${aws_s3_bucket.bucket.arn}/*"
-      ],
-      "Condition": {
-        "Bool": { "aws:SecureTransport": false }
-      }
-    }
-  ]
-}
-EOF
 }
 
 resource "aws_iam_role" "firehose_role" {

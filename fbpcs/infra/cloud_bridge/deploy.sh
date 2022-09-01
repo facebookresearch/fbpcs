@@ -198,8 +198,11 @@ deploy_aws_resources() {
     #clean up previously generated resources if any
     cleanup_generated_resources
     # Create the S3 bucket (to store config files) if it doesn't exist
-    log_streaming_data "creating s3 bucket, if it does not exist"
+    log_streaming_data "creating s3 config bucket, if it does not exist"
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
+    # Create the S3 data bucket if it doesn't exist
+    log_streaming_data "creating s3 data bucket, if it does not exist"
+    validate_or_create_s3_bucket "$s3_bucket_data_pipeline" "$region" "$aws_account_id"
     # Deploy PCE Terraform scripts
     onedocker_ecs_container_image='539290649537.dkr.ecr.us-west-2.amazonaws.com/one-docker-prod:latest'
     publisher_vpc_cidr='10.0.0.0/16'
@@ -291,6 +294,7 @@ deploy_aws_resources() {
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id" \
         -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
+        -var "data_processing_output_bucket_arn=$data_bucket_arn" \
         -var "data_ingestion_lambda_name=$data_ingestion_lambda_name" \
         -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
         -var "data_processing_lambda_s3_key=lambda.zip" \
@@ -298,8 +302,6 @@ deploy_aws_resources() {
         -var "query_results_key_path=$query_results_key_path"
     echo "######################## Deploy Data Ingestion Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
-    app_data_input_bucket_id=$(terraform output data_processing_output_bucket_id | tr -d '"')
-    app_data_input_bucket_arn=$(terraform output data_processing_output_bucket_arn | tr -d '"')
     firehose_stream_name=$(terraform output firehose_stream_name | tr -d '"')
 
     if "$build_semi_automated_data_pipeline"
@@ -312,7 +314,7 @@ deploy_aws_resources() {
         cp template/lambda_trigger.py .
         echo "Updating trigger function configurations..."
         sed -i "s/glueJobName = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"/glueJobName = \"glue-ETL$tag_postfix\"/g" lambda_trigger.py
-        sed -i "s~s3_write_path = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"~s3_write_path = \"$app_data_input_bucket_id/events_data/\"~g" lambda_trigger.py
+        sed -i "s~s3_write_path = \"TO_BE_UPDATED_DURING_DEPLOYMENT\"~s3_write_path = \"$s3_bucket_data_pipeline/events_data/\"~g" lambda_trigger.py
 
         echo "######################## Initializing terraform working directory started ########################"
         terraform init -reconfigure \
@@ -328,8 +330,8 @@ deploy_aws_resources() {
             -var "aws_account_id=$aws_account_id" \
             -var "lambda_trigger_s3_key=lambda_trigger.zip" \
             -var "app_data_input_bucket=$s3_bucket_data_pipeline" \
-            -var "app_data_input_bucket_id=$app_data_input_bucket_id" \
-            -var "app_data_input_bucket_arn=$app_data_input_bucket_arn" \
+            -var "app_data_input_bucket_id=$s3_bucket_data_pipeline" \
+            -var "app_data_input_bucket_arn=$data_bucket_arn" \
             -var "data_upload_key_path=$data_upload_key_path"
         echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
     fi
@@ -406,6 +408,7 @@ else
     s3_bucket_data_pipeline="$s3_bucket_data_pipeline$tag_postfix"
 fi
 
+data_bucket_arn="arn:aws:s3:::${s3_bucket_data_pipeline}"
 policy_name="fb-pc-policy${tag_postfix}"
 database_name="mpc-events-db${tag_postfix}"
 glue_crawler_name="mpc-events-crawler${tag_postfix}"
