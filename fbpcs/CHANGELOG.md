@@ -15,6 +15,13 @@ Types of changes
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Removed
+
+## [1.12.0] - 2022-08-31
+### Added
   - Added an option to specify a CertificateRequest when creating an mpc game instance
   - Upgrade fbpcp dependency to 0.3.0
 ### Changed
