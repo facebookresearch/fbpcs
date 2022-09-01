@@ -93,49 +93,70 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
 };
 
 TEST_P(InputProcessorTest, testNumRows) {
-  EXPECT_EQ(publisherInputProcessor_.getNumRows(), 33);
-  EXPECT_EQ(partnerInputProcessor_.getNumRows(), 33);
+  EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().numRows, 33);
+  EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numRows, 33);
 }
 
 TEST_P(InputProcessorTest, testBitsForValues) {
-  EXPECT_EQ(publisherInputProcessor_.getValueBits(), 10);
-  EXPECT_EQ(partnerInputProcessor_.getValueBits(), 10);
-  EXPECT_EQ(publisherInputProcessor_.getValueSquaredBits(), 15);
-  EXPECT_EQ(partnerInputProcessor_.getValueSquaredBits(), 15);
+  EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().valueBits, 10);
+  EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().valueBits, 10);
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().valueSquaredBits, 15);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().valueSquaredBits, 15);
 }
 
 TEST_P(InputProcessorTest, testNumPartnerCohorts) {
-  EXPECT_EQ(publisherInputProcessor_.getNumPartnerCohorts(), 3);
-  EXPECT_EQ(partnerInputProcessor_.getNumPartnerCohorts(), 3);
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().numPartnerCohorts, 3);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().numPartnerCohorts, 3);
 }
 
 TEST_P(InputProcessorTest, testNumBreakdowns) {
   if (computePublisherBreakdowns_) {
-    EXPECT_EQ(publisherInputProcessor_.getNumPublisherBreakdowns(), 2);
-    EXPECT_EQ(partnerInputProcessor_.getNumPublisherBreakdowns(), 2);
+    EXPECT_EQ(
+        publisherInputProcessor_.getLiftGameProcessedData()
+            .numPublisherBreakdowns,
+        2);
+    EXPECT_EQ(
+        partnerInputProcessor_.getLiftGameProcessedData()
+            .numPublisherBreakdowns,
+        2);
   } else {
-    EXPECT_EQ(publisherInputProcessor_.getNumPublisherBreakdowns(), 0);
-    EXPECT_EQ(partnerInputProcessor_.getNumPublisherBreakdowns(), 0);
+    EXPECT_EQ(
+        publisherInputProcessor_.getLiftGameProcessedData()
+            .numPublisherBreakdowns,
+        0);
+    EXPECT_EQ(
+        partnerInputProcessor_.getLiftGameProcessedData()
+            .numPublisherBreakdowns,
+        0);
   }
 }
 
 TEST_P(InputProcessorTest, testNumGroups) {
   if (computePublisherBreakdowns_) {
-    EXPECT_EQ(publisherInputProcessor_.getNumGroups(), 12);
-    EXPECT_EQ(partnerInputProcessor_.getNumGroups(), 12);
+    EXPECT_EQ(
+        publisherInputProcessor_.getLiftGameProcessedData().numGroups, 12);
+    EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numGroups, 12);
   } else {
-    EXPECT_EQ(publisherInputProcessor_.getNumGroups(), 6);
-    EXPECT_EQ(partnerInputProcessor_.getNumGroups(), 6);
+    EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().numGroups, 6);
+    EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numGroups, 6);
   }
 }
 
 TEST_P(InputProcessorTest, testNumTestGroups) {
   if (computePublisherBreakdowns_) {
-    EXPECT_EQ(publisherInputProcessor_.getNumTestGroups(), 7);
-    EXPECT_EQ(partnerInputProcessor_.getNumTestGroups(), 7);
+    EXPECT_EQ(
+        publisherInputProcessor_.getLiftGameProcessedData().numTestGroups, 7);
+    EXPECT_EQ(
+        partnerInputProcessor_.getLiftGameProcessedData().numTestGroups, 7);
   } else {
-    EXPECT_EQ(publisherInputProcessor_.getNumTestGroups(), 4);
-    EXPECT_EQ(partnerInputProcessor_.getNumTestGroups(), 4);
+    EXPECT_EQ(
+        publisherInputProcessor_.getLiftGameProcessedData().numTestGroups, 4);
+    EXPECT_EQ(
+        partnerInputProcessor_.getLiftGameProcessedData().numTestGroups, 4);
   }
 }
 
@@ -157,9 +178,10 @@ std::vector<uint32_t> convertIndexSharesToGroupIds(
 }
 
 TEST_P(InputProcessorTest, testIndexShares) {
-  auto publisherShares = publisherInputProcessor_.getIndexShares();
-  size_t groupWidth =
-      std::ceil(std::log2(publisherInputProcessor_.getNumGroups()));
+  auto publisherShares =
+      publisherInputProcessor_.getLiftGameProcessedData().indexShares;
+  size_t groupWidth = std::ceil(
+      std::log2(publisherInputProcessor_.getLiftGameProcessedData().numGroups));
   EXPECT_EQ(publisherShares.size(), groupWidth);
   std::vector<uint32_t> expectGroupIds;
   if (computePublisherBreakdowns_) {
@@ -174,9 +196,10 @@ TEST_P(InputProcessorTest, testIndexShares) {
 }
 
 TEST_P(InputProcessorTest, testTestIndexShares) {
-  auto publisherShares = publisherInputProcessor_.getTestIndexShares();
-  size_t testGroupWidth =
-      std::ceil(std::log2(publisherInputProcessor_.getNumTestGroups()));
+  auto publisherShares =
+      publisherInputProcessor_.getLiftGameProcessedData().testIndexShares;
+  size_t testGroupWidth = std::ceil(std::log2(
+      publisherInputProcessor_.getLiftGameProcessedData().numTestGroups));
   EXPECT_EQ(publisherShares.size(), testGroupWidth);
   std::vector<uint32_t> expectTestGroupIds;
   if (computePublisherBreakdowns_) {
@@ -192,13 +215,13 @@ TEST_P(InputProcessorTest, testTestIndexShares) {
 
 TEST_P(InputProcessorTest, testOpportunityTimestamps) {
   auto future0 = std::async([&] {
-    return publisherInputProcessor_.getOpportunityTimestamps()
-        .openToParty(0)
+    return publisherInputProcessor_.getLiftGameProcessedData()
+        .opportunityTimestamps.openToParty(0)
         .getValue();
   });
   auto future1 = std::async([&] {
-    return partnerInputProcessor_.getOpportunityTimestamps()
-        .openToParty(0)
+    return partnerInputProcessor_.getLiftGameProcessedData()
+        .opportunityTimestamps.openToParty(0)
         .getValue();
   });
   auto opportunityTimestamps0 = future0.get();
@@ -212,13 +235,13 @@ TEST_P(InputProcessorTest, testOpportunityTimestamps) {
 
 TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
   auto future0 = std::async([&] {
-    return publisherInputProcessor_.getIsValidOpportunityTimestamp()
-        .openToParty(0)
+    return publisherInputProcessor_.getLiftGameProcessedData()
+        .isValidOpportunityTimestamp.openToParty(0)
         .getValue();
   });
   auto future1 = std::async([&] {
-    return partnerInputProcessor_.getIsValidOpportunityTimestamp()
-        .openToParty(0)
+    return partnerInputProcessor_.getLiftGameProcessedData()
+        .isValidOpportunityTimestamp.openToParty(0)
         .getValue();
   });
   auto isValidOpportunityTimestamp0 = future0.get();
@@ -233,10 +256,12 @@ template <int schedulerId>
 std::vector<std::vector<uint64_t>> revealPurchaseTimestamps(
     InputProcessor<schedulerId> inputProcessor) {
   std::vector<std::vector<uint64_t>> purchaseTimestamps;
-  for (size_t i = 0; i < inputProcessor.getPurchaseTimestamps().size(); ++i) {
+  for (size_t i = 0;
+       i < inputProcessor.getLiftGameProcessedData().purchaseTimestamps.size();
+       ++i) {
     purchaseTimestamps.push_back(
-        std::move(inputProcessor.getPurchaseTimestamps()
-                      .at(i)
+        std::move(inputProcessor.getLiftGameProcessedData()
+                      .purchaseTimestamps.at(i)
                       .openToParty(0)
                       .getValue()));
   }
@@ -263,10 +288,12 @@ template <int schedulerId>
 std::vector<std::vector<uint64_t>> revealThresholdTimestamps(
     InputProcessor<schedulerId> inputProcessor) {
   std::vector<std::vector<uint64_t>> thresholdTimestamps;
-  for (size_t i = 0; i < inputProcessor.getThresholdTimestamps().size(); ++i) {
+  for (size_t i = 0;
+       i < inputProcessor.getLiftGameProcessedData().thresholdTimestamps.size();
+       ++i) {
     thresholdTimestamps.push_back(
-        std::move(inputProcessor.getThresholdTimestamps()
-                      .at(i)
+        std::move(inputProcessor.getLiftGameProcessedData()
+                      .thresholdTimestamps.at(i)
                       .openToParty(0)
                       .getValue()));
   }
@@ -291,13 +318,13 @@ TEST_P(InputProcessorTest, testThresholdTimestamps) {
 
 TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
   auto future0 = std::async([&] {
-    return publisherInputProcessor_.getAnyValidPurchaseTimestamp()
-        .openToParty(0)
+    return publisherInputProcessor_.getLiftGameProcessedData()
+        .anyValidPurchaseTimestamp.openToParty(0)
         .getValue();
   });
   auto future1 = std::async([&] {
-    return partnerInputProcessor_.getAnyValidPurchaseTimestamp()
-        .openToParty(0)
+    return partnerInputProcessor_.getLiftGameProcessedData()
+        .anyValidPurchaseTimestamp.openToParty(0)
         .getValue();
   });
   auto anyValidPurchaseTimestamp0 = future0.get();
@@ -312,9 +339,13 @@ template <int schedulerId>
 std::vector<std::vector<int64_t>> revealPurchaseValues(
     InputProcessor<schedulerId> inputProcessor) {
   std::vector<std::vector<int64_t>> purchaseValues;
-  for (size_t i = 0; i < inputProcessor.getPurchaseValues().size(); ++i) {
-    purchaseValues.push_back(std::move(
-        inputProcessor.getPurchaseValues().at(i).openToParty(0).getValue()));
+  for (size_t i = 0;
+       i < inputProcessor.getLiftGameProcessedData().purchaseValues.size();
+       ++i) {
+    purchaseValues.push_back(std::move(inputProcessor.getLiftGameProcessedData()
+                                           .purchaseValues.at(i)
+                                           .openToParty(0)
+                                           .getValue()));
   }
   return purchaseValues;
 }
@@ -336,10 +367,12 @@ template <int schedulerId>
 std::vector<std::vector<int64_t>> revealPurchaseValueSquared(
     InputProcessor<schedulerId> inputProcessor) {
   std::vector<std::vector<int64_t>> purchaseValueSquared;
-  for (size_t i = 0; i < inputProcessor.getPurchaseValueSquared().size(); ++i) {
+  for (size_t i = 0; i <
+       inputProcessor.getLiftGameProcessedData().purchaseValueSquared.size();
+       ++i) {
     purchaseValueSquared.push_back(
-        std::move(inputProcessor.getPurchaseValueSquared()
-                      .at(i)
+        std::move(inputProcessor.getLiftGameProcessedData()
+                      .purchaseValueSquared.at(i)
                       .openToParty(0)
                       .getValue()));
   }
@@ -366,10 +399,14 @@ TEST_P(InputProcessorTest, testPurchaseValueSquared) {
 
 TEST_P(InputProcessorTest, testReach) {
   auto future0 = std::async([&] {
-    return publisherInputProcessor_.getTestReach().openToParty(0).getValue();
+    return publisherInputProcessor_.getLiftGameProcessedData()
+        .testReach.openToParty(0)
+        .getValue();
   });
   auto future1 = std::async([&] {
-    return partnerInputProcessor_.getTestReach().openToParty(0).getValue();
+    return partnerInputProcessor_.getLiftGameProcessedData()
+        .testReach.openToParty(0)
+        .getValue();
   });
   auto testReach0 = future0.get();
   auto testReach1 = future1.get();

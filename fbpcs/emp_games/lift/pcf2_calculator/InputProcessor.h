@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <fbpcs/emp_games/lift/pcf2_calculator/Constants.h>
 #include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
@@ -25,8 +26,9 @@ class InputProcessor : public IInputProcessor<schedulerId> {
   InputProcessor(int myRole, InputData inputData, int32_t numConversionsPerUser)
       : myRole_{myRole},
         inputData_{inputData},
-        numRows_{inputData.getNumRows()},
         numConversionsPerUser_{numConversionsPerUser} {
+    liftGameProcessedData_.numRows = inputData.getNumRows();
+
     validateNumRowsStep();
     shareNumGroupsStep();
     shareBitsForValuesStep();
@@ -42,75 +44,9 @@ class InputProcessor : public IInputProcessor<schedulerId> {
 
   InputProcessor() {}
 
-  int64_t getNumRows() const override {
-    return numRows_;
-  }
-
-  uint32_t getNumPartnerCohorts() const override {
-    return numPartnerCohorts_;
-  }
-
-  uint32_t getNumPublisherBreakdowns() const override {
-    return numPublisherBreakdowns_;
-  }
-
-  uint32_t getNumGroups() const override {
-    return numGroups_;
-  }
-
-  uint32_t getNumTestGroups() const override {
-    return numTestGroups_;
-  }
-
-  uint8_t getValueBits() const override {
-    return valueBits_;
-  }
-
-  uint8_t getValueSquaredBits() const override {
-    return valueSquaredBits_;
-  }
-
-  const std::vector<std::vector<bool>>& getIndexShares() const override {
-    return indexShares_;
-  }
-
-  const std::vector<std::vector<bool>>& getTestIndexShares() const override {
-    return testIndexShares_;
-  }
-
-  const SecTimestamp<schedulerId>& getOpportunityTimestamps() const override {
-    return opportunityTimestamps_;
-  }
-
-  const SecBit<schedulerId>& getIsValidOpportunityTimestamp() const override {
-    return isValidOpportunityTimestamp_;
-  }
-
-  const std::vector<SecTimestamp<schedulerId>>& getPurchaseTimestamps()
+  const LiftGameProcessedData<schedulerId>& getLiftGameProcessedData()
       const override {
-    return purchaseTimestamps_;
-  }
-
-  const std::vector<SecTimestamp<schedulerId>>& getThresholdTimestamps()
-      const override {
-    return thresholdTimestamps_;
-  }
-
-  const SecBit<schedulerId>& getAnyValidPurchaseTimestamp() const override {
-    return anyValidPurchaseTimestamp_;
-  }
-
-  const std::vector<SecValue<schedulerId>>& getPurchaseValues() const override {
-    return purchaseValues_;
-  }
-
-  const std::vector<SecValueSquared<schedulerId>>& getPurchaseValueSquared()
-      const override {
-    return purchaseValueSquared_;
-  }
-
-  const SecBit<schedulerId>& getTestReach() const override {
-    return testReach_;
+    return liftGameProcessedData_;
   }
 
  private:
@@ -147,30 +83,15 @@ class InputProcessor : public IInputProcessor<schedulerId> {
 
   int32_t myRole_;
   InputData inputData_;
-  int64_t numRows_;
-  int32_t numConversionsPerUser_;
-  uint32_t numPartnerCohorts_;
-  uint32_t numPublisherBreakdowns_;
-  uint32_t numGroups_;
-  uint32_t numTestGroups_;
-  uint8_t valueBits_;
-  uint8_t valueSquaredBits_;
 
-  SecTimestamp<schedulerId> opportunityTimestamps_;
-  SecBit<schedulerId> isValidOpportunityTimestamp_;
-  std::vector<SecTimestamp<schedulerId>> purchaseTimestamps_;
-  std::vector<SecTimestamp<schedulerId>> thresholdTimestamps_;
-  SecBit<schedulerId> anyValidPurchaseTimestamp_;
-  std::vector<SecValue<schedulerId>> purchaseValues_;
-  std::vector<SecValueSquared<schedulerId>> purchaseValueSquared_;
-  SecBit<schedulerId> testReach_;
+  int32_t numConversionsPerUser_;
 
   SecBit<schedulerId> controlPopulation_;
   SecGroup<schedulerId> cohortGroupIds_;
   SecBit<schedulerId> breakdownGroupIds_;
   SecGroup<schedulerId> testGroupIds_;
-  std::vector<std::vector<bool>> indexShares_;
-  std::vector<std::vector<bool>> testIndexShares_;
+
+  LiftGameProcessedData<schedulerId> liftGameProcessedData_;
 };
 
 } // namespace private_lift
