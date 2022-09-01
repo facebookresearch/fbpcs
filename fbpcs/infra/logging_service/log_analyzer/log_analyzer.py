@@ -76,6 +76,7 @@ class LogDigest:
         self.run_study: RunStudy = RunStudy(0)
         self.start_epoch_time: str = ""
         self.container_ids: Dict[str, Set[str]] = {}
+        self.is_bolt_runner: bool = False
 
         self.re_error: Pattern[str] = re.compile(
             r"^(.{16}:\d{2},\d{3}Z ERROR t:[^!]+! |ERROR:[^:]+:)(.+)$"
@@ -125,6 +126,11 @@ class LogDigest:
                     r"\[([^ ]+)\] Valid stage found: PrivateComputationStageFlow\.([^ ]+)$"
                 ),
                 self._add_flow_stage,
+            ),
+            MatcherAndHandler(
+                # E.g. [31602208955937] Partner 31602208955937 starting stage PC_PRE_VALIDATION.
+                re.compile(r" ! \[([^ ]+)\] Partner [^ ]+ starting stage ([_A-Z]+)"),
+                self._add_flow_stage_bolt,
             ),
             MatcherAndHandler(
                 # E.g. [4547351303806882] {"input_path": ... "status_update_ts": 1648146505, ... }
@@ -341,11 +347,39 @@ class LogDigest:
         match: Match[str],
         _last_lines: Optional[List[str]],
     ) -> None:
+        if self.is_bolt_runner:
+            # Flow stage will be extracted by another method
+            return
+
         # The stage ID's are like PC_PRE_VALIDATION, PID_SHARD, etc.
         # They also appear in the log lines highlighting the current stage among the full flow. E.g.
         # CREATED -> PC_PRE_VALIDATION -> [**PID_SHARD**] -> PID_PREPARE -> ID_MATCH -> ID_MATCH_POST_PROCESS -> PREPARE -> COMPUTE -> AGGREGATE -> POST_PROCESSING_HANDLERS
         self.logger.info(
             f"Found flow_stage={match.group(2)}, instance={match.group(1)}. At line_num={context.line_num}"
+        )
+        self.run_study.instances[match.group(1)].stages.append(
+            FlowStage(
+                context=context,
+                stage_id=match.group(2),
+            )
+        )
+
+    def _add_flow_stage_bolt(
+        self,
+        context: LogContext,
+        match: Match[str],
+        _last_lines: Optional[List[str]],
+    ) -> None:
+        if not self.is_bolt_runner:
+            self.is_bolt_runner = True
+            self.logger.info(
+                "Found bolt flow_stage. This is the first stage, which is already extracted and ignored here"
+            )
+            return
+
+        # The stage ID's are like PC_PRE_VALIDATION, PID_SHARD, etc.
+        self.logger.info(
+            f"Found bolt flow_stage={match.group(2)}, instance={match.group(1)}. At line_num={context.line_num}"
         )
         self.run_study.instances[match.group(1)].stages.append(
             FlowStage(
