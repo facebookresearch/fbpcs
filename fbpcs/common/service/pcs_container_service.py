@@ -49,6 +49,7 @@ class PCSContainerService(ContainerService):
             container_definition=container_definition,
             cmd=cmd,
             env_vars=env_vars,
+            container_type=container_type,
         )
         log_url = None
         if self.log_retriever:
