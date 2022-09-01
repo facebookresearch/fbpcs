@@ -15,12 +15,14 @@ template <int schedulerId>
 void Attributor<schedulerId>::calculateEvents() {
   XLOG(INFO) << "Calculate events";
   for (const SecTimestamp<schedulerId>& thresholdTs :
-       inputProcessor_->getThresholdTimestamps()) {
+       inputProcessor_->getLiftGameProcessedData().thresholdTimestamps) {
     // Events occur when there is a valid purchase, i.e. the opportunity
     // timestamp is less than the threshold timestamp
     events_.push_back(std::move(
-        inputProcessor_->getIsValidOpportunityTimestamp() &
-        (thresholdTs > inputProcessor_->getOpportunityTimestamps())));
+        inputProcessor_->getLiftGameProcessedData()
+            .isValidOpportunityTimestamp &
+        (thresholdTs >
+         inputProcessor_->getLiftGameProcessedData().opportunityTimestamps)));
   }
 }
 
@@ -28,7 +30,8 @@ template <int schedulerId>
 void Attributor<
     schedulerId>::calculateNumConvSquaredAndValueSquaredAndConverters() {
   XLOG(INFO) << "Calculate numConvSquared & valueSquared & converters";
-  if (events_.size() != inputProcessor_->getPurchaseValueSquared().size()) {
+  if (events_.size() !=
+      inputProcessor_->getLiftGameProcessedData().purchaseValueSquared.size()) {
     XLOG(FATAL)
         << "Numbers of event bits and purchase values squared are inconsistent.";
   }
@@ -44,27 +47,31 @@ void Attributor<
     auto numConv = events_.size() - i;
     auto convSquared = static_cast<uint32_t>(numConv * numConv);
     SecNumConvSquared<schedulerId> numConvSquared(
-        std::vector(inputProcessor_->getNumRows(), convSquared),
+        std::vector(
+            inputProcessor_->getLiftGameProcessedData().numRows, convSquared),
         common::PUBLISHER);
     numConvSquaredArray.push_back(numConvSquared);
   }
   // The numConvSquared is zero if there are no valid events
   SecNumConvSquared<schedulerId> zero{
-      std::vector<uint32_t>(inputProcessor_->getNumRows(), 0),
+      std::vector<uint32_t>(
+          inputProcessor_->getLiftGameProcessedData().numRows, 0),
       common::PUBLISHER};
   numConvSquaredArray.push_back(zero);
 
   std::vector<SecValueSquared<schedulerId>> valueSquaredArray =
-      inputProcessor_->getPurchaseValueSquared();
+      inputProcessor_->getLiftGameProcessedData().purchaseValueSquared;
   // The value squared is zero if there are no valid events
   SecValueSquared<schedulerId> zeroValueSquared{
-      std::vector<int64_t>(inputProcessor_->getNumRows(), 0),
+      std::vector<int64_t>(
+          inputProcessor_->getLiftGameProcessedData().numRows, 0),
       common::PUBLISHER};
   valueSquaredArray.push_back(zeroValueSquared);
 
   std::vector<SecBit<schedulerId>> eventArray = events_;
   SecBit<schedulerId> zeroBit{
-      std::vector<bool>(inputProcessor_->getNumRows(), false),
+      std::vector<bool>(
+          inputProcessor_->getLiftGameProcessedData().numRows, false),
       common::PUBLISHER};
   eventArray.push_back(zeroBit);
 
@@ -113,8 +120,9 @@ void Attributor<schedulerId>::calculateMatch() {
   XLOG(INFO) << "Calculate match";
   // a valid test/control match is when a person with an opportunity made
   // ANY nonzero conversion.
-  match_ = inputProcessor_->getAnyValidPurchaseTimestamp() &
-      inputProcessor_->getIsValidOpportunityTimestamp();
+  match_ =
+      inputProcessor_->getLiftGameProcessedData().anyValidPurchaseTimestamp &
+      inputProcessor_->getLiftGameProcessedData().isValidOpportunityTimestamp;
 }
 
 template <int schedulerId>
@@ -123,33 +131,35 @@ void Attributor<schedulerId>::calculateReachedConversions() {
   for (const auto& event : events_) {
     // A reached conversion is when there is a reach (number of impressions > 0)
     // and a valid event, and this is only calculated for the test population
-    reachedConversions_.push_back(
-        std::move(event & inputProcessor_->getTestReach()));
+    reachedConversions_.push_back(std::move(
+        event & inputProcessor_->getLiftGameProcessedData().testReach));
   }
 }
 
 template <int schedulerId>
 void Attributor<schedulerId>::calculateValues() {
   XLOG(INFO) << "Calculate values";
-  if (events_.size() != inputProcessor_->getPurchaseValues().size()) {
+  if (events_.size() !=
+      inputProcessor_->getLiftGameProcessedData().purchaseValues.size()) {
     XLOG(FATAL)
         << "Numbers of event bits and/or purchase values are inconsistent.";
   }
-  auto zero = PubValue<schedulerId>(
-      std::vector<int64_t>(inputProcessor_->getNumRows(), 0));
+  auto zero = PubValue<schedulerId>(std::vector<int64_t>(
+      inputProcessor_->getLiftGameProcessedData().numRows, 0));
   for (size_t i = 0; i < events_.size(); ++i) {
     // The value is the purchase value if there is a valid event, otherwise it
     // is zero
-    values_.push_back(std::move(
-        zero.mux(events_.at(i), inputProcessor_->getPurchaseValues().at(i))));
+    values_.push_back(std::move(zero.mux(
+        events_.at(i),
+        inputProcessor_->getLiftGameProcessedData().purchaseValues.at(i))));
   }
 
   XLOG(INFO) << "Calculate reached values";
   // A reached value is the value when there is a reach, otherwise it is zero.
   // This is only calculated for the test population.
   for (const auto& value : values_) {
-    reachedValues_.push_back(
-        std::move(zero.mux(inputProcessor_->getTestReach(), value)));
+    reachedValues_.push_back(std::move(zero.mux(
+        inputProcessor_->getLiftGameProcessedData().testReach, value)));
   }
 }
 
