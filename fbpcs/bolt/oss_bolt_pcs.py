@@ -215,3 +215,10 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
     async def cancel_current_stage(self, instance_id: str) -> None:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.pcs.cancel_current_stage, instance_id)
+
+    async def get_or_create_instance(
+        self, instance_args: BoltPCSCreateInstanceArgs
+    ) -> str:
+        instance_id = await super().get_or_create_instance(instance_args)
+        self.pcs.update_input_path(instance_id, instance_args.input_path)
+        return instance_id
