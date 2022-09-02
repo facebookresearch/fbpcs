@@ -91,10 +91,23 @@ class BoltRunner(Generic[T, U]):
                             if await self.job_is_finished(
                                 job=job, stage_flow=stage_flow
                             ):
-                                logger.info(
-                                    # pyre-fixme: Undefined attribute [16]: `BoltCreateInstanceArgs` has no attribute `output_dir`
-                                    f"Run for {job.job_name} completed. View results at {job.partner_bolt_args.create_instance_args.output_dir}"
-                                )
+                                logger.info(f"Run for {job.job_name} completed.")
+
+                                if isinstance(
+                                    job.partner_bolt_args.create_instance_args,
+                                    BoltPCSCreateInstanceArgs,
+                                ):
+                                    logger.info(
+                                        f"View {job.job_name} partner results at {job.partner_bolt_args.create_instance_args.output_dir}"
+                                    )
+
+                                if isinstance(
+                                    job.publisher_bolt_args.create_instance_args,
+                                    BoltPCSCreateInstanceArgs,
+                                ):
+                                    logger.info(
+                                        f"View {job.job_name} publisher results at {job.publisher_bolt_args.create_instance_args.output_dir}"
+                                    )
                                 return True
                             # disable retries if stage is not retryable by setting tries to max_tries+1
                             if not stage.is_retryable:
