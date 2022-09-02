@@ -282,7 +282,6 @@ async def run_bolt(
                 config.get("pid_post_processing_handlers", {}),
             )
         ),
-        skip_publisher_creation=True,
         logger=logger,
         max_parallel_runs=MAX_NUM_INSTANCES,
     )
