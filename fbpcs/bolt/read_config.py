@@ -22,7 +22,10 @@ from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
 def parse_bolt_config(
     config: Dict[str, Any], logger: logging.Logger
-) -> Tuple[BoltRunner, List[BoltJob]]:
+) -> Tuple[
+    BoltRunner[BoltPCSCreateInstanceArgs, BoltPCSCreateInstanceArgs],
+    List[BoltJob[BoltPCSCreateInstanceArgs, BoltPCSCreateInstanceArgs]],
+]:
 
     # create runner
     runner_config = config["runner"]
@@ -36,7 +39,7 @@ def parse_bolt_config(
 
 def create_bolt_runner(
     runner_config: Dict[str, Any], logger: logging.Logger
-) -> BoltRunner:
+) -> BoltRunner[BoltPCSCreateInstanceArgs, BoltPCSCreateInstanceArgs]:
     publisher_client_config = ConfigYamlDict.from_file(
         runner_config["publisher_client_config"]
     )
@@ -72,7 +75,9 @@ def create_bolt_runner(
     return runner
 
 
-def create_job_list(job_config_list: Dict[str, Any]) -> List[BoltJob]:
+def create_job_list(
+    job_config_list: Dict[str, Any]
+) -> List[BoltJob[BoltPCSCreateInstanceArgs, BoltPCSCreateInstanceArgs]]:
     bolt_job_list = []
     for job_name, job_config in job_config_list.items():
         publisher_args = job_config["publisher"]
