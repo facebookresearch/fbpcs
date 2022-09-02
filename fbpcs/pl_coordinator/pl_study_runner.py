@@ -256,7 +256,11 @@ def run_study(
 
 
 async def run_bolt(
-    config: Dict[str, Any], logger: logging.Logger, job_list: List[BoltJob]
+    config: Dict[str, Any],
+    logger: logging.Logger,
+    job_list: List[
+        BoltJob[BoltPLGraphAPICreateInstanceArgs, BoltPCSCreateInstanceArgs]
+    ],
 ) -> None:
     """Run private lift with the BoltRunner in a dedicated function to ensure that
     the BoltRunner semaphore and runner.run_async share the same event loop.

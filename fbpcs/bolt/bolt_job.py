@@ -8,8 +8,7 @@
 
 from abc import ABC
 from dataclasses import dataclass
-
-from typing import Optional, Type
+from typing import Generic, Optional, Type, TypeVar
 
 from dataclasses_json import DataClassJsonMixin
 from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
@@ -17,7 +16,6 @@ from fbpcs.bolt.exceptions import IncompatibleStageError
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
@@ -28,17 +26,21 @@ class BoltCreateInstanceArgs(ABC):
     instance_id: str
 
 
+T = TypeVar("T", bound=BoltCreateInstanceArgs)
+U = TypeVar("U", bound=BoltCreateInstanceArgs)
+
+
 @dataclass
-class BoltPlayerArgs:
-    create_instance_args: BoltCreateInstanceArgs
+class BoltPlayerArgs(Generic[T]):
+    create_instance_args: T
     expected_result_path: Optional[str] = None
 
 
 @dataclass
-class BoltJob(DataClassJsonMixin):
+class BoltJob(DataClassJsonMixin, Generic[T, U]):
     job_name: str
-    publisher_bolt_args: BoltPlayerArgs
-    partner_bolt_args: BoltPlayerArgs
+    publisher_bolt_args: BoltPlayerArgs[T]
+    partner_bolt_args: BoltPlayerArgs[U]
     poll_interval: int = DEFAULT_POLL_INTERVAL_SEC
     num_tries: Optional[int] = None
 
