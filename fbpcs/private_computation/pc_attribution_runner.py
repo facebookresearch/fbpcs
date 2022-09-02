@@ -227,7 +227,6 @@ def run_attribution(
                 )
             ),
             num_tries=num_tries,
-            skip_publisher_creation=True,
             logger=logger,
         )
 
