@@ -17,8 +17,6 @@ Usage:
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
     pc-cli get_mpc <instance_id> --config=<config_file> [options]
-    pc-cli run_instance <instance_id> --config=<config_file> --input_path=<input_path> --num_shards=<num_shards> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
-    pc-cli run_instances <instance_ids> --config=<config_file> --input_paths=<input_paths> --num_shards_list=<num_shards_list> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --dry_run] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
@@ -54,7 +52,6 @@ from docopt import docopt
 from fbpcs.bolt.read_config import parse_bolt_config
 from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
-from fbpcs.pl_coordinator.pl_instance_runner import run_instance, run_instances
 from fbpcs.pl_coordinator.pl_study_runner import run_study
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -185,8 +182,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             "get_instance": bool,
             "get_server_ips": bool,
             "get_mpc": bool,
-            "run_instance": bool,
-            "run_instances": bool,
             "run_study": bool,
             "pre_validate": bool,
             "run_attribution": bool,
@@ -198,7 +193,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             "bolt_e2e": bool,
             "secret_scrubber": bool,
             "<instance_id>": schema.Or(None, str),
-            "<instance_ids>": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "<study_id>": schema.Or(None, str),
             "<secret_input_path>": schema.Or(
                 None, schema.And(schema.Use(PurePath), os.path.exists)
@@ -239,10 +233,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--attribution_rule": schema.Or(None, schema.Use(AttributionRule)),
             "--timestamp": schema.Or(None, str),
             "--num_files_per_mpc_container": schema.Or(None, schema.Use(int)),
-            "--num_shards": schema.Or(None, schema.Use(int)),
-            "--num_shards_list": schema.Or(
-                None, schema.Use(lambda arg: arg.split(","))
-            ),
             "--server_ips": schema.Or(None, schema.Use(lambda arg: arg.split(","))),
             "--concurrency": schema.Or(None, schema.Use(int)),
             "--padding_size": schema.Or(None, schema.Use(int)),
@@ -386,33 +376,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             aggregated_result_path=arguments["--aggregated_result_path"],
             expected_result_path=arguments["--expected_result_path"],
             logger=logger,
-        )
-    elif arguments["run_instance"]:
-        stage_flow = PrivateComputationStageFlow
-        logger.info(f"Running instance: {instance_id}")
-        run_instance(
-            config=config,
-            instance_id=instance_id,
-            input_path=arguments["--input_path"],
-            game_type=arguments["--game_type"],
-            num_mpc_containers=arguments["--num_shards"],
-            num_pid_containers=arguments["--num_shards"],
-            stage_flow=stage_flow,
-            logger=logger,
-            num_tries=arguments["--tries_per_stage"],
-            dry_run=arguments["--dry_run"],
-        )
-    elif arguments["run_instances"]:
-        stage_flow = PrivateComputationStageFlow
-        run_instances(
-            config=config,
-            instance_ids=arguments["<instance_ids>"],
-            input_paths=arguments["--input_paths"],
-            num_shards_list=arguments["--num_shards_list"],
-            stage_flow=stage_flow,
-            logger=logger,
-            num_tries=arguments["--tries_per_stage"],
-            dry_run=arguments["--dry_run"],
         )
     elif arguments["run_study"]:
         stage_flow = PrivateComputationStageFlow

@@ -6,7 +6,6 @@
 
 
 import asyncio
-
 import json
 import logging
 from datetime import datetime, timedelta, timezone
@@ -24,7 +23,6 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
 )
 from fbpcs.pl_coordinator.exceptions import IncorrectVersionError, sys_exit_after
 from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
-from fbpcs.pl_coordinator.pl_instance_runner import run_instance
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
     PrivateComputationRole,
@@ -42,7 +40,6 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     _build_private_computation_service,
     get_tier,
 )
-from fbpcs.utils.logger_adapter import LoggerAdapter
 
 
 # dataset information fields
@@ -174,91 +171,62 @@ def run_attribution(
     num_pid_containers = instance_data[NUM_SHARDS]
     num_mpc_containers = instance_data[NUM_CONTAINERS]
 
-    if PCSFeature.BOLT_RUNNER in pcs_feature_enums:
-        # using bolt runner
-
-        ## Step 3. Populate instance args and create Bolt jobs
-        publisher_args = BoltPlayerArgs(
-            create_instance_args=BoltPAGraphAPICreateInstanceArgs(
-                instance_id=instance_id,
-                dataset_id=dataset_id,
-                timestamp=str(dt_arg),
-                attribution_rule=attribution_rule.name,
-                num_containers=num_mpc_containers,
+    ## Step 3. Populate instance args and create Bolt jobs
+    publisher_args = BoltPlayerArgs(
+        create_instance_args=BoltPAGraphAPICreateInstanceArgs(
+            instance_id=instance_id,
+            dataset_id=dataset_id,
+            timestamp=str(dt_arg),
+            attribution_rule=attribution_rule.name,
+            num_containers=num_mpc_containers,
+        )
+    )
+    partner_args = BoltPlayerArgs(
+        create_instance_args=BoltPCSCreateInstanceArgs(
+            instance_id=instance_id,
+            role=PrivateComputationRole.PARTNER,
+            game_type=PrivateComputationGameType.ATTRIBUTION,
+            input_path=input_path,
+            num_pid_containers=num_pid_containers,
+            num_mpc_containers=num_mpc_containers,
+            stage_flow_cls=stage_flow_override,
+            concurrency=concurrency,
+            attribution_rule=attribution_rule,
+            aggregation_type=aggregation_type,
+            num_files_per_mpc_container=num_files_per_mpc_container,
+            k_anonymity_threshold=k_anonymity_threshold,
+            pcs_features=pcs_features,
+            run_id=run_id,
+        )
+    )
+    job = BoltJob(
+        job_name=f"Job [dataset_id: {dataset_id}][timestamp: {dt_arg}",
+        publisher_bolt_args=publisher_args,
+        partner_bolt_args=partner_args,
+        num_tries=num_tries,
+        final_stage=stage_flow_override.get_last_stage().previous_stage,
+        poll_interval=60,
+    )
+    runner = BoltRunner(
+        publisher_client=BoltGraphAPIClient(config=config["graphapi"], logger=logger),
+        partner_client=BoltPCSClient(
+            _build_private_computation_service(
+                config["private_computation"],
+                config["mpc"],
+                config["pid"],
+                config.get("post_processing_handlers", {}),
+                config.get("pid_post_processing_handlers", {}),
             )
-        )
-        partner_args = BoltPlayerArgs(
-            create_instance_args=BoltPCSCreateInstanceArgs(
-                instance_id=instance_id,
-                role=PrivateComputationRole.PARTNER,
-                game_type=PrivateComputationGameType.ATTRIBUTION,
-                input_path=input_path,
-                num_pid_containers=num_pid_containers,
-                num_mpc_containers=num_mpc_containers,
-                stage_flow_cls=stage_flow_override,
-                concurrency=concurrency,
-                attribution_rule=attribution_rule,
-                aggregation_type=aggregation_type,
-                num_files_per_mpc_container=num_files_per_mpc_container,
-                k_anonymity_threshold=k_anonymity_threshold,
-                pcs_features=pcs_features,
-                run_id=run_id,
-            )
-        )
-        job = BoltJob(
-            job_name=f"Job [dataset_id: {dataset_id}][timestamp: {dt_arg}",
-            publisher_bolt_args=publisher_args,
-            partner_bolt_args=partner_args,
-            num_tries=num_tries,
-            final_stage=stage_flow_override.get_last_stage().previous_stage,
-            poll_interval=60,
-        )
-        runner = BoltRunner(
-            publisher_client=BoltGraphAPIClient(
-                config=config["graphapi"], logger=logger
-            ),
-            partner_client=BoltPCSClient(
-                _build_private_computation_service(
-                    config["private_computation"],
-                    config["mpc"],
-                    config["pid"],
-                    config.get("post_processing_handlers", {}),
-                    config.get("pid_post_processing_handlers", {}),
-                )
-            ),
-            num_tries=num_tries,
-            logger=logger,
-        )
+        ),
+        num_tries=num_tries,
+        logger=logger,
+    )
 
-        # Step 4. Run instances async
+    # Step 4. Run instances async
 
-        logger.info(f"Started running instance {instance_id}.")
-        asyncio.run(runner.run_async([job]))
-        logger.info(f"Finished running instance {instance_id}.")
-    else:
-        # using existing runner
-        ## Step 3. Run Instances. Run maximum number of instances in parallel
-        logger.info(f"Start running instance {instance_id}.")
-        instance_parameters = {
-            "config": config,
-            "instance_id": instance_id,
-            "input_path": input_path,
-            "num_mpc_containers": num_mpc_containers,
-            "num_pid_containers": num_pid_containers,
-            "stage_flow": stage_flow_override,
-            "logger": LoggerAdapter(logger=logger, prefix=instance_id),
-            "game_type": PrivateComputationGameType.ATTRIBUTION,
-            "attribution_rule": attribution_rule,
-            "aggregation_type": AggregationType.MEASUREMENT,
-            "concurrency": concurrency,
-            "num_files_per_mpc_container": num_files_per_mpc_container,
-            "k_anonymity_threshold": k_anonymity_threshold,
-            "num_tries": num_tries,
-            "pcs_features": pcs_features,
-            "run_id": run_id,
-        }
-        run_instance(**instance_parameters)
-        logger.info(f"Finished running instances {instance_id}.")
+    logger.info(f"Started running instance {instance_id}.")
+    asyncio.run(runner.run_async([job]))
+    logger.info(f"Finished running instance {instance_id}.")
 
 
 def _create_new_instance(
