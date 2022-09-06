@@ -9,11 +9,10 @@
 import asyncio
 import logging
 from time import time
-from typing import List, Optional, Tuple, Type
+from typing import Generic, List, Optional, Tuple, Type, TypeVar
 
 from fbpcs.bolt.bolt_client import BoltClient
-
-from fbpcs.bolt.bolt_job import BoltJob
+from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
 from fbpcs.bolt.constants import (
     DEFAULT_MAX_PARALLEL_RUNS,
     DEFAULT_NUM_TRIES,
@@ -28,21 +27,24 @@ from fbpcs.bolt.exceptions import (
     StageTimeoutException,
     WaitValidStatusTimeout,
 )
+from fbpcs.bolt.oss_bolt_pcs import BoltPCSCreateInstanceArgs
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.utils.logger_adapter import LoggerAdapter
 
+T = TypeVar("T", bound=BoltCreateInstanceArgs)
+U = TypeVar("U", bound=BoltCreateInstanceArgs)
 
-class BoltRunner:
+
+class BoltRunner(Generic[T, U]):
     def __init__(
         self,
-        publisher_client: BoltClient,
-        partner_client: BoltClient,
+        publisher_client: BoltClient[T],
+        partner_client: BoltClient[U],
         max_parallel_runs: Optional[int] = None,
         num_tries: Optional[int] = None,
         skip_publisher_creation: Optional[bool] = None,
@@ -61,11 +63,11 @@ class BoltRunner:
 
     async def run_async(
         self,
-        jobs: List[BoltJob],
+        jobs: List[BoltJob[T, U]],
     ) -> List[bool]:
         return list(await asyncio.gather(*[self.run_one(job=job) for job in jobs]))
 
-    async def run_one(self, job: BoltJob) -> bool:
+    async def run_one(self, job: BoltJob[T, U]) -> bool:
         async with self.semaphore:
             try:
                 publisher_id, partner_id = await self._get_or_create_instances(job)
@@ -266,7 +268,7 @@ class BoltRunner:
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
         )
 
-    async def _get_or_create_instances(self, job: BoltJob) -> Tuple[str, str]:
+    async def _get_or_create_instances(self, job: BoltJob[T, U]) -> Tuple[str, str]:
         """Checks to see if a job is new or being resumed
 
         If the job is new, it creates new instances and returns their IDs. If the job
@@ -322,7 +324,7 @@ class BoltRunner:
 
     async def job_is_finished(
         self,
-        job: BoltJob,
+        job: BoltJob[T, U],
         stage_flow: Type[PrivateComputationBaseStageFlow],
     ) -> bool:
         publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
@@ -342,7 +344,7 @@ class BoltRunner:
 
     async def get_stage_flow(
         self,
-        job: BoltJob,
+        job: BoltJob[T, U],
     ) -> Type[PrivateComputationBaseStageFlow]:
         publisher_id = job.publisher_bolt_args.create_instance_args.instance_id
         partner_id = job.partner_bolt_args.create_instance_args.instance_id
@@ -370,7 +372,7 @@ class BoltRunner:
 
     async def get_next_valid_stage(
         self,
-        job: BoltJob,
+        job: BoltJob[T, U],
         stage_flow: Type[PrivateComputationBaseStageFlow],
     ) -> Optional[PrivateComputationBaseStageFlow]:
         """Gets the next stage that should be run.

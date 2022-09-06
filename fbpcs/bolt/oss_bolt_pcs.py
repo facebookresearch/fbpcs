@@ -106,7 +106,7 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
         return cls.from_dict(yml_dict)
 
 
-class BoltPCSClient(BoltClient):
+class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
     def __init__(
         self, pcs: PrivateComputationService, logger: Optional[logging.Logger] = None
     ) -> None:
@@ -115,10 +115,7 @@ class BoltPCSClient(BoltClient):
             logging.getLogger(__name__) if logger is None else logger
         )
 
-    async def create_instance(self, instance_args: BoltCreateInstanceArgs) -> str:
-        assert isinstance(
-            instance_args, BoltPCSCreateInstanceArgs
-        )  # We will add generics later so that we can move the check to the type checker
+    async def create_instance(self, instance_args: BoltPCSCreateInstanceArgs) -> str:
         instance = self.pcs.create_instance(
             instance_id=instance_args.instance_id,
             role=instance_args.role,
