@@ -34,7 +34,6 @@ from fbpcs.pl_coordinator.pc_graphapi_utils import (
     GraphAPIGenericException,
     PCGraphAPIClient,
 )
-from fbpcs.pl_coordinator.pl_instance_runner import run_instances
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
     PrivateComputationRole,
@@ -153,78 +152,53 @@ def run_study(
 
     ## Step 3. Run Instances. Run maximum number of instances in parallel
 
-    if PCSFeature.BOLT_RUNNER in pcs_feature_enums:
-        # using bolt runner
-        # create the jobs
-        all_instance_ids = []
-        job_list = []
-        for instance_id in instances_input_path.keys():
-            all_instance_ids.append(instance_id)
-            data = instances_input_path[instance_id]
-            input_path = data["input_path"]
-            num_shards = data["num_shards"]
-            cell_id = data["cell_id"]
-            obj_id = data["objective_id"]
-            publisher_args = BoltPlayerArgs(
-                create_instance_args=BoltPLGraphAPICreateInstanceArgs(
-                    instance_id=instance_id,
-                    study_id=study_id,
-                    breakdown_key={
-                        "cell_id": cell_id,
-                        "objective_id": obj_id,
-                    },
-                    run_id=run_id,
-                )
+    # using bolt runner
+    # create the jobs
+    all_instance_ids = []
+    job_list = []
+    for instance_id in instances_input_path.keys():
+        all_instance_ids.append(instance_id)
+        data = instances_input_path[instance_id]
+        input_path = data["input_path"]
+        num_shards = data["num_shards"]
+        cell_id = data["cell_id"]
+        obj_id = data["objective_id"]
+        publisher_args = BoltPlayerArgs(
+            create_instance_args=BoltPLGraphAPICreateInstanceArgs(
+                instance_id=instance_id,
+                study_id=study_id,
+                breakdown_key={
+                    "cell_id": cell_id,
+                    "objective_id": obj_id,
+                },
+                run_id=run_id,
             )
-            partner_args = BoltPlayerArgs(
-                create_instance_args=BoltPCSCreateInstanceArgs(
-                    instance_id=instance_id,
-                    role=PrivateComputationRole.PARTNER,
-                    game_type=PrivateComputationGameType.LIFT,
-                    input_path=input_path,
-                    num_pid_containers=int(num_shards),
-                    num_mpc_containers=int(num_shards),
-                    stage_flow_cls=stage_flow_override,
-                    result_visibility=result_visibility or ResultVisibility.PUBLIC,
-                    pcs_features=pcs_features,
-                    run_id=run_id,
-                )
-            )
-            job = BoltJob(
-                job_name=f"Job [cell_id: {cell_id}][obj_id: {obj_id}]",
-                publisher_bolt_args=publisher_args,
-                partner_bolt_args=partner_args,
-                num_tries=num_tries,
-                final_stage=stage_flow_override.get_last_stage().previous_stage,
-                poll_interval=60,
-            )
-            job_list.append(job)
-
-        asyncio.run(run_bolt(config, logger, job_list))
-
-    else:
-        # using existing runner
-        all_instance_ids = []
-        chunks = _get_chunks(instances_input_path, MAX_NUM_INSTANCES)
-        for chunk in chunks:
-            instance_ids = list(chunk.keys())
-            all_instance_ids.extend(instance_ids)
-            chunk_input_paths = list(map(lambda x: x["input_path"], chunk.values()))
-            chunk_num_shards = list(map(lambda x: x["num_shards"], chunk.values()))
-            logger.info(f"Start running instances {instance_ids}.")
-            run_instances(
-                config=config,
-                instance_ids=instance_ids,
-                input_paths=chunk_input_paths,
-                num_shards_list=chunk_num_shards,
-                stage_flow=stage_flow_override,
-                logger=logger,
-                num_tries=num_tries,
-                dry_run=dry_run,
-                result_visibility=result_visibility,
+        )
+        partner_args = BoltPlayerArgs(
+            create_instance_args=BoltPCSCreateInstanceArgs(
+                instance_id=instance_id,
+                role=PrivateComputationRole.PARTNER,
+                game_type=PrivateComputationGameType.LIFT,
+                input_path=input_path,
+                num_pid_containers=int(num_shards),
+                num_mpc_containers=int(num_shards),
+                stage_flow_cls=stage_flow_override,
+                result_visibility=result_visibility or ResultVisibility.PUBLIC,
                 pcs_features=pcs_features,
+                run_id=run_id,
             )
-            logger.info(f"Finished running instances {instance_ids}.")
+        )
+        job = BoltJob(
+            job_name=f"Job [cell_id: {cell_id}][obj_id: {obj_id}]",
+            publisher_bolt_args=publisher_args,
+            partner_bolt_args=partner_args,
+            num_tries=num_tries,
+            final_stage=stage_flow_override.get_last_stage().previous_stage,
+            poll_interval=60,
+        )
+        job_list.append(job)
+
+    asyncio.run(run_bolt(config, logger, job_list))
 
     ## Step 4: Print out the initial and end states
     new_cell_obj_instances = _get_cell_obj_instance(

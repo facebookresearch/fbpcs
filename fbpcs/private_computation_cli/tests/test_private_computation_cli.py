@@ -292,51 +292,6 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         get_mpc_mock.assert_called_once()
 
-    @patch("fbpcs.private_computation_cli.private_computation_cli.run_instance")
-    def test_run_instance(self, run_instance_mock) -> None:
-        argv = [
-            "run_instance",
-            "instance123",
-            f"--config={self.temp_filename}",
-            f"--input_path={self.temp_filename}",
-            "--num_shards=456",
-        ]
-        pc_cli.main(argv)
-        run_instance_mock.assert_called_once()
-        run_instance_mock.reset_mock()
-
-        argv.extend(
-            [
-                "--tries_per_stage=789",
-                "--dry_run",
-            ]
-        )
-        pc_cli.main(argv)
-        run_instance_mock.assert_called_once()
-
-    @patch("fbpcs.private_computation_cli.private_computation_cli.run_instances")
-    def test_run_instances(self, run_instances_mock) -> None:
-        # Test with real temporary file and folder
-        argv = [
-            "run_instances",
-            "instance123,instance456",
-            f"--config={self.temp_filename}",
-            f"--input_paths={','.join(self.temp_files_paths[:2])}",
-            "--num_shards_list=456,789",
-        ]
-        pc_cli.main(argv)
-        run_instances_mock.assert_called_once()
-        run_instances_mock.reset_mock()
-
-        argv.extend(
-            [
-                "--tries_per_stage=789",
-                "--dry_run",
-            ]
-        )
-        pc_cli.main(argv)
-        run_instances_mock.assert_called_once()
-
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_study")
     def test_run_study(self, run_study_mock) -> None:
         argv = [

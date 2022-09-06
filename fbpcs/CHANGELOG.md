@@ -13,12 +13,30 @@ Types of changes
 - `Security` in case This project adheres to
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased - 2.0.0] - put release date here
 ### Added
+
+- Bolt:
+    - Use generics across Bolt library
+    - Add `get_or_create_instance` to BoltClient API
 
 ### Changed
 
+- Bolt:
+    - BoltPCSClient overrides input path with new input when resuming a paused run
+
 ### Removed
+
+- Bolt:
+    - Remove `_get_or_create_instances` from BoltRunner API
+    - Remove `skip_publisher_creation` from BoltRunner constructor
+- Deleted legacy "one command runner"
+    - pl_instance_runner.py
+    - test_pl_instance_runner.py
+    - pc_calc_instance.py
+    - pc_partner_instance.py
+    - pc_publisher_instance.py
+- BREAKING API: removed `run_instance` and `run_instances` from PC-CLI
 
 ## [1.12.0] - 2022-08-31
 ### Added
