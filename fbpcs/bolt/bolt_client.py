@@ -9,7 +9,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Type
+from typing import Generic, List, Optional, Type, TypeVar
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 
@@ -21,6 +21,9 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 
+# T can be any subtype of BoltCreateInstanceArgs
+T = TypeVar("T", bound=BoltCreateInstanceArgs)
+
 
 @dataclass
 class BoltState:
@@ -28,7 +31,7 @@ class BoltState:
     server_ips: Optional[List[str]] = None
 
 
-class BoltClient(ABC):
+class BoltClient(ABC, Generic[T]):
     """
     Exposes async methods for creating instances, running stages, updating instances,
     and validating the correctness of a computation
@@ -40,7 +43,7 @@ class BoltClient(ABC):
         )
 
     @abstractmethod
-    async def create_instance(self, instance_args: BoltCreateInstanceArgs) -> str:
+    async def create_instance(self, instance_args: T) -> str:
         pass
 
     @abstractmethod
@@ -94,7 +97,7 @@ class BoltClient(ABC):
                 return stage
         return None
 
-    async def is_existing_instance(self, instance_args: BoltCreateInstanceArgs) -> bool:
+    async def is_existing_instance(self, instance_args: T) -> bool:
         """Returns whether the instance with instance_args exists
 
         Args:

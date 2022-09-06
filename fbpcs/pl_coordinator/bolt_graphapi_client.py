@@ -5,14 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
-
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import requests
-
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
@@ -105,7 +103,14 @@ class BoltPAGraphAPICreateInstanceArgs(BoltCreateInstanceArgs):
     num_containers: str
 
 
-class BoltGraphAPIClient(BoltClient):
+BoltGraphAPICreateInstanceArgs = TypeVar(
+    "BoltGraphAPICreateInstanceArgs",
+    BoltPLGraphAPICreateInstanceArgs,
+    BoltPAGraphAPICreateInstanceArgs,
+)
+
+
+class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
     def __init__(
         self, config: Dict[str, Any], logger: Optional[logging.Logger] = None
     ) -> None:
@@ -121,7 +126,10 @@ class BoltGraphAPIClient(BoltClient):
         self.access_token = self._get_graph_api_token(config)
         self.params = {"access_token": self.access_token}
 
-    async def create_instance(self, instance_args: BoltCreateInstanceArgs) -> str:
+    async def create_instance(
+        self,
+        instance_args: BoltGraphAPICreateInstanceArgs,
+    ) -> str:
         params = self.params.copy()
         if isinstance(instance_args, BoltPLGraphAPICreateInstanceArgs):
             params["breakdown_key"] = json.dumps(instance_args.breakdown_key)
@@ -190,7 +198,10 @@ class BoltGraphAPIClient(BoltClient):
                 "This method should not be called with expected results"
             )
 
-    async def is_existing_instance(self, instance_args: BoltCreateInstanceArgs) -> bool:
+    async def is_existing_instance(
+        self,
+        instance_args: BoltGraphAPICreateInstanceArgs,
+    ) -> bool:
         instance_id = instance_args.instance_id
         self.logger.info(f"Checking if {instance_id} exists...")
         if instance_id:
