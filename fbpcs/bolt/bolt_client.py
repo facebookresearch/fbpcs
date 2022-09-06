@@ -116,3 +116,13 @@ class BoltClient(ABC, Generic[T]):
         except Exception:
             self.logger.info(f"{instance_id} not found.")
             return False
+
+    async def get_or_create_instance(self, instance_args: T) -> str:
+        if await self.is_existing_instance(instance_args):
+            self.logger.info(f"instance {instance_args.instance_id} exists - returning")
+            return instance_args.instance_id
+        else:
+            self.logger.info(
+                f"instance {instance_args.instance_id} does not exist - creating"
+            )
+            return await self.create_instance(instance_args)

@@ -132,8 +132,7 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         self.test_concurrency = 1
         self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
-    async def test_create_instance(self) -> None:
-        bolt_instance_args = BoltPCSCreateInstanceArgs(
+        self.bolt_instance_args = BoltPCSCreateInstanceArgs(
             instance_id=self.test_instance_id,
             role=self.test_role,
             game_type=self.test_game_type,
@@ -145,7 +144,9 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             hmac_key=self.test_hmac_key,
         )
-        return_id = await self.bolt_pcs_client.create_instance(bolt_instance_args)
+
+    async def test_create_instance(self) -> None:
+        return_id = await self.bolt_pcs_client.create_instance(self.bolt_instance_args)
         self.assertEqual(return_id, self.test_instance_id)
 
     @mock.patch(
@@ -254,3 +255,16 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
                     instance_args=mock_instance_args
                 )
                 self.assertEqual(actual_result, expected_result)
+
+    async def test_get_or_create_instance(self) -> None:
+        for exists in (True, False):
+            with self.subTest(exists=exists):
+                self.bolt_pcs_client.is_existing_instance = mock.AsyncMock(
+                    return_value=exists
+                )
+
+                expected_result = self.bolt_instance_args.instance_id
+                actual_result = await self.bolt_pcs_client.get_or_create_instance(
+                    self.bolt_instance_args
+                )
+                self.assertEqual(expected_result, actual_result)
