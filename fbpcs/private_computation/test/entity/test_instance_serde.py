@@ -9,17 +9,18 @@
 import unittest
 
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
-from fbpcs.pid.entity.pid_instance import PIDInstance
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
+
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
 from fbpcs.private_computation.test.entity.generate_instance_json import (
     gen_dummy_mpc_instance,
     gen_dummy_pc_instance,
-    gen_dummy_pid_instance,
+    gen_dummy_stage_state_instance,
     LIFT_MPC_PATH,
     LIFT_PC_PATH,
-    LIFT_PID_PATH,
+    STAGE_STATE_PATH,
 )
 
 ERR_MSG: str = (
@@ -52,12 +53,12 @@ class TestInstanceSerde(unittest.TestCase):
     If you need to update test files, you can run buck run //fbpcs:pc_generate_instance_json
     """
 
-    def test_pid_deserialiation(self) -> None:
+    def test_stage_state_deserialiation(self) -> None:
         # this tests that old fields (and instances) can be deserialized
-        with open(LIFT_PID_PATH) as f:
+        with open(STAGE_STATE_PATH) as f:
             instance_json = f.read().strip()
         try:
-            PIDInstance.loads_schema(instance_json)
+            StageStateInstance.loads_schema(instance_json)
         except Exception as e:
             raise RuntimeError(ERR_MSG) from e
 
@@ -79,10 +80,10 @@ class TestInstanceSerde(unittest.TestCase):
         except Exception as e:
             raise RuntimeError(ERR_MSG) from e
 
-    def test_pid_serialization(self) -> None:
+    def test_state_state_serialization(self) -> None:
         # this tests that new fields can be serialized
-        pid_instance = gen_dummy_pid_instance()
-        pid_instance.dumps_schema()
+        stage_state_instance = gen_dummy_stage_state_instance()
+        stage_state_instance.dumps_schema()
 
     def test_mpc_serialization(self) -> None:
         # this tests that new fields can be serialized

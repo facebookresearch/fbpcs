@@ -259,7 +259,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         )
         unioned_pc_instances = [stage_state_instance]
         # pyre-fixme[8]: Attribute has type `List[Union[StageStateInstance,
-        #  PCSMPCInstance, PIDInstance, PostProcessingInstance]]`; used as
+        #  PCSMPCInstance, PostProcessingInstance]]`; used as
         #  `List[StageStateInstance]`.
         pc_instance.infra_config.instances = unioned_pc_instances
         expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED
