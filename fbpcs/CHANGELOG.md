@@ -13,7 +13,14 @@ Types of changes
 - `Security` in case This project adheres to
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 2.0.0] - put release date here
+## [Unreleased - 2.1.0] - put release date here
+### Added
+
+### Changed
+
+### Removed
+
+## [2.0.0] - 2022-09-07
 ### Added
 
 - Bolt:
