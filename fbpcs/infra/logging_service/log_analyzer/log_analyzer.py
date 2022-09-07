@@ -75,7 +75,7 @@ class LogDigest:
         self.logs_file = logs_file
         self.run_study: RunStudy = RunStudy(0)
         self.start_epoch_time: str = ""
-        self.container_ids: Dict[str, Set[str]] = {}
+        self.container_ids: Dict[str, Dict[str, ContainerInfo]] = {}
         self.is_bolt_runner: bool = False
 
         self.re_error: Pattern[str] = re.compile(
@@ -95,6 +95,21 @@ class LogDigest:
         )
         self.re_adv_prepare: Pattern[str] = re.compile(r"\"ADV_PREPARE\": \[([^\]]+)\]")
         self.re_adv_run_pid: Pattern[str] = re.compile(r"\"ADV_RUN_PID\": \[([^\]]+)\]")
+
+        # Pattern to match a container list in status update
+        self.re_containers_in_status_update: Pattern[str] = re.compile(
+            r"\"containers\": \[([^\]]+)\]"
+        )
+        # Patterns to match various fields of a container
+        self.re_container_id_field: Pattern[str] = re.compile(
+            r"\"instance_id\": \"(arn:[^\"]+)\""
+        )
+        self.re_container_status_field: Pattern[str] = re.compile(
+            r"\"status\": \"([^\"]+)\""
+        )
+        self.re_container_log_url_field: Pattern[str] = re.compile(
+            r"\"log_url\": \"([^\"]+)\""
+        )
 
         self.matcher_handlers = [
             MatcherAndHandler(
@@ -284,7 +299,7 @@ class LogDigest:
             objective_id=objective_id,
             cell_id=cell_id,
         )
-        self.container_ids[instance_id] = set()
+        self.container_ids[instance_id] = {}
 
     def _add_existing_instance(
         self,
@@ -337,7 +352,7 @@ class LogDigest:
                     cell_id=cell_id,
                     existing_instance_status=instance.get("status"),
                 )
-                self.container_ids[instance_id] = set()
+                self.container_ids[instance_id] = {}
 
         return None
 
@@ -414,14 +429,18 @@ class LogDigest:
         self._try_add_containers_in_runpid_stage(context, instance_id, instance_data)
 
         # Finally handle all containers
-        self._add_containers_to_last_stage(
-            instance_id,
-            self._extract_new_containers(
-                instance_id,
-                instance_data,
-                context,
-            ),
+        containers_data_list = self.re_containers_in_status_update.findall(
+            instance_data
         )
+        for containers_data in containers_data_list:
+            self._add_containers_to_last_stage(
+                instance_id,
+                self._extract_new_containers(
+                    instance_id,
+                    containers_data,
+                    context,
+                ),
+            )
 
     def _try_add_containers_in_runpid_stage(
         self,
@@ -441,8 +460,7 @@ class LogDigest:
                 ["ADV_SHARD"],
             )
 
-            match = self.re_adv_prepare.search(instance_data)
-            if match:
+            if match := self.re_adv_prepare.search(instance_data):
                 self._add_containers_to_last_stage(
                     instance_id,
                     self._extract_new_containers(
@@ -453,8 +471,7 @@ class LogDigest:
                     ["ADV_PREPARE"],
                 )
 
-            match = self.re_adv_run_pid.search(instance_data)
-            if match:
+            if match := self.re_adv_run_pid.search(instance_data):
                 self._add_containers_to_last_stage(
                     instance_id,
                     self._extract_new_containers(
@@ -479,7 +496,7 @@ class LogDigest:
             return
         self.logger.info(f"Adding container count={len(containers)}")
         for container in containers:
-            self.container_ids[instance_id].add(container.container_id)
+            self.container_ids[instance_id][container.container_id] = container
             self.logger.info(
                 f"Adding container={container.container_id}. At line_num={container.context.line_num}"
             )
@@ -495,19 +512,23 @@ class LogDigest:
     def _extract_new_containers(
         self,
         instance_id: str,
-        log_str: str,
+        containers_data: str,
         context: LogContext,
     ) -> List[ContainerInfo]:
-        added_container_ids = self.container_ids[instance_id]
+        # containers_data represents a list of containers, e.g.
+        # {"ip_address": ..., "log_url": ..., "status": ..., "instance_id": ..., "__type": ...}, {...}
+        added_containers = self.container_ids[instance_id]
         containers: List[ContainerInfo] = []
-        id_list = re.findall(r"\"instance_id\": \"(arn:[^\"]+)\"", log_str)
-        status_list = re.findall(r"\"status\": \"([^\"]+)\"", log_str)
+        id_list = self.re_container_id_field.findall(containers_data)
+        status_list = self.re_container_status_field.findall(containers_data)
         # log_url might be missing, e.g. when running computation client against dev account.
-        log_url_list = re.findall(r"\"log_url\": \"([^\"]+)\"", log_str) or [
+        log_url_list = self.re_container_log_url_field.findall(containers_data) or [
             None
         ] * len(id_list)
+
         for id, status, log_url in zip(id_list, status_list, log_url_list):
-            if id in added_container_ids:
+            if added_container := added_containers.get(id):
+                added_container.status = status
                 continue  # this container is added before and ignored here
             self.logger.debug(
                 f"Found new container=[{instance_id}]: {{{id}, {status}, {log_url}}}"
