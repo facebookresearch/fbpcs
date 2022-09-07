@@ -27,6 +27,12 @@ WORKDIR /home/pcs/pl_coordinator_env
 
 # Switch back to root to ensure root user run compatible
 USER root
+
+# Narrow down the permission to only the workdir for pcs user
+RUN chown -R pcs /home/pcs/pl_coordinator_env/
+RUN chmod -R u+rw /tmp
+RUN chmod -R u+rwx /home/pcs/pl_coordinator_env
+
 RUN python3.8 -m pip install -r fbpcs/pip_requirements.txt
 
 CMD ["/bin/bash"]
