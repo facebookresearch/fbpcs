@@ -315,17 +315,15 @@ def _verify_study_type(study_data: Dict[str, Any]) -> None:
 
 def _verify_mpc_objs(study_data: Dict[str, Any], objective_ids: List[str]) -> None:
     # verify study has mpc objectives
-    mpc_objectives = list(
-        map(
-            lambda obj: obj["id"],
-            list(
-                filter(
-                    lambda obj: obj["type"] == MPC_CONVERSION,
-                    study_data["objectives"]["data"],
-                )
-            ),
+    mpc_objectives = [
+        obj["id"]
+        for obj in list(
+            filter(
+                lambda obj: obj["type"] == MPC_CONVERSION,
+                study_data["objectives"]["data"],
+            )
         )
-    )
+    ]
     if not mpc_objectives:
         raise PCStudyValidationException(
             f"Study {study_data['id']} has no MPC objectives",
@@ -558,7 +556,7 @@ def _has_duplicates(str_list: List[str]) -> bool:
 
 
 def _join_err_msgs(err_msgs: List[str]) -> str:
-    err_msgs = list(map(lambda msg: "Error: " + msg, err_msgs))
+    err_msgs = [f"Error: {msg}" for msg in err_msgs]
     return "\n".join(err_msgs)
 
 
