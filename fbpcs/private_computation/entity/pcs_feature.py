@@ -21,6 +21,15 @@ class PCSFeature(Enum):
     @staticmethod
     def from_str(feature_str: str) -> "PCSFeature":
         """maps str (possibly feature name defined in SV) to a PCSFeature."""
+        # We intentionally do this length check outside of the try/except below.
+        # It indicates that someone likely messed up a config. For example,
+        # passing `"bolt_runner" => ["b", "o", "l", "t", "_", ...]` as features
+        # because the config.yml had missing brackets `[]`, causing the string
+        # to get interpreted as an interable of characters instead of a list of
+        # strings with one element.
+        if len(feature_str) <= 1:
+            raise ValueError("Features of length <= 1 not supported. Check your config")
+
         feature_str = feature_str.casefold()
         try:
             return PCSFeature(feature_str)
