@@ -11,7 +11,7 @@ from functools import cached_property
 from typing import Any, Dict, Generic, Optional, Tuple, Type, TypeVar
 
 from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
-from termcolor import colored
+from fbpcs.utils.color import colored
 
 
 # C  -> Class
