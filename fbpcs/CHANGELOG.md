@@ -17,6 +17,7 @@ Types of changes
 ### Added
 
 ### Changed
+- validate_metrics output is colored green/red depending on success/failure if stdout is a tty
 
 ### Removed
 
