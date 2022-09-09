@@ -868,17 +868,17 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
 
 class DummyJointStageFlow(PrivateComputationBaseStageFlow):
     CREATED = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.CREATION_STARTED,
-        PrivateComputationInstanceStatus.CREATED,
-        PrivateComputationInstanceStatus.CREATION_FAILED,
-        False,
+        started_status=PrivateComputationInstanceStatus.CREATION_STARTED,
+        completed_status=PrivateComputationInstanceStatus.CREATED,
+        failed_status=PrivateComputationInstanceStatus.CREATION_FAILED,
+        is_joint_stage=False,
     )
 
     JOINT_STAGE = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-        PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-        PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-        True,
+        started_status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+        completed_status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+        failed_status=PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+        is_joint_stage=True,
     )
 
     def get_stage_service(
@@ -889,33 +889,33 @@ class DummyJointStageFlow(PrivateComputationBaseStageFlow):
 
 class DummyNonJointStageFlow(PrivateComputationBaseStageFlow):
     CREATED = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.CREATION_STARTED,
-        PrivateComputationInstanceStatus.CREATED,
-        PrivateComputationInstanceStatus.CREATION_FAILED,
-        False,
+        started_status=PrivateComputationInstanceStatus.CREATION_STARTED,
+        completed_status=PrivateComputationInstanceStatus.CREATED,
+        failed_status=PrivateComputationInstanceStatus.CREATION_FAILED,
+        is_joint_stage=False,
     )
 
     NON_JOINT_STAGE = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.PID_SHARD_STARTED,
-        PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
-        PrivateComputationInstanceStatus.PID_SHARD_FAILED,
-        False,
+        started_status=PrivateComputationInstanceStatus.PID_SHARD_STARTED,
+        completed_status=PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
+        failed_status=PrivateComputationInstanceStatus.PID_SHARD_FAILED,
+        is_joint_stage=False,
     )
 
 
 class DummyRetryableStageFlow(PrivateComputationBaseStageFlow):
     CREATED = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.CREATION_STARTED,
-        PrivateComputationInstanceStatus.CREATED,
-        PrivateComputationInstanceStatus.CREATION_FAILED,
-        False,
+        started_status=PrivateComputationInstanceStatus.CREATION_STARTED,
+        completed_status=PrivateComputationInstanceStatus.CREATED,
+        failed_status=PrivateComputationInstanceStatus.CREATION_FAILED,
+        is_joint_stage=False,
     )
 
     RETRYABLE_STAGE = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
-        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
-        PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
-        False,
+        started_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
+        completed_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
+        failed_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
+        is_joint_stage=False,
         is_retryable=True,
     )
 
@@ -927,17 +927,17 @@ class DummyRetryableStageFlow(PrivateComputationBaseStageFlow):
 
 class DummyNonRetryableStageFlow(PrivateComputationBaseStageFlow):
     CREATED = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.CREATION_STARTED,
-        PrivateComputationInstanceStatus.CREATED,
-        PrivateComputationInstanceStatus.CREATION_FAILED,
-        False,
+        started_status=PrivateComputationInstanceStatus.CREATION_STARTED,
+        completed_status=PrivateComputationInstanceStatus.CREATED,
+        failed_status=PrivateComputationInstanceStatus.CREATION_FAILED,
+        is_joint_stage=False,
     )
 
     NON_RETRYABLE_STAGE = PrivateComputationStageFlowData(
-        PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
-        PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
-        PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
-        True,
+        started_status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
+        completed_status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+        failed_status=PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
+        is_joint_stage=True,
         is_retryable=False,
     )
 
