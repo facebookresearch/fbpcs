@@ -51,8 +51,8 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.service.workflow import WorkflowService
+from fbpcs.utils.color import colored
 from fbpcs.utils.config_yaml import reflect
-from termcolor import colored
 
 
 def create_instance(

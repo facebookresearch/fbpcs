@@ -13,7 +13,7 @@ from enum import Enum
 
 from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
-from termcolor import colored
+from fbpcs.utils.color import colored
 
 # decorators are a serious pain to add typing for, so I'm not going to bother...
 # pyre-ignore
