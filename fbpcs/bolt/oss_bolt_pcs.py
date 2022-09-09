@@ -40,6 +40,7 @@ from fbpcs.private_computation.service.private_computation import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+from fbpcs.utils.color import colored
 
 
 @dataclass
@@ -203,12 +204,18 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
                 )
             except PrivateComputationServiceValidationError:
                 self.logger.info(
-                    f"Validate results for instance {instance_id} are not as expected."
+                    colored(
+                        f"Validate results for instance {instance_id} are NOT as expected.",
+                        "red",
+                    )
                 )
                 return False
             else:
                 self.logger.info(
-                    f"Validate results for instance {instance_id} are as expected."
+                    colored(
+                        f"Validate results for instance {instance_id} are as expected.",
+                        "green",
+                    )
                 )
                 return True
 

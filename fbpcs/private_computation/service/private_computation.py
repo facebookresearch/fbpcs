@@ -81,6 +81,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.service.workflow import WorkflowService
+from fbpcs.utils.color import colored
 from fbpcs.utils.optional import unwrap_or_default
 
 T = TypeVar("T")
@@ -525,7 +526,10 @@ class PrivateComputationService:
         )
         if expected_results_dict == aggregated_results_dict:
             self.logger.info(
-                f"Aggregated results for instance {instance_id} on synthetic data is as expected."
+                colored(
+                    f"Aggregated results for instance {instance_id} on synthetic data is as expected.",
+                    "green",
+                )
             )
         else:
             raise PrivateComputationServiceValidationError(
