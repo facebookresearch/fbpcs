@@ -179,7 +179,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
         default_factory=set,
         metadata={
             # this makes type warning away when serialize this field
-            **config(mm_field=fields.List(EnumField(PCSFeature))),
+            **config(mm_field=fields.List(EnumField(enum=PCSFeature, by_value=True))),
             **MutabilityMetadata.IMMUTABLE.value,
         },
     )

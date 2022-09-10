@@ -20,6 +20,18 @@ class TestPcsFeatureEnum(unittest.TestCase):
                 self.assertEquals(feature, test_pcs_feature)
                 self.assertEquals(uppercase_feature, test_pcs_feature)
 
+    def test_pcs_feature_enum_by_name(self) -> None:
+        feature = PCSFeature(PCSFeature.PCS_DUMMY.name)
+        self.assertEquals(feature, PCSFeature.PCS_DUMMY)
+
+    def test_pcs_feature_enum_unkown_by_value(self) -> None:
+        feature = PCSFeature("unknown_feature")
+        self.assertEquals(feature, PCSFeature.UNKNOWN)
+
+    def test_pcs_feature_enum_casefold_by_value(self) -> None:
+        feature = PCSFeature("PCS_Dummy_Feature")
+        self.assertEquals(feature, PCSFeature.PCS_DUMMY)
+
     def test_pcs_feature_enum_unkown(self) -> None:
         feature = PCSFeature.from_str("unknown_feature")
         self.assertEquals(feature, PCSFeature.UNKNOWN)
