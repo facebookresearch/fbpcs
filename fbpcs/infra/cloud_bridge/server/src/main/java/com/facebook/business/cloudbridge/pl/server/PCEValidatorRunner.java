@@ -28,7 +28,6 @@ public class PCEValidatorRunner {
         commandBuilder
             .add("/bin/bash")
             .add("/terraform_deployment/pceValidator.sh")
-            .add("validate_pce_2")
             .add(deployment.region)
             .add(deployment.tag)
             .build();
