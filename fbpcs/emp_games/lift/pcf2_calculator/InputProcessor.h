@@ -34,7 +34,6 @@ class InputProcessor : public IInputProcessor<schedulerId> {
     shareBitsForValuesStep();
     privatelyShareGroupIdsStep();
     privatelySharePopulationStep();
-    privatelyShareGroupIdsStep();
     privatelyShareIndexSharesStep();
     privatelyShareTestIndexSharesStep();
     privatelyShareTimestampsStep();
@@ -59,11 +58,11 @@ class InputProcessor : public IInputProcessor<schedulerId> {
   // Share number of bits needed to store the input value and its square
   void shareBitsForValuesStep();
 
-  // Privately share popoulation
-  void privatelySharePopulationStep();
-
   // Privately share cohort ids and breakdown ids.
   void privatelyShareGroupIdsStep();
+
+  // Privately share popoulation
+  void privatelySharePopulationStep();
 
   // Privately share index shares of group ids encoding the population, cohorts
   // and publisher breakdowns.
