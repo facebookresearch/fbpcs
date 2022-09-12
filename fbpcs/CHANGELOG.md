@@ -15,6 +15,7 @@ Types of changes
 
 ## [Unreleased - 2.1.0] - put release date here
 ### Added
+- Defined Graph-API based trace logging service library
 
 ### Changed
 - validate_metrics output is colored green/red depending on success/failure if stdout is a tty
