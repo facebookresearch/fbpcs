@@ -36,19 +36,29 @@ from fbpcs.private_computation.service.post_processing_stage_service import (
 
 
 class TestPostProcessingStageService(IsolatedAsyncioTestCase):
+    @patch("fbpcs.common.service.trace_logging_service.TraceLoggingService")
     @patch("fbpcp.service.storage_s3.S3StorageService")
-    def setUp(self, mock_storage_svc) -> None:
+    def setUp(self, mock_storage_svc, mock_trace_logging_svc) -> None:
         self.mock_storage_svc = mock_storage_svc
+        self.mock_trace_logging_svc = mock_trace_logging_svc
 
-    async def test_post_processing_all_succeed(self) -> None:
+    @patch("fbpcs.common.service.trace_logging_service.TraceLoggingService")
+    async def test_post_processing_all_succeed(self, mock_trace_logging_svc) -> None:
         # create two handlers that never fail
         handlers = {
-            f"handler{i}": PostProcessingDummyHandler(probability_of_failure=0)
+            f"handler{i}": PostProcessingDummyHandler(
+                probability_of_failure=0, trace_logging_svc=mock_trace_logging_svc
+            )
             for i in range(2)
         }
-        # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
-        #  but got `Dict[str, PostProcessingDummyHandler]`.
-        stage_svc = PostProcessingStageService(self.mock_storage_svc, handlers)
+
+        stage_svc = PostProcessingStageService(
+            self.mock_storage_svc,
+            # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
+            #  but got `Dict[str, PostProcessingDummyHandler]`.
+            handlers,
+            self.mock_trace_logging_svc,
+        )
 
         private_computation_instance = self._create_pc_instance()
         await stage_svc.run_async(private_computation_instance)
@@ -76,15 +86,23 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             expected_handler_statuses,
         )
 
-    async def test_post_processing_all_fail(self) -> None:
+    @patch("fbpcs.common.service.trace_logging_service.TraceLoggingService")
+    async def test_post_processing_all_fail(self, mock_trace_logging_svc) -> None:
         # create two handlers that always fail
         handlers = {
-            f"handler{i}": PostProcessingDummyHandler(probability_of_failure=1)
+            f"handler{i}": PostProcessingDummyHandler(
+                probability_of_failure=1, trace_logging_svc=mock_trace_logging_svc
+            )
             for i in range(2)
         }
-        # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
-        #  but got `Dict[str, PostProcessingDummyHandler]`.
-        stage_svc = PostProcessingStageService(self.mock_storage_svc, handlers)
+
+        stage_svc = PostProcessingStageService(
+            self.mock_storage_svc,
+            # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
+            #  but got `Dict[str, PostProcessingDummyHandler]`.
+            handlers,
+            self.mock_trace_logging_svc,
+        )
 
         private_computation_instance = self._create_pc_instance()
         await stage_svc.run_async(private_computation_instance)
@@ -112,15 +130,23 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             expected_handler_statuses,
         )
 
-    async def test_post_processing_one_fail(self) -> None:
+    @patch("fbpcs.common.service.trace_logging_service.TraceLoggingService")
+    async def test_post_processing_one_fail(self, mock_trace_logging_svc) -> None:
         # create two handlers, one that fails, one that succeeds
         handlers = {
-            f"handler{i}": PostProcessingDummyHandler(probability_of_failure=i)
+            f"handler{i}": PostProcessingDummyHandler(
+                probability_of_failure=i, trace_logging_svc=mock_trace_logging_svc
+            )
             for i in range(2)
         }
-        # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
-        #  but got `Dict[str, PostProcessingDummyHandler]`.
-        stage_svc = PostProcessingStageService(self.mock_storage_svc, handlers)
+
+        stage_svc = PostProcessingStageService(
+            self.mock_storage_svc,
+            # pyre-fixme[6]: For 2nd param expected `Dict[str, PostProcessingHandler]`
+            #  but got `Dict[str, PostProcessingDummyHandler]`.
+            handlers,
+            self.mock_trace_logging_svc,
+        )
 
         private_computation_instance = self._create_pc_instance()
         await stage_svc.run_async(private_computation_instance)
