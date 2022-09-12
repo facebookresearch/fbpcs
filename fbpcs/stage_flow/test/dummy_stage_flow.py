@@ -28,17 +28,17 @@ DummyStageFlowData = StageFlowData[DummyStageFlowStatus]
 
 class DummyStageFlow(StageFlow):
     STAGE_1 = DummyStageFlowData(
-        DummyStageFlowStatus.STAGE_1_STARTED,
-        DummyStageFlowStatus.STAGE_1_COMPLETED,
-        DummyStageFlowStatus.STAGE_1_FAILED,
+        started_status=DummyStageFlowStatus.STAGE_1_STARTED,
+        completed_status=DummyStageFlowStatus.STAGE_1_COMPLETED,
+        failed_status=DummyStageFlowStatus.STAGE_1_FAILED,
     )
     STAGE_2 = DummyStageFlowData(
-        DummyStageFlowStatus.STAGE_2_STARTED,
-        DummyStageFlowStatus.STAGE_2_COMPLETED,
-        DummyStageFlowStatus.STAGE_2_FAILED,
+        started_status=DummyStageFlowStatus.STAGE_2_STARTED,
+        completed_status=DummyStageFlowStatus.STAGE_2_COMPLETED,
+        failed_status=DummyStageFlowStatus.STAGE_2_FAILED,
     )
     STAGE_3 = DummyStageFlowData(
-        DummyStageFlowStatus.STAGE_3_STARTED,
-        DummyStageFlowStatus.STAGE_3_COMPLETED,
-        DummyStageFlowStatus.STAGE_3_FAILED,
+        started_status=DummyStageFlowStatus.STAGE_3_STARTED,
+        completed_status=DummyStageFlowStatus.STAGE_3_COMPLETED,
+        failed_status=DummyStageFlowStatus.STAGE_3_FAILED,
     )
