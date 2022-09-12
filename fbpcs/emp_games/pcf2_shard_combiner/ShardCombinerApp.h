@@ -18,8 +18,8 @@
 #include <fbpcf/engine/communication/IPartyCommunicationAgentFactory.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include <fbpcf/scheduler/IScheduler.h>
+#include <fbpcf/scheduler/LazySchedulerFactory.h>
 #include <fbpcf/scheduler/NetworkPlaintextSchedulerFactory.h>
-#include <fbpcf/scheduler/SchedulerHelper.h>
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
@@ -65,8 +65,9 @@ class ShardCombinerApp {
 
   void run() {
     auto scheduler = useXorEncryption_
-        ? fbpcf::scheduler::createLazySchedulerWithRealEngine(
+        ? fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
               schedulerId, *communicationAgentFactory_)
+              ->create()
         : fbpcf::scheduler::NetworkPlaintextSchedulerFactory<true /*unsafe*/>(
               schedulerId, *communicationAgentFactory_)
               .create();
@@ -90,8 +91,8 @@ class ShardCombinerApp {
 
     std::unordered_map<int32_t, folly::dynamic> ret;
 
-    // Insert revealed results only if the party has access for the result to be
-    // revealed. Otherwise, insert dummy result.
+    // Insert revealed results only if the party has access for the result
+    // to be revealed. Otherwise, insert dummy result.
     if (resultVisibility_ == common::ResultVisibility::kPublisher ||
         resultVisibility_ == common::ResultVisibility::kPublic) {
       ret.insert(std::make_pair(
@@ -103,8 +104,8 @@ class ShardCombinerApp {
       ret.insert(std::make_pair(common::PUBLISHER, dummyResult->toDynamic()));
     }
 
-    // Insert revealed results only if the party has access for the result to be
-    // revealed. Otherwise, insert dummy result.
+    // Insert revealed results only if the party has access for the result
+    // to be revealed. Otherwise, insert dummy result.
     if (resultVisibility_ == common::ResultVisibility::kPartner ||
         resultVisibility_ == common::ResultVisibility::kPublic) {
       ret.insert(std::make_pair(
