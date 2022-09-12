@@ -33,20 +33,20 @@ DummyStageFlowData = StageFlowData[DummyStageFlowStatus]
 
 class DummyStageFlow(PrivateComputationBaseStageFlow):
     STAGE_1 = PrivateComputationStageFlowData(
-        DummyStageFlowStatus.STAGE_1_STARTED,
-        DummyStageFlowStatus.STAGE_1_COMPLETED,
-        DummyStageFlowStatus.STAGE_1_FAILED,
-        False,
+        started_status=DummyStageFlowStatus.STAGE_1_STARTED,
+        completed_status=DummyStageFlowStatus.STAGE_1_COMPLETED,
+        failed_status=DummyStageFlowStatus.STAGE_1_FAILED,
+        is_joint_stage=False,
     )
     STAGE_2 = PrivateComputationStageFlowData(
-        DummyStageFlowStatus.STAGE_2_STARTED,
-        DummyStageFlowStatus.STAGE_2_COMPLETED,
-        DummyStageFlowStatus.STAGE_2_FAILED,
-        True,
+        started_status=DummyStageFlowStatus.STAGE_2_STARTED,
+        completed_status=DummyStageFlowStatus.STAGE_2_COMPLETED,
+        failed_status=DummyStageFlowStatus.STAGE_2_FAILED,
+        is_joint_stage=True,
     )
     STAGE_3 = PrivateComputationStageFlowData(
-        DummyStageFlowStatus.STAGE_3_STARTED,
-        DummyStageFlowStatus.STAGE_3_COMPLETED,
-        DummyStageFlowStatus.STAGE_3_FAILED,
-        False,
+        started_status=DummyStageFlowStatus.STAGE_3_STARTED,
+        completed_status=DummyStageFlowStatus.STAGE_3_COMPLETED,
+        failed_status=DummyStageFlowStatus.STAGE_3_FAILED,
+        is_joint_stage=False,
     )
