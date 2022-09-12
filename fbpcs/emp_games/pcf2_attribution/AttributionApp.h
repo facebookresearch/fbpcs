@@ -10,7 +10,7 @@
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include <string>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
-#include "fbpcf/scheduler/SchedulerHelper.h"
+#include "fbpcf/scheduler/LazySchedulerFactory.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionGame.h"
 
@@ -42,8 +42,9 @@ class AttributionApp {
 
   void run() {
     auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
-    auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
-        MY_ROLE, *communicationAgentFactory_);
+    auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
+                         MY_ROLE, *communicationAgentFactory_)
+                         ->create();
 
     AttributionGame<schedulerId, usingBatch, inputEncryption> game(
         std::move(scheduler));
