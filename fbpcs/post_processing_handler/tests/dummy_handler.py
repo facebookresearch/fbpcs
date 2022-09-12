@@ -9,7 +9,7 @@
 
 import logging
 import random
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from fbpcs.post_processing_handler.exception import PostProcessingHandlerRuntimeError
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
@@ -19,15 +19,21 @@ if TYPE_CHECKING:
         PrivateComputationInstance,
     )
 from fbpcp.service.storage import StorageService
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 
 
 class PostProcessingDummyHandler(PostProcessingHandler):
     """A dummy post processing handler used for testing handler management logic."""
 
-    def __init__(self, probability_of_failure: float = 0) -> None:
+    def __init__(
+        self,
+        trace_logging_svc: Optional[TraceLoggingService] = None,
+        probability_of_failure: float = 0,
+    ) -> None:
         super().__init__()
         self.probability_of_failure = probability_of_failure
         self.logger: logging.Logger = logging.getLogger(__name__)
+        self.trace_logging_svc = trace_logging_svc
 
     async def run(
         self,

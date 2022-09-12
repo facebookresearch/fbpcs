@@ -137,14 +137,21 @@ def validate(
 
 
 def _get_post_processing_handlers(
-    config: Dict[str, Any]
+    config: Dict[str, Any],
+    trace_logging_svc: TraceLoggingService,
 ) -> Dict[str, PostProcessingHandler]:
     if not config:
         return {}
-    return {
-        name: reflect.get_instance(handler_config, PostProcessingHandler)
-        for name, handler_config in config["dependency"].items()
-    }
+
+    post_processing_handlers = {}
+    for name, handler_config in config["dependency"].items():
+        constrcutor_info = handler_config.get("constructor", {})
+        constrcutor_info["trace_logging_svc"] = trace_logging_svc
+        handler_config["constructor"] = constrcutor_info
+        post_processing_handlers[name] = reflect.get_instance(
+            handler_config, PostProcessingHandler
+        )
+    return post_processing_handlers
 
 
 def run_next(
@@ -472,8 +479,12 @@ def _build_private_computation_service(
         onedocker_svc=onedocker_service,
         onedocker_binary_config_map=onedocker_binary_config_map,
         pc_validator_config=_parse_pc_validator_config(pc_config),
-        post_processing_handlers=_get_post_processing_handlers(pph_config),
-        pid_post_processing_handlers=_get_post_processing_handlers(pid_pph_config),
+        post_processing_handlers=_get_post_processing_handlers(
+            pph_config, trace_logging_svc
+        ),
+        pid_post_processing_handlers=_get_post_processing_handlers(
+            pid_pph_config, trace_logging_svc
+        ),
         workflow_svc=workflow_service,
         metric_svc=metric_svc,
         trace_logging_svc=trace_logging_svc,
