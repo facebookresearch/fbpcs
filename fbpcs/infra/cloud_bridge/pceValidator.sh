@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-set -e
 # shellcheck disable=SC1091
 # shellcheck disable=SC1090
 
@@ -18,7 +17,7 @@ validate_pce () {
     local pce_id=$2
     log_pce_validator "validate_pce $region $pce_id"
     local pceValidatorOutput
-    pceValidatorOutput=$(python3 -m pce.validator --region="$region" --key-id="$AWS_ACCESS_KEY_ID" --key-data="$AWS_SECRET_ACCESS_KEY" --pce-id="$pce_id" 2>&1)
+    pceValidatorOutput=$(python3 -m pce.validator --region="$region" --pce-id="$pce_id" 2>&1)
     local pceValidatorExitCode=$?
     log_pce_validator "$pceValidatorOutput"
     log_pce_validator "validator exitcode: $pceValidatorExitCode"
@@ -31,3 +30,6 @@ validate_pce () {
         log_pce_validator "PCE validation successful"
     fi
 }
+
+# main script starts here
+validate_pce "$1" "$2"
