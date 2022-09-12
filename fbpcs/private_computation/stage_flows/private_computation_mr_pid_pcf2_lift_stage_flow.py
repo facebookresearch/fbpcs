@@ -47,36 +47,42 @@ class PrivateComputationMrPidPCF2LiftStageFlow(PrivateComputationBaseStageFlow):
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
     CREATED = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.CREATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.CREATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.CREATED,
         failed_status=PrivateComputationInstanceStatus.CREATION_FAILED,
         is_joint_stage=False,
     )
     PC_PRE_VALIDATION = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
         is_joint_stage=False,
     )
     UNION_PID_MR_MULTIKEY = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.PID_MR_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.PID_MR_STARTED,
         completed_status=PrivateComputationInstanceStatus.PID_MR_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.PID_MR_FAILED,
         is_joint_stage=False,
     )
     ID_SPINE_COMBINER = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_STARTED,
         completed_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED,
         is_joint_stage=False,
     )
     RESHARD = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.RESHARD_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.RESHARD_STARTED,
         completed_status=PrivateComputationInstanceStatus.RESHARD_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.RESHARD_FAILED,
         is_joint_stage=False,
     )
     PCF2_LIFT = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.PCF2_LIFT_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.PCF2_LIFT_STARTED,
         completed_status=PrivateComputationInstanceStatus.PCF2_LIFT_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.PCF2_LIFT_FAILED,
@@ -84,12 +90,14 @@ class PrivateComputationMrPidPCF2LiftStageFlow(PrivateComputationBaseStageFlow):
         timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,  # setting the timeout here to 12 hours, as lift stage can sometime take more time.
     )
     AGGREGATE = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.AGGREGATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         is_joint_stage=True,
     )
     POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
         completed_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,

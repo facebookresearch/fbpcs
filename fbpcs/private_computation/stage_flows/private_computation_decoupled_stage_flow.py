@@ -44,30 +44,35 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
     CREATED = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.CREATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.CREATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.CREATED,
         failed_status=PrivateComputationInstanceStatus.CREATION_FAILED,
         is_joint_stage=False,
     )
     PC_PRE_VALIDATION = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
         is_joint_stage=False,
     )
     PID_SHARD = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.PID_SHARD_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.PID_SHARD_STARTED,
         completed_status=PrivateComputationInstanceStatus.PID_SHARD_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.PID_SHARD_FAILED,
         is_joint_stage=False,
     )
     PID_PREPARE = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.PID_PREPARE_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.PID_PREPARE_STARTED,
         completed_status=PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.PID_PREPARE_FAILED,
         is_joint_stage=False,
     )
     ID_MATCH = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.ID_MATCHING_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
         completed_status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
@@ -75,42 +80,49 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         is_retryable=False,
     )
     ID_MATCH_POST_PROCESS = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_STARTED,
         completed_status=PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_FAILED,
         is_joint_stage=False,
     )
     ID_SPINE_COMBINER = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_STARTED,
         completed_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED,
         is_joint_stage=False,
     )
     RESHARD = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.RESHARD_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.RESHARD_STARTED,
         completed_status=PrivateComputationInstanceStatus.RESHARD_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.RESHARD_FAILED,
         is_joint_stage=False,
     )
     DECOUPLED_ATTRIBUTION = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_STARTED,
         completed_status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_FAILED,
         is_joint_stage=True,
     )
     DECOUPLED_AGGREGATION = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_FAILED,
         is_joint_stage=True,
     )
     AGGREGATE = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.AGGREGATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.AGGREGATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         is_joint_stage=True,
     )
     POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_STARTED,
         completed_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_FAILED,

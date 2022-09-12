@@ -35,6 +35,7 @@ class StageFlowData(Generic[Status]):
     you can run/move to the next stage.
     """
 
+    initialized_status: Status
     started_status: Status
     completed_status: Status
     failed_status: Status
@@ -113,12 +114,16 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
 
 
     Private Attributes:
-        _stage_flow_started_statuses: set containing all start statuses defined in the flow
+        _stage_flow_initialized_statuses: set containing all initialized statuses defined in the flow
+        _stage_flow_started_statuses: set containing all started statuses defined in the flow
+        _stage_flow_completed_statuses: set containing all completed statuses defined in the flow
+        _stage_flow_failed_statuses: set containing all failed statuses defined in the flow
     """
 
     def __init_subclass__(cls: Type[C]) -> None:
         """Post hook ran after class instantiation. Initialize the started status map."""
         super().__init_subclass__()
+        cls._stage_flow_initialized_statuses = set()
         cls._stage_flow_started_statuses = set()
         cls._stage_flow_completed_statuses = set()
         cls._stage_flow_failed_statuses = set()
@@ -128,10 +133,13 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
         member = object.__new__(cls)
         member._value_ = data
 
+        cls._value2member_map_[data.initialized_status] = member
         cls._value2member_map_[data.started_status] = member
         cls._value2member_map_[data.completed_status] = member
         cls._value2member_map_[data.failed_status] = member
 
+        if data.initialized_status:
+            cls._stage_flow_initialized_statuses.add(data.initialized_status)
         if data.started_status:
             cls._stage_flow_started_statuses.add(data.started_status)
         if data.completed_status:
@@ -223,6 +231,10 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
     @classmethod
     def get_last_stage(cls: Type[C]) -> C:
         return list(cls)[-1]
+
+    @classmethod
+    def is_initialized_status(cls: Type[C], status: Status) -> bool:
+        return status in cls._stage_flow_initialized_statuses
 
     @classmethod
     def is_started_status(cls: Type[C], status: Status) -> bool:
