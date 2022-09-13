@@ -435,3 +435,29 @@ class AwsCloud(CloudBaseClass):
             self.log.error("Returning Cloudwatch logging disabled config")
             return return_dict
         return response_dict
+
+    def get_latest_cloudwatch_log(self, log_group_name: str) -> str:
+        """
+        Returns the latest log stream on a given log group
+        """
+        stream_name = ""
+        try:
+            self.log.info("Checking for log stream name in the AWS account")
+            response = self.cloudwatch_client.describe_log_streams(
+                logGroupName=log_group_name,
+                orderBy="LastEventTime",
+                descending=True,
+                limit=1,
+            )
+        except ClientError as error:
+            error_message = (
+                f"Couldn't fetch log streams for log group {log_group_name}: {error}"
+            )
+            raise AwsCloudwatchLogStreamFetchException(f"{error_message}")
+
+        # Since only one entry is fetched, number of log_streams will be 1
+        for log_streams in response.get("logStreams", []):
+            stream_name = log_streams.get("logStreamName", "")
+            break
+
+        return stream_name
