@@ -16,33 +16,19 @@ from dataclasses_json import dataclass_json, DataClassJsonMixin
 @dataclass_json
 @dataclass
 class PidRunConfigs:
-    metaBucketName: str
-    advBucketName: str
     pidMrMultikeyJarPath: str
 
 
 @dataclass_json
 @dataclass
 class PidWorkflowConfigs:
-    state_machine_arn: str
-
-
-@dataclass_json
-@dataclass
-class SparkConfigs:
-    numExecutors: int
-    executorCores: int
-    driverMemory: str
-    executorMemory: str
-    sqlShufflePartitions: int
-    masterInstanceType: str
+    stateMachineArn: str
 
 
 @dataclass
 class PidMrConfig(DataClassJsonMixin):
     runConfigs: PidRunConfigs
     workflowConfigs: PidWorkflowConfigs
-    sparkConfigs: SparkConfigs
 
 
 class Protocol(Enum):

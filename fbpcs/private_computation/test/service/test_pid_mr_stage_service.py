@@ -28,7 +28,6 @@ from fbpcs.private_computation.service.pid_mr_stage_service import (
     PID_WORKFLOW_CONFIGS,
     PIDMR,
     PIDMRStageService,
-    SPARK_CONFIGS,
 )
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
@@ -66,9 +65,12 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
                     output_dir="https://mpc-aem-exp-platform-input.s3.us-west-2.amazonaws.com/pid_test/output",
                     pid_configs={
                         PIDMR: {
-                            PID_WORKFLOW_CONFIGS: {"state_machine_arn": "machine_arn"},
-                            PID_RUN_CONFIGS: {"conf": "conf1"},
-                            SPARK_CONFIGS: {"conf-2": "conf2"},
+                            PID_WORKFLOW_CONFIGS: {
+                                "stateMachineArn": "arn:aws:states:us-west-2:119557546360:stateMachine:pid-mr-e2e-adv-sfn"
+                            },
+                            PID_RUN_CONFIGS: {
+                                "pidMrMultikeyJarPath": "s3://one-docker-repository-prod/pid/private-id-mr/latest/pid-mr-multikey.jar"
+                            },
                         }
                     },
                 )
