@@ -80,8 +80,6 @@ undeploy_aws_resources () {
 
 deploy_aws_resources () {
     input_validation "$region" "$pid_id" "$aws_account_id" "$partner_account_id" "$s3_bucket_for_storage"
-    # Clean up previously generated resources if any
-    cleanup_generated_resources
     echo "########################Started MR-PID AWS Infrastructure Deployment########################"
     echo "creating s3 bucket, if it does not exist"
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"

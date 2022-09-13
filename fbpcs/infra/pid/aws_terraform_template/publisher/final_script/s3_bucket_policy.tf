@@ -8,7 +8,7 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_partner_account" {
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": ["arn:aws:iam::${var.partner_account_id}:role/mrpid_partner_ec2_role", "arn:aws:iam::${var.partner_account_id}:role/mrpid_partner_sfn_role"]
+        "AWS": ["arn:aws:iam::${var.partner_account_id}:role/mrpid-partner-ec2-role", "arn:aws:iam::${var.partner_account_id}:role/mrpid-partner-sfn-role"]
       },
       "Action": [
         "s3:GetObject",

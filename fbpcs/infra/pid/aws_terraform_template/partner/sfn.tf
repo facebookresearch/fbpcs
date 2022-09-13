@@ -1,5 +1,5 @@
 resource "aws_sfn_state_machine" "mrpid_partner_sfn" {
-  name = "mrpid_partner_sfn"
+  name = "mrpid-partner-sfn"
 
   role_arn = aws_iam_role.mrpid_partner_sfn_role.arn
 

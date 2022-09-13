@@ -23,7 +23,6 @@ image-build: external_deps
 	# Cleanup copied resources
 	@echo "\nCleaning up dependencies..."
 	$(RM) -r aws_terraform_template
-	$(RM) config.yml
 	@echo "Done"
 
 
@@ -33,7 +32,6 @@ image-run: image-build
 
 clean:
 	$(RM) -r aws_terraform_template
-	$(RM) config.yml
 
 
 distclean: clean
@@ -41,11 +39,8 @@ distclean: clean
 
 
 # Dockerfile will not accept these resources as links, so they need to be copied in
-external_deps: config.yml aws_terraform_template
+external_deps: aws_terraform_template
 	@echo "Dependencies Copied\n"
-
-config.yml:
-	cp ../../../private_computation_cli/config.yml .
 
 aws_terraform_template:
 	cp -r ../../pid/aws_terraform_template/partner .

@@ -61,7 +61,6 @@ undeploy_aws_resources () {
     echo "All tfstate files exist. Continue..."
 
     md5hash_aws_account_id=$(echo -n $aws_account_id | md5sum | awk '{print $1}')
-    md5hash_publisher_account_id=$(echo -n $publisher_account_id | md5sum | awk '{print $1}')
 
     echo "########################Delete MR-PID resources########################"
     cd /terraform_deployment/terraform_scripts
@@ -74,8 +73,7 @@ undeploy_aws_resources () {
         -var "aws_region=$region" \
         -var "pid_id=$pid_id" \
         -var "md5hash_aws_account_id=$md5hash_aws_account_id" \
-        -var "publisher_account_id=$publisher_account_id" \
-        -var "md5hash_publisher_account_id=$md5hash_publisher_account_id"
+        -var "publisher_account_id=$publisher_account_id"
 }
 
 deploy_aws_resources () {
@@ -87,7 +85,6 @@ deploy_aws_resources () {
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
 
     md5hash_aws_account_id=$(echo -n $aws_account_id | md5sum | awk '{print $1}')
-    md5hash_publisher_account_id=$(echo -n $publisher_account_id | md5sum | awk '{print $1}')
 
     # Deploy MR-PID Partner Terraform scripts
     cd /terraform_deployment/terraform_scripts
@@ -100,26 +97,25 @@ deploy_aws_resources () {
         -var "aws_region=$region" \
         -var "pid_id=$pid_id" \
         -var "md5hash_aws_account_id=$md5hash_aws_account_id" \
-        -var "publisher_account_id=$publisher_account_id" \
-        -var "md5hash_publisher_account_id=$md5hash_publisher_account_id"
+        -var "publisher_account_id=$publisher_account_id"
 
     state_machine_arn=$(terraform output mrpid_partner_sfn_arn | tr -d '"' )
 
     echo "########################Finished MR-PID AWS Infrastructure Deployment########################"
 
-    echo "########################Start populating config.yml ########################"
+    echo "########################Start populating config_mrpid.yml ########################"
 
     cd /terraform_deployment
-    sed -i "s/region: .*/region: $region/g" config.yml
+    sed -i "s/region: .*/region: $region/g" config_mrpid.yml
     echo "Populated region with value $region"
 
-    sed -i "s/state_machine_arn: .*/state_machine_arn: $state_machine_arn/g" config.yml
-    echo "Populated state_machine_arn with value $state_machine_arn"
+    sed -i "s/stateMachineArn: .*/stateMachineArn: $state_machine_arn/g" config_mrpid.yml
+    echo "Populated stateMachineArn with value $state_machine_arn"
 
-    echo "########################Upload config.ymls to S3########################"
+    echo "########################Upload config_mrpid.ymls to S3########################"
     cd /terraform_deployment
-    aws s3api put-object --bucket "$s3_bucket_for_storage" --key "config.yml" --body ./config.yml
-    echo "########################Finished upload config.ymls to S3########################"
+    aws s3api put-object --bucket "$s3_bucket_for_storage" --key "config_mrpid.yml" --body ./config_mrpid.yml
+    echo "########################Finished upload config_mrpid.ymls to S3########################"
 }
 
 ##########################################

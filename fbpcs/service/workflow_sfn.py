@@ -54,12 +54,12 @@ class SfnWorkflowService(WorkflowService):
         """Start workflow
         Keyword arguments:
         workflow_conf - step functions configs
-            state_machine_arn -- state machine ARN
+            stateMachineArn -- state machine ARN
         run_id -- execution name
         run_conf -- workflow running configs (optional)
         """
         response = self.client.start_execution(
-            stateMachineArn=workflow_conf["state_machine_arn"],
+            stateMachineArn=workflow_conf["stateMachineArn"],
             name=run_id,
             input=json.dumps(run_conf) if run_conf else "{}",
         )

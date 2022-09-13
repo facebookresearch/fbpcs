@@ -88,14 +88,6 @@ validate_bucket_name() {
 
 }
 
-cleanup_generated_resources() {
-    # check if previously existed config.yml is present, if yes then remove it
-    cd /terraform_deployment || return
-    rm config.yml || true
-    # copy config.yml template
-    cp /terraform_deployment/config/config.yml /terraform_deployment
-}
-
 input_validation () {
     local region=$1
     local tag_postfix=$2
@@ -146,7 +138,7 @@ input_validation () {
 
     echo "Partner's AWS account ID is $partner_aws_account_id"
     echo "validate input: s3 buckets..."
-    echo "The S3 bucket for storing Terraform state file and config.yml is $s3_bucket_for_storage"
+    echo "The S3 bucket for storing Terraform state file is $s3_bucket_for_storage"
     validate_bucket_name "$s3_bucket_for_storage"
 
     echo "validate input: aws account id..."

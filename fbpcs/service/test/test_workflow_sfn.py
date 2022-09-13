@@ -19,7 +19,7 @@ class TestSfnWorkflowService(unittest.TestCase):
             return_value={"executionArn": "execution_arn"}
         )
         result = service.start_workflow(
-            {"state_machine_arn": "machine_arn"}, "execution_name"
+            {"stateMachineArn": "machine_arn"}, "execution_name"
         )
         self.assertEqual(result, "execution_arn")
 
@@ -30,7 +30,7 @@ class TestSfnWorkflowService(unittest.TestCase):
             return_value={"executionArn": "execution_arn"}
         )
         result = service.start_workflow(
-            {"state_machine_arn": "machine_arn"}, "execution_name", {"conf": "conf1"}
+            {"stateMachineArn": "machine_arn"}, "execution_name", {"conf": "conf1"}
         )
         self.assertEqual(result, "execution_arn")
 
@@ -42,7 +42,7 @@ class TestSfnWorkflowService(unittest.TestCase):
         )
         with self.assertRaises(Exception):
             service.start_workflow(
-                {"state_machine_arn": "machine_arn"},
+                {"stateMachineArn": "machine_arn"},
                 "execution_name",
                 {"conf": "conf1"},
             )
@@ -54,7 +54,7 @@ class TestSfnWorkflowService(unittest.TestCase):
             return_value={"status": "SUCCEEDED"}
         )
         status = service.get_workflow_status(
-            {"state_machine_arn": "machine_arn"}, "execution_arn"
+            {"stateMachineArn": "machine_arn"}, "execution_arn"
         )
         self.assertEqual(status, WorkflowStatus.COMPLETED)
 
@@ -63,7 +63,7 @@ class TestSfnWorkflowService(unittest.TestCase):
         service = SfnWorkflowService("us-west-2", "access_key", "access_data")
         service.client.describe_execution = MagicMock(return_value={"status": "FAILED"})
         status = service.get_workflow_status(
-            {"state_machine_arn": "machine_arn"}, "execution_arn"
+            {"stateMachineArn": "machine_arn"}, "execution_arn"
         )
         self.assertEqual(status, WorkflowStatus.FAILED)
 
@@ -74,6 +74,6 @@ class TestSfnWorkflowService(unittest.TestCase):
             return_value={"errorMessage": "Got error for describing execution"}
         )
         status = service.get_workflow_status(
-            {"state_machine_arn": "machine_arn"}, "execution_arn"
+            {"stateMachineArn": "machine_arn"}, "execution_arn"
         )
         self.assertEqual(status, WorkflowStatus.UNKNOWN)

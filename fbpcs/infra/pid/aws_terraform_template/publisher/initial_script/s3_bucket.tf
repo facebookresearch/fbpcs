@@ -53,19 +53,19 @@ sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /de
         "collect_list": [
           {
             "file_path": "/mnt/var/log/spark/PubStageOne.log",
-            "log_group_name": "mrpid_publisher_${var.md5hash_partner_account_id}_ec2_log_group",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_one_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PubStageTwo.log",
-            "log_group_name": "mrpid_publisher_${var.md5hash_partner_account_id}_ec2_log_group",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_two_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PubStageThree.log",
-            "log_group_name": "mrpid_publisher_${var.md5hash_partner_account_id}_ec2_log_group",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_three_log",
             "timezone": "UTC"
           }

@@ -18,8 +18,3 @@ variable "publisher_account_id" {
   type        = string
   description = "Publisher AWS account ID"
 }
-
-variable "md5hash_publisher_account_id" {
-  type        = string
-  description = "MD5 hashed Publisher AWS account ID"
-}
