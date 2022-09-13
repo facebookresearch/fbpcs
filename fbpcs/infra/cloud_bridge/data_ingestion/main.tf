@@ -28,11 +28,30 @@ resource "aws_s3_bucket_object" "upload_lambda" {
   etag   = filemd5("data_transformation_lambda.py")
 }
 
+locals {
+  kinesis_delivery_log_group       = "/aws/kinesis/s3-delivery${var.tag_postfix}"
+  kinesis_delivery_log_stream_name = "cb-data-ingestion-log-stream"
+}
+
+resource "aws_cloudwatch_log_group" "kinesis-delivery-error-log-group" {
+  name = local.kinesis_delivery_log_group
+}
+
+resource "aws_cloudwatch_log_stream" "kinesis-delivery-error-log-stream" {
+  name           = local.kinesis_delivery_log_stream_name
+  log_group_name = aws_cloudwatch_log_group.kinesis-delivery-error-log-group.name
+}
+
 resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   name        = "cb-data-ingestion-stream${var.tag_postfix}"
   destination = "extended_s3"
 
   extended_s3_configuration {
+    cloudwatch_logging_options {
+      log_group_name  = local.kinesis_delivery_log_group
+      log_stream_name = local.kinesis_delivery_log_stream_name
+      enabled         = true
+    }
     role_arn            = aws_iam_role.firehose_role.arn
     bucket_arn          = var.data_processing_output_bucket_arn
     buffer_size         = 128
