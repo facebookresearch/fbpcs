@@ -20,11 +20,13 @@ from fbpcs.infra.logging_service.download_logs.cloud_error.cloud_error import (
     AwsCloudwatchLogGroupFetchException,
     AwsCloudwatchLogsFetchException,
     AwsCloudwatchLogStreamFetchException,
+    AwsKinesisFirehoseDeliveryStreamFetchException,
     AwsS3BucketVerificationException,
     AwsS3FolderContentFetchException,
     AwsS3FolderCreationException,
     AwsS3UploadFailedException,
 )
+from fbpcs.infra.logging_service.download_logs.utils.utils import Utils
 from tqdm import tqdm
 
 # TODO: Convert this to factory
@@ -51,6 +53,7 @@ class AwsCloud(CloudBaseClass):
         aws_session_token = aws_session_token or os.environ.get("AWS_SESSION_TOKEN")
         aws_region = aws_region or os.environ.get("AWS_REGION")
         self.log: logging.Logger = logging.getLogger(logger_name or __name__)
+        self.utils = Utils()
 
         try:
             sts = boto3.client(
@@ -68,6 +71,13 @@ class AwsCloud(CloudBaseClass):
             )
             self.s3_client: botocore.client.BaseClient = boto3.client(
                 "s3",
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+                region_name=aws_region,
+            )
+            self.kinesis_client: botocore.client.BaseClient = boto3.client(
+                "firehose",
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
                 aws_session_token=aws_session_token,
@@ -400,3 +410,28 @@ class AwsCloud(CloudBaseClass):
         )
 
         return "Contents" in response
+
+    def get_kinesis_firehose_streams(
+        self, kinesis_firehose_stream_name: str
+    ) -> Dict[str, Any]:
+        try:
+            response = self.kinesis_client.describe_delivery_stream(
+                DeliveryStreamName=kinesis_firehose_stream_name, Limit=1
+            )
+        except ClientError as error:
+            error_message = f"Failed to get Kinesis firehose stream {kinesis_firehose_stream_name}: {error}"
+            raise AwsKinesisFirehoseDeliveryStreamFetchException(f"{error_message}")
+
+        return response
+
+    def get_kinesis_firehose_config(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        return_dict = {"Enabled": False}
+        try:
+            response_dict = response["DeliveryStreamDescription"]["Destinations"][0][
+                "S3DestinationDescription"
+            ]["CloudWatchLoggingOptions"]
+        except KeyError:
+            self.log.error("Coudln't find the Cloudwatch configs.")
+            self.log.error("Returning Cloudwatch logging disabled config")
+            return return_dict
+        return response_dict

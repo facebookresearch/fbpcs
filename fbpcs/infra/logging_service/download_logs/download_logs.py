@@ -31,6 +31,9 @@ class AwsContainerLogs(AwsCloud):
     S3_LOGGING_FOLDER = "logging"
     COMPUTATION_RUN_CONTAINER_LOG_FOLDER = "container_logs"
     DEPLOYMENT_LOGS_FOLDER = "deployment_logs"
+    KINESIS_LOGS_FOLDER = "kinesis_logs"
+    KINESIS_ERROR_LOGS = "kinesis_error_logs"
+    KINESIS_CONFIG_LOGS = "kinesis_config_logs"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
     MAX_THREADS = 500
     THREADS_PER_CORE = 20
@@ -41,6 +44,7 @@ class AwsContainerLogs(AwsCloud):
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
         aws_region: Optional[str] = None,
+        deployment_tag: Optional[str] = None,
     ) -> None:
         super().__init__(
             aws_access_key_id=aws_access_key_id,
@@ -49,6 +53,7 @@ class AwsContainerLogs(AwsCloud):
         )
         self.utils = Utils()
         self.tag_name: str = tag_name
+        self.deployment_tag = deployment_tag
         self.containers_without_logs: List[str] = []
         self.containers_download_logs_failed: List[str] = []
         self.write_to_file_lock = Lock()
@@ -120,6 +125,11 @@ class AwsContainerLogs(AwsCloud):
                 self._upload_computation_run_container_logs(
                     container_arn_list=container_arn_list,
                     local_log_folder_location=local_folder_location,
+                )
+
+                # upload kinesis firehose error and config logs
+                self._upload_kinesis_logs(
+                    local_log_folder_location=local_folder_location
                 )
 
             if enable_deployment_logs:
@@ -197,6 +207,67 @@ class AwsContainerLogs(AwsCloud):
             file_name = self.utils.copy_file(
                 source=file_path, destination=file_location
             )
+
+    def _upload_kinesis_logs(self, local_log_folder_location: str) -> None:
+        if not self.deployment_tag:
+            self.log.error(
+                "Couldnt get the deployment tag to fetch the AWS Kinesis resources."
+            )
+            return
+
+        kinesis_firehose_stream_name = self.utils.string_formatter(
+            StringFormatter.KINESIS_FIREHOSE_DELIVERY_STREAM, self.deployment_tag
+        )
+
+        # create kinesis log folder
+        kinesis_log_folder = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            local_log_folder_location,
+            self.KINESIS_LOGS_FOLDER,
+        )
+        self.utils.create_folder(folder_location=kinesis_log_folder)
+
+        # fetch Kinesis configs
+        response = self.get_kinesis_firehose_streams(
+            kinesis_firehose_stream_name=kinesis_firehose_stream_name
+        )
+        cloudwatch_config = self.get_kinesis_firehose_config(response=response)
+
+        # check if logs are enabled
+        if cloudwatch_config.get("Enabled", False):
+            cloudwatch_log_group = cloudwatch_config.get("LogGroupName", "")
+            cloudwatch_log_stream = cloudwatch_config.get("LogStreamName", "")
+
+            if self._verify_log_group(
+                log_group_name=cloudwatch_log_group
+            ) and self._verify_log_stream(
+                log_group_name=cloudwatch_log_group,
+                log_stream_name=cloudwatch_log_stream,
+            ):
+                messages = self.get_cloudwatch_logs(
+                    log_group_name=cloudwatch_log_group,
+                    log_stream_name=cloudwatch_log_stream,
+                )
+                kinesis_error_log_file_location = self.utils.string_formatter(
+                    StringFormatter.FILE_LOCATION,
+                    kinesis_log_folder,
+                    self.KINESIS_ERROR_LOGS,
+                )
+                self.utils.create_file(
+                    file_location=kinesis_error_log_file_location,
+                    content=messages,
+                )
+
+        # copy kinesis logs config
+        kinesis_config_log_file_location = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            kinesis_log_folder,
+            self.KINESIS_CONFIG_LOGS,
+        )
+        self.utils.create_file(
+            file_location=kinesis_config_log_file_location,
+            content=response,
+        )
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:
         """
