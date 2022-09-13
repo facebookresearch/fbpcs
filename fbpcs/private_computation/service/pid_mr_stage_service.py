@@ -28,7 +28,6 @@ INTPUT = "inputPath"
 OUTPUT = "outputPath"
 INSTANCE = "instanceId"
 RUNID = "run_id"
-SPARK_CONFIGS = "sparkConfigs"
 S3URIFORMAT = "s3://{bucket}/{key}"
 PUB_PREFIX = "publisher_"
 PARTNER_PREFIX = "partner_"
@@ -65,7 +64,6 @@ class PIDMRStageService(PrivateComputationStageService):
             and PIDMR in pid_configs
             and PID_RUN_CONFIGS in pid_configs[PIDMR]
             and PID_WORKFLOW_CONFIGS in pid_configs[PIDMR]
-            and SPARK_CONFIGS in pid_configs[PIDMR]
         ):
             pc_configs = {
                 "numPidContainers": pc_instance.infra_config.num_pid_containers
@@ -84,7 +82,6 @@ class PIDMRStageService(PrivateComputationStageService):
             }
             pid_overall_configs = {
                 **pid_configs[PIDMR][PID_RUN_CONFIGS],
-                **pid_configs[PIDMR][SPARK_CONFIGS],
                 **data_configs,
                 **pc_configs,
             }
