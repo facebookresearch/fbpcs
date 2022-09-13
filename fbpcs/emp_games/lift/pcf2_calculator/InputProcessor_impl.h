@@ -31,16 +31,6 @@ void InputProcessor<schedulerId>::validateNumRowsStep() {
 }
 
 template <int schedulerId>
-void InputProcessor<schedulerId>::privatelySharePopulationStep() {
-  XLOG(INFO) << "Share control population";
-  controlPopulation_ = common::privatelyShareArrayWithPaddingFrom<
-      common::PUBLISHER,
-      bool,
-      SecBit<schedulerId>>(
-      inputData_.getControlPopulation(), liftGameProcessedData_.numRows, 0);
-}
-
-template <int schedulerId>
 void InputProcessor<schedulerId>::shareNumGroupsStep() {
   // TODO: We shouldn't be using MPC for this, it should just be shared over
   // a normal network socket as part of the protocol setup
@@ -124,6 +114,16 @@ void InputProcessor<schedulerId>::privatelyShareGroupIdsStep() {
       bool,
       SecBit<schedulerId>>(
       booleanBreakdownGroupIds, liftGameProcessedData_.numRows, 0);
+}
+
+template <int schedulerId>
+void InputProcessor<schedulerId>::privatelySharePopulationStep() {
+  XLOG(INFO) << "Share control population";
+  controlPopulation_ = common::privatelyShareArrayWithPaddingFrom<
+      common::PUBLISHER,
+      bool,
+      SecBit<schedulerId>>(
+      inputData_.getControlPopulation(), liftGameProcessedData_.numRows, 0);
 }
 
 template <int schedulerId>
