@@ -16,6 +16,7 @@ from typing import Callable, Dict, List, Optional
 from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
 from fbpcs.infra.logging_service.download_logs.utils.utils import (
     ContainerDetails,
+    DataInfraLambda,
     DeploymentLogFiles,
     StringFormatter,
     Utils,
@@ -32,6 +33,7 @@ class AwsContainerLogs(AwsCloud):
     COMPUTATION_RUN_CONTAINER_LOG_FOLDER = "container_logs"
     DEPLOYMENT_LOGS_FOLDER = "deployment_logs"
     KINESIS_LOGS_FOLDER = "kinesis_logs"
+    LAMBDA_LOGS_FOLDER = "lambda_logs"
     KINESIS_ERROR_LOGS = "kinesis_error_logs"
     KINESIS_CONFIG_LOGS = "kinesis_config_logs"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
@@ -132,6 +134,11 @@ class AwsContainerLogs(AwsCloud):
                     local_log_folder_location=local_folder_location
                 )
 
+                # upload data infra lambda logs
+                self._upload_lambda_logs(
+                    local_log_folder_location=local_folder_location
+                )
+
             if enable_deployment_logs:
                 self._upload_deployment_logs(
                     local_log_folder_location=local_folder_location
@@ -211,7 +218,7 @@ class AwsContainerLogs(AwsCloud):
     def _upload_kinesis_logs(self, local_log_folder_location: str) -> None:
         if not self.deployment_tag:
             self.log.error(
-                "Couldnt get the deployment tag to fetch the AWS Kinesis resources."
+                "Couldn't get the deployment tag to fetch the AWS Kinesis resources."
             )
             return
 
@@ -268,6 +275,46 @@ class AwsContainerLogs(AwsCloud):
             file_location=kinesis_config_log_file_location,
             content=response,
         )
+
+    def _upload_lambda_logs(self, local_log_folder_location: str) -> None:
+        """
+        Uploads the data infra lambda logs for both semi-automated and fully automated pipelines
+        Logs are compressed and uploaded along with container logs and other data infra resources logs
+        """
+        if not self.deployment_tag:
+            self.log.error(
+                "Couldn't get the deployment tag to fetch the AWS Lambda resources."
+            )
+            return
+        # Create folder for lambda logs
+        lambda_log_folder = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            local_log_folder_location,
+            self.LAMBDA_LOGS_FOLDER,
+        )
+        self.utils.create_folder(folder_location=lambda_log_folder)
+
+        # get the lambda names
+        data_infra_lambda_logs = DataInfraLambda.list()
+        for data_infra_lambda in data_infra_lambda_logs:
+            data_infra_lambda_name = data_infra_lambda.format(self.deployment_tag)
+            lambda_log_group = self.utils.string_formatter(
+                StringFormatter.LAMBDA_LOG_GROUP_NAME, data_infra_lambda_name
+            )
+            log_stream_name = self.get_latest_cloudwatch_log(
+                log_group_name=lambda_log_group
+            )
+            messages = self.get_cloudwatch_logs(
+                log_group_name=lambda_log_group,
+                log_stream_name=log_stream_name,
+            )
+            lambda_log_file_location = self.utils.string_formatter(
+                StringFormatter.FILE_LOCATION, lambda_log_folder, data_infra_lambda_name
+            )
+            self.utils.create_file(
+                file_location=lambda_log_file_location,
+                content=messages,
+            )
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:
         """

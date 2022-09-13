@@ -138,6 +138,7 @@ class StringFormatter(str, Enum):
     FILE_LOCATION = "{}/{}"
     ZIPPED_FOLDER_NAME = "{}.zip"
     KINESIS_FIREHOSE_DELIVERY_STREAM = "cb-data-ingestion-stream-{}"
+    LAMBDA_LOG_GROUP_NAME = "/aws/lambda/{}"
 
 
 @dataclass
@@ -155,3 +156,12 @@ class DeploymentLogFiles(str, Enum):
     @classmethod
     def list(cls) -> List[str]:
         return [e.value for e in DeploymentLogFiles]
+
+
+class DataInfraLambda(str, Enum):
+    STREAM_PROCESSING = "cb-data-ingestion-stream-processor-{}"
+    SEMI_AUTOMATED = "manual-upload-trigger-{}"
+
+    @classmethod
+    def list(cls) -> List[str]:
+        return [e.value for e in DataInfraLambda]
