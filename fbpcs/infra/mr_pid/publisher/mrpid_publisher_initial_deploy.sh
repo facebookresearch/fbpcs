@@ -80,8 +80,6 @@ undeploy_aws_resources () {
 
 deploy_aws_resources () {
     input_validation "$region" "$pid_id" "$aws_account_id" "$partner_account_id" "$s3_bucket_for_storage"
-    # Clean up previously generated resources if any
-    cleanup_generated_resources
     echo "########################Started MR-PID AWS Infrastructure Deployment########################"
     echo "creating s3 bucket, if it does not exist"
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
@@ -103,22 +101,9 @@ deploy_aws_resources () {
         -var "md5hash_partner_account_id=$md5hash_partner_account_id"
 
     state_machine_arn=$(terraform output mrpid_publisher_sfn_arn | tr -d '"' )
+    echo "Publisher side stateMachineArn: $state_machine_arn"
 
     echo "########################Finished MR-PID AWS Infrastructure Deployment########################"
-
-    echo "########################Start populating config.yml ########################"
-
-    cd /terraform_deployment
-    sed -i "s/region: .*/region: $region/g" config.yml
-    echo "Populated region with value $region"
-
-    sed -i "s/state_machine_arn: .*/state_machine_arn: $state_machine_arn/g" config.yml
-    echo "Populated state_machine_arn with value $state_machine_arn"
-
-    echo "########################Upload config.ymls to S3########################"
-    cd /terraform_deployment
-    aws s3api put-object --bucket "$s3_bucket_for_storage" --key "config.yml" --body ./config.yml
-    echo "########################Finished upload config.ymls to S3########################"
 }
 
 ##########################################

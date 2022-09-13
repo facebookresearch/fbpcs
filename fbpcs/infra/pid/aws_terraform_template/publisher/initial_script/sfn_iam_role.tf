@@ -1,5 +1,5 @@
 resource "aws_iam_role" "mrpid_publisher_sfn_role" {
-  name = "mrpid_publisher_${var.md5hash_partner_account_id}_sfn_role"
+  name = "mrpid-publisher-sfn-role-${var.md5hash_partner_account_id}"
 
   assume_role_policy = <<POLICY
 {
@@ -18,7 +18,7 @@ POLICY
 }
 
 resource "aws_iam_role_policy" "mrpid_sfn_access_cloudwatch_logs_policy" {
-  name = "mrpid_${var.md5hash_partner_account_id}_sfn_access_cloudwatch_logs_policy"
+  name = "mrpid-sfn-access-cloudwatch-logs-policy-${var.md5hash_partner_account_id}"
 
   role = aws_iam_role.mrpid_publisher_sfn_role.id
 
@@ -39,7 +39,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "mrpid_sfn_access_emr_policy" {
-  name = "mrpid_${var.md5hash_partner_account_id}_sfn_access_emr_policy"
+  name = "mrpid-sfn-access-emr-policy-${var.md5hash_partner_account_id}"
 
   role = aws_iam_role.mrpid_publisher_sfn_role.id
 
@@ -74,7 +74,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "mrpid_sfn_access_partner_s3_policy" {
-  name = "mrpid_${var.md5hash_partner_account_id}_sfn_access_partner_s3_policy"
+  name = "mrpid-sfn-access-partner-s3-policy-${var.md5hash_partner_account_id}"
 
   role = aws_iam_role.mrpid_publisher_sfn_role.id
 

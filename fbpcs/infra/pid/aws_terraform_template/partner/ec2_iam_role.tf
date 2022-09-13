@@ -1,5 +1,5 @@
 resource "aws_iam_role" "mrpid_partner_ec2_role" {
-  name = "mrpid_partner_ec2_role"
+  name = "mrpid-partner-ec2-role"
 
   assume_role_policy = <<POLICY
 {
@@ -18,7 +18,7 @@ POLICY
 }
 
 resource "aws_iam_instance_profile" "mrpid_partner_ec2_role" {
-  name = "mrpid_partner_ec2_role"
+  name = "mrpid-partner-ec2-role"
   role = aws_iam_role.mrpid_partner_ec2_role.name
 }
 
@@ -28,7 +28,7 @@ resource "aws_iam_role_policy_attachment" "mrpid_emr_ec2_role_attach" {
 }
 
 resource "aws_iam_role_policy" "mrpid_ec2_access_publisher_s3_policy" {
-  name = "mrpid_ec2_access_publisher_s3_policy"
+  name = "mrpid-ec2-access-publisher-s3-policy"
 
   role = aws_iam_role.mrpid_partner_ec2_role.id
 
@@ -53,7 +53,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "mrpid_ec2_access_cloudwatch_logs_policy" {
-  name = "mrpid_ec2_access_cloudwatch_logs_policy"
+  name = "mrpid-ec2-access-cloudwatch-logs-policy"
 
   role = aws_iam_role.mrpid_partner_ec2_role.id
 

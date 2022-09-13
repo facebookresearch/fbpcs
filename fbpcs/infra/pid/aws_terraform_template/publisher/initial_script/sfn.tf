@@ -1,5 +1,5 @@
 resource "aws_sfn_state_machine" "mrpid_publisher_sfn" {
-  name = "mrpid_publisher_${var.md5hash_partner_account_id}_sfn"
+  name = "mrpid-publisher-sfn-${var.md5hash_partner_account_id}"
 
   role_arn = aws_iam_role.mrpid_publisher_sfn_role.arn
 

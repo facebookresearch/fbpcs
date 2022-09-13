@@ -103,7 +103,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageOne {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageOne.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.inputPath))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageOne {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageOne.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.inputPath))"
           }
         }
       },
@@ -133,7 +133,7 @@ data "template_file" "publisher_sfn_definition" {
             "States.ALL"
           ],
           "IntervalSeconds": 30,
-          "MaxAttempts": 180,
+          "MaxAttempts": 360,
           "BackoffRate": 1
         }
       ],
@@ -158,7 +158,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageTwo {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageTwo.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.instanceId))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageTwo {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageTwo.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.instanceId))"
           }
         }
       },
@@ -213,7 +213,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageThree {} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageThree.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.outputPath, $.instanceId))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.publisher.PubStageThree {} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageThree.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.outputPath, $.instanceId, $.numPidContainers))"
           }
         }
       },

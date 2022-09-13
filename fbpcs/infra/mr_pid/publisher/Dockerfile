@@ -47,7 +47,7 @@ RUN curl -SL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terra
 RUN terraform --version
 
 ##########################################
-# Copy mrpid_publisher_deploy.sh, Terraform scripts, and config.yml template
+# Copy mrpid_publisher_deploy.sh, Terraform scripts
 ##########################################
 RUN mkdir -p /terraform_deployment/config
 COPY mrpid_publisher_initial_deploy.sh /terraform_deployment
@@ -58,4 +58,3 @@ COPY util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/util.sh
 COPY initial_script /terraform_deployment/terraform_scripts_initial
 COPY final_script /terraform_deployment/terraform_scripts_final
-COPY config.yml /terraform_deployment/config

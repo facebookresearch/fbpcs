@@ -21,7 +21,7 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_publisher_account"
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": ["arn:aws:iam::${var.publisher_account_id}:role/mrpid_publisher_${var.md5hash_aws_account_id}_ec2_role", "arn:aws:iam::${var.publisher_account_id}:role/mrpid_publisher_${var.md5hash_aws_account_id}_sfn_role"]
+        "AWS": ["arn:aws:iam::${var.publisher_account_id}:role/mrpid-publisher-ec2-role-${var.md5hash_aws_account_id}", "arn:aws:iam::${var.publisher_account_id}:role/mrpid-publisher-sfn-role-${var.md5hash_aws_account_id}"]
       },
       "Action": [
         "s3:GetObject",
@@ -111,13 +111,13 @@ sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /de
         "collect_list": [
           {
             "file_path": "/mnt/var/log/spark/PartnerStageOne.log",
-            "log_group_name": "mrpid_partner_ec2_log_group",
+            "log_group_name": "mrpid-partner-ec2-log-group",
             "log_stream_name": "partner_stage_one_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PartnerStageTwo.log",
-            "log_group_name": "mrpid_partner_ec2_log_group",
+            "log_group_name": "mrpid-partner-ec2-log-group",
             "log_stream_name": "partner_stage_two_log",
             "timezone": "UTC"
           }

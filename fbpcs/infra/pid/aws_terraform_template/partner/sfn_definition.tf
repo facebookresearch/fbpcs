@@ -132,7 +132,7 @@ data "template_file" "partner_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageOne {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageOne.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath, $.inputPath))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageOne {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageOne.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath, $.inputPath))"
           }
         }
       },
@@ -187,7 +187,7 @@ data "template_file" "partner_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageTwo {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageTwo.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=1 --class com.meta.mr.multikey.partner.PartnerStageTwo {} s3://mrpid-publisher-${var.md5hash_aws_account_id}/{} s3://mrpid-partner-${var.md5hash_aws_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PartnerStageTwo.log', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.instanceId, $.outputPath, $.numPidContainers))"
           }
         }
       },

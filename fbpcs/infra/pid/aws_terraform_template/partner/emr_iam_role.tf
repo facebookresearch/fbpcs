@@ -1,5 +1,5 @@
 resource "aws_iam_role" "mrpid_partner_emr_role" {
-  name = "mrpid_partner_emr_role"
+  name = "mrpid-partner-emr-role"
 
   assume_role_policy = <<POLICY
 {
