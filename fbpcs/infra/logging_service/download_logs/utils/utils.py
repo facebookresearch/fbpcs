@@ -11,11 +11,18 @@ import shutil
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from pprint import pprint
+from typing import Any, Dict, List, Union
+
+from fbpcs.infra.logging_service.download_logs.cloud_error.utils_error import (
+    NotSupportedContentType,
+)
 
 
 class Utils:
-    def create_file(self, file_location: str, content: List[str]) -> None:
+    def create_file(
+        self, file_location: str, content: Union[List[str], Dict[str, Any]]
+    ) -> None:
         """
         Create file in the file location with content.
         Args:
@@ -38,7 +45,7 @@ class Utils:
     def write_to_file(
         cls,
         file_object: io.TextIOWrapper,
-        contents: List[str],
+        contents: Union[List[str], Dict[str, Any]],
         append_newline: bool = True,
     ) -> None:
         """
@@ -49,10 +56,18 @@ class Utils:
         Returns:
             None
         """
-        for content in contents:
-            if append_newline:
-                content = content + "\n"
-            file_object.write(content)
+        if isinstance(contents, list):
+            for content in contents:
+                if append_newline:
+                    content = content + "\n"
+                file_object.write(content)
+        elif isinstance(contents, dict):
+            pprint(contents, stream=file_object)
+            file_object.write("\n")
+        else:
+            raise NotSupportedContentType(
+                "Unable to write to the file. Content type not supported."
+            )
 
     @staticmethod
     def create_folder(folder_location: str) -> None:
@@ -122,6 +137,7 @@ class StringFormatter(str, Enum):
     LOCAL_ZIP_FOLDER_LOCATION = "{}.zip"
     FILE_LOCATION = "{}/{}"
     ZIPPED_FOLDER_NAME = "{}.zip"
+    KINESIS_FIREHOSE_DELIVERY_STREAM = "cb-data-ingestion-stream-{}"
 
 
 @dataclass

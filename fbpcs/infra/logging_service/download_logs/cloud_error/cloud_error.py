@@ -18,6 +18,10 @@ class AwsS3Exception(AwsException):
     pass
 
 
+class AwsKinesisException(AwsException):
+    pass
+
+
 class AwsCloudwatchLogsFetchException(AwsCloudwatchException):
     pass
 
@@ -43,4 +47,8 @@ class AwsCloudwatchLogStreamFetchException(AwsCloudwatchException):
 
 
 class AwsS3BucketVerificationException(AwsS3Exception):
+    pass
+
+
+class AwsKinesisFirehoseDeliveryStreamFetchException(AwsKinesisException):
     pass
