@@ -37,10 +37,6 @@ class GraphApiTraceLoggingService(TraceLoggingService):
         status: CheckpointStatus,
         checkpoint_data: Optional[Dict[str, str]] = None,
     ) -> None:
-        if run_id is None:
-            self.logger.debug("No run_id provided - skipping write_checkpoint")
-            return
-
         form_data = {
             "operation": "write_checkpoint",
             "run_id": run_id,

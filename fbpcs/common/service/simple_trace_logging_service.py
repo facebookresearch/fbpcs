@@ -24,10 +24,6 @@ class SimpleTraceLoggingService(TraceLoggingService):
         status: CheckpointStatus,
         checkpoint_data: Optional[Dict[str, str]] = None,
     ) -> None:
-        if run_id is None:
-            self.logger.debug("No run_id provided - skipping write_checkpoint")
-            return
-
         result = {
             "operation": "write_checkpoint",
             "run_id": run_id,
