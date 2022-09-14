@@ -485,9 +485,8 @@ class PrivateComputationService:
             stage_svc = stage_svc or stage.get_stage_service(self.stage_service_args)
             pc_instance = await stage_svc.run_async(pc_instance, server_ips)
         except Exception as e:
-            error_msg = f"Caught exception when running {stage}\n{e}"
-            self.logger.error(error_msg)
-            checkpoint_data = {"error": error_msg}
+            self.logger.error(f"Caught exception when running {stage}\n{e}")
+            checkpoint_data = {"error_msg": str(e)}
             self.trace_logging_svc.write_checkpoint(
                 run_id=pc_instance.infra_config.run_id,
                 instance_id=instance_id,
