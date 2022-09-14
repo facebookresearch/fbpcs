@@ -621,7 +621,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 pl_instance = self.private_computation_service.run_stage(
                     pl_instance.infra_config.instance_id, stage, stage_svc
                 )
-                self.assertEqual(pl_instance.infra_config.status, stage.started_status)
+                self.assertEqual(
+                    pl_instance.infra_config.status, stage.initialized_status
+                )
 
         for data_test in _get_valid_stages_data():
             stage = data_test[0]
@@ -675,7 +677,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             pl_instance = self.private_computation_service.run_stage(
                 pl_instance.infra_config.instance_id, stage, stage_svc, dry_run=True
             )
-            self.assertEqual(pl_instance.infra_config.status, stage.started_status)
+            self.assertEqual(pl_instance.infra_config.status, stage.initialized_status)
 
         for data_test in _get_valid_stages_data():
             stage = data_test[0]
@@ -743,7 +745,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 pl_instance = self.private_computation_service.run_stage(
                     pl_instance.infra_config.instance_id, stage, stage_svc
                 )
-                self.assertEqual(pl_instance.infra_config.status, stage.started_status)
+                self.assertEqual(
+                    pl_instance.infra_config.status, stage.initialized_status
+                )
 
         for data_test in _get_valid_stages_data():
             stage = data_test[0]
