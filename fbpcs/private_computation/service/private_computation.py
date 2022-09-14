@@ -324,9 +324,11 @@ class PrivateComputationService:
     def update_instance(self, instance_id: str) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "update_instance")
         private_computation_instance = self.instance_repository.read(instance_id)
-        # if the status is started, then we need to update the instance
+        # if the status is initialized or started, then we need to update the instance
         # to either failed, started, or completed
-        if private_computation_instance.stage_flow.is_started_status(
+        if private_computation_instance.stage_flow.is_initialized_status(
+            private_computation_instance.infra_config.status
+        ) or private_computation_instance.stage_flow.is_started_status(
             private_computation_instance.infra_config.status
         ):
             self.logger.info(f"Updating instance: {instance_id}")
@@ -430,8 +432,10 @@ class PrivateComputationService:
         # e.g. if status == COMPUTE_METRICS_FAILED, then we can run COMPUTE_METRICS
         elif pc_instance.infra_config.status is stage.failed_status:
             pc_instance.infra_config.retry_counter += 1
-        # if the instance status is a start status, it's running something already. Don't run another stage, even if dry_run=True
-        elif stage.is_started_status(pc_instance.infra_config.status):
+        # if the instance status is a initialize/start status, it's running something already. Don't run another stage, even if dry_run=True
+        elif stage.is_initialized_status(
+            pc_instance.infra_config.status
+        ) or stage.is_started_status(pc_instance.infra_config.status):
             raise ValueError(
                 f"Cannot start a new operation when instance {instance_id} has status {pc_instance.infra_config.status}."
             )
@@ -463,7 +467,10 @@ class PrivateComputationService:
             instance_id, stage, server_ips, dry_run
         )
 
-        pc_instance.update_status(new_status=stage.started_status, logger=self.logger)
+        # update initial status
+        pc_instance.update_status(
+            new_status=stage.initialized_status, logger=self.logger
+        )
         self.logger.info(repr(stage))
 
         checkpoint_name = f"{pc_instance.infra_config.role.value}_{stage.name}"

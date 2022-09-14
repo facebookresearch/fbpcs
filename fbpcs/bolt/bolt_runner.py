@@ -114,9 +114,11 @@ class BoltRunner(Generic[T, U]):
                                         f"View {job.job_name} publisher results at {job.publisher_bolt_args.create_instance_args.output_dir}"
                                     )
                                 return True
+
                             # disable retries if stage is not retryable by setting tries to max_tries+1
                             if not stage.is_retryable:
                                 tries = max_tries + 1
+
                             await self.run_next_stage(
                                 publisher_id=publisher_id,
                                 partner_id=partner_id,
@@ -178,6 +180,7 @@ class BoltRunner(Generic[T, U]):
             # don't retry if started or completed status
             logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
+
         server_ips = None
         if stage.is_joint_stage:
             server_ips = await self.get_server_ips_after_start(
