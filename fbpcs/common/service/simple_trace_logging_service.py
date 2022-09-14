@@ -16,7 +16,7 @@ from fbpcs.common.service.trace_logging_service import (
 
 
 class SimpleTraceLoggingService(TraceLoggingService):
-    def write_checkpoint(
+    def _write_checkpoint_impl(
         self,
         run_id: Optional[str],
         instance_id: str,
