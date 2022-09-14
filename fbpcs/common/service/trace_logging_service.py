@@ -7,6 +7,7 @@
 # pyre-strict
 
 import abc
+import inspect
 import logging
 from enum import auto, Enum
 from typing import Dict, Optional
@@ -25,7 +26,6 @@ class TraceLoggingService(abc.ABC):
     def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(__name__)
 
-    @abc.abstractmethod
     def write_checkpoint(
         self,
         run_id: Optional[str],
@@ -34,4 +34,34 @@ class TraceLoggingService(abc.ABC):
         status: CheckpointStatus,
         checkpoint_data: Optional[Dict[str, str]] = None,
     ) -> None:
+        checkpoint_data = checkpoint_data or {}
+        checkpoint_data.update(self._extract_caller_info())
+
+        self._write_checkpoint_impl(
+            run_id=run_id,
+            instance_id=instance_id,
+            checkpoint_name=checkpoint_name,
+            status=status,
+            checkpoint_data=checkpoint_data,
+        )
+
+    @abc.abstractmethod
+    def _write_checkpoint_impl(
+        self,
+        run_id: Optional[str],
+        instance_id: str,
+        checkpoint_name: str,
+        status: CheckpointStatus,
+        checkpoint_data: Optional[Dict[str, str]] = None,
+    ) -> None:
         pass
+
+    def _extract_caller_info(self) -> Dict[str, str]:
+        res = {}
+        try:
+            frame = inspect.stack()[1]
+            res["filepath"] = f"{frame.filename}:{frame.lineno}"
+        except Exception as e:
+            logging.warning(f"Failed to extract caller info: {e}")
+
+        return res

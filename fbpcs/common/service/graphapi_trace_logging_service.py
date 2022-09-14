@@ -29,7 +29,7 @@ class GraphApiTraceLoggingService(TraceLoggingService):
     def __init__(self, endpoint_url: str) -> None:
         self.endpoint_url = endpoint_url
 
-    def write_checkpoint(
+    def _write_checkpoint_impl(
         self,
         run_id: Optional[str],
         instance_id: str,
