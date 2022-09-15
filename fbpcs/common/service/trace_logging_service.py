@@ -36,18 +36,23 @@ class TraceLoggingService(abc.ABC):
         status: CheckpointStatus,
         checkpoint_data: Optional[Dict[str, str]] = None,
     ) -> None:
-        checkpoint_data = checkpoint_data or {}
-        checkpoint_data.update(self._extract_caller_info())
-        if status is CheckpointStatus.FAILED:
-            checkpoint_data.update(self._extract_error_info())
+        # since we want write_checkpoint to be an infallible operation,
+        # all changes to this method should be within the try/except block
+        try:
+            checkpoint_data = checkpoint_data or {}
+            checkpoint_data.update(self._extract_caller_info())
+            if status is CheckpointStatus.FAILED:
+                checkpoint_data.update(self._extract_error_info())
 
-        self._write_checkpoint_impl(
-            run_id=run_id,
-            instance_id=instance_id,
-            checkpoint_name=checkpoint_name,
-            status=status,
-            checkpoint_data=checkpoint_data,
-        )
+            self._write_checkpoint_impl(
+                run_id=run_id,
+                instance_id=instance_id,
+                checkpoint_name=checkpoint_name,
+                status=status,
+                checkpoint_data=checkpoint_data,
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to write checkpoint: {e}")
 
     @abc.abstractmethod
     def _write_checkpoint_impl(
