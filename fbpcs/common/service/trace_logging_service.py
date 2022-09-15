@@ -9,6 +9,8 @@
 import abc
 import inspect
 import logging
+import sys
+import traceback
 from enum import auto, Enum
 from typing import Dict, Optional
 
@@ -36,6 +38,8 @@ class TraceLoggingService(abc.ABC):
     ) -> None:
         checkpoint_data = checkpoint_data or {}
         checkpoint_data.update(self._extract_caller_info())
+        if status is CheckpointStatus.FAILED:
+            checkpoint_data.update(self._extract_error_info())
 
         self._write_checkpoint_impl(
             run_id=run_id,
@@ -64,4 +68,22 @@ class TraceLoggingService(abc.ABC):
         except Exception as e:
             logging.warning(f"Failed to extract caller info: {e}")
 
+        return res
+
+    def _extract_error_info(self) -> Dict[str, str]:
+        res = {}
+        exception_type, exception, exception_trace = sys.exc_info()
+        if not exception_type:
+            return res
+        res.update(
+            {
+                "exception_type": str(exception_type),
+                "exception": str(exception),
+                "exception_trace": "\n".join(
+                    traceback.format_exception(
+                        exception_type, exception, exception_trace
+                    )
+                ),
+            }
+        )
         return res
