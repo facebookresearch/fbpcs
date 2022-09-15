@@ -68,7 +68,7 @@ class TraceLoggingService(abc.ABC):
     def _extract_caller_info(self) -> Dict[str, str]:
         res = {}
         try:
-            frame = inspect.stack()[1]
+            frame = inspect.stack()[2]
             res["filepath"] = f"{frame.filename}:{frame.lineno}"
         except Exception as e:
             logging.warning(f"Failed to extract caller info: {e}")
