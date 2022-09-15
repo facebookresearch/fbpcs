@@ -55,35 +55,58 @@ class AwsCloud(CloudBaseClass):
         self.log: logging.Logger = logging.getLogger(logger_name or __name__)
         self.utils = Utils()
 
-        try:
-            sts = boto3.client(
-                "sts",
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-            )
-            self.cloudwatch_client: botocore.client.BaseClient = boto3.client(
-                "logs",
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-                region_name=aws_region,
-            )
-            self.s3_client: botocore.client.BaseClient = boto3.client(
-                "s3",
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-                region_name=aws_region,
-            )
-            self.kinesis_client: botocore.client.BaseClient = boto3.client(
-                "firehose",
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-                region_name=aws_region,
-            )
+        sts = self.get_boto3_object(
+            "sts",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+            region_name=aws_region,
+        )
+        self.cloudwatch_client: botocore.client.BaseClient = self.get_boto3_object(
+            "logs",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+            region_name=aws_region,
+        )
+        self.s3_client: botocore.client.BaseClient = self.get_boto3_object(
+            "s3",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+            region_name=aws_region,
+        )
+        self.kinesis_client: botocore.client.BaseClient = self.get_boto3_object(
+            "firehose",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+            region_name=aws_region,
+        )
 
+        try:
+            self.log.info("Verifying AWS credentials.")
+            sts.get_caller_identity()
+        except NoCredentialsError as error:
+            self.log.error(f"Couldn't validate the AWS credentials." f"{error}")
+
+    def get_boto3_object(
+        self,
+        service_name: str,
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None,
+        aws_session_token: Optional[str] = None,
+        region_name: Optional[str] = None,
+    ) -> botocore.client.BaseClient:
+        return_value = None
+        try:
+            return_value = boto3.client(
+                service_name,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+                region_name=region_name,
+            )
         except NoCredentialsError as error:
             self.log.error(
                 f"Error occurred in validating access and secret keys of the aws account.\n"
@@ -101,12 +124,7 @@ class AwsCloud(CloudBaseClass):
             )
         except NoRegionError as error:
             self.log.error(f"Couldn't find region in AWS config." f"{error}")
-
-        try:
-            self.log.info("Verifying AWS credentials.")
-            sts.get_caller_identity()
-        except NoCredentialsError as error:
-            self.log.error(f"Couldn't validate the AWS credentials." f"{error}")
+        return return_value
 
     def get_cloudwatch_logs(
         self,
