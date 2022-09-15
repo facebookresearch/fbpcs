@@ -7,6 +7,7 @@
 
 #include <math.h>
 #include <filesystem>
+#include <future>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -16,8 +17,10 @@
 
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
+#include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
+#include "fbpcf/util/MetricCollector.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
@@ -34,31 +37,17 @@ template <
     common::InputEncryption inputEncryption>
 static void runGame(
     const std::string& serverIp,
-    const uint16_t port,
     const std::string& aggregationFormat,
     const std::filesystem::path& inputSecretSharePath,
     const std::filesystem::path& inputClearTextPath,
     const std::string& outputPath,
     bool useTls,
     const std::string& tlsDir,
-    bool useNewOutputFormat) {
+    bool useNewOutputFormat,
+    std::unique_ptr<
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+        communicationAgentFactory) {
   FLAGS_use_new_output_format = useNewOutputFormat;
-
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
-  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
-  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
-  tlsInfo.useTls = useTls;
-
-  std::map<
-      int,
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
-          PartyInfo>
-      partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
-
-  auto communicationAgentFactory = std::make_unique<
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, tlsInfo, "aggregation_test_traffic");
 
   AggregationApp<PARTY, schedulerId>(
       inputEncryption,
@@ -79,7 +68,6 @@ template <
 inline void testCorrectnessAggregationAppHelper(
     int remainingFiles,
     std::string serverIpAlice,
-    int16_t portAlice,
     std::vector<std::string> attributionRules,
     std::string aggregationFormat,
     std::vector<std::string> inputSecretSharePathAlice,
@@ -87,7 +75,6 @@ inline void testCorrectnessAggregationAppHelper(
     std::vector<std::string> inputClearTextPathAlice,
     std::vector<std::string> outputPathAlice,
     std::string serverIpBob,
-    int16_t portBob,
     std::vector<std::string> inputSecretSharePathBob,
     std::vector<std::string> inputReformattedSecretSharePathBob,
     std::vector<std::string> inputClearTextPathBob,
@@ -107,28 +94,37 @@ inline void testCorrectnessAggregationAppHelper(
     bob_secret_input = inputSecretSharePathBob.at(id);
   }
 
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.useTls = useTls;
+
+  auto [communicationAgentFactoryAlice, communicationAgentFactoryBob] =
+      fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
+
   auto futureAlice = std::async(
       runGame<common::PUBLISHER, 2 * id, outputVisibility, inputEncryption>,
       serverIpAlice,
-      portAlice + 100 * id,
       aggregationFormat,
       alice_secret_input,
       inputClearTextPathAlice.at(id),
       outputPathAlice.at(id),
       useTls,
       tlsDir,
-      useNewOutputFormat);
+      useNewOutputFormat,
+      std::move(communicationAgentFactoryAlice));
   auto futureBob = std::async(
       runGame<common::PARTNER, 2 * id + 1, outputVisibility, inputEncryption>,
       serverIpBob,
-      portBob + 100 * id,
       "",
       bob_secret_input,
       inputClearTextPathBob.at(id),
       outputPathBob.at(id),
       useTls,
       tlsDir,
-      useNewOutputFormat);
+      useNewOutputFormat,
+      std::move(communicationAgentFactoryBob));
 
   futureAlice.get();
   futureBob.get();
@@ -155,7 +151,6 @@ inline void testCorrectnessAggregationAppHelper(
           inputEncryption>(
           remainingFiles - 1,
           serverIpAlice,
-          portAlice,
           attributionRules,
           aggregationFormat,
           inputSecretSharePathAlice,
@@ -163,7 +158,6 @@ inline void testCorrectnessAggregationAppHelper(
           inputClearTextPathAlice,
           outputPathAlice,
           serverIpBob,
-          portBob,
           inputSecretSharePathBob,
           inputReformattedSecretSharePathBob,
           inputClearTextPathBob,
@@ -182,8 +176,6 @@ class AggregationAppTest
  protected:
   void SetUp() override {
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
-    port_ = fbpcf::engine::communication::SocketInTestHelper::findNextOpenPort(
-        5000);
 
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
@@ -248,7 +240,6 @@ class AggregationAppTest
         common::InputEncryption::Plaintext>(
         attributionRules_.size(),
         serverIpAlice_,
-        port_,
         attributionRules_,
         aggregationFormat_,
         inputSecretShareFilePathsAlice_,
@@ -256,7 +247,6 @@ class AggregationAppTest
         inputClearTextFilePathsAlice_,
         outputFilePathsAlice_,
         serverIpBob_,
-        port_,
         inputSecretShareFilePathsBob_,
         inputReformattedSecretShareFilePathsBob_,
         inputClearTextFilePathsBob_,
