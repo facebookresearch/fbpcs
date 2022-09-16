@@ -29,7 +29,11 @@ inline const std::vector<std::string> SECRET_SHARES_HEADER = {
     "id_",
     "opportunityTimestamps",
     "isValidOpportunityTimestamp",
+    "purchaseTimestamps",
+    "thresholdTimestamps",
     "anyValidPurchaseTimestamp",
+    "purchaseValues",
+    "purchaseValueSquared",
     "testReach"};
 
 template <int schedulerId>
@@ -63,12 +67,12 @@ struct LiftGameProcessedData {
  private:
   template <typename T>
   static std::string joinColumn(
-      std::vector<std::vector<T>> data,
+      const std::vector<std::vector<T>>& data,
       size_t columnIndex);
 
   template <typename T>
   static std::vector<T> extractColumn(
-      std::vector<std::vector<T>> data,
+      const std::vector<std::vector<T>>& data,
       size_t columnIndex);
 
   static std::vector<std::string> splitValueArray(const std::string& str);
