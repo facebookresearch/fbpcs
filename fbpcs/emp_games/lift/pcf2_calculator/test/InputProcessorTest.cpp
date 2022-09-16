@@ -6,6 +6,10 @@
  */
 
 #include <gtest/gtest.h>
+#include <fstream>
+#include <functional>
+#include <utility>
+#include "folly/Random.h"
 
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/scheduler/ISchedulerFactory.h"
@@ -32,10 +36,30 @@ InputProcessor<schedulerId> createInputProcessorWithScheduler(
   return InputProcessor<schedulerId>(myRole, inputData, numConversionsPerUser);
 }
 
+template <int schedulerId>
+void serializeAndDeserializeData(
+    std::reference_wrapper<InputProcessor<schedulerId>> inputProcessor,
+    std::reference_wrapper<LiftGameProcessedData<schedulerId>> toWrite,
+    const std::string& globalParamsPath,
+    const std::string& secretSharesPath) {
+  inputProcessor.get().getLiftGameProcessedData().writeToCSV(
+      globalParamsPath, secretSharesPath);
+
+  toWrite.get() = LiftGameProcessedData<schedulerId>::readFromCSV(
+      globalParamsPath, secretSharesPath);
+}
+
+static void cleanup(std::string file_to_delete) {
+  remove(file_to_delete.c_str());
+}
+
 class InputProcessorTest : public ::testing::TestWithParam<bool> {
  protected:
   InputProcessor<0> publisherInputProcessor_;
   InputProcessor<1> partnerInputProcessor_;
+  LiftGameProcessedData<0> publisherDeserialized_;
+  LiftGameProcessedData<1> partnerDeserialized_;
+
   bool computePublisherBreakdowns_;
 
   void SetUp() override {
@@ -45,6 +69,27 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
         baseDir + "../sample_input/publisher_unittest3.csv";
     std::string partnerInputFilename =
         baseDir + "../sample_input/partner_2_convs_unittest.csv";
+
+    std::string publisherGlobalParamsOutput = folly::sformat(
+        "{}../sample_input/publisher_global_params_{}.json",
+        baseDir,
+        folly::Random::secureRand64());
+
+    std::string publisherSecretSharesOutput = folly::sformat(
+        "{}../sample_input/publisher_secret_shares_{}.json",
+        baseDir,
+        folly::Random::secureRand64());
+
+    std::string partnerGlobalParamsOutput = folly::sformat(
+        "{}../sample_input/partner_global_params_{}.json",
+        baseDir,
+        folly::Random::secureRand64());
+
+    std::string partnerSecretSharesOutput = folly::sformat(
+        "{}../sample_input/partner_secret_shares_{}.json",
+        baseDir,
+        folly::Random::secureRand64());
+
     int numConversionsPerUser = 2;
     int epoch = 1546300800;
     computePublisherBreakdowns_ = GetParam();
@@ -89,6 +134,27 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
 
     publisherInputProcessor_ = future0.get();
     partnerInputProcessor_ = future1.get();
+
+    auto future2 = std::async(
+        serializeAndDeserializeData<0>,
+        std::reference_wrapper<InputProcessor<0>>(publisherInputProcessor_),
+        std::reference_wrapper<LiftGameProcessedData<0>>(
+            publisherDeserialized_),
+        publisherGlobalParamsOutput,
+        publisherSecretSharesOutput);
+
+    auto future3 = std::async(
+        serializeAndDeserializeData<1>,
+        std::reference_wrapper<InputProcessor<1>>(partnerInputProcessor_),
+        std::reference_wrapper<LiftGameProcessedData<1>>(partnerDeserialized_),
+        partnerGlobalParamsOutput,
+        partnerSecretSharesOutput);
+
+    future2.get();
+    future3.get();
+
+    cleanup(publisherGlobalParamsOutput);
+    cleanup(partnerGlobalParamsOutput);
   }
 };
 
@@ -104,6 +170,19 @@ TEST_P(InputProcessorTest, testBitsForValues) {
       publisherInputProcessor_.getLiftGameProcessedData().valueSquaredBits, 15);
   EXPECT_EQ(
       partnerInputProcessor_.getLiftGameProcessedData().valueSquaredBits, 15);
+
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().valueBits,
+      publisherDeserialized_.valueBits);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().valueBits,
+      partnerDeserialized_.valueBits);
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().valueSquaredBits,
+      publisherDeserialized_.valueSquaredBits);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().valueSquaredBits,
+      partnerDeserialized_.valueSquaredBits);
 }
 
 TEST_P(InputProcessorTest, testNumPartnerCohorts) {
@@ -111,6 +190,13 @@ TEST_P(InputProcessorTest, testNumPartnerCohorts) {
       publisherInputProcessor_.getLiftGameProcessedData().numPartnerCohorts, 3);
   EXPECT_EQ(
       partnerInputProcessor_.getLiftGameProcessedData().numPartnerCohorts, 3);
+
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().numPartnerCohorts,
+      publisherDeserialized_.numPartnerCohorts);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().numPartnerCohorts,
+      partnerDeserialized_.numPartnerCohorts);
 }
 
 TEST_P(InputProcessorTest, testNumBreakdowns) {
@@ -133,6 +219,14 @@ TEST_P(InputProcessorTest, testNumBreakdowns) {
             .numPublisherBreakdowns,
         0);
   }
+
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData()
+          .numPublisherBreakdowns,
+      publisherDeserialized_.numPublisherBreakdowns);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().numPublisherBreakdowns,
+      partnerDeserialized_.numPublisherBreakdowns);
 }
 
 TEST_P(InputProcessorTest, testNumGroups) {
@@ -144,6 +238,13 @@ TEST_P(InputProcessorTest, testNumGroups) {
     EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().numGroups, 6);
     EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numGroups, 6);
   }
+
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().numGroups,
+      publisherDeserialized_.numGroups);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().numGroups,
+      partnerDeserialized_.numGroups);
 }
 
 TEST_P(InputProcessorTest, testNumTestGroups) {
@@ -158,6 +259,13 @@ TEST_P(InputProcessorTest, testNumTestGroups) {
     EXPECT_EQ(
         partnerInputProcessor_.getLiftGameProcessedData().numTestGroups, 4);
   }
+
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().numTestGroups,
+      publisherDeserialized_.numTestGroups);
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().numTestGroups,
+      partnerDeserialized_.numTestGroups);
 }
 
 // Convert input boolean index shares to group ids
