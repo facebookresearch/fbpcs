@@ -34,4 +34,9 @@ bool readCsv(
     std::function<void(const std::vector<std::string>&)> processHeader =
         [](auto) {});
 
+bool writeCsv(
+    const std::string& fileName,
+    const std::vector<std::string>& header,
+    const std::vector<std::vector<std::string>>& data);
+
 } // namespace private_measurement::csv
