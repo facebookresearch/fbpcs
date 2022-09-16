@@ -16,6 +16,7 @@
 
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
+#include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 #include "fbpcs/emp_games/common/Constants.h"
@@ -30,29 +31,12 @@ template <
     bool usingBatch,
     common::InputEncryption inputEncryption>
 static void runGame(
-    const std::string& serverIp,
-    const uint16_t port,
     const std::string& attributionRules,
     const std::filesystem::path& inputPath,
     const std::string& outputPath,
-    bool useTls,
-    const std::string& tlsDir) {
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
-  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
-  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
-  tlsInfo.useTls = useTls;
-
-  std::map<
-      int,
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
-          PartyInfo>
-      partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
-
-  auto communicationAgentFactory = std::make_unique<
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, tlsInfo, "attribution_test_traffic");
-
+    std::unique_ptr<
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+        communicationAgentFactory) {
   AttributionApp<PARTY, schedulerId, usingBatch, inputEncryption>(
       std::move(communicationAgentFactory),
       attributionRules,
@@ -64,36 +48,35 @@ static void runGame(
 // helper function for executing MPC game and verifying corresponding output
 template <int id, bool usingBatch, common::InputEncryption inputEncryption>
 inline void testCorrectnessAttributionAppHelper(
-    std::string serverIpAlice,
-    int16_t portAlice,
     std::vector<std::string> attributionRule,
     std::vector<std::string> inputPathAlice,
     std::vector<std::string> outputPathAlice,
-    std::string serverIpBob,
-    int16_t portBob,
     std::vector<std::string> inputPathBob,
     std::vector<std::string> outputPathBob,
     std::vector<std::string> expectedOutputFilenames,
     bool useTls,
     std::string& tlsDir) {
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.useTls = useTls;
+
+  auto [communicationAgentFactoryAlice, communicationAgentFactoryBob] =
+      fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
+
   auto futureAlice = std::async(
       runGame<common::PUBLISHER, 2 * id, usingBatch, inputEncryption>,
-      serverIpAlice,
-      portAlice + 100 * id,
       attributionRule.at(id),
       inputPathAlice.at(id),
       outputPathAlice.at(id),
-      useTls,
-      tlsDir);
+      std::move(communicationAgentFactoryAlice));
   auto futureBob = std::async(
       runGame<common::PARTNER, 2 * id + 1, usingBatch, inputEncryption>,
-      serverIpBob,
-      portBob + 100 * id,
       "",
       inputPathBob.at(id),
       outputPathBob.at(id),
-      useTls,
-      tlsDir);
+      std::move(communicationAgentFactoryBob));
 
   futureAlice.wait();
   futureBob.wait();
@@ -114,13 +97,9 @@ class AttributionAppTest
  protected:
   void SetUp() override {
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
-    port_ = fbpcf::engine::communication::SocketInTestHelper::findNextOpenPort(
-        5000);
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
     std::string tempDir = std::filesystem::temp_directory_path();
-    serverIpAlice_ = "";
-    serverIpBob_ = "127.0.0.1";
     std::string outputPathAlice_ = folly::sformat(
         "{}/output_path_alice.json_{}", tempDir, folly::Random::secureRand64());
     std::string outputPathBob_ = folly::sformat(
@@ -155,13 +134,9 @@ class AttributionAppTest
         id,
         usingBatch,
         common::InputEncryption::Plaintext>(
-        serverIpAlice_,
-        port_,
         attributionRules_,
         inputFilenamesAlice_,
         outputFilenamesAlice_,
-        serverIpBob_,
-        port_,
         inputFilenamesBob_,
         outputFilenamesBob_,
         expectedOutputFilenames_,
