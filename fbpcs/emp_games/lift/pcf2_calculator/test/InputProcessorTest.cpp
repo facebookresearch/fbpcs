@@ -154,13 +154,23 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
     future3.get();
 
     cleanup(publisherGlobalParamsOutput);
+    cleanup(publisherSecretSharesOutput);
     cleanup(partnerGlobalParamsOutput);
+    cleanup(partnerSecretSharesOutput);
   }
 };
 
 TEST_P(InputProcessorTest, testNumRows) {
   EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().numRows, 33);
   EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numRows, 33);
+
+  EXPECT_EQ(
+      publisherInputProcessor_.getLiftGameProcessedData().numRows,
+      publisherDeserialized_.numRows);
+
+  EXPECT_EQ(
+      partnerInputProcessor_.getLiftGameProcessedData().numRows,
+      partnerDeserialized_.numRows);
 }
 
 TEST_P(InputProcessorTest, testBitsForValues) {
@@ -333,12 +343,25 @@ TEST_P(InputProcessorTest, testOpportunityTimestamps) {
         .getValue();
   });
   auto opportunityTimestamps0 = future0.get();
-  auto opportunityTimestamps1 = future1.get();
+  future1.get();
   std::vector<uint64_t> expectOpportunityTimestamps = {
       0,   0,   0,   100, 100, 100, 100, 100, 100, 100, 100,
       100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
       100, 100, 0,   100, 100, 100, 100, 100, 100, 100, 100};
   EXPECT_EQ(opportunityTimestamps0, expectOpportunityTimestamps);
+
+  auto future2 = std::async([&] {
+    return publisherDeserialized_.opportunityTimestamps.openToParty(0)
+        .getValue();
+  });
+  auto future3 = std::async([&] {
+    return partnerDeserialized_.opportunityTimestamps.openToParty(0).getValue();
+  });
+
+  auto deserializedOpportunityTimestamps = future2.get();
+  future3.get();
+
+  EXPECT_EQ(opportunityTimestamps0, deserializedOpportunityTimestamps);
 }
 
 TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
@@ -353,11 +376,26 @@ TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
         .getValue();
   });
   auto isValidOpportunityTimestamp0 = future0.get();
-  auto isValidOpportunityTimestamp1 = future1.get();
+  future1.get();
   std::vector<bool> expectIsValidOpportunityTimestamp = {
       0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1,
       1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1};
   EXPECT_EQ(isValidOpportunityTimestamp0, expectIsValidOpportunityTimestamp);
+
+  auto future2 = std::async([&] {
+    return publisherDeserialized_.isValidOpportunityTimestamp.openToParty(0)
+        .getValue();
+  });
+  auto future3 = std::async([&] {
+    return partnerDeserialized_.isValidOpportunityTimestamp.openToParty(0)
+        .getValue();
+  });
+
+  auto deserializedIsValidOpportunityTimestamp = future2.get();
+  future3.get();
+
+  EXPECT_EQ(
+      isValidOpportunityTimestamp0, deserializedIsValidOpportunityTimestamp);
 }
 
 template <int schedulerId>
@@ -441,6 +479,20 @@ TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
       1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   EXPECT_EQ(anyValidPurchaseTimestamp0, expectAnyValidPurchaseTimestamp);
+
+  auto future2 = std::async([&] {
+    return publisherDeserialized_.anyValidPurchaseTimestamp.openToParty(0)
+        .getValue();
+  });
+  auto future3 = std::async([&] {
+    return partnerDeserialized_.anyValidPurchaseTimestamp.openToParty(0)
+        .getValue();
+  });
+
+  auto anyValidPurchaseTimestampDeserialized = future2.get();
+  future3.get();
+
+  EXPECT_EQ(anyValidPurchaseTimestamp0, anyValidPurchaseTimestampDeserialized);
 }
 
 template <int schedulerId>
@@ -517,12 +569,23 @@ TEST_P(InputProcessorTest, testReach) {
         .getValue();
   });
   auto testReach0 = future0.get();
-  auto testReach1 = future1.get();
+  future1.get();
 
   std::vector<bool> expectTestReach = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                        0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0};
   EXPECT_EQ(testReach0, expectTestReach);
+
+  auto future2 = std::async([&] {
+    return publisherDeserialized_.testReach.openToParty(0).getValue();
+  });
+  auto future3 = std::async(
+      [&] { return partnerDeserialized_.testReach.openToParty(0).getValue(); });
+
+  auto testReachDeserialized = future2.get();
+  future3.get();
+
+  EXPECT_EQ(testReach0, testReachDeserialized);
 }
 
 INSTANTIATE_TEST_SUITE_P(
