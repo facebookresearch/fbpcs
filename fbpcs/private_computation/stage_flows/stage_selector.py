@@ -55,6 +55,7 @@ class StageSelector:
                 args.pc_validator_config,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
+                args.trace_logging_svc,
             )
         elif stage_flow.name == "PID_SHARD":
             return PIDShardStageService(

@@ -11,6 +11,10 @@ from typing import DefaultDict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.common.service.trace_logging_service import (
+    CheckpointStatus,
+    TraceLoggingService,
+)
 from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
@@ -54,6 +58,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
         pc_validator_config: PCValidatorConfig,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
+        trace_logging_svc: Optional[TraceLoggingService] = None,
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(__name__)
         self._failed_status: PrivateComputationInstanceStatus = (
@@ -63,6 +68,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._pc_validator_config: PCValidatorConfig = pc_validator_config
         self._onedocker_svc = onedocker_svc
+        self._trace_logging_svc = trace_logging_svc
 
     async def run_async(
         self,
@@ -73,6 +79,14 @@ class PCPreValidationStageService(PrivateComputationStageService):
         Updates the status to COMPLETED and returns the pc_instance
         """
         self._logger.info("[PCPreValidation] - Starting stage")
+        if self._trace_logging_svc is not None:
+            self._trace_logging_svc.write_checkpoint(
+                run_id=pc_instance.infra_config.run_id,
+                instance_id=pc_instance.infra_config.instance_id,
+                checkpoint_name=pc_instance.current_stage.name,
+                status=CheckpointStatus.STARTED,
+            )
+
         if self._should_run_pre_validation(pc_instance):
             self._logger.info(
                 "[PCPreValidation] - starting a pc_pre_validation_cli run"
@@ -154,9 +168,18 @@ class PCPreValidationStageService(PrivateComputationStageService):
                     "[PCPreValidation] - stage failed because of some failed validations. Please check the logs in ECS"
                 )
 
+            # adding to partner TL if needed
             return instance_status
 
-        return PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
+        else:
+            if self._trace_logging_svc is not None:
+                self._trace_logging_svc.write_checkpoint(
+                    run_id=pc_instance.infra_config.run_id,
+                    instance_id=pc_instance.infra_config.instance_id,
+                    checkpoint_name=pc_instance.current_stage.name,
+                    status=CheckpointStatus.COMPLETED,
+                )
+            return PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
 
     def _should_run_pre_validation(
         self, pc_instance: PrivateComputationInstance
