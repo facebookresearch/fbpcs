@@ -11,6 +11,8 @@
 #include <vector>
 #include "fbpcs/emp_games/lift/pcf2_calculator/Constants.h"
 
+#include "folly/logging/xlog.h"
+
 namespace private_lift {
 
 template <int schedulerId>
@@ -32,6 +34,16 @@ struct LiftGameProcessedData {
   std::vector<SecValue<schedulerId>> purchaseValues;
   std::vector<SecValueSquared<schedulerId>> purchaseValueSquared;
   SecBit<schedulerId> testReach;
+
+  void writeToCSV(
+      const std::string& globalParamsOutputPath,
+      const std::string& secretSharesOutputPath) const;
+
+  static LiftGameProcessedData readFromCSV(
+      const std::string& globalParamsInputPath,
+      const std::string& secretSharesInputPath);
 };
 
 } // namespace private_lift
+
+#include "fbpcs/emp_games/lift/pcf2_calculator/LiftGameProcessedData_impl.h"
