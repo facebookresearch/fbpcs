@@ -82,6 +82,25 @@ struct LiftGameProcessedData {
       const std::vector<std::vector<T>>& data);
 
   static std::vector<std::string> splitValueArray(const std::string& str);
+
+  static std::function<
+      void(const std::vector<std::string>&, const std::vector<std::string>&)>
+  readParamsLine(LiftGameProcessedData<schedulerId>& result);
+
+  static std::function<
+      void(const std::vector<std::string>&, const std::vector<std::string>&)>
+  readSharesLine(
+      LiftGameProcessedData<schedulerId>& result,
+      std::vector<std::vector<bool>>& indexShares,
+      std::vector<std::vector<bool>>& testIndexShares,
+      std::vector<uint64_t>& opportunityTimestampsShares,
+      std::vector<bool>& isValidOpportunityTimestampShares,
+      std::vector<std::vector<uint64_t>>& purchaseTimestampShares,
+      std::vector<std::vector<uint64_t>>& thresholdTimestampShares,
+      std::vector<bool>& anyValidPurchaseTimestampShares,
+      std::vector<std::vector<int64_t>>& purchaseValueShares,
+      std::vector<std::vector<int64_t>>& purchaseValueSquaredShares,
+      std::vector<bool>& testReachShares);
 };
 
 } // namespace private_lift
