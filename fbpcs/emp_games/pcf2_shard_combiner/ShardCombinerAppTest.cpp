@@ -21,6 +21,7 @@
 #include <fbpcf/engine/communication/test/SocketInTestHelper.h>
 #include <fbpcf/engine/communication/test/TlsCommunicationUtils.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h"
@@ -32,12 +33,6 @@ class ShardCombinerAppTestFixture
     : public ::testing::TestWithParam<std::tuple<bool, bool>> {
  protected:
   void SetUp() override {
-    // When running tests in parallel there could be contention for ports
-    // to run the game. To be on the safer side we set different ports
-    // for each test.
-    initialPort_ =
-        fbpcf::engine::communication::SocketInTestHelper::findNextOpenPort(
-            5500);
     std::string filePath = __FILE__;
     baseDir_ = filePath.substr(0, filePath.rfind("/")) + "/test/";
     tempDir_ = std::filesystem::temp_directory_path();
@@ -63,7 +58,6 @@ class ShardCombinerAppTestFixture
       const std::string& expectedOutputFile,
       bool useTls,
       const std::string& tlsDir,
-      uint16_t portNo,
       bool xorEncrypted,
       common::ResultVisibility resultVisibility) {
     std::string outputPathPartner = folly::sformat(
@@ -75,38 +69,39 @@ class ShardCombinerAppTestFixture
         tempDir_,
         folly::Random::secureRand64());
 
-    std::pair<std::string, std::uint16_t> publisherEndpoint = {
-        "127.0.0.1", portNo};
-    std::pair<std::string, std::uint16_t> partnerEndpoint = {
-        "127.0.0.1", (portNo)};
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
+        tlsInfo;
+    tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+    tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+    tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+    tlsInfo.useTls = useTls;
+
+    auto [communicationAgentFactoryAlice, communicationAgentFactoryBob] =
+        fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
 
     auto f1 = std::async(
         doIt<shardSchemaType, common::PUBLISHER, usingBatch, inputEncryption>,
         firstShardIndex,
         numShards,
         threshold,
-        publisherEndpoint,
         baseDir,
         inputFilePrefixPublisher,
         outputPathPublisher,
-        useTls,
-        tlsDir,
         xorEncrypted,
-        resultVisibility);
+        resultVisibility,
+        std::move(communicationAgentFactoryAlice));
 
     auto f2 = std::async(
         doIt<shardSchemaType, common::PARTNER, usingBatch, inputEncryption>,
         firstShardIndex,
         numShards,
         threshold,
-        partnerEndpoint,
         baseDir,
         inputFilePrefixPartner,
         outputPathPartner,
-        useTls,
-        tlsDir,
         xorEncrypted,
-        resultVisibility);
+        resultVisibility,
+        std::move(communicationAgentFactoryBob));
 
     f1.wait();
     f2.wait();
@@ -153,33 +148,14 @@ class ShardCombinerAppTestFixture
       int32_t firstShardIndex,
       int32_t numShards,
       int64_t threshold,
-      const std::pair<std::string, std::uint16_t>& endPoint,
       const std::string& inputPath,
       const std::string& inputPrefix,
       const std::string& outputPath,
-      bool useTls,
-      const std::string& tlsDir,
       bool xorEncrypted,
-      common::ResultVisibility resultVisibility) {
-    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
-        tlsInfo;
-    tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
-    tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
-    tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
-    tlsInfo.useTls = useTls;
-
-    std::map<
-        int32_t,
-        fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
-            PartyInfo>
-        partyInfos(
-            {{0, {endPoint.first, endPoint.second}},
-             {1, {endPoint.first, endPoint.second}}});
-
-    auto communicationAgentFactory = std::make_unique<
-        fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        schedulerId, partyInfos, tlsInfo, "shard_combiner_test_traffic");
-
+      common::ResultVisibility resultVisibility,
+      std::unique_ptr<
+          fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+          communicationAgentFactory) {
     ShardCombinerApp<shardSchemaType, schedulerId, usingBatch, inputEncryption>(
         std::move(communicationAgentFactory),
         numShards,
@@ -197,8 +173,7 @@ class ShardCombinerAppTestFixture
       std::string caseShortName,
       bool xorEncrypted,
       bool usingBatch,
-      bool useTls,
-      std::uint16_t portNo) {
+      bool useTls) {
     const std::string inputPathAlice =
         "publisher_attribution_correctness_" + caseShortName + "_out.json";
     const std::string inputPathBob =
@@ -234,7 +209,6 @@ class ShardCombinerAppTestFixture
             expectedOutPath,
             useTls,
             tlsDir_,
-            portNo,
             xorEncrypted,
             common::ResultVisibility::kPublic);
       } else {
@@ -251,18 +225,13 @@ class ShardCombinerAppTestFixture
             expectedOutPath,
             useTls,
             tlsDir_,
-            portNo,
             xorEncrypted,
             common::ResultVisibility::kPublic);
       }
     }
   }
 
-  void testLift(
-      bool xorEncrypted,
-      bool usingBatch,
-      bool useTls,
-      std::uint16_t portNo) {
+  void testLift(bool xorEncrypted, bool usingBatch, bool useTls) {
     const std::string partnerFileName = "partner_lift_input_shard.json";
     const std::string publisherFileName = "publisher_lift_input_shard.json";
     std::string expectedOutFileName = "lift_expected_output_shards_2.json";
@@ -283,7 +252,6 @@ class ShardCombinerAppTestFixture
           baseDir_ + "/lift_threshold_test/" + expectedOutFileName,
           useTls,
           tlsDir_,
-          portNo,
           xorEncrypted,
           common::ResultVisibility::kPublic);
     } else {
@@ -300,7 +268,6 @@ class ShardCombinerAppTestFixture
           baseDir_ + "/lift_threshold_test/" + expectedOutFileName,
           useTls,
           tlsDir_,
-          portNo,
           xorEncrypted,
           common::ResultVisibility::kPublic);
     }
@@ -317,50 +284,20 @@ class ShardCombinerAppTestFixture
 // --- ONE TH ---
 TEST_P(ShardCombinerAppTestFixture, TestGenericShardAggCorrectnessAdObject) {
   auto [useTls, usingBatch] = GetParam();
+  testForShortCase("old", false /* XorEncrypted */, usingBatch, useTls);
   testForShortCase(
-      "old", false /* XorEncrypted */, usingBatch, useTls, initialPort_);
+      "mmt_nooverlap", false /* XorEncrypted */, usingBatch, useTls);
+  testForShortCase("mmt_overlap", false /* XorEncrypted */, usingBatch, useTls);
   testForShortCase(
-      "mmt_nooverlap",
-      false /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_);
+      "clickonly_touchonly", false /* XorEncrypted */, usingBatch, useTls);
   testForShortCase(
-      "mmt_overlap",
-      false /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_);
+      "clicktouch_touchonly", false /* XorEncrypted */, usingBatch, useTls);
   testForShortCase(
-      "clickonly_touchonly",
-      false /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_);
+      "clickonly_clicktouch", false /* XorEncrypted */, usingBatch, useTls);
   testForShortCase(
-      "clicktouch_touchonly",
-      false /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_);
+      "clicktouch_clicktouch", false /* XorEncrypted */, usingBatch, useTls);
   testForShortCase(
-      "clickonly_clicktouch",
-      false /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_);
-  testForShortCase(
-      "clicktouch_clicktouch",
-      false /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_);
-  testForShortCase(
-      "kanonymity_allpass",
-      false /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_);
+      "kanonymity_allpass", false /* XorEncrypted */, usingBatch, useTls);
 }
 
 // --- adObjXor ---
@@ -369,11 +306,7 @@ TEST_P(
     TestGenericShardAggCorrectnessAdObjectXorNw) {
   auto [useTls, usingBatch] = GetParam();
   testForShortCase(
-      "kanonymity_allpass",
-      true /* XorEncrypted */,
-      usingBatch,
-      useTls,
-      initialPort_ + 10);
+      "kanonymity_allpass", true /* XorEncrypted */, usingBatch, useTls);
 }
 
 // -END- AdObject format related test --
@@ -383,13 +316,13 @@ TEST_P(
     ShardCombinerAppTestFixture,
     TestGenericLiftCorrectnessPlainTextNwEncyption) {
   auto [useTls, usingBatch] = GetParam();
-  testLift(false /* XorEncrypted */, usingBatch, useTls, initialPort_ + 20);
+  testLift(false /* XorEncrypted */, usingBatch, useTls);
 }
 
 // Test LiftXor
 TEST_P(ShardCombinerAppTestFixture, TestGenericLiftCorrectnessXorNwEncrypted) {
   auto [useTls, usingBatch] = GetParam();
-  testLift(true /* XorEncrypted */, usingBatch, useTls, initialPort_ + 30);
+  testLift(true /* XorEncrypted */, usingBatch, useTls);
 }
 // -END- Test
 

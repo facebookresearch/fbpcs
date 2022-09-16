@@ -37,27 +37,10 @@ void runCalculatorApp(
     const int epoch,
     const std::string& inputPath,
     const std::string& outputPath,
-    uint16_t port,
-    std::string serverIp,
-    std::string tlsDir,
-    bool useTls,
-    bool useXorEncryption) {
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
-  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
-  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
-  tlsInfo.useTls = useTls;
-
-  std::map<
-      int,
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
-          PartyInfo>
-      partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
-
-  auto communicationAgentFactory = std::make_unique<
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      myId, partyInfos, tlsInfo, "lift_test_traffic");
-
+    bool useXorEncryption,
+    std::unique_ptr<
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+        communicationAgentFactory) {
   auto app = std::make_unique<CalculatorApp<schedulerId>>(
       myId,
       std::move(communicationAgentFactory),
@@ -79,8 +62,6 @@ class CalculatorAppTestFixture
   std::string partnerInputPath_;
   std::string publisherOutputPath_;
   std::string partnerOutputPath_;
-  uint16_t port_;
-  std::string serverIp_;
   std::string tlsDir_;
 
   void SetUp() override {
@@ -93,11 +74,6 @@ class CalculatorAppTestFixture
         "{}/res_publisher_{}", tempDir, folly::Random::secureRand64());
     partnerOutputPath_ = folly::sformat(
         "{}/res_partner_{}", tempDir, folly::Random::secureRand64());
-
-    port_ = fbpcf::engine::communication::SocketInTestHelper::findNextOpenPort(
-        5000);
-
-    serverIp_ = "127.0.0.1";
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
   }
 
@@ -118,6 +94,15 @@ class CalculatorAppTestFixture
       const bool computePublisherBreakdowns,
       bool useTls,
       bool useXorEncryption) {
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
+        tlsInfo;
+    tlsInfo.certPath = useTls ? (tlsDir_ + "/cert.pem") : "";
+    tlsInfo.keyPath = useTls ? (tlsDir_ + "/key.pem") : "";
+    tlsInfo.passphrasePath = useTls ? (tlsDir_ + "/passphrase.pem") : "";
+    tlsInfo.useTls = useTls;
+
+    auto [communicationAgentFactoryAlice, communicationAgentFactoryBob] =
+        fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
     int epoch = 1546300800;
     auto future0 = std::async(
         runCalculatorApp<0>,
@@ -127,11 +112,8 @@ class CalculatorAppTestFixture
         epoch,
         publisherInputPath,
         publisherOutputPath,
-        port_,
-        serverIp_,
-        tlsDir_,
-        useTls,
-        useXorEncryption);
+        useXorEncryption,
+        std::move(communicationAgentFactoryAlice));
 
     auto future1 = std::async(
         runCalculatorApp<1>,
@@ -141,11 +123,8 @@ class CalculatorAppTestFixture
         epoch,
         partnerInputPath,
         partnerOutputPath,
-        port_,
-        serverIp_,
-        tlsDir_,
-        useTls,
-        useXorEncryption);
+        useXorEncryption,
+        std::move(communicationAgentFactoryBob));
 
     future0.get();
     future1.get();
