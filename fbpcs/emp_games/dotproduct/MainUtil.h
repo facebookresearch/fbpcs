@@ -32,10 +32,15 @@ inline common::SchedulerStatistics startDotProductApp(
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
           PartyInfo>
       partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.useTls = useTls;
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, tlsDir, "dotproduct_traffic");
+      PARTY, partyInfos, tlsInfo, "dotproduct_traffic");
 
   auto app = std::make_unique<pcf2_dotproduct::DotproductApp<PARTY, PARTY>>(
       std::move(communicationAgentFactory),
