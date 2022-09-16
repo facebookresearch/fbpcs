@@ -5,12 +5,15 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <folly/String.h>
 #include <functional>
 #include <string>
 #include <vector>
 
 #include "fbpcf/io/api/BufferedReader.h"
+#include "fbpcf/io/api/BufferedWriter.h"
 #include "fbpcf/io/api/FileReader.h"
+#include "fbpcf/io/api/FileWriter.h"
 
 #include "Constants.h"
 #include "Csv.h"
@@ -74,6 +77,33 @@ bool readCsv(
     readLine(header, parts);
   }
   inlineBufferedReader->close();
+  return true;
+}
+
+bool writeCsv(
+    const std::string& fileName,
+    const std::vector<std::string>& header,
+    const std::vector<std::vector<std::string>>& data) {
+  auto inlineWriter = std::make_unique<fbpcf::io::FileWriter>(fileName);
+  auto inlineBufferedWriter =
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(inlineWriter));
+
+  std::string newLine = "\n";
+
+  std::string outputLine;
+  folly::join(',', header, outputLine);
+
+  inlineBufferedWriter->writeString(outputLine);
+  inlineBufferedWriter->writeString(newLine);
+
+  for (auto& parts : data) {
+    folly::join(",", parts, outputLine);
+    inlineBufferedWriter->writeString(outputLine);
+    inlineBufferedWriter->writeString(newLine);
+  }
+
+  inlineBufferedWriter->close();
+
   return true;
 }
 
