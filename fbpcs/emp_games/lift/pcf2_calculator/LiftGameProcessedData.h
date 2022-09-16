@@ -9,11 +9,21 @@
 
 #include <cstdint>
 #include <vector>
+#include "fbpcs/emp_games/common/Csv.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Constants.h"
 
 #include "folly/logging/xlog.h"
 
 namespace private_lift {
+
+inline const std::vector<std::string> GLOBAL_PARAMS_HEADER = {
+    "numPartnerCohorts",
+    "numPublisherBreakdowns",
+    "numGroups",
+    "numTestGroups",
+    "valueBits",
+    "valueSquaredBits",
+};
 
 template <int schedulerId>
 struct LiftGameProcessedData {
