@@ -27,6 +27,8 @@ inline const std::vector<std::string> GLOBAL_PARAMS_HEADER = {
 
 inline const std::vector<std::string> SECRET_SHARES_HEADER = {
     "id_",
+    "indexShares",
+    "testIndexShares",
     "opportunityTimestamps",
     "isValidOpportunityTimestamp",
     "purchaseTimestamps",
@@ -74,6 +76,10 @@ struct LiftGameProcessedData {
   static std::vector<T> extractColumn(
       const std::vector<std::vector<T>>& data,
       size_t columnIndex);
+
+  template <typename T>
+  static std::vector<std::vector<T>> transpose(
+      const std::vector<std::vector<T>>& data);
 
   static std::vector<std::string> splitValueArray(const std::string& str);
 };

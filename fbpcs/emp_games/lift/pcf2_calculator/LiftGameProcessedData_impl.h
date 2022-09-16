@@ -78,6 +78,8 @@ void LiftGameProcessedData<schedulerId>::writeToCSV(
 
     // id_ column
     secretShares[i].push_back(std::to_string(i));
+    secretShares[i].push_back(joinColumn(indexShares, i));
+    secretShares[i].push_back(joinColumn(testIndexShares, i));
     secretShares[i].push_back(std::to_string(opportunityTimestampsShares[i]));
     secretShares[i].push_back(
         std::to_string(isValidOpportunityTimestampShares[i]));
@@ -128,6 +130,18 @@ std::vector<T> LiftGameProcessedData<schedulerId>::extractColumn(
 }
 
 template <int schedulerId>
+template <typename T>
+std::vector<std::vector<T>> LiftGameProcessedData<schedulerId>::transpose(
+    const std::vector<std::vector<T>>& data) {
+  std::vector<std::vector<T>> result;
+  result.reserve(data[0].size());
+  for (size_t column = 0; column < data[0].size(); column++) {
+    result.push_back(extractColumn(data, column));
+  }
+  return result;
+}
+
+template <int schedulerId>
 LiftGameProcessedData<schedulerId>
 LiftGameProcessedData<schedulerId>::readFromCSV(
     const std::string& globalParamsInputPath,
@@ -160,6 +174,9 @@ LiftGameProcessedData<schedulerId>::readFromCSV(
           }
         }
       });
+
+  std::vector<std::vector<bool>> indexShares;
+  std::vector<std::vector<bool>> testIndexShares;
   std::vector<uint64_t> opportunityTimestampsShares;
   std::vector<bool> isValidOpportunityTimestampShares;
   std::vector<std::vector<uint64_t>> purchaseTimestampShares;
@@ -172,6 +189,8 @@ LiftGameProcessedData<schedulerId>::readFromCSV(
   private_measurement::csv::readCsv(
       secretSharesInputPath,
       [&result,
+       &indexShares,
+       &testIndexShares,
        &opportunityTimestampsShares,
        &isValidOpportunityTimestampShares,
        &purchaseTimestampShares,
@@ -186,7 +205,17 @@ LiftGameProcessedData<schedulerId>::readFromCSV(
         for (size_t i = 0; i < header.size(); i++) {
           auto column = header[i];
           auto value = parts[i];
-          if (column == "opportunityTimestamps") {
+          if (column == "indexShares") {
+            indexShares.emplace_back();
+            for (const auto& indexShare : splitValueArray(value)) {
+              indexShares.back().push_back(std::stoul(indexShare));
+            }
+          } else if (column == "testIndexShares") {
+            testIndexShares.emplace_back();
+            for (const auto& testIndexShare : splitValueArray(value)) {
+              testIndexShares.back().push_back(std::stoul(testIndexShare));
+            }
+          } else if (column == "opportunityTimestamps") {
             opportunityTimestampsShares.push_back(std::stoull(value));
           } else if (column == "isValidOpportunityTimestamp") {
             isValidOpportunityTimestampShares.push_back(std::stoul(value));
@@ -229,6 +258,8 @@ LiftGameProcessedData<schedulerId>::readFromCSV(
     XLOG(FATAL, "Lift Game shares file was empty");
   }
 
+  result.indexShares = transpose(indexShares);
+  result.testIndexShares = transpose(testIndexShares);
   result.opportunityTimestamps = SecTimestamp<schedulerId>(
       typename SecTimestamp<schedulerId>::ExtractedInt(
           opportunityTimestampsShares));

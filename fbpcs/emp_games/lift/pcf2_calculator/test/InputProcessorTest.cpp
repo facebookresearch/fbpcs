@@ -311,6 +311,10 @@ TEST_P(InputProcessorTest, testIndexShares) {
   }
   auto groupIds = convertIndexSharesToGroupIds(publisherShares);
   EXPECT_EQ(expectGroupIds, groupIds);
+
+  auto deserializedGroupIds =
+      convertIndexSharesToGroupIds(publisherDeserialized_.indexShares);
+  EXPECT_EQ(groupIds, deserializedGroupIds);
 }
 
 TEST_P(InputProcessorTest, testTestIndexShares) {
@@ -329,6 +333,10 @@ TEST_P(InputProcessorTest, testTestIndexShares) {
   }
   auto testGroupIds = convertIndexSharesToGroupIds(publisherShares);
   EXPECT_EQ(expectTestGroupIds, testGroupIds);
+
+  auto deserializedTestGroupIds =
+      convertIndexSharesToGroupIds(publisherDeserialized_.testIndexShares);
+  EXPECT_EQ(testGroupIds, deserializedTestGroupIds);
 }
 
 TEST_P(InputProcessorTest, testOpportunityTimestamps) {
