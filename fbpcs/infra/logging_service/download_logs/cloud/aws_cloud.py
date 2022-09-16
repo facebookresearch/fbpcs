@@ -141,9 +141,11 @@ class AwsCloud(CloudBaseClass):
         Returns:
             List[string]
         """
-
         messages = []
         message_events = []
+
+        if not log_group_name or not log_stream_name:
+            return messages
 
         try:
             self.log.info(
@@ -459,6 +461,7 @@ class AwsCloud(CloudBaseClass):
         Returns the latest log stream on a given log group
         """
         stream_name = ""
+        response = {}
         try:
             self.log.info("Checking for log stream name in the AWS account")
             response = self.cloudwatch_client.describe_log_streams(
@@ -471,7 +474,7 @@ class AwsCloud(CloudBaseClass):
             error_message = (
                 f"Couldn't fetch log streams for log group {log_group_name}: {error}"
             )
-            raise AwsCloudwatchLogStreamFetchException(f"{error_message}")
+            self.log.error(f"{error_message}")
 
         # Since only one entry is fetched, number of log_streams will be 1
         for log_streams in response.get("logStreams", []):
