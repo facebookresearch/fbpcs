@@ -90,6 +90,7 @@ def run_study(
     result_visibility: Optional[ResultVisibility] = None,
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
     run_id: Optional[str] = None,
+    output_dir: Optional[str] = None,
 ) -> None:
 
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
@@ -180,6 +181,7 @@ def run_study(
                 role=PrivateComputationRole.PARTNER,
                 game_type=PrivateComputationGameType.LIFT,
                 input_path=input_path,
+                output_dir=output_dir if output_dir else "",
                 num_pid_containers=int(num_shards),
                 num_mpc_containers=int(num_shards),
                 stage_flow_cls=stage_flow_override,
