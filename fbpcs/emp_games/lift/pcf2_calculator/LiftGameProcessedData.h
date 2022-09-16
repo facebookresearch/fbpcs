@@ -25,6 +25,13 @@ inline const std::vector<std::string> GLOBAL_PARAMS_HEADER = {
     "valueSquaredBits",
 };
 
+inline const std::vector<std::string> SECRET_SHARES_HEADER = {
+    "id_",
+    "opportunityTimestamps",
+    "isValidOpportunityTimestamp",
+    "anyValidPurchaseTimestamp",
+    "testReach"};
+
 template <int schedulerId>
 struct LiftGameProcessedData {
   int64_t numRows;
@@ -52,6 +59,19 @@ struct LiftGameProcessedData {
   static LiftGameProcessedData readFromCSV(
       const std::string& globalParamsInputPath,
       const std::string& secretSharesInputPath);
+
+ private:
+  template <typename T>
+  static std::string joinColumn(
+      std::vector<std::vector<T>> data,
+      size_t columnIndex);
+
+  template <typename T>
+  static std::vector<T> extractColumn(
+      std::vector<std::vector<T>> data,
+      size_t columnIndex);
+
+  static std::vector<std::string> splitValueArray(const std::string& str);
 };
 
 } // namespace private_lift
