@@ -31,6 +31,7 @@ class RunBinaryBaseService:
         timeout: Optional[int] = None,
         wait_for_containers_to_finish: bool = False,
         env_vars: Optional[Dict[str, str]] = None,
+        wait_for_containers_to_start_up: bool = True,
     ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
 
@@ -43,6 +44,9 @@ class RunBinaryBaseService:
             timeout=timeout,
             env_vars=env_vars,
         )
+        if not wait_for_containers_to_start_up:
+            logger.info("Skipped container warm up")
+            return pending_containers
 
         with RetryHandler(
             ThrottlingError, logger=logger, backoff_seconds=30
