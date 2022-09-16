@@ -16,6 +16,7 @@ Types of changes
 ## [Unreleased - 2.1.0] - put release date here
 ### Added
 - Defined Graph-API based trace logging service library
+- PCF2 based Private Lift ability to serialize and deserialize InputProcessor results to CSV file.
 
 ### Changed
 - validate_metrics output is colored green/red depending on success/failure if stdout is a tty
