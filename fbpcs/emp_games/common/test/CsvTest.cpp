@@ -6,8 +6,12 @@
  */
 
 #include <gtest/gtest.h>
+#include <fstream>
+#include "folly/Format.h"
+#include "folly/Random.h"
 
 #include "../Csv.h"
+#include "fbpcs/emp_games/common/TestUtil.h"
 
 namespace private_measurement {
 class CsvTest : public ::testing::Test {
@@ -15,6 +19,20 @@ class CsvTest : public ::testing::Test {
  protected:
   void SetUp() override {}
 };
+
+const std::vector<std::string> EXPECTED_HEADER = {
+    "id",
+    "field1",
+    "field2",
+    "field3"};
+
+const std::vector<std::vector<std::string>> EXPECTED_VALUES = {
+    {"1", "foo", "bubba", "gas"},
+    {"2", "trio", "[1,2,3]", "[4,5,6]"}};
+
+static void cleanup(std::string file_to_delete) {
+  remove(file_to_delete.c_str());
+}
 
 TEST_F(CsvTest, TestSplitByCommaNotSupportInnerBrackets) {
   std::string inputStr =
@@ -34,6 +52,59 @@ TEST_F(CsvTest, TestSplitByCommaSupportInnerBrackets) {
       "[0,0,71,71]"};
   auto output = csv::splitByComma(inputStr, true);
   EXPECT_EQ(expOutput, output);
+}
+
+TEST_F(CsvTest, TestReadCsv) {
+  std::string baseDir = test_util::getBaseDirFromPath(__FILE__);
+  std::string inputPath = baseDir + "test_data/input.csv";
+
+  std::vector<std::string> headerInput;
+  bool headerRead = false;
+  std::vector<std::vector<std::string>> results;
+
+  csv::readCsv(
+      inputPath,
+      [&headerInput, &headerRead, &results](
+          const std::vector<std::string>& header,
+          const std::vector<std::string>& values) {
+        if (!headerRead) {
+          headerInput = header;
+        }
+
+        results.push_back(values);
+      });
+
+  EXPECT_EQ(headerInput, EXPECTED_HEADER);
+  EXPECT_EQ(results, EXPECTED_VALUES);
+}
+
+TEST_F(CsvTest, TestWriteCsv) {
+  std::string baseDir = test_util::getBaseDirFromPath(__FILE__);
+  std::string outputPath = folly::sformat(
+      "{}test_data/output_{}.csv", baseDir, folly::Random::secureRand64());
+
+  csv::writeCsv(outputPath, EXPECTED_HEADER, EXPECTED_VALUES);
+
+  std::vector<std::string> headerInput;
+  bool headerRead = false;
+  std::vector<std::vector<std::string>> results;
+
+  csv::readCsv(
+      outputPath,
+      [&headerInput, &headerRead, &results](
+          const std::vector<std::string>& header,
+          const std::vector<std::string>& values) {
+        if (!headerRead) {
+          headerInput = header;
+        }
+
+        results.push_back(values);
+      });
+
+  EXPECT_EQ(headerInput, EXPECTED_HEADER);
+  EXPECT_EQ(results, EXPECTED_VALUES);
+
+  cleanup(outputPath);
 }
 
 } // namespace private_measurement
