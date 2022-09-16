@@ -399,28 +399,30 @@ TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
 }
 
 template <int schedulerId>
-std::vector<std::vector<uint64_t>> revealPurchaseTimestamps(
-    InputProcessor<schedulerId> inputProcessor) {
-  std::vector<std::vector<uint64_t>> purchaseTimestamps;
-  for (size_t i = 0;
-       i < inputProcessor.getLiftGameProcessedData().purchaseTimestamps.size();
-       ++i) {
-    purchaseTimestamps.push_back(
-        std::move(inputProcessor.getLiftGameProcessedData()
-                      .purchaseTimestamps.at(i)
-                      .openToParty(0)
-                      .getValue()));
+std::vector<std::vector<uint64_t>> revealTimestamps(
+    std::reference_wrapper<const std::vector<SecTimestamp<schedulerId>>>
+        timestamps) {
+  std::vector<std::vector<uint64_t>> result;
+  for (size_t i = 0; i < timestamps.get().size(); ++i) {
+    result.push_back(
+        std::move(timestamps.get().at(i).openToParty(0).getValue()));
   }
-  return purchaseTimestamps;
+  return result;
 }
 
 TEST_P(InputProcessorTest, testPurchaseTimestamps) {
-  auto future0 =
-      std::async(revealPurchaseTimestamps<0>, publisherInputProcessor_);
-  auto future1 =
-      std::async(revealPurchaseTimestamps<1>, partnerInputProcessor_);
+  auto future0 = std::async(
+      revealTimestamps<0>,
+      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
+          publisherInputProcessor_.getLiftGameProcessedData()
+              .purchaseTimestamps));
+  auto future1 = std::async(
+      revealTimestamps<1>,
+      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
+          partnerInputProcessor_.getLiftGameProcessedData()
+              .purchaseTimestamps));
   auto purchaseTimestamps0 = future0.get();
-  auto purchaseTimestamps1 = future1.get();
+  future1.get();
   std::vector<std::vector<uint64_t>> expectPurchaseTimestamps = {
       {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  150, 150, 150, 50, 50,
        50, 30, 30, 30, 0, 0, 0, 0, 0, 0, 150, 50, 30,  0,   0,   0},
@@ -428,31 +430,34 @@ TEST_P(InputProcessorTest, testPurchaseTimestamps) {
        90,  200, 200, 200, 150, 150, 150, 50,  50,  50,  0,
        0,   0,   100, 50,  150, 200, 150, 50,  200, 200, 200}};
   EXPECT_EQ(purchaseTimestamps0, expectPurchaseTimestamps);
-}
 
-template <int schedulerId>
-std::vector<std::vector<uint64_t>> revealThresholdTimestamps(
-    InputProcessor<schedulerId> inputProcessor) {
-  std::vector<std::vector<uint64_t>> thresholdTimestamps;
-  for (size_t i = 0;
-       i < inputProcessor.getLiftGameProcessedData().thresholdTimestamps.size();
-       ++i) {
-    thresholdTimestamps.push_back(
-        std::move(inputProcessor.getLiftGameProcessedData()
-                      .thresholdTimestamps.at(i)
-                      .openToParty(0)
-                      .getValue()));
-  }
-  return thresholdTimestamps;
+  auto future2 = std::async(
+      revealTimestamps<0>,
+      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
+          publisherDeserialized_.purchaseTimestamps));
+  auto future3 = std::async(
+      revealTimestamps<1>,
+      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
+          partnerDeserialized_.purchaseTimestamps));
+  auto deserializedPurchaseTimestamps = future2.get();
+  future3.get();
+
+  EXPECT_EQ(purchaseTimestamps0, deserializedPurchaseTimestamps);
 }
 
 TEST_P(InputProcessorTest, testThresholdTimestamps) {
-  auto future0 =
-      std::async(revealThresholdTimestamps<0>, publisherInputProcessor_);
-  auto future1 =
-      std::async(revealThresholdTimestamps<1>, partnerInputProcessor_);
+  auto future0 = std::async(
+      revealTimestamps<0>,
+      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
+          publisherInputProcessor_.getLiftGameProcessedData()
+              .thresholdTimestamps));
+  auto future1 = std::async(
+      revealTimestamps<1>,
+      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
+          partnerInputProcessor_.getLiftGameProcessedData()
+              .thresholdTimestamps));
   auto thresholdTimestamps0 = future0.get();
-  auto thresholdTimestamps1 = future1.get();
+  future1.get();
   std::vector<std::vector<uint64_t>> expectThresholdTimestamps = {
       {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  160, 160, 160, 60, 60,
        60, 40, 40, 40, 0, 0, 0, 0, 0, 0, 160, 60, 40,  0,   0,   0},
@@ -460,6 +465,19 @@ TEST_P(InputProcessorTest, testThresholdTimestamps) {
        100, 210, 210, 210, 160, 160, 160, 60,  60,  60,  0,
        0,   0,   110, 60,  160, 210, 160, 60,  210, 210, 210}};
   EXPECT_EQ(thresholdTimestamps0, expectThresholdTimestamps);
+
+  auto future2 = std::async(
+      revealTimestamps<0>,
+      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
+          publisherDeserialized_.thresholdTimestamps));
+  auto future3 = std::async(
+      revealTimestamps<1>,
+      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
+          partnerDeserialized_.thresholdTimestamps));
+  auto deserializedThresholdTimestamps = future2.get();
+  future3.get();
+
+  EXPECT_EQ(thresholdTimestamps0, deserializedThresholdTimestamps);
 }
 
 TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
@@ -496,56 +514,71 @@ TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
 }
 
 template <int schedulerId>
-std::vector<std::vector<int64_t>> revealPurchaseValues(
-    InputProcessor<schedulerId> inputProcessor) {
-  std::vector<std::vector<int64_t>> purchaseValues;
-  for (size_t i = 0;
-       i < inputProcessor.getLiftGameProcessedData().purchaseValues.size();
-       ++i) {
-    purchaseValues.push_back(std::move(inputProcessor.getLiftGameProcessedData()
-                                           .purchaseValues.at(i)
-                                           .openToParty(0)
-                                           .getValue()));
+std::vector<std::vector<int64_t>> revealValues(
+    std::reference_wrapper<const std::vector<SecValue<schedulerId>>> values) {
+  std::vector<std::vector<int64_t>> result;
+  for (size_t i = 0; i < values.get().size(); ++i) {
+    result.push_back(std::move(values.get().at(i).openToParty(0).getValue()));
   }
-  return purchaseValues;
+  return result;
 }
 
 TEST_P(InputProcessorTest, testPurchaseValues) {
-  auto future0 = std::async(revealPurchaseValues<0>, publisherInputProcessor_);
-  auto future1 = std::async(revealPurchaseValues<1>, partnerInputProcessor_);
+  auto future0 = std::async(
+      revealValues<0>,
+      std::reference_wrapper<const std::vector<SecValue<0>>>(
+          publisherInputProcessor_.getLiftGameProcessedData().purchaseValues));
+  auto future1 = std::async(
+      revealValues<1>,
+      std::reference_wrapper<const std::vector<SecValue<1>>>(
+          partnerInputProcessor_.getLiftGameProcessedData().purchaseValues));
   auto purchaseValues0 = future0.get();
-  auto purchaseValues1 = future1.get();
+  future1.get();
   std::vector<std::vector<int64_t>> expectPurchaseValues = {
       {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,  0,  10, 10, 10, 10, 10,
        10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 10, 10, 10, 0,  0,  0},
       {0,  0,  0,  20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,  20,  20, 20,
        20, 20, 20, 20, 0,  0,  0,  50, 50, 50, 20, 20, 20, -50, -50, -50}};
   EXPECT_EQ(purchaseValues0, expectPurchaseValues);
+
+  auto future2 = std::async(
+      revealValues<0>,
+      std::reference_wrapper<const std::vector<SecValue<0>>>(
+          publisherDeserialized_.purchaseValues));
+  auto future3 = std::async(
+      revealValues<1>,
+      std::reference_wrapper<const std::vector<SecValue<1>>>(
+          partnerDeserialized_.purchaseValues));
+  auto deserializedPurchaseValues = future2.get();
+  future3.get();
+
+  EXPECT_EQ(purchaseValues0, deserializedPurchaseValues);
 }
 
 template <int schedulerId>
-std::vector<std::vector<int64_t>> revealPurchaseValueSquared(
-    InputProcessor<schedulerId> inputProcessor) {
-  std::vector<std::vector<int64_t>> purchaseValueSquared;
-  for (size_t i = 0; i <
-       inputProcessor.getLiftGameProcessedData().purchaseValueSquared.size();
-       ++i) {
-    purchaseValueSquared.push_back(
-        std::move(inputProcessor.getLiftGameProcessedData()
-                      .purchaseValueSquared.at(i)
-                      .openToParty(0)
-                      .getValue()));
+std::vector<std::vector<int64_t>> revealValueSquared(
+    std::reference_wrapper<const std::vector<SecValueSquared<schedulerId>>>
+        values) {
+  std::vector<std::vector<int64_t>> result;
+  for (size_t i = 0; i < values.get().size(); ++i) {
+    result.push_back(std::move(values.get().at(i).openToParty(0).getValue()));
   }
-  return purchaseValueSquared;
+  return result;
 }
 
 TEST_P(InputProcessorTest, testPurchaseValueSquared) {
-  auto future0 =
-      std::async(revealPurchaseValueSquared<0>, publisherInputProcessor_);
-  auto future1 =
-      std::async(revealPurchaseValueSquared<1>, partnerInputProcessor_);
+  auto future0 = std::async(
+      revealValueSquared<0>,
+      std::reference_wrapper<const std::vector<SecValueSquared<0>>>(
+          publisherInputProcessor_.getLiftGameProcessedData()
+              .purchaseValueSquared));
+  auto future1 = std::async(
+      revealValueSquared<1>,
+      std::reference_wrapper<const std::vector<SecValueSquared<1>>>(
+          partnerInputProcessor_.getLiftGameProcessedData()
+              .purchaseValueSquared));
   auto purchaseValueSquared0 = future0.get();
-  auto purchaseValueSquared1 = future1.get();
+  future1.get();
   // squared sum of purchase value in each row
   std::vector<std::vector<int64_t>> expectPurchaseValueSquared = {
       {0,   0,   0,    400,  400,  400, 400, 400, 400,  400,  400,
@@ -555,6 +588,19 @@ TEST_P(InputProcessorTest, testPurchaseValueSquared) {
        400, 400, 400,  400,  400,  400, 400, 400, 400,  400,  0,
        0,   0,   2500, 2500, 2500, 400, 400, 400, 2500, 2500, 2500}};
   EXPECT_EQ(purchaseValueSquared0, expectPurchaseValueSquared);
+
+  auto future2 = std::async(
+      revealValueSquared<0>,
+      std::reference_wrapper<const std::vector<SecValueSquared<0>>>(
+          publisherDeserialized_.purchaseValueSquared));
+  auto future3 = std::async(
+      revealValueSquared<1>,
+      std::reference_wrapper<const std::vector<SecValueSquared<1>>>(
+          partnerDeserialized_.purchaseValueSquared));
+  auto deserializedPurchaseValueSquared = future2.get();
+  future3.get();
+
+  EXPECT_EQ(purchaseValueSquared0, deserializedPurchaseValueSquared);
 }
 
 TEST_P(InputProcessorTest, testReach) {
