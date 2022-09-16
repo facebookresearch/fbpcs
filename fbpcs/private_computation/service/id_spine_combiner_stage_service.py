@@ -17,6 +17,7 @@ from fbpcs.private_computation.entity.pid_mr_config import Protocol
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 
@@ -75,6 +76,9 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
 
         # TODO: we will write log_cost_to_s3 to the instance, so this function interface
         #   will get simplified
+        should_wait_spin_up: bool = (
+            pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        )
         container_instances = await start_combiner_service(
             pc_instance,
             self._onedocker_svc,
@@ -83,6 +87,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             log_cost_to_s3=self._log_cost_to_s3,
             max_id_column_count=pc_instance.product_config.common.pid_max_column_count,
             protocol_type=self.protocol_type,
+            wait_for_containers_to_start_up=should_wait_spin_up,
         )
         self._logger.info("Finished running CombinerService")
 

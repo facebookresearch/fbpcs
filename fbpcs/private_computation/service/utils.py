@@ -65,6 +65,7 @@ async def create_and_start_mpc_instance(
     container_timeout: Optional[int] = None,
     repository_path: Optional[str] = None,
     certificate_request: Optional[CertificateRequest] = None,
+    wait_for_containers_to_start_up: bool = True,
 ) -> MPCInstance:
     """Creates an MPC instance and runs MPC service with it
 
@@ -102,6 +103,7 @@ async def create_and_start_mpc_instance(
         version=binary_version,
         env_vars=env_vars,
         certificate_request=certificate_request,
+        wait_for_containers_to_start_up=wait_for_containers_to_start_up,
     )
 
 
@@ -222,6 +224,7 @@ async def start_combiner_service(
     wait_for_containers: bool = False,
     max_id_column_count: int = 1,
     protocol_type: str = Protocol.PID_PROTOCOL.value,
+    wait_for_containers_to_start_up: bool = True,
 ) -> List[ContainerInstance]:
     """Run combiner service and return those container instances
 
@@ -305,6 +308,7 @@ async def start_combiner_service(
         timeout=None,
         wait_for_containers_to_finish=wait_for_containers,
         env_vars=env_vars,
+        wait_for_containers_to_start_up=wait_for_containers_to_start_up,
     )
 
 
@@ -316,6 +320,7 @@ async def start_sharder_service(
     onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
     combine_output_path: str,
     wait_for_containers: bool = False,
+    wait_for_containers_to_start_up: bool = True,
 ) -> List[ContainerInstance]:
     """Run combiner service and return those container instances
 
@@ -374,6 +379,7 @@ async def start_sharder_service(
         timeout=None,
         wait_for_containers_to_finish=wait_for_containers,
         env_vars=env_vars,
+        wait_for_containers_to_start_up=wait_for_containers_to_start_up,
     )
 
 

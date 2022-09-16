@@ -113,13 +113,17 @@ class PCPreValidationStageService(PrivateComputationStageService):
         if binary_config.repository_path:
             env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
 
+        should_wait_spin_up: bool = (
+            pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        )
         container_instances = await RunBinaryBaseService().start_containers(
-            [cmd_args],
-            self._onedocker_svc,
-            binary_config.binary_version,
-            binary_name,
+            cmd_args_list=[cmd_args],
+            onedocker_svc=self._onedocker_svc,
+            binary_version=binary_config.binary_version,
+            binary_name=binary_name,
             timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
             env_vars=env_vars,
+            wait_for_containers_to_start_up=should_wait_spin_up,
         )
 
         stage_state = StageStateInstance(

@@ -23,6 +23,7 @@ from fbpcs.onedocker_binary_config import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_stage_service import (
@@ -133,6 +134,9 @@ class PIDPrepareStageService(PrivateComputationStageService):
             ] = onedocker_binary_config.repository_path
 
         pid_prepare_binary_service = PIDPrepareBinaryService()
+        should_wait_spin_up: bool = (
+            pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        )
         return await pid_prepare_binary_service.start_containers(
             cmd_args_list=args_list,
             onedocker_svc=self._onedocker_svc,
@@ -140,6 +144,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
             binary_name=binary_name,
             timeout=self._container_timeout,
             env_vars=env_vars,
+            wait_for_containers_to_start_up=should_wait_spin_up,
         )
 
     def stop_service(

@@ -16,6 +16,7 @@ from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -67,11 +68,15 @@ class ShardStageService(PrivateComputationStageService):
         #     note we need each file to be sharded into the same # of files
         #     because we want to keep the data of each existing file to run
         #     on the same container
+        should_wait_spin_up: bool = (
+            pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        )
         container_instances = await start_sharder_service(
             pc_instance,
             self._onedocker_svc,
             self._onedocker_binary_config_map,
             combine_output_path,
+            wait_for_containers_to_start_up=should_wait_spin_up,
         )
         self._logger.info("All sharding coroutines finished")
 
