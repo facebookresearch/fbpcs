@@ -8,6 +8,7 @@
 import asyncio
 import json
 import logging
+import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Type
 
@@ -225,8 +226,10 @@ def run_attribution(
     # Step 4. Run instances async
 
     logger.info(f"Started running instance {instance_id}.")
-    asyncio.run(runner.run_async([job]))
+    all_run_success = asyncio.run(runner.run_async([job]))
     logger.info(f"Finished running instance {instance_id}.")
+    if not all(all_run_success):
+        sys.exit(1)
 
 
 def _create_new_instance(
