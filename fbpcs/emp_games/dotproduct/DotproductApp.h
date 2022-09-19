@@ -13,6 +13,7 @@
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
+#include "fbpcs/emp_games/dotproduct/DotproductGame.h"
 
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 
@@ -44,15 +45,43 @@ class DotproductApp {
     auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
         MY_ROLE, *communicationAgentFactory_);
 
+    DotproductGame<schedulerId> game(
+        std::move(scheduler), std::move(communicationAgentFactory_));
+
     XLOG(INFO) << "Start Reading input file ";
     auto inputTuple = readCSVInput(inputFilePath_, labelWidth_, numFeatures_);
     XLOG(INFO) << "Finished Reading input file ";
 
     XLOG(INFO) << "Number of feature rows " << std::get<0>(inputTuple).size();
 
-    XLOG(INFO) << "Number of label rows " << std::get<1>(inputTuple).size();
-    XLOG(INFO) << "Number of label columns "
-               << std::get<1>(inputTuple).at(0).size();
+    auto output = game.computeDotProduct(
+        MY_ROLE, inputTuple, labelWidth_, numFeatures_, debugMode_);
+
+    if (MY_ROLE == common::PUBLISHER) {
+      XLOG(INFO, "Writing output ...");
+      writeOutputData(output, outputFilePath_);
+    }
+
+    auto gateStatistics =
+        fbpcf::scheduler::SchedulerKeeper<schedulerId>::getGateStatistics();
+    XLOGF(
+        INFO,
+        "Non-free gate count = {}, Free gate count = {}",
+        gateStatistics.first,
+        gateStatistics.second);
+
+    auto trafficStatistics =
+        fbpcf::scheduler::SchedulerKeeper<schedulerId>::getTrafficStatistics();
+    XLOGF(
+        INFO,
+        "Sent network traffic = {}, Received network traffic = {}",
+        trafficStatistics.first,
+        trafficStatistics.second);
+
+    schedulerStatistics_.nonFreeGates = gateStatistics.first;
+    schedulerStatistics_.freeGates = gateStatistics.second;
+    schedulerStatistics_.sentNetwork = trafficStatistics.first;
+    schedulerStatistics_.receivedNetwork = trafficStatistics.second;
   }
 
   common::SchedulerStatistics getSchedulerStatistics() {
@@ -76,8 +105,6 @@ class DotproductApp {
 
           auto [features, labels] =
               parseLine(lineNo, header, parts, labelWidth, numFeatures);
-
-          // empty feature vector is not added for partner
           if (features.size() != 0)
             allFeatures.push_back(features);
           allLabels.push_back(labels);
@@ -126,6 +153,19 @@ class DotproductApp {
       for (int j = 0; j < labelWidth; j++)
         transposedLabels[j][i] = labels[i][j];
     return transposedLabels;
+  }
+
+  void writeOutputData(
+      const std::vector<double> dotproduct,
+      std::string outputPath) {
+    std::string outputString = "[";
+    for (auto& v : dotproduct) {
+      outputString = outputString + std::to_string(v) + ",";
+    }
+    // replace the comma with bracket to end the list
+    outputString[outputString.size() - 1] = ']';
+    XLOG(INFO, outputString);
+    fbpcf::io::FileIOWrappers::writeFile(outputPath, outputString);
   }
 
  private:
