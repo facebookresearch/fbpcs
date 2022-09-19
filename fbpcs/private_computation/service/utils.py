@@ -200,6 +200,7 @@ def get_pc_status_from_stage_state(
     # calling onedocker_svc to update newest containers in StageState
     stage_state_instance_status = stage_instance.update_status(onedocker_svc)
     current_stage = private_computation_instance.current_stage
+    # only update when StageStateInstanceStatus transit to Started/Completed/Failed, or remain the current status
     if stage_state_instance_status is StageStateInstanceStatus.STARTED:
         status = current_stage.started_status
     elif stage_state_instance_status is StageStateInstanceStatus.COMPLETED:
