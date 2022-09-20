@@ -303,6 +303,7 @@ deploy_aws_resources() {
     echo "######################## Deploy Data Ingestion Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
     firehose_stream_name=$(terraform output firehose_stream_name | tr -d '"')
+    events_data_crawler_arn=$(terraform output events_data_crawler_arn | tr -d '"')
 
     if "$build_semi_automated_data_pipeline"
     then
@@ -374,7 +375,8 @@ deploy_aws_resources() {
         --database_name "$database_name" \
         --table_name "$table_name" \
         --cluster_name "$aws_ecs_cluster_name" \
-        --ecs_task_execution_role_name "$ecs_task_execution_role_name"
+        --ecs_task_execution_role_name "$ecs_task_execution_role_name" \
+        --events_data_crawler_arn "$events_data_crawler_arn"
     echo "######################## Finished deploy resources policy ########################"
     log_streaming_data "validating generated resoureces and policies..."
     # validate generated resources through PCE validator
