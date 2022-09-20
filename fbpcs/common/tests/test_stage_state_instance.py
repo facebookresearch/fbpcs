@@ -43,6 +43,9 @@ class TestStageStateInstance(unittest.TestCase):
             self.stage_state_instance.server_ips, ["192.0.2.4", "192.0.2.5"]
         )
 
+        self.stage_state_instance.status = StageStateInstanceStatus.UNKNOWN
+        self.assertEqual(self.stage_state_instance.server_ips, [])
+
     def test_elapsed_time(self) -> None:
         self.assertEqual(self.stage_state_instance.elapsed_time, 5)
 
@@ -70,6 +73,88 @@ class TestStageStateInstance(unittest.TestCase):
                 mock_onedocker_svc.stop_containers.assert_called_with(
                     ["test_container_instance_1", "test_container_instance_2"]
                 )
+
+    @patch("fbpcp.service.onedocker.OneDockerService")
+    @patch(
+        "fbpcs.common.entity.stage_state_instance.StageStateInstance._update_containers"
+    )
+    def test_update_status_translation(
+        self, mock_update_containers, mock_onedocker_svc
+    ) -> None:
+        with self.subTest("test all containers started"):
+            mock_update_containers.return_value = [
+                ContainerInstance(
+                    instance_id="test_container_instance_100",
+                    status=ContainerInstanceStatus.STARTED,
+                ),
+                ContainerInstance(
+                    instance_id="test_container_instance_101",
+                    status=ContainerInstanceStatus.STARTED,
+                ),
+            ]
+
+            status = self.stage_state_instance.update_status(mock_onedocker_svc)
+            self.assertEqual(status, StageStateInstanceStatus.STARTED)
+
+        with self.subTest("test some container completed"):
+            mock_update_containers.return_value = [
+                ContainerInstance(
+                    instance_id="test_container_instance_100",
+                    status=ContainerInstanceStatus.COMPLETED,
+                ),
+                ContainerInstance(
+                    instance_id="test_container_instance_101",
+                    status=ContainerInstanceStatus.STARTED,
+                ),
+            ]
+
+            status = self.stage_state_instance.update_status(mock_onedocker_svc)
+            self.assertEqual(status, StageStateInstanceStatus.STARTED)
+
+        with self.subTest("test all containers completed"):
+            mock_update_containers.return_value = [
+                ContainerInstance(
+                    instance_id="test_container_instance_100",
+                    status=ContainerInstanceStatus.COMPLETED,
+                ),
+                ContainerInstance(
+                    instance_id="test_container_instance_101",
+                    status=ContainerInstanceStatus.COMPLETED,
+                ),
+            ]
+
+            status = self.stage_state_instance.update_status(mock_onedocker_svc)
+            self.assertEqual(status, StageStateInstanceStatus.COMPLETED)
+
+        with self.subTest("test container had failed"):
+            mock_update_containers.return_value = [
+                ContainerInstance(
+                    instance_id="test_container_instance_100",
+                    status=ContainerInstanceStatus.FAILED,
+                ),
+                ContainerInstance(
+                    instance_id="test_container_instance_101",
+                    status=ContainerInstanceStatus.COMPLETED,
+                ),
+            ]
+
+            status = self.stage_state_instance.update_status(mock_onedocker_svc)
+            self.assertEqual(status, StageStateInstanceStatus.FAILED)
+
+        with self.subTest("test container had unknown"):
+            mock_update_containers.return_value = [
+                ContainerInstance(
+                    instance_id="test_container_instance_100",
+                    status=ContainerInstanceStatus.COMPLETED,
+                ),
+                ContainerInstance(
+                    instance_id="test_container_instance_101",
+                    status=ContainerInstanceStatus.UNKNOWN,
+                ),
+            ]
+
+            status = self.stage_state_instance.update_status(mock_onedocker_svc)
+            self.assertEqual(status, StageStateInstanceStatus.UNKNOWN)
 
     @patch("fbpcp.service.onedocker.OneDockerService")
     def test_update_status(self, mock_onedocker_svc) -> None:

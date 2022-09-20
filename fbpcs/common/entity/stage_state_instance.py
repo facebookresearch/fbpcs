@@ -39,6 +39,12 @@ class StageStateInstance(InstanceBase):
 
     @property
     def server_ips(self) -> List[str]:
+        if self.status in [
+            StageStateInstanceStatus.UNKNOWN,
+            StageStateInstanceStatus.CREATED,
+        ]:
+            return []
+
         return [
             checked_cast(str, container.ip_address) for container in self.containers
         ]
@@ -63,6 +69,8 @@ class StageStateInstance(InstanceBase):
         elif all(status is ContainerInstanceStatus.COMPLETED for status in statuses):
             self.status = StageStateInstanceStatus.COMPLETED
             self.end_ts = int(time.time())
+        elif ContainerInstanceStatus.UNKNOWN in statuses:
+            self.status = StageStateInstanceStatus.UNKNOWN
         elif ContainerInstanceStatus.STARTED in statuses:
             self.status = StageStateInstanceStatus.STARTED
         else:
