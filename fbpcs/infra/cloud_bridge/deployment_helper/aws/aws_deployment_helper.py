@@ -295,6 +295,7 @@ class AwsDeploymentHelper:
             "DATEBASE_NAME": policy_params.database_name,
             "TABLE_NAME": policy_params.table_name,
             "DATA_INGESTION_LAMBDA_NAME": policy_params.data_ingestion_lambda_name,
+            "EVENTS_DATA_CRAWLER_ARN": policy_params.events_data_crawler_arn,
         }
 
         file_path = os.path.join(os.path.dirname(__file__), file_name)

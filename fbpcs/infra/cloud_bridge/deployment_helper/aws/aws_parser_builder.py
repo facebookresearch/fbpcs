@@ -118,6 +118,13 @@ class AwsParserBuilder:
             help="Data ingestion Lambda name",
         )
 
+        iam_policy_command_group.add_argument(
+            "--events_data_crawler_arn",
+            type=str,
+            required=False,
+            help="The events_data Glue crawler ARN",
+        )
+
         return self
 
     def with_attach_iam_policy_parser_arguments(

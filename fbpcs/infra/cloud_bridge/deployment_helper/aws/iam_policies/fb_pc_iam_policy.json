@@ -41,7 +41,8 @@
                 "arn:aws:glue:${REGION}:${ACCOUNT_ID}:database/${DATEBASE_NAME}",
                 "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/${DATEBASE_NAME}/*",
                 "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/default/${TABLE_NAME}",
-                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/default/events_data"
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/default/events_data",
+                "${EVENTS_DATA_CRAWLER_ARN}"
             ]
         },
         {
