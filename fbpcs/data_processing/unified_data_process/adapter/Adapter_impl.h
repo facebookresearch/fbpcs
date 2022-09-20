@@ -84,7 +84,7 @@ std::vector<int64_t> Adapter<schedulerId>::adapt(
   std::vector<int64_t> rst(intersectionSize, 0);
   for (size_t i = 0; i < intersectionSize; i++) {
     for (size_t j = 0; j < indexWidth; j++) {
-      rst[i] += (myShare.at(i).at(j)) << j;
+      rst[i] += (myShare.at(j).at(i)) << j;
     }
   }
   return rst;
