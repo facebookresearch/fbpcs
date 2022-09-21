@@ -13,7 +13,14 @@ Types of changes
 - `Security` in case This project adheres to
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 2.1.0] - put release date here
+## [Unreleased - 2.2.0] - put release date here
+### Added
+
+### Changed
+
+### Removed
+
+## [2.1.0] - 2022-09-20
 ### Added
 - Defined Graph-API based trace logging service library
 - PCF2 based Private Lift ability to serialize and deserialize InputProcessor results to CSV file.
