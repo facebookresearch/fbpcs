@@ -60,6 +60,7 @@ inline void testCorrectnessAttributionAppHelper(
   tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
   tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
   tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.rootCaCertPath = useTls ? (tlsDir + "/ca_cert.pem") : "";
   tlsInfo.useTls = useTls;
 
   auto [communicationAgentFactoryAlice, communicationAgentFactoryBob] =
