@@ -66,7 +66,6 @@ template <
     common::Visibility outputVisibility,
     common::InputEncryption inputEncryption>
 inline void testCorrectnessAggregationAppHelper(
-    int remainingFiles,
     std::string serverIpAlice,
     std::vector<std::string> attributionRules,
     std::string aggregationFormat,
@@ -142,32 +141,6 @@ inline void testCorrectnessAggregationAppHelper(
   } else {
     verifyOutput(resAlice, expectedOutputFilePaths.at(id));
   }
-
-  if constexpr (id < 16) { // 16 is an arbitrary limit on number of files to run
-    if (remainingFiles > 1) {
-      testCorrectnessAggregationAppHelper<
-          id + 1,
-          outputVisibility,
-          inputEncryption>(
-          remainingFiles - 1,
-          serverIpAlice,
-          attributionRules,
-          aggregationFormat,
-          inputSecretSharePathAlice,
-          inputReformattedSecretSharePathAlice,
-          inputClearTextPathAlice,
-          outputPathAlice,
-          serverIpBob,
-          inputSecretSharePathBob,
-          inputReformattedSecretSharePathBob,
-          inputClearTextPathBob,
-          outputPathBob,
-          expectedOutputFilePaths,
-          useTls,
-          tlsDir,
-          useNewOutputFormat);
-    }
-  }
 }
 
 class AggregationAppTest
@@ -238,7 +211,6 @@ class AggregationAppTest
         id,
         visibility,
         common::InputEncryption::Plaintext>(
-        attributionRules_.size(),
         serverIpAlice_,
         attributionRules_,
         aggregationFormat_,
@@ -303,7 +275,7 @@ INSTANTIATE_TEST_SUITE_P(
     AggregationAppTest,
     AggregationAppTest,
     ::testing::Combine(
-        ::testing::Values(0),
+        ::testing::Values(0, 1, 2, 3),
         ::testing::Values(
             common::Visibility::Publisher,
             common::Visibility::Xor),
