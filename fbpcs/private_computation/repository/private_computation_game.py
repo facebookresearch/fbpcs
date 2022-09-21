@@ -64,6 +64,10 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="run_id", required=False),
             OneDockerArgument(name="pc_feature_flags", required=False),
+            OneDockerArgument(name="use_tls", required=False),
+            OneDockerArgument(name="ca_cert_path", required=False),
+            OneDockerArgument(name="server_cert_path", required=False),
+            OneDockerArgument(name="private_key_path", required=False),
         ],
     },
     GameNames.SHARD_AGGREGATOR.value: {
@@ -94,6 +98,10 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="log_cost", required=False),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="visibility", required=False),
+            OneDockerArgument(name="use_tls", required=False),
+            OneDockerArgument(name="ca_cert_path", required=False),
+            OneDockerArgument(name="server_cert_path", required=False),
+            OneDockerArgument(name="private_key_path", required=False),
         ],
     },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
@@ -146,6 +154,10 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="use_new_output_format", required=False),
             OneDockerArgument(name="run_id", required=False),
             OneDockerArgument(name="pc_feature_flags", required=False),
+            OneDockerArgument(name="use_tls", required=False),
+            OneDockerArgument(name="ca_cert_path", required=False),
+            OneDockerArgument(name="server_cert_path", required=False),
+            OneDockerArgument(name="private_key_path", required=False),
         ],
     },
     GameNames.PCF2_AGGREGATION.value: {
@@ -166,6 +178,10 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="use_new_output_format", required=False),
             OneDockerArgument(name="run_id", required=False),
             OneDockerArgument(name="pc_feature_flags", required=False),
+            OneDockerArgument(name="use_tls", required=False),
+            OneDockerArgument(name="ca_cert_path", required=False),
+            OneDockerArgument(name="server_cert_path", required=False),
+            OneDockerArgument(name="private_key_path", required=False),
         ],
     },
 }
