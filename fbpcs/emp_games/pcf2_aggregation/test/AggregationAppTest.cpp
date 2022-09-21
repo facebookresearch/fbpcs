@@ -266,6 +266,45 @@ TEST_P(AggregationAppTest, TestCorrectness) {
           break;
       }
       break;
+    case 1:
+      switch (visibility) {
+        case common::Visibility::Publisher:
+          testCorrectnessAggregationAppWrapper<
+              1,
+              common::Visibility::Publisher>(useTls, useNewOutputFormat);
+          break;
+        case common::Visibility::Xor:
+          testCorrectnessAggregationAppWrapper<1, common::Visibility::Xor>(
+              useTls, useNewOutputFormat);
+          break;
+      }
+      break;
+    case 2:
+      switch (visibility) {
+        case common::Visibility::Publisher:
+          testCorrectnessAggregationAppWrapper<
+              2,
+              common::Visibility::Publisher>(useTls, useNewOutputFormat);
+          break;
+        case common::Visibility::Xor:
+          testCorrectnessAggregationAppWrapper<2, common::Visibility::Xor>(
+              useTls, useNewOutputFormat);
+          break;
+      }
+      break;
+    case 3:
+      switch (visibility) {
+        case common::Visibility::Publisher:
+          testCorrectnessAggregationAppWrapper<
+              3,
+              common::Visibility::Publisher>(useTls, useNewOutputFormat);
+          break;
+        case common::Visibility::Xor:
+          testCorrectnessAggregationAppWrapper<3, common::Visibility::Xor>(
+              useTls, useNewOutputFormat);
+          break;
+      }
+      break;
     default:
       break;
   }
