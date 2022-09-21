@@ -189,10 +189,13 @@ class PrivateComputationService:
         post_processing_data = post_processing_data_optional or PostProcessingData(
             dataset_timestamp=int(yesterday_timestamp)
         )
-        pcs_feature_enums = {
-            PCSFeature.from_str(feature)
-            for feature in unwrap_or_default(optional=pcs_features, default=[])
-        }
+        pcs_feature_enums = set()
+        for feature in unwrap_or_default(optional=pcs_features, default=[]):
+            pcs_feature_enums.add(PCSFeature.from_str(feature))
+            self.metric_svc.bump_entity_key(
+                PCSERVICE_ENTITY_NAME, f"pcs_feature_{feature.lower()}_enabled"
+            )
+
         infra_config: InfraConfig = InfraConfig(
             instance_id=instance_id,
             role=role,
