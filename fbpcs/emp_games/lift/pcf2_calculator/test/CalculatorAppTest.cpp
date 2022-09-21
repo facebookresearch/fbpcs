@@ -99,6 +99,7 @@ class CalculatorAppTestFixture
     tlsInfo.certPath = useTls ? (tlsDir_ + "/cert.pem") : "";
     tlsInfo.keyPath = useTls ? (tlsDir_ + "/key.pem") : "";
     tlsInfo.passphrasePath = useTls ? (tlsDir_ + "/passphrase.pem") : "";
+    tlsInfo.rootCaCertPath = useTls ? (tlsDir_ + "/ca_cert.pem") : "";
     tlsInfo.useTls = useTls;
 
     auto [communicationAgentFactoryAlice, communicationAgentFactoryBob] =
