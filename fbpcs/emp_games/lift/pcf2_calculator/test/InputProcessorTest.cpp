@@ -19,6 +19,7 @@
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/InputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/SecretShareInputProcessor.h"
 
 namespace private_lift {
 const bool unsafe = true;
@@ -42,8 +43,7 @@ void serializeAndDeserializeData(
     std::reference_wrapper<LiftGameProcessedData<schedulerId>> toWrite,
     const std::string& globalParamsPath,
     const std::string& secretSharesPath) {
-  inputProcessor.get().getLiftGameProcessedData().writeToCSV(
-      globalParamsPath, secretSharesPath);
+  writeToCSV(inputProcessor.get(), globalParamsPath, secretSharesPath);
 
   toWrite.get() = LiftGameProcessedData<schedulerId>::readFromCSV(
       globalParamsPath, secretSharesPath);
@@ -59,6 +59,8 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
   InputProcessor<1> partnerInputProcessor_;
   LiftGameProcessedData<0> publisherDeserialized_;
   LiftGameProcessedData<1> partnerDeserialized_;
+  SecretShareInputProcessor<0> publisherSecretInputProcessor_;
+  SecretShareInputProcessor<1> partnerSecretInputProcessor_;
 
   bool computePublisherBreakdowns_;
 
@@ -153,6 +155,27 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
     future2.get();
     future3.get();
 
+    auto future4 = std::async(
+        [](const std::string& globalParamsPath,
+           const std::string& secretSharesPath) {
+          return SecretShareInputProcessor<0>(
+              globalParamsPath, secretSharesPath);
+        },
+        publisherGlobalParamsOutput,
+        publisherSecretSharesOutput);
+
+    auto future5 = std::async(
+        [](const std::string& globalParamsPath,
+           const std::string& secretSharesPath) {
+          return SecretShareInputProcessor<1>(
+              globalParamsPath, secretSharesPath);
+        },
+        partnerGlobalParamsOutput,
+        partnerSecretSharesOutput);
+
+    publisherSecretInputProcessor_ = future4.get();
+    partnerSecretInputProcessor_ = future5.get();
+
     cleanup(publisherGlobalParamsOutput);
     cleanup(publisherSecretSharesOutput);
     cleanup(partnerGlobalParamsOutput);
@@ -160,122 +183,135 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
   }
 };
 
+template <int schedulerId>
+void assertNumRows(
+    const LiftGameProcessedData<schedulerId>& liftGameProcessedData) {
+  EXPECT_EQ(liftGameProcessedData.numRows, 33);
+}
+
 TEST_P(InputProcessorTest, testNumRows) {
-  EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().numRows, 33);
-  EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numRows, 33);
+  assertNumRows(publisherInputProcessor_.getLiftGameProcessedData());
+  assertNumRows(partnerInputProcessor_.getLiftGameProcessedData());
+  assertNumRows(publisherSecretInputProcessor_.getLiftGameProcessedData());
+  assertNumRows(partnerSecretInputProcessor_.getLiftGameProcessedData());
+  assertNumRows(publisherDeserialized_);
+  assertNumRows(partnerDeserialized_);
+}
 
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().numRows,
-      publisherDeserialized_.numRows);
-
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().numRows,
-      partnerDeserialized_.numRows);
+template <int schedulerId>
+void assertValueBits(
+    const LiftGameProcessedData<schedulerId>& liftGameProcessedData) {
+  EXPECT_EQ(liftGameProcessedData.valueBits, 10);
+  EXPECT_EQ(liftGameProcessedData.valueSquaredBits, 15);
 }
 
 TEST_P(InputProcessorTest, testBitsForValues) {
-  EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().valueBits, 10);
-  EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().valueBits, 10);
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().valueSquaredBits, 15);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().valueSquaredBits, 15);
+  assertValueBits(publisherInputProcessor_.getLiftGameProcessedData());
+  assertValueBits(partnerInputProcessor_.getLiftGameProcessedData());
+  assertValueBits(publisherSecretInputProcessor_.getLiftGameProcessedData());
+  assertValueBits(partnerSecretInputProcessor_.getLiftGameProcessedData());
+  assertValueBits(publisherDeserialized_);
+  assertValueBits(partnerDeserialized_);
+}
 
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().valueBits,
-      publisherDeserialized_.valueBits);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().valueBits,
-      partnerDeserialized_.valueBits);
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().valueSquaredBits,
-      publisherDeserialized_.valueSquaredBits);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().valueSquaredBits,
-      partnerDeserialized_.valueSquaredBits);
+template <int schedulerId>
+void assertPartnerCohorts(
+    const LiftGameProcessedData<schedulerId>& liftGameProcessedData) {
+  EXPECT_EQ(liftGameProcessedData.numPartnerCohorts, 3);
 }
 
 TEST_P(InputProcessorTest, testNumPartnerCohorts) {
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().numPartnerCohorts, 3);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().numPartnerCohorts, 3);
+  assertPartnerCohorts(publisherInputProcessor_.getLiftGameProcessedData());
+  assertPartnerCohorts(partnerInputProcessor_.getLiftGameProcessedData());
+  assertPartnerCohorts(
+      publisherSecretInputProcessor_.getLiftGameProcessedData());
+  assertPartnerCohorts(partnerSecretInputProcessor_.getLiftGameProcessedData());
+  assertPartnerCohorts(publisherDeserialized_);
+  assertPartnerCohorts(partnerDeserialized_);
+}
 
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().numPartnerCohorts,
-      publisherDeserialized_.numPartnerCohorts);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().numPartnerCohorts,
-      partnerDeserialized_.numPartnerCohorts);
+template <int schedulerId>
+void assertNumBreakdowns(
+    const LiftGameProcessedData<schedulerId>& liftGameProcessedData,
+    bool computePublisherBreakdowns) {
+  if (computePublisherBreakdowns) {
+    EXPECT_EQ(liftGameProcessedData.numPublisherBreakdowns, 2);
+  } else {
+    EXPECT_EQ(liftGameProcessedData.numPublisherBreakdowns, 0);
+  }
 }
 
 TEST_P(InputProcessorTest, testNumBreakdowns) {
-  if (computePublisherBreakdowns_) {
-    EXPECT_EQ(
-        publisherInputProcessor_.getLiftGameProcessedData()
-            .numPublisherBreakdowns,
-        2);
-    EXPECT_EQ(
-        partnerInputProcessor_.getLiftGameProcessedData()
-            .numPublisherBreakdowns,
-        2);
-  } else {
-    EXPECT_EQ(
-        publisherInputProcessor_.getLiftGameProcessedData()
-            .numPublisherBreakdowns,
-        0);
-    EXPECT_EQ(
-        partnerInputProcessor_.getLiftGameProcessedData()
-            .numPublisherBreakdowns,
-        0);
-  }
+  assertNumBreakdowns(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumBreakdowns(
+      partnerInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumBreakdowns(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumBreakdowns(
+      partnerSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumBreakdowns(publisherDeserialized_, computePublisherBreakdowns_);
+  assertNumBreakdowns(partnerDeserialized_, computePublisherBreakdowns_);
+}
 
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData()
-          .numPublisherBreakdowns,
-      publisherDeserialized_.numPublisherBreakdowns);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().numPublisherBreakdowns,
-      partnerDeserialized_.numPublisherBreakdowns);
+template <int schedulerId>
+void assertNumGroups(
+    const LiftGameProcessedData<schedulerId>& liftGameProcessedData,
+    bool computePublisherBreakdowns) {
+  if (computePublisherBreakdowns) {
+    EXPECT_EQ(liftGameProcessedData.numGroups, 12);
+  } else {
+    EXPECT_EQ(liftGameProcessedData.numGroups, 6);
+  }
 }
 
 TEST_P(InputProcessorTest, testNumGroups) {
-  if (computePublisherBreakdowns_) {
-    EXPECT_EQ(
-        publisherInputProcessor_.getLiftGameProcessedData().numGroups, 12);
-    EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numGroups, 12);
-  } else {
-    EXPECT_EQ(publisherInputProcessor_.getLiftGameProcessedData().numGroups, 6);
-    EXPECT_EQ(partnerInputProcessor_.getLiftGameProcessedData().numGroups, 6);
-  }
+  assertNumGroups(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumGroups(
+      partnerInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumGroups(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumGroups(
+      partnerSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumGroups(publisherDeserialized_, computePublisherBreakdowns_);
+  assertNumGroups(partnerDeserialized_, computePublisherBreakdowns_);
+}
 
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().numGroups,
-      publisherDeserialized_.numGroups);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().numGroups,
-      partnerDeserialized_.numGroups);
+template <int schedulerId>
+void assertNumTestGroups(
+    const LiftGameProcessedData<schedulerId>& liftGameProcessedData,
+    bool computePublisherBreakdowns) {
+  if (computePublisherBreakdowns) {
+    EXPECT_EQ(liftGameProcessedData.numTestGroups, 7);
+  } else {
+    EXPECT_EQ(liftGameProcessedData.numTestGroups, 4);
+  }
 }
 
 TEST_P(InputProcessorTest, testNumTestGroups) {
-  if (computePublisherBreakdowns_) {
-    EXPECT_EQ(
-        publisherInputProcessor_.getLiftGameProcessedData().numTestGroups, 7);
-    EXPECT_EQ(
-        partnerInputProcessor_.getLiftGameProcessedData().numTestGroups, 7);
-  } else {
-    EXPECT_EQ(
-        publisherInputProcessor_.getLiftGameProcessedData().numTestGroups, 4);
-    EXPECT_EQ(
-        partnerInputProcessor_.getLiftGameProcessedData().numTestGroups, 4);
-  }
-
-  EXPECT_EQ(
-      publisherInputProcessor_.getLiftGameProcessedData().numTestGroups,
-      publisherDeserialized_.numTestGroups);
-  EXPECT_EQ(
-      partnerInputProcessor_.getLiftGameProcessedData().numTestGroups,
-      partnerDeserialized_.numTestGroups);
+  assertNumTestGroups(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumTestGroups(
+      partnerInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumTestGroups(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumTestGroups(
+      partnerSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  assertNumTestGroups(publisherDeserialized_, computePublisherBreakdowns_);
+  assertNumTestGroups(partnerDeserialized_, computePublisherBreakdowns_);
 }
 
 // Convert input boolean index shares to group ids
@@ -315,6 +351,11 @@ TEST_P(InputProcessorTest, testIndexShares) {
   auto deserializedGroupIds =
       convertIndexSharesToGroupIds(publisherDeserialized_.indexShares);
   EXPECT_EQ(groupIds, deserializedGroupIds);
+
+  deserializedGroupIds = convertIndexSharesToGroupIds(
+      publisherSecretInputProcessor_.getLiftGameProcessedData().indexShares);
+
+  EXPECT_EQ(deserializedGroupIds, groupIds);
 }
 
 TEST_P(InputProcessorTest, testTestIndexShares) {
@@ -337,73 +378,71 @@ TEST_P(InputProcessorTest, testTestIndexShares) {
   auto deserializedTestGroupIds =
       convertIndexSharesToGroupIds(publisherDeserialized_.testIndexShares);
   EXPECT_EQ(testGroupIds, deserializedTestGroupIds);
+
+  deserializedTestGroupIds = convertIndexSharesToGroupIds(
+      publisherSecretInputProcessor_.getLiftGameProcessedData()
+          .testIndexShares);
+
+  EXPECT_EQ(deserializedTestGroupIds, testGroupIds);
 }
 
-TEST_P(InputProcessorTest, testOpportunityTimestamps) {
+void assertOpportunityTimestamps(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
   auto future0 = std::async([&] {
-    return publisherInputProcessor_.getLiftGameProcessedData()
-        .opportunityTimestamps.openToParty(0)
-        .getValue();
+    return publisherData.opportunityTimestamps.openToParty(0).getValue();
   });
   auto future1 = std::async([&] {
-    return partnerInputProcessor_.getLiftGameProcessedData()
-        .opportunityTimestamps.openToParty(0)
-        .getValue();
+    return partnerData.opportunityTimestamps.openToParty(0).getValue();
   });
-  auto opportunityTimestamps0 = future0.get();
+
+  auto opportunityTimestamps = future0.get();
   future1.get();
+
   std::vector<uint64_t> expectOpportunityTimestamps = {
       0,   0,   0,   100, 100, 100, 100, 100, 100, 100, 100,
       100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
       100, 100, 0,   100, 100, 100, 100, 100, 100, 100, 100};
-  EXPECT_EQ(opportunityTimestamps0, expectOpportunityTimestamps);
-
-  auto future2 = std::async([&] {
-    return publisherDeserialized_.opportunityTimestamps.openToParty(0)
-        .getValue();
-  });
-  auto future3 = std::async([&] {
-    return partnerDeserialized_.opportunityTimestamps.openToParty(0).getValue();
-  });
-
-  auto deserializedOpportunityTimestamps = future2.get();
-  future3.get();
-
-  EXPECT_EQ(opportunityTimestamps0, deserializedOpportunityTimestamps);
+  EXPECT_EQ(opportunityTimestamps, expectOpportunityTimestamps);
 }
 
-TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
+TEST_P(InputProcessorTest, testOpportunityTimestamps) {
+  assertOpportunityTimestamps(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertOpportunityTimestamps(publisherDeserialized_, partnerDeserialized_);
+  assertOpportunityTimestamps(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
+}
+
+void assertIsValidOpportunityTimestamps(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
   auto future0 = std::async([&] {
-    return publisherInputProcessor_.getLiftGameProcessedData()
-        .isValidOpportunityTimestamp.openToParty(0)
-        .getValue();
+    return publisherData.isValidOpportunityTimestamp.openToParty(0).getValue();
   });
   auto future1 = std::async([&] {
-    return partnerInputProcessor_.getLiftGameProcessedData()
-        .isValidOpportunityTimestamp.openToParty(0)
-        .getValue();
+    return partnerData.isValidOpportunityTimestamp.openToParty(0).getValue();
   });
-  auto isValidOpportunityTimestamp0 = future0.get();
+
+  auto isValidOpportunityTimestamp = future0.get();
   future1.get();
+
   std::vector<bool> expectIsValidOpportunityTimestamp = {
       0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1,
       1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1};
-  EXPECT_EQ(isValidOpportunityTimestamp0, expectIsValidOpportunityTimestamp);
+  EXPECT_EQ(isValidOpportunityTimestamp, expectIsValidOpportunityTimestamp);
+}
 
-  auto future2 = std::async([&] {
-    return publisherDeserialized_.isValidOpportunityTimestamp.openToParty(0)
-        .getValue();
-  });
-  auto future3 = std::async([&] {
-    return partnerDeserialized_.isValidOpportunityTimestamp.openToParty(0)
-        .getValue();
-  });
-
-  auto deserializedIsValidOpportunityTimestamp = future2.get();
-  future3.get();
-
-  EXPECT_EQ(
-      isValidOpportunityTimestamp0, deserializedIsValidOpportunityTimestamp);
+TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
+  assertOpportunityTimestamps(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertOpportunityTimestamps(publisherDeserialized_, partnerDeserialized_);
+  assertOpportunityTimestamps(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
 }
 
 template <int schedulerId>
@@ -418,18 +457,18 @@ std::vector<std::vector<uint64_t>> revealTimestamps(
   return result;
 }
 
-TEST_P(InputProcessorTest, testPurchaseTimestamps) {
+void assertPurchaseTimestamps(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
   auto future0 = std::async(
       revealTimestamps<0>,
       std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
-          publisherInputProcessor_.getLiftGameProcessedData()
-              .purchaseTimestamps));
+          publisherData.purchaseTimestamps));
   auto future1 = std::async(
       revealTimestamps<1>,
       std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
-          partnerInputProcessor_.getLiftGameProcessedData()
-              .purchaseTimestamps));
-  auto purchaseTimestamps0 = future0.get();
+          partnerData.purchaseTimestamps));
+  auto purchaseTimestamps = future0.get();
   future1.get();
   std::vector<std::vector<uint64_t>> expectPurchaseTimestamps = {
       {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  150, 150, 150, 50, 50,
@@ -437,34 +476,31 @@ TEST_P(InputProcessorTest, testPurchaseTimestamps) {
       {100, 100, 100, 50,  50,  50,  100, 100, 100, 90,  90,
        90,  200, 200, 200, 150, 150, 150, 50,  50,  50,  0,
        0,   0,   100, 50,  150, 200, 150, 50,  200, 200, 200}};
-  EXPECT_EQ(purchaseTimestamps0, expectPurchaseTimestamps);
-
-  auto future2 = std::async(
-      revealTimestamps<0>,
-      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
-          publisherDeserialized_.purchaseTimestamps));
-  auto future3 = std::async(
-      revealTimestamps<1>,
-      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
-          partnerDeserialized_.purchaseTimestamps));
-  auto deserializedPurchaseTimestamps = future2.get();
-  future3.get();
-
-  EXPECT_EQ(purchaseTimestamps0, deserializedPurchaseTimestamps);
+  EXPECT_EQ(purchaseTimestamps, expectPurchaseTimestamps);
 }
 
-TEST_P(InputProcessorTest, testThresholdTimestamps) {
+TEST_P(InputProcessorTest, testPurchaseTimestamps) {
+  assertPurchaseTimestamps(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertPurchaseTimestamps(publisherDeserialized_, partnerDeserialized_);
+  assertPurchaseTimestamps(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
+}
+
+void assertThresholdTimestamps(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
   auto future0 = std::async(
       revealTimestamps<0>,
       std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
-          publisherInputProcessor_.getLiftGameProcessedData()
-              .thresholdTimestamps));
+          publisherData.thresholdTimestamps));
   auto future1 = std::async(
       revealTimestamps<1>,
       std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
-          partnerInputProcessor_.getLiftGameProcessedData()
-              .thresholdTimestamps));
-  auto thresholdTimestamps0 = future0.get();
+          partnerData.thresholdTimestamps));
+  auto thresholdTimestamps = future0.get();
   future1.get();
   std::vector<std::vector<uint64_t>> expectThresholdTimestamps = {
       {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  160, 160, 160, 60, 60,
@@ -472,53 +508,44 @@ TEST_P(InputProcessorTest, testThresholdTimestamps) {
       {110, 110, 110, 60,  60,  60,  110, 110, 110, 100, 100,
        100, 210, 210, 210, 160, 160, 160, 60,  60,  60,  0,
        0,   0,   110, 60,  160, 210, 160, 60,  210, 210, 210}};
-  EXPECT_EQ(thresholdTimestamps0, expectThresholdTimestamps);
-
-  auto future2 = std::async(
-      revealTimestamps<0>,
-      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
-          publisherDeserialized_.thresholdTimestamps));
-  auto future3 = std::async(
-      revealTimestamps<1>,
-      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
-          partnerDeserialized_.thresholdTimestamps));
-  auto deserializedThresholdTimestamps = future2.get();
-  future3.get();
-
-  EXPECT_EQ(thresholdTimestamps0, deserializedThresholdTimestamps);
+  EXPECT_EQ(thresholdTimestamps, expectThresholdTimestamps);
 }
 
-TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
+TEST_P(InputProcessorTest, testThresholdTimestamps) {
+  assertThresholdTimestamps(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertThresholdTimestamps(publisherDeserialized_, partnerDeserialized_);
+  assertThresholdTimestamps(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
+}
+
+void assertAnyValidPurchaseTimestamp(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
   auto future0 = std::async([&] {
-    return publisherInputProcessor_.getLiftGameProcessedData()
-        .anyValidPurchaseTimestamp.openToParty(0)
-        .getValue();
+    return publisherData.anyValidPurchaseTimestamp.openToParty(0).getValue();
   });
   auto future1 = std::async([&] {
-    return partnerInputProcessor_.getLiftGameProcessedData()
-        .anyValidPurchaseTimestamp.openToParty(0)
-        .getValue();
+    return partnerData.anyValidPurchaseTimestamp.openToParty(0).getValue();
   });
-  auto anyValidPurchaseTimestamp0 = future0.get();
-  auto anyValidPurchaseTimestamp1 = future1.get();
+  auto anyValidPurchaseTimestamp = future0.get();
+  future1.get();
   std::vector<bool> expectAnyValidPurchaseTimestamp = {
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
       1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  EXPECT_EQ(anyValidPurchaseTimestamp0, expectAnyValidPurchaseTimestamp);
+  EXPECT_EQ(anyValidPurchaseTimestamp, expectAnyValidPurchaseTimestamp);
+}
 
-  auto future2 = std::async([&] {
-    return publisherDeserialized_.anyValidPurchaseTimestamp.openToParty(0)
-        .getValue();
-  });
-  auto future3 = std::async([&] {
-    return partnerDeserialized_.anyValidPurchaseTimestamp.openToParty(0)
-        .getValue();
-  });
-
-  auto anyValidPurchaseTimestampDeserialized = future2.get();
-  future3.get();
-
-  EXPECT_EQ(anyValidPurchaseTimestamp0, anyValidPurchaseTimestampDeserialized);
+TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
+  assertAnyValidPurchaseTimestamp(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertAnyValidPurchaseTimestamp(publisherDeserialized_, partnerDeserialized_);
+  assertAnyValidPurchaseTimestamp(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
 }
 
 template <int schedulerId>
@@ -531,36 +558,35 @@ std::vector<std::vector<int64_t>> revealValues(
   return result;
 }
 
-TEST_P(InputProcessorTest, testPurchaseValues) {
+void assertPurchaseValues(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
   auto future0 = std::async(
       revealValues<0>,
       std::reference_wrapper<const std::vector<SecValue<0>>>(
-          publisherInputProcessor_.getLiftGameProcessedData().purchaseValues));
+          publisherData.purchaseValues));
   auto future1 = std::async(
       revealValues<1>,
       std::reference_wrapper<const std::vector<SecValue<1>>>(
-          partnerInputProcessor_.getLiftGameProcessedData().purchaseValues));
-  auto purchaseValues0 = future0.get();
+          partnerData.purchaseValues));
+  auto purchaseValues = future0.get();
   future1.get();
   std::vector<std::vector<int64_t>> expectPurchaseValues = {
       {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,  0,  10, 10, 10, 10, 10,
        10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 10, 10, 10, 0,  0,  0},
       {0,  0,  0,  20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,  20,  20, 20,
        20, 20, 20, 20, 0,  0,  0,  50, 50, 50, 20, 20, 20, -50, -50, -50}};
-  EXPECT_EQ(purchaseValues0, expectPurchaseValues);
+  EXPECT_EQ(purchaseValues, expectPurchaseValues);
+}
 
-  auto future2 = std::async(
-      revealValues<0>,
-      std::reference_wrapper<const std::vector<SecValue<0>>>(
-          publisherDeserialized_.purchaseValues));
-  auto future3 = std::async(
-      revealValues<1>,
-      std::reference_wrapper<const std::vector<SecValue<1>>>(
-          partnerDeserialized_.purchaseValues));
-  auto deserializedPurchaseValues = future2.get();
-  future3.get();
-
-  EXPECT_EQ(purchaseValues0, deserializedPurchaseValues);
+TEST_P(InputProcessorTest, testPurchaseValues) {
+  assertPurchaseValues(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertPurchaseValues(publisherDeserialized_, partnerDeserialized_);
+  assertPurchaseValues(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
 }
 
 template <int schedulerId>
@@ -574,18 +600,18 @@ std::vector<std::vector<int64_t>> revealValueSquared(
   return result;
 }
 
-TEST_P(InputProcessorTest, testPurchaseValueSquared) {
+void assertPurchaseValuesSquared(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
   auto future0 = std::async(
       revealValueSquared<0>,
       std::reference_wrapper<const std::vector<SecValueSquared<0>>>(
-          publisherInputProcessor_.getLiftGameProcessedData()
-              .purchaseValueSquared));
+          publisherData.purchaseValueSquared));
   auto future1 = std::async(
       revealValueSquared<1>,
       std::reference_wrapper<const std::vector<SecValueSquared<1>>>(
-          partnerInputProcessor_.getLiftGameProcessedData()
-              .purchaseValueSquared));
-  auto purchaseValueSquared0 = future0.get();
+          partnerData.purchaseValueSquared));
+  auto purchaseValueSquared = future0.get();
   future1.get();
   // squared sum of purchase value in each row
   std::vector<std::vector<int64_t>> expectPurchaseValueSquared = {
@@ -595,51 +621,43 @@ TEST_P(InputProcessorTest, testPurchaseValueSquared) {
       {0,   0,   0,    400,  400,  400, 400, 400, 400,  400,  400,
        400, 400, 400,  400,  400,  400, 400, 400, 400,  400,  0,
        0,   0,   2500, 2500, 2500, 400, 400, 400, 2500, 2500, 2500}};
-  EXPECT_EQ(purchaseValueSquared0, expectPurchaseValueSquared);
-
-  auto future2 = std::async(
-      revealValueSquared<0>,
-      std::reference_wrapper<const std::vector<SecValueSquared<0>>>(
-          publisherDeserialized_.purchaseValueSquared));
-  auto future3 = std::async(
-      revealValueSquared<1>,
-      std::reference_wrapper<const std::vector<SecValueSquared<1>>>(
-          partnerDeserialized_.purchaseValueSquared));
-  auto deserializedPurchaseValueSquared = future2.get();
-  future3.get();
-
-  EXPECT_EQ(purchaseValueSquared0, deserializedPurchaseValueSquared);
+  EXPECT_EQ(purchaseValueSquared, expectPurchaseValueSquared);
 }
 
-TEST_P(InputProcessorTest, testReach) {
-  auto future0 = std::async([&] {
-    return publisherInputProcessor_.getLiftGameProcessedData()
-        .testReach.openToParty(0)
-        .getValue();
-  });
-  auto future1 = std::async([&] {
-    return partnerInputProcessor_.getLiftGameProcessedData()
-        .testReach.openToParty(0)
-        .getValue();
-  });
-  auto testReach0 = future0.get();
+TEST_P(InputProcessorTest, testPurchaseValueSquared) {
+  assertPurchaseValuesSquared(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertPurchaseValuesSquared(publisherDeserialized_, partnerDeserialized_);
+  assertPurchaseValuesSquared(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
+}
+
+void assertReach(
+    const LiftGameProcessedData<0>& publisherData,
+    const LiftGameProcessedData<1>& partnerData) {
+  auto future0 = std::async(
+      [&] { return publisherData.testReach.openToParty(0).getValue(); });
+  auto future1 = std::async(
+      [&] { return partnerData.testReach.openToParty(0).getValue(); });
+  auto testReach = future0.get();
   future1.get();
 
   std::vector<bool> expectTestReach = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                        0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0};
-  EXPECT_EQ(testReach0, expectTestReach);
+  EXPECT_EQ(testReach, expectTestReach);
+}
 
-  auto future2 = std::async([&] {
-    return publisherDeserialized_.testReach.openToParty(0).getValue();
-  });
-  auto future3 = std::async(
-      [&] { return partnerDeserialized_.testReach.openToParty(0).getValue(); });
-
-  auto testReachDeserialized = future2.get();
-  future3.get();
-
-  EXPECT_EQ(testReach0, testReachDeserialized);
+TEST_P(InputProcessorTest, testReach) {
+  assertReach(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      partnerInputProcessor_.getLiftGameProcessedData());
+  assertReach(publisherDeserialized_, partnerDeserialized_);
+  assertReach(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
 }
 
 INSTANTIATE_TEST_SUITE_P(

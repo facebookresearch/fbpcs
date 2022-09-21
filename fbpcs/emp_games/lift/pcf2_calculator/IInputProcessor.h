@@ -20,4 +20,13 @@ class IInputProcessor {
       const = 0;
 };
 
+template <int schedulerId>
+void writeToCSV(
+    const IInputProcessor<schedulerId>& inputProcessor,
+    const std::string& globalParamsPath,
+    const std::string& secretSharesPath) {
+  inputProcessor.getLiftGameProcessedData().writeToCSV(
+      globalParamsPath, secretSharesPath);
+}
+
 } // namespace private_lift
