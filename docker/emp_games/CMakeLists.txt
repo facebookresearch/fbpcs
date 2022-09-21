@@ -142,7 +142,8 @@ add_executable(
 target_link_libraries(
   pcf2_lift_calculator
   empgamecommon
-  perftools)
+  perftools
+  pcf2_lift_input_processing)
 install(TARGETS pcf2_lift_calculator DESTINATION bin)
 
 # pcf2_shard_combiner

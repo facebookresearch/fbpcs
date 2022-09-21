@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <vector>
 #include "fbpcs/emp_games/common/Csv.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/Constants.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
 
 #include "folly/logging/xlog.h"
 
@@ -105,4 +105,4 @@ struct LiftGameProcessedData {
 
 } // namespace private_lift
 
-#include "fbpcs/emp_games/lift/pcf2_calculator/LiftGameProcessedData_impl.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/LiftGameProcessedData_impl.h"

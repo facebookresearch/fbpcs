@@ -13,8 +13,8 @@
 #include "fbpcs/emp_games/lift/pcf2_calculator/Aggregator.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Attributor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorGameConfig.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputData.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
 
 namespace private_lift {
 template <int schedulerId>

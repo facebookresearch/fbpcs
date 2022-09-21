@@ -17,7 +17,7 @@
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorGame.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorGameConfig.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 
 namespace private_lift {
 

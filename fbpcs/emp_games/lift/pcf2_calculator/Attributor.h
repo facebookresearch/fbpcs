@@ -10,7 +10,7 @@
 #include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/IInputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
 
 namespace private_lift {
 

@@ -14,8 +14,8 @@
 #include "fbpcf/mpc_std_lib/oram/WriteOnlyOramFactory.h"
 #include "fbpcs/emp_games/lift/common/GroupedLiftMetrics.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Attributor.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/IInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/OutputMetricsData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
 
 namespace private_lift {
 

@@ -18,8 +18,8 @@
 
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/Util.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputProcessor.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/SecretShareInputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/SecretShareInputProcessor.h"
 
 namespace private_lift {
 const bool unsafe = true;
@@ -68,27 +68,27 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
     std::string baseDir =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
     std::string publisherInputFilename =
-        baseDir + "../sample_input/publisher_unittest3.csv";
+        baseDir + "../../sample_input/publisher_unittest3.csv";
     std::string partnerInputFilename =
-        baseDir + "../sample_input/partner_2_convs_unittest.csv";
+        baseDir + "../../sample_input/partner_2_convs_unittest.csv";
 
     std::string publisherGlobalParamsOutput = folly::sformat(
-        "{}../sample_input/publisher_global_params_{}.json",
+        "{}../../sample_input/publisher_global_params_{}.json",
         baseDir,
         folly::Random::secureRand64());
 
     std::string publisherSecretSharesOutput = folly::sformat(
-        "{}../sample_input/publisher_secret_shares_{}.json",
+        "{}../../sample_input/publisher_secret_shares_{}.json",
         baseDir,
         folly::Random::secureRand64());
 
     std::string partnerGlobalParamsOutput = folly::sformat(
-        "{}../sample_input/partner_global_params_{}.json",
+        "{}../../sample_input/partner_global_params_{}.json",
         baseDir,
         folly::Random::secureRand64());
 
     std::string partnerSecretSharesOutput = folly::sformat(
-        "{}../sample_input/partner_secret_shares_{}.json",
+        "{}../../sample_input/partner_secret_shares_{}.json",
         baseDir,
         folly::Random::secureRand64());
 

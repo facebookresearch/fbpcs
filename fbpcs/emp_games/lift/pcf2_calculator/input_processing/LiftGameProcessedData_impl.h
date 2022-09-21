@@ -11,7 +11,7 @@
 #include <iterator>
 #include <string>
 
-#include "fbpcs/emp_games/lift/pcf2_calculator/LiftGameProcessedData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/LiftGameProcessedData.h"
 
 namespace private_lift {
 

@@ -26,3 +26,16 @@ target_link_libraries(
   google-cloud-cpp::storage
   Folly::folly
   re2)
+
+# pcf2 lift input processing
+file(GLOB_RECURSE pcf2_lift_input_processing_src
+  "fbpcs/emp_games/lift/pcf2_calculator/input_processing/**.cpp"
+  "fbpcs/emp_games/lift/pcf2_calculator/input_processing/**.h")
+list(FILTER pcf2_lift_input_processing_src EXCLUDE REGEX ".*Test.*")
+add_library(pcf2_lift_input_processing STATIC
+  ${pcf2_lift_input_processing_src})
+target_link_libraries(
+  pcf2_lift_input_processing
+  INTERFACE
+  empgamecommon
+)
