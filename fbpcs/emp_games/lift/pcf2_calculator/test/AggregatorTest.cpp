@@ -15,7 +15,7 @@
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Aggregator.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Attributor.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
 
 namespace private_lift {
 const bool unsafe = true;

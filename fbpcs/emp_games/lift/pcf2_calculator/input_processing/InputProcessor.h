@@ -7,14 +7,13 @@
 
 #pragma once
 
-#include <fbpcs/emp_games/lift/pcf2_calculator/Constants.h>
 #include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/Constants.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/IInputProcessor.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 
 namespace private_lift {
 /**
@@ -95,4 +94,4 @@ class InputProcessor : public IInputProcessor<schedulerId> {
 
 } // namespace private_lift
 
-#include "fbpcs/emp_games/lift/pcf2_calculator/InputProcessor_impl.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor_impl.h"

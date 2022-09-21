@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "fbpcs/emp_games/lift/pcf2_calculator/IInputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
 
 #pragma once
 

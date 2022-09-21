@@ -12,8 +12,8 @@
 
 #include "folly/Random.h"
 
-#include "../../../common/TestUtil.h"
-#include "../InputData.h"
+#include "fbpcs/emp_games/common/TestUtil.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 
 namespace private_lift {
 class InputDataTest : public ::testing::Test {
@@ -27,12 +27,13 @@ class InputDataTest : public ::testing::Test {
   void SetUp() override {
     std::string baseDir =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
-    aliceInputFilename_ = baseDir + "../sample_input/publisher_unittest.csv";
-    aliceInputFilename2_ = baseDir + "../sample_input/publisher_unittest2.csv";
+    aliceInputFilename_ = baseDir + "../../sample_input/publisher_unittest.csv";
+    aliceInputFilename2_ =
+        baseDir + "../../sample_input/publisher_unittest2.csv";
     bobInputFilename_ =
-        baseDir + "../sample_input/partner_4_convs_unittest.csv";
+        baseDir + "../../sample_input/partner_4_convs_unittest.csv";
     bobInputFilename2_ =
-        baseDir + "../sample_input/partner_converter_unittest.csv";
+        baseDir + "../../sample_input/partner_converter_unittest.csv";
   }
 };
 
