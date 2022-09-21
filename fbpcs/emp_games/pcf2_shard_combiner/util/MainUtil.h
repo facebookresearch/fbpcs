@@ -30,8 +30,6 @@ common::SchedulerStatistics runApp(
     const std::string& inputFilePrefix,
     const std::string& outputPath,
     std::int64_t threshold,
-    bool useTls,
-    const std::string& tlsDir,
     bool useXorEncryption,
     int32_t visibility,
     std::string ip,

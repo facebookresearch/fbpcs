@@ -32,3 +32,7 @@ DECLARE_string(log_cost_s3_region);
 DECLARE_bool(use_new_output_format);
 DECLARE_string(run_id);
 DECLARE_string(pc_feature_flags);
+DECLARE_bool(use_tls);
+DECLARE_string(ca_cert_path);
+DECLARE_string(server_cert_path);
+DECLARE_string(private_key_path);

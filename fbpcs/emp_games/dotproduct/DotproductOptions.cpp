@@ -25,14 +25,6 @@ DEFINE_int32(
     label_width,
     16,
     "Number of labels in each row of the label matrix");
-DEFINE_bool(
-    use_tls,
-    false,
-    "Whether to use TLS when communicating with the other party.");
-DEFINE_string(
-    tls_dir,
-    "",
-    "If using TLS, the directory that has the certificate, private key, and passphrase.");
 DEFINE_string(
     run_name,
     "",
@@ -47,3 +39,19 @@ DEFINE_string(
     log_cost_s3_region,
     ".s3.us-west-2.amazonaws.com/",
     "s3 region name");
+DEFINE_bool(
+    use_tls,
+    false,
+    "Whether to use TLS when communicating with other parties.");
+DEFINE_string(
+    ca_cert_path,
+    "",
+    "Relative file path where root CA cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    server_cert_path,
+    "",
+    "Relative file path where server cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    private_key_path,
+    "",
+    "Relative file path where private key is stored. It will be prefixed with $HOME.");
