@@ -74,3 +74,19 @@ DEFINE_string(
     pc_feature_flags,
     "",
     "A String of PC Feature Flags passing from PCS, separated by comma");
+DEFINE_bool(
+    use_tls,
+    false,
+    "Whether to use TLS when communicating with other parties.");
+DEFINE_string(
+    ca_cert_path,
+    "",
+    "Relative file path where root CA cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    server_cert_path,
+    "",
+    "Relative file path where server cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    private_key_path,
+    "",
+    "Relative file path where private key is stored. It will be prefixed with $HOME.");

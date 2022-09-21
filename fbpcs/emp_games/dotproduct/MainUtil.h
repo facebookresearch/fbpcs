@@ -24,8 +24,6 @@ inline common::SchedulerStatistics startDotProductApp(
     std::string& outFilePath,
     int numFeatures,
     int labelWidth,
-    bool useTls,
-    std::string tlsDir,
     bool debugMode) {
   std::map<
       int,
@@ -33,10 +31,10 @@ inline common::SchedulerStatistics startDotProductApp(
           PartyInfo>
       partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
   fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
-  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
-  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
-  tlsInfo.useTls = useTls;
+  tlsInfo.certPath = "";
+  tlsInfo.keyPath = "";
+  tlsInfo.passphrasePath = "";
+  tlsInfo.useTls = false;
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(

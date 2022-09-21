@@ -62,16 +62,26 @@ DEFINE_string(
     log_cost_s3_region,
     ".s3.us-west-2.amazonaws.com/",
     "s3 regioni name");
-
-DEFINE_bool(
-    useTls,
-    false,
-    "flag to enable tls, note: if true, you have to provide tlsDir option.");
-DEFINE_string(tlsDir, "", "Directory to find tls certs.");
 DEFINE_bool(
     use_xor_encryption,
     true,
     "Use XOR encryption while communicating intermediate results(uses LazyScheduler).");
+DEFINE_bool(
+    use_tls,
+    false,
+    "Whether to use TLS when communicating with other parties.");
+DEFINE_string(
+    ca_cert_path,
+    "",
+    "Relative file path where root CA cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    server_cert_path,
+    "",
+    "Relative file path where server cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    private_key_path,
+    "",
+    "Relative file path where private key is stored. It will be prefixed with $HOME.");
 
 using namespace shard_combiner;
 
@@ -122,8 +132,6 @@ int main(int argc, char* argv[]) {
         inputFilePrefix,
         FLAGS_output_path,
         FLAGS_threshold,
-        FLAGS_useTls,
-        FLAGS_tlsDir,
         FLAGS_use_xor_encryption,
         FLAGS_visibility,
         FLAGS_server_ip,
@@ -139,8 +147,6 @@ int main(int argc, char* argv[]) {
         inputFilePrefix,
         FLAGS_output_path,
         FLAGS_threshold,
-        FLAGS_useTls,
-        FLAGS_tlsDir,
         FLAGS_use_xor_encryption,
         FLAGS_visibility,
         FLAGS_server_ip,
