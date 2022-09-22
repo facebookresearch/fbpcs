@@ -19,6 +19,7 @@ from fbpcs.common.service.graphapi_trace_logging_service import (
 from fbpcs.common.service.trace_logging_service import CheckpointStatus
 
 
+TEST_ACCESS_TOKEN = "access_token"
 TEST_ENDPOINT_URL = "localhost"
 
 
@@ -35,7 +36,10 @@ class TestGraphApiTraceLoggingService(TestCase):
         # This is because after mocking, Timeout is a *MagicMock*, not an Exception.
         # The line below will fix that oddity.
         self.mock_requests.exceptions = requests.exceptions
-        self.svc = GraphApiTraceLoggingService(TEST_ENDPOINT_URL)
+        self.svc = GraphApiTraceLoggingService(
+            access_token=TEST_ACCESS_TOKEN,
+            endpoint_url=TEST_ENDPOINT_URL,
+        )
         self.svc.logger = self.logger
 
     def test_write_checkpoint_simple(self) -> None:
