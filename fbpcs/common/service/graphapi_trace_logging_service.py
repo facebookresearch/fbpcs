@@ -10,8 +10,8 @@ import json
 from typing import Dict, Optional
 
 import requests
-from fbpcs.common.service.secret_scrubber import SecretScrubber
 
+from fbpcs.common.service.secret_scrubber import SecretScrubber
 from fbpcs.common.service.trace_logging_service import (
     CheckpointStatus,
     TraceLoggingService,

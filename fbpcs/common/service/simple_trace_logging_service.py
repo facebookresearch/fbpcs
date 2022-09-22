@@ -9,6 +9,7 @@
 import json
 from typing import Dict, Optional
 
+from fbpcs.common.service.secret_scrubber import SecretScrubber
 from fbpcs.common.service.trace_logging_service import (
     CheckpointStatus,
     TraceLoggingService,
@@ -33,4 +34,10 @@ class SimpleTraceLoggingService(TraceLoggingService):
         }
         if checkpoint_data:
             result["checkpoint_data"] = json.dumps(checkpoint_data)
-        self.logger.info(json.dumps(result))
+
+        # We run the secret scrubber since we want to be completely
+        # sure we don't accidentally log an access token
+        log_dump = json.dumps(result)
+        scrubber = SecretScrubber()
+        scrubbed_log_dump = scrubber.scrub(log_dump).scrubbed_output
+        self.logger.info(scrubbed_log_dump)
