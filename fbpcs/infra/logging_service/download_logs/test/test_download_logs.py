@@ -121,7 +121,8 @@ class TestDownloadLogs(unittest.TestCase):
             ],
             cli.container_ids,
         )
-        self.assertIsNotNone(cli.aws_container_logs)
+        # This will be none because aws_cloud raises exception
+        self.assertIsNone(cli.aws_container_logs)
 
     #######################################
     # Tests for logically private methods #
