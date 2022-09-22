@@ -83,6 +83,13 @@ class AwsCloud(CloudBaseClass):
             aws_session_token=aws_session_token,
             region_name=aws_region,
         )
+        self.glue_client: botocore.client.BaseClient = self.get_boto3_object(
+            "glue",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+            region_name=aws_region,
+        )
 
         try:
             self.log.info("Verifying AWS credentials.")
@@ -482,3 +489,76 @@ class AwsCloud(CloudBaseClass):
             break
 
         return stream_name
+
+    def get_glue_crawler_config(self, glue_crawler_name: str) -> Dict[str, Any]:
+        """
+        Returns glue crawler config which included status of crawler and last crawler status
+        """
+        response = {}
+        if not glue_crawler_name:
+            self.log.error(
+                "Glue crawler name not found. Failed to fetch Glue Crawler configs."
+            )
+            return response
+        try:
+            response = self.glue_client.get_crawler(Name=glue_crawler_name)
+        except ClientError as error:
+            error_message = f"Couldn't fetch glue crawler {glue_crawler_name}: {error}"
+            self.log.error(f"{error_message}")
+            response = {"Get_Crawler_Error": error_message}
+        return response
+
+    def get_glue_crawler_metrics(self, glue_crawler_name: str) -> Dict[str, Any]:
+        """
+        Returns glue crawler metrics which includes number of rows updated in a database, run time etc
+        """
+        response = {}
+        if not glue_crawler_name:
+            return response
+        try:
+            response = self.glue_client.get_crawler_metrics(
+                CrawlerNameList=[glue_crawler_name], MaxResults=1
+            )
+        except ClientError as error:
+            error_message = (
+                f"Couldn't fetch glue crawler metrics {glue_crawler_name}: {error}"
+            )
+            self.log.error(f"{error_message}")
+            response = {"Get_Crawler_Metrics_Error": error_message}
+        return response
+
+    def get_glue_etl_job_details(self, glue_etl_name: str) -> Dict[str, Any]:
+        """
+        Returns glue ETL job details
+        """
+        response = {}
+        if not glue_etl_name:
+            return response
+
+        try:
+            response = self.glue_client.get_job(JobName=glue_etl_name)
+        except ClientError as error:
+            error_message = f"Couldn't fetch glue ETL job {glue_etl_name}: {error}"
+            self.log.error(f"{error_message}")
+            response = {"Get_Job_Error": error_message}
+        return response
+
+    def get_glue_etl_job_run_details(self, glue_etl_name: str) -> Dict[str, Any]:
+        """
+        Returns run details of a glue ETL job
+        """
+        response = {}
+        if not glue_etl_name:
+            return response
+
+        try:
+            response = self.glue_client.get_job_runs(
+                JobName=glue_etl_name, MaxResults=10
+            )
+        except ClientError as error:
+            error_message = (
+                f"Couldn't fetch glue ETL job run details {glue_etl_name}: {error}"
+            )
+            self.log.error(f"{error_message}")
+            response = {"Get_Job_Runs_Error": error_message}
+        return response
