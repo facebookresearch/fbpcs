@@ -10,7 +10,7 @@ import logging
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, create_autospec
 
-from fbpcs.private_computation.service.retry_handler import BackoffType, RetryHandler
+from fbpcs.common.service.retry_handler import BackoffType, RetryHandler
 
 
 class DummyExceptionType(Exception):
