@@ -17,7 +17,7 @@ Usage:
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
     pc-cli get_mpc <instance_id> --config=<config_file> [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --dry_run] [options]
+    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --dry_run] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
@@ -391,6 +391,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             result_visibility=arguments["--result_visibility"],
             run_id=arguments["--run_id"],
             final_stage=PrivateComputationStageFlow.AGGREGATE,
+            output_dir=arguments["--output_dir"],
         )
     elif arguments["run_attribution"]:
         stage_flow = PrivateComputationPCF2StageFlow

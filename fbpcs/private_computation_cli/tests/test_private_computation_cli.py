@@ -310,6 +310,7 @@ class TestPrivateComputationCli(TestCase):
             [
                 "--tries_per_stage=789",
                 "--dry_run",
+                f"--output_dir={self.temp_dir_path}",
             ]
         )
         pc_cli.main(argv)
