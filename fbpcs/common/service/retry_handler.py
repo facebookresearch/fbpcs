@@ -10,7 +10,7 @@ import asyncio
 import logging
 from enum import auto, Enum
 from types import TracebackType
-from typing import Any, Awaitable, Callable, Dict, Optional, Type, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Optional, Tuple, Type, TypeVar, Union
 
 
 T = TypeVar("T")
@@ -29,8 +29,7 @@ class RetryHandler:
     """
     A class that can act as a context manager to help retry a segment of code.
     Parameters:
-        - exc_type: The type of exception to handle
-            NOTE: Does not support handling multiple exception types at once
+        - exc_type: The type of exception (or a tuple of exception types) to handle
         - max_attempts: number of attempts to try before re-raising the
             underlying exception that most recently occurred
         - logger: an optional logger to log.warning on each retry and log.error
@@ -41,11 +40,16 @@ class RetryHandler:
     Usage:
     with RetryHandler(MyException, max_attempts=3) as retry_handler:
         await retry_handler.execute(func_we_want_to_retry, arg1, arg2, arg3=999)
+    # Or with a tuple of exception types
+    with RetryHandler((MyException, ValueError), max_attempts=3) as retry_handler:
+        await retry_handler.execute(func_we_want_to_retry, arg1, arg2, arg3=999)
     """
 
     def __init__(
         self,
-        exc_type: Type[BaseException] = Exception,
+        exc_type: Union[
+            Tuple[Type[BaseException], ...], Type[BaseException]
+        ] = Exception,
         max_attempts: int = DEFAULT_MAX_ATTEMPTS,
         logger: Optional[logging.Logger] = None,
         backoff_type: BackoffType = BackoffType.CONSTANT,
@@ -98,5 +102,10 @@ class RetryHandler:
                 )
                 await asyncio.sleep(self._get_backoff_time(attempt))
                 saved_err = e
+            except BaseException as e:
+                self.logger.warning(
+                    f"Unhandled exception type being thrown from RetryHandler: {e}"
+                )
+                raise
         self.logger.error("Out of retry attempts. Raising last error.")
         raise saved_err

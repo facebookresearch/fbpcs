@@ -76,6 +76,47 @@ class TestRetryHandler(IsolatedAsyncioTestCase):
                     await handler.execute(foo)
             logger.error.assert_called_once()
 
+    async def test_execute_with_tuple_of_exceptions(self) -> None:
+        handled_exc_types = (DummyExceptionType, ValueError)
+
+        with self.subTest("first_attempt"):
+            # Arrange
+            foo = AsyncMock(return_value=123)
+            logger = create_autospec(logging.Logger)
+            # Act
+            with RetryHandler(handled_exc_types, logger=logger) as handler:
+                await handler.execute(foo)
+            # Assert
+            logger.assert_not_called()
+        with self.subTest("DummyExceptionType"):
+            # Arrange
+            foo = AsyncMock(side_effect=[DummyExceptionType(), 123])
+            logger = create_autospec(logging.Logger)
+            # Act
+            with RetryHandler(handled_exc_types, logger=logger) as handler:
+                await handler.execute(foo)
+            # Assert
+            logger.warning.assert_called_once()
+        with self.subTest("ValueError"):
+            # Arrange
+            foo = AsyncMock(side_effect=[ValueError(), 123])
+            logger = create_autospec(logging.Logger)
+            # Act
+            with RetryHandler(handled_exc_types, logger=logger) as handler:
+                await handler.execute(foo)
+            # Assert
+            logger.warning.assert_called_once()
+        with self.subTest("unsupported_exc_type"):
+            # Arrange
+            foo = AsyncMock(side_effect=[TypeError(), 123])
+            logger = create_autospec(logging.Logger)
+            # Act
+            with self.assertRaises(TypeError):
+                with RetryHandler(handled_exc_types, logger=logger) as handler:
+                    await handler.execute(foo)
+            # Assert
+            logger.warning.assert_called_once()
+
     #############################
     # Logically private methods #
     #############################
