@@ -10,6 +10,7 @@ import json
 from typing import Dict, Optional
 
 import requests
+from fbpcs.common.service.secret_scrubber import SecretScrubber
 
 from fbpcs.common.service.trace_logging_service import (
     CheckpointStatus,
@@ -26,7 +27,8 @@ RESPONSE_TIMEOUT: float = 3.05
 
 
 class GraphApiTraceLoggingService(TraceLoggingService):
-    def __init__(self, endpoint_url: str) -> None:
+    def __init__(self, access_token: str, endpoint_url: str) -> None:
+        self.access_token = access_token
         self.endpoint_url = endpoint_url
 
     def _write_checkpoint_impl(
@@ -43,6 +45,7 @@ class GraphApiTraceLoggingService(TraceLoggingService):
             "instance_id": instance_id,
             "checkpoint_name": checkpoint_name,
             "status": str(status),
+            "access_token": self.access_token,
         }
         if checkpoint_data:
             form_data["checkpoint_data"] = json.dumps(checkpoint_data)
@@ -60,4 +63,9 @@ class GraphApiTraceLoggingService(TraceLoggingService):
         except Exception as e:
             log_data["extra_info"] = f"Unexpected error: {e}"
 
-        self.logger.info(json.dumps(log_data))
+        # We run the secret scrubber since we want to be completely
+        # sure we don't accidentally log an access token
+        log_dump = json.dumps(log_data)
+        scrubber = SecretScrubber()
+        scrubbed_log_dump = scrubber.scrub(log_dump).scrubbed_output
+        self.logger.info(scrubbed_log_dump)
