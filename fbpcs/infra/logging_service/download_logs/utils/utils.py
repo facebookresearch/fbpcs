@@ -12,7 +12,7 @@ import shutil
 from dataclasses import dataclass
 from enum import Enum
 from pprint import pprint
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from fbpcs.infra.logging_service.download_logs.cloud_error.utils_error import (
     NotSupportedContentType,
@@ -126,7 +126,7 @@ class Utils:
         return file_name
 
     @staticmethod
-    def string_formatter(preset_string: str, *args: str) -> str:
+    def string_formatter(preset_string: str, *args: Optional[str]) -> str:
         return preset_string.format(*args)
 
 
@@ -139,6 +139,8 @@ class StringFormatter(str, Enum):
     ZIPPED_FOLDER_NAME = "{}.zip"
     KINESIS_FIREHOSE_DELIVERY_STREAM = "cb-data-ingestion-stream-{}"
     LAMBDA_LOG_GROUP_NAME = "/aws/lambda/{}"
+    GLUE_CRAWLER_NAME = "mpc-events-crawler-{}"
+    GLUE_ETL_NAME = "glue-ETL-{}"
 
 
 @dataclass
