@@ -50,6 +50,7 @@ from typing import Iterable, List, Optional, Tuple, Union
 import schema
 from docopt import docopt
 from fbpcs.bolt.read_config import parse_bolt_config
+from fbpcs.common.service.secret_scrubber import LoggingSecretScrubber, SecretScrubber
 from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
 from fbpcs.pl_coordinator.pl_study_runner import run_study
@@ -68,10 +69,6 @@ from fbpcs.private_computation.pc_attribution_runner import (
 )
 from fbpcs.private_computation.service.constants import FBPCS_BUNDLE_ID
 from fbpcs.private_computation.service.pre_validate_service import PreValidateService
-from fbpcs.private_computation.service.secret_scrubber import (
-    LoggingSecretScrubber,
-    SecretScrubber,
-)
 from fbpcs.private_computation.service.utils import transform_file_path
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,

@@ -6,7 +6,7 @@
 
 from unittest import TestCase
 
-from fbpcs.private_computation.service.secret_scrubber import SecretScrubber
+from fbpcs.common.service.secret_scrubber import SecretScrubber
 
 
 class TestSecretScrubber(TestCase):
