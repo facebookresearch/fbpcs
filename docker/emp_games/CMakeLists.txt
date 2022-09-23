@@ -143,6 +143,7 @@ target_link_libraries(
   perftools
   pcf2_lift_input_processing
 )
+install(TARGETS pcf2_lift_metadata_compaction DESTINATION bin)
 
 # pcf2_lift
 file(GLOB pcf2_lift_calculator_src
