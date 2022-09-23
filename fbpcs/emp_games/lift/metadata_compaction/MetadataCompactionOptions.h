@@ -23,4 +23,10 @@ DECLARE_int32(epoch);
 DECLARE_int32(num_conversions_per_user);
 DECLARE_bool(compute_publisher_breakdowns);
 
+// Logging flags
+DECLARE_string(run_name);
+DECLARE_bool(log_cost);
+DECLARE_string(log_cost_s3_bucket);
+DECLARE_string(log_cost_s3_region);
+
 DECLARE_string(pc_feature_flags);

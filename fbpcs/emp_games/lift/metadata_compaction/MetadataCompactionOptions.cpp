@@ -41,6 +41,21 @@ DEFINE_bool(
     true,
     "To enable or disable computing publisher breakdown for result validation");
 
+// Logging flags
+DEFINE_string(
+    run_name,
+    "",
+    "A user given run name that will be used in s3 filename");
+DEFINE_bool(
+    log_cost,
+    false,
+    "Log cost info into cloud which will be used for dashboard");
+DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
+DEFINE_string(
+    log_cost_s3_region,
+    ".s3.us-west-2.amazonaws.com/",
+    "s3 region name");
+
 DEFINE_string(
     pc_feature_flags,
     "",
