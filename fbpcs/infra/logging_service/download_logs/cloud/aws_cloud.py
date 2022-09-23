@@ -422,17 +422,15 @@ class AwsCloud(CloudBaseClass):
 
         return len(response.get("logStreams", [])) == 1
 
-    def verify_s3_bucket(self, s3_bucket_name: str) -> None:
+    def verify_s3_bucket(self, s3_bucket_name: str) -> bool:
         # verify s3 bucket
+        response = ""
         try:
-            self.s3_client.head_bucket(Bucket=s3_bucket_name)
+            response = self.s3_client.head_bucket(Bucket=s3_bucket_name)
         except ClientError as error:
-            if error.response.get("Error", {}).get("Code") == "404":
-                error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
-            else:
-                # TODO T122315973: This error message doesn't seem right
-                error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
+            error_message = f"Failed to fetch S3 bucket {s3_bucket_name}: {error}"
             raise AwsS3BucketVerificationException(f"{error_message}")
+        return True if response is None else False
 
     def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
         """

@@ -254,3 +254,20 @@ class TestAwsCloud(unittest.TestCase):
                 self.aws_container_logs._verify_log_stream(
                     "my_log_group", "my_log_stream"
                 )
+
+    def test_verify_s3_bucket(self) -> None:
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.head_bucket
+        # head_bucket returns None for a successful case
+        self.aws_container_logs.s3_client.head_bucket.return_value = None
+
+        with self.subTest("basic"):
+            self.assertTrue(self.aws_container_logs.verify_s3_bucket("test_bucket"))
+
+        with self.subTest("ExcpetionCase"):
+            self.aws_container_logs.s3_client.head_bucket.reset_mock()
+            self.aws_container_logs.s3_client.head_bucket.side_effect = ClientError(
+                error_response={"Error": {"Code": "BucketNotFound"}},
+                operation_name="head_bucket",
+            )
+            with self.assertRaisesRegex(Exception, "Failed to fetch S3.*"):
+                self.aws_container_logs.verify_s3_bucket("test_bucket")
