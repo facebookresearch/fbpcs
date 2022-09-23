@@ -20,6 +20,7 @@ from fbpcs.infra.logging_service.download_logs.cloud_error.cloud_error import (
     AwsCloudwatchLogGroupFetchException,
     AwsCloudwatchLogsFetchException,
     AwsCloudwatchLogStreamFetchException,
+    AwsInvalidCredentials,
     AwsKinesisFirehoseDeliveryStreamFetchException,
     AwsS3BucketVerificationException,
     AwsS3FolderContentFetchException,
@@ -62,6 +63,16 @@ class AwsCloud(CloudBaseClass):
             aws_session_token=aws_session_token,
             region_name=aws_region,
         )
+
+        # Verify if the aws credentials are correct
+        try:
+            self.log.info("Verifying AWS credentials.")
+            sts.get_caller_identity()
+        except NoCredentialsError as error:
+            error_message = f"Couldn't validate the AWS credentials: {error}"
+            self.log.error(f"{error_message}")
+            raise AwsInvalidCredentials(f"{error_message}")
+
         self.cloudwatch_client: botocore.client.BaseClient = self.get_boto3_object(
             "logs",
             aws_access_key_id=aws_access_key_id,
@@ -90,12 +101,6 @@ class AwsCloud(CloudBaseClass):
             aws_session_token=aws_session_token,
             region_name=aws_region,
         )
-
-        try:
-            self.log.info("Verifying AWS credentials.")
-            sts.get_caller_identity()
-        except NoCredentialsError as error:
-            self.log.error(f"Couldn't validate the AWS credentials." f"{error}")
 
     def get_boto3_object(
         self,
@@ -287,7 +292,7 @@ class AwsCloud(CloudBaseClass):
             error_message = f"Couldn't find folder. Please check if S3 bucket name {bucket_name} and folder name {folder_name} are correct"
             if error.response.get("Error", {}).get("Code") == "NoSuchBucket":
                 error_message = f"Couldn't find folder {folder_name} in S3 bucket {bucket_name}\n{error}"
-            raise AwsS3FolderContentFetchException({error_message})
+            raise AwsS3FolderContentFetchException(f"{error_message}")
 
         return response
 

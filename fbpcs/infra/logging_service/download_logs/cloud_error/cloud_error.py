@@ -10,6 +10,10 @@ class AwsException(Exception):
     pass
 
 
+class AwsInvalidCredentials(AwsException):
+    pass
+
+
 class AwsCloudwatchException(AwsException):
     pass
 
