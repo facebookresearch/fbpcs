@@ -41,6 +41,24 @@ DEFINE_bool(
     true,
     "To enable or disable computing publisher breakdown for result validation");
 
+// TLS Settings
+DEFINE_bool(
+    use_tls,
+    false,
+    "Whether to use TLS when communicating with other parties.");
+DEFINE_string(
+    ca_cert_path,
+    "",
+    "Relative file path where root CA cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    server_cert_path,
+    "",
+    "Relative file path where server cert is stored. It will be prefixed with $HOME.");
+DEFINE_string(
+    private_key_path,
+    "",
+    "Relative file path where private key is stored. It will be prefixed with $HOME.");
+
 // Logging flags
 DEFINE_string(
     run_name,

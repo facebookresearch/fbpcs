@@ -12,6 +12,7 @@
 #include "fbpcs/performance_tools/CostEstimation.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
+#include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MainUtil.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactionOptions.h"
 
@@ -52,6 +53,14 @@ int main(int argc, char** argv) {
 
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner
   // instead of 1 and 2
+
+  auto tlsInfo = common::getTlsInfoFromArgs(
+      FLAGS_use_tls,
+      FLAGS_ca_cert_path,
+      FLAGS_server_cert_path,
+      FLAGS_private_key_path,
+      "");
+
   common::SchedulerStatistics schedulerStatistics;
 
   XLOG(INFO) << "Start Metadata Compaction...";
@@ -68,7 +77,8 @@ int main(int argc, char** argv) {
             FLAGS_num_conversions_per_user,
             FLAGS_compute_publisher_breakdowns,
             FLAGS_epoch,
-            FLAGS_use_xor_encryption);
+            FLAGS_use_xor_encryption,
+            tlsInfo);
   } else if (FLAGS_party == common::PARTNER) {
     XLOG(INFO)
         << "Starting Metadata Compaction as Partner, will wait for Publisher...";
@@ -82,7 +92,8 @@ int main(int argc, char** argv) {
             FLAGS_num_conversions_per_user,
             FLAGS_compute_publisher_breakdowns,
             FLAGS_epoch,
-            FLAGS_use_xor_encryption);
+            FLAGS_use_xor_encryption,
+            tlsInfo);
   } else {
     XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
   }

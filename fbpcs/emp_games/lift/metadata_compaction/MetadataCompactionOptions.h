@@ -23,6 +23,12 @@ DECLARE_int32(epoch);
 DECLARE_int32(num_conversions_per_user);
 DECLARE_bool(compute_publisher_breakdowns);
 
+// TLS Settings
+DECLARE_bool(use_tls);
+DECLARE_string(ca_cert_path);
+DECLARE_string(server_cert_path);
+DECLARE_string(private_key_path);
+
 // Logging flags
 DECLARE_string(run_name);
 DECLARE_bool(log_cost);
