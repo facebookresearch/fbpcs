@@ -20,6 +20,8 @@ template <int schedulerId>
 void MetadataCompactorApp<schedulerId>::run() {
   auto scheduler = createScheduler();
 
+  auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
+
   InputData inputData(
       inputPath_,
       InputData::LiftMPCType::Standard,
@@ -33,6 +35,29 @@ void MetadataCompactorApp<schedulerId>::run() {
   auto inputProcessor =
       metadataCompactorGame->play(inputData, numConversionsPerUser_);
   writeToCSV(*inputProcessor, outputGlobalParamsPath_, outputSecretSharesPath_);
+
+  auto gateStatistics =
+      fbpcf::scheduler::SchedulerKeeper<schedulerId>::getGateStatistics();
+
+  XLOGF(
+      INFO,
+      "Non-free gate count = {}, Free gate count = {}",
+      gateStatistics.first,
+      gateStatistics.second);
+
+  auto trafficStatistics =
+      fbpcf::scheduler::SchedulerKeeper<schedulerId>::getTrafficStatistics();
+  XLOGF(
+      INFO,
+      "Sent network traffic = {}, Received network traffic = {}",
+      trafficStatistics.first,
+      trafficStatistics.second);
+
+  schedulerStatistics_.nonFreeGates = gateStatistics.first;
+  schedulerStatistics_.freeGates = gateStatistics.second;
+  schedulerStatistics_.sentNetwork = trafficStatistics.first;
+  schedulerStatistics_.receivedNetwork = trafficStatistics.second;
+  schedulerStatistics_.details = metricsCollector->collectMetrics();
 }
 
 template <int schedulerId>

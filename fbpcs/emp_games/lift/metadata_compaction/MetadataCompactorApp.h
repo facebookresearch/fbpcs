@@ -46,6 +46,10 @@ class MetadataCompactorApp {
 
   void run();
 
+  common::SchedulerStatistics getSchedulerStatistics() {
+    return schedulerStatistics_;
+  }
+
  protected:
   std::unique_ptr<fbpcf::scheduler::IScheduler> createScheduler();
 
@@ -66,6 +70,7 @@ class MetadataCompactorApp {
   std::string outputGlobalParamsPath_;
   std::string outputSecretSharesPath_;
   bool useXorEncryption_;
+  common::SchedulerStatistics schedulerStatistics_;
 };
 
 } // namespace private_lift
