@@ -33,16 +33,4 @@ class DummyMetadataCompactorGame
   const int party_;
 };
 
-template <int schedulerId>
-std::function<std::unique_ptr<IMetadataCompactorGame<schedulerId>>(
-    std::unique_ptr<fbpcf::scheduler::IScheduler>,
-    int)>
-getDummyMetadataCompactorGameCreator() {
-  return
-      [](std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler, int partyId) {
-        return std::make_unique<DummyMetadataCompactorGame<schedulerId>>(
-            partyId, std::move(scheduler));
-      };
-}
-
 } // namespace private_lift
