@@ -9,9 +9,11 @@
 import os
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-from botocore.exceptions import ClientError
+import boto3
+
+from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 from fbpcs.infra.logging_service.download_logs.cloud.aws_cloud import AwsCloud
 
 
@@ -23,6 +25,34 @@ class TestAwsCloud(unittest.TestCase):
             "fbpcs.infra.logging_service.download_logs.cloud.aws_cloud.boto3"
         ), patch("fbpcs.infra.logging_service.download_logs.download_logs.Utils"):
             self.aws_container_logs = AwsCloud(self.tag)
+
+    def test_get_boto3_object(self) -> None:
+        boto3.client = MagicMock()
+        boto3.client.return_value = "something"
+
+        with self.subTest("basic"):
+            expected = "something"
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_boto3_object(service_name="aws_service"),
+            )
+        with self.subTest("NoCredentialsError"):
+            expected = r"^Error occurred in validating access and secret keys of the aws account.*"
+            boto3.client.reset_mock()
+            boto3.client.side_effect = NoCredentialsError
+            with self.assertLogs() as captured:
+                self.aws_container_logs.get_boto3_object("aws_service")
+                self.assertEqual(len(captured.records), 1)
+                self.assertRegex(captured.records[0].getMessage(), expected)
+
+        with self.subTest("NoRegionError"):
+            expected = r"^Couldn't find region in AWS config.*"
+            boto3.client.reset_mock()
+            boto3.client.side_effect = NoRegionError
+            with self.assertLogs() as captured:
+                self.aws_container_logs.get_boto3_object("aws_service")
+                self.assertEqual(len(captured.records), 1)
+                self.assertRegex(captured.records[0].getMessage(), expected)
 
     ##############################
     # Tests for public interface #
