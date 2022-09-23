@@ -17,10 +17,7 @@
 namespace private_lift {
 
 template <int schedulerId>
-void MetadataCompactorApp<schedulerId>::run(
-    std::function<std::unique_ptr<IMetadataCompactorGame<schedulerId>>(
-        std::unique_ptr<fbpcf::scheduler::IScheduler>,
-        int)> metadataCompactorGameCreator) {
+void MetadataCompactorApp<schedulerId>::run() {
   auto scheduler = createScheduler();
 
   InputData inputData(
@@ -31,7 +28,7 @@ void MetadataCompactorApp<schedulerId>::run(
       numConversionsPerUser_);
 
   auto metadataCompactorGame =
-      metadataCompactorGameCreator(std::move(scheduler), party_);
+      compactorGameFactory_->create(std::move(scheduler), party_);
 
   auto inputProcessor =
       metadataCompactorGame->play(inputData, numConversionsPerUser_);

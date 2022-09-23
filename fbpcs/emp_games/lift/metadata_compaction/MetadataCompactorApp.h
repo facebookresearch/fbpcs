@@ -11,6 +11,7 @@
 #include "fbpcf/scheduler/IScheduler.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/IMetadataCompactorGame.h"
+#include "fbpcs/emp_games/lift/metadata_compaction/IMetadataCompactorGameFactory.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 
 namespace private_lift {
@@ -23,6 +24,8 @@ class MetadataCompactorApp {
       std::unique_ptr<
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>
           communicationAgentFactory,
+      std::unique_ptr<IMetadataCompactorGameFactory<schedulerId>>
+          compactorGameFactory,
       int numConversionsPerUser,
       bool computePublisherBreakdowns,
       int epoch,
@@ -32,6 +35,7 @@ class MetadataCompactorApp {
       bool useXorEncryption = true)
       : party_{party},
         communicationAgentFactory_{std::move(communicationAgentFactory)},
+        compactorGameFactory_{std::move(compactorGameFactory)},
         numConversionsPerUser_{numConversionsPerUser},
         computePublisherBreakdowns_{computePublisherBreakdowns},
         epoch_{epoch},
@@ -40,9 +44,7 @@ class MetadataCompactorApp {
         outputSecretSharesPath_{outputSecretSharesPath},
         useXorEncryption_{useXorEncryption} {}
 
-  void run(std::function<std::unique_ptr<IMetadataCompactorGame<schedulerId>>(
-               std::unique_ptr<fbpcf::scheduler::IScheduler>,
-               int)> metadataCompactorGameCreator);
+  void run();
 
  protected:
   std::unique_ptr<fbpcf::scheduler::IScheduler> createScheduler();
@@ -55,6 +57,8 @@ class MetadataCompactorApp {
       metadataCompactorGameCreator_;
   std::unique_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
       communicationAgentFactory_;
+  std::unique_ptr<IMetadataCompactorGameFactory<schedulerId>>
+      compactorGameFactory_;
   int numConversionsPerUser_;
   bool computePublisherBreakdowns_;
   int epoch_;

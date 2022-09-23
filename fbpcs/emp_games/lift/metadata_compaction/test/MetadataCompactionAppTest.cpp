@@ -14,7 +14,7 @@
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/scheduler/ISchedulerFactory.h"
 
-#include "fbpcs/emp_games/lift/metadata_compaction/DummyMetadataCompactorGame.h"
+#include "fbpcs/emp_games/lift/metadata_compaction/DummyMetadataCompactorGameFactory.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorApp.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/SecretShareInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/GenFakeData.h"
@@ -33,12 +33,12 @@ void runMetadataCompactionApp(
     std::unique_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory>
         communicationAgentFactory,
-    std::function<std::unique_ptr<IMetadataCompactorGame<schedulerId>>(
-        std::unique_ptr<fbpcf::scheduler::IScheduler>,
-        int)> metadataCompactorGameCreator) {
+    std::unique_ptr<IMetadataCompactorGameFactory<schedulerId>>
+        metadataCompactorGameFactory) {
   auto app = std::make_unique<MetadataCompactorApp<schedulerId>>(
       myId,
       std::move(communicationAgentFactory),
+      std::move(metadataCompactorGameFactory),
       numConversionsPerUser,
       computePublisherBreakdowns,
       epoch,
@@ -47,7 +47,7 @@ void runMetadataCompactionApp(
       outputSecretSharesPath,
       useXorEncryption);
 
-  app->run(metadataCompactorGameCreator);
+  app->run();
 }
 
 template <int schedulerId>
@@ -130,12 +130,8 @@ class MetadataCompactionAppTestFixture
       int numConversionsPerUser,
       bool computePublisherBreakdowns,
       bool useXorEncryption,
-      std::function<std::unique_ptr<IMetadataCompactorGame<0>>(
-          std::unique_ptr<fbpcf::scheduler::IScheduler>,
-          int)> publisherGameCreator,
-      std::function<std::unique_ptr<IMetadataCompactorGame<1>>(
-          std::unique_ptr<fbpcf::scheduler::IScheduler>,
-          int)> partnerGameCreator) {
+      std::unique_ptr<IMetadataCompactorGameFactory<0>> publisherGameFactory,
+      std::unique_ptr<IMetadataCompactorGameFactory<1>> partnerGameFactory) {
     auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
 
     int epoch = 1546300800;
@@ -150,7 +146,7 @@ class MetadataCompactionAppTestFixture
         publisherSecretSharesOutputPath,
         useXorEncryption,
         std::move(factories[0]),
-        publisherGameCreator);
+        std::move(publisherGameFactory));
 
     auto future1 = std::async(
         runMetadataCompactionApp<1>,
@@ -163,7 +159,7 @@ class MetadataCompactionAppTestFixture
         partnerSecretSharesOutputPath,
         useXorEncryption,
         std::move(factories[1]),
-        partnerGameCreator);
+        std::move(partnerGameFactory));
 
     future0.get();
     future1.get();
@@ -225,8 +221,8 @@ TEST_P(
       numConversionsPerUser,
       computePublisherBreakdowns,
       useXorEncryption,
-      getDummyMetadataCompactorGameCreator<0>(),
-      getDummyMetadataCompactorGameCreator<1>());
+      std::make_unique<DummyMetadataCompactorGameFactory<0>>(),
+      std::make_unique<DummyMetadataCompactorGameFactory<1>>());
 
   std::unique_ptr<IInputProcessor<2>> publisherResults =
       std::move(std::get<0>(res));
