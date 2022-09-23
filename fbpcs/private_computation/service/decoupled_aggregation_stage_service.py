@@ -18,6 +18,7 @@ from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
@@ -98,6 +99,9 @@ class AggregationStageService(PrivateComputationStageService):
 
         binary_config = self._onedocker_binary_config_map[binary_name]
         retry_counter_str = str(pc_instance.infra_config.retry_counter)
+        should_wait_spin_up: bool = (
+            pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        )
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
             instance_id=pc_instance.infra_config.instance_id
@@ -113,6 +117,7 @@ class AggregationStageService(PrivateComputationStageService):
             game_args=game_args,
             container_timeout=self._container_timeout,
             repository_path=binary_config.repository_path,
+            wait_for_containers_to_start_up=should_wait_spin_up,
         )
 
         logging.info("MPC instance started running for decoupled aggregation stage.")

@@ -147,12 +147,16 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
                 ONEDOCKER_REPOSITORY_PATH
             ] = onedocker_binary_config.repository_path
 
+        should_wait_spin_up: bool = (
+            pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        )
         return await pid_run_protocol_binary_service.start_containers(
             cmd_args_list=args_list,
             onedocker_svc=self._onedocker_svc,
             binary_version=onedocker_binary_config.binary_version,
             binary_name=binary_name,
             env_vars=env_vars,
+            wait_for_containers_to_start_up=should_wait_spin_up,
         )
 
     @classmethod

@@ -129,12 +129,13 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
 
         env_vars = {ONEDOCKER_REPOSITORY_PATH: "test_path/"}
         mock_run_binary_base_service_start_containers.assert_called_with(
-            [expected_cmd_args],
-            mock_onedocker_svc,
-            "latest",
-            OneDockerBinaryNames.PC_PRE_VALIDATION.value,
+            cmd_args_list=[expected_cmd_args],
+            onedocker_svc=mock_onedocker_svc,
+            binary_version="latest",
+            binary_name=OneDockerBinaryNames.PC_PRE_VALIDATION.value,
             timeout=1200,
             env_vars=env_vars,
+            wait_for_containers_to_start_up=True,
         )
 
         mock_stage_state_instance.assert_called_with(

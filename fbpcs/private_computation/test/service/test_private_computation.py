@@ -851,6 +851,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 version=binary_version,
                 env_vars=env_vars,
                 certificate_request=None,
+                wait_for_containers_to_start_up=True,
             ),
             mock_mpc_svc.start_instance_async.call_args,
         )

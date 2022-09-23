@@ -20,6 +20,7 @@ from fbpcs.onedocker_binary_config import (
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+    PrivateComputationRole,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -122,6 +123,9 @@ class PIDShardStageService(PrivateComputationStageService):
                 ONEDOCKER_REPOSITORY_PATH
             ] = onedocker_binary_config.repository_path
 
+        should_wait_spin_up: bool = (
+            pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        )
         return await sharding_binary_service.start_containers(
             cmd_args_list=[args],
             onedocker_svc=self._onedocker_svc,
@@ -129,6 +133,7 @@ class PIDShardStageService(PrivateComputationStageService):
             binary_name=binary_name,
             timeout=self._container_timeout,
             env_vars=env_vars,
+            wait_for_containers_to_start_up=should_wait_spin_up,
         )
 
     def stop_service(
