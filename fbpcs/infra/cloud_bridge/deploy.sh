@@ -179,12 +179,20 @@ undeploy_aws_resources() {
             -var "aws_account_id=$aws_account_id" \
             -var "data_upload_key_path=$data_upload_key_path"
     fi
+    echo "######################## Undeploy resources policy ########################"
+    log_streaming_data "Undeploying resources policies..."
+    cd /terraform_deployment
+    python3 cli.py destroy aws \
+        --delete_iam_policy \
+        --policy_name "$policy_name"
+    echo "######################## Finished undeploy resources policy ########################"
+
     log_streaming_data "finished undeploying all AWS resources "
     echo "Finished destroying all AWS resources, except for:"
-    echo "  # S3 storage bucket ${s3_bucket_for_storage} because it is not empty"
+    echo "  # S3 storage bucket ${s3_bucket_for_storage}"
+    echo "  # S3 data bucket ${s3_bucket_data_pipeline}"
     echo "The following resources may have been deleted:"
-    echo "  # S3 data bucket ${s3_bucket_data_pipeline} (it will be deleted only if it is empty)"
-    echo "  # iam policy ${policy_name} (it will be deleted only if it is not attached to any users)"
+    echo "  # IAM policy ${policy_name} (it will be deleted only if it is not attached to any users)"
     log_streaming_data "undeployment process finished"
 }
 
