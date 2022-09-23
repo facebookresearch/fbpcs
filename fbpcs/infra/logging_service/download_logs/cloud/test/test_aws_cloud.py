@@ -271,3 +271,27 @@ class TestAwsCloud(unittest.TestCase):
             )
             with self.assertRaisesRegex(Exception, "Failed to fetch S3.*"):
                 self.aws_container_logs.verify_s3_bucket("test_bucket")
+
+    def test_ensure_folder_exists(self) -> None:
+        bucket_name = "test_bucket"
+        folder_name = "test_folder"
+        mock_return = {"Contents": bucket_name}
+        self.aws_container_logs.s3_client.list_objects_v2.return_value = mock_return
+
+        with self.subTest("PositiveCase"):
+            self.assertTrue(
+                self.aws_container_logs.ensure_folder_exists(
+                    bucket_name=bucket_name, folder_name=folder_name
+                )
+            )
+
+        with self.subTest("NegativeCase"):
+            mock_return = {}
+            self.aws_container_logs.s3_client.list_objects_v2.reset_mock()
+            self.aws_container_logs.s3_client.list_objects_v2.return_value = mock_return
+
+            self.assertFalse(
+                self.aws_container_logs.ensure_folder_exists(
+                    bucket_name=bucket_name, folder_name=folder_name
+                )
+            )
