@@ -26,17 +26,14 @@ inline common::SchedulerStatistics startMetadataCompactionApp(
     int numConversionsPerUser,
     bool computePublisherBreakdowns,
     int epoch,
-    bool useXorEncryption) {
+    bool useXorEncryption,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
           PartyInfo>
       partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = "";
-  tlsInfo.keyPath = "";
-  tlsInfo.passphrasePath = "";
-  tlsInfo.useTls = false;
 
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
