@@ -16,6 +16,7 @@ git clone https://github.com/facebookresearch/fbpcs.git
   * run the following command
 ```
 cd fbpcs/infra/mr_pid/publisher
+```
 3. build the image
   * run the following command
 ```
@@ -26,7 +27,7 @@ make image-build
 ```
 docker image ls
 ```
-`or`
+or
 ```
 docker images mrpid-publisher-side
 ```
@@ -45,10 +46,10 @@ cd /terraform_deployment
 Note: This initial script needs to be run before partner side deployment script!
 8. create environment variables on AWS credentials (while be removed eventually)
   * run the following command
-```
+
 Note: Make sure you have the credentials `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to access the AWS account.
 The `AWS_SESSION_TOKEN` is optional if you have a permanent pair of `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
-
+```
 export AWS_ACCESS_KEY_ID=<YOUR_OWN_AWS_ACCESS_KEY> \
 export AWS_SECRET_ACCESS_KEY=<YOUR_OWN_AWS_SECRET_ACCESS_KEY> \
 export AWS_SESSION_TOKEN=<YOUR_OWN_AWS_SESSION_TOKEN> \
@@ -85,7 +86,6 @@ example: /bin/bash mrpid_publisher_final_deploy.sh deploy -r us-west-2 -t your-t
 /bin/bash mrpid_publisher_final_deploy.sh undeploy -r <> -t <> -a <> -p <> -b <optional>
 example: /bin/bash mrpid_publisher_final_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
 ```
-
 
 # Notes
  * parameter tag (`-t`) cannot be too long. AWS function/variable name must have length less than or equal to 64.
