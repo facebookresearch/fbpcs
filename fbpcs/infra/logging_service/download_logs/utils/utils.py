@@ -141,6 +141,7 @@ class StringFormatter(str, Enum):
     LAMBDA_LOG_GROUP_NAME = "/aws/lambda/{}"
     GLUE_CRAWLER_NAME = "mpc-events-crawler-{}"
     GLUE_ETL_NAME = "glue-ETL-{}"
+    ATHENA_DATABASE = "mpc-events-db-{}"
 
 
 @dataclass
