@@ -19,6 +19,14 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
+  fbpcs::performance_tools::CostEstimation cost =
+      fbpcs::performance_tools::CostEstimation(
+          "lift_metadata_compaction",
+          FLAGS_log_cost_s3_bucket,
+          FLAGS_log_cost_s3_region,
+          "pcf2");
+  cost.start();
+
   fbpcf::AwsSdk::aquire();
 
   XLOG(INFO) << "Running lift metadata compaction with settings:\n"
@@ -36,6 +44,10 @@ int main(int argc, char** argv) {
              << FLAGS_num_conversions_per_user << "\n"
              << "\tcompute publisher breakdowns: "
              << FLAGS_compute_publisher_breakdowns << "\n"
+             << "\trun_name: " << FLAGS_run_name << "\n"
+             << "\tlog cost: " << FLAGS_log_cost << "\n"
+             << "\ts3 bucket: " << FLAGS_log_cost_s3_bucket << "\n"
+             << "\ts3 region: " << FLAGS_log_cost_s3_region << "\n"
              << "\tpc_feature_flags:" << FLAGS_pc_feature_flags;
 
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner
@@ -75,6 +87,9 @@ int main(int argc, char** argv) {
     XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
   }
 
+  cost.end();
+  XLOG(INFO, cost.getEstimatedCostString());
+
   XLOGF(
       INFO,
       "Non-free gate count = {}, Free gate count = {}",
@@ -86,6 +101,35 @@ int main(int argc, char** argv) {
       "Sent network traffic = {}, Received network traffic = {}",
       schedulerStatistics.sentNetwork,
       schedulerStatistics.receivedNetwork);
+
+  if (FLAGS_log_cost) {
+    bool run_name_specified = FLAGS_run_name != "";
+    auto run_name = run_name_specified ? FLAGS_run_name : "temp_run_name";
+    auto party = (FLAGS_party == common::PUBLISHER) ? "Publisher" : "Partner";
+
+    folly::dynamic extra_info = common::getCostExtraInfo(
+        party,
+        FLAGS_input_path,
+        "",
+        1,
+        0,
+        1,
+        FLAGS_use_xor_encryption,
+        schedulerStatistics);
+
+    extra_info["output_secret_shares_path"] = FLAGS_output_secret_shares_path;
+    extra_info["output_global_params_path"] = FLAGS_output_global_params_path;
+
+    folly::dynamic costDict =
+        cost.getEstimatedCostDynamic(run_name, party, extra_info);
+
+    auto objectName = run_name_specified
+        ? run_name
+        : folly::to<std::string>(
+              FLAGS_run_name, '_', costDict["timestamp"].asString());
+
+    XLOGF(INFO, "{}", cost.writeToS3(party, objectName, costDict));
+  }
 
   return 0;
 }

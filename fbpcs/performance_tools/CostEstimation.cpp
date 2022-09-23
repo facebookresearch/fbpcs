@@ -29,6 +29,7 @@ const std::unordered_map<std::string, std::string> SUPPORTED_APPLICATIONS(
      {"attributor", "att-logs"},
      {"aggregator", "agg-logs"},
      {"lift", "pl-logs"},
+     {"lift_metadata_compaction", "pl-logs"},
      {"shard_aggregator", "sa-logs"},
      {"shard_combiner", "sc-logs"},
      {"compactor", "comp-logs"},
