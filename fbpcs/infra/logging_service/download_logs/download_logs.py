@@ -35,8 +35,11 @@ class AwsContainerLogs(AwsCloud):
     KINESIS_LOGS_FOLDER = "kinesis_logs"
     LAMBDA_LOGS_FOLDER = "lambda_logs"
     GLUE_LOGS_FOLDER = "glue_logs"
+    ATHENA_LOGS_FOLDER = "athena_logs"
     KINESIS_ERROR_LOGS = "kinesis_error_logs"
     KINESIS_CONFIG_LOGS = "kinesis_config_logs"
+    ATHENA_CONFIG_LOGS = "athena_config_logs"
+    ATHENA_DATA_CATALOG_NAME = "AwsDataCatalog"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
     MAX_THREADS = 500
     THREADS_PER_CORE = 20
@@ -142,6 +145,11 @@ class AwsContainerLogs(AwsCloud):
 
                 # upload data infra glue logs
                 self._prepare_glue_logs(local_log_folder_location=local_folder_location)
+
+                # upload data infra athena logs
+                self._prepare_athena_logs(
+                    local_log_folder_location=local_folder_location
+                )
 
             if enable_deployment_logs:
                 self._upload_deployment_logs(
@@ -386,6 +394,57 @@ class AwsContainerLogs(AwsCloud):
         self.utils.create_file(
             file_location=glue_etl_log_file_location,
             content=response_glue_etl_config,
+        )
+
+    def _prepare_athena_logs(self, local_log_folder_location: str) -> None:
+        """
+        Upload Athena logs
+        """
+        athena_details_dict = {}
+        if not self.deployment_tag:
+            self.log.error(
+                "Couldn't get the deployment tag to fetch the AWS Athena resources."
+            )
+            return
+
+        database_name = self.utils.string_formatter(
+            StringFormatter.ATHENA_DATABASE, self.deployment_tag
+        )
+
+        # create folder for athena logs
+        athena_log_folder = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            local_log_folder_location,
+            self.ATHENA_LOGS_FOLDER,
+        )
+        self.utils.create_folder(folder_location=athena_log_folder)
+
+        # fetch database config
+        response_database_config = self.get_athena_database_config(
+            catalog_name=self.ATHENA_DATA_CATALOG_NAME, database_name=database_name
+        )
+
+        athena_details_dict.update(response_database_config)
+        athena_details_dict.update({"Query_Result": []})
+
+        query_execution_id_list = self.get_athena_query_executions()
+        # TODO: Add threading for get each query execution details
+        for query_execution_id in query_execution_id_list:
+            response = self.get_athena_query_execution_details(
+                query_execution_id=query_execution_id
+            )
+            athena_details_dict["Query_Result"].append(response)
+
+        # copy glue etl config
+        athena_config_logs_file_location = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            athena_log_folder,
+            self.ATHENA_CONFIG_LOGS,
+        )
+
+        self.utils.create_file(
+            file_location=athena_config_logs_file_location,
+            content=athena_details_dict,
         )
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:

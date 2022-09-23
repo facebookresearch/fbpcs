@@ -101,6 +101,13 @@ class AwsCloud(CloudBaseClass):
             aws_session_token=aws_session_token,
             region_name=aws_region,
         )
+        self.athena_client: botocore.client.BaseClient = self.get_boto3_object(
+            "athena",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+            region_name=aws_region,
+        )
 
     def get_boto3_object(
         self,
@@ -566,4 +573,82 @@ class AwsCloud(CloudBaseClass):
             )
             self.log.error(f"{error_message}")
             response = {"Get_Job_Runs_Error": error_message}
+        return response
+
+    def get_athena_database_list(self, data_catalog_name: str) -> Dict[str, Any]:
+        """
+        Returns list of databases for a given data catalog
+        """
+        response = {}
+        if not data_catalog_name:
+            self.log.error("Catalog name not passed to fetch database config.")
+            return response
+
+        try:
+            response = self.athena_client.list_databases(
+                CatalogName=data_catalog_name, MaxResults=10
+            )
+        except ClientError as error:
+            error_message = (
+                f"Couldn't fetch databses for data catalog {data_catalog_name}: {error}"
+            )
+            self.log.error(f"{error_message}")
+            response = {"List_Databases_Error": error_message}
+        return response
+
+    def get_athena_database_config(
+        self, catalog_name: str, database_name: str
+    ) -> Dict[str, Any]:
+        """
+        Checks the database config for a given catalog and returns the api response
+        """
+        response = {}
+        if not catalog_name:
+            self.log.error("Catalog name not provided to fetch database config.")
+            return response
+
+        if not database_name:
+            self.log.error("Database name not provided to fetch database config.")
+            return response
+
+        try:
+            response = self.athena_client.get_database(
+                CatalogName=catalog_name, DatabaseName=database_name
+            )
+        except ClientError as error:
+            error_message = f"Failed to fetch database config in Athena for catalog {catalog_name} and database {database_name}: {error}"
+            self.log.error(f"{error_message}")
+            response = {"Get_Database_Error": error_message}
+        return response
+
+    def get_athena_query_executions(self) -> List[str]:
+        """
+        List Athena execution IDs.
+        Which can be used to get more information about the query execution
+        """
+        try:
+            response = self.athena_client.list_query_executions()
+        except ClientError as error:
+            error_message = f"Failed to fetch athena query exectuction ID: {error}"
+            self.log.error(f"{error_message}")
+        return response.get("QueryExecutionIds", [])
+
+    def get_athena_query_execution_details(
+        self, query_execution_id: str
+    ) -> Dict[str, Any]:
+        """
+        Returns Athena query execution details
+        """
+        response = {}
+        if not query_execution_id:
+            self.log.error("Query execution ID not provided to fetch query details.")
+            return response
+        try:
+            response = self.athena_client.get_query_execution(
+                QueryExecutionId=query_execution_id
+            )
+        except ClientError as error:
+            error_message = f"Failed to fetch query details with execution ID {query_execution_id}: {error}"
+            self.log.error(f"{error_message}")
+            response = {"Get_Query_Execution_Error": error_message}
         return response
