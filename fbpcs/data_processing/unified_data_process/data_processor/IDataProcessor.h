@@ -23,7 +23,7 @@ class IDataProcessor {
  public:
   using SecString = fbpcf::frontend::BitString<true, schedulerId, true>;
   using PubString = fbpcf::frontend::BitString<false, schedulerId, true>;
-
+  using SecBit = fbpcf::frontend::Bit<true, schedulerId, true>;
   virtual ~IDataProcessor() = default;
 
   /**
