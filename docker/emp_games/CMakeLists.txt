@@ -129,6 +129,21 @@ target_link_libraries(
   perftools)
 install(TARGETS pcf2_aggregation_calculator DESTINATION bin)
 
+# pcf2_lift metadata compaction
+file(GLOB pcf2_lift_metadata_compaction_src
+  "fbpcs/emp_games/lift/metadata_compaction/**.cpp"
+  "fbpcs/emp_games/lift/metadata_compaction/**.h")
+list(FILTER pcf2_lift_metadata_compaction_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  pcf2_lift_metadata_compaction
+  ${pcf2_lift_metadata_compaction_src})
+target_link_libraries(
+  pcf2_lift_metadata_compaction
+  empgamecommon
+  perftools
+  pcf2_lift_input_processing
+)
+
 # pcf2_lift
 file(GLOB pcf2_lift_calculator_src
   "fbpcs/emp_games/lift/common/**.cpp"
