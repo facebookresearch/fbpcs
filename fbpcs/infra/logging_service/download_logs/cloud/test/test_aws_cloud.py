@@ -360,3 +360,65 @@ class TestAwsCloud(unittest.TestCase):
                     response=mock_response
                 ),
             )
+
+    def test_get_latest_cloudwatch_log(self) -> None:
+        mock_streams = [
+            {"logStreamName": "test_stream_1"},
+            {"logStreamName": "test_stream_2"},
+        ]
+        mock_response = {"logStreams": mock_streams}
+        self.aws_container_logs.cloudwatch_client.describe_log_streams.return_value = (
+            mock_response
+        )
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                mock_streams[0]["logStreamName"],
+                self.aws_container_logs.get_latest_cloudwatch_log(
+                    log_group_name="test_group"
+                ),
+            )
+
+        with self.subTest("EmptyStreamsList"):
+            mock_streams = []
+            mock_response = {"logStreams": mock_streams}
+            self.aws_container_logs.cloudwatch_client.describe_log_streams.reset_mock()
+            self.aws_container_logs.cloudwatch_client.describe_log_streams.return_value = (
+                mock_response
+            )
+            expected = ""
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_latest_cloudwatch_log(
+                    log_group_name="test_group"
+                ),
+            )
+
+        with self.subTest("EmptyResponse"):
+            mock_response = {}
+            self.aws_container_logs.cloudwatch_client.describe_log_streams.reset_mock()
+            self.aws_container_logs.cloudwatch_client.describe_log_streams.return_value = (
+                mock_response
+            )
+            expected = ""
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_latest_cloudwatch_log(
+                    log_group_name="test_group"
+                ),
+            )
+
+        with self.subTest("ExceptionCase"):
+            mock_response = {}
+            self.aws_container_logs.cloudwatch_client.describe_log_streams.reset_mock()
+            self.aws_container_logs.cloudwatch_client.describe_log_streams.side_effect = ClientError(
+                error_response={"Error": {"Code": "cloudwatcherro"}},
+                operation_name="describe_log_streams",
+            )
+            expected = r"^Couldn't fetch log streams.*"
+            with self.assertLogs() as captured:
+                self.aws_container_logs.get_latest_cloudwatch_log(
+                    log_group_name="test_group"
+                )
+                self.assertEqual(len(captured.records), 2)
+                self.assertRegex(captured.records[1].getMessage(), expected)
