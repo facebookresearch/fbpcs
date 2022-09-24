@@ -157,7 +157,6 @@ class PCGraphAPIClient:
         dataset_id: str,
         timestamp: int,
         attribution_rule: str,
-        num_containers: int,
     ) -> requests.Response:
         params = self.params.copy()
         params["attribution_rule"] = attribution_rule
