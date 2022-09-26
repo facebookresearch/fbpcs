@@ -153,12 +153,8 @@ public class DeployController {
       consumes = "application/json")
   public PCEValidatorAPIReturn runPCEValidator(@RequestBody DeploymentParams deployment) {
     logger.info("Received request to run PCE validator: ");
-    final Integer exitCode = new PCEValidatorRunner().start(deployment);
-    return new PCEValidatorAPIReturn(
-        exitCode == 0
-            ? PCEValidatorAPIReturn.Status.STATUS_SUCCESS
-            : PCEValidatorAPIReturn.Status.STATUS_FAIL,
-        "");
+    final PCEValidatorAPIReturn result = new PCEValidatorRunner().start(deployment);
+    return result;
   }
 
   @GetMapping(path = "/v1/deployment/logs")
