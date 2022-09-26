@@ -7,20 +7,20 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.facebook.business.cloudbridge.pl.server.DeploymentParams.LogLevel;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
-class DeploymentParamsTests {
+public class DeploymentParamsTest {
   private DeploymentParams deploymentParams = null;
 
-  @BeforeEach
-  void setup() {
+  @Before
+  public void setUp() {
     DeploymentParams deploymentParams = new DeploymentParams();
     deploymentParams.region = "us-west-2";
     deploymentParams.accountId = "123456789012";
@@ -39,7 +39,7 @@ class DeploymentParamsTests {
   }
 
   @Test
-  void testLogLevel() {
+  public void testLogLevel() {
     String logLevelString = "DEBUG";
     LogLevel expectedLogLevel = LogLevel.DEBUG;
 
@@ -49,12 +49,12 @@ class DeploymentParamsTests {
   }
 
   @Test
-  void testValidateWhenAllFieldsAreValid() {
+  public void testValidateWhenAllFieldsAreValid() {
     assertDoesNotThrow(deploymentParams::validate);
   }
 
   @Test
-  void testValidateWhenValidationErrors() {
+  public void testValidateWhenValidationErrors() {
     String region = deploymentParams.region;
     deploymentParams.region = "";
     assertThrows(InvalidDeploymentArgumentException.class, deploymentParams::validate);
@@ -102,7 +102,7 @@ class DeploymentParamsTests {
   }
 
   @Test
-  void testToString() {
+  public void testToString() {
     boolean enabledSemiAutoValue = deploymentParams.enableSemiAutomatedDataIngestion;
     String regexTemplate = ".*%s.*";
     String stringValue = deploymentParams.toString();

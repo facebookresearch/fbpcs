@@ -7,12 +7,12 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ApplicationTests {
+public class ApplicationTest {
 
   @Test
-  void contextLoads() {}
+  public void contextLoads() {}
 }
