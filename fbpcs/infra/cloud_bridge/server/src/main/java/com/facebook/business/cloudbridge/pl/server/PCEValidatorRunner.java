@@ -47,13 +47,25 @@ public class PCEValidatorRunner {
     return environmentVariables;
   }
 
-  public Integer start(final @NonNull DeploymentParams deployment) {
-    final ShellCommandRunner.CommandRunnerResult result =
+  public PCEValidatorAPIReturn start(final @NonNull DeploymentParams deployment) {
+
+    final Validator.ValidatorResult credentialValidationResult =
+        new Validator().validateCredentials(deployment);
+    if (credentialValidationResult.isSuccessful == false) {
+      return new PCEValidatorAPIReturn(
+          PCEValidatorAPIReturn.Status.STATUS_FAIL, credentialValidationResult.message);
+    }
+
+    final ShellCommandRunner.CommandRunnerResult pceValidationResult =
         shellCommandRunner.run(
             buildPCEValidateCommand(deployment),
             buildEnvironmentVariables(deployment),
             "/terraform_deployment",
             "pceValidator.log");
-    return result.getExitCode();
+    return new PCEValidatorAPIReturn(
+        pceValidationResult.getExitCode() == 0
+            ? PCEValidatorAPIReturn.Status.STATUS_SUCCESS
+            : PCEValidatorAPIReturn.Status.STATUS_FAIL,
+        "");
   }
 }

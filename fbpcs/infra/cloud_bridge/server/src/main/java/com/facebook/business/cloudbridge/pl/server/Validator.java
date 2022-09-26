@@ -110,7 +110,7 @@ public class Validator {
     }
   }
 
-  private ValidatorResult validateCredentials(DeploymentParams deploymentParams) {
+  public ValidatorResult validateCredentials(DeploymentParams deploymentParams) {
     final String accountIdFromAws = getAccountIDUsingAccessKey(deploymentParams);
     if (accountIdFromAws == null) {
       logger.error("Invalid credentials received");
@@ -126,7 +126,7 @@ public class Validator {
       return new ValidatorResult(
           false, "The AWS account id provided doesn't match with the AWS credentials provided");
     }
-    return new ValidatorResult(true, "credentials provides are valid");
+    return new ValidatorResult(true, "credentials provided are valid");
   }
 
   public ValidatorResult validate(DeploymentParams deploymentParams, boolean deploy) {
