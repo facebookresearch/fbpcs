@@ -34,6 +34,7 @@ class AwsContainerLogs(AwsCloud):
     DEPLOYMENT_LOGS_FOLDER = "deployment_logs"
     KINESIS_LOGS_FOLDER = "kinesis_logs"
     LAMBDA_LOGS_FOLDER = "lambda_logs"
+    GLUE_LOGS_FOLDER = "glue_logs"
     KINESIS_ERROR_LOGS = "kinesis_error_logs"
     KINESIS_CONFIG_LOGS = "kinesis_config_logs"
     DEFAULT_DOWNLOAD_LOCATION = "/tmp"
@@ -138,6 +139,9 @@ class AwsContainerLogs(AwsCloud):
                 self._upload_lambda_logs(
                     local_log_folder_location=local_folder_location
                 )
+
+                # upload data infra glue logs
+                self._prepare_glue_logs(local_log_folder_location=local_folder_location)
 
             if enable_deployment_logs:
                 self._upload_deployment_logs(
@@ -286,6 +290,7 @@ class AwsContainerLogs(AwsCloud):
                 "Couldn't get the deployment tag to fetch the AWS Lambda resources."
             )
             return
+
         # Create folder for lambda logs
         lambda_log_folder = self.utils.string_formatter(
             StringFormatter.FILE_LOCATION,
@@ -315,6 +320,73 @@ class AwsContainerLogs(AwsCloud):
                 file_location=lambda_log_file_location,
                 content=messages,
             )
+
+    def _prepare_glue_logs(self, local_log_folder_location: str) -> None:
+        """
+        Upload glue crawler and ETL logs
+        """
+
+        if not self.deployment_tag:
+            self.log.error(
+                "Couldn't get the deployment tag to fetch the AWS Glue resources."
+            )
+            return
+
+        # Create folder for glue logs
+        glue_log_folder = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            local_log_folder_location,
+            self.GLUE_LOGS_FOLDER,
+        )
+        self.utils.create_folder(folder_location=glue_log_folder)
+
+        crawler_name = self.utils.string_formatter(
+            StringFormatter.GLUE_CRAWLER_NAME, self.deployment_tag
+        )
+
+        # fetch crawler configs and metrics
+        response_crawler_config = self.get_glue_crawler_config(
+            glue_crawler_name=crawler_name
+        )
+        response_crawler_metric = self.get_glue_crawler_metrics(
+            glue_crawler_name=crawler_name
+        )
+        response_crawler_config.update(response_crawler_metric)
+
+        # copy glue crawler config
+        glue_crawler_log_file_location = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            glue_log_folder,
+            crawler_name,
+        )
+        self.utils.create_file(
+            file_location=glue_crawler_log_file_location,
+            content=response_crawler_config,
+        )
+
+        glue_etl_name = self.utils.string_formatter(
+            StringFormatter.GLUE_ETL_NAME, self.deployment_tag
+        )
+
+        # fetch glue ETL configs and metrics
+        response_glue_etl_config = self.get_glue_etl_job_details(
+            glue_etl_name=glue_etl_name
+        )
+        response_glue_etl_metrics = self.get_glue_etl_job_run_details(
+            glue_etl_name=glue_etl_name
+        )
+        response_glue_etl_config.update(response_glue_etl_metrics)
+
+        # copy glue etl config
+        glue_etl_log_file_location = self.utils.string_formatter(
+            StringFormatter.FILE_LOCATION,
+            glue_log_folder,
+            glue_etl_name,
+        )
+        self.utils.create_file(
+            file_location=glue_etl_log_file_location,
+            content=response_glue_etl_config,
+        )
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:
         """
