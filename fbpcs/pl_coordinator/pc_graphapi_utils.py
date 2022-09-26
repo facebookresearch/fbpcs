@@ -129,6 +129,13 @@ class PCGraphAPIClient:
             )
         return token
 
+    def get_debug_token_data(self) -> requests.Response:
+        params = self.params.copy()
+        params["input_token"] = self.access_token
+        r = requests.get(f"{URL}/debug_token", params=params)
+        self._check_err(r, "getting debug token data")
+        return r
+
     def get_instance(self, instance_id: str) -> requests.Response:
         r = requests.get(
             f"{URL}/{instance_id}",

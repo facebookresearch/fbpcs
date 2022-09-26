@@ -53,7 +53,10 @@ from fbpcs.bolt.read_config import parse_bolt_config
 from fbpcs.common.service.secret_scrubber import LoggingSecretScrubber, SecretScrubber
 from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
+from fbpcs.pl_coordinator.exceptions import sys_exit_after
+from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.pl_study_runner import run_study
+from fbpcs.pl_coordinator.token_validator import TokenValidator
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
@@ -169,6 +172,7 @@ def parse_host_port(
     return (found.group(1), int(found.group(2)))
 
 
+@sys_exit_after
 def main(argv: Optional[List[str]] = None) -> None:
     s = schema.Schema(
         {
@@ -308,6 +312,12 @@ def main(argv: Optional[List[str]] = None) -> None:
         f"Client using logging service host: {logging_service_host}, port: {logging_service_port}."
     )
     logging_service_client = ClientManager(logging_service_host, logging_service_port)
+
+    # validate token before run study/attribution
+    if arguments["run_attribution"] or arguments["run_study"]:
+        graph_client = PCGraphAPIClient(config=config, logger=logger)
+        token_validator = TokenValidator(client=graph_client)
+        token_validator.validate_common_rules()
 
     if arguments["create_instance"]:
         logger.info(f"Create instance: {instance_id}")
