@@ -12,6 +12,8 @@ import sys
 from enum import Enum
 
 from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
+
+from fbpcs.pl_coordinator.token_validation_rules import TokenValidationRule
 from fbpcs.private_computation.entity.pcs_tier import PCSTier
 from fbpcs.utils.color import colored
 
@@ -62,6 +64,14 @@ class OneCommandRunnerExitCode(Enum):
     INCORRECT_TIER_EXPECTED_CANARY = 66
     INCORRECT_TIER_EXPECTED_LATEST = 67
 
+    # Token validation error code
+    ERROR_TOKEN = 70
+    ERROR_TOKEN_USER_TYPE = 71
+    ERROR_TOKEN_VALID = 72
+    ERROR_TOKEN_EXPIRY = 73
+    ERROR_TOKEN_DATA_ACCESS_EXPIRY = 74
+    ERROR_TOKEN_PERMISSIONS = 75
+
 
 class OneCommandRunnerBaseException(Exception):
     def __init__(
@@ -110,6 +120,34 @@ class GraphAPITokenNotFound(OneCommandRunnerBaseException, RuntimeError):
             remediation="Put Graph API token in config.yml file or run"
             f" export {FBPCS_GRAPH_API_TOKEN}=YOUR_TOKEN in your terminal",
         )
+
+
+class GraphAPITokenValidationError(OneCommandRunnerBaseException, RuntimeError):
+    @classmethod
+    def make_error(cls, rule: TokenValidationRule) -> "GraphAPITokenValidationError":
+        return cls(
+            msg="Graph API token didn't pass the validation.",
+            cause=f"Graph API token didn't pass. rule={rule}",
+            remediation="Please check your Graph API token meet the requirements",
+            exit_code=cls._determine_exit_code(rule),
+        )
+
+    @classmethod
+    def _determine_exit_code(
+        cls, rule: TokenValidationRule
+    ) -> OneCommandRunnerExitCode:
+        if rule is TokenValidationRule.TOKEN_USER_TYPE:
+            return OneCommandRunnerExitCode.ERROR_TOKEN_USER_TYPE
+        elif rule is TokenValidationRule.TOKEN_VALID:
+            return OneCommandRunnerExitCode.ERROR_TOKEN_VALID
+        elif rule is TokenValidationRule.TOKEN_EXPIRY:
+            return OneCommandRunnerExitCode.ERROR_TOKEN_EXPIRY
+        elif rule is TokenValidationRule.TOKEN_DATA_ACCESS_EXPIRY:
+            return OneCommandRunnerExitCode.ERROR_TOKEN_DATA_ACCESS_EXPIRY
+        elif rule is TokenValidationRule.TOKEN_PERMISSIONS:
+            return OneCommandRunnerExitCode.ERROR_TOKEN_PERMISSIONS
+        else:
+            return OneCommandRunnerExitCode.ERROR_TOKEN
 
 
 class IncompatibleStageError(OneCommandRunnerBaseException, RuntimeError):

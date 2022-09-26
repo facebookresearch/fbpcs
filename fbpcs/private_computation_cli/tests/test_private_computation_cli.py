@@ -188,8 +188,12 @@ class TestPrivateComputationCli(TestCase):
             pc_cli.main(argv)
             create_mock.assert_called_once()
 
+    @patch("fbpcs.private_computation_cli.private_computation_cli.TokenValidator")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.PCGraphAPIClient")
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_attribution")
-    def test_run_attribution(self, create_mock) -> None:
+    def test_run_attribution(
+        self, create_mock, graph_client_mock, token_validator_mock
+    ) -> None:
         argv = [
             "run_attribution",
             "--dataset_id=43423422232",
@@ -292,8 +296,12 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         get_mpc_mock.assert_called_once()
 
+    @patch("fbpcs.private_computation_cli.private_computation_cli.TokenValidator")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.PCGraphAPIClient")
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_study")
-    def test_run_study(self, run_study_mock) -> None:
+    def test_run_study(
+        self, run_study_mock, graph_client_mock, token_validator_mock
+    ) -> None:
         argv = [
             "run_study",
             "12345",
