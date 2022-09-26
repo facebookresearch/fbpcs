@@ -244,7 +244,6 @@ def _create_new_instance(
             dataset_id,
             timestamp,
             attribution_rule,
-            2,
         ).text
     )["id"]
     logger.info(
