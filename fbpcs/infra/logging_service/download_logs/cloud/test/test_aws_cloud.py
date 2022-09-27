@@ -319,3 +319,38 @@ class TestAwsCloud(unittest.TestCase):
                 self.aws_container_logs.get_kinesis_firehose_streams(
                     kinesis_firehose_stream_name=kinesis_firehose_stream_name
                 )
+
+    def test_get_kinesis_firehose_config(self) -> None:
+        mock_response = {
+            "DeliveryStreamDescription": {
+                "Destinations": [
+                    {
+                        "S3DestinationDescription": {
+                            "CloudWatchLoggingOptions": {"Enabled": True}
+                        }
+                    }
+                ]
+            }
+        }
+        with self.subTest("basic"):
+            expected = {"Enabled": True}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_kinesis_firehose_config(
+                    response=mock_response
+                ),
+            )
+
+        with self.subTest("NegativeCase"):
+            expected = {"Enabled": False}
+            mock_response = {
+                "DeliveryStreamDescription": {
+                    "Destinations": [{"S3DestinationDescription": {}}]
+                }
+            }
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_kinesis_firehose_config(
+                    response=mock_response
+                ),
+            )
