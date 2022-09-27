@@ -157,6 +157,8 @@ class ShardCombinerAppTestFixture
       std::unique_ptr<
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>
           communicationAgentFactory) {
+    auto metricCollector =
+        std::make_shared<fbpcf::util::MetricCollector>("shard_combiner_test");
     ShardCombinerApp<shardSchemaType, schedulerId, usingBatch, inputEncryption>(
         std::move(communicationAgentFactory),
         numShards,
@@ -166,7 +168,8 @@ class ShardCombinerAppTestFixture
         outputPath,
         threshold,
         xorEncrypted,
-        resultVisibility)
+        resultVisibility,
+        metricCollector)
         .run();
   }
 

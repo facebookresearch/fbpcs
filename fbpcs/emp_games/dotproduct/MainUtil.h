@@ -36,9 +36,12 @@ inline common::SchedulerStatistics startDotProductApp(
   tlsInfo.passphrasePath = "";
   tlsInfo.useTls = false;
 
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("dotproduct");
+
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, tlsInfo, "dotproduct_traffic");
+      PARTY, partyInfos, tlsInfo, metricCollector);
 
   auto app = std::make_unique<pcf2_dotproduct::DotproductApp<PARTY, PARTY>>(
       std::move(communicationAgentFactory),
@@ -46,6 +49,7 @@ inline common::SchedulerStatistics startDotProductApp(
       outFilePath,
       numFeatures,
       labelWidth,
+      metricCollector,
       debugMode);
 
   app->run();

@@ -37,11 +37,14 @@ static void runGame(
     std::unique_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory>
         communicationAgentFactory) {
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("attribution_test");
   AttributionApp<PARTY, schedulerId, usingBatch, inputEncryption>(
       std::move(communicationAgentFactory),
       attributionRules,
       std::vector<string>{inputPath},
-      std::vector<string>{outputPath})
+      std::vector<string>{outputPath},
+      metricCollector)
       .run();
 }
 

@@ -41,6 +41,9 @@ static void runGame(
           PartyInfo>
       partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
 
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("dotproduct_test");
+
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
       PARTY, partyInfos, useTls, tlsDir, "dotproduct_traffic_test");
@@ -51,6 +54,7 @@ static void runGame(
       outputFilePath,
       numFeatures,
       labelWidth,
+      metricCollector,
       debugMode);
 
   app->run();

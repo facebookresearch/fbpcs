@@ -19,7 +19,6 @@ void CalculatorApp<schedulerId>::run() {
   // Run calculator game sequentially on numFiles files, starting from
   // startFileIndex
   auto scheduler = createScheduler();
-  auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
   CalculatorGame<schedulerId> game{
       party_, std::move(scheduler), std::move(communicationAgentFactory_)};
 
@@ -62,7 +61,7 @@ void CalculatorApp<schedulerId>::run() {
   schedulerStatistics_.freeGates = gateStatistics.second;
   schedulerStatistics_.sentNetwork = trafficStatistics.first;
   schedulerStatistics_.receivedNetwork = trafficStatistics.second;
-  schedulerStatistics_.details = metricsCollector->collectMetrics();
+  schedulerStatistics_.details = metricCollector_->collectMetrics();
 };
 
 template <int schedulerId>
@@ -93,10 +92,10 @@ std::unique_ptr<fbpcf::scheduler::IScheduler>
 CalculatorApp<schedulerId>::createScheduler() {
   return useXorEncryption_
       ? fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-            party_, *communicationAgentFactory_)
+            party_, *communicationAgentFactory_, metricCollector_)
             ->create()
       : fbpcf::scheduler::NetworkPlaintextSchedulerFactory<false>(
-            party_, *communicationAgentFactory_)
+            party_, *communicationAgentFactory_, metricCollector_)
             .create();
 }
 } // namespace private_lift

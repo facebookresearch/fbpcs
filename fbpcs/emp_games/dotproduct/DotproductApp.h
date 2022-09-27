@@ -10,7 +10,7 @@
 #include <fbpcf/io/api/FileIOWrappers.h>
 
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
-#include "fbpcf/scheduler/SchedulerHelper.h"
+#include "fbpcf/scheduler/LazySchedulerFactory.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/dotproduct/DotproductGame.h"
@@ -30,6 +30,7 @@ class DotproductApp {
       std::string& outputFilePath,
       int numFeatures,
       int labelWidth,
+      std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       const bool debugMode = false)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
         inputFilePath_(inputFilePath),
@@ -37,13 +38,13 @@ class DotproductApp {
         numFeatures_(numFeatures),
         labelWidth_(labelWidth),
         schedulerStatistics_{0, 0, 0, 0, 0},
+        metricCollector_{metricCollector},
         debugMode_(debugMode) {}
 
   void run() {
-    auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
-
-    auto scheduler = fbpcf::scheduler::createLazySchedulerWithRealEngine(
-        MY_ROLE, *communicationAgentFactory_);
+    auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
+                         MY_ROLE, *communicationAgentFactory_, metricCollector_)
+                         ->create();
 
     DotproductGame<schedulerId> game(
         std::move(scheduler), std::move(communicationAgentFactory_));
@@ -176,6 +177,7 @@ class DotproductApp {
   int numFeatures_;
   int labelWidth_;
   common::SchedulerStatistics schedulerStatistics_;
+  std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
   bool debugMode_;
 };
 

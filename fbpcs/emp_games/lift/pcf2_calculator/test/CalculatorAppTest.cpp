@@ -41,6 +41,9 @@ void runCalculatorApp(
     std::unique_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory>
         communicationAgentFactory) {
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("calculator_test");
+
   auto app = std::make_unique<CalculatorApp<schedulerId>>(
       myId,
       std::move(communicationAgentFactory),
@@ -49,6 +52,7 @@ void runCalculatorApp(
       epoch,
       std::vector<std::string>{inputPath},
       std::vector<std::string>{outputPath},
+      metricCollector,
       0,
       1,
       useXorEncryption);

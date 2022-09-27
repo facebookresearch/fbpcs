@@ -12,13 +12,13 @@
 
 #include <gflags/gflags.h>
 
-#include <folly/Synchronized.h>
-#include <folly/init/Init.h>
-#include <folly/logging/xlog.h>
-
 #include <fbpcf/aws/AwsSdk.h>
 #include <fbpcf/exception/ExceptionBase.h>
 #include <fbpcf/exception/exceptions.h>
+#include <folly/Synchronized.h>
+#include <folly/init/Init.h>
+#include <folly/json.h>
+#include <folly/logging/xlog.h>
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
@@ -160,6 +160,10 @@ int main(int argc, char* argv[]) {
 
   cost.end();
   XLOG(INFO) << cost.getEstimatedCostString();
+  XLOGF(
+      INFO,
+      "MPC Traffic Details: {}",
+      folly::toPrettyJson(schedulerStatistics.details));
   if (FLAGS_log_cost) {
     std::string party_str =
         (FLAGS_party == static_cast<int32_t>(common::PUBLISHER)) ? "Publisher"

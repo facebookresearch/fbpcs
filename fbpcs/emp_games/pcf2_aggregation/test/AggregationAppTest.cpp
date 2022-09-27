@@ -49,6 +49,9 @@ static void runGame(
         communicationAgentFactory) {
   FLAGS_use_new_output_format = useNewOutputFormat;
 
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("aggregation_test");
+
   AggregationApp<PARTY, schedulerId>(
       inputEncryption,
       outputVisibility,
@@ -56,7 +59,8 @@ static void runGame(
       aggregationFormat,
       std::vector<std::string>{inputSecretSharePath},
       std::vector<std::string>{inputClearTextPath},
-      std::vector<std::string>{outputPath})
+      std::vector<std::string>{outputPath},
+      metricCollector)
       .run();
 }
 

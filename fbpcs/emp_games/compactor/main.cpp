@@ -114,13 +114,17 @@ int main(int argc, char** argv) {
       partyInfos{
           {{PUBLISHER_ROLE, {FLAGS_host, FLAGS_port}},
            {PARTNER_ROLE, {FLAGS_host, FLAGS_port}}}};
+
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("compactor");
+
   auto commAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      FLAGS_party, std::move(partyInfos), tlsInfo, "compactor_traffic");
+      FLAGS_party, std::move(partyInfos), tlsInfo, metricCollector);
 
   XLOG(INFO) << "Creating scheduler\n";
   auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-                       FLAGS_party, *commAgentFactory)
+                       FLAGS_party, *commAgentFactory, metricCollector)
                        ->create();
 
   XLOG(INFO) << "Starting game\n";

@@ -84,12 +84,12 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
     tlsInfo.passphrasePath = "";
     tlsInfo.useTls = false;
 
+    auto metricCollector = std::make_shared<fbpcf::util::MetricCollector>(
+        "aggregation_metrics_for_thread_" + std::to_string(index));
+
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY,
-        partyInfos,
-        tlsInfo,
-        "aggregation_traffic_for_thread_" + std::to_string(index));
+        PARTY, partyInfos, tlsInfo, metricCollector);
 
     // Each AggregationApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
@@ -102,6 +102,7 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
         inputSecretShareFilenames,
         inputClearTextFilenames,
         outputFilenames,
+        metricCollector,
         startFileIndex,
         numFiles,
         numThreads);

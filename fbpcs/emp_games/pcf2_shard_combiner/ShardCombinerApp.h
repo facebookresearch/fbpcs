@@ -49,7 +49,8 @@ class ShardCombinerApp {
       const std::string& outputPath,
       std::int64_t threshold,
       bool useXorEncryption,
-      common::ResultVisibility resultVisibility)
+      common::ResultVisibility resultVisibility,
+      std::shared_ptr<fbpcf::util::MetricCollector> metricCollector)
       : shardStartIndex_(shardStartIndex),
         numShards_(numShards),
         threshold_(threshold),
@@ -59,19 +60,19 @@ class ShardCombinerApp {
         resultVisibility_(resultVisibility),
         communicationAgentFactory_(std::move(communicationAgentFactory)),
         useXorEncryption_(useXorEncryption),
-        schedulerStatistics_{0, 0, 0, 0, 0} {
+        schedulerStatistics_{0, 0, 0, 0, 0},
+        metricCollector_(metricCollector) {
     XLOG(INFO) << "Instantiated: " << schedulerId;
   }
 
   void run() {
     auto scheduler = useXorEncryption_
         ? fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-              schedulerId, *communicationAgentFactory_)
+              schedulerId, *communicationAgentFactory_, metricCollector_)
               ->create()
         : fbpcf::scheduler::NetworkPlaintextSchedulerFactory<true /*unsafe*/>(
-              schedulerId, *communicationAgentFactory_)
+              schedulerId, *communicationAgentFactory_, metricCollector_)
               .create();
-    auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
     XLOG(INFO) << "Made scheduler: " << schedulerId;
 
@@ -140,7 +141,7 @@ class ShardCombinerApp {
     schedulerStatistics_.freeGates = gateStatistics.second;
     schedulerStatistics_.sentNetwork = trafficStatistics.first;
     schedulerStatistics_.receivedNetwork = trafficStatistics.second;
-    schedulerStatistics_.details = metricsCollector->collectMetrics();
+    schedulerStatistics_.details = metricCollector_->collectMetrics();
   }
 
   common::SchedulerStatistics getSchedulerStatistics() {
@@ -172,5 +173,6 @@ class ShardCombinerApp {
       communicationAgentFactory_;
   bool useXorEncryption_;
   common::SchedulerStatistics schedulerStatistics_;
+  std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
 };
 } // namespace shard_combiner

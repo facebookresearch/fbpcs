@@ -93,12 +93,12 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     tlsInfo.passphrasePath = "";
     tlsInfo.useTls = false;
 
+    auto metricCollector = std::make_shared<fbpcf::util::MetricCollector>(
+        "attribution_metrics_for_thread_" + std::to_string(index));
+
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY,
-        partyInfos,
-        tlsInfo,
-        "attribution_traffic_for_thread_" + std::to_string(index));
+        PARTY, partyInfos, tlsInfo, metricCollector);
 
     // Each AttributionApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
@@ -111,6 +111,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
         attributionRules,
         inputFilenames,
         outputFilenames,
+        metricCollector,
         startFileIndex,
         numFiles);
 

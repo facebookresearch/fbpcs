@@ -63,9 +63,12 @@ common::SchedulerStatistics runApp(
       partyInfos(
           {{common::PUBLISHER, {ip, port}}, {common::PARTNER, {ip, port}}});
 
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("shard_combiner");
+
   auto communicationAgentFactory = std::make_unique<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      schedulerId, partyInfos, tlsInfo, "shard_combiner_traffic");
+      schedulerId, partyInfos, tlsInfo, metricCollector);
 
   common::SchedulerStatistics schedulerStats;
   if (schedulerId == common::PUBLISHER) {
@@ -83,7 +86,8 @@ common::SchedulerStatistics runApp(
           outputPath,
           threshold,
           useXorEncryption,
-          resultVisibility);
+          resultVisibility,
+          metricCollector);
       app->run();
       return app->getSchedulerStatistics();
     } else {
@@ -100,7 +104,8 @@ common::SchedulerStatistics runApp(
           outputPath,
           threshold,
           useXorEncryption,
-          resultVisibility);
+          resultVisibility,
+          metricCollector);
       app->run();
       return app->getSchedulerStatistics();
     }
@@ -119,7 +124,8 @@ common::SchedulerStatistics runApp(
           outputPath,
           threshold,
           useXorEncryption,
-          resultVisibility);
+          resultVisibility,
+          metricCollector);
       app->run();
       return app->getSchedulerStatistics();
     } else {
@@ -136,7 +142,8 @@ common::SchedulerStatistics runApp(
           outputPath,
           threshold,
           useXorEncryption,
-          resultVisibility);
+          resultVisibility,
+          metricCollector);
       app->run();
       return app->getSchedulerStatistics();
     }
