@@ -98,12 +98,12 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
     tlsInfo.passphrasePath = "";
     tlsInfo.useTls = false;
 
+    auto metricCollector = std::make_shared<fbpcf::util::MetricCollector>(
+        "lift_metrics_for_thread_" + std::to_string(index));
+
     auto communicationAgentFactory = std::make_unique<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-        PARTY,
-        partyInfos,
-        tlsInfo,
-        "lift_traffic_for_thread_" + std::to_string(index));
+        PARTY, partyInfos, tlsInfo, metricCollector);
 
     // Each CalculatorApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
@@ -115,6 +115,7 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
         epoch,
         inputFilepaths,
         outputFilepaths,
+        metricCollector,
         startFileIndex,
         numFiles,
         useXorEncryption);

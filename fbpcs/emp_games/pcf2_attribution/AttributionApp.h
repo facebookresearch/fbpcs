@@ -30,20 +30,21 @@ class AttributionApp {
       const std::string& attributionRules,
       const std::vector<std::string>& inputFilenames,
       const std::vector<std::string>& outputFilenames,
+      std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       std::uint32_t startFileIndex = 0U,
       int numFiles = 1)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
         attributionRules_{attributionRules},
         inputFilenames_(inputFilenames),
         outputFilenames_(outputFilenames),
+        metricCollector_(metricCollector),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
         schedulerStatistics_{0, 0, 0, 0} {}
 
   void run() {
-    auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
     auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-                         MY_ROLE, *communicationAgentFactory_)
+                         MY_ROLE, *communicationAgentFactory_, metricCollector_)
                          ->create();
 
     AttributionGame<schedulerId, usingBatch, inputEncryption> game(
@@ -79,7 +80,7 @@ class AttributionApp {
     schedulerStatistics_.freeGates = gateStatistics.second;
     schedulerStatistics_.sentNetwork = trafficStatistics.first;
     schedulerStatistics_.receivedNetwork = trafficStatistics.second;
-    schedulerStatistics_.details = metricsCollector->collectMetrics();
+    schedulerStatistics_.details = metricCollector_->collectMetrics();
   }
 
   common::SchedulerStatistics getSchedulerStatistics() {
@@ -109,6 +110,7 @@ class AttributionApp {
   std::string attributionRules_;
   std::vector<std::string> inputFilenames_;
   std::vector<std::string> outputFilenames_;
+  std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
   const std::uint32_t startFileIndex_;
   const int numFiles_;
   common::SchedulerStatistics schedulerStatistics_;

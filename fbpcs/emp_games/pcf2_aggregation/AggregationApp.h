@@ -30,6 +30,7 @@ class AggregationApp {
       const std::vector<std::string>& inputSecretShareFilePaths,
       const std::vector<std::string>& inputClearTextFilePaths,
       const std::vector<std::string>& outputFilePaths,
+      std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       std::int32_t startFileIndex = 0,
       std::int32_t numFiles = 1,
       int concurrency = 1)
@@ -40,6 +41,7 @@ class AggregationApp {
         inputSecretShareFilePaths_(inputSecretShareFilePaths),
         inputClearTextFilePaths_(inputClearTextFilePaths),
         outputFilePaths_(outputFilePaths),
+        metricCollector_(metricCollector),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
         concurrency_(concurrency),
@@ -48,12 +50,11 @@ class AggregationApp {
   void run() {
     auto scheduler = outputVisibility_ == common::Visibility::Publisher
         ? fbpcf::scheduler::NetworkPlaintextSchedulerFactory<false>(
-              MY_ROLE, *communicationAgentFactory_)
+              MY_ROLE, *communicationAgentFactory_, metricCollector_)
               .create()
         : fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-              MY_ROLE, *communicationAgentFactory_)
+              MY_ROLE, *communicationAgentFactory_, metricCollector_)
               ->create();
-    auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
     AggregationGame<schedulerId> game(
         std::move(scheduler),
@@ -99,7 +100,7 @@ class AggregationApp {
     schedulerStatistics_.freeGates = gateStatistics.second;
     schedulerStatistics_.sentNetwork = trafficStatistics.first;
     schedulerStatistics_.receivedNetwork = trafficStatistics.second;
-    schedulerStatistics_.details = metricsCollector->collectMetrics();
+    schedulerStatistics_.details = metricCollector_->collectMetrics();
   }
 
   common::SchedulerStatistics getSchedulerStatistics() {
@@ -142,6 +143,7 @@ class AggregationApp {
   std::vector<std::string> inputSecretShareFilePaths_;
   std::vector<std::string> inputClearTextFilePaths_;
   std::vector<std::string> outputFilePaths_;
+  std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
   const std::int32_t startFileIndex_;
   const std::int32_t numFiles_;
   const int concurrency_;

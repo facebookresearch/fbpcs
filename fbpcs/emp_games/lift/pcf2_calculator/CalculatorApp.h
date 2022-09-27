@@ -34,6 +34,7 @@ class CalculatorApp {
       const int epoch,
       const std::vector<std::string>& inputPaths,
       const std::vector<std::string>& outputPaths,
+      std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       const int startFileIndex = 0,
       const int numFiles = 1,
       const bool useXorEncryption = true)
@@ -44,6 +45,7 @@ class CalculatorApp {
         epoch_(epoch),
         inputPaths_(inputPaths),
         outputPaths_(outputPaths),
+        metricCollector_(metricCollector),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
         useXorEncryption_(useXorEncryption) {}
@@ -70,6 +72,7 @@ class CalculatorApp {
   int epoch_;
   std::vector<std::string> inputPaths_;
   std::vector<std::string> outputPaths_;
+  std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
   int startFileIndex_;
   int numFiles_;
   bool useXorEncryption_;
