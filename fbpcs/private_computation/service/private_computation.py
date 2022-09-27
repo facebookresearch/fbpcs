@@ -557,10 +557,9 @@ class PrivateComputationService:
         if private_computation_instance.stage_flow.is_completed_status(
             private_computation_instance.infra_config.status
         ):
-            raise ValueError(
-                f"Instance {instance_id} has status {private_computation_instance.infra_config.status}. Nothing to cancel."
+            raise PrivateComputationServiceInvalidStageError(
+                f"Instance {instance_id} stage flow completed. (status: {private_computation_instance.infra_config.status}). Nothing to cancel."
             )
-            return private_computation_instance
 
         if not private_computation_instance.infra_config.instances:
             raise ValueError(
