@@ -423,15 +423,23 @@ class AwsCloud(CloudBaseClass):
         return len(response.get("logStreams", [])) == 1
 
     def verify_s3_bucket(self, s3_bucket_name: str) -> None:
-        # verify s3 bucket
+        """
+        Verify if S3 bucket is present
+        Boto3 function head_bucket returns None if the bucket is present
+
+        Args:
+            s3_bucket_name (str): name of the S3 bucket to check if it's present
+
+        Returns:
+            None
+
+        Raises:
+            AwsS3BucketVerificationException if the S3 bucket is not present in AWS accout
+        """
         try:
             self.s3_client.head_bucket(Bucket=s3_bucket_name)
         except ClientError as error:
-            if error.response.get("Error", {}).get("Code") == "404":
-                error_message = f"Couldn't find bucket in the AWS account.\n{error}\n"
-            else:
-                # TODO T122315973: This error message doesn't seem right
-                error_message = "Couldn't find the S3 bucket in AWS account. Please use the right AWS S3 bucket name\n"
+            error_message = f"Failed to fetch S3 bucket {s3_bucket_name}: {error}"
             raise AwsS3BucketVerificationException(f"{error_message}")
 
     def ensure_folder_exists(self, bucket_name: str, folder_name: str) -> bool:
