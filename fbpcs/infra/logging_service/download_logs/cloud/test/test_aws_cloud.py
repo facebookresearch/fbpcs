@@ -289,3 +289,33 @@ class TestAwsCloud(unittest.TestCase):
                     bucket_name=bucket_name, folder_name=folder_name
                 )
             )
+
+    def test_get_kinesis_firehose_streams(self) -> None:
+
+        kinesis_firehose_stream_name = "test_stream"
+        mock_return = {"stream_name": kinesis_firehose_stream_name}
+        self.aws_container_logs.kinesis_client.describe_delivery_stream.return_value = (
+            mock_return
+        )
+
+        with self.subTest("basic"):
+            expected = {"stream_name": "test_stream"}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_kinesis_firehose_streams(
+                    kinesis_firehose_stream_name=kinesis_firehose_stream_name
+                ),
+            )
+
+        with self.subTest("ExceptionCase"):
+            self.aws_container_logs.kinesis_client.describe_delivery_stream.reset_mock()
+            self.aws_container_logs.kinesis_client.describe_delivery_stream.side_effect = ClientError(
+                error_response={"Error": {"Code": "StreamNotFound"}},
+                operation_name="describe_delivery_stream",
+            )
+            with self.assertRaisesRegex(
+                Exception, "Failed to get Kinesis firehose stream.*"
+            ):
+                self.aws_container_logs.get_kinesis_firehose_streams(
+                    kinesis_firehose_stream_name=kinesis_firehose_stream_name
+                )
