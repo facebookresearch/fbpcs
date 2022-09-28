@@ -68,6 +68,20 @@ class RunBinaryBaseService:
             except Exception:
                 logger.warning(f"Could not look up URL for container[{i}]")
 
+            # Fast-fail if spin-up failed, raise with exception msg
+            # TODO: T132884953 we will need to support partial retry during containers spin up
+            if container.status is ContainerInstanceStatus.FAILED:
+                try:
+                    self.stop_containers(
+                        onedocker_svc=onedocker_svc, containers=containers
+                    )
+                except RuntimeError as e:
+                    logger.exception(e)
+                finally:
+                    raise RuntimeError(
+                        "One or more containers failed to stop. See the logs above to find the exact container_id"
+                    )
+
         logger.info("Task started")
         if wait_for_containers_to_finish:
             # Busy wait until the container is finished
@@ -80,6 +94,19 @@ class RunBinaryBaseService:
                     "One or more containers failed. See the logs above to find the exact container_id"
                 )
         return containers
+
+    @staticmethod
+    def stop_containers(
+        onedocker_svc: OneDockerService,
+        containers: List[ContainerInstance],
+    ) -> None:
+        container_ids = [instance.instance_id for instance in containers]
+        resp = onedocker_svc.stop_containers(container_ids)
+        error_msg = [(id, error) for id, error in zip(container_ids, resp) if error]
+        if error_msg:
+            raise RuntimeError(
+                f"We encountered errors when stopping containers: {error_msg}"
+            )
 
     @staticmethod
     async def wait_for_containers_async(
