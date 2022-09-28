@@ -24,6 +24,7 @@ from typing import Optional, Sequence
 
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcs.pc_pre_validation.constants import (
+    COHORT_ID_FIELD,
     ID_FIELD_PREFIX,
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_TMP_FILE_PATH,
@@ -99,6 +100,7 @@ class InputDataValidator(Validator):
                 header_row = ",".join(field_names)
                 self._set_num_id_columns(field_names)
                 self._validate_header(field_names)
+            cohort_id_set = set()
 
             with open(self._local_file_path, "rb") as local_file:
                 header_line = local_file.readline().decode("utf-8")
@@ -111,7 +113,15 @@ class InputDataValidator(Validator):
                     for row in csv_row_reader:
                         for field, value in row.items():
                             self._validate_row(validation_issues, field, value)
+                            if field.startswith(COHORT_ID_FIELD):
+                                cohort_id_set.add(int(value))
                     rows_processed_count += 1
+
+                for i, cohort_id in enumerate(sorted(cohort_id_set)):
+                    if i != cohort_id:
+                        raise InputDataValidationException(
+                            "Cohort Id Format is invalid. Cohort ID should start with 0 and increment by 1."
+                        )
 
         except InputDataValidationException as e:
             return self._format_validation_report(
