@@ -121,6 +121,90 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_success_for_pl_fields_with_cohort_id(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp,cohort_id\n",
+            b"abcd/1234+WXYZ=,100,1645157987,0\n",
+            b"abcd/1234+WXYZ=,100,1645157987,1\n",
+            b"abcd/1234+WXYZ=,100,1645157987,2\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
+            details={
+                "rows_processed_count": 3,
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_fail_for_cohort_id_not_starting_with_zero(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp,cohort_id\n",
+            b"abcd/1234+WXYZ=,100,1645157987,23434\n",
+            b"abcd/1234+WXYZ=,100,1645157987,23425\n",
+            b"abcd/1234+WXYZ=,100,1645157987,23436\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: Cohort Id Format is invalid. Cohort ID should start with 0 and increment by 1.",
+            details={
+                "rows_processed_count": 3,
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_fail_for_cohort_id_not_incremental_by_one(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp,cohort_id\n",
+            b"abcd/1234+WXYZ=,100,1645157987,0\n",
+            b"abcd/1234+WXYZ=,100,1645157987,1\n",
+            b"abcd/1234+WXYZ=,100,1645157987,3\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: Cohort Id Format is invalid. Cohort ID should start with 0 and increment by 1.",
+            details={
+                "rows_processed_count": 3,
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_success_for_multikey_pl_fields(
         self, time_mock: Mock
     ) -> None:
