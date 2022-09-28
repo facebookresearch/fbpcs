@@ -19,9 +19,10 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import PathType, StorageService
+
+from fbpcs.common.service.retry_handler import RetryHandler
 from fbpcs.data_processing.pid_preparer.preparer import UnionPIDDataPreparerService
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.private_computation.service.retry_handler import RetryHandler
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
