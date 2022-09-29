@@ -42,6 +42,11 @@ class StageStateInstance(InstanceBase):
         if self.status in [
             StageStateInstanceStatus.UNKNOWN,
             StageStateInstanceStatus.CREATED,
+            # if a container fails during initialization, then it is possible for
+            # that container to have no server ip. If we do not include FAILED here,
+            # the checked cast will fail. We don't need to transmit server ips
+            # when in a FAILED state, so this should be fine.
+            StageStateInstanceStatus.FAILED,
         ]:
             return []
 
