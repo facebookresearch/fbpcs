@@ -416,3 +416,46 @@ class TestAwsCloud(unittest.TestCase):
                 )
                 self.assertEqual(len(captured.records), 2)
                 self.assertRegex(captured.records[1].getMessage(), expected)
+
+    def test_get_glue_crawler_config(self) -> None:
+        mock_response = {"glue_crawler": "test_config"}
+        expected = {"glue_crawler": "test_config"}
+        self.aws_container_logs.glue_client.get_crawler.return_value = mock_response
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_config(
+                    glue_crawler_name="test_crawler_name"
+                ),
+            )
+        with self.subTest("CrawlerNameEmpty"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_config(glue_crawler_name=""),
+            )
+
+        with self.subTest("CrawlerNameNone"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_config(glue_crawler_name=None),
+            )
+
+        with self.subTest("ExceptionCase"):
+            crawler_name = "test_crawler_name"
+            crawler_exception = "crawlerException"
+            expected_error = f"Couldn't fetch glue crawler {crawler_name}: An error occurred ({crawler_exception}) when calling the get_crawler operation: Unknown"
+            expected = {"Get_Crawler_Error": expected_error}
+            self.aws_container_logs.glue_client.get_crawler.reset_mock()
+            self.aws_container_logs.glue_client.get_crawler.side_effect = ClientError(
+                error_response={"Error": {"Code": crawler_exception}},
+                operation_name="get_crawler",
+            )
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_config(
+                    glue_crawler_name=crawler_name
+                ),
+            )
