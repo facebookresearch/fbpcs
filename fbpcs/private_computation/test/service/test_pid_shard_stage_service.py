@@ -71,9 +71,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
                 onedocker_binary_config_map=self.onedocker_binary_config_map,
                 container_timeout=self.container_timeout,
             )
-            containers = [
-                self.create_container_instance() for _ in range(test_num_containers)
-            ]
+            containers = [self.create_container_instance()]
             self.mock_onedocker_svc.start_containers = MagicMock(
                 return_value=containers
             )
