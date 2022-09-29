@@ -219,9 +219,10 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
                 )
                 return True
 
-    async def cancel_current_stage(self, instance_id: str) -> None:
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self.pcs.cancel_current_stage, instance_id)
+    # canceling stages is not properly supported
+    # async def cancel_current_stage(self, instance_id: str) -> None:
+    #     loop = asyncio.get_running_loop()
+    #     await loop.run_in_executor(None, self.pcs.cancel_current_stage, instance_id)
 
     async def get_or_create_instance(
         self, instance_args: BoltPCSCreateInstanceArgs

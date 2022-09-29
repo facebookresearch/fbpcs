@@ -309,6 +309,7 @@ async def start_combiner_service(
         wait_for_containers_to_finish=wait_for_containers,
         env_vars=env_vars,
         wait_for_containers_to_start_up=wait_for_containers_to_start_up,
+        existing_containers=private_computation_instance.get_existing_containers_for_retry(),
     )
 
 
@@ -380,6 +381,7 @@ async def start_sharder_service(
         wait_for_containers_to_finish=wait_for_containers,
         env_vars=env_vars,
         wait_for_containers_to_start_up=wait_for_containers_to_start_up,
+        existing_containers=private_computation_instance.get_existing_containers_for_retry(),
     )
 
 
