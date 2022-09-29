@@ -459,3 +459,53 @@ class TestAwsCloud(unittest.TestCase):
                     glue_crawler_name=crawler_name
                 ),
             )
+
+    def test_get_glue_crawler_metrics(self) -> None:
+        mock_response = {"glue_crawler_metric": "test_metric"}
+        expected = {"glue_crawler_metric": "test_metric"}
+        self.aws_container_logs.glue_client.get_crawler_metrics.return_value = (
+            mock_response
+        )
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_metrics(
+                    glue_crawler_name="test_crawler_name"
+                ),
+            )
+
+        with self.subTest("CrawlerNameEmpty"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_metrics(glue_crawler_name=""),
+            )
+
+        with self.subTest("CrawlerNameNone"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_metrics(
+                    glue_crawler_name=None
+                ),
+            )
+
+        with self.subTest("ExceptionCase"):
+            crawler_name = "test_crawler_name"
+            crawler_exception = "crawlerMetricException"
+            expected_error = f"Couldn't fetch glue crawler metrics {crawler_name}: An error occurred ({crawler_exception}) when calling the get_crawler_metrics operation: Unknown"
+            expected = {"Get_Crawler_Metrics_Error": expected_error}
+            self.aws_container_logs.glue_client.get_crawler_metrics.reset_mock()
+            self.aws_container_logs.glue_client.get_crawler_metrics.side_effect = (
+                ClientError(
+                    error_response={"Error": {"Code": crawler_exception}},
+                    operation_name="get_crawler_metrics",
+                )
+            )
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_crawler_metrics(
+                    glue_crawler_name=crawler_name
+                ),
+            )
