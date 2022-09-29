@@ -136,6 +136,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             timeout=1200,
             env_vars=env_vars,
             wait_for_containers_to_start_up=True,
+            existing_containers=None,
         )
 
         mock_stage_state_instance.assert_called_with(

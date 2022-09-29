@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 import marshmallow
-
 from dataclasses_json.mm import SchemaType
 
 if TYPE_CHECKING:
@@ -26,6 +25,7 @@ if TYPE_CHECKING:
 
 from pathlib import Path
 
+from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -328,6 +328,22 @@ class PrivateComputationInstance(InstanceBase):
                     return stage_instance
 
         return None
+
+    def get_existing_containers_for_retry(
+        self,
+    ) -> Optional[List[ContainerInstance]]:
+        if self.infra_config.retry_counter == 0:
+            return None
+
+        instances = self.infra_config.instances
+        if not instances:
+            return None
+
+        last_instance = instances[-1]
+        if isinstance(last_instance, (PCSMPCInstance, StageStateInstance)):
+            return last_instance.containers
+        else:
+            return None
 
     def has_feature(self, feature: PCSFeature) -> bool:
         if feature is PCSFeature.UNKNOWN:

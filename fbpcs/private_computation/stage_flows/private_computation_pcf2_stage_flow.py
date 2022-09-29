@@ -76,7 +76,7 @@ class PrivateComputationPCF2StageFlow(PrivateComputationBaseStageFlow):
         completed_status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
         is_joint_stage=True,
-        is_retryable=False,
+        is_retryable=True,
     )
     ID_MATCH_POST_PROCESS = PrivateComputationStageFlowData(
         initialized_status=PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_INITIALIZED,

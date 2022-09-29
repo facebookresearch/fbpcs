@@ -124,6 +124,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
             timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
             env_vars=env_vars,
             wait_for_containers_to_start_up=should_wait_spin_up,
+            existing_containers=pc_instance.get_existing_containers_for_retry(),
         )
 
         stage_state = StageStateInstance(
