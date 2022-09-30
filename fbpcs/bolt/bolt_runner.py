@@ -176,8 +176,12 @@ class BoltRunner(Generic[T, U]):
         publisher_status = (
             await self.publisher_client.update_instance(publisher_id)
         ).pc_instance_status
-        if publisher_status not in [stage.started_status, stage.completed_status]:
-            # don't retry if started or completed status
+        if publisher_status not in [
+            stage.started_status,
+            stage.initialized_status,
+            stage.completed_status,
+        ]:
+            # don't retry if started, initialized, or completed status
             logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
 
@@ -196,8 +200,12 @@ class BoltRunner(Generic[T, U]):
         partner_status = (
             await self.partner_client.update_instance(partner_id)
         ).pc_instance_status
-        if partner_status not in [stage.started_status, stage.completed_status]:
-            # don't retry if started or completed status
+        if partner_status not in [
+            stage.started_status,
+            stage.initialized_status,
+            stage.completed_status,
+        ]:
+            # don't retry if started, initialized, or completed status
             logger.info(f"Partner {partner_id} starting stage {stage.name}.")
             await self.partner_client.run_stage(
                 instance_id=partner_id, stage=stage, server_ips=server_ips
