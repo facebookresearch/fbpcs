@@ -12,8 +12,8 @@ from typing import Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.error.pcp import ThrottlingError
+from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
-
 from fbpcs.common.service.retry_handler import RetryHandler
 from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
@@ -22,48 +22,6 @@ DEFAULT_WAIT_FOR_CONTAINER_POLL = 5
 
 
 class RunBinaryBaseService:
-    @classmethod
-    def _get_containers_to_start(
-        cls,
-        cmd_args_list: List[str],
-        existing_containers: Optional[List[ContainerInstance]] = None,
-    ) -> List[int]:
-        if existing_containers is None:
-            # if there are no existing containers, we need to spin containers up for
-            # every command
-            return list(range(len(cmd_args_list)))
-
-        if len(cmd_args_list) != len(existing_containers):
-            raise ValueError(
-                "Cannot retry stage - list of container arguments and list of existing containers have different lengths"
-            )
-
-        # only start containers that previously failed
-        return [
-            i
-            for i, container in enumerate(existing_containers)
-            if container.status is ContainerInstanceStatus.FAILED
-        ]
-
-    @classmethod
-    def _get_pending_containers(
-        cls,
-        new_pending_containers: List[ContainerInstance],
-        containers_to_start: List[int],
-        existing_containers: Optional[List[ContainerInstance]] = None,
-    ) -> List[ContainerInstance]:
-        if not existing_containers:
-            return new_pending_containers
-
-        pending_containers = existing_containers.copy()
-        for i, new_pending_container in zip(
-            containers_to_start, new_pending_containers
-        ):
-            # replace existing container with the new pending container
-            pending_containers[i] = new_pending_container
-
-        return pending_containers
-
     async def start_containers(
         self,
         cmd_args_list: List[str],
@@ -80,23 +38,30 @@ class RunBinaryBaseService:
 
         timeout = timeout or DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 
-        containers_to_start = self._get_containers_to_start(
-            cmd_args_list, existing_containers
-        )
-        logger.info(f"Spinning up {len(containers_to_start)} containers")
-        logger.info(f"Containers to start: {containers_to_start}")
-
-        new_pending_containers = onedocker_svc.start_containers(
-            package_name=binary_name,
-            version=binary_version,
-            cmd_args_list=[cmd_args_list[i] for i in containers_to_start],
-            timeout=timeout,
-            env_vars=env_vars,
+        containers_to_start = MPCService.get_containers_to_start(
+            len(cmd_args_list), existing_containers
         )
 
-        pending_containers = self._get_pending_containers(
-            new_pending_containers, containers_to_start, existing_containers
-        )
+        if containers_to_start:
+            logger.info(f"Spinning up {len(containers_to_start)} containers")
+            logger.info(f"Containers to start: {containers_to_start}")
+
+            new_pending_containers = onedocker_svc.start_containers(
+                package_name=binary_name,
+                version=binary_version,
+                cmd_args_list=[cmd_args_list[i] for i in containers_to_start],
+                timeout=timeout,
+                env_vars=env_vars,
+            )
+
+            pending_containers = MPCService.get_pending_containers(
+                new_pending_containers, containers_to_start, existing_containers
+            )
+        else:
+            logger.info(
+                "No containers are in a failed state - skipping container start-up"
+            )
+            pending_containers = existing_containers or []
 
         if not wait_for_containers_to_start_up:
             logger.info("Skipped container warm up")
