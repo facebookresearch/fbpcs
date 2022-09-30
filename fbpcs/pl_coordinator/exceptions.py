@@ -72,6 +72,16 @@ class OneCommandRunnerExitCode(Enum):
     ERROR_TOKEN_DATA_ACCESS_EXPIRY = 74
     ERROR_TOKEN_PERMISSIONS = 75
 
+    # PL validation specific error
+    ERROR_READ_STUDY = 80
+    ERROR_CREATE_PL_INSTANCE = 81
+    ERROR_READ_PL_INSTANCE = 82
+
+    # PA validation specific error
+    ERROR_READ_DATASET = 90
+    ERROR_CREATE_PA_INSTANCE = 91
+    ERROR_READ_PA_INSTANCE = 92
+
 
 class OneCommandRunnerBaseException(Exception):
     def __init__(
@@ -98,11 +108,32 @@ class OneCommandRunnerBaseException(Exception):
 
 
 class PCStudyValidationException(OneCommandRunnerBaseException, RuntimeError):
-    def __init__(self, cause: str, remediation: str) -> None:
+    def __init__(
+        self,
+        cause: str,
+        remediation: str,
+        exit_code: OneCommandRunnerExitCode = OneCommandRunnerExitCode.ERROR,
+    ) -> None:
         super().__init__(
             msg="PCStudyValidationException",
             cause=cause,
             remediation=remediation,
+            exit_code=exit_code,
+        )
+
+
+class PCAttributionValidationException(OneCommandRunnerBaseException, RuntimeError):
+    def __init__(
+        self,
+        cause: str,
+        remediation: str,
+        exit_code: OneCommandRunnerExitCode = OneCommandRunnerExitCode.ERROR,
+    ) -> None:
+        super().__init__(
+            msg="PCAttributionValidationException",
+            cause=cause,
+            remediation=remediation,
+            exit_code=exit_code,
         )
 
 
