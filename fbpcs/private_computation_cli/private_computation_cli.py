@@ -414,7 +414,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             k_anonymity_threshold=arguments["--k_anonymity_threshold"],
             logger=logger,
             stage_flow=stage_flow,
-            num_tries=2,
             final_stage=PrivateComputationPCF2StageFlow.AGGREGATE,
             run_id=arguments["--run_id"],
         )

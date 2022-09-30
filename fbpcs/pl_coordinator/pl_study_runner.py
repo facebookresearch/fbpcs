@@ -86,7 +86,7 @@ def run_study(
     input_paths: List[str],
     logger: logging.Logger,
     stage_flow: Type[PrivateComputationBaseStageFlow],
-    num_tries: Optional[int] = 2,  # this is number of tries per stage
+    num_tries: Optional[int] = None,  # this is number of tries per stage
     dry_run: Optional[bool] = False,  # if set to true, it will only run one stage
     result_visibility: Optional[ResultVisibility] = None,
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
