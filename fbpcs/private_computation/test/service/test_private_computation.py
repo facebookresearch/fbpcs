@@ -793,6 +793,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
     @patch("fbpcp.service.mpc.MPCService")
     async def test_create_and_start_mpc_instance(self, mock_mpc_svc) -> None:
+        mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())
         mock_mpc_svc.create_instance = MagicMock()
         mock_mpc_svc.start_instance_async = AsyncMock()
 

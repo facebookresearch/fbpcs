@@ -167,9 +167,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
         )
         mpc_instance = await create_and_start_mpc_instance(
             mpc_svc=self._mpc_service,
-            instance_id=pc_instance.infra_config.instance_id
-            + "_aggregate_shards"
-            + str(pc_instance.infra_config.retry_counter),
+            instance_id=pc_instance.infra_config.instance_id + "_aggregate_shards",
             game_name=self.get_game_name(pc_instance),
             mpc_party=map_private_computation_role_to_mpc_party(
                 pc_instance.infra_config.role

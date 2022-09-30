@@ -38,6 +38,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.mpc.MPCService")
     def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
+        self.mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())
         self.mock_mpc_svc.create_instance = MagicMock()
         self.run_id = "681ba82c-16d9-11ed-861d-0242ac120002"
 
@@ -56,7 +57,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=private_computation_instance.infra_config.instance_id
-            + "_aggregate_metrics0",
+            + "_aggregate_metrics",
             game_name=GameNames.LIFT.value,
             mpc_party=MPCParty.CLIENT,
             num_workers=private_computation_instance.infra_config.num_mpc_containers,
