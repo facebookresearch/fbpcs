@@ -32,6 +32,7 @@ shift
 one_docker_repo="one-docker-repository-custom"
 lift_package="s3://$one_docker_repo/private_lift/lift/${TAG}/lift"
 pcf2_lift_package="s3://$one_docker_repo/private_lift/pcf2_lift/${TAG}/pcf2_lift"
+pcf2_lift_metadata_compaction_package="s3://$one_docker_repo/private_lift/pcf2_lift_metadata_compaction/${TAG}/pcf2_lift_metadata_compaction"
 attribution_repo="s3://$one_docker_repo/private_attribution"
 decoupled_attribution="$attribution_repo/decoupled_attribution/${TAG}/decoupled_attribution"
 decoupled_aggregation="$attribution_repo/decoupled_aggregation/${TAG}/decoupled_aggregation"
@@ -47,6 +48,7 @@ if [ "$PACKAGE" = "emp_games" ]; then
 cd binaries_out || exit
 aws s3 cp lift_calculator "$lift_package"
 aws s3 cp pcf2_lift_calculator "$pcf2_lift_package"
+aws s3 cp pcf2_lift_metadata_compaction "$pcf2_lift_metadata_compaction_package"
 aws s3 cp decoupled_attribution_calculator "$decoupled_attribution"
 aws s3 cp decoupled_aggregation_calculator "$decoupled_aggregation"
 aws s3 cp pcf2_attribution_calculator "$pcf2_attribution"
