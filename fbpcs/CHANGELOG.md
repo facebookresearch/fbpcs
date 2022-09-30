@@ -18,6 +18,11 @@ Types of changes
 
 ### Changed
 
+- RunBinaryBaseService supports retrying containers that previously failed
+- Pull in latest fbpcp updates that enable retrying MPC containers that previously failed
+- PCS only creates one MPC instance per MPC stage now
+- Bolt default num attempts per stage has been updated from 2 -> 4
+
 ### Removed
 
 ## [2.1.0] - 2022-09-20
