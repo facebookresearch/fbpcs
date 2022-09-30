@@ -93,7 +93,7 @@ def run_attribution(
     k_anonymity_threshold: int,
     stage_flow: Type[PrivateComputationBaseStageFlow],
     logger: logging.Logger,
-    num_tries: Optional[int] = 2,  # this is number of tries per stage
+    num_tries: Optional[int] = None,  # this is number of tries per stage
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
     run_id: Optional[str] = None,
 ) -> None:
