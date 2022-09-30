@@ -85,13 +85,18 @@ async def create_and_start_mpc_instance(
     Returns:
         return: an mpc instance started by mpc service
     """
-    mpc_svc.create_instance(
-        instance_id=instance_id,
-        game_name=game_name,
-        mpc_party=mpc_party,
-        num_workers=num_containers,
-        game_args=game_args,
-    )
+    try:
+        mpc_svc.get_instance(instance_id)
+    except Exception:
+        logging.info(f"Failed to fetch MPC instance {instance_id} - trying to create")
+        mpc_svc.create_instance(
+            instance_id=instance_id,
+            game_name=game_name,
+            mpc_party=mpc_party,
+            num_workers=num_containers,
+            game_args=game_args,
+        )
+
     env_vars = {}
     if repository_path:
         env_vars[ONEDOCKER_REPOSITORY_PATH] = repository_path
