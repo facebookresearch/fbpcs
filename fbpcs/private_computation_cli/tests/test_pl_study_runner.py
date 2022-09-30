@@ -18,7 +18,11 @@ from unittest.mock import MagicMock, patch, PropertyMock
 import requests
 from fbpcs.pl_coordinator import pl_study_runner
 
-from fbpcs.pl_coordinator.exceptions import PCStudyValidationException
+from fbpcs.pl_coordinator.exceptions import (
+    OneCommandRunnerExitCode,
+    PCStudyValidationException,
+)
+from fbpcs.pl_coordinator.pc_graphapi_utils import GraphAPIGenericException
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
@@ -199,6 +203,23 @@ class TestPlStudyRunner(TestCase):
         invalid_study_data_dict = dict(**self.study_data_dict)
         frozen_time = time.time()
         time_mock.time.return_value = frozen_time
+
+        with self.subTest("token_unable_read_study"):
+            try:
+                self.client_mock.get_study_data.side_effect = GraphAPIGenericException(
+                    "unable_read_study"
+                )
+                with self.assertRaises(SystemExit) as err_ctx:
+                    self._run_study()
+
+                self.assertEqual(
+                    str(err_ctx.exception),
+                    str(OneCommandRunnerExitCode.ERROR_READ_STUDY.value),
+                )
+            finally:
+                self.client_mock.get_study_data.side_effect = None
+                self.client_mock.reset_mock()
+                logger_mock.exception.reset_mock()
 
         with self.subTest("invalid_type"):
             try:

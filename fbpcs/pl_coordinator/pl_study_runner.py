@@ -26,6 +26,7 @@ from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
 from fbpcs.pl_coordinator.exceptions import (
     IncorrectVersionError,
     OneCommandRunnerBaseException,
+    OneCommandRunnerExitCode,
     PCStudyValidationException,
     sys_exit_after,
 )
@@ -98,7 +99,15 @@ def run_study(
 
     # obtain study information
     client = PCGraphAPIClient(config, logger)
-    study_data = _get_study_data(study_id, client)
+    try:
+        study_data = _get_study_data(study_id, client)
+    except GraphAPIGenericException as err:
+        logger.error(err)
+        raise PCStudyValidationException(
+            cause=f"Read study {study_id} data failed.",
+            remediation=f"Check access token has permission to read study {study_id}",
+            exit_code=OneCommandRunnerExitCode.ERROR_READ_STUDY,
+        )
 
     # Verify study can run private lift:
     _verify_study_type(study_data)
@@ -125,7 +134,16 @@ def run_study(
         "Existing valid instances for cell-obj pairs", cell_obj_instance, logger
     )
     # create new instances
-    _create_new_instances(cell_obj_instance, study_id, client, logger, run_id)
+    try:
+        _create_new_instances(cell_obj_instance, study_id, client, logger, run_id)
+    except GraphAPIGenericException as err:
+        logger.error(err)
+        raise PCStudyValidationException(
+            cause=f"Create PL instance on study {study_id} and cell-obj pairs {cell_obj_instance} failed.",
+            remediation="Check access token has permission to create instance",
+            exit_code=OneCommandRunnerExitCode.ERROR_CREATE_PL_INSTANCE,
+        )
+
     _print_json("Instances to run for cell-obj pairs", cell_obj_instance, logger)
     # create a dict with {instance_id, input_path} pairs
     instances_input_path = _instance_to_input_path(cell_obj_instance)
@@ -136,7 +154,16 @@ def run_study(
     )
 
     # check that the version in config.yml is same as from graph api
-    _check_versions(cell_obj_instance, config, client)
+    try:
+        _check_versions(cell_obj_instance, config, client)
+    except GraphAPIGenericException as err:
+        logger.error(err)
+        raise PCStudyValidationException(
+            cause=f"Read PL instance on cell-obj pairs {cell_obj_instance} failed.",
+            remediation="Check access token has permission to read instance",
+            exit_code=OneCommandRunnerExitCode.ERROR_READ_PL_INSTANCE,
+        )
+
     # override stage flow based on pcs feature gate. Please contact PSI team to have a similar adoption
     stage_flow_override = stage_flow
     # get the enabled features

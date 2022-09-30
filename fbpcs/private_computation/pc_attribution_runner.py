@@ -22,8 +22,16 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPAGraphAPICreateInstanceArgs,
 )
-from fbpcs.pl_coordinator.exceptions import IncorrectVersionError, sys_exit_after
-from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
+from fbpcs.pl_coordinator.exceptions import (
+    IncorrectVersionError,
+    OneCommandRunnerExitCode,
+    PCAttributionValidationException,
+    sys_exit_after,
+)
+from fbpcs.pl_coordinator.pc_graphapi_utils import (
+    GraphAPIGenericException,
+    PCGraphAPIClient,
+)
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
     PrivateComputationRole,
@@ -93,7 +101,16 @@ def run_attribution(
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
     client = PCGraphAPIClient(config, logger)
-    datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
+    try:
+        datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
+    except GraphAPIGenericException as err:
+        logger.error(err)
+        raise PCAttributionValidationException(
+            cause=f"Read attribution dataset {dataset_id} data failed.",
+            remediation=f"Check access token has permission to read dataset {dataset_id}",
+            exit_code=OneCommandRunnerExitCode.ERROR_READ_DATASET,
+        )
+
     datasets = datasets_info[DATASETS_INFORMATION]
     matched_data = {}
     attribution_rule_str = attribution_rule.name
@@ -130,7 +147,16 @@ def run_attribution(
     # Conditions for retry:
     # 1. Not in a terminal status
     # 2. Instance has been created > 1d ago
-    dataset_instance_data = _get_existing_pa_instances(client, dataset_id)
+    try:
+        dataset_instance_data = _get_existing_pa_instances(client, dataset_id)
+    except GraphAPIGenericException as err:
+        logger.error(err)
+        raise PCAttributionValidationException(
+            cause=f"Read dataset instance {dataset_id} failed.",
+            remediation=f"Check access token has permission to read dataset instance {dataset_id}",
+            exit_code=OneCommandRunnerExitCode.ERROR_READ_PA_INSTANCE,
+        )
+
     existing_instances = dataset_instance_data["data"]
     for inst in existing_instances:
         inst_time = dateutil.parser.parse(inst[TIMESTAMP])
@@ -147,13 +173,22 @@ def run_attribution(
             break
 
     if instance_id is None:
-        instance_id = _create_new_instance(
-            dataset_id,
-            int(dt_arg),
-            attribution_rule_val,
-            client,
-            logger,
-        )
+        try:
+            instance_id = _create_new_instance(
+                dataset_id,
+                int(dt_arg),
+                attribution_rule_val,
+                client,
+                logger,
+            )
+        except GraphAPIGenericException as err:
+            logger.error(err)
+            raise PCAttributionValidationException(
+                cause=f"Create dataset instance {dataset_id} failed.",
+                remediation=f"Check access token has permission to create dataset instance {dataset_id}",
+                exit_code=OneCommandRunnerExitCode.ERROR_CREATE_PA_INSTANCE,
+            )
+
     instance_data = _get_pa_instance_info(client, instance_id, logger)
     _check_version(instance_data, config)
     # override stage flow based on pcs feature gate. Please contact PSI team to have a similar adoption
