@@ -314,6 +314,28 @@ class TestPlStudyRunner(TestCase):
                 invalid_study_data_dict["objectives"] = self.study_objectives
                 logger_mock.exception.reset_mock()
 
+        with self.subTest("cannot_read_ads_pixel"):
+            try:
+                invalid_study_data_dict["objectives"]["data"][0]["adspixels"] = {
+                    "data": [{"id": "adspixel_id"}]
+                }
+                self.response_mock.text = json.dumps(invalid_study_data_dict)
+                self.client_mock.get_study_data.return_value = self.response_mock
+                self.client_mock.get_adspixels.side_effect = GraphAPIGenericException(
+                    "unable_read_study"
+                )
+                with self.assertRaises(SystemExit) as err_ctx:
+                    self._run_study()
+
+                self.assertEqual(
+                    str(err_ctx.exception),
+                    str(OneCommandRunnerExitCode.ERROR_READ_ADSPIXELS.value),
+                )
+            finally:
+                self.client_mock.get_adspixels.side_effect = None
+                invalid_study_data_dict["objectives"] = self.study_objectives
+                logger_mock.exception.reset_mock()
+
     @patch("fbpcs.pl_coordinator.exceptions.logging")
     def test_opp_data_information_validation_error(self, logger_mock) -> None:
         self.study_data_dict.pop("opp_data_information")

@@ -188,6 +188,13 @@ class PCGraphAPIClient:
         self._check_err(r, "getting study data")
         return r
 
+    def get_adspixels(self, adspixels_id: str, fields: List[str]) -> requests.Response:
+        params = self.params.copy()
+        params["fields"] = ",".join(fields)
+        r = requests.get(f"{URL}/{adspixels_id}", params=params)
+        self._check_err(r, "getting adspixels data")
+        return r
+
     def get_attribution_dataset_info(
         self, dataset_id: str, fields: List[str]
     ) -> requests.Response:
