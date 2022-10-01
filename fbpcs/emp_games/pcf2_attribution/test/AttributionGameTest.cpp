@@ -650,6 +650,11 @@ void testCorrectnessWithScheduler(
     auto outputReformatted =
         revealXORedReformattedResult(res0, res1, attributionRule);
     verifyOutput(outputReformatted, reformattedOutputJsonFileName);
+    if (std::filesystem::exists(
+            FLAGS_output_base_path + "compressionMapping.json")) {
+      std::filesystem::remove(
+          FLAGS_output_base_path + "compressionMapping.json");
+    }
   } else {
     // check against expected output
     auto output = revealXORedResult(res0, res1, attributionRule);
