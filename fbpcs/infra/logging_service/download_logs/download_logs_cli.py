@@ -26,6 +26,7 @@ import logging
 import re
 import sys
 import time
+from os.path import abspath
 from pathlib import Path
 from typing import List, Optional
 
@@ -99,8 +100,12 @@ class DownloadLogsCli:
         self.aws_container_logs = AwsContainerLogs(
             tag_name=archive_tag, aws_region=self.aws_region
         )
+        include_local_files = [abspath(cli_log_file)]
+        # pyre-ignore[16]: `Optional` has no attribute `upload_logs_to_s3_from_cloudwatch`.
         self.aws_container_logs.upload_logs_to_s3_from_cloudwatch(
-            self.s3_bucket, self.container_ids
+            self.s3_bucket,
+            self.container_ids,
+            include_local_files=include_local_files,
         )
         self.logger.info("After uploading log archive")
 
