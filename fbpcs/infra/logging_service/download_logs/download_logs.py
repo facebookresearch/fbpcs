@@ -70,6 +70,7 @@ class AwsContainerLogs(AwsCloud):
         container_arn_list: List[str],
         copy_debug_logs: bool = False,
         copy_debug_logs_location: str = DEFAULT_DOWNLOAD_LOCATION,
+        include_local_files: Optional[List[str]] = None,
         **kwargs: Dict[str, bool],
     ) -> None:
         """
@@ -155,6 +156,11 @@ class AwsContainerLogs(AwsCloud):
                 self._upload_deployment_logs(
                     local_log_folder_location=local_folder_location
                 )
+
+            self._prepare_local_files(
+                include_local_files=include_local_files,
+                local_log_folder_location=local_folder_location,
+            )
 
             # compressing the folder before uploading it to S3
             self.log.info("Compressing downloaded logs folder")
@@ -446,6 +452,29 @@ class AwsContainerLogs(AwsCloud):
             file_location=athena_config_logs_file_location,
             content=athena_details_dict,
         )
+
+    def _prepare_local_files(
+        self, include_local_files: Optional[List[str]], local_log_folder_location: str
+    ) -> None:
+        """
+        Copy over the local files (if any)
+        """
+        self.log.info(f"Copying the local files (if any): {include_local_files}")
+        if not include_local_files:
+            return
+        for local_file in include_local_files:
+            if not os.path.exists(local_file):
+                self.log.warning(f"Cannot find the local file: '{local_file}'")
+            else:
+                try:
+                    self.utils.copy_file(
+                        source=local_file, destination=local_log_folder_location
+                    )
+                except Exception as error:
+                    error_message = f"Error in copying local file: {error}"
+                    self.log.error(error_message)
+                    raise Exception(error_message)
+        self.log.info("Copied the local files, which will be added to the log archive")
 
     def _parse_container_arn(self, container_arn: Optional[str]) -> ContainerDetails:
         """
