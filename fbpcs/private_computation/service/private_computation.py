@@ -104,6 +104,7 @@ class PrivateComputationService:
         workflow_svc: Optional[WorkflowService] = None,
         metric_svc: Optional[MetricService] = None,
         trace_logging_svc: Optional[TraceLoggingService] = None,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         """Constructor of PrivateComputationService
         instance_repository -- repository to CRUD PrivateComputationInstance
@@ -140,7 +141,9 @@ class PrivateComputationService:
             self.metric_svc,
             self.trace_logging_svc,
         )
-        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.logger: logging.Logger = (
+            logging.getLogger(__name__) if logger is None else logger
+        )
 
     # TODO T88759390: make an async version of this function
     def create_instance(
