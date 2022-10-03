@@ -53,6 +53,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 
 # dataset information fields
 DATASETS_INFORMATION = "datasets_information"
+TARGET_ID = "target_id"
 INSTANCES = "instances"
 NUM_SHARDS = "num_shards"
 NUM_CONTAINERS = "num_containers"
@@ -112,6 +113,9 @@ def run_attribution(
         )
 
     datasets = datasets_info[DATASETS_INFORMATION]
+    target_id = datasets_info[TARGET_ID]
+    # Verify adspixel
+    _verify_adspixel(target_id, client)
     matched_data = {}
     attribution_rule_str = attribution_rule.name
     attribution_rule_val = attribution_rule.value
@@ -319,6 +323,17 @@ def _get_pcs_features(instance: Dict[str, Any]) -> Optional[List[str]]:
     return instance.get(FEATURE_LIST)
 
 
+def _verify_adspixel(adspixels_id: str, client: PCGraphAPIClient) -> None:
+    try:
+        client.get_adspixels(adspixels_id=adspixels_id, fields=["id"])
+    except GraphAPIGenericException:
+        raise PCAttributionValidationException(
+            cause=f"Read adspixel {adspixels_id} failed.",
+            remediation="Check access token has permission to read adspixel",
+            exit_code=OneCommandRunnerExitCode.ERROR_READ_ADSPIXELS,
+        )
+
+
 def get_attribution_dataset_info(
     config: Dict[str, Any], dataset_id: str, logger: logging.Logger
 ) -> str:
@@ -327,7 +342,7 @@ def get_attribution_dataset_info(
     return json.loads(
         client.get_attribution_dataset_info(
             dataset_id,
-            [DATASETS_INFORMATION],
+            [DATASETS_INFORMATION, TARGET_ID],
         ).text
     )
 
@@ -354,7 +369,7 @@ def _get_attribution_dataset_info(
     return json.loads(
         client.get_attribution_dataset_info(
             dataset_id,
-            [DATASETS_INFORMATION],
+            [DATASETS_INFORMATION, TARGET_ID],
         ).text
     )
 

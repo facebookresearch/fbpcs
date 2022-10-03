@@ -113,7 +113,7 @@ def run_study(
     _verify_study_type(study_data)
 
     # verify mpc objectives
-    _verify_mpc_objs(study_data, objective_ids)
+    _verify_mpc_objs(study_data, objective_ids, client)
 
     # verify study opp_data_information is non-empty
     if OPP_DATA_INFORMATION not in study_data:
@@ -342,28 +342,54 @@ def _verify_study_type(study_data: Dict[str, Any]) -> None:
         )
 
 
-def _verify_mpc_objs(study_data: Dict[str, Any], objective_ids: List[str]) -> None:
-    # verify study has mpc objectives
-    mpc_objectives = [
-        obj["id"]
-        for obj in list(
-            filter(
-                lambda obj: obj["type"] == MPC_CONVERSION,
-                study_data["objectives"]["data"],
+def _verify_adspixels_if_exist(
+    adspixels_ids: List[str], client: PCGraphAPIClient
+) -> None:
+    if adspixels_ids:
+        try:
+            for pixel_id in adspixels_ids:
+                client.get_adspixels(adspixels_id=pixel_id, fields=["id"])
+        except GraphAPIGenericException:
+            raise PCStudyValidationException(
+                cause=f"Read adspixel {adspixels_ids} failed.",
+                remediation="Check access token has permission to read adspixel",
+                exit_code=OneCommandRunnerExitCode.ERROR_READ_ADSPIXELS,
             )
+
+
+def _verify_mpc_objs(
+    study_data: Dict[str, Any], objective_ids: List[str], client: PCGraphAPIClient
+) -> None:
+    # verify study has mpc objectives
+    mpc_objectives = list(
+        filter(
+            lambda obj: obj["type"] == MPC_CONVERSION,
+            study_data["objectives"]["data"],
         )
-    ]
+    )
+
     if not mpc_objectives:
         raise PCStudyValidationException(
             f"Study {study_data['id']} has no MPC objectives",
             "check study data that need to have MPC objectives",
         )
 
+    # verify adspixels read if exist
+    adspixels_ids = []
+    for obj in mpc_objectives:
+        if "adspixels" in obj:
+            adspixels = obj["adspixels"]["data"]
+            for pixel in adspixels:
+                adspixels_ids.append(pixel["id"])
+
+    _verify_adspixels_if_exist(adspixels_ids, client)
+
+    mpc_objectives_ids = [obj["id"] for obj in mpc_objectives]
     # verify input objs are MPC objs of this study.
     for obj_id in objective_ids:
-        if obj_id not in mpc_objectives:
+        if obj_id not in mpc_objectives_ids:
             raise PCStudyValidationException(
-                f"Objective id {obj_id} invalid. Valid MPC objective ids for study {study_data['id']}: {','.join(mpc_objectives)}",
+                f"Objective id {obj_id} invalid. Valid MPC objective ids for study {study_data['id']}: {','.join(mpc_objectives_ids)}",
                 "input objs are MPC objs of this study.",
             )
 

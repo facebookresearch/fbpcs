@@ -82,6 +82,9 @@ class OneCommandRunnerExitCode(Enum):
     ERROR_CREATE_PA_INSTANCE = 91
     ERROR_READ_PA_INSTANCE = 92
 
+    # Product common validation error
+    ERROR_READ_ADSPIXELS = 100
+
 
 class OneCommandRunnerBaseException(Exception):
     def __init__(
