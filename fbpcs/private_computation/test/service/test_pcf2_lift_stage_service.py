@@ -96,6 +96,10 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             "run_name": run_name,
             "log_cost": True,
             "run_id": self.run_id,
+            "use_tls": False,
+            "ca_cert_path": "",
+            "server_cert_path": "",
+            "private_key_path": "",
         }
         test_game_args = [
             {

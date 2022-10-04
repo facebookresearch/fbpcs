@@ -94,6 +94,10 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             "use_postfix": True,
             "log_cost": True,
             "run_id": self.run_id,
+            "use_tls": False,
+            "ca_cert_path": "",
+            "server_cert_path": "",
+            "private_key_path": "",
         }
         test_game_args = [
             {
