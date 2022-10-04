@@ -121,6 +121,13 @@ int main(int argc, char* argv[]) {
 
   common::SchedulerStatistics schedulerStatistics;
 
+  auto tlsInfo = common::getTlsInfoFromArgs(
+      FLAGS_use_tls,
+      FLAGS_ca_cert_path,
+      FLAGS_server_cert_path,
+      FLAGS_private_key_path,
+      "");
+
   if (FLAGS_metrics_format_type == "ad_object") {
     schedulerStatistics = runApp<ShardSchemaType::kAdObjFormat>(
         FLAGS_party,
@@ -135,7 +142,8 @@ int main(int argc, char* argv[]) {
         FLAGS_use_xor_encryption,
         FLAGS_visibility,
         FLAGS_server_ip,
-        FLAGS_port);
+        FLAGS_port,
+        tlsInfo);
   } else if (FLAGS_metrics_format_type == "lift") {
     schedulerStatistics = runApp<ShardSchemaType::kGroupedLiftMetrics>(
         FLAGS_party,
@@ -150,7 +158,8 @@ int main(int argc, char* argv[]) {
         FLAGS_use_xor_encryption,
         FLAGS_visibility,
         FLAGS_server_ip,
-        FLAGS_port);
+        FLAGS_port,
+        tlsInfo);
   } else {
     std::string errStr = folly::sformat(
         "unsupported metrics format type: {}", FLAGS_metrics_format_type);

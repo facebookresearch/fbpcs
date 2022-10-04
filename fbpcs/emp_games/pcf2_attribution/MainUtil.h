@@ -65,7 +65,9 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     int port,
     std::string attributionRules,
     std::vector<std::string>& inputFilenames,
-    std::vector<std::string>& outputFilenames) {
+    std::vector<std::string>& outputFilenames,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   // aggregate scheduler statistics across apps
   common::SchedulerStatistics schedulerStatistics{
       0, 0, 0, 0, folly::dynamic::object()};
@@ -85,13 +87,6 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
         partyInfos(
             {{0, {serverIp, port + static_cast<int>(index) * 100}},
              {1, {serverIp, port + static_cast<int>(index) * 100}}});
-
-    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
-        tlsInfo;
-    tlsInfo.certPath = "";
-    tlsInfo.keyPath = "";
-    tlsInfo.passphrasePath = "";
-    tlsInfo.useTls = false;
 
     auto metricCollector = std::make_shared<fbpcf::util::MetricCollector>(
         "attribution_metrics_for_thread_" + std::to_string(index));
@@ -133,7 +128,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
             port,
             attributionRules,
             inputFilenames,
-            outputFilenames);
+            outputFilenames,
+            tlsInfo);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -150,7 +146,9 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     int16_t concurrency,
     std::string serverIp,
     int port,
-    std::string attributionRules) {
+    std::string attributionRules,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   // use only as many threads as the number of files
   auto numThreads =
       std::min(static_cast<std::int16_t>(inputFilenames.size()), concurrency);
@@ -166,7 +164,8 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
       port,
       attributionRules,
       inputFilenames,
-      outputFilenames);
+      outputFilenames,
+      tlsInfo);
 }
 
 } // namespace pcf2_attribution

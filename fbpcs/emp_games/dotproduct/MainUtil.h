@@ -24,17 +24,14 @@ inline common::SchedulerStatistics startDotProductApp(
     std::string& outFilePath,
     int numFeatures,
     int labelWidth,
-    bool debugMode) {
+    bool debugMode,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
           PartyInfo>
       partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = "";
-  tlsInfo.keyPath = "";
-  tlsInfo.passphrasePath = "";
-  tlsInfo.useTls = false;
 
   auto metricCollector =
       std::make_shared<fbpcf::util::MetricCollector>("dotproduct");

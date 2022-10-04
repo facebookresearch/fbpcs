@@ -33,7 +33,9 @@ common::SchedulerStatistics runApp(
     bool useXorEncryption,
     int32_t visibility,
     std::string ip,
-    std::uint16_t port) {
+    std::uint16_t port,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   assert(inputEncryption == common::InputEncryption::Xor);
   assert(visibility == 0 || visibility == 1 || visibility == 2);
 
@@ -49,12 +51,6 @@ common::SchedulerStatistics runApp(
       resultVisibility = common::ResultVisibility::kPartner;
       break;
   }
-
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = "";
-  tlsInfo.keyPath = "";
-  tlsInfo.passphrasePath = "";
-  tlsInfo.useTls = false;
 
   std::map<
       int32_t,
