@@ -15,6 +15,7 @@ from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -26,6 +27,7 @@ from fbpcs.private_computation.entity.product_config import (
     AttributionRule,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
+from fbpcs.private_computation.service.argument_helper import get_tls_arguments
 from fbpcs.private_computation.service.constants import (
     DEFAULT_LOG_COST_TO_S3,
     LIFT_DEFAULT_PADDING_SIZE,
@@ -190,6 +192,11 @@ class PCF2LiftStageService(PrivateComputationStageService):
             common_compute_game_args[
                 "pc_feature_flags"
             ] = private_computation_instance.feature_flags
+        tls_args = get_tls_arguments(
+            private_computation_instance.has_feature(PCSFeature.PCF_TLS)
+        )
+
+        common_compute_game_args.update(tls_args)
 
         game_args = []
 

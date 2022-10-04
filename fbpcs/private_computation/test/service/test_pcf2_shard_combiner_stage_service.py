@@ -85,6 +85,10 @@ class TestShardCombinerStageService(IsolatedAsyncioTestCase):
                 if self.stage_svc._log_cost_to_s3
                 else "",
                 "log_cost": True,
+                "use_tls": False,
+                "ca_cert_path": "",
+                "server_cert_path": "",
+                "private_key_path": "",
             }
         ]
 

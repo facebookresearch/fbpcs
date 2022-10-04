@@ -26,6 +26,7 @@ from fbpcs.private_computation.entity.product_config import (
     ResultVisibility,
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
+from fbpcs.private_computation.service.argument_helper import get_tls_arguments
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -126,20 +127,22 @@ class ShardCombinerStageService(PrivateComputationStageService):
         else:
             run_name = ""
 
+        tls_args = get_tls_arguments(pc_instance.has_feature(PCSFeature.PCF_TLS))
+        compute_args = {
+            "input_base_path": input_stage_path,
+            "metrics_format_type": metrics_format_type,
+            "num_shards": num_shards,
+            "output_path": pc_instance.pcf2_shard_combine_stage_output_path,
+            "threshold": 0 if isinstance(pc_instance.product_config, AttributionConfig)
+            # pyre-ignore Undefined attribute [16]
+            else pc_instance.product_config.k_anonymity_threshold,
+            "run_name": run_name,
+            "log_cost": self._log_cost_to_s3,
+        }
+        compute_args.update(tls_args)
         # Create and start MPC instance
         game_args = [
-            {
-                "input_base_path": input_stage_path,
-                "metrics_format_type": metrics_format_type,
-                "num_shards": num_shards,
-                "output_path": pc_instance.pcf2_shard_combine_stage_output_path,
-                "threshold": 0
-                if isinstance(pc_instance.product_config, AttributionConfig)
-                # pyre-ignore Undefined attribute [16]
-                else pc_instance.product_config.k_anonymity_threshold,
-                "run_name": run_name,
-                "log_cost": self._log_cost_to_s3,
-            },
+            compute_args,
         ]
         # We should only export visibility to scribe when it's set
         if (

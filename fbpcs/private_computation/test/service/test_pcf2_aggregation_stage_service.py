@@ -101,6 +101,10 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             "log_cost": True,
             "use_new_output_format": False,
             "run_id": self.run_id,
+            "use_tls": False,
+            "ca_cert_path": "",
+            "server_cert_path": "",
+            "private_key_path": "",
         }
         test_game_args = [
             {
