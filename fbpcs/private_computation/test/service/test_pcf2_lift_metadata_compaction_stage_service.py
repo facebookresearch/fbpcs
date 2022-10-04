@@ -18,6 +18,7 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -55,7 +56,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             self.mock_mpc_svc,
         )
 
-    async def test_run_async(self) -> None:
+    async def test_run_async_with_udp(self) -> None:
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=private_computation_instance.infra_config.instance_id
@@ -77,7 +78,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             mpc_instance, private_computation_instance.infra_config.instances[0]
         )
 
-    def test_get_game_args(self) -> None:
+    def test_get_game_args_with_udp(self) -> None:
         private_computation_instance = self._create_pc_instance()
         base_run_name = (
             private_computation_instance.infra_config.instance_id
@@ -97,6 +98,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
                 "ca_cert_path": "",
                 "server_cert_path": "",
                 "private_key_path": "",
+                "pc_feature_flags": "private_lift_unified_data_process",
             }
             for i in range(2)
         ]
@@ -109,6 +111,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
+
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
@@ -120,7 +123,9 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=2,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
+            pcs_features={PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS},
         )
+
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
             output_dir="789",
