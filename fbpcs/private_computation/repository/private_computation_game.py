@@ -19,6 +19,7 @@ from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 class GameNames(Enum):
     LIFT = "lift"
     PCF2_LIFT = "pcf2_lift"
+    PCF2_LIFT_METADATA_COMPACTION = "pcf2_lift_metadata_compaction"
     SHARD_AGGREGATOR = "shard_aggregator"
     PCF2_SHARD_COMBINER = "pcf2_shard_combiner"
     DECOUPLED_ATTRIBUTION = "decoupled_attribution"
@@ -59,10 +60,34 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="file_start_index", required=False),
             OneDockerArgument(name="num_files", required=True),
             OneDockerArgument(name="concurrency", required=True),
+            OneDockerArgument(name="epoch", required=False),
             OneDockerArgument(name="num_conversions_per_user", required=False),
+            OneDockerArgument(name="compute_publisher_breakdowns", required=False),
             OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
+            OneDockerArgument(name="use_tls", required=False),
+            OneDockerArgument(name="ca_cert_path", required=False),
+            OneDockerArgument(name="server_cert_path", required=False),
+            OneDockerArgument(name="private_key_path", required=False),
+        ],
+    },
+    GameNames.PCF2_LIFT_METADATA_COMPACTION.value: {
+        "onedocker_package_name": OneDockerBinaryNames.PCF2_LIFT_METADATA_COMPACTION.value,
+        "arguments": [
+            OneDockerArgument(name="input_path", required=True),
+            OneDockerArgument(name="output_global_params_path", required=True),
+            OneDockerArgument(name="output_secret_shares_path", required=True),
+            OneDockerArgument(name="epoch", required=False),
+            OneDockerArgument(name="num_conversions_per_user", required=False),
+            OneDockerArgument(name="compute_publisher_breakdowns", required=False),
+            OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
             OneDockerArgument(name="pc_feature_flags", required=False),
             OneDockerArgument(name="use_tls", required=False),
             OneDockerArgument(name="ca_cert_path", required=False),
@@ -80,6 +105,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="threshold", required=True),
             OneDockerArgument(name="first_shard_index", required=False),
             OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="visibility", required=False),
             OneDockerArgument(name="run_id", required=False),
@@ -96,6 +123,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="threshold", required=True),
             OneDockerArgument(name="first_shard_index", required=False),
             OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="visibility", required=False),
             OneDockerArgument(name="use_tls", required=False),
@@ -150,6 +179,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="use_xor_encryption", required=True),
             OneDockerArgument(name="use_postfix", required=True),
             OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="use_new_output_format", required=False),
             OneDockerArgument(name="run_id", required=False),
@@ -174,6 +205,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="use_xor_encryption", required=True),
             OneDockerArgument(name="use_postfix", required=True),
             OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="use_new_output_format", required=False),
             OneDockerArgument(name="run_id", required=False),
