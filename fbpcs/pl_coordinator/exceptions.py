@@ -144,7 +144,11 @@ class PCInstanceCalculationException(OneCommandRunnerBaseException, RuntimeError
     pass
 
 
-class GraphAPITokenNotFound(OneCommandRunnerBaseException, RuntimeError):
+class GraphAPIGenericException(RuntimeError):
+    pass
+
+
+class GraphAPITokenNotFound(OneCommandRunnerBaseException, GraphAPIGenericException):
     @classmethod
     def make_error(cls) -> "GraphAPITokenNotFound":
         return cls(
@@ -156,7 +160,9 @@ class GraphAPITokenNotFound(OneCommandRunnerBaseException, RuntimeError):
         )
 
 
-class GraphAPITokenValidationError(OneCommandRunnerBaseException, RuntimeError):
+class GraphAPITokenValidationError(
+    OneCommandRunnerBaseException, GraphAPIGenericException
+):
     @classmethod
     def make_error(cls, rule: TokenValidationRule) -> "GraphAPITokenValidationError":
         return cls(

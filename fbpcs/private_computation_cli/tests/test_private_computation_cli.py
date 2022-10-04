@@ -21,10 +21,10 @@ class TestPrivateComputationCli(TestCase):
             "PrivateComputationLocalTestStageFlow",
             "PrivateComputationMRStageFlow",
         ]
-        # We don't actually use the config, but we need to write a file so that
+        # We actually use the config, so we need to write a file so that
         # the yaml load won't blow up in `main`
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
-            json.dump({}, f)
+            json.dump({"graphapi": {"access_token": "this_is_an_access_token"}}, f)
             self.temp_filename = f.name
         # Create many temporary files for testing
         self.temp_files_paths = []
@@ -189,7 +189,7 @@ class TestPrivateComputationCli(TestCase):
             create_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.TokenValidator")
-    @patch("fbpcs.private_computation_cli.private_computation_cli.PCGraphAPIClient")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.BoltGraphAPIClient")
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_attribution")
     def test_run_attribution(
         self, create_mock, graph_client_mock, token_validator_mock
@@ -297,7 +297,7 @@ class TestPrivateComputationCli(TestCase):
         get_mpc_mock.assert_called_once()
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.TokenValidator")
-    @patch("fbpcs.private_computation_cli.private_computation_cli.PCGraphAPIClient")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.BoltGraphAPIClient")
     @patch("fbpcs.private_computation_cli.private_computation_cli.run_study")
     def test_run_study(
         self, run_study_mock, graph_client_mock, token_validator_mock

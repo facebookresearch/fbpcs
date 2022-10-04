@@ -12,18 +12,16 @@ from unittest import TestCase
 from unittest.mock import MagicMock, PropertyMock
 
 import requests
-
+from fbpcs.pl_coordinator.bolt_graphapi_client import BoltGraphAPIClient
 from fbpcs.pl_coordinator.constants import INSTANCE_SLA
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenValidationError
-
-from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
 from fbpcs.pl_coordinator.token_validation_rules import TokenValidationRule
 from fbpcs.pl_coordinator.token_validator import TokenValidator
 
 
 class TestTokenValidator(TestCase):
     def setUp(self) -> None:
-        self.client = MagicMock(spec=PCGraphAPIClient)
+        self.client = MagicMock(spec=BoltGraphAPIClient)
         self.validator = TokenValidator(self.client)
 
     def test_token_common_rules(self) -> None:

@@ -16,24 +16,19 @@ from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
-
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPLGraphAPICreateInstanceArgs,
+    GRAPHAPI_INSTANCE_STATUSES,
 )
 from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
-
 from fbpcs.pl_coordinator.exceptions import (
+    GraphAPIGenericException,
     IncorrectVersionError,
     OneCommandRunnerBaseException,
     OneCommandRunnerExitCode,
     PCStudyValidationException,
     sys_exit_after,
-)
-from fbpcs.pl_coordinator.pc_graphapi_utils import (
-    GRAPHAPI_INSTANCE_STATUSES,
-    GraphAPIGenericException,
-    PCGraphAPIClient,
 )
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
@@ -98,7 +93,9 @@ def run_study(
     _validate_input(objective_ids, input_paths)
 
     # obtain study information
-    client = PCGraphAPIClient(config, logger)
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
+        config["graphapi"], logger
+    )
     try:
         study_data = _get_study_data(study_id, client)
     except GraphAPIGenericException as err:
@@ -343,7 +340,8 @@ def _verify_study_type(study_data: Dict[str, Any]) -> None:
 
 
 def _verify_adspixels_if_exist(
-    adspixels_ids: List[str], client: PCGraphAPIClient
+    adspixels_ids: List[str],
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
 ) -> None:
     if adspixels_ids:
         try:
@@ -358,7 +356,9 @@ def _verify_adspixels_if_exist(
 
 
 def _verify_mpc_objs(
-    study_data: Dict[str, Any], objective_ids: List[str], client: PCGraphAPIClient
+    study_data: Dict[str, Any],
+    objective_ids: List[str],
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
 ) -> None:
     # verify study has mpc objectives
     mpc_objectives = list(
@@ -394,7 +394,9 @@ def _verify_mpc_objs(
             )
 
 
-def _get_study_data(study_id: str, client: PCGraphAPIClient) -> Any:
+def _get_study_data(
+    study_id: str, client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs]
+) -> Any:
     return json.loads(
         client.get_study_data(
             study_id,
@@ -479,7 +481,7 @@ def _get_cell_obj_instance(
 def _create_new_instances(
     cell_obj_instances: Dict[str, Dict[str, Any]],
     study_id: str,
-    client: PCGraphAPIClient,
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
     logger: logging.Logger,
     run_id: Optional[str] = None,
 ) -> None:
@@ -498,7 +500,7 @@ def _create_new_instances(
 
 
 def _create_instance_retry(
-    client: PCGraphAPIClient,
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
     study_id: str,
     cell_id: str,
     objective_id: str,
@@ -509,13 +511,19 @@ def _create_instance_retry(
     while tries < CREATE_INSTANCE_TRIES:
         tries += 1
         try:
-            instance_id = json.loads(
+            instance_id = asyncio.run(
                 client.create_instance(
-                    study_id,
-                    {"cell_id": cell_id, "objective_id": objective_id},
-                    run_id,
-                ).text
-            )["id"]
+                    BoltPLGraphAPICreateInstanceArgs(
+                        instance_id="",
+                        study_id=study_id,
+                        breakdown_key={
+                            "cell_id": cell_id,
+                            "objective_id": objective_id,
+                        },
+                        run_id=run_id,
+                    )
+                )
+            )
             logger.info(
                 f"Created instance {instance_id} for cell {cell_id} and objective {objective_id}"
             )
@@ -557,7 +565,7 @@ def _instance_to_input_path(
 def _check_versions(
     cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
     config: Dict[str, Any],
-    client: PCGraphAPIClient,
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
 ) -> None:
     """Checks that the publisher version (graph api) and the partner version (config.yml) are the same
 
@@ -578,7 +586,9 @@ def _check_versions(
             instance_id = instance_data["instance_id"]
             # if there is no tier for some reason (e.g. old study?), let's just assume
             # the tier is correct
-            tier_str = json.loads(client.get_instance(instance_id).text).get("tier")
+            tier_str = json.loads(
+                asyncio.run(client.get_instance(instance_id)).text
+            ).get("tier")
             if tier_str:
                 expected_tier = PCSTier.from_str(tier_str)
                 if expected_tier is not config_tier:
@@ -589,15 +599,15 @@ def _check_versions(
 
 def _get_pcs_features(
     cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
-    client: PCGraphAPIClient,
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
 ) -> Optional[List[str]]:
     for cell_id in cell_obj_instances:
         for objective_id in cell_obj_instances[cell_id]:
             instance_data = cell_obj_instances[cell_id][objective_id]
             instance_id = instance_data["instance_id"]
-            feature_list = json.loads(client.get_instance(instance_id).text).get(
-                "feature_list"
-            )
+            feature_list = json.loads(
+                asyncio.run(client.get_instance(instance_id)).text
+            ).get("feature_list")
             if feature_list:
                 return feature_list
 

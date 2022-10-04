@@ -22,15 +22,13 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPAGraphAPICreateInstanceArgs,
 )
+from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
 from fbpcs.pl_coordinator.exceptions import (
+    GraphAPIGenericException,
     IncorrectVersionError,
     OneCommandRunnerExitCode,
     PCAttributionValidationException,
     sys_exit_after,
-)
-from fbpcs.pl_coordinator.pc_graphapi_utils import (
-    GraphAPIGenericException,
-    PCGraphAPIClient,
 )
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
@@ -101,7 +99,9 @@ def run_attribution(
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
-    client = PCGraphAPIClient(config, logger)
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
+        config["graphapi"], logger
+    )
     try:
         datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
     except GraphAPIGenericException as err:
@@ -218,7 +218,6 @@ def run_attribution(
             dataset_id=dataset_id,
             timestamp=str(dt_arg),
             attribution_rule=attribution_rule.name,
-            num_containers=num_mpc_containers,
         )
     )
     partner_args = BoltPlayerArgs(
@@ -247,6 +246,31 @@ def run_attribution(
         final_stage=stage_flow_override.get_last_stage().previous_stage,
         poll_interval=60,
     )
+    # Step 4. Run instances async
+
+    logger.info(f"Started running instance {instance_id}.")
+    all_run_success = asyncio.run(run_bolt(config, logger, [job]))
+    logger.info(f"Finished running instance {instance_id}.")
+    if not all(all_run_success):
+        sys.exit(1)
+
+
+async def run_bolt(
+    config: Dict[str, Any],
+    logger: logging.Logger,
+    job_list: List[
+        BoltJob[BoltPAGraphAPICreateInstanceArgs, BoltPCSCreateInstanceArgs]
+    ],
+) -> List[bool]:
+    """Run private attribution with the BoltRunner in a dedicated function to ensure that
+    the BoltRunner semaphore and runner.run_async share the same event loop.
+
+    Arguments:
+        config: The dict representation of a config.yml file
+        logger: logger client
+        job_list: The BoltJobs to execute
+    """
+
     runner = BoltRunner(
         publisher_client=BoltGraphAPIClient(config=config["graphapi"], logger=logger),
         partner_client=BoltPCSClient(
@@ -258,33 +282,31 @@ def run_attribution(
                 config.get("pid_post_processing_handlers", {}),
             )
         ),
-        num_tries=num_tries,
         logger=logger,
+        max_parallel_runs=MAX_NUM_INSTANCES,
     )
 
-    # Step 4. Run instances async
-
-    logger.info(f"Started running instance {instance_id}.")
-    all_run_success = asyncio.run(runner.run_async([job]))
-    logger.info(f"Finished running instance {instance_id}.")
-    if not all(all_run_success):
-        sys.exit(1)
+    # run all jobs
+    return await runner.run_async(job_list)
 
 
 def _create_new_instance(
     dataset_id: str,
     timestamp: int,
     attribution_rule: str,
-    client: PCGraphAPIClient,
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
     logger: logging.Logger,
 ) -> str:
-    instance_id = json.loads(
-        client.create_pa_instance(
-            dataset_id,
-            timestamp,
-            attribution_rule,
-        ).text
-    )["id"]
+    instance_id = asyncio.run(
+        client.create_instance(
+            BoltPAGraphAPICreateInstanceArgs(
+                instance_id="",
+                dataset_id=dataset_id,
+                timestamp=str(timestamp),
+                attribution_rule=attribution_rule,
+            )
+        )
+    )
     logger.info(
         f"Created instance {instance_id} for dataset {dataset_id} and attribution rule {attribution_rule}"
     )
@@ -323,7 +345,9 @@ def _get_pcs_features(instance: Dict[str, Any]) -> Optional[List[str]]:
     return instance.get(FEATURE_LIST)
 
 
-def _verify_adspixel(adspixels_id: str, client: PCGraphAPIClient) -> None:
+def _verify_adspixel(
+    adspixels_id: str, client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs]
+) -> None:
     try:
         client.get_adspixels(adspixels_id=adspixels_id, fields=["id"])
     except GraphAPIGenericException:
@@ -337,7 +361,9 @@ def _verify_adspixel(adspixels_id: str, client: PCGraphAPIClient) -> None:
 def get_attribution_dataset_info(
     config: Dict[str, Any], dataset_id: str, logger: logging.Logger
 ) -> str:
-    client = PCGraphAPIClient(config, logger)
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
+        config["graphapi"], logger
+    )
 
     return json.loads(
         client.get_attribution_dataset_info(
@@ -348,9 +374,11 @@ def get_attribution_dataset_info(
 
 
 def _get_pa_instance_info(
-    client: PCGraphAPIClient, instance_id: str, logger: logging.Logger
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
+    instance_id: str,
+    logger: logging.Logger,
 ) -> Any:
-    return json.loads(client.get_instance(instance_id).text)
+    return json.loads(asyncio.run(client.get_instance(instance_id)).text)
 
 
 def _iso_date_validator(timestamp: str) -> Any:
@@ -364,7 +392,9 @@ def _iso_date_validator(timestamp: str) -> Any:
 
 
 def _get_attribution_dataset_info(
-    client: PCGraphAPIClient, dataset_id: str, logger: logging.Logger
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
+    dataset_id: str,
+    logger: logging.Logger,
 ) -> Any:
     return json.loads(
         client.get_attribution_dataset_info(
@@ -374,5 +404,7 @@ def _get_attribution_dataset_info(
     )
 
 
-def _get_existing_pa_instances(client: PCGraphAPIClient, dataset_id: str) -> Any:
+def _get_existing_pa_instances(
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs], dataset_id: str
+) -> Any:
     return json.loads(client.get_existing_pa_instances(dataset_id).text)

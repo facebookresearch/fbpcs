@@ -17,22 +17,23 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 import requests
 from fbpcs.pl_coordinator import pl_study_runner
-
 from fbpcs.pl_coordinator.exceptions import (
+    GraphAPIGenericException,
     OneCommandRunnerExitCode,
     PCStudyValidationException,
 )
-from fbpcs.pl_coordinator.pc_graphapi_utils import GraphAPIGenericException
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
 
-PCGraphAPIClientMock = MagicMock()
+BoltGraphAPIClientMock = MagicMock()
 
 
-@patch("fbpcs.pl_coordinator.pl_study_runner.PCGraphAPIClient", PCGraphAPIClientMock)
+@patch(
+    "fbpcs.pl_coordinator.pl_study_runner.BoltGraphAPIClient", BoltGraphAPIClientMock
+)
 class TestPlStudyRunner(TestCase):
     TEST_STUDY_ID = "test_study_1"
     TEST_OBJECTIVE_ID_1 = "OBJECTIVE1"
@@ -42,13 +43,13 @@ class TestPlStudyRunner(TestCase):
     TEST_STAGE_FLOW = PrivateComputationStageFlow
 
     @patch("logging.Logger")
-    @patch("fbpcs.pl_coordinator.pc_graphapi_utils.PCGraphAPIClient")
+    @patch("fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient")
     def setUp(
         self,
         mock_graph_api_client,
         mock_logger,
     ) -> None:
-        self.config = {}
+        self.config = {"graphapi": {"access_token": "access_token"}}
         self.test_logger = logging.getLogger(__name__)
         self.client_mock = MagicMock()
         valid_start_date = datetime.datetime.now() - datetime.timedelta(hours=1)
@@ -85,7 +86,7 @@ class TestPlStudyRunner(TestCase):
         self.mock_graph_api_client = mock_graph_api_client
         self.client_mock = MagicMock()
         self.client_mock.get_study_data.return_value = self.response_mock
-        PCGraphAPIClientMock.return_value = self.client_mock
+        BoltGraphAPIClientMock.return_value = self.client_mock
         self.mock_logger = mock_logger
         self.num_shards = 2
         self.cell_id = str(random.randint(100, 200))
@@ -347,7 +348,7 @@ class TestPlStudyRunner(TestCase):
             logger_mock,
         )
 
-    def _get_graph_api_output(
+    async def _get_graph_api_output(
         self, status: str, feature_list: List[str]
     ) -> requests.Response:
         data = {"status": status, "feature_list": feature_list}
