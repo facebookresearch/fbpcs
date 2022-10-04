@@ -109,6 +109,14 @@ class PrivateComputationServiceData:
         service=None,
     )
 
+    PCF2_LIFT_METADATA_COMPACTION_DATA: StageData = StageData(
+        binary_name=OneDockerBinaryNames.PCF2_LIFT_METADATA_COMPACTION.value,
+        game_name=BINARY_NAME_TO_GAME_NAME[
+            OneDockerBinaryNames.PCF2_LIFT_METADATA_COMPACTION.value
+        ],
+        service=None,
+    )
+
     PCF2_SHARD_COMBINE_STAGE_DATA: StageData = StageData(
         binary_name=OneDockerBinaryNames.PCF2_SHARD_COMBINER.value,
         game_name=BINARY_NAME_TO_GAME_NAME[
