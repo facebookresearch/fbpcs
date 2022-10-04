@@ -55,7 +55,9 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
     std::string aggregationFormats,
     std::vector<std::string>& inputSecretShareFilenames,
     std::vector<std::string>& inputClearTextFilenames,
-    std::vector<std::string>& outputFilenames) {
+    std::vector<std::string>& outputFilenames,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   // aggregate scheduler statistics across apps
   common::SchedulerStatistics schedulerStatistics{
       0, 0, 0, 0, folly::dynamic::object()};
@@ -76,13 +78,6 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
         partyInfos(
             {{0, {serverIp, port + index * 100}},
              {1, {serverIp, port + index * 100}}});
-
-    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
-        tlsInfo;
-    tlsInfo.certPath = "";
-    tlsInfo.keyPath = "";
-    tlsInfo.passphrasePath = "";
-    tlsInfo.useTls = false;
 
     auto metricCollector = std::make_shared<fbpcf::util::MetricCollector>(
         "aggregation_metrics_for_thread_" + std::to_string(index));
@@ -126,7 +121,8 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFilesHelper(
                 aggregationFormats,
                 inputSecretShareFilenames,
                 inputClearTextFilenames,
-                outputFilenames);
+                outputFilenames,
+                tlsInfo);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -146,7 +142,9 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFiles(
     int16_t concurrency,
     std::string serverIp,
     int port,
-    std::string aggregationFormats) {
+    std::string aggregationFormats,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   // use only as many threads as the number of files
   auto numThreads =
       std::min((int)inputSecretShareFilenames.size(), (int)concurrency);
@@ -162,7 +160,8 @@ inline common::SchedulerStatistics startAggregationAppsForShardedFiles(
       aggregationFormats,
       inputSecretShareFilenames,
       inputClearTextFilenames,
-      outputFilenames);
+      outputFilenames,
+      tlsInfo);
 }
 
 } // namespace pcf2_aggregation

@@ -18,6 +18,7 @@
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcf/io/api/FileIOWrappers.h"
 #include "fbpcf/scheduler/LazySchedulerFactory.h"
+#include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/compactor/AttributionOutput.h"
 #include "fbpcs/emp_games/compactor/CompactorGame.h"
 #include "fbpcs/performance_tools/CostEstimation.h"
@@ -101,11 +102,12 @@ int main(int argc, char** argv) {
 
   XLOG(INFO) << "Creating communication agent factory\n";
 
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.certPath = "";
-  tlsInfo.keyPath = "";
-  tlsInfo.passphrasePath = "";
-  tlsInfo.useTls = false;
+  auto tlsInfo = common::getTlsInfoFromArgs(
+      FLAGS_use_tls,
+      FLAGS_ca_cert_path,
+      FLAGS_server_cert_path,
+      FLAGS_private_key_path,
+      "");
 
   std::map<
       int,

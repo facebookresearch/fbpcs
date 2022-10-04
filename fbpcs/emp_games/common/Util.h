@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <cstdlib>
+#include <memory>
 #include <sstream>
 
 #include "folly/dynamic.h"

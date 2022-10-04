@@ -89,6 +89,13 @@ int main(int argc, char* argv[]) {
       inputEncryption = common::InputEncryption::Plaintext;
     }
 
+    auto tlsInfo = common::getTlsInfoFromArgs(
+        FLAGS_use_tls,
+        FLAGS_ca_cert_path,
+        FLAGS_server_cert_path,
+        FLAGS_private_key_path,
+        "");
+
     if (FLAGS_party == common::PUBLISHER) {
       XLOGF(INFO, "Aggregation Format: {}", FLAGS_aggregators);
 
@@ -106,7 +113,8 @@ int main(int argc, char* argv[]) {
               concurrency,
               FLAGS_server_ip,
               FLAGS_port,
-              FLAGS_aggregators);
+              FLAGS_aggregators,
+              tlsInfo);
     } else if (FLAGS_party == common::PARTNER) {
       XLOG(INFO)
           << "Starting private aggregation as Partner, will wait for Publisher...";
@@ -121,7 +129,8 @@ int main(int argc, char* argv[]) {
               concurrency,
               FLAGS_server_ip,
               FLAGS_port,
-              FLAGS_aggregators);
+              FLAGS_aggregators,
+              tlsInfo);
 
     } else {
       XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);

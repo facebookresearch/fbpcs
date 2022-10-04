@@ -64,6 +64,13 @@ int main(int argc, char* argv[]) {
     CHECK_LE(concurrency, pcf2_attribution::kMaxConcurrency)
         << "Concurrency must be at most " << pcf2_attribution::kMaxConcurrency;
 
+    auto tlsInfo = common::getTlsInfoFromArgs(
+        FLAGS_use_tls,
+        FLAGS_ca_cert_path,
+        FLAGS_server_cert_path,
+        FLAGS_private_key_path,
+        "");
+
     if (FLAGS_party == common::PUBLISHER) {
       XLOGF(INFO, "Attribution Rules: {}", FLAGS_attribution_rules);
 
@@ -81,7 +88,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                tlsInfo);
       } else if (FLAGS_input_encryption == 2) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
@@ -93,7 +101,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                tlsInfo);
       } else {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
@@ -105,7 +114,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                tlsInfo);
       }
 
     } else if (FLAGS_party == common::PARTNER) {
@@ -123,7 +133,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                tlsInfo);
       } else if (FLAGS_input_encryption == 2) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
@@ -135,7 +146,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                tlsInfo);
 
       } else {
         schedulerStatistics =
@@ -148,7 +160,8 @@ int main(int argc, char* argv[]) {
                 concurrency,
                 FLAGS_server_ip,
                 FLAGS_port,
-                FLAGS_attribution_rules);
+                FLAGS_attribution_rules,
+                tlsInfo);
       }
 
     } else {

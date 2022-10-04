@@ -44,6 +44,13 @@ int main(int argc, char* argv[]) {
   XLOGF(INFO, "Base output path: {}", FLAGS_output_base_path);
 
   common::SchedulerStatistics schedulerStatistics;
+
+  auto tlsInfo = common::getTlsInfoFromArgs(
+      FLAGS_use_tls,
+      FLAGS_ca_cert_path,
+      FLAGS_server_cert_path,
+      FLAGS_private_key_path,
+      "");
   try {
     if (FLAGS_party == common::PUBLISHER) {
       XLOG(INFO)
@@ -57,7 +64,8 @@ int main(int argc, char* argv[]) {
               FLAGS_output_base_path,
               FLAGS_num_features,
               FLAGS_label_width,
-              FLAGS_debug);
+              FLAGS_debug,
+              tlsInfo);
 
     } else if (FLAGS_party == common::PARTNER) {
       XLOG(INFO)
@@ -71,7 +79,8 @@ int main(int argc, char* argv[]) {
               FLAGS_output_base_path,
               FLAGS_num_features,
               FLAGS_label_width,
-              FLAGS_debug);
+              FLAGS_debug,
+              tlsInfo);
     } else {
       XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
     }
