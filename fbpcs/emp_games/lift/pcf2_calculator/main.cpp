@@ -7,10 +7,12 @@
 
 #include <glog/logging.h>
 #include <signal.h>
+#include <algorithm>
 #include <filesystem>
 #include <sstream>
 #include <string>
 
+#include "folly/String.h"
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
 
@@ -32,6 +34,10 @@ DEFINE_string(
     input_filenames,
     "in.csv_0[,in.csv_1,in.csv_2,...]",
     "List of input file names that should be parsed (should have a header)");
+DEFINE_string(
+    input_global_params_path,
+    "out.csv_global_params_0",
+    "Input file name of global parameter setup. Used when reading inputs in secret share format rather than plaintext.");
 DEFINE_string(
     output_directory,
     "",
@@ -146,6 +152,15 @@ int main(int argc, char** argv) {
   auto inputFilepaths = filepaths.first;
   auto outputFilepaths = filepaths.second;
 
+  std::vector<std::string> enabledFeatureFlags;
+  folly::split(',', FLAGS_pc_feature_flags, enabledFeatureFlags);
+  bool readInputFromSecretShares = std::any_of(
+      enabledFeatureFlags.begin(),
+      enabledFeatureFlags.end(),
+      [](std::string flag) {
+        return flag == "private_lift_unified_data_process";
+      });
+
   {
     // Build a quick list of input/output files to log
     std::ostringstream inputFileLogList;
@@ -166,6 +181,10 @@ int main(int argc, char** argv) {
                << "\tpc_feature_flags:" << FLAGS_pc_feature_flags
                << "\tinput: " << inputFileLogList.str()
                << "\toutput: " << outputFileLogList.str() << "\n"
+               << "\tread from secret share: : " << readInputFromSecretShares
+               << "\n"
+               << "\tinput global params path: "
+               << FLAGS_input_global_params_path << "\n"
                << "\trun_id: " << FLAGS_run_id;
   }
 
@@ -180,7 +199,9 @@ int main(int argc, char** argv) {
     schedulerStatistics =
         private_lift::startCalculatorAppsForShardedFiles<common::PUBLISHER>(
             inputFilepaths,
+            FLAGS_input_global_params_path,
             outputFilepaths,
+            readInputFromSecretShares,
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
@@ -194,7 +215,9 @@ int main(int argc, char** argv) {
     schedulerStatistics =
         private_lift::startCalculatorAppsForShardedFiles<common::PARTNER>(
             inputFilepaths,
+            FLAGS_input_global_params_path,
             outputFilepaths,
+            readInputFromSecretShares,
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
