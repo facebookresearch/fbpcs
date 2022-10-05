@@ -15,6 +15,7 @@
 #include "folly/logging/xlog.h"
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
+#include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 
@@ -30,23 +31,15 @@ static void runGame(
     std::string inputFilePath,
     std::string outputFilePath,
     bool useTls,
-    std::string tlsDir) {
+    std::unique_ptr<
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+        communicationAgentFactory) {
   const bool debugMode = false;
   int numFeatures = 50;
   int labelWidth = 16;
 
-  std::map<
-      int,
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
-          PartyInfo>
-      partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
-
   auto metricCollector =
       std::make_shared<fbpcf::util::MetricCollector>("dotproduct_test");
-
-  auto communicationAgentFactory = std::make_unique<
-      fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, useTls, tlsDir, "dotproduct_traffic_test");
 
   auto app = std::make_unique<pcf2_dotproduct::DotproductApp<PARTY, PARTY>>(
       std::move(communicationAgentFactory),
@@ -109,6 +102,15 @@ inline void testCorrectnessDotProductAppHelper(
     std::vector<std::string> expectedOutputPaths,
     bool useTls,
     std::string& tlsDir) {
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+  tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
+  tlsInfo.keyPath = useTls ? (tlsDir + "/key.pem") : "";
+  tlsInfo.passphrasePath = useTls ? (tlsDir + "/passphrase.pem") : "";
+  tlsInfo.rootCaCertPath = useTls ? (tlsDir + "/ca_cert.pem") : "";
+  tlsInfo.useTls = useTls;
+
+  auto [communicationAgentFactoryAlice, communicationAgentFactoryBob] =
+      fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
   for (int i = 0; i < inputPathsAlice.size(); i++) {
     auto futureAlice = std::async(
         runGame<0, 0>,
@@ -117,7 +119,7 @@ inline void testCorrectnessDotProductAppHelper(
         inputPathsAlice.at(i),
         outputPathsAlice.at(i),
         useTls,
-        tlsDir);
+        std::move(communicationAgentFactoryAlice));
     auto futureBob = std::async(
         runGame<1, 1>,
         serverIp,
@@ -125,7 +127,7 @@ inline void testCorrectnessDotProductAppHelper(
         inputPathsBob.at(i),
         outputPathsBob.at(i),
         useTls,
-        tlsDir);
+        std::move(communicationAgentFactoryBob));
     futureAlice.wait();
     futureBob.wait();
 
@@ -143,8 +145,8 @@ inline void testCorrectnessDotProductAppHelper(
 }
 
 TEST(DotproductAppTest, DotproductAppCorrectnessTest) {
-  bool useTls = false;
-  std::string tlsDir = "";
+  bool useTls = true;
+  std::string tlsDir = fbpcf::engine::communication::setUpTlsFiles();
   int port =
       fbpcf::engine::communication::SocketInTestHelper::findNextOpenPort(5000);
   std::string baseDir =
@@ -157,7 +159,7 @@ TEST(DotproductAppTest, DotproductAppCorrectnessTest) {
   std::vector<std::string> outputFilenamesBob;
   std::vector<std::string> expectedOutputFilenames;
 
-  int numTestFiles = 2;
+  int numTestFiles = 1;
   std::string filePrefix = baseDir + "test_correctness/";
 
   for (size_t i = 0; i < numTestFiles; i++) {
