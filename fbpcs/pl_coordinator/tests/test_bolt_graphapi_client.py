@@ -126,6 +126,20 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             await self.test_client.run_stage(instance_id="id", stage=stage)
             mock_post.assert_called_once_with(f"{URL}/id", params=expected_params)
 
+    @patch("fbpcs.pl_coordinator.bolt_graphapi_client.requests.post")
+    async def test_bolt_cancel_current_stage(self, mock_post) -> None:
+        expected_params = {
+            "access_token": ACCESS_TOKEN,
+            "operation": "CANCEL",
+        }
+        for stage in PrivateComputationStageFlow.ID_MATCH, None:
+            with self.subTest(stage=stage):
+                mock_post.reset_mock()
+                await self.test_client.cancel_current_stage(
+                    instance_id="id", stage=stage
+                )
+                mock_post.assert_called_once_with(f"{URL}/id", params=expected_params)
+
     @patch(
         "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient.get_instance",
         new_callable=AsyncMock,
