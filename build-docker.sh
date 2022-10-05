@@ -8,6 +8,7 @@ set -e
 
 UBUNTU_RELEASE="20.04"
 GITHUB_PACKAGES="ghcr.io/facebookresearch"
+FBPCF_VERSION="2.1.66"
 
 
 PROG_NAME=$0
@@ -62,7 +63,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Docker build must run from the root folder, so all the relative paths work inside the Dockerfile's
 cd "$SCRIPT_DIR" || exit
 
-FBPCF_IMAGE="fbpcf/${OS_VARIANT}:latest"
+FBPCF_IMAGE="fbpcf/${OS_VARIANT}:${FBPCF_VERSION}"
 if [[ " $FBPCF_DEPENDENCY " =~ $PACKAGE ]]; then # Not all packages require fbpcf
   IMAGE_PREFIX="fbpcs/" # Current all FBPCF Dependent images are tagged with "fbpcs" prefix
   if [ "${FORCE_EXTERNAL}" == false ] && docker image inspect "${FBPCF_IMAGE}" >/dev/null 2>&1; then
