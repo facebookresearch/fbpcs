@@ -176,6 +176,21 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             msg = "running next stage"
         self._check_err(r, msg)
 
+    async def cancel_current_stage(
+        self,
+        instance_id: str,
+        stage: Optional[PrivateComputationBaseStageFlow] = None,
+        server_ips: Optional[List[str]] = None,
+    ) -> None:
+        params = self.params.copy()
+        params["operation"] = "CANCEL"
+        r = requests.post(f"{URL}/{instance_id}", params=params)
+        if stage:
+            msg = f"cancel current stage {stage}."
+        else:
+            msg = "cancel current stage."
+        self._check_err(r, msg)
+
     async def update_instance(self, instance_id: str) -> BoltState:
         response = json.loads((await self.get_instance(instance_id)).text)
         response_status = response.get("status")
