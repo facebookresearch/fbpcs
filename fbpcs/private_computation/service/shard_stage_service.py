@@ -21,6 +21,7 @@ from fbpcs.onedocker_binary_config import (
     OneDockerBinaryConfig,
 )
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -65,8 +66,14 @@ class ShardStageService(PrivateComputationStageService):
             An updated version of pc_instance
         """
 
-        output_path = pc_instance.data_processing_output_path
-        combine_output_path = output_path + "_combine"
+        if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS):
+            output_path = pc_instance.pcf2_lift_metadata_compaction_output_base_path
+            combine_output_path = output_path + "_secret_shares"
+            self._logger.info("Resharding on Metadata Compaction Stage Output")
+        else:
+            output_path = pc_instance.data_processing_output_path
+            combine_output_path = output_path + "_combine"
+            self._logger.info("Resharding on ID Spine Combiner Stage Output")
 
         self._logger.info(f"[{self}] Starting reshard service")
 
@@ -81,7 +88,8 @@ class ShardStageService(PrivateComputationStageService):
             pc_instance,
             self._onedocker_svc,
             self._onedocker_binary_config_map,
-            combine_output_path,
+            combine_output_path=combine_output_path,
+            shard_output_base_path=output_path,
             wait_for_containers_to_start_up=should_wait_spin_up,
         )
         self._logger.info("All sharding coroutines finished")
@@ -115,6 +123,7 @@ class ShardStageService(PrivateComputationStageService):
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         combine_output_path: str,
+        shard_output_base_path: str,
         wait_for_containers: bool = False,
         wait_for_containers_to_start_up: bool = True,
     ) -> List[ContainerInstance]:
@@ -137,8 +146,8 @@ class ShardStageService(PrivateComputationStageService):
         for shard_index in range(
             private_computation_instance.infra_config.num_pid_containers
         ):
-            path_to_shard = get_sharded_filepath(combine_output_path, shard_index)
-            logging.info(f"Input path to sharder: {path_to_shard}")
+            path_to_input_shard = get_sharded_filepath(combine_output_path, shard_index)
+            logging.info(f"Input path to sharder: {path_to_input_shard}")
 
             shards_per_file = math.ceil(
                 (
@@ -149,15 +158,15 @@ class ShardStageService(PrivateComputationStageService):
             )
             shard_index_offset = shard_index * shards_per_file
             logging.info(
-                f"Output base path to sharder: {private_computation_instance.data_processing_output_path}, {shard_index_offset=}"
+                f"Output base path to sharder: {shard_output_base_path}, {shard_index_offset=}"
             )
 
             binary_config = onedocker_binary_config_map[
                 OneDockerBinaryNames.SHARDER.value
             ]
             args_per_shard = sharder.build_args(
-                filepath=path_to_shard,
-                output_base_path=private_computation_instance.data_processing_output_path,
+                filepath=path_to_input_shard,
+                output_base_path=shard_output_base_path,
                 file_start_index=shard_index_offset,
                 num_output_files=shards_per_file,
                 tmp_directory=binary_config.tmp_directory,
