@@ -18,6 +18,9 @@ from fbpcs.private_computation.stage_flows.private_computation_mr_pid_pcf2_lift_
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
 )
+from fbpcs.private_computation.stage_flows.private_computation_pcf2_lift_udp_stage_flow import (
+    PrivateComputationPCF2LiftUDPStageFlow,
+)
 from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
     PrivateComputationPCF2StageFlow,
 )
@@ -45,5 +48,11 @@ def get_stage_flow(
             PrivateComputationMRStageFlow
             if game_type is PrivateComputationGameType.ATTRIBUTION
             else PrivateComputationMrPidPCF2LiftStageFlow
+        )
+    if PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS in pcs_feature_enums:
+        selected_stage_flow_cls = (
+            PrivateComputationPCF2LiftUDPStageFlow
+            if game_type is PrivateComputationGameType.LIFT
+            else selected_stage_flow_cls
         )
     return selected_stage_flow_cls
