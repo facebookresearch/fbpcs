@@ -14,7 +14,10 @@ import requests
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
-from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
+from fbpcs.pl_coordinator.exceptions import (
+    GraphAPIGenericException,
+    GraphAPITokenNotFound,
+)
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -103,7 +106,6 @@ class BoltPAGraphAPICreateInstanceArgs(BoltCreateInstanceArgs):
     dataset_id: str
     timestamp: str
     attribution_rule: str
-    num_containers: str
 
 
 BoltGraphAPICreateInstanceArgs = TypeVar(
@@ -142,7 +144,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
                 f"{URL}/{instance_args.study_id}/instances", params=params
             )
             self._check_err(r, "creating fb pl instance")
-            return r.json().id
+            return r.json()["id"]
         elif isinstance(instance_args, BoltPAGraphAPICreateInstanceArgs):
             params["attribution_rule"] = instance_args.attribution_rule
             params["timestamp"] = instance_args.timestamp
@@ -150,7 +152,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
                 f"{URL}/{instance_args.dataset_id}/instance", params=params
             )
             self._check_err(r, "creating fb pa instance")
-            return r.json().id
+            return r.json()["id"]
         raise TypeError(
             f"Instance args must be of type {BoltPLGraphAPICreateInstanceArgs} or {BoltPAGraphAPICreateInstanceArgs}"
         )
@@ -275,4 +277,40 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         if r.status_code != 200:
             err_msg = f"Error {msg}: {r.content}"
             self.logger.error(err_msg)
-            raise RuntimeError(err_msg)
+            raise GraphAPIGenericException(err_msg)
+
+    def get_adspixels(self, adspixels_id: str, fields: List[str]) -> requests.Response:
+        params = self.params.copy()
+        params["fields"] = ",".join(fields)
+        r = requests.get(f"{URL}/{adspixels_id}", params=params)
+        self._check_err(r, "getting adspixels data")
+        return r
+
+    def get_debug_token_data(self) -> requests.Response:
+        params = self.params.copy()
+        params["input_token"] = self.access_token
+        r = requests.get(f"{URL}/debug_token", params=params)
+        self._check_err(r, "getting debug token data")
+        return r
+
+    def get_study_data(self, study_id: str, fields: List[str]) -> requests.Response:
+        params = self.params.copy()
+        params["fields"] = ",".join(fields)
+        r = requests.get(f"{URL}/{study_id}", params=params)
+        self._check_err(r, "getting study data")
+        return r
+
+    def get_attribution_dataset_info(
+        self, dataset_id: str, fields: List[str]
+    ) -> requests.Response:
+        params = self.params.copy()
+        params["fields"] = ",".join(fields)
+        r = requests.get(f"{URL}/{dataset_id}", params=params)
+        self._check_err(r, "getting dataset information")
+        return r
+
+    def get_existing_pa_instances(self, dataset_id: str) -> requests.Response:
+        params = self.params.copy()
+        r = requests.get(f"{URL}/{dataset_id}/instances", params=params)
+        self._check_err(r, "getting attribution instances tied to the dataset")
+        return r

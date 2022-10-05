@@ -103,7 +103,6 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             dataset_id="dataset_id",
             timestamp="0",
             attribution_rule="attribution_rule",
-            num_containers="1",
         )
         await self.test_client.create_instance(test_pa_args)
         mock_post.assert_called_once_with(

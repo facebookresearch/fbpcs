@@ -9,10 +9,11 @@
 import json
 from typing import Optional, Tuple
 
+from fbpcs.pl_coordinator.bolt_graphapi_client import (
+    BoltGraphAPIClient,
+    BoltGraphAPICreateInstanceArgs,
+)
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenValidationError
-
-from fbpcs.pl_coordinator.pc_graphapi_utils import PCGraphAPIClient
-
 from fbpcs.pl_coordinator.token_validation_rules import (
     DebugTokenData,
     TokenValidationRule,
@@ -30,7 +31,9 @@ COMMON_RULES: Tuple[TokenValidationRule, ...] = (
 
 
 class TokenValidator:
-    def __init__(self, client: PCGraphAPIClient) -> None:
+    def __init__(
+        self, client: BoltGraphAPIClient[BoltGraphAPICreateInstanceArgs]
+    ) -> None:
         self.client = client
         self.debug_token_data: Optional[DebugTokenData] = None
 
