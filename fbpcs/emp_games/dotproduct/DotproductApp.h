@@ -159,11 +159,14 @@ class DotproductApp {
   void writeOutputData(
       const std::vector<double> dotproduct,
       std::string outputPath) {
-    std::string outputString = "[";
-    for (auto& v : dotproduct) {
-      outputString = outputString + std::to_string(v) + ",";
+    std::stringstream ss;
+    ss.precision(10);
+    ss << "[";
+    for (const auto& v : dotproduct) {
+      ss << v << ',';
     }
     // replace the comma with bracket to end the list
+    std::string outputString = ss.str();
     outputString[outputString.size() - 1] = ']';
     XLOG(INFO, outputString);
     fbpcf::io::FileIOWrappers::writeFile(outputPath, outputString);
