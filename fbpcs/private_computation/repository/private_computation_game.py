@@ -57,6 +57,7 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
         "arguments": [
             OneDockerArgument(name="input_base_path", required=True),
             OneDockerArgument(name="output_base_path", required=True),
+            OneDockerArgument(name="input_global_params_path", required=False),
             OneDockerArgument(name="file_start_index", required=False),
             OneDockerArgument(name="num_files", required=True),
             OneDockerArgument(name="concurrency", required=True),
