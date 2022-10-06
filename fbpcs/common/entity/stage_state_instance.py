@@ -9,7 +9,7 @@
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Iterator, List, Optional, Union
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.service.onedocker import OneDockerService
@@ -66,7 +66,15 @@ class StageStateInstance(InstanceBase):
         self,
         onedocker_svc: OneDockerService,
     ) -> StageStateInstanceStatus:
-        self.containers = self._update_containers(onedocker_svc)
+        # update containers in place, return fast if found any failed/unknown
+        for instance_status in self._update_containers_in_place(onedocker_svc):
+            if instance_status is ContainerInstanceStatus.FAILED:
+                self.status = StageStateInstanceStatus.FAILED
+                return self.status
+            elif instance_status is ContainerInstanceStatus.UNKNOWN:
+                self.status = StageStateInstanceStatus.UNKNOWN
+                return self.status
+
         statuses = {container.status for container in self.containers}
         # updating stage state status based on containers status
         if ContainerInstanceStatus.FAILED in statuses:
@@ -82,6 +90,13 @@ class StageStateInstance(InstanceBase):
             self.status = StageStateInstanceStatus.UNKNOWN
 
         return self.status
+
+    def _update_containers_in_place(
+        self, onedocker_svc: OneDockerService
+    ) -> Iterator[ContainerInstanceStatus]:
+        for idx, container in enumerate(self.containers):
+            self.containers[idx] = self._update_container(onedocker_svc, container)
+            yield self.containers[idx].status
 
     def _update_containers(
         self, onedocker_svc: OneDockerService

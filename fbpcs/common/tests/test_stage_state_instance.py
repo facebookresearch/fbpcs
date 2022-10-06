@@ -76,13 +76,13 @@ class TestStageStateInstance(unittest.TestCase):
 
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch(
-        "fbpcs.common.entity.stage_state_instance.StageStateInstance._update_containers"
+        "fbpcs.common.entity.stage_state_instance.StageStateInstance._update_container"
     )
     def test_update_status_translation(
-        self, mock_update_containers, mock_onedocker_svc
+        self, mock_update_container, mock_onedocker_svc
     ) -> None:
         with self.subTest("test all containers started"):
-            mock_update_containers.return_value = [
+            mock_update_container.side_effect = [
                 ContainerInstance(
                     instance_id="test_container_instance_100",
                     status=ContainerInstanceStatus.STARTED,
@@ -97,7 +97,7 @@ class TestStageStateInstance(unittest.TestCase):
             self.assertEqual(status, StageStateInstanceStatus.STARTED)
 
         with self.subTest("test some container completed"):
-            mock_update_containers.return_value = [
+            mock_update_container.side_effect = [
                 ContainerInstance(
                     instance_id="test_container_instance_100",
                     status=ContainerInstanceStatus.COMPLETED,
@@ -112,7 +112,7 @@ class TestStageStateInstance(unittest.TestCase):
             self.assertEqual(status, StageStateInstanceStatus.STARTED)
 
         with self.subTest("test all containers completed"):
-            mock_update_containers.return_value = [
+            mock_update_container.side_effect = [
                 ContainerInstance(
                     instance_id="test_container_instance_100",
                     status=ContainerInstanceStatus.COMPLETED,
@@ -127,7 +127,7 @@ class TestStageStateInstance(unittest.TestCase):
             self.assertEqual(status, StageStateInstanceStatus.COMPLETED)
 
         with self.subTest("test container had failed"):
-            mock_update_containers.return_value = [
+            mock_update_container.side_effect = [
                 ContainerInstance(
                     instance_id="test_container_instance_100",
                     status=ContainerInstanceStatus.FAILED,
@@ -142,7 +142,7 @@ class TestStageStateInstance(unittest.TestCase):
             self.assertEqual(status, StageStateInstanceStatus.FAILED)
 
         with self.subTest("test container had unknown"):
-            mock_update_containers.return_value = [
+            mock_update_container.side_effect = [
                 ContainerInstance(
                     instance_id="test_container_instance_100",
                     status=ContainerInstanceStatus.COMPLETED,
@@ -172,15 +172,11 @@ class TestStageStateInstance(unittest.TestCase):
         mock_onedocker_svc.reset_mock()
         mock_onedocker_svc.get_container = MagicMock(return_value=updated_container)
         self.stage_state_instance.update_status(mock_onedocker_svc)
-
-        mock_onedocker_svc.get_container.assert_called_once_with(
-            started_container.instance_id
-        )
         self.assertEqual(
             [o.status for o in self.stage_state_instance.containers],
             [
                 ContainerInstanceStatus.FAILED,
                 ContainerInstanceStatus.COMPLETED,
-                ContainerInstanceStatus.FAILED,
+                ContainerInstanceStatus.STARTED,
             ],
         )
