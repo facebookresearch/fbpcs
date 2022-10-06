@@ -113,6 +113,7 @@ class TestDownloadLogs(unittest.TestCase):
                     str(self._get_sample_log_path("container_ids.txt")),
                     "bucket-name",
                     "tag-name",
+                    "deployment_tag",
                     "--input_ids",
                 ]
             )
