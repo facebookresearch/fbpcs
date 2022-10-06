@@ -9,15 +9,14 @@
 from typing import Dict, List, Optional
 
 from fbpcp.entity.cluster_instance import Cluster
-
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.container import ContainerService
 from fbpcp.service.container_aws import AWSContainerService
 from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
-from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
-
+from fbpcs.experimental.cloud_logs.aws_log_retriever import AWSLogRetriever
+from fbpcs.experimental.cloud_logs.log_retriever import LogRetriever
 from fbpcs.private_computation.service.utils import deprecated
 
 
@@ -26,7 +25,7 @@ class PCSContainerService(ContainerService):
         self.inner_container_service: ContainerService = inner_container_service
         self.log_retriever: Optional[LogRetriever] = None
         if isinstance(self.inner_container_service, AWSContainerService):
-            self.log_retriever = LogRetriever(CloudProvider.AWS)
+            self.log_retriever = AWSLogRetriever()
 
     def get_region(
         self,

@@ -15,7 +15,6 @@ import warnings
 from typing import Any, Dict, List, Optional
 
 from fbpcp.entity.certificate_request import CertificateRequest
-
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
@@ -25,9 +24,8 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
 )
-from fbpcs.experimental.cloud_logs.log_retriever import CloudProvider, LogRetriever
+from fbpcs.experimental.cloud_logs.aws_log_retriever import AWSLogRetriever
 from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
-
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -217,7 +215,7 @@ def get_log_urls(
     last_instance = private_computation_instance.infra_config.instances[-1]
 
     # TODO - hope we're using AWS!
-    log_retriever = LogRetriever(CloudProvider.AWS)
+    log_retriever = AWSLogRetriever()
 
     res = {}
     if isinstance(last_instance, PCSMPCInstance) or isinstance(
