@@ -33,7 +33,8 @@ const std::unordered_map<std::string, std::string> SUPPORTED_APPLICATIONS(
      {"shard_aggregator", "sa-logs"},
      {"shard_combiner", "sc-logs"},
      {"compactor", "comp-logs"},
-     {"dotproduct", "dotprod-logs"}});
+     {"dotproduct", "dotprod-logs"},
+     {"private_id_dfca_aggregator", "piddfca-logs"}});
 const std::vector<std::string> SUPPORTED_VERSIONS{"decoupled", "pcf2"};
 const std::string CLOUD = "aws";
 
