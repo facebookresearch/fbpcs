@@ -10,15 +10,16 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar
+from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar, Union
 
 from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
+from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
-
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.simple_metric_service import SimpleMetricService
 from fbpcs.common.service.simple_trace_logging_service import SimpleTraceLoggingService
@@ -26,6 +27,8 @@ from fbpcs.common.service.trace_logging_service import (
     CheckpointStatus,
     TraceLoggingService,
 )
+from fbpcs.experimental.cloud_logs.dummy_log_retriever import DummyLogRetriever
+from fbpcs.experimental.cloud_logs.log_retriever import LogRetriever
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -76,7 +79,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
 )
-from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
@@ -104,6 +106,7 @@ class PrivateComputationService:
         workflow_svc: Optional[WorkflowService] = None,
         metric_svc: Optional[MetricService] = None,
         trace_logging_svc: Optional[TraceLoggingService] = None,
+        log_retriever: Optional[LogRetriever] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
         """Constructor of PrivateComputationService
@@ -122,6 +125,7 @@ class PrivateComputationService:
         self.trace_logging_svc: TraceLoggingService = (
             trace_logging_svc or SimpleTraceLoggingService()
         )
+        self.log_retriever: LogRetriever = log_retriever or DummyLogRetriever()
         self.post_processing_handlers: Dict[str, PostProcessingHandler] = (
             post_processing_handlers or {}
         )
@@ -506,7 +510,7 @@ class PrivateComputationService:
             self.instance_repository.update(pc_instance)
 
         try:
-            log_urls = get_log_urls(pc_instance)
+            log_urls = self.get_log_urls(pc_instance)
             for key, url in log_urls.items():
                 self.logger.info(f"Log for {key} at {url}")
         except Exception:
@@ -519,6 +523,44 @@ class PrivateComputationService:
             status=CheckpointStatus.COMPLETED,
         )
         return pc_instance
+
+    def get_log_urls(
+        self, instance_or_id: Union[str, PrivateComputationInstance]
+    ) -> Dict[str, str]:
+        """Get log urls for most recently run containers
+
+        Arguments:
+            instance_or_id: The PC instance to get logs from or its instance id
+
+        Returns:
+            A mapping of log index to log url
+        """
+
+        if isinstance(instance_or_id, str):
+            private_computation_instance = self.get_instance(instance_or_id)
+        elif isinstance(instance_or_id, PrivateComputationInstance):
+            private_computation_instance = instance_or_id
+        else:
+            raise ValueError(
+                "instance_or_id must be either a str or PrivateComputationInstance"
+            )
+        # Get the last pid or mpc instance
+        last_instance = private_computation_instance.infra_config.instances[-1]
+
+        res = {}
+        if isinstance(last_instance, PCSMPCInstance) or isinstance(
+            last_instance, StageStateInstance
+        ):
+            containers = last_instance.containers
+            for i, container in enumerate(containers):
+                res[str(i)] = self.log_retriever.get_log_url(container.instance_id)
+        else:
+            logging.warning(
+                "The last instance of PrivateComputationInstance "
+                f"{private_computation_instance.infra_config.instance_id} has no supported way "
+                "of retrieving log URLs"
+            )
+        return res
 
     # TODO T88759390: make an async version of this function
     # Optional stage, validate the correctness of aggregated results for injected synthetic data

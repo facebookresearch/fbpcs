@@ -17,12 +17,12 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.pcs_container_service import PCSContainerService
 from fbpcs.common.service.simple_metric_service import SimpleMetricService
 from fbpcs.common.service.simple_trace_logging_service import SimpleTraceLoggingService
 from fbpcs.common.service.trace_logging_service import TraceLoggingService
+from fbpcs.experimental.cloud_logs.log_retriever import LogRetriever
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
@@ -46,7 +46,6 @@ from fbpcs.private_computation.repository.private_computation_instance import (
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
-from fbpcs.private_computation.service.utils import get_log_urls
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
@@ -341,8 +340,14 @@ def print_log_urls(
     To print the log urls with id instance_id.
     Printing out by stages and correspondens log url
     """
-    instance = get_instance(config, instance_id, logger)
-    log_urls = get_log_urls(instance)
+    pc_service = _build_private_computation_service(
+        config["private_computation"],
+        config["mpc"],
+        config["pid"],
+        config.get("post_processing_handlers", {}),
+        config.get("pid_post_processing_handlers", {}),
+    )
+    log_urls = pc_service.get_log_urls(instance_id)
     if not log_urls:
         logger.warning(f"Unable to get log container urls for instance {instance_id}")
         return
@@ -369,8 +374,21 @@ def get_tier(config: Dict[str, Any]) -> PCSTier:
     return PCSTier.from_str(tier_str)
 
 
-def _build_container_service(config: Dict[str, Any]) -> PCSContainerService:
-    return PCSContainerService(reflect.get_instance(config, ContainerService))
+def _try_build_log_retriever(
+    log_retriever_config: Dict[str, Any]
+) -> Optional[LogRetriever]:
+    if log_retriever_config:
+        return reflect.get_instance(log_retriever_config, LogRetriever)
+    else:
+        return None
+
+
+def _build_container_service(
+    config: Dict[str, Any], log_retriever: Optional[LogRetriever] = None
+) -> PCSContainerService:
+    return PCSContainerService(
+        reflect.get_instance(config, ContainerService), log_retriever
+    )
 
 
 def _build_storage_service(config: Dict[str, Any]) -> StorageService:
@@ -445,8 +463,11 @@ def _build_private_computation_service(
     repository_service = reflect.get_instance(
         instance_repository_config, PrivateComputationInstanceRepository
     )
+    maybe_log_retriever = _try_build_log_retriever(
+        pc_config["dependency"].get("LogRetriever")
+    )
     container_service = _build_container_service(
-        pc_config["dependency"]["ContainerService"]
+        pc_config["dependency"]["ContainerService"], maybe_log_retriever
     )
     onedocker_service_config = _build_onedocker_service_cfg(
         pc_config["dependency"]["OneDockerServiceConfig"]
@@ -488,6 +509,7 @@ def _build_private_computation_service(
         workflow_svc=workflow_service,
         metric_svc=metric_svc,
         trace_logging_svc=trace_logging_svc,
+        log_retriever=container_service.log_retriever,
     )
 
 

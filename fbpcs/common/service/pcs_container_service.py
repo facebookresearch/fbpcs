@@ -21,11 +21,16 @@ from fbpcs.private_computation.service.utils import deprecated
 
 
 class PCSContainerService(ContainerService):
-    def __init__(self, inner_container_service: ContainerService) -> None:
+    def __init__(
+        self,
+        inner_container_service: ContainerService,
+        log_retriever: Optional[LogRetriever] = None,
+    ) -> None:
         self.inner_container_service: ContainerService = inner_container_service
-        self.log_retriever: Optional[LogRetriever] = None
-        if isinstance(self.inner_container_service, AWSContainerService):
-            self.log_retriever = AWSLogRetriever()
+        self.log_retriever: Optional[LogRetriever] = log_retriever
+        if not self.log_retriever:
+            if isinstance(self.inner_container_service, AWSContainerService):
+                self.log_retriever = AWSLogRetriever()
 
     def get_region(
         self,
