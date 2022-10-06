@@ -1,6 +1,6 @@
 # Private Lift Games Pseudocode
-## Sample of Facebook Input
-Facebook inputs the opportunity data of a Lift study. This is not shared with the advertiser. We assume the `id_` column is aligned across publisher (facebook) and advertiser using Private ID protocol that runs before MPC game.
+## Sample of Meta Input
+Meta inputs the opportunity data of a Lift study. This is not shared with the advertiser. We assume the `id_` column is aligned across publisher (Meta) and advertiser using Private ID protocol that runs before MPC game.
 * Each row represents a person.
 * The `id_` column can be in a different format based on the type of person id used by the participating advertiser.
 * `opportunity` column is optional.
@@ -18,8 +18,8 @@ id_,opportunity,test_flag,opportunity_timestamp
 ```
 
 ## Sample of Advertiser Input
-The advertiser inputs the conversion data of a Lift study. This is not shared with Facebook.
-* Because ids should be matched by PID process before play the Lift games, we expect a one-to-one mapping between the ids in this input and the ids in Facebook's input.
+The advertiser inputs the conversion data of a Lift study. This is not shared with Meta.
+* Because ids should be matched by PID process before play the Lift games, we expect a one-to-one mapping between the ids in this input and the ids in Meta's input.
 * Both "event_timestamps" and "values" are capped and padded to have 4 values. This means currently we support up to **4 conversions per user**.
 
 ```
@@ -35,9 +35,9 @@ id_,event_timestamps,values,feature_foo,feature_bar
 ## Conversion Lift Game
 
 ### Inputs and Outputs
-* Facebook Input: List of id_, opportunity (optional), test_flag, opportunity_timestamp
+* Meta Input: List of id_, opportunity (optional), test_flag, opportunity_timestamp
 * Advertiser Input: List of id_, event_timestamps, values, any features (optional)
-* Facebook Output: Xor share of Output statistics
+* Meta Output: Xor share of Output statistics
 * Advertiser Output: Xor share of Output statistics
 
 ### Output statistics
@@ -50,7 +50,7 @@ id_,event_timestamps,values,feature_foo,feature_bar
     testSquared, //user-grain sum of the squares of the values of valid conversions in the test group
     controlSquared, //user-grain sum of the squares of the values of valid conversions in the control group
 
-### Facebook and Advertiser jointly compute in 2 PC
+### Meta and Advertiser jointly compute in 2 PC
 
 ```
 for each row in lists:
@@ -79,7 +79,7 @@ Output XOR share of the Output Statistics to each party.
 ## Aggregator Game
 
 ### Inputs and outputs
-* Facebook Input:
+* Meta Input:
 ```
     X shards of XOR share of output metrics from previous step
         testPopulation,
@@ -92,11 +92,11 @@ Output XOR share of the Output Statistics to each party.
         controlSquared
     with X >= 1
 ```
-* Advertiser Input: Same format as Facebook Input
-* Facebook Output: Output metrics with all zeroes
+* Advertiser Input: Same format as Meta Input
+* Meta Output: Output metrics with all zeroes
 * Advertiser Output: Aggregated output metrics
 
-### Facebook and Advertiser jointly compute in 2 PC
+### Meta and Advertiser jointly compute in 2 PC
 ```
 for each shard S in all shards:
    for each metric M in S:
