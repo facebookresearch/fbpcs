@@ -20,11 +20,7 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
-from fbpcs.common.entity.stage_state_instance import (
-    StageStateInstance,
-    StageStateInstanceStatus,
-)
-from fbpcs.experimental.cloud_logs.aws_log_retriever import AWSLogRetriever
+from fbpcs.common.entity.stage_state_instance import StageStateInstanceStatus
 from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -198,39 +194,6 @@ def get_pc_status_from_stage_state(
         status = current_stage.failed_status
 
     return status
-
-
-def get_log_urls(
-    private_computation_instance: PrivateComputationInstance,
-) -> Dict[str, str]:
-    """Get log urls for most recently run containers
-
-    Arguments:
-        private_computation_instance: The PC instance that is being updated
-
-    Returns:
-        The latest status for private_computation_instance as an ordered dict
-    """
-    # Get the last pid or mpc instance
-    last_instance = private_computation_instance.infra_config.instances[-1]
-
-    # TODO - hope we're using AWS!
-    log_retriever = AWSLogRetriever()
-
-    res = {}
-    if isinstance(last_instance, PCSMPCInstance) or isinstance(
-        last_instance, StageStateInstance
-    ):
-        containers = last_instance.containers
-        for i, container in enumerate(containers):
-            res[str(i)] = log_retriever.get_log_url(container.instance_id)
-    else:
-        logging.warning(
-            "The last instance of PrivateComputationInstance "
-            f"{private_computation_instance.infra_config.instance_id} has no supported way "
-            "of retrieving log URLs"
-        )
-    return res
 
 
 # decorators are a serious pain to add typing for, so I'm not going to bother...
