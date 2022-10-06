@@ -76,6 +76,7 @@ class BoltRunner(Generic[T, U]):
                         job.partner_bolt_args.create_instance_args
                     ),
                 )
+
                 logger = LoggerAdapter(logger=self.logger, prefix=partner_id)
                 await self.wait_valid_publisher_status(
                     instance_id=publisher_id,
@@ -185,18 +186,6 @@ class BoltRunner(Generic[T, U]):
             logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
 
-        server_ips = None
-        if stage.is_joint_stage:
-            server_ips = await self.get_server_ips_after_start(
-                instance_id=publisher_id,
-                stage=stage,
-                timeout=stage.timeout,
-                poll_interval=poll_interval,
-            )
-            if server_ips is None:
-                raise NoServerIpsException(
-                    f"{stage.name} requires server ips but got none."
-                )
         partner_status = (
             await self.partner_client.update_instance(partner_id)
         ).pc_instance_status
@@ -206,6 +195,18 @@ class BoltRunner(Generic[T, U]):
             stage.completed_status,
         ]:
             # don't retry if started, initialized, or completed status
+            server_ips = None
+            if stage.is_joint_stage:
+                server_ips = await self.get_server_ips_after_start(
+                    instance_id=publisher_id,
+                    stage=stage,
+                    timeout=stage.timeout,
+                    poll_interval=poll_interval,
+                )
+                if server_ips is None:
+                    raise NoServerIpsException(
+                        f"{stage.name} requires server ips but got none."
+                    )
             logger.info(f"Partner {partner_id} starting stage {stage.name}.")
             await self.partner_client.run_stage(
                 instance_id=partner_id, stage=stage, server_ips=server_ips
