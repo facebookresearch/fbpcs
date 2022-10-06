@@ -33,7 +33,9 @@ class CalculatorApp {
       const bool computePublisherBreakdowns,
       const int epoch,
       const std::vector<std::string>& inputPaths,
+      const std::string& inputGlobalParamsPath,
       const std::vector<std::string>& outputPaths,
+      bool readInputFromSecretShares,
       std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       const int startFileIndex = 0,
       const int numFiles = 1,
@@ -44,7 +46,9 @@ class CalculatorApp {
         computePublisherBreakdowns_(computePublisherBreakdowns),
         epoch_(epoch),
         inputPaths_(inputPaths),
+        inputGlobalParamsPath_(inputGlobalParamsPath),
         outputPaths_(outputPaths),
+        readInputFromSecretShares_(readInputFromSecretShares),
         metricCollector_(metricCollector),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
@@ -71,7 +75,9 @@ class CalculatorApp {
   bool computePublisherBreakdowns_;
   int epoch_;
   std::vector<std::string> inputPaths_;
+  const std::string inputGlobalParamsPath_;
   std::vector<std::string> outputPaths_;
+  const bool readInputFromSecretShares_;
   std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
   int startFileIndex_;
   int numFiles_;

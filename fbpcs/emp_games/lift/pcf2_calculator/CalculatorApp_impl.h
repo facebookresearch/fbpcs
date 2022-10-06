@@ -25,10 +25,18 @@ void CalculatorApp<schedulerId>::run() {
   for (size_t i = startFileIndex_; i < startFileIndex_ + numFiles_; ++i) {
     try {
       CHECK_LT(i, inputPaths_.size()) << "File index exceeds number of files.";
-      CalculatorGameConfig config = getInputData(inputPaths_.at(i));
-      auto numRows = config.inputData.getNumRows();
-      XLOG(INFO) << "Have " << numRows << " values in inputData.";
-      auto output = game.play(config);
+      std::string output;
+      if (!readInputFromSecretShares_) {
+        CalculatorGameConfig config = getInputData(inputPaths_.at(i));
+        auto numRows = config.inputData.getNumRows();
+        XLOG(INFO) << "Have " << numRows << " values in inputData.";
+        output = game.play(config);
+      } else {
+        XLOG(INFO) << "Reading input data from secret shares.";
+        output = game.playFromSecretShares(
+            inputGlobalParamsPath_, inputPaths_.at(i), numConversionsPerUser_);
+      }
+
       XLOG(INFO) << "done calculating";
       putOutputData(output, outputPaths_.at(i));
     } catch (const std::exception& e) {
