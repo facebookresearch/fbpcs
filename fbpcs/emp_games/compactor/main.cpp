@@ -169,6 +169,7 @@ int main(int argc, char** argv) {
     auto run_name = run_name_specified ? FLAGS_run_name : "temp_run_name";
     auto party = (FLAGS_party == PUBLISHER_ROLE) ? "Publisher" : "Partner";
 
+    fbpcf::scheduler::SchedulerKeeper<0>::deleteEngine();
     folly::dynamic extra_info = folly::dynamic::object(
         "publisher_input_path", (FLAGS_party == PUBLISHER_ROLE) ? FLAGS_input_file_path : "")
         ("partner_input_basepath", (FLAGS_party == PARTNER_ROLE) ? FLAGS_input_file_path : "")

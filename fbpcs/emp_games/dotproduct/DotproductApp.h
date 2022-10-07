@@ -78,11 +78,12 @@ class DotproductApp {
         "Sent network traffic = {}, Received network traffic = {}",
         trafficStatistics.first,
         trafficStatistics.second);
-
+    fbpcf::scheduler::SchedulerKeeper<schedulerId>::deleteEngine();
     schedulerStatistics_.nonFreeGates = gateStatistics.first;
     schedulerStatistics_.freeGates = gateStatistics.second;
     schedulerStatistics_.sentNetwork = trafficStatistics.first;
     schedulerStatistics_.receivedNetwork = trafficStatistics.second;
+    schedulerStatistics_.details = metricCollector_->collectMetrics();
   }
 
   common::SchedulerStatistics getSchedulerStatistics() {

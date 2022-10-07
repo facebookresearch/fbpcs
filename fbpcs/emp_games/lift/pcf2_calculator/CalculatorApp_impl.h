@@ -69,6 +69,7 @@ void CalculatorApp<schedulerId>::run() {
   schedulerStatistics_.freeGates = gateStatistics.second;
   schedulerStatistics_.sentNetwork = trafficStatistics.first;
   schedulerStatistics_.receivedNetwork = trafficStatistics.second;
+  fbpcf::scheduler::SchedulerKeeper<schedulerId>::deleteEngine();
   schedulerStatistics_.details = metricCollector_->collectMetrics();
 };
 
