@@ -21,6 +21,7 @@
 
 #include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/dotproduct/DotproductApp.h"
+#include "fbpcs/emp_games/dotproduct/test/DotproductTestUtils.h"
 
 namespace pcf2_dotproduct {
 
@@ -51,44 +52,6 @@ static void runGame(
       debugMode);
 
   app->run();
-}
-
-// verify the dotproduct output
-bool verifyOutput(
-    std::vector<double> result,
-    std::vector<double> expectedResult) {
-  return std::equal(
-      result.begin(),
-      result.end(),
-      expectedResult.begin(),
-      [](double value1, double value2) {
-        constexpr double epsilon = 0.00001;
-        return std::fabs(value1 - value2) < epsilon;
-      });
-}
-
-std::vector<double> parseResult(std::string filePath) {
-  std::ifstream result;
-  std::string line;
-
-  result.open(filePath);
-  std::getline(result, line);
-
-  const auto left = line.find('[');
-  const auto right = line.find(']');
-
-  std::string valsString = line.substr(left + 1, right - (left + 1));
-
-  std::vector<double> v;
-
-  std::stringstream ss(valsString);
-
-  while (ss.good()) {
-    string substr;
-    getline(ss, substr, ',');
-    v.push_back(std::stod(substr));
-  }
-  return v;
 }
 
 // helper function for executing MPC game and verifying corresponding output
