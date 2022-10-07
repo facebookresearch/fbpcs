@@ -456,6 +456,7 @@ def _build_private_computation_service(
     pid_config: Dict[str, Any],
     pph_config: Dict[str, Any],
     pid_pph_config: Dict[str, Any],
+    trace_logging_svc: Optional[TraceLoggingService] = None,
 ) -> PrivateComputationService:
     instance_repository_config = pc_config["dependency"][
         "PrivateComputationInstanceRepository"
@@ -487,7 +488,7 @@ def _build_private_computation_service(
         workflow_service = None
 
     metric_svc = _build_metric_service(pc_config["dependency"].get("MetricService"))
-    trace_logging_svc = _build_trace_logging_service(
+    trace_logging_svc = trace_logging_svc or _build_trace_logging_service(
         pc_config["dependency"].get("TraceLoggingService")
     )
 
