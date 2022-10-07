@@ -103,6 +103,12 @@ log_streaming_data() {
     echo "$(date +"%M:%S") -> $text" >> "$TF_LOG_STREAMING"
 }
 
+log_resource_output() {
+    local resource_name=$1
+    local resource_value=$2
+    echo "$(jq -n --arg key "$resource_name" --arg value "$resource_value" '{ ($key) : $value }' "$TF_RESOURCE_OUTPUT")" > "$TF_RESOURCE_OUTPUT"
+}
+
 validateDeploymentResources () {
     local region=$1
     local pce_id=$2

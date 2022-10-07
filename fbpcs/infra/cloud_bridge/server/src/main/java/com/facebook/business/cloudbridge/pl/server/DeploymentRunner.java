@@ -125,6 +125,7 @@ public class DeploymentRunner extends Thread {
       environmentVariables.put("AWS_SESSION_TOKEN", deployment.awsSessionToken);
     }
     environmentVariables.put("TF_LOG_STREAMING", Constants.DEPLOYMENT_STREAMING_LOG_FILE);
+    environmentVariables.put("TF_RESOURCE_OUTPUT", Constants.DEPLOYMENT_RESOURCE_OUTPUT_FILE);
     if (deployment.logLevel != DeploymentParams.LogLevel.DISABLED) {
       if (deployment.logLevel == null) deployment.logLevel = DeploymentParams.LogLevel.DEBUG;
       environmentVariables.put("TF_LOG", deployment.logLevel.getLevel());
