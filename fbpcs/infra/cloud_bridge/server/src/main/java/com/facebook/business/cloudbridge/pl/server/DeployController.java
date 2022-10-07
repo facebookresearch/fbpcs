@@ -7,8 +7,7 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
-import static com.facebook.business.cloudbridge.pl.server.Constants.DEPLOYMENT_STREAMING_LOG_FILE;
-import static com.facebook.business.cloudbridge.pl.server.Constants.PCE_VALIDATOR_LOG_STREAMING;
+import static com.facebook.business.cloudbridge.pl.server.Constants.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,7 +17,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -97,6 +98,20 @@ public class DeployController {
     }
   }
 
+  private Map<String, Object> readAndMapResourceOutputFromFile(final ObjectNode objectNode) {
+    Map<String, Object> resourceMap = new HashMap<>();
+    try {
+      final ObjectMapper resourceOutputMapper = new ObjectMapper();
+      resourceMap =
+          resourceOutputMapper.readValue(
+              Paths.get(DEPLOYMENT_RESOURCE_OUTPUT_FILE).toFile(), HashMap.class);
+      resourceMap.forEach((key, value) -> objectNode.put(key, value.toString()));
+    } catch (final Exception e) {
+      logger.error("Caught exception during reading JSON output from terraform deployment" + e);
+    }
+    return resourceMap;
+  }
+
   @GetMapping(path = "/v1/deployment", produces = "application/json")
   public APIReturn deploymentStatus() {
     logger.info("Received status request");
@@ -117,6 +132,8 @@ public class DeployController {
           rootNode.put("state", state.toString());
           if (state == DeploymentRunner.DeploymentState.STATE_HALTED) {
             rootNode.put("exitValue", runner.getExitValue());
+            // TODO refactor whole class to include a Response Structure
+            readAndMapResourceOutputFromFile(rootNode);
             runner = null;
           }
         }

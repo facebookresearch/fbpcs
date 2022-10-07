@@ -30,6 +30,7 @@ repositories {
 
 dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
   implementation 'com.amazonaws:aws-java-sdk-sts'
   implementation 'com.amazonaws:aws-java-sdk-ec2'
