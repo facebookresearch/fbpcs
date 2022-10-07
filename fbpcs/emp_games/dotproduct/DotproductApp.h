@@ -90,9 +90,9 @@ class DotproductApp {
     return schedulerStatistics_;
   }
 
- protected:
-  std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<bool>>>
-  readCSVInput(std::string inputPath, int labelWidth, int numFeatures) {
+  static std::
+      tuple<std::vector<std::vector<double>>, std::vector<std::vector<bool>>>
+      readCSVInput(std::string inputPath, int labelWidth, int numFeatures) {
     std::vector<std::vector<double>> allFeatures;
     std::vector<std::vector<bool>> allLabels;
     auto lineNo = 0;
@@ -116,7 +116,7 @@ class DotproductApp {
     return {allFeatures, transposeLabels(allLabels, labelWidth)};
   }
 
-  std::tuple<std::vector<double>, std::vector<bool>> parseLine(
+  static std::tuple<std::vector<double>, std::vector<bool>> parseLine(
       const int lineNo,
       const std::vector<std::string>& header,
       const std::vector<std::string>& parts,
@@ -146,7 +146,7 @@ class DotproductApp {
     return {features, labels};
   }
 
-  inline std::vector<std::vector<bool>> transposeLabels(
+  static inline std::vector<std::vector<bool>> transposeLabels(
       std::vector<std::vector<bool>> labels,
       int labelWidth) {
     std::vector<std::vector<bool>> transposedLabels(

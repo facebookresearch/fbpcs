@@ -22,7 +22,9 @@
 
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
+#include "fbpcs/emp_games/dotproduct/DotproductApp.h"
 #include "fbpcs/emp_games/dotproduct/DotproductGame.h"
+#include "fbpcs/emp_games/dotproduct/test/DotproductTestUtils.h"
 
 namespace pcf2_dotproduct {
 
@@ -46,6 +48,26 @@ std::vector<bool> runORLabelsGame(
   auto labelVec = finalLabel.extractBit().getValue();
 
   return labelVec;
+}
+
+template <int PARTY, int schedulerId>
+std::vector<double> runGame(
+    std::unique_ptr<
+        fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
+    fbpcf::SchedulerCreator schedulerCreator,
+    std::string inputFilePath,
+    int numFeatures,
+    int labelWidth) {
+  auto scheduler = schedulerCreator(PARTY, *factory);
+
+  DotproductGame<schedulerId> game(std::move(scheduler), std::move(factory));
+
+  auto inputTuple = DotproductApp<PARTY, schedulerId>::readCSVInput(
+      inputFilePath, labelWidth, numFeatures);
+
+  auto output =
+      game.computeDotProduct(PARTY, inputTuple, labelWidth, numFeatures, false);
+  return output;
 }
 
 std::vector<std::vector<bool>> getBooleanLabels(
@@ -125,6 +147,56 @@ void testORLabels(fbpcf::SchedulerType schedulerType) {
 
   EXPECT_EQ(result, expectedResult);
 }
+
+void testDotproductGame(fbpcf::SchedulerType schedulerType) {
+  auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
+  const bool unsafe = true;
+  fbpcf::SchedulerCreator schedulerCreator =
+      fbpcf::getSchedulerCreator<unsafe>(schedulerType);
+
+  std::string baseDir =
+      private_measurement::test_util::getBaseDirFromPath(__FILE__);
+  std::string filename0 = folly::sformat(
+      "{}/test_correctness/publisher_dotprodtest_0.csv", baseDir);
+
+  std::string filename1 =
+      folly::sformat("{}/test_correctness/partner_dotprodtest_0.csv", baseDir);
+
+  std::string expectedOutput =
+      folly::sformat("{}/test_correctness/expected_result_0.csv", baseDir);
+
+  int NUM_FEATURES = 50;
+  int LABEL_WIDTH = 16;
+
+  // run the game for publisher and partner
+  auto futureAlice = std::async(
+      runGame<0, 0>,
+      std::move(factories[0]),
+      schedulerCreator,
+      filename0,
+      NUM_FEATURES,
+      LABEL_WIDTH);
+  auto futureBob = std::async(
+      runGame<1, 1>,
+      std::move(factories[1]),
+      schedulerCreator,
+      filename1,
+      NUM_FEATURES,
+      LABEL_WIDTH);
+
+  auto output = futureAlice.get();
+  futureBob.get();
+
+  auto expectedResult = parseResult(expectedOutput);
+
+  // Check that size of the result matches the expected size
+  EXPECT_EQ(output.size(), expectedResult.size());
+
+  // Check that values are equal
+  bool equal = verifyOutput(output, expectedResult);
+  EXPECT_TRUE(equal);
+}
+
 /* run the same tests with multiple schedulers */
 class DotproductGameTestFixture
     : public ::testing::TestWithParam<fbpcf::SchedulerType> {};
@@ -132,6 +204,10 @@ class DotproductGameTestFixture
 TEST_P(DotproductGameTestFixture, TestORAllLabels) {
   auto schedulerType = GetParam();
   testORLabels(schedulerType);
+}
+TEST_P(DotproductGameTestFixture, TestDotProductGame) {
+  auto schedulerType = GetParam();
+  testDotproductGame(schedulerType);
 }
 
 INSTANTIATE_TEST_SUITE_P(
