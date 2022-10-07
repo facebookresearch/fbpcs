@@ -12,13 +12,15 @@ The input log file should by default come from execution of private computation 
 S3 bucket can be the bucket name, or the URL of the bucket (e.g. "https://bucketname.s3.us...").
 
 Usage:
-    download_logs_cli <cli_log_file> <s3_bucket> <archive_tag> [options]
+    download_logs_cli <cli_log_file> <s3_bucket> <archive_tag> <deployment_tag> [options]
 
 
 Options:
     -h --help                       Show this help
     --input_ids                     The input log file has container ID's, with one ID per line
     --log_path=<path>               Override the default path where logs are saved
+    --get_deployment_logs           Fetche and add deployment logs in the log zip folder
+    --get_data_pipeline_logs        Fetche and add data infra pipeline logs in the log zip folder
     --verbose                       Set logging level to DEBUG
 """
 
@@ -52,8 +54,11 @@ class DownloadLogsCli:
                 "<cli_log_file>": schema.Use(Path),
                 "<s3_bucket>": str,
                 "<archive_tag>": str,
+                "<deployment_tag>": str,
                 "--input_ids": bool,
                 "--log_path": schema.Or(None, schema.Use(Path)),
+                "--get_deployment_logs": bool,
+                "--get_data_pipeline_logs": bool,
                 "--verbose": bool,
                 "--help": bool,
             }
@@ -64,6 +69,9 @@ class DownloadLogsCli:
         cli_log_file = arguments["<cli_log_file>"]
         archive_tag = arguments["<archive_tag>"]
         log_path = arguments["--log_path"]
+        deployment_tag = arguments["<deployment_tag>"]
+        get_deployment_logs = arguments["--get_deployment_logs"]
+        get_data_pipeline_logs = arguments["--get_data_pipeline_logs"]
 
         # if log_path specified, logging using FileHandler, or console StreamHandler
         log_handler = (
@@ -98,7 +106,9 @@ class DownloadLogsCli:
         self.logger.info(f"Found aws_region: {self.aws_region}")
 
         self.aws_container_logs = AwsContainerLogs(
-            tag_name=archive_tag, aws_region=self.aws_region
+            tag_name=archive_tag,
+            aws_region=self.aws_region,
+            deployment_tag=deployment_tag,
         )
         include_local_files = [abspath(cli_log_file)]
         # pyre-ignore[16]: `Optional` has no attribute `upload_logs_to_s3_from_cloudwatch`.
@@ -106,6 +116,8 @@ class DownloadLogsCli:
             self.s3_bucket,
             self.container_ids,
             include_local_files=include_local_files,
+            enable_data_pipeline_logs=get_data_pipeline_logs,
+            enable_deployment_logs=get_deployment_logs,
         )
         self.logger.info("After uploading log archive")
 
