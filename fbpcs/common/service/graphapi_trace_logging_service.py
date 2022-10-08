@@ -25,7 +25,6 @@ from fbpcs.common.service.trace_logging_service import (
 # which is the default TCP packet retransmission window.
 RESPONSE_TIMEOUT: float = 3.05
 
-DEFAULT_RUN_ID = "anonymous_run_id"
 DEFAULT_COMPONENT_NAME = "pcservice"
 
 
@@ -54,7 +53,7 @@ class GraphApiTraceLoggingService(TraceLoggingService):
             scrubbed_checkpoint_data[scrubbed_key] = scrubbed_val
 
         params = {
-            "run_id": run_id or DEFAULT_RUN_ID,
+            "run_id": run_id,
             "instance_id": instance_id,
             "checkpoint_name": f"{checkpoint_name}_{status}",
             "access_token": self.access_token,

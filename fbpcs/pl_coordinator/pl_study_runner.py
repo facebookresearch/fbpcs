@@ -48,7 +48,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
     PrivateComputationBaseStageFlow,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    _build_private_computation_service,
+    build_private_computation_service,
     get_instance,
     get_tier,
 )
@@ -296,7 +296,7 @@ async def run_bolt(
     runner = BoltRunner(
         publisher_client=publisher_client,
         partner_client=BoltPCSClient(
-            _build_private_computation_service(
+            build_private_computation_service(
                 pc_config=config["private_computation"],
                 mpc_config=config["mpc"],
                 pid_config=config["pid"],
