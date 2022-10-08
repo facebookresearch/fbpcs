@@ -144,9 +144,9 @@ def _get_post_processing_handlers(
 
     post_processing_handlers = {}
     for name, handler_config in config["dependency"].items():
-        constrcutor_info = handler_config.get("constructor", {})
-        constrcutor_info["trace_logging_svc"] = trace_logging_svc
-        handler_config["constructor"] = constrcutor_info
+        constructor_info = handler_config.get("constructor", {})
+        constructor_info["trace_logging_svc"] = trace_logging_svc
+        handler_config["constructor"] = constructor_info
         post_processing_handlers[name] = reflect.get_instance(
             handler_config, PostProcessingHandler
         )
