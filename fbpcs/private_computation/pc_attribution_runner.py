@@ -26,6 +26,7 @@ from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
 from fbpcs.pl_coordinator.exceptions import (
     GraphAPIGenericException,
     IncorrectVersionError,
+    OneCommandRunnerBaseException,
     OneCommandRunnerExitCode,
     PCAttributionValidationException,
     sys_exit_after,
@@ -270,6 +271,12 @@ async def run_bolt(
         logger: logger client
         job_list: The BoltJobs to execute
     """
+    if not job_list:
+        raise OneCommandRunnerBaseException(
+            "Expected at least one job",
+            "len(job_list) == 0",
+            "Submit at least one job to call this API",
+        )
 
     runner = BoltRunner(
         publisher_client=BoltGraphAPIClient(config=config["graphapi"], logger=logger),
