@@ -28,6 +28,7 @@ RESPONSE_TIMEOUT: float = 3.05
 
 class GraphApiTraceLoggingService(TraceLoggingService):
     def __init__(self, access_token: str, endpoint_url: str) -> None:
+        super().__init__()
         self.access_token = access_token
         self.endpoint_url = endpoint_url
 
