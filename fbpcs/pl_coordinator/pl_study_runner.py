@@ -270,6 +270,13 @@ async def run_bolt(
         logger: logger client
         job_list: The BoltJobs to execute
     """
+    if not job_list:
+        raise OneCommandRunnerBaseException(
+            "Expected at least one job",
+            "len(job_list) == 0",
+            "Submit at least one job to call this API",
+        )
+
     # create the runner
     runner = BoltRunner(
         publisher_client=BoltGraphAPIClient(config=config["graphapi"], logger=logger),
