@@ -17,6 +17,7 @@ Types of changes
 
 ### Changed
 * Made _build_private_computation_service a logically public method
+* Use GraphApiTraceLoggingService as default if none provided in config
 
 ## [2.2.0] - 2022-10-03
 ### Added
