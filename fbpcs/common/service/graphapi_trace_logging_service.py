@@ -25,12 +25,16 @@ from fbpcs.common.service.trace_logging_service import (
 # which is the default TCP packet retransmission window.
 RESPONSE_TIMEOUT: float = 3.05
 
+DEFAULT_RUN_ID = "anonymous_run_id"
+DEFAULT_COMPONENT_NAME = "pcservice"
+
 
 class GraphApiTraceLoggingService(TraceLoggingService):
     def __init__(self, access_token: str, endpoint_url: str) -> None:
         super().__init__()
         self.access_token = access_token
         self.endpoint_url = endpoint_url
+        self.scrubber = SecretScrubber()
 
     def _write_checkpoint_impl(
         self,
@@ -40,22 +44,30 @@ class GraphApiTraceLoggingService(TraceLoggingService):
         status: CheckpointStatus,
         checkpoint_data: Optional[Dict[str, str]] = None,
     ) -> None:
-        form_data = {
-            "operation": "write_checkpoint",
-            "run_id": run_id,
-            "instance_id": instance_id,
-            "checkpoint_name": checkpoint_name,
-            "status": str(status),
-            "access_token": self.access_token,
-        }
-        if checkpoint_data:
-            form_data["checkpoint_data"] = json.dumps(checkpoint_data)
 
-        log_data = form_data.copy()
+        checkpoint_data = checkpoint_data or {}
+        component = checkpoint_data.pop("component", DEFAULT_COMPONENT_NAME)
+        scrubbed_checkpoint_data = {}
+        for k, v in checkpoint_data.items():
+            scrubbed_key = self.scrubber.scrub(k).scrubbed_output
+            scrubbed_val = self.scrubber.scrub(v).scrubbed_output
+            scrubbed_checkpoint_data[scrubbed_key] = scrubbed_val
+
+        params = {
+            "run_id": run_id or DEFAULT_RUN_ID,
+            "instance_id": instance_id,
+            "checkpoint_name": f"{checkpoint_name}_{status}",
+            "access_token": self.access_token,
+            "component": component,
+            "checkpoint_data": json.dumps(checkpoint_data),
+        }
+
+        log_data = params.copy()
+        del log_data["access_token"]
 
         try:
             r = requests.post(
-                self.endpoint_url, json=form_data, timeout=RESPONSE_TIMEOUT
+                self.endpoint_url, params=params, timeout=RESPONSE_TIMEOUT
             )
             log_data["requests_post_status_code"] = str(r.status_code)
             log_data["requests_post_reason"] = str(r.reason)
@@ -67,6 +79,5 @@ class GraphApiTraceLoggingService(TraceLoggingService):
         # We run the secret scrubber since we want to be completely
         # sure we don't accidentally log an access token
         log_dump = json.dumps(log_data)
-        scrubber = SecretScrubber()
-        scrubbed_log_dump = scrubber.scrub(log_dump).scrubbed_output
+        scrubbed_log_dump = self.scrubber.scrub(log_dump).scrubbed_output
         self.logger.info(scrubbed_log_dump)
