@@ -15,6 +15,9 @@ Types of changes
 
 ## [Unreleased - 2.3.0] - put release date here
 
+### Changed
+* Made _build_private_computation_service a logically public method
+
 ## [2.2.0] - 2022-10-03
 ### Added
 
