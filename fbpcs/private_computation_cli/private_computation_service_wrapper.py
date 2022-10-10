@@ -76,7 +76,7 @@ def create_instance(
     pcs_features: Optional[List[str]] = None,
     run_id: Optional[str] = None,
 ) -> PrivateComputationInstance:
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -121,7 +121,7 @@ def validate(
     expected_result_path: str,
     aggregated_result_path: Optional[str] = None,
 ) -> None:
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -160,7 +160,7 @@ def run_next(
     server_ips: Optional[List[str]] = None,
 ) -> None:
 
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -187,7 +187,7 @@ def run_stage(
     dry_run: bool = False,
 ) -> None:
 
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -213,7 +213,7 @@ def update_input_path(
     """
     Update input path by given instance_id, currently only support partner instance override.
     """
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -233,7 +233,7 @@ def get_instance(
     MPCInstance to this pc instance. Because pc_service.update_instance() also writes to this pc instance, it could
     accidentally erase that PID or MPCInstance.
     """
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -249,7 +249,7 @@ def get_instance(
 def get_server_ips(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> List[str]:
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -299,7 +299,7 @@ def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) ->
 def cancel_current_stage(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -340,7 +340,7 @@ def print_log_urls(
     To print the log urls with id instance_id.
     Printing out by stages and correspondens log url
     """
-    pc_service = _build_private_computation_service(
+    pc_service = build_private_computation_service(
         config["private_computation"],
         config["mpc"],
         config["pid"],
@@ -450,7 +450,7 @@ def _build_trace_logging_service(
     return reflect.get_instance(config, TraceLoggingService)
 
 
-def _build_private_computation_service(
+def build_private_computation_service(
     pc_config: Dict[str, Any],
     mpc_config: Dict[str, Any],
     pid_config: Dict[str, Any],

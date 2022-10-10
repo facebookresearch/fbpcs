@@ -30,7 +30,7 @@ from fbpcs.private_computation.stage_flows.private_computation_stage_flow import
 )
 
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    _build_private_computation_service,
+    build_private_computation_service,
     cancel_current_stage,
     create_instance,
     get_instance,
@@ -98,7 +98,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         mock_reflect_get_instance,
         mock_reflect_get_class,
     ) -> None:
-        _build_private_computation_service(
+        build_private_computation_service(
             pc_config=self.config["private_computation"],
             mpc_config=self.config["mpc"],
             pid_config=self.config["pid"],
@@ -123,7 +123,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         )
 
     @patch(
-        "fbpcs.private_computation_cli.private_computation_service_wrapper._build_private_computation_service"
+        "fbpcs.private_computation_cli.private_computation_service_wrapper.build_private_computation_service"
     )
     def test_create_instance(
         self,
@@ -166,7 +166,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         )
 
     @patch(
-        "fbpcs.private_computation_cli.private_computation_service_wrapper._build_private_computation_service"
+        "fbpcs.private_computation_cli.private_computation_service_wrapper.build_private_computation_service"
     )
     def test_validate(self, mock_build_pcs) -> None:
         mock_build_pcs.return_value = self.mock_pcs
@@ -183,7 +183,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         )
 
     @patch(
-        "fbpcs.private_computation_cli.private_computation_service_wrapper._build_private_computation_service"
+        "fbpcs.private_computation_cli.private_computation_service_wrapper.build_private_computation_service"
     )
     def test_run_next(self, mock_build_pcs) -> None:
         mock_build_pcs.return_value = self.mock_pcs
@@ -198,7 +198,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         )
 
     @patch(
-        "fbpcs.private_computation_cli.private_computation_service_wrapper._build_private_computation_service"
+        "fbpcs.private_computation_cli.private_computation_service_wrapper.build_private_computation_service"
     )
     def test_run_stage(self, mock_build_pcs) -> None:
         mock_build_pcs.return_value = self.mock_pcs
@@ -217,7 +217,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         )
 
     @patch(
-        "fbpcs.private_computation_cli.private_computation_service_wrapper._build_private_computation_service"
+        "fbpcs.private_computation_cli.private_computation_service_wrapper.build_private_computation_service"
     )
     def test_update_input_path(self, mock_build_pcs) -> None:
         mock_build_pcs.return_value = self.mock_pcs
@@ -232,7 +232,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         )
 
     @patch(
-        "fbpcs.private_computation_cli.private_computation_service_wrapper._build_private_computation_service"
+        "fbpcs.private_computation_cli.private_computation_service_wrapper.build_private_computation_service"
     )
     def test_get_instance(self, mock_build_pcs) -> None:
         mock_build_pcs.return_value = self.mock_pcs
@@ -244,7 +244,7 @@ class TestPrivateComputationServiceWrapper(TestCase):
         self.mock_pcs.get_instance.assert_called_once_with(self.test_instance_id)
 
     @patch(
-        "fbpcs.private_computation_cli.private_computation_service_wrapper._build_private_computation_service"
+        "fbpcs.private_computation_cli.private_computation_service_wrapper.build_private_computation_service"
     )
     def test_cancel_current_stage(self, mock_build_pcs) -> None:
         mock_build_pcs.return_value = self.mock_pcs

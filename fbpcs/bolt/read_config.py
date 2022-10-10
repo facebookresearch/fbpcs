@@ -15,7 +15,7 @@ from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    _build_private_computation_service,
+    build_private_computation_service,
 )
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
@@ -47,7 +47,7 @@ def create_bolt_runner(
         runner_config["partner_client_config"]
     )
     publisher_client = BoltPCSClient(
-        _build_private_computation_service(
+        build_private_computation_service(
             publisher_client_config["private_computation"],
             publisher_client_config["mpc"],
             publisher_client_config["pid"],
@@ -56,7 +56,7 @@ def create_bolt_runner(
         )
     )
     partner_client = BoltPCSClient(
-        _build_private_computation_service(
+        build_private_computation_service(
             partner_client_config["private_computation"],
             partner_client_config["mpc"],
             partner_client_config["pid"],

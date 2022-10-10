@@ -24,7 +24,7 @@ from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
-    _build_private_computation_service,
+    build_private_computation_service,
 )
 
 
@@ -102,7 +102,7 @@ class PreValidateService:
         input_paths: List[str],
         logger: logging.Logger,
     ) -> None:
-        pc_service = _build_private_computation_service(
+        pc_service = build_private_computation_service(
             config["private_computation"],
             config["mpc"],
             config["pid"],
