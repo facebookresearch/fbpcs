@@ -16,10 +16,14 @@ from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
+from fbpcs.common.service.graphapi_trace_logging_service import (
+    GraphApiTraceLoggingService,
+)
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPLGraphAPICreateInstanceArgs,
     GRAPHAPI_INSTANCE_STATUSES,
+    URL,
 )
 from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
 from fbpcs.pl_coordinator.exceptions import (
@@ -277,16 +281,28 @@ async def run_bolt(
             "Submit at least one job to call this API",
         )
 
+    # We create the publisher_client here so we can reuse the access_token in our trace logger svc
+    publisher_client = BoltGraphAPIClient(config=config["graphapi"], logger=logger)
+
+    # Create a GraphApiTraceLoggingService specific for this study_id
+    study_id = job_list[0].publisher_bolt_args.create_instance_args.study_id
+    endpoint_url = f"{URL}/{study_id}/checkpoint"
+    graphapi_trace_logging_svc = GraphApiTraceLoggingService(
+        access_token=publisher_client.access_token,
+        endpoint_url=endpoint_url,
+    )
+
     # create the runner
     runner = BoltRunner(
-        publisher_client=BoltGraphAPIClient(config=config["graphapi"], logger=logger),
+        publisher_client=publisher_client,
         partner_client=BoltPCSClient(
             _build_private_computation_service(
-                config["private_computation"],
-                config["mpc"],
-                config["pid"],
-                config.get("post_processing_handlers", {}),
-                config.get("pid_post_processing_handlers", {}),
+                pc_config=config["private_computation"],
+                mpc_config=config["mpc"],
+                pid_config=config["pid"],
+                pph_config=config.get("post_processing_handlers", {}),
+                pid_pph_config=config.get("pid_post_processing_handlers", {}),
+                trace_logging_svc=graphapi_trace_logging_svc,
             )
         ),
         logger=logger,
