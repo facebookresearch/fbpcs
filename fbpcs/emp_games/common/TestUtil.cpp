@@ -10,7 +10,14 @@
 namespace private_measurement::test_util {
 
 std::string getBaseDirFromPath(const std::string& filePath) {
-  return filePath.substr(0, filePath.rfind("/") + 1);
+  auto dir = filePath.substr(0, filePath.rfind("/") + 1);
+  std::string toErase = "fbcode/";
+  size_t pos = dir.find(toErase);
+  if (pos != std::string::npos) {
+    // If found then erase it from string
+    return dir.substr(pos + toErase.size());
+  }
+  return dir;
 }
 
 } // namespace private_measurement::test_util
