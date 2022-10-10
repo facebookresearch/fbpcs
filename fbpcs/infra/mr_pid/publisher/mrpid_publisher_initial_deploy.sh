@@ -61,7 +61,6 @@ undeploy_aws_resources () {
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pid$tag_postfix.tfstate" "$aws_account_id"
     echo "All tfstate files exist. Continue..."
 
-    md5hash_aws_account_id=$(echo -n $aws_account_id | md5sum | awk '{print $1}')
     md5hash_partner_account_id=$(echo -n $partner_account_id | md5sum | awk '{print $1}')
 
     echo "########################Delete MR-PID resources########################"
@@ -74,7 +73,6 @@ undeploy_aws_resources () {
         -auto-approve \
         -var "aws_region=$region" \
         -var "pid_id=$pid_id" \
-        -var "md5hash_aws_account_id=$md5hash_aws_account_id" \
         -var "md5hash_partner_account_id=$md5hash_partner_account_id"
 }
 
@@ -84,7 +82,6 @@ deploy_aws_resources () {
     echo "creating s3 bucket, if it does not exist"
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
 
-    md5hash_aws_account_id=$(echo -n $aws_account_id | md5sum | awk '{print $1}')
     md5hash_partner_account_id=$(echo -n $partner_account_id | md5sum | awk '{print $1}')
 
     # Deploy MR-PID Publisher PID Terraform scripts
@@ -97,7 +94,6 @@ deploy_aws_resources () {
         -auto-approve \
         -var "aws_region=$region" \
         -var "pid_id=$pid_id" \
-        -var "md5hash_aws_account_id=$md5hash_aws_account_id" \
         -var "md5hash_partner_account_id=$md5hash_partner_account_id"
 
     state_machine_arn=$(terraform output mrpid_publisher_sfn_arn | tr -d '"' )
