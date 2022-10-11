@@ -34,7 +34,9 @@ class DotproductGame : public fbpcf::frontend::MpcGame<schedulerId> {
           std::vector<std::vector<bool>>> inputTuple,
       size_t nLabels,
       size_t nFeatures,
-      const bool debugMode);
+      double delta,
+      double eps,
+      const bool addDpNoise);
 
   std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
       communicationAgentFactory_;

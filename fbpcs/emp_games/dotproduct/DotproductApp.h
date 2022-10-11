@@ -31,15 +31,19 @@ class DotproductApp {
       int numFeatures,
       int labelWidth,
       std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
-      const bool debugMode = false)
+      double delta,
+      double eps,
+      const bool addDpNoise = true)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
         inputFilePath_(inputFilePath),
         outputFilePath_(outputFilePath),
         numFeatures_(numFeatures),
         labelWidth_(labelWidth),
+        delta_(delta),
+        eps_(eps),
         schedulerStatistics_{0, 0, 0, 0, 0},
         metricCollector_{metricCollector},
-        debugMode_(debugMode) {}
+        addDpNoise_(addDpNoise) {}
 
   void run() {
     auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
@@ -56,7 +60,13 @@ class DotproductApp {
     XLOG(INFO) << "Number of feature rows " << std::get<0>(inputTuple).size();
 
     auto output = game.computeDotProduct(
-        MY_ROLE, inputTuple, labelWidth_, numFeatures_, debugMode_);
+        MY_ROLE,
+        inputTuple,
+        labelWidth_,
+        numFeatures_,
+        delta_,
+        eps_,
+        addDpNoise_);
 
     if (MY_ROLE == common::PUBLISHER) {
       XLOG(INFO, "Writing output ...");
@@ -180,9 +190,11 @@ class DotproductApp {
   std::string outputFilePath_;
   int numFeatures_;
   int labelWidth_;
+  double delta_;
+  double eps_;
   common::SchedulerStatistics schedulerStatistics_;
   std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
-  bool debugMode_;
+  bool addDpNoise_;
 };
 
 } // namespace pcf2_dotproduct

@@ -64,7 +64,9 @@ int main(int argc, char* argv[]) {
               FLAGS_output_base_path,
               FLAGS_num_features,
               FLAGS_label_width,
-              FLAGS_debug,
+              FLAGS_delta,
+              FLAGS_eps,
+              FLAGS_add_dp_noise,
               tlsInfo);
 
     } else if (FLAGS_party == common::PARTNER) {
@@ -79,7 +81,9 @@ int main(int argc, char* argv[]) {
               FLAGS_output_base_path,
               FLAGS_num_features,
               FLAGS_label_width,
-              FLAGS_debug,
+              FLAGS_delta,
+              FLAGS_eps,
+              FLAGS_add_dp_noise,
               tlsInfo);
     } else {
       XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
