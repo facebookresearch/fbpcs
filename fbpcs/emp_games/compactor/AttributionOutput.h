@@ -6,6 +6,9 @@
  */
 
 #pragma once
+
+#include <filesystem>
+
 #include "fbpcf/frontend/Bit.h"
 #include "fbpcf/frontend/Int.h"
 #include "fbpcs/emp_games/common/Csv.h"
