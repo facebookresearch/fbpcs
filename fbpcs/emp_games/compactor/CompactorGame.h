@@ -41,7 +41,7 @@ class BaseCompactorGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   SecretAttributionOutput<schedulerId> play(
       const SecretAttributionOutput<schedulerId>& secret,
-      size_t size,
+      uint32_t size,
       bool shouldRevealSize) {
     auto compactor = getCompactor(myId_, partnerId_);
     auto [rstMetadata, rstLabel] = compactor->compaction(
