@@ -38,6 +38,9 @@ class DotproductGame : public fbpcf::frontend::MpcGame<schedulerId> {
       double eps,
       const bool addDpNoise);
 
+  virtual std::vector<double>
+  generateDpNoise(int nFeatures, double delta, double eps, bool addDpNoise);
+
   std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
       communicationAgentFactory_;
 
@@ -46,6 +49,8 @@ class DotproductGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   fbpcf::frontend::Bit<true, schedulerId, true> orAllLabels(
       const std::vector<fbpcf::frontend::Bit<true, schedulerId, true>>& labels);
+
+  virtual ~DotproductGame<schedulerId>() = default;
 };
 
 } // namespace pcf2_dotproduct

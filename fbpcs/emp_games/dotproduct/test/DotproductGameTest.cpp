@@ -25,8 +25,28 @@
 #include "fbpcs/emp_games/dotproduct/DotproductApp.h"
 #include "fbpcs/emp_games/dotproduct/DotproductGame.h"
 #include "fbpcs/emp_games/dotproduct/test/DotproductTestUtils.h"
+#include "gmock/gmock.h"
 
 namespace pcf2_dotproduct {
+
+template <int schedulerId>
+class MockDotProductGame : public DotproductGame<schedulerId> {
+ public:
+  explicit MockDotProductGame(
+      std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler,
+      std::shared_ptr<
+          fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+          communicationAgentFactory)
+      : DotproductGame<schedulerId>(
+            std::move(scheduler),
+            std::move(communicationAgentFactory)) {}
+
+  MOCK_METHOD(
+      std::vector<double>,
+      generateDpNoise,
+      (int nFeatures, double delta, double eps, bool addDpNoise),
+      (override));
+};
 
 template <int PARTY, int schedulerId>
 std::vector<bool> runORLabelsGame(
@@ -60,15 +80,22 @@ std::vector<double> runGame(
     int labelWidth,
     double delta,
     double eps,
-    bool addDpNoise) {
+    bool addDpNoise,
+    std::vector<double> dpNoise) {
   auto scheduler = schedulerCreator(PARTY, *factory);
 
-  DotproductGame<schedulerId> game(std::move(scheduler), std::move(factory));
+  // create a mock Dotproduct Game
+  MockDotProductGame<schedulerId> mockGame(
+      std::move(scheduler), std::move(factory));
+
+  // mock the dpNoise generation in DotproductGame
+  ON_CALL(mockGame, generateDpNoise(numFeatures, delta, eps, addDpNoise))
+      .WillByDefault(testing::Return(dpNoise));
 
   auto inputTuple = DotproductApp<PARTY, schedulerId>::readCSVInput(
       inputFilePath, labelWidth, numFeatures);
 
-  auto output = game.computeDotProduct(
+  auto output = mockGame.computeDotProduct(
       PARTY, inputTuple, labelWidth, numFeatures, delta, eps, addDpNoise);
   return output;
 }
@@ -173,6 +200,18 @@ void testDotproductGame(fbpcf::SchedulerType schedulerType, bool addDpNoise) {
   const double DELTA = 1e-6;
   const double EPS = 5;
 
+  // generate dp noise
+  std::vector<double> dpNoise(NUM_FEATURES, 0.0);
+  if (addDpNoise) {
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::normal_distribution<double> gaussianNoise{0, 2};
+
+    for (double& item : dpNoise) {
+      item = gaussianNoise(gen);
+    }
+  }
+
   // run the game for publisher and partner
   auto futureAlice = std::async(
       runGame<0, 0>,
@@ -183,7 +222,8 @@ void testDotproductGame(fbpcf::SchedulerType schedulerType, bool addDpNoise) {
       LABEL_WIDTH,
       DELTA,
       EPS,
-      addDpNoise);
+      addDpNoise,
+      dpNoise);
   auto futureBob = std::async(
       runGame<1, 1>,
       std::move(factories[1]),
@@ -193,12 +233,21 @@ void testDotproductGame(fbpcf::SchedulerType schedulerType, bool addDpNoise) {
       LABEL_WIDTH,
       DELTA,
       EPS,
-      addDpNoise);
+      addDpNoise,
+      dpNoise);
 
   auto output = futureAlice.get();
   futureBob.get();
 
   auto expectedResult = parseResult(expectedOutput);
+
+  // Add the noise to the expectedResult
+  std::transform(
+      expectedResult.cbegin(),
+      expectedResult.cend(),
+      dpNoise.cbegin(),
+      expectedResult.begin(),
+      std::plus<double>());
 
   // Check that size of the result matches the expected size
   EXPECT_EQ(output.size(), expectedResult.size());
@@ -206,11 +255,7 @@ void testDotproductGame(fbpcf::SchedulerType schedulerType, bool addDpNoise) {
   // Check that values are equal
   bool equal = verifyOutput(output, expectedResult);
 
-  if (!addDpNoise) {
-    EXPECT_TRUE(equal);
-  } else {
-    EXPECT_FALSE(equal);
-  }
+  EXPECT_TRUE(equal);
 }
 
 /* run the same tests with multiple schedulers */
