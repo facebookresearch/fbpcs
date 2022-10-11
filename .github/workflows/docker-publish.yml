@@ -30,8 +30,8 @@ env:
 jobs:
   ### Build and publish rc/onedocker image
   build_image:
-    name: Build Image
-    runs-on: self-hosted
+    name: Build Onedocker, MPC Games and Data Processing Images
+    runs-on: [self-hosted, fbpcs-build]
     permissions:
       contents: read
       packages: write
@@ -68,6 +68,15 @@ jobs:
         run: |
           docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
 
+  e2e_test:
+    name: Run End to End Tests
+    runs-on: self-hosted
+    needs: build_image
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
       - name: Cleanup ECS running tasks and previous running results
         run: |
           ./cleanup.sh
@@ -98,6 +107,13 @@ jobs:
           docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
           docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{github.event.inputs.new_tag}}
           docker tag ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }} ${{ env.PROD_REGISTRY_IMAGE_NAME }}:${{ steps.vars.outputs.ref }}
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push docker image to prod registry
         run: |

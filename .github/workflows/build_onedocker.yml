@@ -12,7 +12,7 @@ jobs:
   ### Build onedocker image
   build_image:
     name: Build Image
-    runs-on: self-hosted
+    runs-on: [self-hosted, fbpcs-build]
     permissions:
       contents: read
 
