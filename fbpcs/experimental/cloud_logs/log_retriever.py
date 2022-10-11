@@ -5,6 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 from abc import ABC, abstractmethod
+from typing import List
+
+from fbpcp.entity.log_event import LogEvent
 
 
 class LogRetriever(ABC):
@@ -21,3 +24,9 @@ class LogRetriever(ABC):
             return: The log URL for said container
         """
         ...
+
+    def fetch(self, container_id: str) -> List[LogEvent]:
+        return []
+
+    def log_events_to_str(self, events: List[LogEvent]) -> str:
+        return "\n".join(f"{event.timestamp}: {event.message}" for event in events)
