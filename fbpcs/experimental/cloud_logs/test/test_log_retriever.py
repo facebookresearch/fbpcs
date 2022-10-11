@@ -6,8 +6,10 @@
 
 import unittest
 
+from fbpcp.service.log_cloudwatch import CloudWatchLogService
 from fbpcs.experimental.cloud_logs.aws_log_retriever import (
     AWSLogRetriever,
+    CloudWatchLogServiceArgs,
     LogGroupGuessStrategy,
 )
 
@@ -43,3 +45,37 @@ class TestLogRetriever(unittest.TestCase):
         expected_url = "https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/$252Fecs$252Fonedocker-container-mpc-aem-exp-platform-partner/log-events/ecs$252Fonedocker-container-mpc-aem-exp-platform-partner$252Fdc4fdf05e7684165b639b4e1831872c8"
         actual = retriever.get_log_url(container_id)
         self.assertEqual(expected_url, actual)
+
+    def test_get_cloudwatch_log_svc_no_args(self) -> None:
+        retriever = AWSLogRetriever()
+        log_svc = retriever._get_cloudwatch_log_svc(
+            "/ecs/onedocker-container-shared-us-west-2", "us-west-2"
+        )
+        self.assertIsNone(log_svc)
+
+    def test_get_cloudwatch_log_svc_invalid_args(self) -> None:
+        retriever = AWSLogRetriever(
+            cloudwatch_log_service_args=CloudWatchLogServiceArgs(
+                kls=CloudWatchLogService, args={"arg_dne": "lol"}
+            )
+        )
+        log_svc = retriever._get_cloudwatch_log_svc(
+            "/ecs/onedocker-container-shared-us-west-2", "us-west-2"
+        )
+        self.assertIsNone(log_svc)
+
+    def test_get_cloudwatch_log_svc_from_kls(self) -> None:
+        for kls in (
+            CloudWatchLogService,
+            "fbpcp.service.log_cloudwatch.CloudWatchLogService",
+        ):
+            retriever = AWSLogRetriever(
+                cloudwatch_log_service_args=CloudWatchLogServiceArgs(
+                    kls=kls,
+                    args={"access_key_id": "fake_id", "access_key_data": "fake_data"},
+                )
+            )
+            log_svc = retriever._get_cloudwatch_log_svc(
+                "/ecs/onedocker-container-shared-us-west-2", "us-west-2"
+            )
+            assert isinstance(log_svc, CloudWatchLogService)
