@@ -57,7 +57,10 @@ std::vector<double> runGame(
     fbpcf::SchedulerCreator schedulerCreator,
     std::string inputFilePath,
     int numFeatures,
-    int labelWidth) {
+    int labelWidth,
+    double delta,
+    double eps,
+    bool addDpNoise) {
   auto scheduler = schedulerCreator(PARTY, *factory);
 
   DotproductGame<schedulerId> game(std::move(scheduler), std::move(factory));
@@ -65,8 +68,8 @@ std::vector<double> runGame(
   auto inputTuple = DotproductApp<PARTY, schedulerId>::readCSVInput(
       inputFilePath, labelWidth, numFeatures);
 
-  auto output =
-      game.computeDotProduct(PARTY, inputTuple, labelWidth, numFeatures, false);
+  auto output = game.computeDotProduct(
+      PARTY, inputTuple, labelWidth, numFeatures, delta, eps, addDpNoise);
   return output;
 }
 
@@ -148,7 +151,7 @@ void testORLabels(fbpcf::SchedulerType schedulerType) {
   EXPECT_EQ(result, expectedResult);
 }
 
-void testDotproductGame(fbpcf::SchedulerType schedulerType) {
+void testDotproductGame(fbpcf::SchedulerType schedulerType, bool addDpNoise) {
   auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
   const bool unsafe = true;
   fbpcf::SchedulerCreator schedulerCreator =
@@ -165,8 +168,10 @@ void testDotproductGame(fbpcf::SchedulerType schedulerType) {
   std::string expectedOutput =
       folly::sformat("{}/test_correctness/expected_result_0.csv", baseDir);
 
-  int NUM_FEATURES = 50;
-  int LABEL_WIDTH = 16;
+  const int NUM_FEATURES = 50;
+  const int LABEL_WIDTH = 16;
+  const double DELTA = 1e-6;
+  const double EPS = 5;
 
   // run the game for publisher and partner
   auto futureAlice = std::async(
@@ -175,14 +180,20 @@ void testDotproductGame(fbpcf::SchedulerType schedulerType) {
       schedulerCreator,
       filename0,
       NUM_FEATURES,
-      LABEL_WIDTH);
+      LABEL_WIDTH,
+      DELTA,
+      EPS,
+      addDpNoise);
   auto futureBob = std::async(
       runGame<1, 1>,
       std::move(factories[1]),
       schedulerCreator,
       filename1,
       NUM_FEATURES,
-      LABEL_WIDTH);
+      LABEL_WIDTH,
+      DELTA,
+      EPS,
+      addDpNoise);
 
   auto output = futureAlice.get();
   futureBob.get();
@@ -194,7 +205,12 @@ void testDotproductGame(fbpcf::SchedulerType schedulerType) {
 
   // Check that values are equal
   bool equal = verifyOutput(output, expectedResult);
-  EXPECT_TRUE(equal);
+
+  if (!addDpNoise) {
+    EXPECT_TRUE(equal);
+  } else {
+    EXPECT_FALSE(equal);
+  }
 }
 
 /* run the same tests with multiple schedulers */
@@ -207,7 +223,15 @@ TEST_P(DotproductGameTestFixture, TestORAllLabels) {
 }
 TEST_P(DotproductGameTestFixture, TestDotProductGame) {
   auto schedulerType = GetParam();
-  testDotproductGame(schedulerType);
+
+  // With Dp noise
+  testDotproductGame(schedulerType, true);
+}
+TEST_P(DotproductGameTestFixture, TestDotProductGameWithNoise) {
+  auto schedulerType = GetParam();
+
+  // No Dp noise
+  testDotproductGame(schedulerType, false);
 }
 
 INSTANTIATE_TEST_SUITE_P(

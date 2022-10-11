@@ -25,6 +25,8 @@ DEFINE_int32(
     label_width,
     16,
     "Number of labels in each row of the label matrix");
+DEFINE_double(delta, 1e-6, "DP noise parameter (delta)");
+DEFINE_double(eps, 5, "DP noise parameter (epsilon)");
 DEFINE_string(
     run_name,
     "",
@@ -33,7 +35,10 @@ DEFINE_bool(
     log_cost,
     false,
     "Log cost info into cloud which will be used for dashboard");
-DEFINE_bool(debug, false, "If true, output will be in debug mode.");
+DEFINE_bool(
+    add_dp_noise,
+    true,
+    "If true, dp noise will not be added to the output.");
 DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
 DEFINE_string(
     log_cost_s3_region,

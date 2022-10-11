@@ -35,9 +35,11 @@ static void runGame(
     std::unique_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory>
         communicationAgentFactory) {
-  const bool debugMode = false;
-  int numFeatures = 50;
-  int labelWidth = 16;
+  const bool ADD_DP_NOISE = false;
+  const int NUM_FEATURES = 50;
+  const int LABEL_WIDTH = 16;
+  const double DELTA = 1e-6;
+  const double EPS = 5;
 
   auto metricCollector =
       std::make_shared<fbpcf::util::MetricCollector>("dotproduct_test");
@@ -46,10 +48,12 @@ static void runGame(
       std::move(communicationAgentFactory),
       inputFilePath,
       outputFilePath,
-      numFeatures,
-      labelWidth,
+      NUM_FEATURES,
+      LABEL_WIDTH,
       metricCollector,
-      debugMode);
+      DELTA,
+      EPS,
+      ADD_DP_NOISE);
 
   app->run();
 }

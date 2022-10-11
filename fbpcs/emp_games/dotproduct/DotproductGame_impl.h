@@ -38,7 +38,9 @@ std::vector<double> DotproductGame<schedulerId>::computeDotProduct(
         std::vector<std::vector<bool>>> inputTuple,
     size_t nLabels,
     size_t nFeatures,
-    const bool debugMode) {
+    double delta,
+    double eps,
+    const bool addDpNoise) {
   // Plaintext label secret share
   std::vector<std::vector<bool>> labels = std::get<1>(inputTuple);
 
@@ -103,7 +105,20 @@ std::vector<double> DotproductGame<schedulerId>::computeDotProduct(
   } else if (myRole == common::PARTNER) {
     // Create noise vector
     std::vector<double> dpNoise(nFeatures, 0.0);
+    if (addDpNoise) {
+      // Noise generator
+      std::random_device rd;
+      std::mt19937_64 gen(rd());
 
+      // calculate variance  k * 2 * ln ( 1 / delta) / (eps^2)
+      double variance = nFeatures * 2 * log(1 / delta) / pow(eps, 2);
+
+      std::normal_distribution<double> gaussianNoise{0, std::sqrt(variance)};
+
+      for (auto& item : dpNoise) {
+        item = gaussianNoise(gen);
+      }
+    }
     // Create matrix multiplication factory
     auto matMulFactoryPartner = std::make_unique<
         fbpcf::mpc_std_lib::walr::
