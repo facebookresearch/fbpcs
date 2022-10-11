@@ -12,6 +12,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar, Union
 
+from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.mpc import MPCService
@@ -373,6 +374,42 @@ class PrivateComputationService:
         )
 
         return private_computation_instance
+
+    def log_failed_containers(
+        self,
+        pc_instance_id: str,
+        log_only_first_failure: bool = True,
+        num_lines: int = 30,
+    ) -> None:
+        try:
+            private_computation_instance = self.get_instance(pc_instance_id)
+            if private_computation_instance.infra_config.stage_flow.is_failed_status(
+                private_computation_instance.infra_config.status
+            ):
+                containers = private_computation_instance.containers or []
+                for container in containers:
+                    if container.status is ContainerInstanceStatus.FAILED:
+                        self.logger.info(
+                            f"Logging failed container {container.instance_id}"
+                        )
+                        # get log url
+                        log_url = self.log_retriever.get_log_url(container.instance_id)
+                        # get last num_lines events. If num_lines > len(events),
+                        # then len(events) events would be logged.
+                        log_events = self.log_retriever.fetch(container.instance_id)[
+                            -num_lines:
+                        ]
+                        log_events_str = self.log_retriever.log_events_to_str(
+                            log_events
+                        )
+                        self.logger.info(f"Failed container URL: {log_url}")
+                        self.logger.info(log_events_str)
+
+                        if log_only_first_failure:
+                            return
+        except Exception as e:
+            self.logger.warning("error when trying to log cloudwatch logs")
+            self.logger.debug(e)
 
     def run_next(
         self, instance_id: str, server_ips: Optional[List[str]] = None

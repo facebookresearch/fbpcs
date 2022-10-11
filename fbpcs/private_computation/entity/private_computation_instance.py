@@ -338,7 +338,10 @@ class PrivateComputationInstance(InstanceBase):
     ) -> Optional[List[ContainerInstance]]:
         if self.infra_config.retry_counter == 0:
             return None
+        return self.containers
 
+    @property
+    def containers(self) -> Optional[List[ContainerInstance]]:
         instances = self.infra_config.instances
         if not instances:
             return None
