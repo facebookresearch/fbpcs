@@ -11,6 +11,7 @@ from enum import Enum
 
 class PCSTier(Enum):
     UNKNOWN = "unknown"
+    EPHEMERAL = "ephemeral"
     RC = "rc"
     CANARY = "canary"
     PROD = "latest"
@@ -20,6 +21,11 @@ class PCSTier(Enum):
         """maps str (possibly smc tier of deployed PCS thrift servers) to a PCSTier."""
 
         if tier_str in (
+            "ephemeral",
+            "private_measurement.private_computation_service_ephemeral",
+        ):
+            return PCSTier.EPHEMERAL
+        elif tier_str in (
             "rc",
             "private_measurement.private_computation_service_rc",
         ):
