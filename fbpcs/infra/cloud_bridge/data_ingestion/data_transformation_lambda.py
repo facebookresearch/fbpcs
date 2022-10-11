@@ -82,6 +82,7 @@ def lambda_handler(
         action_source = row_data.get("action_source")
         timestamp = row_data.get("event_time")
         event_type = row_data.get("event_name")
+        event_id = row_data.get("event_id")
         pc_test_event_code = row_data.get("pc_test_event_code")
         dummy_dict = {}
         currency_type = row_data.get("custom_data", dummy_dict).get("currency")
@@ -150,6 +151,8 @@ def lambda_handler(
         data["conversion_value"] = conversion_value
         data["event_type"] = event_type
         data["action_source"] = action_source
+        if event_id:
+            data["event_id"] = event_id
         if pc_test_event_code:
             data["pc_test_event_code"] = pc_test_event_code
         if email:
