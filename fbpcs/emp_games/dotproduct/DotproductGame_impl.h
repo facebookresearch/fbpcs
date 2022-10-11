@@ -104,21 +104,9 @@ std::vector<double> DotproductGame<schedulerId>::computeDotProduct(
 
   } else if (myRole == common::PARTNER) {
     // Create noise vector
-    std::vector<double> dpNoise(nFeatures, 0.0);
-    if (addDpNoise) {
-      // Noise generator
-      std::random_device rd;
-      std::mt19937_64 gen(rd());
+    const std::vector<double> dpNoise =
+        generateDpNoise(nFeatures, delta, eps, addDpNoise);
 
-      // calculate variance  k * 2 * ln ( 1 / delta) / (eps^2)
-      double variance = nFeatures * 2 * log(1 / delta) / pow(eps, 2);
-
-      std::normal_distribution<double> gaussianNoise{0, std::sqrt(variance)};
-
-      for (auto& item : dpNoise) {
-        item = gaussianNoise(gen);
-      }
-    }
     // Create matrix multiplication factory
     auto matMulFactoryPartner = std::make_unique<
         fbpcf::mpc_std_lib::walr::
@@ -136,6 +124,30 @@ std::vector<double> DotproductGame<schedulerId>::computeDotProduct(
         finalLabel, dpNoise);
   }
   return rst;
+}
+
+template <int schedulerId>
+std::vector<double> DotproductGame<schedulerId>::generateDpNoise(
+    const int nFeatures,
+    const double delta,
+    const double eps,
+    const bool addDpNoise) {
+  std::vector<double> dpNoise(nFeatures, 0.0);
+  if (addDpNoise) {
+    // Noise generator
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+
+    // calculate variance  k * 2 * ln ( 1 / delta) / (eps^2)
+    const double variance = nFeatures * 2 * log(1 / delta) / pow(eps, 2);
+
+    std::normal_distribution<double> gaussianNoise{0, std::sqrt(variance)};
+
+    for (auto& item : dpNoise) {
+      item = gaussianNoise(gen);
+    }
+  }
+  return dpNoise;
 }
 
 template <int schedulerId>
