@@ -24,7 +24,9 @@ inline common::SchedulerStatistics startDotProductApp(
     std::string& outFilePath,
     int numFeatures,
     int labelWidth,
-    bool debugMode,
+    double delta,
+    double eps,
+    bool addDpNoise,
     fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
         tlsInfo) {
   std::map<
@@ -47,7 +49,9 @@ inline common::SchedulerStatistics startDotProductApp(
       numFeatures,
       labelWidth,
       metricCollector,
-      debugMode);
+      delta,
+      eps,
+      addDpNoise);
 
   app->run();
   return app->getSchedulerStatistics();
