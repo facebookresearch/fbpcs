@@ -486,13 +486,21 @@ def _get_cell_obj_instance(
         ):
             continue
         created_time = _date_to_timestamp(instance_data["created_time"])
-        status = GRAPHAPI_INSTANCE_STATUSES[instance_data[STATUS]]
+        status = GRAPHAPI_INSTANCE_STATUSES.get(instance_data[STATUS])
+        if not status:
+            logging.warning(
+                f"Status in {instance_data} could not be mapped to a PrivateComputationInstanceStatus"
+            )
+
         # Instance is valid if it has not expired and it was created after opp_data upload time
         # Duplicates shouldn't occur if all instances of this study were created by partner. If
         # they do, select a random one.
-        if created_time > cell_obj_instance[cell_id][objective_id][
-            "latest_data_ts"
-        ] and (created_time > current_time - INSTANCE_LIFESPAN):
+        if (
+            status
+            and created_time
+            > cell_obj_instance[cell_id][objective_id]["latest_data_ts"]
+            and (created_time > current_time - INSTANCE_LIFESPAN)
+        ):
             cell_obj_instance[cell_id][objective_id]["instance_id"] = instance_data[
                 "id"
             ]

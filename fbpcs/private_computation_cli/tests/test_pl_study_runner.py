@@ -117,6 +117,106 @@ class TestPlStudyRunner(TestCase):
         defaults.update(**kwargs)
         pl_study_runner.run_study(**defaults)
 
+    @patch("time.time", new=MagicMock(return_value=1665458111.3078792))
+    def test_get_cell_obj_instance(self) -> None:
+        for created_time, latest_data_ts, status, is_instance_valid in (
+            # valid case
+            (
+                "2022-10-10T14:31:11+0000",
+                1658355374,
+                "PC_PRE_VALIDATION_COMPLETED",
+                True,
+            ),
+            # invalid status case
+            (
+                "2022-10-10T14:31:11+0000",
+                1658355374,
+                "A_FAKE_STATUS",
+                False,
+            ),
+            # expired instance case
+            (
+                "2022-10-05T14:31:11+0000",
+                1658355374,
+                "PC_PRE_VALIDATION_COMPLETED",
+                False,
+            ),
+            # latest_data_ts > creation time case
+            (
+                "2022-10-10T14:31:11+0000",
+                1665458000,
+                "PC_PRE_VALIDATION_COMPLETED",
+                False,
+            ),
+        ):
+            with self.subTest(
+                created_time=created_time,
+                latest_data_ts=latest_data_ts,
+                status=status,
+                is_instance_valid=is_instance_valid,
+            ):
+                study_data = {
+                    "type": "LIFT",
+                    "start_time": "2022-10-03T07:00:00+0000",
+                    "observation_end_time": "2023-04-01T07:00:00+0000",
+                    "objectives": {
+                        "data": [
+                            {
+                                "id": "11111111111111",
+                                "name": "Objective",
+                                "type": "MPC_CONVERSION",
+                            }
+                        ]
+                    },
+                    "opp_data_information": [
+                        f'{{"breakdowns":{{"cell_id":22222222222222}},"latest_data_ts":{latest_data_ts},"num_shards":2,"data_file_path_url":"https:\\/\\/test-bucket.s3.us-west-2.amazonaws.com\\/lift\\/publisher\\/publisher_e2e_input.csv","hash_key":"0"}}'
+                    ],
+                    "instances": {
+                        "data": [
+                            {
+                                "id": "33333333333333",
+                                "breakdown_key": '{"cell_id":22222222222222,"objective_id":11111111111111}',
+                                "status": status,
+                                "server_ips": ["11.1.11.11"],
+                                "tier": "private_measurement.private_computation_service_rc",
+                                "feature_list": [
+                                    "bolt_runner",
+                                    "private_lift_pcf2_release",
+                                ],
+                                "created_time": created_time,
+                                "latest_status_update_time": "2022-10-10T14:35:25+0000",
+                            }
+                        ]
+                    },
+                }
+                objective_ids = ["11111111111111"]
+                input_paths = [
+                    "https://test-bucket.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv"
+                ]
+
+                expected_results = {
+                    "22222222222222": {
+                        "11111111111111": {
+                            "latest_data_ts": latest_data_ts,
+                            "input_path": "https://test-bucket.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv",
+                            "num_shards": 2,
+                        }
+                    }
+                }
+
+                if is_instance_valid:
+                    expected_results["22222222222222"]["11111111111111"].update(
+                        {"instance_id": "33333333333333", "status": status}
+                    )
+
+                actual_results = pl_study_runner._get_cell_obj_instance(
+                    study_data=study_data,
+                    objective_ids=objective_ids,
+                    input_paths=input_paths,
+                )
+
+                self.assertEqual(expected_results, actual_results)
+
     def _validate_error(
         self, cause: str, remediation: str, logger_mock: MagicMock, **kwargs
     ) -> None:
