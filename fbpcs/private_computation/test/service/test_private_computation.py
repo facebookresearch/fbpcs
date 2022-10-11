@@ -1007,6 +1007,50 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             args.onedocker_binary_config_map,
         )
 
+    @patch("fbpcs.experimental.cloud_logs.dummy_log_retriever.DummyLogRetriever.fetch")
+    def test_log_failed_containers(self, mock_log_fetch) -> None:
+        for log_only_first_failure in (True, False):
+            for num_failures in (0, 1, 2):
+                with self.subTest(
+                    log_only_first_failure=log_only_first_failure,
+                    num_failures=num_failures,
+                ):
+                    mock_log_fetch.reset_mock()
+                    state_instance = StageStateInstance(
+                        instance_id=self.test_private_computation_id,
+                        stage_name="test_stage",
+                        containers=[
+                            ContainerInstance(
+                                instance_id="id", status=ContainerInstanceStatus.STARTED
+                            )
+                        ]
+                        + [
+                            ContainerInstance(
+                                instance_id="id", status=ContainerInstanceStatus.FAILED
+                            )
+                            for _ in range(num_failures)
+                        ],
+                    )
+                    private_computation_instance = self.create_sample_instance(
+                        status=PrivateComputationInstanceStatus.PID_SHARD_FAILED,
+                        role=PrivateComputationRole.PARTNER,
+                        instances=[state_instance],
+                    )
+                    self.private_computation_service.instance_repository.read = (
+                        MagicMock(return_value=private_computation_instance)
+                    )
+
+                    self.private_computation_service.log_failed_containers(
+                        self.test_private_computation_id,
+                        log_only_first_failure=log_only_first_failure,
+                    )
+                    if num_failures == 0:
+                        self.assertEqual(mock_log_fetch.call_count, 0)
+                    elif log_only_first_failure:
+                        self.assertEqual(mock_log_fetch.call_count, 1)
+                    else:
+                        self.assertEqual(mock_log_fetch.call_count, num_failures)
+
     @mock.patch.object(
         PrivateComputationStageFlow,
         "get_stage_service",
