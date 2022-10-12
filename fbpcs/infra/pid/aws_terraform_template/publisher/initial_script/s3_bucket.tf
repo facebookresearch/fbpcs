@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "mrpid_publisher_intermediate_bucket" {
   bucket = "mrpid-publisher-${var.md5hash_partner_account_id}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "mrpid_block_public_access" {
@@ -13,6 +14,7 @@ resource "aws_s3_bucket_public_access_block" "mrpid_block_public_access" {
 
 resource "aws_s3_bucket" "mrpid_publisher_confs_bucket" {
   bucket = "mrpid-publisher-${var.md5hash_partner_account_id}-confs"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "mrpid_confs_block_public_access" {
