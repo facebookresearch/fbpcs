@@ -273,6 +273,13 @@ class BoltRunner(Generic[T, U]):
                 in [fail_status, PrivateComputationInstanceStatus.TIMEOUT]
                 or partner_state.pc_instance_status is fail_status
             ):
+                try:
+                    await asyncio.gather(
+                        self.publisher_client.log_failed_containers(publisher_id),
+                        self.partner_client.log_failed_containers(partner_id),
+                    )
+                except Exception as e:
+                    logger.debug(e)
                 # stage failed, cancel publisher and partner side only in joint stage
                 if stage.is_joint_stage:
                     try:

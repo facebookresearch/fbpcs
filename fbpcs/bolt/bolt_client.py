@@ -126,3 +126,6 @@ class BoltClient(ABC, Generic[T]):
                 f"instance {instance_args.instance_id} does not exist - creating"
             )
             return await self.create_instance(instance_args)
+
+    async def log_failed_containers(self, instance_id: str) -> None:
+        pass
