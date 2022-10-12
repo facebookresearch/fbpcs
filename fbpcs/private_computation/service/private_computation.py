@@ -381,13 +381,21 @@ class PrivateComputationService:
         log_only_first_failure: bool = True,
         num_lines: int = 30,
     ) -> None:
+        checkpoint_name = "log_failed_containers"
+        checkpoint_data = {}
         try:
             private_computation_instance = self.get_instance(pc_instance_id)
+            self.trace_logging_svc.write_checkpoint(
+                run_id=private_computation_instance.infra_config.run_id,
+                instance_id=pc_instance_id,
+                checkpoint_name=checkpoint_name,
+                status=CheckpointStatus.STARTED,
+            )
             if private_computation_instance.infra_config.stage_flow.is_failed_status(
                 private_computation_instance.infra_config.status
             ):
                 containers = private_computation_instance.containers or []
-                for container in containers:
+                for i, container in enumerate(containers):
                     if container.status is ContainerInstanceStatus.FAILED:
                         self.logger.info(
                             f"Logging failed container {container.instance_id}"
@@ -405,11 +413,30 @@ class PrivateComputationService:
                         self.logger.info(f"Failed container URL: {log_url}")
                         self.logger.info(log_events_str)
 
+                        checkpoint_data[f"container_{i}"] = log_events_str.replace(
+                            "\n", "\\n"
+                        )
+
                         if log_only_first_failure:
-                            return
+                            break
         except Exception as e:
             self.logger.warning("error when trying to log cloudwatch logs")
             self.logger.debug(e)
+            self.trace_logging_svc.write_checkpoint(
+                run_id=private_computation_instance.infra_config.run_id,
+                instance_id=pc_instance_id,
+                checkpoint_name=checkpoint_name,
+                status=CheckpointStatus.FAILED,
+                checkpoint_data=checkpoint_data,
+            )
+        else:
+            self.trace_logging_svc.write_checkpoint(
+                run_id=private_computation_instance.infra_config.run_id,
+                instance_id=pc_instance_id,
+                checkpoint_name=checkpoint_name,
+                status=CheckpointStatus.COMPLETED,
+                checkpoint_data=checkpoint_data,
+            )
 
     def run_next(
         self, instance_id: str, server_ips: Optional[List[str]] = None
