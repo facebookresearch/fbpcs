@@ -415,9 +415,6 @@ if [ -z ${s3_bucket_data_pipeline+x} ]
 then
     # s3_bucket_data_pipeline is unset
     s3_bucket_data_pipeline="fb-pc-data$tag_postfix"
-else
-    # s3_bucket_data_pipeline is set, but add tags to it
-    s3_bucket_data_pipeline="$s3_bucket_data_pipeline$tag_postfix"
 fi
 
 data_bucket_arn="arn:aws:s3:::${s3_bucket_data_pipeline}"

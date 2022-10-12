@@ -35,6 +35,8 @@ dependencies {
   implementation 'com.amazonaws:aws-java-sdk-sts'
   implementation 'com.amazonaws:aws-java-sdk-ec2'
   implementation 'com.amazonaws:aws-java-sdk-servicequotas'
+  implementation 'com.amazonaws:aws-java-sdk-s3'
+  implementation 'org.apache.commons:commons-lang3'
   implementation platform('com.amazonaws:aws-java-sdk-bom:1.12.+')
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 }

@@ -7,12 +7,16 @@
 
 package com.facebook.business.cloudbridge.pl.server;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeVpcsResult;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.HeadBucketRequest;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
@@ -21,6 +25,7 @@ import com.amazonaws.services.servicequotas.AWSServiceQuotas;
 import com.amazonaws.services.servicequotas.AWSServiceQuotasClient;
 import com.amazonaws.services.servicequotas.model.GetServiceQuotaRequest;
 import com.amazonaws.services.servicequotas.model.ServiceQuota;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,6 +134,48 @@ public class Validator {
     return new ValidatorResult(true, "credentials provided are valid");
   }
 
+  public ValidatorResult validateDataBucket(DeploymentParams deploymentParams) {
+    if (StringUtils.isNotEmpty(deploymentParams.dataStorage)) {
+      final AmazonS3 s3 =
+          AmazonS3ClientBuilder.standard()
+              .withRegion(deploymentParams.region)
+              .withCredentials(
+                  new AWSStaticCredentialsProvider(
+                      StringUtils.isEmpty(deploymentParams.awsSessionToken)
+                          ? new BasicAWSCredentials(
+                              deploymentParams.awsAccessKeyId, deploymentParams.awsSecretAccessKey)
+                          : new BasicSessionCredentials(
+                              deploymentParams.awsAccessKeyId,
+                              deploymentParams.awsSecretAccessKey,
+                              deploymentParams.awsSessionToken)))
+              .build();
+
+      try {
+        s3.headBucket(new HeadBucketRequest(deploymentParams.dataStorage));
+      } catch (AmazonServiceException e) {
+        logger.error("Head bucket for {} failed: {}", deploymentParams.dataStorage, e.getMessage());
+        String msg =
+            "The specified data bucket does not exist in the region or the "
+                + "provided credential does not have access to it";
+        if (e.getStatusCode() == 400 || e.getStatusCode() == 404) {
+          msg = "The specified data bucket does not exist in the region";
+        } else if (e.getStatusCode() == 403) {
+          msg = "The provided credential does not have access to the data bucket";
+        }
+
+        return new ValidatorResult(false, msg);
+      } catch (Exception e) {
+        logger.error("Head bucket for {} failed: {}", deploymentParams.dataStorage, e.getMessage());
+        return new ValidatorResult(
+            false,
+            "The specified data bucket does not exist in the region or the "
+                + "provided credential does not have access to it");
+      }
+    }
+
+    return new ValidatorResult(true, "The provided data bucket is valid");
+  }
+
   public ValidatorResult validate(DeploymentParams deploymentParams, boolean deploy) {
     final ValidatorResult credentialsValidationResult = validateCredentials(deploymentParams);
     if (!credentialsValidationResult.isSuccessful) {
@@ -141,6 +188,12 @@ public class Validator {
         return vpcValidationResult;
       }
     }
+
+    ValidatorResult dataStorageValidationRes = validateDataBucket(deploymentParams);
+    if (!dataStorageValidationRes.isSuccessful) {
+      return dataStorageValidationRes;
+    }
+
     // TODO S3 bucket limit validation T119080329
     return new ValidatorResult(true, "No pre validation issues found so far!");
   }
