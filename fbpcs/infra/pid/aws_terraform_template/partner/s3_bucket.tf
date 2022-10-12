@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "mrpid_partner_intermediate_bucket" {
   bucket = "mrpid-partner-${var.md5hash_aws_account_id}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "mrpid_block_public_access" {
@@ -71,6 +72,7 @@ EOF
 
 resource "aws_s3_bucket" "mrpid_partner_confs_bucket" {
   bucket = "mrpid-partner-${var.md5hash_aws_account_id}-confs"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "mrpid_confs_block_public_access" {
