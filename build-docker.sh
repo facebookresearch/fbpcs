@@ -14,7 +14,7 @@ FBPCF_VERSION="2.1.73"
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-g] [-t TAG] [-p PLATFORM]
+Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-g] [-t TAG] [-p PLATFORM] [-v FBPCF_VERSION]
 
 package:
   emp_games - builds the emp-games docker image
@@ -26,6 +26,7 @@ package:
 -g Only used for the pce_deployment package to build the GCP docker image instead of the AWS image
 -t TAG: tags the image with the given tag (default: latest)
 -p PLATFORM: builds the image to target the given platform (default depends on local system) - requires Docker Engine API 1.40+
+-v FBPCF_VERSION: base FBPCF version to use
 EOF
   exit 1
 }
@@ -45,7 +46,8 @@ TAG="latest"
 FORCE_EXTERNAL=false
 USE_GCP=false
 PLATFORM=""
-while getopts "u,f,g,t:,p:" o; do
+FBPCF_VERSION="latest"
+while getopts "u,f,g,t:,p,v:" o; do
   case $o in
     (u) OS_VARIANT="ubuntu"
         OS_RELEASE=${UBUNTU_RELEASE}
@@ -54,6 +56,7 @@ while getopts "u,f,g,t:,p:" o; do
     (g) USE_GCP=true;;
     (t) TAG=$OPTARG;;
     (p) PLATFORM=$OPTARG;;
+    (v) FBPCF_VERSION=$OPTARG;;
     (*) usage
   esac
 done
