@@ -65,7 +65,11 @@ class TokenValidationRuleData:
 """
 rule checkers
 """
-user_type_checker: Callable[[DebugTokenData], bool] = lambda data: data.type == "USER"
+user_type_checker: Callable[[DebugTokenData], bool] = lambda data: data.type in (
+    "USER",
+    "SYSTEM_USER",
+)
+
 valid_checker: Callable[[DebugTokenData], bool] = lambda data: data.is_valid
 
 
