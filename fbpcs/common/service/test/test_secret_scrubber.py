@@ -141,3 +141,88 @@ class TestSecretScrubber(TestCase):
         self.assertEqual(scrub_summary.scrubbed_output, expected_output)
         self.assertEqual(scrub_summary.total_substitutions, 4)
         self.assertEqual(scrub_summary.name_to_num_subs["Credit card number"], 4)
+
+    def test_date_of_birth_scrub(self) -> None:
+        # valid case
+        valid_dob_1 = "10-31-2021"
+        valid_dob_2 = "31-10-2021"
+        valid_dob_3 = "09/20/1947"
+        valid_dob_4 = "20/09/2000"
+        valid_dob_5 = "09 13 1900"
+        valid_dob_6 = "20 09 2020"
+
+        # invalid cases
+        invalid_dob_1 = "10-32-2021"
+        invalid_dob_2 = "31-13-2021"
+        invalid_dob_3 = "09/20 /1947"
+        invalid_dob_4 = "020/09/2000"
+        invalid_dob_5 = "09 13 19003"
+        invalid_dob_6 = "20 13 2020"
+
+        test_message = f"""
+        valid_dob_1: {valid_dob_1}
+        valid_dob_2: {valid_dob_2}
+        valid_dob_3: {valid_dob_3}
+        valid_dob_4: {valid_dob_4}
+        valid_dob_5: {valid_dob_5}
+        valid_dob_6: {valid_dob_6}
+
+        invalid_dob_1: {invalid_dob_1}
+        invalid_dob_2: {invalid_dob_2}
+        invalid_dob_3: {invalid_dob_3}
+        invalid_dob_4: {invalid_dob_4}
+        invalid_dob_5: {invalid_dob_5}
+        invalid_dob_6: {invalid_dob_6}
+        """
+
+        expected_output = f"""
+        valid_dob_1: {self.scrubber.REPLACEMENT_STR}
+        valid_dob_2: {self.scrubber.REPLACEMENT_STR}
+        valid_dob_3: {self.scrubber.REPLACEMENT_STR}
+        valid_dob_4: {self.scrubber.REPLACEMENT_STR}
+        valid_dob_5: {self.scrubber.REPLACEMENT_STR}
+        valid_dob_6: {self.scrubber.REPLACEMENT_STR}
+
+        invalid_dob_1: {invalid_dob_1}
+        invalid_dob_2: {invalid_dob_2}
+        invalid_dob_3: {invalid_dob_3}
+        invalid_dob_4: {invalid_dob_4}
+        invalid_dob_5: {invalid_dob_5}
+        invalid_dob_6: {invalid_dob_6}
+        """
+
+        scrub_summary = self.scrubber.scrub(test_message)
+
+        self.assertEqual(scrub_summary.scrubbed_output, expected_output)
+        self.assertEqual(scrub_summary.total_substitutions, 6)
+        self.assertEqual(scrub_summary.name_to_num_subs["Date of birth DDMMYY"], 3)
+        self.assertEqual(scrub_summary.name_to_num_subs["Date of birth MMDDYY"], 3)
+
+    def test_phone_number_scrub(self) -> None:
+        # valid cases
+        valid_phone_number_1 = "+19191231234"
+        valid_phone_number_2 = "+1 (919) 123 1234"
+        valid_phone_number_3 = "+1-(919)-123-1234"
+        valid_phone_number_4 = "+123 919 123 1234"
+
+        # invalid cases
+
+        test_message = f"""
+        valid_phone_number_1: {valid_phone_number_1}
+        valid_phone_number_2: {valid_phone_number_2}
+        valid_phone_number_3: {valid_phone_number_3}
+        valid_phone_number_4: {valid_phone_number_4}
+        """
+
+        expected_output = f"""
+        valid_phone_number_1: {self.scrubber.REPLACEMENT_STR}
+        valid_phone_number_2: {self.scrubber.REPLACEMENT_STR}
+        valid_phone_number_3: {self.scrubber.REPLACEMENT_STR}
+        valid_phone_number_4: {self.scrubber.REPLACEMENT_STR}
+        """
+
+        scrub_summary = self.scrubber.scrub(test_message)
+
+        self.assertEqual(scrub_summary.scrubbed_output, expected_output)
+        self.assertEqual(scrub_summary.total_substitutions, 4)
+        self.assertEqual(scrub_summary.name_to_num_subs["Phone number"], 4)
