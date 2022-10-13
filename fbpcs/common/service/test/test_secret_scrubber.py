@@ -52,5 +52,92 @@ class TestSecretScrubber(TestCase):
 
         self.assertEqual(scrub_summary.scrubbed_output, expected_output)
         self.assertEqual(scrub_summary.total_substitutions, 3)
-        for c in scrub_summary.name_to_num_subs.values():
-            self.assertEqual(c, 1)
+        self.assertEqual(scrub_summary.name_to_num_subs["AWS access key id"], 1)
+        self.assertEqual(scrub_summary.name_to_num_subs["AWS secret access key"], 1)
+        self.assertEqual(scrub_summary.name_to_num_subs["Meta Graph API token"], 1)
+
+    def test_email_scrub(self) -> None:
+        # valid cases
+        valid_email_address_1 = "test@test.com"
+        valid_email_address_2 = "test.test@test.com"
+        valid_email_address_3 = "test_test@test.com"
+
+        # invalid cases
+        invalid_email_address_1 = "test@"
+        invalid_email_address_2 = "@test.com"
+        invalid_email_address_3 = "test @test.com"
+
+        test_message = f"""
+        valid_email_address_1: {valid_email_address_1}
+        valid_email_address_2: {valid_email_address_2}
+        valid_email_address_3: {valid_email_address_3}
+
+        invalid_email_address_1: {invalid_email_address_1}
+        invalid_email_address_2: {invalid_email_address_2}
+        invalid_email_address_3: {invalid_email_address_3}
+        """
+
+        expected_output = f"""
+        valid_email_address_1: {self.scrubber.REPLACEMENT_STR}
+        valid_email_address_2: {self.scrubber.REPLACEMENT_STR}
+        valid_email_address_3: {self.scrubber.REPLACEMENT_STR}
+
+        invalid_email_address_1: {invalid_email_address_1}
+        invalid_email_address_2: {invalid_email_address_2}
+        invalid_email_address_3: {invalid_email_address_3}
+        """
+
+        scrub_summary = self.scrubber.scrub(test_message)
+
+        self.assertEqual(scrub_summary.scrubbed_output, expected_output)
+        self.assertEqual(scrub_summary.total_substitutions, 3)
+        self.assertEqual(scrub_summary.name_to_num_subs["Email address"], 3)
+
+    def test_credit_Card_scrub(self) -> None:
+        # valid cases
+        valid_visa_credit_card_1 = "1234-1234-1234-1234"
+        valid_visa_credit_card_2 = "1234123412341234"
+        valid_mastercard_credit_card_1 = "1234-123456-12345"
+        valid_mastercard_credit_card_2 = "123412345612345"
+
+        # invalid cases
+        invalid_visa_credit_card_1 = "123-1234-1234-1234"
+        invalid_visa_credit_card_2 = "12341234123412342"
+        invalid_visa_credit_card_3 = "123-1234- 1234-1234"
+        invalid_mastercard_credit_card_1 = "1234-1234567-12345"
+        invalid_mastercard_credit_card_2 = "12341234561234"
+        invalid_mastercard_credit_card_3 = "1234- 1234567-12345"
+
+        test_message = f"""
+        valid_visa_credit_card_1: {valid_visa_credit_card_1}
+        valid_visa_credit_card_2: {valid_visa_credit_card_2}
+        valid_mastercard_credit_card_1: {valid_mastercard_credit_card_1}
+        valid_mastercard_credit_card_2: {valid_mastercard_credit_card_2}
+
+        invalid_visa_credit_card_1: {invalid_visa_credit_card_1}
+        invalid_visa_credit_card_2: {invalid_visa_credit_card_2}
+        invalid_visa_credit_card_3: {invalid_visa_credit_card_3}
+        invalid_mastercard_credit_card_1: {invalid_mastercard_credit_card_1}
+        invalid_mastercard_credit_card_2: {invalid_mastercard_credit_card_2}
+        invalid_mastercard_credit_card_3: {invalid_mastercard_credit_card_3}
+        """
+
+        expected_output = f"""
+        valid_visa_credit_card_1: {self.scrubber.REPLACEMENT_STR}
+        valid_visa_credit_card_2: {self.scrubber.REPLACEMENT_STR}
+        valid_mastercard_credit_card_1: {self.scrubber.REPLACEMENT_STR}
+        valid_mastercard_credit_card_2: {self.scrubber.REPLACEMENT_STR}
+
+        invalid_visa_credit_card_1: {invalid_visa_credit_card_1}
+        invalid_visa_credit_card_2: {invalid_visa_credit_card_2}
+        invalid_visa_credit_card_3: {invalid_visa_credit_card_3}
+        invalid_mastercard_credit_card_1: {invalid_mastercard_credit_card_1}
+        invalid_mastercard_credit_card_2: {invalid_mastercard_credit_card_2}
+        invalid_mastercard_credit_card_3: {invalid_mastercard_credit_card_3}
+        """
+
+        scrub_summary = self.scrubber.scrub(test_message)
+
+        self.assertEqual(scrub_summary.scrubbed_output, expected_output)
+        self.assertEqual(scrub_summary.total_substitutions, 4)
+        self.assertEqual(scrub_summary.name_to_num_subs["Credit card number"], 4)
