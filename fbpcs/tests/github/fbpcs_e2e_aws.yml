@@ -30,6 +30,15 @@ private_computation:
     OneDockerServiceConfig:
       constructor:
         task_definition: fbpcs-github-cicd:4#fbpcs-github-cicd
+    LogRetriever:
+      class: fbpcs.experimental.cloud_logs.aws_log_retriever.AWSLogRetriever
+      constructor:
+        cloudwatch_log_service_args:
+          kls: fbpcp.service.log_cloudwatch.CloudWatchLogService
+          args:
+            region: us-west-2
+            access_key_id:
+            access_key_data:
 pid:
   dependency:
   skip_aggregation_step: true
