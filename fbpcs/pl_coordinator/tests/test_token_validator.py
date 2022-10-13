@@ -112,6 +112,18 @@ class TestTokenValidator(TestCase):
                 False,
             ),
             (
+                "Token is User type",
+                TokenValidationRule.TOKEN_USER_TYPE,
+                self._gen_debug_data(type="USER"),
+                True,
+            ),
+            (
+                "Token is System User type",
+                TokenValidationRule.TOKEN_USER_TYPE,
+                self._gen_debug_data(type="SYSTEM_USER"),
+                True,
+            ),
+            (
                 "Token expire soon",
                 TokenValidationRule.TOKEN_EXPIRY,
                 self._gen_debug_data(
