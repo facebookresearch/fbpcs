@@ -43,6 +43,14 @@ class SecretScrubber:
         ),
         # https://fburl.com/code/ogf6f0v4
         Secret("Meta Graph API token", "([^a-zA-Z0-9]|^)EAA[a-zA-Z0-9]{90,400}"),
+        Secret(
+            "Email address",
+            r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+",
+        ),
+        Secret(
+            "Credit card number",
+            r"""(\b(\d{4}[-]?\d{4}[-]?\d{4}[-]?\d{4})\b)|(\b(\d{4}[-]?\d{6}[-]?\d{5})\b)""",
+        ),
     ]
     REPLACEMENT_STR: str = "********"
 
