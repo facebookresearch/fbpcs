@@ -74,7 +74,7 @@ template <int schedulerId>
 typename IDataProcessor<schedulerId>::SecString
 DataProcessor<schedulerId>::processPeersData(
     size_t dataSize,
-    const std::vector<int64_t>& indexes,
+    const std::vector<int32_t>& indexes,
     size_t dataWidth) {
   // 1a. (peer)encrypt my data locally
   // 2a. (peer)send encryted data to peer

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "fbpcs/data_processing/unified_data_process/data_processor/DummyDataProcessor.h"
+
 namespace unified_data_process::data_processor::insecure {
 
 template <int schedulerId>
@@ -33,7 +35,7 @@ template <int schedulerId>
 typename IDataProcessor<schedulerId>::SecString
 DummyDataProcessor<schedulerId>::processPeersData(
     size_t dataSize,
-    const std::vector<int64_t>& indexes,
+    const std::vector<int32_t>& indexes,
     size_t dataWidth) {
   std::vector<std::vector<unsigned char>> plaintext;
   for (size_t i = 0; i < dataSize; i++) {

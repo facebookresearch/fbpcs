@@ -38,7 +38,7 @@ class DummyDataProcessor final : public IDataProcessor<schedulerId> {
    */
   typename IDataProcessor<schedulerId>::SecString processPeersData(
       size_t dataSize,
-      const std::vector<int64_t>& indexes,
+      const std::vector<int32_t>& indexes,
       size_t dataWidth) override;
 
  private:

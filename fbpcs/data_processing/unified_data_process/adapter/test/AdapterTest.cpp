@@ -24,8 +24,8 @@
 
 namespace unified_data_process::adapter {
 
-std::vector<int64_t> generateShuffledIndex(size_t size) {
-  std::vector<int64_t> rst(size);
+std::vector<int32_t> generateShuffledIndex(size_t size) {
+  std::vector<int32_t> rst(size);
   for (size_t i = 0; i < size; i++) {
     rst[i] = i;
   }
@@ -34,9 +34,9 @@ std::vector<int64_t> generateShuffledIndex(size_t size) {
 }
 
 std::tuple<
-    std::vector<int64_t>,
-    std::vector<int64_t>,
-    std::unordered_map<int64_t, int64_t>>
+    std::vector<int32_t>,
+    std::vector<int32_t>,
+    std::unordered_map<int32_t, int32_t>>
 generateAdapterTestData() {
   std::random_device rd;
   std::mt19937_64 e(rd());
@@ -57,13 +57,13 @@ generateAdapterTestData() {
     }
   }
 
-  std::vector<int64_t> p0Data = generateShuffledIndex(p0InputSize);
-  std::vector<int64_t> p1Data = generateShuffledIndex(p1InputSize);
-  std::vector<int64_t> p0Input(unionSize);
-  std::vector<int64_t> p1Input(unionSize);
+  std::vector<int32_t> p0Data = generateShuffledIndex(p0InputSize);
+  std::vector<int32_t> p1Data = generateShuffledIndex(p1InputSize);
+  std::vector<int32_t> p0Input(unionSize);
+  std::vector<int32_t> p1Input(unionSize);
   size_t p0Index = 0;
   size_t p1Index = 0;
-  std::unordered_map<int64_t, int64_t> expectedOutput;
+  std::unordered_map<int32_t, int32_t> expectedOutput;
   for (size_t i = 0; i < unionSize; i++) {
     if (u.at(i) == 2) {
       expectedOutput[p0Data.at(p0Index)] = p1Data.at(p1Index);
@@ -86,9 +86,9 @@ generateAdapterTestData() {
 }
 
 void checkOutput(
-    const std::vector<int64_t>& p0Output,
-    const std::vector<int64_t>& p1Output,
-    const std::unordered_map<int64_t, int64_t>& expectedOutput) {
+    const std::vector<int32_t>& p0Output,
+    const std::vector<int32_t>& p1Output,
+    const std::unordered_map<int32_t, int32_t>& expectedOutput) {
   ASSERT_EQ(p0Output.size(), expectedOutput.size());
   ASSERT_EQ(p1Output.size(), expectedOutput.size());
   for (size_t i = 0; i < p0Output.size(); i++) {
@@ -102,7 +102,7 @@ void adapterTest(
     std::unique_ptr<IAdapter> adapter1) {
   auto [p0Input, p1Input, expectedOutput] = generateAdapterTestData();
   auto task = [](std::unique_ptr<IAdapter> adapter,
-                 const std::vector<int64_t>& input) {
+                 const std::vector<int32_t>& input) {
     return adapter->adapt(input);
   };
   auto future0 = std::async(task, std::move(adapter0), p0Input);
