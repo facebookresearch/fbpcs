@@ -404,13 +404,13 @@ class BoltRunner(Generic[T, U]):
                 # if it's not a joint stage, the statuses don't matter at all since
                 # each party operates independently
                 # Example: publisher is RESHARD_FAILED, partner is RESHARD_COMPLETED
-                if not publisher_stage.is_joint_stage or (
+                if stage_flow.is_completed_status(partner_status) and (
+                    not publisher_stage.is_joint_stage
                     # it's fine if one party is completed and the other is started
                     # because the one with the started status just needs to call
                     # update_instance one more time
                     # Example: publisher is COMPUTATION_STARTED, partner is COMPUTATION_COMPLETED
-                    stage_flow.is_started_status(publisher_status)
-                    and stage_flow.is_completed_status(partner_status)
+                    or stage_flow.is_started_status(publisher_status)
                 ):
                     return publisher_stage
             elif partner_stage is publisher_stage.previous_stage:
@@ -421,10 +421,10 @@ class BoltRunner(Generic[T, U]):
                     await self.partner_client.update_instance(partner_id)
                 ).pc_instance_status
                 # Example: publisher is RESHARD_COMPLETED, partner is RESHARD_FAILED
-                if not partner_stage.is_joint_stage or (
+                if stage_flow.is_completed_status(publisher_status) and (
+                    not partner_stage.is_joint_stage
                     # Example: publisher is COMPUTATION_COMPLETED, partner is COMPUTATION_STARTED
-                    stage_flow.is_started_status(partner_status)
-                    and stage_flow.is_completed_status(publisher_status)
+                    or stage_flow.is_started_status(partner_status)
                 ):
                     return partner_stage
             # Example: partner is CREATED, publisher is PID_PREPARE_COMPLETED
