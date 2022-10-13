@@ -13,7 +13,9 @@ Types of changes
 - `Security` in case This project adheres to
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 2.3.0] - put release date here
+## [Unreleased - 2.4.0] - put release date here
+
+## [2.3.0] - 2022-10-12
 
 ### Changed
 * Made _build_private_computation_service a logically public method

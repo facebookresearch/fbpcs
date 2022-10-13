@@ -8,7 +8,7 @@ set -e
 
 UBUNTU_RELEASE="20.04"
 GITHUB_PACKAGES="ghcr.io/facebookresearch"
-FBPCF_VERSION="2.1.69"
+FBPCF_VERSION="2.1.73"
 
 
 PROG_NAME=$0
