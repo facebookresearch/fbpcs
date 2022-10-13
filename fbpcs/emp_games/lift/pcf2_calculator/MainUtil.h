@@ -73,7 +73,9 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
     int numConversionsPerUser,
     bool computePublisherBreakdowns,
     int epoch,
-    bool useXorEncryption) {
+    bool useXorEncryption,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   // aggregate scheduler statistics across apps
   common::SchedulerStatistics schedulerStatistics{
       0, 0, 0, 0, folly::dynamic::object()};
@@ -92,13 +94,6 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
         partyInfos(
             {{0, {serverIp, port + index * 100}},
              {1, {serverIp, port + index * 100}}});
-
-    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
-        tlsInfo;
-    tlsInfo.certPath = "";
-    tlsInfo.keyPath = "";
-    tlsInfo.passphrasePath = "";
-    tlsInfo.useTls = false;
 
     auto metricCollector = std::make_shared<fbpcf::util::MetricCollector>(
         "lift_metrics_for_thread_" + std::to_string(index));
@@ -147,7 +142,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFilesHelper(
                 numConversionsPerUser,
                 computePublisherBreakdowns,
                 epoch,
-                useXorEncryption);
+                useXorEncryption,
+                tlsInfo);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -169,7 +165,9 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFiles(
     int numConversionsPerUser,
     bool computePublisherBreakdowns,
     int epoch,
-    bool useXorEncryption) {
+    bool useXorEncryption,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   // use only as many threads as the number of files
   auto numThreads = std::min((int)inputFilepaths.size(), (int)concurrency);
 
@@ -186,7 +184,8 @@ inline common::SchedulerStatistics startCalculatorAppsForShardedFiles(
       numConversionsPerUser,
       computePublisherBreakdowns,
       epoch,
-      useXorEncryption);
+      useXorEncryption,
+      tlsInfo);
 }
 
 } // namespace private_lift

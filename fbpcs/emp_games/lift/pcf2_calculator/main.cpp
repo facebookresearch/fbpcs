@@ -152,6 +152,13 @@ int main(int argc, char** argv) {
   auto inputFilepaths = filepaths.first;
   auto outputFilepaths = filepaths.second;
 
+  auto tlsInfo = common::getTlsInfoFromArgs(
+      FLAGS_use_tls,
+      FLAGS_ca_cert_path,
+      FLAGS_server_cert_path,
+      FLAGS_private_key_path,
+      "");
+
   std::vector<std::string> enabledFeatureFlags;
   folly::split(',', FLAGS_pc_feature_flags, enabledFeatureFlags);
   bool readInputFromSecretShares = std::any_of(
@@ -208,7 +215,8 @@ int main(int argc, char** argv) {
             FLAGS_num_conversions_per_user,
             FLAGS_compute_publisher_breakdowns,
             FLAGS_epoch,
-            FLAGS_use_xor_encryption);
+            FLAGS_use_xor_encryption,
+            tlsInfo);
   } else if (FLAGS_party == common::PARTNER) {
     XLOG(INFO)
         << "Starting Private Lift as Partner, will wait for Publisher...";
@@ -224,7 +232,8 @@ int main(int argc, char** argv) {
             FLAGS_num_conversions_per_user,
             FLAGS_compute_publisher_breakdowns,
             FLAGS_epoch,
-            FLAGS_use_xor_encryption);
+            FLAGS_use_xor_encryption,
+            tlsInfo);
   } else {
     XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
   }
