@@ -863,6 +863,18 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                 PrivateComputationStageFlow.COMPUTE.completed_status,
                 PrivateComputationStageFlow.COMPUTE.next_stage,
             ),
+            (
+                PrivateComputationStageFlow.CREATED.completed_status,
+                PrivateComputationStageFlow.CREATED.next_stage,
+                PrivateComputationStageFlow.PID_SHARD.failed_status,
+                PrivateComputationStageFlow.PID_SHARD,
+            ),
+            (
+                PrivateComputationStageFlow.PID_SHARD.failed_status,
+                PrivateComputationStageFlow.PID_SHARD,
+                PrivateComputationStageFlow.CREATED.completed_status,
+                PrivateComputationStageFlow.CREATED.next_stage,
+            ),
         ]
 
 
