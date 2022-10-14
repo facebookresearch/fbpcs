@@ -47,20 +47,28 @@ private_computation:
     PCValidatorConfig:
       class: fbpcs.private_computation.entity.pc_validator_config.PCValidatorConfig
       constructor:
-        ### AWS region - ex. us-west-2
+        # AWS region - ex. us-west-2
         region: TODO
-        ### Toggle running the PCPreValidator
+        # Toggle running the PCPreValidator
         # pc_pre_validator_enabled: false
     WorkflowService:
       class: fbpcs.service.workflow_sfn_fb.FBSfnWorkflowService
       constructor:
+        # AWS region - ex. us-west-2
         region: TODO
+        # AWS access key
+        access_key_id: TODO
+        # AWS access secret
+        access_key_data: TODO
+        # AWS session token
+        # session_token: TODO
 pid:
   dependency:
   pid_mr:
     runConfigs:
       pidMrMultikeyJarPath: s3://one-docker-repository-prod/pid/private-id-mr/latest/pid-mr-multikey.jar
     workflowConfigs:
+      # AWS Step Functions ARN used for MR-PID running
       stateMachineArn: TODO
 mpc:
   dependency:
