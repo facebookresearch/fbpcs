@@ -39,7 +39,7 @@ jobs:
   pl_test:
     name: Private Lift E2E Tests
     runs-on: self-hosted
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: write
