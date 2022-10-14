@@ -36,11 +36,11 @@ class UdpProcessGame : public fbpcf::frontend::MpcGame<schedulerId> {
         adapterFactory_(std::move(adapterFactory)),
         dataProcessorFactory_(std::move(dataProcessorFactory)) {}
 
-  std::vector<int64_t> playAdapter(const std::vector<int64_t>& unionMap);
+  std::vector<int32_t> playAdapter(const std::vector<int32_t>& unionMap);
   std::tuple<std::vector<std::vector<bool>>, std::vector<std::vector<bool>>>
   playDataProcessor(
       const std::vector<std::vector<unsigned char>>& metaData,
-      const std::vector<int64_t>& indexes,
+      const std::vector<int32_t>& indexes,
       size_t peersDataSize,
       size_t peersDataWidth);
 
@@ -54,3 +54,5 @@ class UdpProcessGame : public fbpcf::frontend::MpcGame<schedulerId> {
 };
 
 } // namespace unified_data_process
+
+#include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGame_impl.h"

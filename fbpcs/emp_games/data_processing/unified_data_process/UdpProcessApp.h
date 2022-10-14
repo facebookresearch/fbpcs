@@ -13,7 +13,6 @@
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGame.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGameFactory.h"
-#include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGame_impl.h"
 
 namespace unified_data_process {
 
@@ -27,9 +26,9 @@ class UdpProcessApp {
           communicationAgentFactory,
       std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       std::unique_ptr<UdpProcessGameFactory<schedulerId>> udpGameFactory,
-      int64_t numberOfRows,
+      int32_t numberOfRows,
       int64_t sizeOfRow,
-      int64_t numberOfIntersection,
+      int32_t numberOfIntersection,
       bool useXorEncryption = true)
       : party_{party},
         communicationAgentFactory_{std::move(communicationAgentFactory)},
@@ -52,7 +51,7 @@ class UdpProcessApp {
  protected:
   std::unique_ptr<fbpcf::scheduler::IScheduler> createScheduler();
 
-  std::tuple<std::vector<int64_t>, std::vector<std::vector<unsigned char>>>
+  std::tuple<std::vector<int32_t>, std::vector<std::vector<unsigned char>>>
   dataGeneration();
 
  private:

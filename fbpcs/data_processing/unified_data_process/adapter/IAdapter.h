@@ -30,8 +30,8 @@ class IAdapter {
    * in the output represents the index of peer's element that corresponds to
    * the i-th element in the intersection.
    */
-  virtual std::vector<int64_t> adapt(
-      const std::vector<int64_t>& unionMap) const = 0;
+  virtual std::vector<int32_t> adapt(
+      const std::vector<int32_t>& unionMap) const = 0;
 };
 
 } // namespace unified_data_process::adapter

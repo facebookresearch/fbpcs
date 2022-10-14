@@ -22,9 +22,9 @@ template <int schedulerId>
 std::tuple<std::vector<std::vector<bool>>, std::vector<std::vector<bool>>>
 runUdpProcessApp(
     int myId,
-    int64_t rowNumber,
-    int64_t rowSize,
-    int64_t intersectionSize,
+    int32_t rowNumber,
+    int32_t rowSize,
+    int32_t intersectionSize,
     std::shared_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory>
         communicationAgentFactory,
@@ -69,8 +69,8 @@ std::vector<std::vector<uint8_t>> reconstructResults(
 void checkOutput(
     const std::vector<std::vector<uint8_t>>& publisherData,
     const std::vector<std::vector<uint8_t>>& partnerData,
-    int64_t row_size,
-    int64_t intersectionSize) {
+    int32_t row_size,
+    int32_t intersectionSize) {
   ASSERT_EQ(publisherData.size(), intersectionSize);
   ASSERT_EQ(partnerData.size(), intersectionSize);
   ASSERT_EQ(publisherData.at(0).size(), row_size);
@@ -88,10 +88,10 @@ TEST(UdpProcessApp, testUdpProcessApp) {
   std::uniform_int_distribution<int32_t> randomRowNum(100, 0xFF);
   std::uniform_int_distribution<int32_t> randomRowSize(64, 80);
   std::uniform_int_distribution<uint8_t> randomRate(1, 20);
-  int64_t rowNumber = randomRowNum(e);
-  int64_t rowSize = randomRowSize(e);
-  double intsectionRate = randomRate(e);
-  int64_t intersectionSize = (intsectionRate / 100) * rowNumber;
+  int32_t rowNumber = randomRowNum(e);
+  int32_t rowSize = randomRowSize(e);
+  double intersectionRate = randomRate(e);
+  int32_t intersectionSize = (intersectionRate / 100) * rowNumber;
 
   auto agentFactories =
       fbpcf::engine::communication::getInMemoryAgentFactory(2);

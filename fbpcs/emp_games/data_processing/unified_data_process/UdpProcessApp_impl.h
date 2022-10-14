@@ -89,9 +89,9 @@ UdpProcessApp<schedulerId>::createScheduler() {
 }
 
 template <int schedulerId>
-std::tuple<std::vector<int64_t>, std::vector<std::vector<unsigned char>>>
+std::tuple<std::vector<int32_t>, std::vector<std::vector<unsigned char>>>
 UdpProcessApp<schedulerId>::dataGeneration() {
-  std::vector<int64_t> unionMap(numberOfRows_, -1);
+  std::vector<int32_t> unionMap(numberOfRows_, -1);
   std::vector<std::vector<unsigned char>> metaData(
       (numberOfRows_ - numberOfIntersection_) / 2 + numberOfIntersection_,
       std::vector<unsigned char>(sizeOfRow_));

@@ -14,8 +14,8 @@
 namespace unified_data_process::adapter {
 
 template <int schedulerId>
-std::vector<int64_t> Adapter<schedulerId>::adapt(
-    const std::vector<int64_t>& unionMap) const {
+std::vector<int32_t> Adapter<schedulerId>::adapt(
+    const std::vector<int32_t>& unionMap) const {
   auto unionSize = unionMap.size();
 
   if (unionSize == 0) {
@@ -26,7 +26,7 @@ std::vector<int64_t> Adapter<schedulerId>::adapt(
   SecString ids(2 * indexWidth + 1);
 
   std::vector<bool> hasValue(unionSize);
-  std::vector<uint64_t> myMap(unionSize);
+  std::vector<uint32_t> myMap(unionSize);
 
   for (size_t i = 0; i < unionSize; i++) {
     hasValue[i] = unionMap.at(i) >= 0;
@@ -51,7 +51,7 @@ std::vector<int64_t> Adapter<schedulerId>::adapt(
   auto match1 = shuffledIds[0].openToParty(party1Id_);
   auto matchResult =
       amIParty0_ ? std::move(match0).getValue() : std::move(match1).getValue();
-  int64_t intersectionSize = 0;
+  int32_t intersectionSize = 0;
   for (auto item : matchResult) {
     intersectionSize += item;
   }
@@ -81,7 +81,7 @@ std::vector<int64_t> Adapter<schedulerId>::adapt(
   auto myShare = amIParty0_ ? std::move(myShare1).getValue()
                             : std::move(myShare0).getValue();
 
-  std::vector<int64_t> rst(intersectionSize, 0);
+  std::vector<int32_t> rst(intersectionSize, 0);
   for (size_t i = 0; i < intersectionSize; i++) {
     for (size_t j = 0; j < indexWidth; j++) {
       rst[i] += (myShare.at(j).at(i)) << j;

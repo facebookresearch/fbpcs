@@ -31,8 +31,8 @@ class Adapter final : public IAdapter {
         party1Id_(party1Id),
         shuffler_(std::move(shuffler)) {}
 
-  std::vector<int64_t> adapt(
-      const std::vector<int64_t>& unionMap) const override;
+  std::vector<int32_t> adapt(
+      const std::vector<int32_t>& unionMap) const override;
 
  private:
   bool amIParty0_;

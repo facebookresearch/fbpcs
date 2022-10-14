@@ -22,8 +22,8 @@
 namespace unified_data_process {
 
 template <int schedulerId>
-std::vector<int64_t> UdpProcessGame<schedulerId>::playAdapter(
-    const std::vector<int64_t>& unionMap) {
+std::vector<int32_t> UdpProcessGame<schedulerId>::playAdapter(
+    const std::vector<int32_t>& unionMap) {
   auto adapter = adapterFactory_->create();
   return adapter->adapt(unionMap);
 }
@@ -32,7 +32,7 @@ template <int schedulerId>
 std::tuple<std::vector<std::vector<bool>>, std::vector<std::vector<bool>>>
 UdpProcessGame<schedulerId>::playDataProcessor(
     const std::vector<std::vector<unsigned char>>& metaData,
-    const std::vector<int64_t>& indexes,
+    const std::vector<int32_t>& indexes,
     size_t peersDataSize,
     size_t peersDataWidth) {
   size_t intersectionSize = indexes.size();

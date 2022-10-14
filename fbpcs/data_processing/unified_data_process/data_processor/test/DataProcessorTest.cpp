@@ -27,7 +27,7 @@ namespace unified_data_process::data_processor {
 
 std::tuple<
     std::vector<std::vector<uint8_t>>,
-    std::vector<int64_t>,
+    std::vector<int32_t>,
     std::vector<std::vector<uint8_t>>>
 generateDataProcessorTestData() {
   std::random_device rd;
@@ -46,7 +46,7 @@ generateDataProcessorTestData() {
       data = randomData(e);
     }
   }
-  std::vector<int64_t> index(inputSize);
+  std::vector<int32_t> index(inputSize);
   for (size_t i = 0; i < inputSize; i++) {
     index[i] = i;
   }
@@ -88,7 +88,7 @@ void testDataProcessor(
   };
   auto task1 = [](std::unique_ptr<IDataProcessor<1>> processor,
                   size_t dataSize,
-                  const std::vector<int64_t>& indexes,
+                  const std::vector<int32_t>& indexes,
                   size_t dataWidth) {
     auto secretSharedOutput =
         processor->processPeersData(dataSize, indexes, dataWidth);
