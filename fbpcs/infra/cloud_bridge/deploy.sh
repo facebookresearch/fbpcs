@@ -377,6 +377,7 @@ deploy_aws_resources() {
     python3 cli.py create aws \
         --add_iam_policy \
         --policy_name "$policy_name" \
+        --template_path "$fb_pc_iam_policy" \
         --region "$region" \
         --firehose_stream_name "$firehose_stream_name" \
         --data_ingestion_lambda_name "$data_ingestion_lambda_name" \
@@ -425,6 +426,7 @@ table_name=${s3_bucket_data_pipeline//-/_}
 data_upload_key_path="semi-automated-data-ingestion"
 query_results_key_path="query-results"
 data_ingestion_lambda_name="cb-data-ingestion-stream-processor${tag_postfix}"
+fb_pc_iam_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_iam_policy.json"
 
 if "$undeploy"
 then

@@ -22,6 +22,7 @@ class TestAwsDeploymentHelperTool(unittest.TestCase):
     def test_create(self, mock_aws_deployment_helper: MagicMock) -> None:
         test_user_name = "test-user"
         test_policy_name = "test-policy"
+        test_template_path = "test-template-path"
         test_region = "us-east-1"
         test_firehose_stream_name = "test-firehose"
         test_data_bucket_name = "test-data-bucket"
@@ -58,6 +59,7 @@ class TestAwsDeploymentHelperTool(unittest.TestCase):
             cli_args = self.setup_cli_args_mock()
             cli_args.add_iam_policy = True
             cli_args.policy_name = test_policy_name
+            cli_args.template_path = test_template_path
             cli_args.region = test_region
             cli_args.firehose_stream_name = test_firehose_stream_name
             cli_args.data_bucket_name = test_data_bucket_name
@@ -74,6 +76,7 @@ class TestAwsDeploymentHelperTool(unittest.TestCase):
 
             aws_deployment_helper_tool.aws_deployment_helper_obj.create_policy.assert_called_once_with(
                 policy_name=test_policy_name,
+                template_path=test_template_path,
                 policy_params=PolicyParams(
                     firehose_stream_name=test_firehose_stream_name,
                     data_bucket_name=test_data_bucket_name,
