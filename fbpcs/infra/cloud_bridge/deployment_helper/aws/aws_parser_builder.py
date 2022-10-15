@@ -78,6 +78,13 @@ class AwsParserBuilder:
         )
 
         iam_policy_command_group.add_argument(
+            "--template_path",
+            type=str,
+            required=False,
+            help="Policy template file to use",
+        )
+
+        iam_policy_command_group.add_argument(
             "--firehose_stream_name",
             type=str,
             required=False,

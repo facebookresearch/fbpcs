@@ -124,16 +124,14 @@ class AwsDeploymentHelper:
     def create_policy(
         self,
         policy_name: str,
+        template_path: str,
         policy_params: PolicyParams,
         user_name: Optional[str] = None,
     ) -> None:
         self.log.info(f"Adding policy {policy_name}")
 
-        # directly reading the json file from iam_policies folder
-        # TODO: pass the policy to be added from cli.py when we need more granular control
-
         policy_json_data = self.read_json_file(
-            file_name="iam_policies/fb_pc_iam_policy.json", policy_params=policy_params
+            file_name=template_path, policy_params=policy_params
         )
 
         try:

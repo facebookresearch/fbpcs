@@ -52,7 +52,9 @@ class AwsDeploymentHelperTool:
                 events_data_crawler_arn=self.cli_args.events_data_crawler_arn,
             )
             self.aws_deployment_helper_obj.create_policy(
-                policy_name=self.cli_args.policy_name, policy_params=policy_params
+                policy_name=self.cli_args.policy_name,
+                template_path=self.cli_args.template_path,
+                policy_params=policy_params,
             )
 
         if self.cli_args.attach_iam_policy:
