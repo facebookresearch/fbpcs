@@ -86,6 +86,7 @@ undeploy_aws_resources() {
         -var "aws_region=$region" \
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id" \
+        -var "s3_access_arn=$data_bucket_policy_arn" \
         -var "pce_id=$pce_id"
     echo "Finished undeploying AWS resources under PCE_shared."
     echo "Start undeploying AWS resource under PCE..."
@@ -181,10 +182,16 @@ undeploy_aws_resources() {
     fi
     echo "######################## Undeploy resources policy ########################"
     log_streaming_data "Undeploying resources policies..."
+    echo "Deleting policy: $policy_name"
     cd /terraform_deployment
     python3 cli.py destroy aws \
         --delete_iam_policy \
         --policy_name "$policy_name"
+
+    echo "Deleting data bucket policy: $data_bucket_policy_name"
+    python3 cli.py destroy aws \
+        --delete_iam_policy \
+        --policy_name "$data_bucket_policy_name"
     echo "######################## Finished undeploy resources policy ########################"
 
     log_streaming_data "finished undeploying all AWS resources "
@@ -211,6 +218,18 @@ deploy_aws_resources() {
     # Create the S3 data bucket if it doesn't exist
     log_streaming_data "creating s3 data bucket, if it does not exist"
     validate_or_create_s3_bucket "$s3_bucket_data_pipeline" "$region" "$aws_account_id"
+
+    # Create data bucket policy
+    echo "########################Create data bucket policy########################"
+    cd /terraform_deployment
+    python3 cli.py create aws \
+        --add_iam_policy \
+        --policy_name "$data_bucket_policy_name" \
+        --template_path "$fb_pc_data_bucket_policy" \
+        --region "$region" \
+        --data_bucket_name "$s3_bucket_data_pipeline"
+    echo "########################Done creating data bucket policy########################"
+
     # Deploy PCE Terraform scripts
     onedocker_ecs_container_image='539290649537.dkr.ecr.us-west-2.amazonaws.com/one-docker-prod:latest'
     publisher_vpc_cidr='10.0.0.0/16'
@@ -229,6 +248,7 @@ deploy_aws_resources() {
         -var "tag_postfix=$tag_postfix" \
         -var "aws_account_id=$aws_account_id" \
         -var "onedocker_ecs_container_image=$onedocker_ecs_container_image" \
+        -var "s3_access_arn=$data_bucket_policy_arn" \
         -var "pce_id=$pce_id"
     echo "######################## Deploy PCE SHARED Terraform scripts completed ########################"
     # Store the outputs into variables
@@ -427,6 +447,9 @@ data_upload_key_path="semi-automated-data-ingestion"
 query_results_key_path="query-results"
 data_ingestion_lambda_name="cb-data-ingestion-stream-processor${tag_postfix}"
 fb_pc_iam_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_iam_policy.json"
+fb_pc_data_bucket_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_data_bucket_policy.json"
+data_bucket_policy_name="fb-pc-data-bucket-policy${tag_postfix}"
+data_bucket_policy_arn="arn:aws:iam::${aws_account_id}:policy/${data_bucket_policy_name}"
 
 if "$undeploy"
 then
