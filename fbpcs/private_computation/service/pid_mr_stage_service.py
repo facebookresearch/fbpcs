@@ -53,18 +53,20 @@ class PIDMRStageService(PrivateComputationStageService):
         Returns:
             An updated version of pc_instance
         """
+        logging.info("PID-MR: Starting MR PID workflow")
         stage_state = StageStateInstance(
             pc_instance.infra_config.instance_id,
             pc_instance.current_stage.name,
         )
-        logging.info("Start PID MR Stage Service")
         pid_configs = pc_instance.product_config.common.pid_configs
+        logging.info("PID-MR: pid_configs, %s", pid_configs)
         if (
             pid_configs
             and PIDMR in pid_configs
             and PID_RUN_CONFIGS in pid_configs[PIDMR]
             and PID_WORKFLOW_CONFIGS in pid_configs[PIDMR]
         ):
+            logging.info("PID-MR: All configurations are available")
             pc_configs = {
                 "numPidContainers": pc_instance.infra_config.num_pid_containers
             }
@@ -91,6 +93,8 @@ class PIDMRStageService(PrivateComputationStageService):
                 pc_instance.infra_config.instance_id,
                 pid_overall_configs,
             )
+        else:
+            raise ValueError("Missing relevant workflow configurations")
         pc_instance.infra_config.instances.append(stage_state)
         return pc_instance
 

@@ -119,7 +119,6 @@ class PrivateComputationMrPidPCF2LiftStageFlow(PrivateComputationBaseStageFlow):
         Raises:
             NotImplementedError: The subclass doesn't implement a stage service for a given StageFlow enum member
         """
-        logging.info("Start MR stage flow")
         if self is self.UNION_PID_MR_MULTIKEY:
             if args.workflow_svc is None:
                 raise NotImplementedError("workflow_svc is None")
