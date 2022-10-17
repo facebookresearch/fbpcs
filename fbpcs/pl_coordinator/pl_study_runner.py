@@ -215,6 +215,7 @@ def run_study(
                 stage_flow_cls=stage_flow_override,
                 result_visibility=result_visibility or ResultVisibility.PUBLIC,
                 pcs_features=pcs_features,
+                pid_configs=config["pid"],
                 run_id=run_id,
             )
         )
