@@ -52,7 +52,7 @@ private_computation:
         # Toggle running the PCPreValidator
         # pc_pre_validator_enabled: false
     WorkflowService:
-      class: fbpcs.service.workflow_sfn_fb.FBSfnWorkflowService
+      class: fbpcs.service.workflow_sfn.SfnWorkflowService
       constructor:
         # AWS region - ex. us-west-2
         region: TODO
