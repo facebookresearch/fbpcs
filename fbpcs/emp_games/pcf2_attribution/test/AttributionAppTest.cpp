@@ -29,6 +29,7 @@ template <
     int PARTY,
     int schedulerId,
     bool usingBatch,
+    bool useXorEncryption,
     common::InputEncryption inputEncryption>
 static void runGame(
     const std::string& attributionRules,
@@ -39,7 +40,12 @@ static void runGame(
         communicationAgentFactory) {
   auto metricCollector =
       std::make_shared<fbpcf::util::MetricCollector>("attribution_test");
-  AttributionApp<PARTY, schedulerId, usingBatch, inputEncryption>(
+  AttributionApp<
+      PARTY,
+      schedulerId,
+      usingBatch,
+      useXorEncryption,
+      inputEncryption>(
       std::move(communicationAgentFactory),
       attributionRules,
       std::vector<string>{inputPath},
@@ -49,7 +55,11 @@ static void runGame(
 }
 
 // helper function for executing MPC game and verifying corresponding output
-template <int id, bool usingBatch, common::InputEncryption inputEncryption>
+template <
+    int id,
+    bool usingBatch,
+    bool useXorEncryption,
+    common::InputEncryption inputEncryption>
 inline void testCorrectnessAttributionAppHelper(
     std::vector<std::string> attributionRule,
     std::vector<std::string> inputPathAlice,
@@ -70,13 +80,23 @@ inline void testCorrectnessAttributionAppHelper(
       fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
 
   auto futureAlice = std::async(
-      runGame<common::PUBLISHER, 2 * id, usingBatch, inputEncryption>,
+      runGame<
+          common::PUBLISHER,
+          2 * id,
+          usingBatch,
+          useXorEncryption,
+          inputEncryption>,
       attributionRule.at(id),
       inputPathAlice.at(id),
       outputPathAlice.at(id),
       std::move(communicationAgentFactoryAlice));
   auto futureBob = std::async(
-      runGame<common::PARTNER, 2 * id + 1, usingBatch, inputEncryption>,
+      runGame<
+          common::PARTNER,
+          2 * id + 1,
+          usingBatch,
+          useXorEncryption,
+          inputEncryption>,
       "",
       inputPathBob.at(id),
       outputPathBob.at(id),
@@ -97,7 +117,8 @@ inline void testCorrectnessAttributionAppHelper(
 
 class AttributionAppTest
     : public ::testing::TestWithParam<
-          std::tuple<int, bool, bool>> { // id, usingBatch, useTls
+          std::tuple<int, bool, bool, bool>> { // id, usingBatch, useTls,
+                                               // use_encrypt_xor_not,
  protected:
   void SetUp() override {
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
@@ -132,11 +153,12 @@ class AttributionAppTest
     fbpcf::engine::communication::deleteTlsFiles(tlsDir_);
   }
 
-  template <int id, bool usingBatch>
+  template <int id, bool usingBatch, bool useXorEncryption>
   void testCorrectnessAttributionAppWrapper(bool useTls) {
     testCorrectnessAttributionAppHelper<
         id,
         usingBatch,
+        useXorEncryption,
         common::InputEncryption::Plaintext>(
         attributionRules_,
         inputFilenamesAlice_,
@@ -163,35 +185,67 @@ class AttributionAppTest
 };
 
 TEST_P(AttributionAppTest, TestCorrectness) {
-  auto [id, usingBatch, useTls] = GetParam();
+  auto [id, usingBatch, useXorEncryption, useTls] = GetParam();
 
   switch (id) {
     case 0:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<0, true>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<0, true, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<0, true, false>(useTls);
+        }
       } else {
-        testCorrectnessAttributionAppWrapper<0, false>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<0, false, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<0, false, false>(useTls);
+        }
       }
       break;
     case 1:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<1, true>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<1, true, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<1, true, false>(useTls);
+        }
       } else {
-        testCorrectnessAttributionAppWrapper<1, false>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<1, false, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<1, false, false>(useTls);
+        }
       }
       break;
     case 2:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<2, true>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<2, true, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<2, true, false>(useTls);
+        }
       } else {
-        testCorrectnessAttributionAppWrapper<2, false>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<2, false, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<2, false, false>(useTls);
+        }
       }
       break;
     case 3:
       if (usingBatch) {
-        testCorrectnessAttributionAppWrapper<3, true>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<3, true, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<3, true, false>(useTls);
+        }
       } else {
-        testCorrectnessAttributionAppWrapper<3, false>(useTls);
+        if (useXorEncryption) {
+          testCorrectnessAttributionAppWrapper<3, false, true>(useTls);
+        } else {
+          testCorrectnessAttributionAppWrapper<3, false, false>(useTls);
+        }
       }
       break;
     default:
@@ -209,14 +263,16 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(0, 1, 2, 3),
         ::testing::Bool(),
+        ::testing::Bool(),
         ::testing::Bool()),
 
     [](const testing::TestParamInfo<AttributionAppTest::ParamType>& info) {
       auto id = std::to_string(std::get<0>(info.param));
       auto batch = std::get<1>(info.param) ? "True" : "False";
-      auto tls = std::get<2>(info.param) ? "True" : "False";
-
-      std::string name = "ID_" + id + "_Batch_" + batch + "_TLS_" + tls;
+      auto useXorEncryption = std::get<2>(info.param) ? "True" : "False";
+      auto tls = std::get<3>(info.param) ? "True" : "False";
+      std::string name = "ID_" + id + "_Batch_" + batch + "_TLS_" + tls +
+          "_useXorEncryption_" + useXorEncryption;
       return name;
     });
 

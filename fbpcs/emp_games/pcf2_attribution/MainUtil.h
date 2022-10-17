@@ -57,6 +57,7 @@ template <
     std::uint32_t PARTY,
     std::uint32_t index,
     bool usingBatch,
+    bool useXorEncryption,
     common::InputEncryption inputEncryption>
 inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     std::uint32_t startFileIndex,
@@ -101,6 +102,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
         PARTY,
         2 * index + PARTY,
         usingBatch,
+        useXorEncryption,
         inputEncryption>>(
         std::move(communicationAgentFactory),
         attributionRules,
@@ -121,6 +123,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
             PARTY,
             index + 1,
             usingBatch,
+            useXorEncryption,
             inputEncryption>(
             startFileIndex + numFiles,
             remainingThreads - 1,
@@ -139,7 +142,11 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
   return schedulerStatistics;
 }
 
-template <int PARTY, bool usingBatch, common::InputEncryption inputEncryption>
+template <
+    int PARTY,
+    bool usingBatch,
+    bool useXorEncryption,
+    common::InputEncryption inputEncryption>
 inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     std::vector<std::string>& inputFilenames,
     std::vector<std::string>& outputFilenames,
@@ -157,6 +164,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
       PARTY,
       0U,
       usingBatch,
+      useXorEncryption,
       inputEncryption>(
       0U,
       numThreads,

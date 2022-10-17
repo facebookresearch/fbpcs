@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 
   // use batched attribution by default
   const bool usingBatch = true;
-
+  const bool useXorEncryption = true;
   try {
     auto [inputFilenames, outputFilenames] = pcf2_attribution::getIOFilenames(
         FLAGS_num_files,
@@ -82,6 +82,7 @@ int main(int argc, char* argv[]) {
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PUBLISHER,
                 usingBatch,
+                useXorEncryption,
                 common::InputEncryption::PartnerXor>(
                 inputFilenames,
                 outputFilenames,
@@ -95,6 +96,7 @@ int main(int argc, char* argv[]) {
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PUBLISHER,
                 usingBatch,
+                useXorEncryption,
                 common::InputEncryption::Xor>(
                 inputFilenames,
                 outputFilenames,
@@ -108,6 +110,7 @@ int main(int argc, char* argv[]) {
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PUBLISHER,
                 usingBatch,
+                useXorEncryption,
                 common::InputEncryption::Plaintext>(
                 inputFilenames,
                 outputFilenames,
@@ -127,6 +130,7 @@ int main(int argc, char* argv[]) {
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PARTNER,
                 usingBatch,
+                useXorEncryption,
                 common::InputEncryption::PartnerXor>(
                 inputFilenames,
                 outputFilenames,
@@ -140,6 +144,7 @@ int main(int argc, char* argv[]) {
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PARTNER,
                 usingBatch,
+                useXorEncryption,
                 common::InputEncryption::Xor>(
                 inputFilenames,
                 outputFilenames,
@@ -154,6 +159,7 @@ int main(int argc, char* argv[]) {
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PARTNER,
                 usingBatch,
+                useXorEncryption,
                 common::InputEncryption::Plaintext>(
                 inputFilenames,
                 outputFilenames,

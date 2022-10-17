@@ -8,6 +8,7 @@
 #pragma once
 
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include <fbpcf/scheduler/NetworkPlaintextSchedulerFactory.h>
 #include <string>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
 #include "fbpcf/scheduler/LazySchedulerFactory.h"
@@ -20,6 +21,7 @@ template <
     int MY_ROLE,
     int schedulerId,
     bool usingBatch,
+    bool useXorEncryption,
     common::InputEncryption inputEncryption>
 class AttributionApp {
  public:
@@ -43,9 +45,13 @@ class AttributionApp {
         schedulerStatistics_{0, 0, 0, 0} {}
 
   void run() {
-    auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-                         MY_ROLE, *communicationAgentFactory_, metricCollector_)
-                         ->create();
+    auto scheduler = useXorEncryption
+        ? fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
+              MY_ROLE, *communicationAgentFactory_, metricCollector_)
+              ->create()
+        : fbpcf::scheduler::NetworkPlaintextSchedulerFactory<false>(
+              MY_ROLE, *communicationAgentFactory_, metricCollector_)
+              .create();
 
     AttributionGame<schedulerId, usingBatch, inputEncryption> game(
         std::move(scheduler));
