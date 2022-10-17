@@ -207,6 +207,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             GraphAPITokenNotFound: graph api token not in config.yml and not in env var
         """
         try:
+            config = config.get("graphapi", config)
             if not isinstance(config, ConfigYamlDict):
                 config = ConfigYamlDict.from_dict(config)
             self.logger.info("attempting to read graph api token from config.yml file")

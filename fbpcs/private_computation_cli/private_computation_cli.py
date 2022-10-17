@@ -315,7 +315,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     # validate token before run study/attribution
     if arguments["run_attribution"] or arguments["run_study"]:
-        graph_client = BoltGraphAPIClient(config=config["graphapi"], logger=logger)
+        graph_client = BoltGraphAPIClient(config=config, logger=logger)
         token_validator = TokenValidator(client=graph_client)
         token_validator.validate_common_rules()
 
