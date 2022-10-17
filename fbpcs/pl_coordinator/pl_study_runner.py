@@ -98,7 +98,7 @@ def run_study(
 
     # obtain study information
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
-        config["graphapi"], logger
+        config, logger
     )
     try:
         study_data = _get_study_data(study_id, client)
@@ -283,7 +283,7 @@ async def run_bolt(
         )
 
     # We create the publisher_client here so we can reuse the access_token in our trace logger svc
-    publisher_client = BoltGraphAPIClient(config=config["graphapi"], logger=logger)
+    publisher_client = BoltGraphAPIClient(config=config, logger=logger)
 
     # Create a GraphApiTraceLoggingService specific for this study_id
     study_id = job_list[0].publisher_bolt_args.create_instance_args.study_id

@@ -105,7 +105,7 @@ def run_attribution(
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
-        config["graphapi"], logger
+        config, logger
     )
     try:
         datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
@@ -283,7 +283,7 @@ async def run_bolt(
         )
 
     # We create the publisher_client here so we can reuse the access_token in our trace logger svc
-    publisher_client = BoltGraphAPIClient(config=config["graphapi"], logger=logger)
+    publisher_client = BoltGraphAPIClient(config=config, logger=logger)
 
     # Create a GraphApiTraceLoggingService specific for this study_id
     dataset_id = job_list[0].publisher_bolt_args.create_instance_args.dataset_id
@@ -385,7 +385,7 @@ def get_attribution_dataset_info(
     config: Dict[str, Any], dataset_id: str, logger: logging.Logger
 ) -> str:
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
-        config["graphapi"], logger
+        config, logger
     )
 
     return json.loads(

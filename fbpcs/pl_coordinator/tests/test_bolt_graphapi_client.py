@@ -38,6 +38,26 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
         self.test_client = BoltGraphAPIClient(config, mock_logger)
         self.test_client._check_err = MagicMock()
 
+    def test_get_graph_api_token_from_env_empty_config(self) -> None:
+        expected_token = "from_env"
+        with patch.dict("os.environ", {FBPCS_GRAPH_API_TOKEN: expected_token}):
+            config = {}
+            actual_token = BoltGraphAPIClient(config, self.mock_logger).access_token
+            self.assertEqual(expected_token, actual_token)
+
+    def test_get_graph_api_token_from_env_full_config_todo(self) -> None:
+        expected_token = "from_env"
+        with patch.dict("os.environ", {FBPCS_GRAPH_API_TOKEN: expected_token}):
+            config = {"graphapi": {"access_token": "TODO"}}
+            actual_token = BoltGraphAPIClient(config, self.mock_logger).access_token
+            self.assertEqual(expected_token, actual_token)
+
+    def test_get_graph_api_token_from_dict_full_config(self) -> None:
+        expected_token = "from_dict"
+        config = {"graphapi": {"access_token": expected_token}}
+        actual_token = BoltGraphAPIClient(config, self.mock_logger).access_token
+        self.assertEqual(expected_token, actual_token)
+
     def test_get_graph_api_token_from_dict(self) -> None:
         expected_token = "from_dict"
         config = {"access_token": expected_token}

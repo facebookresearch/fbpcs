@@ -49,7 +49,7 @@ class TestPlStudyRunner(TestCase):
         mock_graph_api_client,
         mock_logger,
     ) -> None:
-        self.config = {"graphapi": {"access_token": "access_token"}}
+        self.config = {}
         self.test_logger = logging.getLogger(__name__)
         self.client_mock = MagicMock()
         valid_start_date = datetime.datetime.now() - datetime.timedelta(hours=1)
