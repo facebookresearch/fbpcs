@@ -17,7 +17,7 @@ data "template_file" "publisher_sfn_definition" {
       "Parameters": {
         "Name": "MetaWorkflowCluster",
         "VisibleToAllUsers": true,
-        "ReleaseLabel": "emr-6.7.0",
+        "ReleaseLabel": "emr-6.8.0",
         "Applications": [
           {
             "Name": "Hadoop"
@@ -28,6 +28,9 @@ data "template_file" "publisher_sfn_definition" {
         ],
         "ServiceRole": "${aws_iam_role.mrpid_publisher_emr_role.id}",
         "JobFlowRole": "${aws_iam_role.mrpid_publisher_ec2_role.id}",
+        "AutoTerminationPolicy": {
+          "IdleTimeout": 14400
+        },
         "ManagedScalingPolicy": {
           "ComputeLimits": {
             "MinimumCapacityUnits": 2,
@@ -108,6 +111,7 @@ data "template_file" "publisher_sfn_definition" {
         }
       },
       "ResultPath": null,
+      "TimeoutSeconds": 7200,
       "Catch": [
         {
           "ErrorEquals": [
@@ -133,7 +137,7 @@ data "template_file" "publisher_sfn_definition" {
             "States.ALL"
           ],
           "IntervalSeconds": 30,
-          "MaxAttempts": 360,
+          "MaxAttempts": 480,
           "BackoffRate": 1
         }
       ],
@@ -163,6 +167,7 @@ data "template_file" "publisher_sfn_definition" {
         }
       },
       "ResultPath": null,
+      "TimeoutSeconds": 14400,
       "Catch": [
         {
           "ErrorEquals": [
@@ -218,6 +223,7 @@ data "template_file" "publisher_sfn_definition" {
         }
       },
       "ResultPath": null,
+      "TimeoutSeconds": 10800,
       "Catch": [
         {
           "ErrorEquals": [
