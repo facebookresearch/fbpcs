@@ -39,6 +39,7 @@ class MwaaWorkflowService(WorkflowService):
         access_key_id: Optional[str] = None,
         access_key_data: Optional[str] = None,
         config: Optional[Dict[str, Any]] = None,
+        session_token: Optional[str] = None,
     ) -> None:
         self.config: Dict[str, Any] = config or {}
 
@@ -47,6 +48,9 @@ class MwaaWorkflowService(WorkflowService):
 
         if access_key_data is not None:
             self.config["aws_secret_access_key"] = access_key_data
+
+        if session_token is not None:
+            self.config["aws_session_token"] = session_token
 
         self.client: BaseClient = boto3.client(
             "mwaa", region_name=region, **self.config
