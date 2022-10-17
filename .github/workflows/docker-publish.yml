@@ -73,7 +73,7 @@ jobs:
 
   e2e_test:
     name: Run End to End Tests
-    runs-on: self-hosted
+    runs-on: [self-hosted, fbpcs-e2e-test-runner]
     needs: build_image
     permissions:
       contents: read
@@ -102,7 +102,6 @@ jobs:
         run: |
           docker run --rm -v "instances":"/instances" -v "$(realpath fbpcs_e2e_aws.yml):/home/pcs/pl_coordinator_env/fbpcs_e2e_aws.yml" -v "$(realpath bolt_config.yml):/home/pcs/pl_coordinator_env/bolt_config.yml" ${{ env.COORDINATOR_IMAGE }}:${{ github.event.inputs.new_tag }} python3.8 -m fbpcs.private_computation_cli.private_computation_cli bolt_e2e --bolt_config="bolt_config.yml"
         working-directory: ./fbpcs/tests/github/
-
 
       - name: Pull image from rc registry
         run: |

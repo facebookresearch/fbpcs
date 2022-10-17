@@ -34,7 +34,7 @@ jobs:
 
   pa_test:
     name: Private Attribution E2E Tests
-    runs-on: self-hosted
+    runs-on: [self-hosted, fbpcs-e2e-test-runner]
     timeout-minutes: 90
     permissions:
       contents: read

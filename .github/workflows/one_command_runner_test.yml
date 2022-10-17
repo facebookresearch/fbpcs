@@ -38,7 +38,7 @@ jobs:
   ### Private Lift E2E tests
   pl_test:
     name: Private Lift E2E Tests
-    runs-on: self-hosted
+    runs-on: [self-hosted, fbpcs-e2e-test-runner]
     timeout-minutes: 90
     permissions:
       contents: read
