@@ -83,6 +83,10 @@ jobs:
       - name: Print Tracker Hash
         run: echo ${{ github.event.inputs.tracker_hash }}
 
+      - name: Clean Up Docker Images
+        run: |
+          docker image prune -af
+
       - name: Cleanup ECS running tasks and previous running results
         run: |
           ./cleanup.sh
