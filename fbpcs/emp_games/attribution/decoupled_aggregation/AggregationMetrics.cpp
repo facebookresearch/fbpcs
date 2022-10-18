@@ -251,7 +251,7 @@ AggregationInputMetrics::AggregationInputMetrics(
   if (myRole == PUBLISHER) {
     touchpointSecretShare_ =
         AggregationMetrics::getAttributionsArrayfromDynamic(
-            attributionResultJson);
+            std::move(attributionResultJson));
 
     XLOG(INFO, "Replacing original ad Ids with compressed ad Ids");
     originalAdIds_ = retrieveOriginalAdIds(touchpointMetadataArrays_);
@@ -259,7 +259,7 @@ AggregationInputMetrics::AggregationInputMetrics(
   } else {
     conversionSecretShare_ =
         AggregationMetrics::getAttributionsArrayfromDynamic(
-            attributionResultJson);
+            std::move(attributionResultJson));
   }
 }
 

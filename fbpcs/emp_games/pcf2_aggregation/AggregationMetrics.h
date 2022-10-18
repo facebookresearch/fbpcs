@@ -47,11 +47,10 @@ struct AggregationMetrics {
       auto aggregationMetrics = kv.second;
       res.insert(aggregationName, aggregationMetrics);
     }
-
     return res;
   }
 
-  static AggregationMetrics fromDynamic(const folly::dynamic& obj) {
+  static AggregationMetrics fromDynamic(folly::dynamic&& obj) {
     std::unordered_map<std::string, AggregationOutput> formatToAggregation;
     for (auto& pair : obj.items()) {
       auto aggregationName = pair.first.asString();
@@ -63,7 +62,6 @@ struct AggregationMetrics {
 
     AggregationMetrics metrics{};
     metrics.formatToAggregation = formatToAggregation;
-
     return metrics;
   }
 
@@ -109,31 +107,28 @@ struct AggregationMetrics {
   }
 
   static AggregationMetrics::AttributionReformattedResultsList
-  getAttributionsReformattedArrayfromDynamic(const folly::dynamic& obj) {
+  getAttributionsReformattedArrayfromDynamic(folly::dynamic&& obj) {
     AttributionReformattedResultsMap attributionReformattedPidVectorMap;
     // list of attribution rules
-    // For now, I am not using the rule name or formatter name in the logic as
+    // For now, I am not using the rule name in the logic as
     // the aggregation behaviour is not affected by different attribution rules.
     std::vector<std::string> attributionReformattedList;
     AttributionReformattedResultsList attributionReformattedResultsList;
-    for (const auto& [rule, formatters] : obj.items()) {
+    for (auto& [rule, resultPerPID] : obj.items()) { // last_touch_id
       attributionReformattedList.push_back(rule.asString());
-      for (const auto& [formatter, resultPerPID] : formatters.items()) {
-        std::map<int64_t, std::vector<AttributionReformattedResult>>
-            attributionsReformattedPerPidMap;
-        for (const auto& [pid, results] : resultPerPID.items()) {
-          std::vector<AttributionReformattedResult>
-              attributionReformattedResults;
-          for (const auto& result : results) {
-            attributionReformattedResults.push_back(
-                AttributionReformattedResult::fromDynamic(result));
-          }
-          attributionsReformattedPerPidMap.emplace(
-              pid.asInt(), attributionReformattedResults);
+      std::map<int64_t, std::vector<AttributionReformattedResult>>
+          attributionsReformattedPerPidMap;
+      for (auto& [pid, results] : resultPerPID.items()) {
+        std::vector<AttributionReformattedResult> attributionReformattedResults;
+        for (auto& result : results) {
+          attributionReformattedResults.push_back(
+              AttributionReformattedResult::fromDynamic(std::move(result)));
         }
-        attributionReformattedPidVectorMap.push_back(
-            attributionsReformattedPerPidMap);
+        attributionsReformattedPerPidMap.emplace(
+            pid.asInt(), attributionReformattedResults);
       }
+      attributionReformattedPidVectorMap.push_back(
+          attributionsReformattedPerPidMap);
 
       for (const auto& attributionsPerPidMap :
            attributionReformattedPidVectorMap) {
@@ -156,38 +151,36 @@ struct AggregationOutputMetrics {
   folly::dynamic toDynamic() const {
     folly::dynamic res = folly::dynamic::object();
     for (auto& kv : ruleToMetrics) {
-      auto ruleName = kv.first;
-      auto metrics = kv.second;
-      res.insert(ruleName, metrics.toDynamic());
+      res.insert(kv.first, kv.second.toDynamic());
     }
 
     return res;
   }
 
-  static AggregationOutputMetrics fromDynamic(const folly::dynamic& obj) {
-    AggregationOutputMetrics metrics;
+  static AggregationOutputMetrics fromDynamic(folly::dynamic&& obj) {
     std::unordered_map<std::string, AggregationMetrics> ruleToMetrics;
 
     for (auto& pair : obj.items()) {
       std::string ruleName = pair.first.asString();
-      auto attributionMetrics = AggregationMetrics::fromDynamic(pair.second);
+      auto attributionMetrics =
+          AggregationMetrics::fromDynamic(std::move(pair.second));
       std::pair<std::string, AggregationMetrics> t{
           ruleName, attributionMetrics};
       ruleToMetrics.insert(t);
     }
-
+    AggregationOutputMetrics metrics{};
     metrics.ruleToMetrics = ruleToMetrics;
     return metrics;
   }
 
   std::string toJson() const {
-    auto obj = toDynamic();
-    return folly::toJson(obj);
+    auto dyn = toDynamic();
+    return folly::toJson(dyn);
   }
 
   static AggregationOutputMetrics fromJson(const std::string& str) {
     auto obj = folly::parseJson(str);
-    return fromDynamic(obj);
+    return fromDynamic(std::move(obj));
   }
 };
 
