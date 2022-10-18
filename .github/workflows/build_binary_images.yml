@@ -1,0 +1,34 @@
+name: Build and Publish Data Processing and EMP Games Docker Images
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  FBPCF_VERSION: 2.1.73  # Please also update line 29 in .github/workflows/docker-publish.yml
+
+jobs:
+  output_version:
+    runs-on: ubuntu-latest
+    name: Set FBPCF version
+    outputs:
+      fbpcf_version: ${{ steps.set_version.outputs.version }}
+    steps:
+      - id: set_version
+        run: echo "version=${{ env.FBPCF_VERSION }}" >> $GITHUB_OUTPUT
+
+  build_and_publish_data_processing_image:
+    name: Build and Publish Data Processing Image
+    needs: output_version
+    uses: ./.github/workflows/build_data_processing_image.yml
+    with:
+      tag: latest
+      fbpcf_version: ${{needs.output_version.outputs.fbpcf_version}}
+
+  build_and_publish_emp_games_image:
+    name: Build and Publish EMP Games Image
+    needs: output_version
+    uses: ./.github/workflows/build_emp_games_image.yml
+    with:
+      tag: latest
+      fbpcf_version: ${{needs.output_version.outputs.fbpcf_version}}
