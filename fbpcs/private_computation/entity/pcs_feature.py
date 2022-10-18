@@ -17,6 +17,7 @@ class PCSFeature(Enum):
     PRIVATE_LIFT_UNIFIED_DATA_PROCESS = "private_lift_unified_data_process"
     PRIVATE_ATTRIBUTION_MR_PID = "private_attribution_with_mr_pid"
     SHARD_COMBINER_PCF2_RELEASE = "shard_combiner_pcf2_release"
+    NUM_MPC_CONTAINER_MUTATION = "num_mpc_container_mutation"
     PCF_TLS = "pcf_tls"
     UNKNOWN = "unknown"
 

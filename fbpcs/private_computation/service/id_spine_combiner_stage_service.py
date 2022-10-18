@@ -7,11 +7,15 @@
 # pyre-strict
 
 
+import asyncio
+import json
 import logging
+from math import ceil
 from typing import DefaultDict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
+from fbpcp.service.storage import StorageService
 
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
@@ -21,13 +25,19 @@ from fbpcs.onedocker_binary_config import (
     OneDockerBinaryConfig,
 )
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.pid_mr_config import Protocol
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_LOG_COST_TO_S3,
+    NUM_ROWS_PER_MPC_SHARD_PA,
+    NUM_ROWS_PER_MPC_SHARD_PL,
+)
+from fbpcs.private_computation.service.pid_utils import get_metrics_filepath
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -49,12 +59,14 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
 
     def __init__(
         self,
+        storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         padding_size: Optional[int] = None,
         protocol_type: str = Protocol.PID_PROTOCOL.value,
     ) -> None:
+        self._storage_svc = storage_svc
         self._onedocker_svc = onedocker_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._log_cost_to_s3 = log_cost_to_s3
@@ -191,6 +203,25 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         else:
             spine_path = private_computation_instance.pid_stage_output_spine_path
             data_path = private_computation_instance.pid_stage_output_data_path
+            if private_computation_instance.has_feature(
+                PCSFeature.NUM_MPC_CONTAINER_MUTATION
+            ):
+                # Update number of MPC containers based on spine file size.
+                # The spine file size are shared between publisher and partner.
+                # The spine file size would be the size of id combiner.
+                new_num_mpc_containers = await (
+                    self.get_mutated_num_mpc_containers(
+                        spine_path,
+                        private_computation_instance.infra_config.num_pid_containers,
+                        private_computation_instance.infra_config.game_type,
+                    )
+                )
+                self._logger.info(
+                    f"[{self}] Mutate num MPC containers from {private_computation_instance.infra_config.num_mpc_containers} to {new_num_mpc_containers}"
+                )
+                private_computation_instance.infra_config.num_mpc_containers = (
+                    new_num_mpc_containers
+                )
 
         args = combiner_service.build_args(
             spine_path=spine_path,
@@ -221,3 +252,40 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=wait_for_containers_to_start_up,
             existing_containers=private_computation_instance.get_existing_containers_for_retry(),
         )
+
+    async def get_mutated_num_mpc_containers(
+        self,
+        spine_path: str,
+        num_pid_containers: int,
+        game_type: PrivateComputationGameType,
+    ) -> int:
+        """
+        Calculates new number of MPC containers based on spine file size to mutate number of MPC containers.
+        The spine file size is stored in PID metric logging.
+        """
+        if game_type is PrivateComputationGameType.ATTRIBUTION:
+            num_rows_per_shard = NUM_ROWS_PER_MPC_SHARD_PA
+        else:
+            num_rows_per_shard = NUM_ROWS_PER_MPC_SHARD_PL
+
+        loop = asyncio.get_running_loop()
+
+        union_file_size = 0
+
+        for shard in range(num_pid_containers):
+            pid_match_metric_path = get_metrics_filepath(spine_path, shard)
+            if not self._storage_svc.file_exists(pid_match_metric_path):
+                raise Exception(
+                    f"PID metrics file doesn't exist at {pid_match_metric_path}"
+                )
+            pid_match_metric_json_str = await loop.run_in_executor(
+                None, self._storage_svc.read, pid_match_metric_path
+            )
+            pid_match_metric_dict = json.loads(pid_match_metric_json_str)
+            if "union_file_size" not in pid_match_metric_dict:
+                raise Exception(
+                    f"PID metrics file doesn't have union_file_size in {pid_match_metric_path}"
+                )
+            union_file_size += pid_match_metric_dict["union_file_size"]
+
+        return ceil(union_file_size / float(num_rows_per_shard))

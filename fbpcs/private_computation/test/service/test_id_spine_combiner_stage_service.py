@@ -32,8 +32,10 @@ from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
 
 
 class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
+    @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
-    def setUp(self, onedocker_service) -> None:
+    def setUp(self, onedocker_service, storage_svc) -> None:
+        self.storage_svc = storage_svc
         self.onedocker_service = onedocker_service
         self.test_num_containers = 2
 
@@ -45,7 +47,7 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
             )
         )
         self.stage_svc = IdSpineCombinerStageService(
-            self.onedocker_service, self.onedocker_binary_config_map
+            self.storage_svc, self.onedocker_service, self.onedocker_binary_config_map
         )
 
     async def test_id_spine_combiner(self) -> None:

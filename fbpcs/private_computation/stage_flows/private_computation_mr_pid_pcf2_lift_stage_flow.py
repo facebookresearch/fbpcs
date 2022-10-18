@@ -126,6 +126,7 @@ class PrivateComputationMrPidPCF2LiftStageFlow(PrivateComputationBaseStageFlow):
             return PIDMRStageService(args.workflow_svc)
         elif self is self.ID_SPINE_COMBINER:
             return IdSpineCombinerStageService(
+                args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
                 protocol_type=Protocol.MR_PID_PROTOCOL.value,
