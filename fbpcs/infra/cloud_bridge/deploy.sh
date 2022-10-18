@@ -206,6 +206,7 @@ undeploy_aws_resources() {
 
 deploy_aws_resources() {
     # first log, making sure the file is re-written fresh
+    echo "{}" > "$TF_RESOURCE_OUTPUT"
     log_streaming_data "starting to deploy resources..."
     log_streaming_data "validating inputs..."
     # validate all the inputs
@@ -278,7 +279,7 @@ deploy_aws_resources() {
     subnet_ids=$(terraform output subnets | tr -d '""[]\ \n')
     route_table_id=$(terraform output route_table_id | tr -d '"')
     aws_ecs_cluster_name=$(terraform output aws_ecs_cluster_name | tr -d '"')
-    log_resource_output resource_name "vpc_id" resource_value "$vpc_id"
+    log_resource_output "vpc_id" "$vpc_id"
     log_streaming_data "establishing vpc peering connection..."
     # Issue VPC Peering Connection to Publisher's VPC and add a route to the route table
     echo "########################Issue VPC Peering connection to Publisher's VPC########################"
@@ -305,7 +306,7 @@ deploy_aws_resources() {
     # Store the outputs into variables
     vpc_peering_connection_id=$(terraform output vpc_peering_connection_id | tr -d '"' )
     echo "VPC peering connection has been created. ID: $vpc_peering_connection_id"
-    log_resource_output resource_name "vpc_peering_connection_id" resource_value "$vpc_peering_connection_id"
+    log_resource_output "vpc_peering_connection_id" "$vpc_peering_connection_id"
 
     # Configure Data Ingestion Pipeline from CB to S3
     echo "########################Configure Data Ingestion Pipeline from CB to S3########################"
