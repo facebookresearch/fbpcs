@@ -106,8 +106,9 @@ log_streaming_data() {
 log_resource_output() {
     local resource_name=$1
     local resource_value=$2
-    echo "$(jq -n --arg key "$resource_name" --arg value "$resource_value" '{ ($key) : $value }' "$TF_RESOURCE_OUTPUT")" > "$TF_RESOURCE_OUTPUT"
+    echo "$(jq --arg key "$resource_name" --arg value "$resource_value" '. + { ($key) : $value }' "$TF_RESOURCE_OUTPUT")" > "$TF_RESOURCE_OUTPUT"
 }
+
 
 validateDeploymentResources () {
     local region=$1
