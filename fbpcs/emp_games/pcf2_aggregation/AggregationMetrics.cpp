@@ -236,11 +236,11 @@ AggregationInputMetrics::AggregationInputMetrics(
   if (FLAGS_use_new_output_format) {
     attributionReformattedSecretShare_ =
         AggregationMetrics::getAttributionsReformattedArrayfromDynamic(
-            attributionResultJson);
+            std::move(attributionResultJson));
   } else {
     attributionSecretShare_ =
         AggregationMetrics::getAttributionsArrayfromDynamic(
-            attributionResultJson);
+            std::move(attributionResultJson));
   }
 }
 

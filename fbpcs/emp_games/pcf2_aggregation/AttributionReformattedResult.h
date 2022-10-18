@@ -18,7 +18,7 @@ struct AttributionReformattedResult {
   uint64_t convValue;
   bool isAttributed;
 
-  static AttributionReformattedResult fromDynamic(const folly::dynamic& obj) {
+  static AttributionReformattedResult fromDynamic(folly::dynamic&& obj) {
     AttributionReformattedResult out = AttributionReformattedResult{};
 
     out.adId = obj["ad_id"].asInt();

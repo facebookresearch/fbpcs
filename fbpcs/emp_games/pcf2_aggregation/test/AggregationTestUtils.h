@@ -25,8 +25,7 @@ inline void verifyOutput(
   folly::dynamic expectedOutput =
       folly::parseJson(fbpcf::io::FileIOWrappers::readFile(outputJsonFileName));
 
-  FOLLY_EXPECT_JSON_EQ(
-      folly::toJson(output.toDynamic()), folly::toJson(expectedOutput));
+  FOLLY_EXPECT_JSON_EQ(output.toJson(), folly::toJson(expectedOutput));
 }
 
 inline AggregationOutputMetrics revealXORedResult(
@@ -69,7 +68,8 @@ inline AggregationOutputMetrics revealXORedResult(
   revealedAggregatedMetrics[attributionRule] = std::move(revealedMetricsMap);
 
   // return Json format
-  return AggregationOutputMetrics::fromDynamic(revealedAggregatedMetrics);
+  return AggregationOutputMetrics::fromDynamic(
+      std::move(revealedAggregatedMetrics));
 }
 
 } // namespace pcf2_aggregation
