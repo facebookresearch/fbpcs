@@ -24,7 +24,6 @@ from fbpcs.common.service.graphapi_trace_logging_service import (
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPAGraphAPICreateInstanceArgs,
-    URL,
 )
 from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
 from fbpcs.pl_coordinator.exceptions import (
@@ -100,12 +99,15 @@ def run_attribution(
     num_tries: Optional[int] = None,  # this is number of tries per stage
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
     run_id: Optional[str] = None,
+    graphapi_version: Optional[str] = None,
 ) -> None:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
-        config, logger
+        config=config,
+        logger=logger,
+        graphapi_version=graphapi_version,
     )
     try:
         datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
@@ -254,7 +256,14 @@ def run_attribution(
     # Step 4. Run instances async
 
     logger.info(f"Started running instance {instance_id}.")
-    all_run_success = asyncio.run(run_bolt(config, logger, [job]))
+    all_run_success = asyncio.run(
+        run_bolt(
+            config=config,
+            logger=logger,
+            job_list=[job],
+            graphapi_version=graphapi_version,
+        )
+    )
     logger.info(f"Finished running instance {instance_id}.")
     if not all(all_run_success):
         sys.exit(1)
@@ -266,6 +275,7 @@ async def run_bolt(
     job_list: List[
         BoltJob[BoltPAGraphAPICreateInstanceArgs, BoltPCSCreateInstanceArgs]
     ],
+    graphapi_version: Optional[str] = None,
 ) -> List[bool]:
     """Run private attribution with the BoltRunner in a dedicated function to ensure that
     the BoltRunner semaphore and runner.run_async share the same event loop.
@@ -283,11 +293,13 @@ async def run_bolt(
         )
 
     # We create the publisher_client here so we can reuse the access_token in our trace logger svc
-    publisher_client = BoltGraphAPIClient(config=config, logger=logger)
+    publisher_client = BoltGraphAPIClient(
+        config=config, logger=logger, graphapi_version=graphapi_version
+    )
 
     # Create a GraphApiTraceLoggingService specific for this study_id
     dataset_id = job_list[0].publisher_bolt_args.create_instance_args.dataset_id
-    endpoint_url = f"{URL}/{dataset_id}/checkpoint"
+    endpoint_url = f"{publisher_client.graphapi_url}/{dataset_id}/checkpoint"
     graphapi_trace_logging_svc = GraphApiTraceLoggingService(
         access_token=publisher_client.access_token,
         endpoint_url=endpoint_url,
@@ -381,11 +393,17 @@ def _verify_adspixel(
         )
 
 
+# TODO: remove unused method
 def get_attribution_dataset_info(
-    config: Dict[str, Any], dataset_id: str, logger: logging.Logger
+    config: Dict[str, Any],
+    dataset_id: str,
+    logger: logging.Logger,
+    graphapi_version: Optional[str] = None,
 ) -> str:
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
-        config, logger
+        config=config,
+        logger=logger,
+        graphapi_version=graphapi_version,
     )
 
     return json.loads(
