@@ -17,14 +17,14 @@ Usage:
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
     pc-cli get_mpc <instance_id> --config=<config_file> [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --dry_run] [options]
+    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --dry_run] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
     pc-cli print_current_status <instance_id> --config=<config_file> [options]
     pc-cli print_log_urls <instance_id> --config=<config_file> [options]
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
-    pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [--run_id=<run_id>] [options]
+    pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [--run_id=<run_id> --graphapi_version=<graphapi_version>] [options]
     pc-cli pre_validate --config=<config_file> [--dataset_id=<dataset_id>] --input_path=<input_path> [--timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>] [options]
     pc-cli bolt_e2e --bolt_config=<bolt_config_file> [options]
     pc-cli secret_scrubber <secret_input_path> <scrubbed_output_path> [options]
@@ -260,6 +260,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                 schema.Use(lambda arg: ResultVisibility[arg.upper()]),
             ),
             "--run_id": schema.Or(None, str),
+            "--graphapi_version": schema.Or(None, str),
             "--stage": schema.Or(None, str),
             "--verbose": bool,
             "--help": bool,
@@ -315,7 +316,11 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     # validate token before run study/attribution
     if arguments["run_attribution"] or arguments["run_study"]:
-        graph_client = BoltGraphAPIClient(config=config, logger=logger)
+        graph_client = BoltGraphAPIClient(
+            config=config,
+            logger=logger,
+            graphapi_version=arguments["--graphapi_version"],
+        )
         token_validator = TokenValidator(client=graph_client)
         token_validator.validate_common_rules()
 
@@ -397,6 +402,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             dry_run=arguments["--dry_run"],
             result_visibility=arguments["--result_visibility"],
             run_id=arguments["--run_id"],
+            graphapi_version=arguments["--graphapi_version"],
             final_stage=PrivateComputationStageFlow.AGGREGATE,
             output_dir=arguments["--output_dir"],
         )
@@ -416,6 +422,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             stage_flow=stage_flow,
             final_stage=PrivateComputationPCF2StageFlow.AGGREGATE,
             run_id=arguments["--run_id"],
+            graphapi_version=arguments["--graphapi_version"],
         )
 
     elif arguments["cancel_current_stage"]:

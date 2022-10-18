@@ -27,7 +27,8 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 from fbpcs.utils.config_yaml.exceptions import ConfigYamlBaseException
 
-URL = "https://graph.facebook.com/v13.0"
+GRAPHPI_BASE_URL = "https://graph.facebook.com"
+GRAPHAPI_DEFAULT_VERSION = "v13.0"
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     **{status.value: status for status in PrivateComputationInstanceStatus},
     **{
@@ -70,7 +71,10 @@ BoltGraphAPICreateInstanceArgs = TypeVar(
 
 class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
     def __init__(
-        self, config: Dict[str, Any], logger: Optional[logging.Logger] = None
+        self,
+        config: Dict[str, Any],
+        logger: Optional[logging.Logger] = None,
+        graphapi_version: Optional[str] = None,
     ) -> None:
         """Bolt GraphAPI Client
 
@@ -81,6 +85,9 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         self.logger: logging.Logger = (
             logging.getLogger(__name__) if logger is None else logger
         )
+        _graphapi_version = graphapi_version or GRAPHAPI_DEFAULT_VERSION
+        self.graphapi_url = f"{GRAPHPI_BASE_URL}/{_graphapi_version}"
+        self.logger.info(f"GraphAPI URL: {self.graphapi_url}")
         self.access_token = self._get_graph_api_token(config)
         self.params = {"access_token": self.access_token}
 
@@ -94,7 +101,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             if instance_args.run_id is not None:
                 params["run_id"] = instance_args.run_id
             r = requests.post(
-                f"{URL}/{instance_args.study_id}/instances", params=params
+                f"{self.graphapi_url}/{instance_args.study_id}/instances", params=params
             )
             self._check_err(r, "creating fb pl instance")
             return r.json()["id"]
@@ -102,7 +109,8 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             params["attribution_rule"] = instance_args.attribution_rule
             params["timestamp"] = instance_args.timestamp
             r = requests.post(
-                f"{URL}/{instance_args.dataset_id}/instance", params=params
+                f"{self.graphapi_url}/{instance_args.dataset_id}/instance",
+                params=params,
             )
             self._check_err(r, "creating fb pa instance")
             return r.json()["id"]
@@ -124,7 +132,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
     ) -> None:
         params = self.params.copy()
         params["operation"] = "NEXT"
-        r = requests.post(f"{URL}/{instance_id}", params=params)
+        r = requests.post(f"{self.graphapi_url}/{instance_id}", params=params)
         if stage:
             msg = f"running stage {stage}"
         else:
@@ -139,7 +147,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
     ) -> None:
         params = self.params.copy()
         params["operation"] = "CANCEL"
-        r = requests.post(f"{URL}/{instance_id}", params=params)
+        r = requests.post(f"{self.graphapi_url}/{instance_id}", params=params)
         if stage:
             msg = f"cancel current stage {stage}."
         else:
@@ -190,7 +198,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             return False
 
     async def get_instance(self, instance_id: str) -> requests.Response:
-        r = requests.get(f"{URL}/{instance_id}", self.params)
+        r = requests.get(f"{self.graphapi_url}/{instance_id}", self.params)
         self._check_err(r, "getting fb instance")
         return r
 
@@ -236,21 +244,21 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
     def get_adspixels(self, adspixels_id: str, fields: List[str]) -> requests.Response:
         params = self.params.copy()
         params["fields"] = ",".join(fields)
-        r = requests.get(f"{URL}/{adspixels_id}", params=params)
+        r = requests.get(f"{self.graphapi_url}/{adspixels_id}", params=params)
         self._check_err(r, "getting adspixels data")
         return r
 
     def get_debug_token_data(self) -> requests.Response:
         params = self.params.copy()
         params["input_token"] = self.access_token
-        r = requests.get(f"{URL}/debug_token", params=params)
+        r = requests.get(f"{self.graphapi_url}/debug_token", params=params)
         self._check_err(r, "getting debug token data")
         return r
 
     def get_study_data(self, study_id: str, fields: List[str]) -> requests.Response:
         params = self.params.copy()
         params["fields"] = ",".join(fields)
-        r = requests.get(f"{URL}/{study_id}", params=params)
+        r = requests.get(f"{self.graphapi_url}/{study_id}", params=params)
         self._check_err(r, "getting study data")
         return r
 
@@ -259,12 +267,12 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
     ) -> requests.Response:
         params = self.params.copy()
         params["fields"] = ",".join(fields)
-        r = requests.get(f"{URL}/{dataset_id}", params=params)
+        r = requests.get(f"{self.graphapi_url}/{dataset_id}", params=params)
         self._check_err(r, "getting dataset information")
         return r
 
     def get_existing_pa_instances(self, dataset_id: str) -> requests.Response:
         params = self.params.copy()
-        r = requests.get(f"{URL}/{dataset_id}/instances", params=params)
+        r = requests.get(f"{self.graphapi_url}/{dataset_id}/instances", params=params)
         self._check_err(r, "getting attribution instances tied to the dataset")
         return r

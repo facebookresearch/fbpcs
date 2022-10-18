@@ -23,7 +23,6 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPLGraphAPICreateInstanceArgs,
     GRAPHAPI_INSTANCE_STATUSES,
-    URL,
 )
 from fbpcs.pl_coordinator.constants import MAX_NUM_INSTANCES
 from fbpcs.pl_coordinator.exceptions import (
@@ -90,6 +89,7 @@ def run_study(
     result_visibility: Optional[ResultVisibility] = None,
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
     run_id: Optional[str] = None,
+    graphapi_version: Optional[str] = None,
     output_dir: Optional[str] = None,
 ) -> None:
 
@@ -98,7 +98,9 @@ def run_study(
 
     # obtain study information
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
-        config, logger
+        config=config,
+        logger=logger,
+        graphapi_version=graphapi_version,
     )
     try:
         study_data = _get_study_data(study_id, client)
@@ -229,7 +231,14 @@ def run_study(
         )
         job_list.append(job)
 
-    asyncio.run(run_bolt(config, logger, job_list))
+    asyncio.run(
+        run_bolt(
+            config=config,
+            logger=logger,
+            job_list=job_list,
+            graphapi_version=graphapi_version,
+        )
+    )
 
     ## Step 4: Print out the initial and end states
     new_cell_obj_instances = _get_cell_obj_instance(
@@ -266,6 +275,7 @@ async def run_bolt(
     job_list: List[
         BoltJob[BoltPLGraphAPICreateInstanceArgs, BoltPCSCreateInstanceArgs]
     ],
+    graphapi_version: Optional[str] = None,
 ) -> None:
     """Run private lift with the BoltRunner in a dedicated function to ensure that
     the BoltRunner semaphore and runner.run_async share the same event loop.
@@ -283,11 +293,15 @@ async def run_bolt(
         )
 
     # We create the publisher_client here so we can reuse the access_token in our trace logger svc
-    publisher_client = BoltGraphAPIClient(config=config, logger=logger)
+    publisher_client = BoltGraphAPIClient(
+        config=config,
+        logger=logger,
+        graphapi_version=graphapi_version,
+    )
 
     # Create a GraphApiTraceLoggingService specific for this study_id
     study_id = job_list[0].publisher_bolt_args.create_instance_args.study_id
-    endpoint_url = f"{URL}/{study_id}/checkpoint"
+    endpoint_url = f"{publisher_client.graphapi_url}/{study_id}/checkpoint"
     graphapi_trace_logging_svc = GraphApiTraceLoggingService(
         access_token=publisher_client.access_token,
         endpoint_url=endpoint_url,

@@ -27,7 +27,9 @@ from fbpcs.private_computation.stage_flows.private_computation_stage_flow import
 )
 
 ACCESS_TOKEN = "access_token"
-URL = "https://graph.facebook.com/v13.0"
+GRAPHPI_BASE_URL = "https://graph.facebook.com"
+GRAPHAPI_DEFAULT_VERSION = "v13.0"
+URL = f"{GRAPHPI_BASE_URL}/{GRAPHAPI_DEFAULT_VERSION}"
 
 
 class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
@@ -37,6 +39,11 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
         config = {"access_token": ACCESS_TOKEN}
         self.test_client = BoltGraphAPIClient(config, mock_logger)
         self.test_client._check_err = MagicMock()
+
+    def test_customize_graphapi_version(self) -> None:
+        config = {"access_token": ACCESS_TOKEN}
+        test_client = BoltGraphAPIClient(config, self.mock_logger, "v15.0")
+        self.assertEqual(test_client.graphapi_url, f"{GRAPHPI_BASE_URL}/v15.0")
 
     def test_get_graph_api_token_from_env_empty_config(self) -> None:
         expected_token = "from_env"
