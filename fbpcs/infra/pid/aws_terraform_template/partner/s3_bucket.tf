@@ -112,15 +112,27 @@ sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /de
       "files": {
         "collect_list": [
           {
-            "file_path": "/mnt/var/log/spark/PartnerStageOne.log",
+            "file_path": "/mnt/var/log/spark/PartnerStageOneConsole.log",
             "log_group_name": "mrpid-partner-ec2-log-group",
-            "log_stream_name": "partner_stage_one_log",
+            "log_stream_name": "partner_stage_one_console_log",
             "timezone": "UTC"
           },
           {
-            "file_path": "/mnt/var/log/spark/PartnerStageTwo.log",
+            "file_path": "/mnt/var/log/spark/PartnerStageTwoConsole.log",
             "log_group_name": "mrpid-partner-ec2-log-group",
-            "log_stream_name": "partner_stage_two_log",
+            "log_stream_name": "partner_stage_two_console_log",
+            "timezone": "UTC"
+          },
+          {
+            "file_path": "/mnt/var/log/spark/PartnerStageOneYarn.log",
+            "log_group_name": "mrpid-partner-ec2-log-group",
+            "log_stream_name": "partner_stage_one_yarn_log",
+            "timezone": "UTC"
+          },
+          {
+            "file_path": "/mnt/var/log/spark/PartnerStageTwoYarn.log",
+            "log_group_name": "mrpid-partner-ec2-log-group",
+            "log_stream_name": "partner_stage_two_yarn_log",
             "timezone": "UTC"
           }
         ]

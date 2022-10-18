@@ -54,21 +54,39 @@ sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /de
       "files": {
         "collect_list": [
           {
-            "file_path": "/mnt/var/log/spark/PubStageOne.log",
+            "file_path": "/mnt/var/log/spark/PubStageOneConsole.log",
             "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
-            "log_stream_name": "publisher_stage_one_log",
+            "log_stream_name": "publisher_stage_one_console_log",
             "timezone": "UTC"
           },
           {
-            "file_path": "/mnt/var/log/spark/PubStageTwo.log",
+            "file_path": "/mnt/var/log/spark/PubStageTwoConsole.log",
             "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
-            "log_stream_name": "publisher_stage_two_log",
+            "log_stream_name": "publisher_stage_two_console_log",
             "timezone": "UTC"
           },
           {
-            "file_path": "/mnt/var/log/spark/PubStageThree.log",
+            "file_path": "/mnt/var/log/spark/PubStageThreeConsole.log",
             "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
-            "log_stream_name": "publisher_stage_three_log",
+            "log_stream_name": "publisher_stage_three_console_log",
+            "timezone": "UTC"
+          },
+          {
+            "file_path": "/mnt/var/log/spark/PubStageOneYarn.log",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
+            "log_stream_name": "publisher_stage_one_yarn_log",
+            "timezone": "UTC"
+          },
+          {
+            "file_path": "/mnt/var/log/spark/PubStageTwoYarn.log",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
+            "log_stream_name": "publisher_stage_two_yarn_log",
+            "timezone": "UTC"
+          },
+          {
+            "file_path": "/mnt/var/log/spark/PubStageThreeYarn.log",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
+            "log_stream_name": "publisher_stage_three_yarn_log",
             "timezone": "UTC"
           }
         ]
