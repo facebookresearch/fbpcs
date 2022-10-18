@@ -26,6 +26,7 @@ namespace fbpcs::performance_tools {
 
 const std::unordered_map<std::string, std::string> SUPPORTED_APPLICATIONS(
     {{"data_processing", "dp-logs"},
+     {"data_processing_udp", "dp-logs"},
      {"attributor", "att-logs"},
      {"aggregator", "agg-logs"},
      {"lift", "pl-logs"},
