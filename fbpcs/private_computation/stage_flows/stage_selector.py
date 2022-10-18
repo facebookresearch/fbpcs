@@ -81,6 +81,7 @@ class StageSelector:
             )
         elif stage_flow.name == "ID_SPINE_COMBINER":
             return IdSpineCombinerStageService(
+                args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
             )

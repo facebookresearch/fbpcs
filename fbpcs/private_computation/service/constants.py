@@ -42,3 +42,7 @@ FBPCS_BUNDLE_ID = "FBPCS_BUNDLE_ID"
 CA_CERT_PATH = "tls/ca_cert.pem"
 SERVER_CERT_PATH = "tls/server_cert.pem"
 PRIVATE_KEY_PATH = "tls/private_key.pem"
+
+# TODO: pass number of rows per shard in arg instead of hardcoding
+NUM_ROWS_PER_MPC_SHARD_PL = 1000000
+NUM_ROWS_PER_MPC_SHARD_PA = 200000
