@@ -60,6 +60,7 @@ class TestAwsDeploymentHelper(unittest.TestCase):
         pass
 
     def test_create_policy(self) -> None:
+        template_path = "iam_policies/fb_pc_iam_policy.json"
         test_policy_name = "TestIamPolicyName"
         test_policy_params = {"test-key-1": "test-val-1"}
         test_user_name = "test-user-name"
@@ -73,11 +74,11 @@ class TestAwsDeploymentHelper(unittest.TestCase):
         with self.subTest("basic"):
             # Test
             self.aws_deployment_helper.create_policy(
-                test_policy_name, test_policy_params
+                test_policy_name, template_path, test_policy_params
             )
             # Assert
             self.aws_deployment_helper.read_json_file.assert_called_once_with(
-                file_name="iam_policies/fb_pc_iam_policy.json",
+                file_name=template_path,
                 policy_params=test_policy_params,
             )
             self.aws_deployment_helper.iam.create_policy.assert_called_once_with(
@@ -93,7 +94,7 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             )
             # Test
             self.aws_deployment_helper.create_policy(
-                test_policy_name, test_policy_params
+                test_policy_name, "test_template_path", test_policy_params
             )
             # Assert
             self.aws_deployment_helper.iam.create_policy.assert_called_once_with(
@@ -111,7 +112,7 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             )
             # Test
             self.aws_deployment_helper.create_policy(
-                test_policy_name, test_policy_params
+                test_policy_name, "test_template_path", test_policy_params
             )
             # Assert
             self.aws_deployment_helper.log.error.assert_called_once()
@@ -124,7 +125,10 @@ class TestAwsDeploymentHelper(unittest.TestCase):
             )
             # Test
             self.aws_deployment_helper.create_policy(
-                test_policy_name, test_policy_params, test_user_name
+                test_policy_name,
+                "test_template_path",
+                test_policy_params,
+                test_user_name,
             )
             # Assert
             self.aws_deployment_helper.log.error.assert_called_once()
