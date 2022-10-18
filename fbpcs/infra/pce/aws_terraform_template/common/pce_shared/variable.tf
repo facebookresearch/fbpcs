@@ -22,3 +22,9 @@ variable "pce_id" {
   type        = string
   description = "The identifier for marking the cloud resources are in PCE"
 }
+
+variable "s3_access_arn" {
+  type        = string
+  description = "The s3 arn that the PCE can access"
+  default     = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
