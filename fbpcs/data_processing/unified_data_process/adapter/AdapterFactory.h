@@ -7,6 +7,11 @@
 
 #pragma once
 
+#include <memory>
+#include "fbpcf/engine/util/AesPrgFactory.h"
+#include "fbpcf/mpc_std_lib/permuter/AsWaksmanPermuterFactory.h"
+#include "fbpcf/mpc_std_lib/shuffler/IShufflerFactory.h"
+#include "fbpcf/mpc_std_lib/shuffler/PermuteBasedShufflerFactory.h"
 #include "fbpcs/data_processing/unified_data_process/adapter/Adapter.h"
 #include "fbpcs/data_processing/unified_data_process/adapter/IAdapterFactory.h"
 
@@ -14,9 +19,9 @@ namespace unified_data_process::adapter {
 
 template <int schedulerId>
 class AdapterFactory final : public IAdapterFactory {
+ public:
   using SecString = fbpcf::frontend::BitString<true, schedulerId, true>;
 
- public:
   AdapterFactory(
       bool amIParty0,
       int32_t party0Id,
@@ -39,5 +44,30 @@ class AdapterFactory final : public IAdapterFactory {
   std::unique_ptr<fbpcf::mpc_std_lib::shuffler::IShufflerFactory<SecString>>
       shufflerFactory_;
 };
+
+template <int schedulerId>
+inline std::unique_ptr<AdapterFactory<schedulerId>>
+getAdapterFactoryWithAsWaksmanBasedShuffler(
+    bool amIParty0,
+    int myId,
+    int partnerId) {
+  auto permuterFactory =
+      std::make_unique<fbpcf::mpc_std_lib::permuter::AsWaksmanPermuterFactory<
+          std::vector<bool>,
+          schedulerId>>(myId, partnerId);
+  auto shufflerfactory = std::make_unique<
+      fbpcf::mpc_std_lib::shuffler::PermuteBasedShufflerFactory<
+          typename AdapterFactory<schedulerId>::SecString>>(
+      myId,
+      partnerId,
+      std::move(permuterFactory),
+      std::make_unique<fbpcf::engine::util::AesPrgFactory>());
+
+  return std::make_unique<AdapterFactory<schedulerId>>(
+      amIParty0,
+      amIParty0 ? myId : partnerId,
+      amIParty0 ? partnerId : myId,
+      std::move(shufflerfactory));
+}
 
 } // namespace unified_data_process::adapter

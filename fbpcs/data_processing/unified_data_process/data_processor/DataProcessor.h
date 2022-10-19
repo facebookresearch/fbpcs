@@ -88,3 +88,5 @@ class DataProcessor final : public IDataProcessor<schedulerId> {
 };
 
 } // namespace unified_data_process::data_processor
+
+#include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessor_impl.h"
