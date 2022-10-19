@@ -29,7 +29,7 @@ MAX_TRIES = 2
 RETRY_INTERVAL = 60
 
 MIN_NUM_INSTANCES = 1
-MAX_NUM_INSTANCES = 3
+MAX_NUM_INSTANCES = 5
 PROCESS_WAIT = 1  # interval between starting processes.
 INSTANCE_SLA = 86400  # 16 hr instance sla, 2 tries per stage, total 24 hrs (since the Ent expires after 24 hours)
 
