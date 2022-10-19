@@ -135,3 +135,15 @@ target_link_libraries(
   idcombiner
   perftools)
 install(TARGETS attribution_id_combiner DESTINATION bin)
+
+# GenFakeData utility
+find_package(gflags REQUIRED)
+add_executable(
+  gen_fake_data
+  "fbpcs/data_processing/load_testing_utils/FakeDataGenerator.cpp"
+  "fbpcs/data_processing/load_testing_utils/GenFakeData.cpp")
+target_link_libraries(
+  gen_fake_data
+  gflags
+)
+install(TARGETS gen_fake_data DESTINATION bin)
