@@ -48,4 +48,19 @@ class DataProcessorFactory final : public IDataProcessorFactory<schedulerId> {
   std::unique_ptr<AesCtrFactory> aesCtrFactory_;
 };
 
+template <int schedulerId>
+inline std::unique_ptr<DataProcessorFactory<schedulerId>>
+getDataProcessorFactoryWithAesCtr(
+    int myId,
+    int partnerId,
+    fbpcf::engine::communication::IPartyCommunicationAgentFactory&
+        agentFactory) {
+  return std::make_unique<DataProcessorFactory<schedulerId>>(
+      myId,
+      partnerId,
+      agentFactory,
+      std::make_unique<fbpcf::mpc_std_lib::aes_circuit::AesCircuitCtrFactory<
+          typename IDataProcessor<schedulerId>::SecBit>>());
+}
+
 } // namespace unified_data_process::data_processor

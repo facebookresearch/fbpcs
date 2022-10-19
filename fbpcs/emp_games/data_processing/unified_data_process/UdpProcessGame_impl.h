@@ -12,10 +12,8 @@
 #include <vector>
 
 #include "fbpcs/data_processing/unified_data_process/adapter/Adapter.h"
-#include "fbpcs/data_processing/unified_data_process/adapter/Adapter_impl.h"
 #include "fbpcs/data_processing/unified_data_process/adapter/IAdapter.h"
 #include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessor.h"
-#include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessor_impl.h"
 #include "fbpcs/data_processing/unified_data_process/data_processor/IDataProcessor.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGame.h"
 
