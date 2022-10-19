@@ -92,7 +92,40 @@ def run_study(
     graphapi_version: Optional[str] = None,
     output_dir: Optional[str] = None,
 ) -> None:
+    asyncio.run(
+        run_study_async(
+            config,
+            study_id,
+            objective_ids,
+            input_paths,
+            logger,
+            stage_flow,
+            num_tries,
+            dry_run,
+            result_visibility,
+            final_stage,
+            run_id,
+            graphapi_version,
+            output_dir,
+        )
+    )
 
+
+async def run_study_async(
+    config: Dict[str, Any],
+    study_id: str,
+    objective_ids: List[str],
+    input_paths: List[str],
+    logger: logging.Logger,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
+    num_tries: Optional[int] = None,  # this is number of tries per stage
+    dry_run: Optional[bool] = False,  # if set to true, it will only run one stage
+    result_visibility: Optional[ResultVisibility] = None,
+    final_stage: Optional[PrivateComputationBaseStageFlow] = None,
+    run_id: Optional[str] = None,
+    graphapi_version: Optional[str] = None,
+    output_dir: Optional[str] = None,
+) -> None:
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
     _validate_input(objective_ids, input_paths)
 
@@ -138,7 +171,7 @@ def run_study(
     )
     # create new instances
     try:
-        _create_new_instances(cell_obj_instance, study_id, client, logger, run_id)
+        await _create_new_instances(cell_obj_instance, study_id, client, logger, run_id)
     except GraphAPIGenericException as err:
         logger.error(err)
         raise PCStudyValidationException(
@@ -158,7 +191,7 @@ def run_study(
 
     # check that the version in config.yml is same as from graph api
     try:
-        _check_versions(cell_obj_instance, config, client)
+        await _check_versions(cell_obj_instance, config, client)
     except GraphAPIGenericException as err:
         logger.error(err)
         raise PCStudyValidationException(
@@ -170,7 +203,7 @@ def run_study(
     # override stage flow based on pcs feature gate. Please contact PSI team to have a similar adoption
     stage_flow_override = stage_flow
     # get the enabled features
-    pcs_features = _get_pcs_features(cell_obj_instance, client)
+    pcs_features = await _get_pcs_features(cell_obj_instance, client)
     pcs_feature_enums = set()
     if pcs_features:
         logger.info(f"Enabled features: {pcs_features}")
@@ -231,14 +264,7 @@ def run_study(
         )
         job_list.append(job)
 
-    asyncio.run(
-        run_bolt(
-            config=config,
-            logger=logger,
-            job_list=job_list,
-            graphapi_version=graphapi_version,
-        )
-    )
+    await run_bolt(config, logger, job_list, graphapi_version=graphapi_version)
 
     ## Step 4: Print out the initial and end states
     new_cell_obj_instances = _get_cell_obj_instance(
@@ -524,7 +550,7 @@ def _get_cell_obj_instance(
     return cell_obj_instance
 
 
-def _create_new_instances(
+async def _create_new_instances(
     cell_obj_instances: Dict[str, Dict[str, Any]],
     study_id: str,
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
@@ -537,7 +563,7 @@ def _create_new_instances(
             if "instance_id" not in cell_obj_instances[cell_id][objective_id]:
                 cell_obj_instances[cell_id][objective_id][
                     "instance_id"
-                ] = _create_instance_retry(
+                ] = await _create_instance_retry(
                     client, study_id, cell_id, objective_id, run_id, logger
                 )
                 cell_obj_instances[cell_id][objective_id][
@@ -545,7 +571,7 @@ def _create_new_instances(
                 ] = PrivateComputationInstanceStatus.CREATED.value
 
 
-def _create_instance_retry(
+async def _create_instance_retry(
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
     study_id: str,
     cell_id: str,
@@ -557,17 +583,15 @@ def _create_instance_retry(
     while tries < CREATE_INSTANCE_TRIES:
         tries += 1
         try:
-            instance_id = asyncio.run(
-                client.create_instance(
-                    BoltPLGraphAPICreateInstanceArgs(
-                        instance_id="",
-                        study_id=study_id,
-                        breakdown_key={
-                            "cell_id": cell_id,
-                            "objective_id": objective_id,
-                        },
-                        run_id=run_id,
-                    )
+            instance_id = await client.create_instance(
+                BoltPLGraphAPICreateInstanceArgs(
+                    instance_id="",
+                    study_id=study_id,
+                    breakdown_key={
+                        "cell_id": cell_id,
+                        "objective_id": objective_id,
+                    },
+                    run_id=run_id,
                 )
             )
             logger.info(
@@ -608,7 +632,7 @@ def _instance_to_input_path(
     return instance_input_path
 
 
-def _check_versions(
+async def _check_versions(
     cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
     config: Dict[str, Any],
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
@@ -632,9 +656,9 @@ def _check_versions(
             instance_id = instance_data["instance_id"]
             # if there is no tier for some reason (e.g. old study?), let's just assume
             # the tier is correct
-            tier_str = json.loads(
-                asyncio.run(client.get_instance(instance_id)).text
-            ).get("tier")
+            tier_str = json.loads((await client.get_instance(instance_id)).text).get(
+                "tier"
+            )
             if tier_str:
                 expected_tier = PCSTier.from_str(tier_str)
                 if expected_tier is not config_tier:
@@ -643,7 +667,7 @@ def _check_versions(
                     )
 
 
-def _get_pcs_features(
+async def _get_pcs_features(
     cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
 ) -> Optional[List[str]]:
@@ -652,7 +676,7 @@ def _get_pcs_features(
             instance_data = cell_obj_instances[cell_id][objective_id]
             instance_id = instance_data["instance_id"]
             feature_list = json.loads(
-                asyncio.run(client.get_instance(instance_id)).text
+                (await client.get_instance(instance_id)).text
             ).get("feature_list")
             if feature_list:
                 return feature_list

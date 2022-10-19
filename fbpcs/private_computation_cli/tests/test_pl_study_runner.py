@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
 import calendar
 import copy
 import datetime
@@ -237,8 +238,10 @@ class TestPlStudyRunner(TestCase):
         self.mock_graph_api_client.get_instance.return_value = (
             self._get_graph_api_output("CREATED", expected_features)
         )
-        tested_features = pl_study_runner._get_pcs_features(
-            self.cell_obj_instances, self.mock_graph_api_client
+        tested_features = asyncio.run(
+            pl_study_runner._get_pcs_features(
+                self.cell_obj_instances, self.mock_graph_api_client
+            )
         )
         self.assertEqual(tested_features, expected_features)
 
