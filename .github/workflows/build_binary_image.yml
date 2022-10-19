@@ -1,8 +1,12 @@
-name: Build and Publish EMP Games Image
+name: Build and Publish Binary Image
 
 on:
   workflow_call:
     inputs:
+      image_to_build:
+        description: Which image we should build. Can be either emp_games or data_processing
+        required: true
+        type: string
       tag:
         description: The docker tag to publish with
         required: true
@@ -13,15 +17,25 @@ on:
         required: true
         default: latest
         type: string
+      load_image_locally:
+        description: A boolean on whether we should load the image locally or not.
+        required: false
+        default: false
+        type: boolean
+      push_to_registry:
+        description: A boolean on whether we should push the image to the RC registry or not.
+        required: false
+        default: false
+        type: boolean
 
 env:
   DISTRO: ubuntu
   REGISTRY: ghcr.io
-  RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/emp-games
+  RC_REGISTRY_IMAGE_URL: ghcr.io/${{ github.repository }}/rc/
 
 jobs:
-  build_emp_games_image:
-    name: Build EMP Games Image
+  build_image:
+    name: Build Image
     runs-on: [self-hosted, fbpcs-build]
     permissions:
       contents: write
@@ -37,9 +51,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-emp-games-${{ github.sha }}
+          key: ${{ runner.os }}-${{ inputs.image_to_build }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-emp-games
+            ${{ runner.os }}-${{ inputs.image_to_build }}
 
       - name: Pull FBPCF Image
         run: docker pull ghcr.io/facebookresearch/fbpcf/ubuntu:${{ inputs.fbpcf_version }}
@@ -51,19 +65,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Publish EMP Games image to GHCR
+      - name: Build Image
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker/emp_games/Dockerfile.ubuntu
+          file: docker/${{ inputs.image_to_build }}/Dockerfile.ubuntu
           tags: |
-            ${{ env.RC_REGISTRY_IMAGE_NAME }}:latest
-            ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.RC_REGISTRY_IMAGE_URL }}${{ inputs.image_to_build }}:${{ github.sha }}
           build-args: |
             tag=latest
             os_release=20.04
             fbpcf_image=ghcr.io/facebookresearch/fbpcf/ubuntu:${{ inputs.fbpcf_version }}
-          push: true
+          push: ${{ inputs.push_to_registry }}
+          load: ${{ inputs.load_image_locally }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
