@@ -10,7 +10,9 @@
 #include <memory>
 #include "fbpcf/engine/util/AesPrgFactory.h"
 #include "fbpcf/mpc_std_lib/permuter/AsWaksmanPermuterFactory.h"
+#include "fbpcf/mpc_std_lib/permuter/DummyPermuterFactory.h"
 #include "fbpcf/mpc_std_lib/shuffler/IShufflerFactory.h"
+#include "fbpcf/mpc_std_lib/shuffler/NonShufflerFactory.h"
 #include "fbpcf/mpc_std_lib/shuffler/PermuteBasedShufflerFactory.h"
 #include "fbpcs/data_processing/unified_data_process/adapter/Adapter.h"
 #include "fbpcs/data_processing/unified_data_process/adapter/IAdapterFactory.h"
@@ -62,6 +64,42 @@ getAdapterFactoryWithAsWaksmanBasedShuffler(
       partnerId,
       std::move(permuterFactory),
       std::make_unique<fbpcf::engine::util::AesPrgFactory>());
+
+  return std::make_unique<AdapterFactory<schedulerId>>(
+      amIParty0,
+      amIParty0 ? myId : partnerId,
+      amIParty0 ? partnerId : myId,
+      std::move(shufflerfactory));
+}
+
+template <int schedulerId>
+inline std::unique_ptr<AdapterFactory<schedulerId>>
+getAdapterFactoryWithInsecureShuffler(bool amIParty0, int myId, int partnerId) {
+  auto permuterFactory = std::make_unique<
+      fbpcf::mpc_std_lib::permuter::insecure::
+          DummyPermuterFactory<std::vector<bool>, schedulerId>>(
+      myId, partnerId);
+  auto shufflerfactory = std::make_unique<
+      fbpcf::mpc_std_lib::shuffler::PermuteBasedShufflerFactory<
+          typename AdapterFactory<schedulerId>::SecString>>(
+      myId,
+      partnerId,
+      std::move(permuterFactory),
+      std::make_unique<fbpcf::engine::util::AesPrgFactory>());
+
+  return std::make_unique<AdapterFactory<schedulerId>>(
+      amIParty0,
+      amIParty0 ? myId : partnerId,
+      amIParty0 ? partnerId : myId,
+      std::move(shufflerfactory));
+}
+
+template <int schedulerId>
+inline std::unique_ptr<AdapterFactory<schedulerId>>
+getAdapterFactoryWithNonShuffler(bool amIParty0, int myId, int partnerId) {
+  auto shufflerfactory = std::make_unique<
+      fbpcf::mpc_std_lib::shuffler::insecure::NonShufflerFactory<
+          typename AdapterFactory<schedulerId>::SecString>>();
 
   return std::make_unique<AdapterFactory<schedulerId>>(
       amIParty0,
