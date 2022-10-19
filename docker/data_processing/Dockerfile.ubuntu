@@ -21,6 +21,7 @@ COPY fbpcs/data_processing/id_combiner/ ./fbpcs/data_processing/id_combiner
 COPY fbpcs/data_processing/lift_id_combiner/ ./fbpcs/data_processing/lift_id_combiner
 COPY fbpcs/data_processing/pid_preparer/ ./fbpcs/data_processing/pid_preparer
 COPY fbpcs/data_processing/sharding/ ./fbpcs/data_processing/sharding
+COPY fbpcs/data_processing/load_testing_utils/ ./fbpcs/data_processing/load_testing_utils
 
 RUN cmake . -DTHREADING=ON -DEMP_USE_RANDOM_DEVICE=ON
 RUN make && make install
