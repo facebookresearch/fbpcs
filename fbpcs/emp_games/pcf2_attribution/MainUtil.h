@@ -59,6 +59,7 @@ template <
     bool usingBatch,
     common::InputEncryption inputEncryption>
 inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
+    bool useXorEncryption,
     std::uint32_t startFileIndex,
     std::uint32_t remainingThreads,
     std::string serverIp,
@@ -107,6 +108,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
         inputFilenames,
         outputFilenames,
         metricCollector,
+        useXorEncryption,
         startFileIndex,
         numFiles);
 
@@ -122,6 +124,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
             index + 1,
             usingBatch,
             inputEncryption>(
+            useXorEncryption,
             startFileIndex + numFiles,
             remainingThreads - 1,
             serverIp,
@@ -141,6 +144,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
 
 template <int PARTY, bool usingBatch, common::InputEncryption inputEncryption>
 inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
+    bool useXorEncryption,
     std::vector<std::string>& inputFilenames,
     std::vector<std::string>& outputFilenames,
     int16_t concurrency,
@@ -158,6 +162,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
       0U,
       usingBatch,
       inputEncryption>(
+      useXorEncryption,
       0U,
       numThreads,
       serverIp,
