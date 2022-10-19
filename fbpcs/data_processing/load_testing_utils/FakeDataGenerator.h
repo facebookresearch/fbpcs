@@ -13,22 +13,25 @@
 #include <string>
 #include <vector>
 
+enum class Role { Publisher, Partner };
+
 struct FakeDataGeneratorParams {
+  Role role;
   std::vector<std::string> header;
   double opportunityRate = 0.8;
-  double testRate = 0.5;
+  double testRate = 0.9;
   double purchaseRate = 0.1;
   // 2020-09-13 12:26:40 UTC
   // Just a nice round number near the current date
-  int64_t minTs = 1600000000;
+  int64_t minTs = 1'600'000'000;
   // 30 days after the default minTs
-  int64_t maxTs = 1600000000 + 86400 * 30;
+  int64_t maxTs = 1'600'000'000 + 86400 * 30;
   int64_t minValue = 100;
   int64_t maxValue = 10000;
   bool shouldUseComplexIds = true;
-  int16_t numConversions = 4;
 
-  FakeDataGenerator(std::vector<std::string> header_) : header{header_} {}
+  FakeDataGeneratorParams(Role role_, std::vector<std::string> header_)
+      : role{role_}, header{header_} {}
 
   FakeDataGeneratorParams& withOpportunityRate(double r) {
     opportunityRate = r;
@@ -54,6 +57,7 @@ struct FakeDataGeneratorParams {
     maxTs = ts;
     return *this;
   }
+
   FakeDataGeneratorParams& withMinValue(int64_t v) {
     minValue = v;
     return *this;
@@ -68,11 +72,6 @@ struct FakeDataGeneratorParams {
     shouldUseComplexIds = b;
     return *this;
   }
-
-  FakeDataGeneratorParams& withNumConversions(int16_t n) {
-    numConversions = n;
-    return *this;
-  }
 };
 
 class FakeDataGenerator {
@@ -80,12 +79,13 @@ class FakeDataGenerator {
   explicit FakeDataGenerator(FakeDataGeneratorParams params)
       : FakeDataGenerator{
             params,
-            std::chrono::system_clock::now().time_since_epoch().count()} {}
+            static_cast<uint32_t>(
+                std::chrono::system_clock::now().time_since_epoch().count())} {}
 
-  FakeDataGenerator(FakeDataGeneratorParams params, int64_t seed)
+  FakeDataGenerator(FakeDataGeneratorParams params, uint32_t seed)
       : params_{params}, r_{seed}, n_{0} {}
 
-  std::string genOneRow() const;
+  std::string genOneRow();
 
  private:
   FakeDataGeneratorParams params_;

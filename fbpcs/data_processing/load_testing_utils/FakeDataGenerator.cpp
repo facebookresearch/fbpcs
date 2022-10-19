@@ -17,10 +17,10 @@ static std::string genIdFor(int64_t n) {
   auto c = std::to_string(n);
   // I'm too lazy to do something better
   // and md5 is a PITA without pulling in openssl
-  return c + c + c + c;
+  return "a1" + c + "b2c3" + c + "d4" + c + "e5f6";
 }
 
-std::string FakeDataGenerator::genOneRow() const {
+std::string FakeDataGenerator::genOneRow() {
   std::uniform_real_distribution<double> realDist{0, 1};
   std::uniform_int_distribution<int8_t> binaryDist{0, 1};
   // Used for impressions and clicks
@@ -34,7 +34,7 @@ std::string FakeDataGenerator::genOneRow() const {
   auto groupId = binaryDist(r_);
 
   // Publisher stuff
-  auto hasOpp = realDist(r_) < params.opportunityRate ? 1 : 0;
+  auto hasOpp = realDist(r_) < params_.opportunityRate ? 1 : 0;
   auto oppTs = hasOpp * tsDist(r_);
   auto isTest = hasOpp && realDist(r_) < params_.testRate ? 1 : 0;
   // Engagement
@@ -46,6 +46,16 @@ std::string FakeDataGenerator::genOneRow() const {
   auto hasPurchase = realDist(r_) < params_.purchaseRate ? 1 : 0;
   auto eventTs = hasPurchase * tsDist(r_);
   auto value = hasPurchase * valueDist(r_);
+
+  // If no opp as publisher, useless row
+  if (!hasOpp && params_.role == Role::Publisher) {
+    return "";
+  }
+
+  // If no purchase as partner, useless row
+  if (!hasPurchase && params_.role == Role::Partner) {
+    return "";
+  }
 
   std::string res;
   std::unordered_map<std::string, std::string> m{
@@ -63,12 +73,12 @@ std::string FakeDataGenerator::genOneRow() const {
 
   for (const auto& col : params_.header) {
     res += m.at(col);
-    res += ','
+    res += ',';
   }
 
   // Get rid of the last ','
   res.pop_back();
 
-  ++n;
+  ++n_;
   return res;
 }
