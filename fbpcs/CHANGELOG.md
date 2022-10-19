@@ -14,6 +14,8 @@ Types of changes
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased - 2.4.0] - put release date here
+### Changed
+* Client max concurrency increased from 3 to 5
 
 ## [2.3.0] - 2022-10-12
 
