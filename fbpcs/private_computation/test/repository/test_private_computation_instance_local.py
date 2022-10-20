@@ -75,24 +75,6 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
         )
         self.repo.delete(instance_id)
 
-    def test_create_with_invalid_num_containers(self) -> None:
-        instance_id = self._get_random_id()
-
-        with self.assertRaises(ValueError):
-            InfraConfig(
-                instance_id=instance_id,
-                role=PrivateComputationRole.PUBLISHER,
-                status=PrivateComputationInstanceStatus.CREATED,
-                status_update_ts=1600000000,
-                instances=[self.test_mpc_instance],
-                game_type=PrivateComputationGameType.LIFT,
-                num_pid_containers=8,
-                num_mpc_containers=4,
-                num_files_per_mpc_container=40,
-                mpc_compute_concurrency=1,
-                status_updates=[],
-            )
-
     def test_update(self) -> None:
         instance_id = self._get_random_id()
         infra_config: InfraConfig = InfraConfig(
