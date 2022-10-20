@@ -14,14 +14,22 @@ from enum import Enum
 from pprint import pprint
 from typing import Any, Dict, List, Optional, Union
 
+from fbpcs.common.service.pii_scrubber import PiiLoggingScrubber
+
 from fbpcs.infra.logging_service.download_logs.cloud_error.utils_error import (
     NotSupportedContentType,
 )
 
 
 class Utils:
+    def __init__(self) -> None:
+        self.pii_scrubber: PiiLoggingScrubber = PiiLoggingScrubber()
+
     def create_file(
-        self, file_location: str, content: Union[List[str], Dict[str, Any]]
+        self,
+        file_location: str,
+        content: Union[List[str], Dict[str, Any]],
+        **kwargs: Dict[str, Any],
     ) -> None:
         """
         Create file in the file location with content.
@@ -32,11 +40,15 @@ class Utils:
             None
         """
         content = content or []
+        pii_scrubber = kwargs.get("scrub_pii_data", True)
+
+        if pii_scrubber:
+            content = self.scrub_logs_content(content=content)
 
         try:
             # write to a file, if it already exists
             with open(file_location, "w") as file_object:
-                self.write_to_file(file_object, content)
+                self.write_to_file(file_object, content, **kwargs)
         except IOError as error:
             # T122918736 - for better execption messages
             raise Exception(f"Failed to create file {file_location}") from error
@@ -46,7 +58,7 @@ class Utils:
         cls,
         file_object: io.TextIOWrapper,
         contents: Union[List[str], Dict[str, Any]],
-        append_newline: bool = True,
+        **kwargs: Dict[str, Any],
     ) -> None:
         """
         Write content to the file.
@@ -56,6 +68,8 @@ class Utils:
         Returns:
             None
         """
+        append_newline = kwargs.get("append_newline", True)
+
         if isinstance(contents, list):
             for content in contents:
                 if append_newline:
@@ -68,6 +82,81 @@ class Utils:
             raise NotSupportedContentType(
                 "Unable to write to the file. Content type not supported."
             )
+
+    def scrub_logs_content(
+        self,
+        content: Union[
+            List[str],
+            Dict[str, Any],
+        ],
+    ) -> Union[List[str], Dict[str, Any],]:
+        """
+        Calls other scrub functions based on the content type
+        """
+        if isinstance(content, dict):
+            """
+            Case 1: Content type dictionary
+            content = {
+                name: test
+                email: test@test.com
+                phone: +1-(123)-456-1234
+            }
+            """
+            self.scrub_dict_content(content)
+        elif isinstance(content, list):
+            """
+            Case 2: Content type list
+            content = ["test", "test@test.com", "+1-(123)-456-1234"]
+            """
+            self.scrub_list_content(content)
+        elif isinstance(content, (str, int)):
+            """
+            Case 3: Content type string or int
+            content = "test email is test@test.com"
+            """
+            content = self.scrub_str_content(content=str(content))
+        else:
+            raise NotSupportedContentType("Not supported content type to scrub")
+        return content
+
+    def scrub_dict_content(self, content: Dict[str, Any]) -> None:
+        """
+        Scrubs dictionary content type
+        In case of nested dictionary, function is recursively called
+        """
+        for key, value in content.items():
+            if isinstance(value, dict):
+                self.scrub_dict_content(value)
+            elif isinstance(value, list):
+                self.scrub_list_content(value)
+            elif isinstance(value, (str, int)):
+                content[key] = self.scrub_str_content(content=str(value))
+
+    def scrub_list_content(
+        self,
+        content: List[str],
+    ) -> None:
+        """
+        Scrubs list content type
+        In case of nested lists, function is recursively called
+        """
+        for index in range(len(content)):
+            if isinstance(content[index], dict):
+                # pyre-fixme[6]
+                self.scrub_dict_content(content[index])
+            elif isinstance(content[index], list):
+                # pyre-fixme[6]
+                self.scrub_list_content(content[index])
+            elif isinstance(content[index], (str, int)):
+                content[index] = self.scrub_str_content(content=str(content[index]))
+
+    def scrub_str_content(self, content: str) -> str:
+        """
+        Scrubs string content type
+        """
+        scrubber_object = self.pii_scrubber.scrub(content)
+        scrubbed_content = scrubber_object.scrubbed_output
+        return scrubbed_content
 
     @staticmethod
     def create_folder(folder_location: str) -> None:
