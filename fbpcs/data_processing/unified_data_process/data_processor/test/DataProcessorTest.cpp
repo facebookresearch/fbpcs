@@ -14,7 +14,6 @@
 #include <unordered_map>
 
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
-#include "fbpcf/mpc_std_lib/aes_circuit/AesCircuitCtrFactory.h"
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcf/test/TestHelper.h"
 #include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessor.h"
@@ -120,19 +119,12 @@ TEST(DataProcessor, testDataProcessor) {
   auto agentFactories =
       fbpcf::engine::communication::getInMemoryAgentFactory(2);
   fbpcf::setupRealBackend<0, 1>(*agentFactories[0], *agentFactories[1]);
-  DataProcessorFactory<0> factory0(
-      0,
-      1,
-      *agentFactories[0],
-      std::make_unique<fbpcf::mpc_std_lib::aes_circuit::AesCircuitCtrFactory<
-          typename IDataProcessor<0>::SecBit>>());
-  DataProcessorFactory<1> factory1(
-      1,
-      0,
-      *agentFactories[1],
-      std::make_unique<fbpcf::mpc_std_lib::aes_circuit::AesCircuitCtrFactory<
-          typename IDataProcessor<1>::SecBit>>());
-  testDataProcessor(factory0.create(), factory1.create());
+  auto factory0 =
+      getDataProcessorFactoryWithAesCtr<0>(0, 1, *agentFactories[0]);
+  auto factory1 =
+      getDataProcessorFactoryWithAesCtr<1>(1, 0, *agentFactories[1]);
+
+  testDataProcessor(factory0->create(), factory1->create());
 }
 
 } // namespace unified_data_process::data_processor
