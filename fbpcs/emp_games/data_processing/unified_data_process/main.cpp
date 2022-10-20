@@ -48,6 +48,8 @@ int main(int argc, char** argv) {
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner
   // instead of 1 and 2
 
+  auto tlsInfo = common::getTlsInfoFromArgs(false, "", "", "", "");
+
   common::SchedulerStatistics schedulerStatistics;
 
   XLOG(INFO) << "Start UDP Processing...";
@@ -61,7 +63,8 @@ int main(int argc, char** argv) {
             FLAGS_row_number,
             FLAGS_row_size,
             FLAGS_intersection,
-            FLAGS_use_xor_encryption);
+            FLAGS_use_xor_encryption,
+            tlsInfo);
   } else if (FLAGS_party == common::PARTNER) {
     XLOG(INFO)
         << "Starting UDP Processing as Partner, will wait for Publisher...";
@@ -72,7 +75,8 @@ int main(int argc, char** argv) {
             FLAGS_row_number,
             FLAGS_row_size,
             FLAGS_intersection,
-            FLAGS_use_xor_encryption);
+            FLAGS_use_xor_encryption,
+            tlsInfo);
   } else {
     XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
   }
