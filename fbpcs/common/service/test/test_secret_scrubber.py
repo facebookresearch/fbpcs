@@ -54,3 +54,25 @@ class TestSecretScrubber(TestCase):
         self.assertEqual(scrub_summary.total_substitutions, 3)
         for c in scrub_summary.name_to_num_subs.values():
             self.assertEqual(c, 1)
+
+    def test_pii_scrubber_regex(self) -> None:
+        # Adding Logging Service PII scubber related regex
+        # These regex are not expected to be scrubbed
+        sha256 = "746df05c8f3a0b07a46c0967cfbc5cbe5b9d48d0f79b6177eeedf8be6c8b34b5"
+        email = "test@test.com"
+        test_message = f"""
+        sha256: "{sha256}"
+        email: "{email}"
+        """
+
+        expected_output = f"""
+        sha256: "{sha256}"
+        email: "{email}"
+        """
+
+        scrub_summary = self.scrubber.scrub(test_message)
+
+        self.assertEqual(scrub_summary.scrubbed_output, expected_output)
+        self.assertEqual(scrub_summary.total_substitutions, 0)
+        for c in scrub_summary.name_to_num_subs.values():
+            self.assertEqual(c, 0)
