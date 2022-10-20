@@ -26,11 +26,11 @@ UdpProcessApp<schedulerId>::run() {
   auto& unionMap = std::get<0>(testData);
   auto& metaData = std::get<1>(testData);
   auto udpProcessGame = udpGameFactory_->create(std::move(scheduler));
-
+  costEst_->addCheckPoint("computation preparation");
   XLOGF(
       INFO, "Start to run Adapter with a unionMap of size {}", unionMap.size());
   auto indexes = udpProcessGame->playAdapter(unionMap);
-
+  costEst_->addCheckPoint("Adapter done");
   XLOGF(
       INFO,
       "Start to run DataProcessor with a metaData of size {} and intersection size of {}",
@@ -38,7 +38,7 @@ UdpProcessApp<schedulerId>::run() {
       indexes.size());
   auto shares = udpProcessGame->playDataProcessor(
       metaData, indexes, metaData.size(), sizeOfRow_);
-
+  costEst_->addCheckPoint("DataProcessor done");
   auto publisherShares = std::get<0>(shares);
   auto partnerShares = std::get<1>(shares);
 

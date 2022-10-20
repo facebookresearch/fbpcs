@@ -7,6 +7,7 @@
 
 #include "fbpcs/performance_tools/CostEstimation.h"
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include <folly/DynamicConverter.h>
 #include <folly/dynamic.h>
 #include <folly/json.h>
 #include <folly/logging/xlog.h>
@@ -84,6 +85,40 @@ long CostEstimation::getNetworkBytes() {
   return networkRXBytes_ + networkTXBytes_;
 }
 
+// calculate cost for each check point
+void CostEstimation::calculateCostCheckPoints() {
+  for (size_t i = checkPoints_ - 1; i > 0; --i) {
+    auto& cur_checkpoint = checkPointMetrics_.at(checkPointName_[i]);
+    auto& pre_checkpoint = checkPointMetrics_.at(checkPointName_[i - 1]);
+    cur_checkpoint.runtime = cur_checkpoint.runtime - pre_checkpoint.runtime;
+    cur_checkpoint.networkRxBytes =
+        cur_checkpoint.networkRxBytes - pre_checkpoint.networkRxBytes;
+    cur_checkpoint.networkTxBytes =
+        cur_checkpoint.networkTxBytes - pre_checkpoint.networkTxBytes;
+  }
+
+  for (size_t i = 0; i < checkPoints_; ++i) {
+    auto& cur_checkpoint = checkPointMetrics_.at(checkPointName_[i]);
+    // CPU cost
+    const double cpu_cost =
+        vCPUS * (PER_CPU_HOUR_COST / 60) * (cur_checkpoint.runtime / 60);
+    // Memory cost
+    const double memory_cost =
+        MEMORY_SIZE * (PER_GB_HOUR_COST / 60) * (cur_checkpoint.runtime / 60);
+    // Network cost
+    const double network_cost =
+        (((cur_checkpoint.networkRxBytes + cur_checkpoint.networkTxBytes) /
+          1024) /
+         1024 / 1024) *
+        NETWORK_PER_GB_COST;
+    // ECR cost
+    const double binarySizeInGB = 0.2; // The PA binary file is about ~200MB
+    const double ecr_cost = binarySizeInGB * ECR_PER_GB_COST;
+    // Total estimated cost
+    cur_checkpoint.cost = cpu_cost + memory_cost + network_cost + ecr_cost;
+  }
+}
+
 void CostEstimation::calculateCost() {
   // CPU cost
   double cpu_cost = vCPUS * (PER_CPU_HOUR_COST / 60) * (runningTimeInSec_ / 60);
@@ -99,6 +134,7 @@ void CostEstimation::calculateCost() {
   double ecr_cost = binarySizeInGB * ECR_PER_GB_COST;
   // Total estimated cost
   estimatedCost_ = cpu_cost + memory_cost + network_cost + ecr_cost;
+  calculateCostCheckPoints();
 }
 
 std::unordered_map<std::string, long> CostEstimation::readNetworkSnapshot() {
@@ -144,7 +180,6 @@ folly::dynamic CostEstimation::getEstimatedCostDynamic(
   struct tm newTime;
   std::strftime(
       ds_string, sizeof(ds_string), "%Y-%m-%d", localtime_r(&t, &newTime));
-
   result.insert("name", run_name);
   result.insert("party", party);
   result.insert("ds", ds_string);
@@ -160,6 +195,15 @@ folly::dynamic CostEstimation::getEstimatedCostDynamic(
   result.insert("cloud_provider", CLOUD);
   result.insert("additional_info", folly::toJson(info));
 
+  if (checkPoints_ > 0) {
+    folly::dynamic checkpointsFolly = folly::dynamic::object();
+    for (size_t i = 0; i < checkPoints_; ++i) {
+      checkpointsFolly.insert(
+          checkPointName_[i],
+          checkPointMetrics_[checkPointName_[i]].toDynamic());
+    }
+    result.insert("checkpoint", folly::toJson(checkpointsFolly));
+  }
   return result;
 }
 
@@ -197,6 +241,25 @@ void CostEstimation::end() {
 
   runningTimeInSec_ = (end_time_ - start_time_) / std::chrono::seconds(1);
   calculateCost();
+}
+
+void CostEstimation::addCheckPoint(std::string checkPointName) {
+  if (checkPointMetrics_.find(checkPointName) != checkPointMetrics_.end()) {
+    XLOGF(ERR, "Checkpoint name {} already exist!", checkPointName);
+  }
+  CheckPointMetrics current_metrics;
+  std::chrono::time_point<std::chrono::system_clock> current_time =
+      std::chrono::system_clock::now();
+  current_metrics.runtime =
+      (current_time - start_time_) / std::chrono::seconds(1);
+  const std::unordered_map<std::string, long> result = readNetworkSnapshot();
+  if (!result.empty()) {
+    current_metrics.networkRxBytes = result.at("rx") - networkRXBytes_;
+    current_metrics.networkTxBytes = result.at("tx") - networkTXBytes_;
+  }
+  checkPointMetrics_[checkPointName] = current_metrics;
+  checkPointName_.push_back(checkPointName);
+  checkPoints_++;
 }
 
 std::string CostEstimation::writeToS3(
