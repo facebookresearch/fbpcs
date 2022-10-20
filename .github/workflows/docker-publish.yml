@@ -3,9 +3,6 @@ name: Publish OneDocker image
 on:
   workflow_dispatch:
     inputs:
-      name:
-        description: 'Manually running this workflow will skip "Check New Commits" step and build image directly'
-        default: "Run"
       new_tag:
         description: "The new tag of the docker image"
         required: false
@@ -17,15 +14,11 @@ on:
         type: str
 
 env:
-  DISTRO: ubuntu
   REGISTRY: ghcr.io
   LOCAL_IMAGE_NAME: fbpcs/onedocker
   RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
   PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
   COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator
-  PL_CONTAINER_NAME: e2e_pl_container
-  PA_CONTAINER_NAME: e2e_pa_container
-  TIME_RANGE: 24 hours
   FBPCF_VERSION: 2.1.73  # Please also update line 8 in .github/workflows/build_binary_images.yml
 
 jobs:
