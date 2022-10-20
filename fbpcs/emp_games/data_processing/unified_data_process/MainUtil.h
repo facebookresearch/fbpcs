@@ -21,7 +21,9 @@ inline common::SchedulerStatistics startUdpProcessApp(
     int64_t numberOfRows,
     int64_t sizeOfRow,
     int64_t numberOfIntersection,
-    bool useXorEncryption) {
+    bool useXorEncryption,
+    fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
+        tlsInfo) {
   std::map<
       int,
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory::
@@ -33,7 +35,7 @@ inline common::SchedulerStatistics startUdpProcessApp(
 
   auto communicationAgentFactory = std::make_shared<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
-      PARTY, partyInfos, metricCollector);
+      PARTY, partyInfos, tlsInfo, metricCollector);
 
   auto udpGameFactory = std::make_unique<UdpProcessGameFactory<PARTY>>(
       PARTY, *communicationAgentFactory);
