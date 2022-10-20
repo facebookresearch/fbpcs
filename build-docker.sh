@@ -46,7 +46,7 @@ FORCE_EXTERNAL=false
 USE_GCP=false
 PLATFORM=""
 FBPCF_VERSION="latest"
-while getopts "u,f,g,t:,p,v:" o; do
+while getopts "u,f,g,t:,p:,v:" o; do
   case $o in
     (u) OS_VARIANT="ubuntu"
         OS_RELEASE=${UBUNTU_RELEASE}
