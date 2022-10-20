@@ -1,0 +1,73 @@
+name: PA One command runner test
+
+on:
+  workflow_call:
+    inputs:
+      attribution_dataset_id:
+        description: Attribution Dataset id
+        required: true
+        default: 1127612294482487
+      attribution_input_path:
+        description: S3 path to synthetic attribution data
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_input.csv
+      attribution_expected_result_path:
+        description: S3 path to expected results from synthetic run
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click.json
+      tag:
+        description: Version tag to use
+        required: true
+        default: rc
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
+
+env:
+  FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
+  FBPCS_IMAGE_NAME: coordinator
+  FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_GRAPH_API_TOKEN }}
+
+jobs:
+  ### Private Attribution E2E tests
+
+  pa_test:
+    name: Private Attribution E2E Tests
+    runs-on: [self-hosted, fbpcs-e2e-test-runner]
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash}}
+
+      - name: One Command runner
+        run: |
+          ./fbpcs/scripts/run_fbpcs.sh run_attribution \
+          --dataset_id=${{ github.event.inputs.dataset_id}} \
+          --attribution_rule="last_click_1d" \
+          --input_path=${{ github.event.inputs.input_path}} \
+          --aggregation_type="measurement" \
+          --concurrency=4 \
+          --num_files_per_mpc_container=4 \
+          --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
+          --timestamp="1646870400" \
+          --k_anonymity_threshold=0 \
+          -- \
+          --version=${{ github.event.inputs.tag }}
+      - name: Validate Results
+        # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
+        # the fbpcs_instances directory is where instances are written to (feature of run_fbpcs.sh)
+        # the config.yml specifies that /fbpcs_instances is the instance repo, which is the source of the "/{}"
+        run: |
+          find fbpcs_instances -regex 'fbpcs_instances/[0-9]+' | xargs -I {} ./fbpcs/scripts/run_fbpcs.sh \
+          validate \
+          "/{}" \
+          --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
+          --expected_result_path=${{ github.event.inputs.expected_result_path }} \
+          -- \
+          --version=${{ github.event.inputs.tag }}
