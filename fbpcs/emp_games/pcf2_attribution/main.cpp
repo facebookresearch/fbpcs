@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 
   // use batched attribution by default
   const bool usingBatch = true;
-
+  bool useXorEncryption = FLAGS_use_xor_encryption;
   try {
     auto [inputFilenames, outputFilenames] = pcf2_attribution::getIOFilenames(
         FLAGS_num_files,
@@ -83,6 +83,7 @@ int main(int argc, char* argv[]) {
                 common::PUBLISHER,
                 usingBatch,
                 common::InputEncryption::PartnerXor>(
+                useXorEncryption,
                 inputFilenames,
                 outputFilenames,
                 concurrency,
@@ -96,6 +97,7 @@ int main(int argc, char* argv[]) {
                 common::PUBLISHER,
                 usingBatch,
                 common::InputEncryption::Xor>(
+                useXorEncryption,
                 inputFilenames,
                 outputFilenames,
                 concurrency,
@@ -109,6 +111,7 @@ int main(int argc, char* argv[]) {
                 common::PUBLISHER,
                 usingBatch,
                 common::InputEncryption::Plaintext>(
+                useXorEncryption,
                 inputFilenames,
                 outputFilenames,
                 concurrency,
@@ -128,6 +131,7 @@ int main(int argc, char* argv[]) {
                 common::PARTNER,
                 usingBatch,
                 common::InputEncryption::PartnerXor>(
+                useXorEncryption,
                 inputFilenames,
                 outputFilenames,
                 concurrency,
@@ -141,6 +145,7 @@ int main(int argc, char* argv[]) {
                 common::PARTNER,
                 usingBatch,
                 common::InputEncryption::Xor>(
+                useXorEncryption,
                 inputFilenames,
                 outputFilenames,
                 concurrency,
@@ -155,6 +160,7 @@ int main(int argc, char* argv[]) {
                 common::PARTNER,
                 usingBatch,
                 common::InputEncryption::Plaintext>(
+                useXorEncryption,
                 inputFilenames,
                 outputFilenames,
                 concurrency,

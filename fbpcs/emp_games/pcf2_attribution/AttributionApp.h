@@ -8,6 +8,7 @@
 #pragma once
 
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include <fbpcf/scheduler/NetworkPlaintextSchedulerFactory.h>
 #include <string>
 #include "fbpcf/engine/communication/IPartyCommunicationAgentFactory.h"
 #include "fbpcf/scheduler/LazySchedulerFactory.h"
@@ -31,6 +32,7 @@ class AttributionApp {
       const std::vector<std::string>& inputFilenames,
       const std::vector<std::string>& outputFilenames,
       std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
+      bool useXorEncryption,
       std::uint32_t startFileIndex = 0U,
       int numFiles = 1)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
@@ -38,14 +40,19 @@ class AttributionApp {
         inputFilenames_(inputFilenames),
         outputFilenames_(outputFilenames),
         metricCollector_(metricCollector),
+        useXorEncryption_(useXorEncryption),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
         schedulerStatistics_{0, 0, 0, 0} {}
 
   void run() {
-    auto scheduler = fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
-                         MY_ROLE, *communicationAgentFactory_, metricCollector_)
-                         ->create();
+    auto scheduler = useXorEncryption_
+        ? fbpcf::scheduler::getLazySchedulerFactoryWithRealEngine(
+              MY_ROLE, *communicationAgentFactory_, metricCollector_)
+              ->create()
+        : fbpcf::scheduler::NetworkPlaintextSchedulerFactory<false>(
+              MY_ROLE, *communicationAgentFactory_, metricCollector_)
+              .create();
 
     AttributionGame<schedulerId, usingBatch, inputEncryption> game(
         std::move(scheduler));
@@ -112,6 +119,7 @@ class AttributionApp {
   std::vector<std::string> inputFilenames_;
   std::vector<std::string> outputFilenames_;
   std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
+  bool useXorEncryption_;
   const std::uint32_t startFileIndex_;
   const int numFiles_;
   common::SchedulerStatistics schedulerStatistics_;
