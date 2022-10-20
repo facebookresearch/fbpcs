@@ -26,6 +26,7 @@ class PCEConfig:
     # TODO T118605748 The cloud_account_id should not be optional in PCEConfig. Make it required after a full release cycle
     cloud_account_id: Optional[str] = None
     partner_id: Optional[str] = None
+    pce_id: Optional[str] = None
 
     def __str__(self) -> str:
         # pyre-ignore
