@@ -11,6 +11,8 @@
 #include <folly/dynamic.h>
 #include <folly/json.h>
 #include <folly/logging/xlog.h>
+#include <sys/resource.h>
+#include <unistd.h>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -134,6 +136,8 @@ void CostEstimation::calculateCost() {
   double ecr_cost = binarySizeInGB * ECR_PER_GB_COST;
   // Total estimated cost
   estimatedCost_ = cpu_cost + memory_cost + network_cost + ecr_cost;
+  // peak memory usage
+  peakRSS_ = getPeakRSS();
   calculateCostCheckPoints();
 }
 
@@ -154,6 +158,33 @@ std::unordered_map<std::string, long> CostEstimation::readNetworkSnapshot() {
     }
   }
   return result;
+}
+
+size_t CostEstimation::getPeakRSS() {
+  struct rusage ru;
+  if (getrusage(RUSAGE_SELF, &ru) == 0) {
+    return ru.ru_maxrss;
+  }
+  return 0;
+}
+
+size_t CostEstimation::getCurrentRSS() {
+  std::ifstream in;
+  in.exceptions(std::ifstream::badbit);
+  size_t rss = 0;
+  try {
+    in.open("/proc/self/statm");
+    size_t totalSize = 0;
+    size_t rssSize = 0;
+    in >> totalSize >> rssSize; // reading totalSize to skip it
+    rss = rssSize * static_cast<size_t>(sysconf(_SC_PAGESIZE));
+  } catch (const std::ifstream::failure& e) {
+    XLOG(WARN)
+        << "Warning: Exception reading current memory usage.\n\terror msg: "
+        << e.what();
+  }
+  in.close();
+  return rss / 1024L;
 }
 
 std::string CostEstimation::getEstimatedCostString() {
@@ -194,6 +225,7 @@ folly::dynamic CostEstimation::getEstimatedCostDynamic(
   result.insert("estimated_cost", estimatedCost_);
   result.insert("cloud_provider", CLOUD);
   result.insert("additional_info", folly::toJson(info));
+  result.insert("maximum memory usage", peakRSS_);
 
   if (checkPoints_ > 0) {
     folly::dynamic checkpointsFolly = folly::dynamic::object();
@@ -257,6 +289,8 @@ void CostEstimation::addCheckPoint(std::string checkPointName) {
     current_metrics.networkRxBytes = result.at("rx") - networkRXBytes_;
     current_metrics.networkTxBytes = result.at("tx") - networkTXBytes_;
   }
+  current_metrics.peakRSS = getPeakRSS();
+  current_metrics.curRSS = getCurrentRSS();
   checkPointMetrics_[checkPointName] = current_metrics;
   checkPointName_.push_back(checkPointName);
   checkPoints_++;

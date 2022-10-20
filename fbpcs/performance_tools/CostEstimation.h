@@ -34,11 +34,14 @@ class CostEstimation {
     double networkRxBytes;
     double networkTxBytes;
     double cost;
+    size_t peakRSS;
+    size_t curRSS;
 
     folly::dynamic toDynamic() const {
       folly::dynamic res = folly::dynamic::object("runtime", runtime)(
           "networkRxBytes", networkRxBytes)(
-          "networkTxBytes", networkTxBytes)("cost", cost);
+          "networkTxBytes",
+          networkTxBytes)("cost", cost)("peak mem", peakRSS)("current mem", curRSS);
       return res;
     }
   };
@@ -53,11 +56,14 @@ class CostEstimation {
   long networkTXBytes_; // Network Transmit bytes
   std::chrono::time_point<std::chrono::system_clock> start_time_;
   std::chrono::time_point<std::chrono::system_clock> end_time_;
+  size_t peakRSS_; // maximum virtual memory space used by the process, in kB
   std::unordered_map<std::string, CheckPointMetrics> checkPointMetrics_;
   std::vector<std::string> checkPointName_;
   int checkPoints_ = 0;
   void calculateCostCheckPoints();
   std::unordered_map<std::string, long> readNetworkSnapshot();
+  size_t getPeakRSS();
+  size_t getCurrentRSS();
 
  public:
   explicit CostEstimation(
