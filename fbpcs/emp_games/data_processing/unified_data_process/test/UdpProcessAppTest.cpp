@@ -16,6 +16,7 @@
 #include "fbpcf/test/TestHelper.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessApp.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGameFactory.h"
+#include "fbpcs/performance_tools/CostEstimation.h"
 
 namespace unified_data_process {
 template <int schedulerId>
@@ -25,6 +26,7 @@ runUdpProcessApp(
     int32_t rowNumber,
     int32_t rowSize,
     int32_t intersectionSize,
+    std::shared_ptr<fbpcs::performance_tools::CostEstimation> costEst,
     std::shared_ptr<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory>
         communicationAgentFactory,
@@ -37,7 +39,8 @@ runUdpProcessApp(
       std::move(udpGameFactory),
       rowNumber,
       rowSize,
-      intersectionSize);
+      intersectionSize,
+      costEst);
   return app.run();
 }
 
@@ -107,12 +110,20 @@ TEST(UdpProcessApp, testUdpProcessApp) {
   auto metricCollector1 =
       std::make_shared<fbpcf::util::MetricCollector>("attribution_test_1");
 
+  auto costEst0 = std::make_shared<fbpcs::performance_tools::CostEstimation>(
+      "data_processing_udp", "test_bucket", "test_s3_region", "pcf2");
+  costEst0->start();
+  auto costEst1 = std::make_shared<fbpcs::performance_tools::CostEstimation>(
+      "data_processing_udp", "test_bucket", "test_s3_region", "pcf2");
+  costEst1->start();
+
   auto future0 = std::async(
       runUdpProcessApp<0>,
       0,
       rowNumber,
       rowSize,
       intersectionSize,
+      costEst0,
       std::move(agentFactories[0]),
       std::move(metricCollector0),
       std::move(udpGameFactory0));
@@ -122,6 +133,7 @@ TEST(UdpProcessApp, testUdpProcessApp) {
       rowNumber,
       rowSize,
       intersectionSize,
+      costEst1,
       std::move(agentFactories[1]),
       std::move(metricCollector1),
       std::move(udpGameFactory1));

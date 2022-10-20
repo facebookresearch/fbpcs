@@ -5,11 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <memory>
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
 
 #include "fbpcf/aws/AwsSdk.h"
-#include "fbpcs/performance_tools/CostEstimation.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
@@ -21,13 +21,13 @@ int main(int argc, char** argv) {
   folly::init(&argc, &argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  fbpcs::performance_tools::CostEstimation cost =
-      fbpcs::performance_tools::CostEstimation(
+  std::shared_ptr<fbpcs::performance_tools::CostEstimation> costEst =
+      std::make_shared<fbpcs::performance_tools::CostEstimation>(
           "data_processing_udp",
           FLAGS_log_cost_s3_bucket,
           FLAGS_log_cost_s3_region,
           "pcf2");
-  cost.start();
+  costEst->start();
 
   fbpcf::AwsSdk::aquire();
 
@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
             FLAGS_row_number,
             FLAGS_row_size,
             FLAGS_intersection,
+            costEst,
             FLAGS_use_xor_encryption);
   } else if (FLAGS_party == common::PARTNER) {
     XLOG(INFO)
@@ -72,13 +73,14 @@ int main(int argc, char** argv) {
             FLAGS_row_number,
             FLAGS_row_size,
             FLAGS_intersection,
+            costEst,
             FLAGS_use_xor_encryption);
   } else {
     XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
   }
 
-  cost.end();
-  XLOG(INFO, cost.getEstimatedCostString());
+  costEst->end();
+  XLOG(INFO, costEst->getEstimatedCostString());
 
   XLOGF(
       INFO,
@@ -100,14 +102,14 @@ int main(int argc, char** argv) {
     folly::dynamic extra_info = schedulerStatistics.details;
 
     folly::dynamic costDict =
-        cost.getEstimatedCostDynamic(run_name, party, extra_info);
+        costEst->getEstimatedCostDynamic(run_name, party, extra_info);
 
     auto objectName = run_name_specified
         ? run_name
         : folly::to<std::string>(
               FLAGS_run_name, '_', costDict["timestamp"].asString());
 
-    XLOGF(INFO, "{}", cost.writeToS3(party, objectName, costDict));
+    XLOGF(INFO, "{}", costEst->writeToS3(party, objectName, costDict));
   }
 
   return 0;

@@ -13,6 +13,7 @@
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGame.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGameFactory.h"
+#include "fbpcs/performance_tools/CostEstimation.h"
 
 namespace unified_data_process {
 
@@ -29,6 +30,7 @@ class UdpProcessApp {
       int32_t numberOfRows,
       int64_t sizeOfRow,
       int32_t numberOfIntersection,
+      std::shared_ptr<fbpcs::performance_tools::CostEstimation> costEst,
       bool useXorEncryption = true)
       : party_{party},
         communicationAgentFactory_{std::move(communicationAgentFactory)},
@@ -37,6 +39,7 @@ class UdpProcessApp {
         numberOfRows_{numberOfRows},
         sizeOfRow_{sizeOfRow},
         numberOfIntersection_{numberOfIntersection},
+        costEst_{costEst},
         useXorEncryption_{useXorEncryption} {}
 
   // return the extracted shares of intersected metadata from publiser and
@@ -63,6 +66,7 @@ class UdpProcessApp {
   int64_t numberOfRows_;
   int64_t sizeOfRow_;
   int64_t numberOfIntersection_;
+  std::shared_ptr<fbpcs::performance_tools::CostEstimation> costEst_;
   bool useXorEncryption_;
   common::SchedulerStatistics schedulerStatistics_;
 };

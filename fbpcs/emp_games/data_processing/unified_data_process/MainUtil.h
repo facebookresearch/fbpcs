@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <memory>
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessApp.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGame.h"
@@ -21,6 +20,7 @@ inline common::SchedulerStatistics startUdpProcessApp(
     int64_t numberOfRows,
     int64_t sizeOfRow,
     int64_t numberOfIntersection,
+    std::shared_ptr<fbpcs::performance_tools::CostEstimation> costEst,
     bool useXorEncryption) {
   std::map<
       int,
@@ -46,6 +46,7 @@ inline common::SchedulerStatistics startUdpProcessApp(
       numberOfRows,
       sizeOfRow,
       numberOfIntersection,
+      costEst,
       useXorEncryption);
 
   app.run();
