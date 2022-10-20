@@ -29,6 +29,19 @@ const std::string NET_DEV_FILE = "/proc/net/dev";
  */
 class CostEstimation {
  private:
+  struct CheckPointMetrics {
+    double runtime;
+    double networkRxBytes;
+    double networkTxBytes;
+    double cost;
+
+    folly::dynamic toDynamic() const {
+      folly::dynamic res = folly::dynamic::object("runtime", runtime)(
+          "networkRxBytes", networkRxBytes)(
+          "networkTxBytes", networkTxBytes)("cost", cost);
+      return res;
+    }
+  };
   std::string application_;
   std::string s3Bucket_;
   std::string s3Region_;
@@ -40,6 +53,11 @@ class CostEstimation {
   long networkTXBytes_; // Network Transmit bytes
   std::chrono::time_point<std::chrono::system_clock> start_time_;
   std::chrono::time_point<std::chrono::system_clock> end_time_;
+  std::unordered_map<std::string, CheckPointMetrics> checkPointMetrics_;
+  std::vector<std::string> checkPointName_;
+  int checkPoints_ = 0;
+  void calculateCostCheckPoints();
+  std::unordered_map<std::string, long> readNetworkSnapshot();
 
  public:
   explicit CostEstimation(
@@ -57,7 +75,6 @@ class CostEstimation {
   long getNetworkBytes();
   void calculateCost();
 
-  std::unordered_map<std::string, long> readNetworkSnapshot();
   std::string getEstimatedCostString();
   folly::dynamic getEstimatedCostDynamic(
       std::string run_name,
@@ -67,6 +84,7 @@ class CostEstimation {
 
   void start();
   void end();
+  void addCheckPoint(std::string checkPointName);
 
   std::string writeToS3(
       std::string party,
