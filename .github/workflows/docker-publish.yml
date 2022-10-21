@@ -26,7 +26,8 @@ env:
   PL_CONTAINER_NAME: e2e_pl_container
   PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
-  FBPCF_VERSION: 2.1.73  # Please also update line 8 in .github/workflows/build_binary_images.yml
+  FBPCF_VERSION: 2.1.73  # Please also update line 8 in .github/workflows/build_fbpcs_images.yml
+  PID_VERSION: 0.0.4
 
 jobs:
   ### Build and publish rc/onedocker image
@@ -49,7 +50,7 @@ jobs:
 
       - name: Build onedocker image in rc
         run: |
-          ./build-docker.sh onedocker -t ${{github.event.inputs.new_tag}} -f -p linux/amd64 -v ${{ env.FBPCF_VERSION }}
+          ./build-docker.sh onedocker -t ${{github.event.inputs.new_tag}} -f -p linux/amd64 -v ${{ env.FBPCF_VERSION }} -i ${{ env.PID_VERSION }}
 
       - name: Log into registry ${{ env.REGISTRY }}
         uses: docker/login-action@v1
