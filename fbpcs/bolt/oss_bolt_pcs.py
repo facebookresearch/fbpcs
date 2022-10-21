@@ -23,6 +23,7 @@ from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.pce_config import PCEConfig
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.post_processing_data import PostProcessingData
 
 from fbpcs.private_computation.entity.product_config import (
@@ -188,6 +189,14 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
         )
         return state
 
+    async def has_feature(self, instance_id: str, feature: PCSFeature) -> bool:
+
+        loop = asyncio.get_running_loop()
+        pc_instance = await loop.run_in_executor(
+            None, self.pcs.get_instance, instance_id
+        )
+        return pc_instance.has_feature(feature)
+
     async def validate_results(
         self, instance_id: str, expected_result_path: Optional[str] = None
     ) -> bool:
@@ -219,10 +228,9 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
                 )
                 return True
 
-    # canceling stages is not properly supported
-    # async def cancel_current_stage(self, instance_id: str) -> None:
-    #     loop = asyncio.get_running_loop()
-    #     await loop.run_in_executor(None, self.pcs.cancel_current_stage, instance_id)
+    async def cancel_current_stage(self, instance_id: str) -> None:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self.pcs.cancel_current_stage, instance_id)
 
     async def get_or_create_instance(
         self, instance_args: BoltPCSCreateInstanceArgs

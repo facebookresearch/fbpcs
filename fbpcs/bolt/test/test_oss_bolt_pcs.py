@@ -30,6 +30,7 @@ from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
@@ -143,6 +144,7 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             concurrency=self.test_concurrency,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             hmac_key=self.test_hmac_key,
+            pcs_features=[PCSFeature.PCS_DUMMY.value],
         )
 
     async def test_create_instance(self) -> None:
@@ -150,52 +152,30 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(return_id, self.test_instance_id)
 
     @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService.get_instance"
+    )
+    async def test_has_feature(self, mock_get_instance) -> None:
+        # mock pc get_instancwe to return a pc instance with specific test status, instances and features.
+        mock_get_instance.return_value = self._get_test_instance()
+        for pcs_feature, expected_result in [
+            (PCSFeature.PCS_DUMMY, True),
+            (PCSFeature.PRIVATE_LIFT_PCF2_RELEASE, False),
+        ]:
+            with self.subTest(
+                pcs_feature=pcs_feature,
+                expected_result=expected_result,
+            ):
+                is_feature_enabled = await self.bolt_pcs_client.has_feature(
+                    self.test_instance_id, pcs_feature
+                )
+                self.assertEqual(is_feature_enabled, expected_result)
+
+    @mock.patch(
         "fbpcs.private_computation.service.private_computation.PrivateComputationService.update_instance"
     )
     async def test_update_instance(self, mock_update) -> None:
         # mock pc update_instance to return a pc instance with specific test status and instances
-        stage_state_instance = StageStateInstance(
-            instance_id="stage_state_instance",
-            stage_name="test_stage",
-            status=StageStateInstanceStatus.COMPLETED,
-            containers=[
-                ContainerInstance(
-                    instance_id="test_container_instance",
-                    ip_address="10.0.10.242",
-                    status=ContainerInstanceStatus.COMPLETED,
-                )
-            ],
-        )
-        infra_config: InfraConfig = InfraConfig(
-            instance_id=self.test_instance_id,
-            role=self.test_role,
-            status=PrivateComputationInstanceStatus.CREATED,
-            status_update_ts=0,
-            instances=[stage_state_instance],
-            game_type=self.test_game_type,
-            num_pid_containers=self.test_num_containers,
-            num_mpc_containers=self.test_num_containers,
-            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
-            status_updates=[],
-        )
-        common: CommonProductConfig = CommonProductConfig(
-            input_path=self.test_input_path,
-            output_dir=self.test_output_path,
-        )
-        product_config: ProductConfig
-        if self.test_game_type is PrivateComputationGameType.ATTRIBUTION:
-            product_config = AttributionConfig(
-                common=common,
-                attribution_rule=AttributionRule.LAST_CLICK_1D,
-                aggregation_type=AggregationType.MEASUREMENT,
-            )
-        elif self.test_game_type is PrivateComputationGameType.LIFT:
-            product_config = LiftConfig(common=common)
-        test_instance = PrivateComputationInstance(
-            infra_config=infra_config,
-            product_config=product_config,
-        )
-        mock_update.return_value = test_instance
+        mock_update.return_value = self._get_test_instance()
         return_state = await self.bolt_pcs_client.update_instance(
             instance_id=self.test_instance_id,
         )
@@ -268,3 +248,48 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
                     self.bolt_instance_args
                 )
                 self.assertEqual(expected_result, actual_result)
+
+    def _get_test_instance(self) -> PrivateComputationInstance:
+        stage_state_instance = StageStateInstance(
+            instance_id="stage_state_instance",
+            stage_name="test_stage",
+            status=StageStateInstanceStatus.COMPLETED,
+            containers=[
+                ContainerInstance(
+                    instance_id="test_container_instance",
+                    ip_address="10.0.10.242",
+                    status=ContainerInstanceStatus.COMPLETED,
+                )
+            ],
+        )
+        infra_config: InfraConfig = InfraConfig(
+            instance_id=self.test_instance_id,
+            role=self.test_role,
+            status=PrivateComputationInstanceStatus.CREATED,
+            status_update_ts=0,
+            instances=[stage_state_instance],
+            game_type=self.test_game_type,
+            num_pid_containers=self.test_num_containers,
+            num_mpc_containers=self.test_num_containers,
+            num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
+            status_updates=[],
+            pcs_features={PCSFeature.PCS_DUMMY},
+        )
+        common: CommonProductConfig = CommonProductConfig(
+            input_path=self.test_input_path,
+            output_dir=self.test_output_path,
+        )
+        product_config: ProductConfig
+        if self.test_game_type is PrivateComputationGameType.ATTRIBUTION:
+            product_config = AttributionConfig(
+                common=common,
+                attribution_rule=AttributionRule.LAST_CLICK_1D,
+                aggregation_type=AggregationType.MEASUREMENT,
+            )
+        elif self.test_game_type is PrivateComputationGameType.LIFT:
+            product_config = LiftConfig(common=common)
+        test_instance = PrivateComputationInstance(
+            infra_config=infra_config,
+            product_config=product_config,
+        )
+        return test_instance

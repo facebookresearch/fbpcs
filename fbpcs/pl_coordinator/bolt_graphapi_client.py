@@ -18,6 +18,7 @@ from fbpcs.pl_coordinator.exceptions import (
     GraphAPIGenericException,
     GraphAPITokenNotFound,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -196,6 +197,16 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         else:
             self.logger.info("instance_id is empty, fetching a valid one")
             return False
+
+    async def has_feature(self, instance_id: str, feature: PCSFeature) -> bool:
+        response = json.loads((await self.get_instance(instance_id)).text)
+        feature_list = response.get("feature_list")
+        if feature_list:
+            pcs_feature_enums = {
+                PCSFeature.from_str(feature) for feature in feature_list
+            }
+            return feature in pcs_feature_enums
+        return False
 
     async def get_instance(self, instance_id: str) -> requests.Response:
         r = requests.get(f"{self.graphapi_url}/{instance_id}", self.params)
