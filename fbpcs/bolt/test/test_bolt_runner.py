@@ -290,7 +290,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     mock_partner_run_stage.assert_called_once()
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
-    async def test_wait_stage_complete(self, mock_sleep) -> None:
+    @mock.patch("fbpcs.bolt.bolt_client.BoltClient.has_feature")
+    async def test_wait_stage_complete(self, mock_sleep, mock_has_feature) -> None:
         for (
             stage,
             publisher_statuses,
@@ -298,6 +299,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             result,
         ) in self._get_wait_stage_complete_data():
             self.test_runner.partner_client.cancel_current_stage = mock.AsyncMock()
+            mock_has_feature.return_value = True
             with self.subTest(
                 stage=stage,
                 publisher_statuses=publisher_statuses,
@@ -325,6 +327,9 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                         # make sure it calls cancel_current_stage
                         self.test_runner.partner_client.cancel_current_stage.assert_called_once_with(
                             instance_id="test_part_id"
+                        )
+                        self.test_runner.publisher_client.cancel_current_stage.assert_called_once_with(
+                            instance_id="test_pub_id"
                         )
                     else:
                         self.test_runner.partner_client.cancel_current_stage.assert_not_called()
