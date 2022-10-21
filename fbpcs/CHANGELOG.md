@@ -16,6 +16,7 @@ Types of changes
 ## [Unreleased - 2.4.0] - put release date here
 ### Changed
 * Client max concurrency increased from 3 to 5
+* PID Version pinned to 0.0.4
 
 ## [2.3.0] - 2022-10-12
 

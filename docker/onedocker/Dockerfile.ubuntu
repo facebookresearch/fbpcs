@@ -4,10 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 ARG os_release="20.04"
 ARG tag="latest"
+ARG private_id_tag="latest"
 FROM fbpcs/data-processing:${tag} as data_processing
 FROM fbpcs/emp-games:${tag} as emp_games
-# Tag for private-id is always latest
-FROM ghcr.io/facebookresearch/private-id:latest as private_id
+FROM ghcr.io/facebookresearch/private-id:${private_id_tag} as private_id
 
 FROM ubuntu:${os_release}
 # Set the timezone

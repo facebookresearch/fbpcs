@@ -26,6 +26,7 @@ package:
 -t TAG: tags the image with the given tag (default: latest)
 -p PLATFORM: builds the image to target the given platform (default depends on local system) - requires Docker Engine API 1.40+
 -v FBPCF_VERSION: base FBPCF version to use
+-i PID_VERSION: The version of PID to use when building the OneDocker Container
 EOF
   exit 1
 }
@@ -46,7 +47,8 @@ FORCE_EXTERNAL=false
 USE_GCP=false
 PLATFORM=""
 FBPCF_VERSION="latest"
-while getopts "u,f,g,t:,p:,v:" o; do
+PID_VERSION="latest"
+while getopts "u,f,g,t:,p:,v:,i:" o; do
   case $o in
     (u) OS_VARIANT="ubuntu"
         OS_RELEASE=${UBUNTU_RELEASE}
@@ -56,6 +58,7 @@ while getopts "u,f,g,t:,p:,v:" o; do
     (t) TAG=$OPTARG;;
     (p) PLATFORM=$OPTARG;;
     (v) FBPCF_VERSION=$OPTARG;;
+    (i) PID_VERSION=$OPTARG;;
     (*) usage
   esac
 done
@@ -108,6 +111,7 @@ for P in $PACKAGE; do
     --build-arg tag="${TAG}" \
     --build-arg os_release="${OS_RELEASE}" \
     --build-arg fbpcf_image="${FBPCF_IMAGE}" \
+    --build-arg private_id_tag="${PID_VERSION}" \
     --compress \
     -t "${IMAGE_PREFIX}${DOCKER_PACKAGE}:${TAG}" -f "docker/${P}/Dockerfile${DOCKER_EXTENSION}" \
     "${opt_params[@]}" .
