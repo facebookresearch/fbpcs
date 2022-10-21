@@ -261,28 +261,26 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
     async def test_auto_stage_retry_one_sided_failure(
         self, mock_get_stage_flow, mock_next_stage, mock_sleep
     ) -> None:
-        mock_get_stage_flow.return_value = DummyNonJointStageFlow
-        test_publisher_id = "test_pub_id"
-        test_partner_id = "test_part_id"
-        self.test_runner.publisher_client.get_or_create_instance = mock.AsyncMock(
-            return_value=test_publisher_id
-        )
-        self.test_runner.partner_client.get_or_create_instance = mock.AsyncMock(
-            return_value=test_partner_id
-        )
-        for failing_side in ("publisher", "partner"):
-            (
-                mock_publisher_run_stage,
-                mock_partner_run_stage,
-                test_job,
-            ) = self._prepare_one_sided_failure_retry(failing_side=failing_side)
-            mock_next_stage.return_value = list(DummyNonJointStageFlow)[1]
-            with self.subTest(failing_side=failing_side):
+        stage = DummyNonJointStageFlow.NON_JOINT_STAGE
+        for publisher_fails in (True, False):
+            with self.subTest(publisher_fails=publisher_fails):
+                mock_publisher_run_stage = mock.AsyncMock()
+                mock_partner_run_stage = mock.AsyncMock()
+                self.test_runner.publisher_client.run_stage = mock_publisher_run_stage
+                self.test_runner.partner_client.run_stage = mock_partner_run_stage
+                self.test_runner.publisher_client.should_invoke_stage = mock.AsyncMock(
+                    return_value=publisher_fails
+                )
+                self.test_runner.partner_client.should_invoke_stage = mock.AsyncMock(
+                    return_value=not publisher_fails
+                )
                 # if one side fails but the other doesn't and it's not a joint stage,
                 # only the failing side should retry. The joint stage case involves cancelling,
                 # which is tested separately
-                await self.test_runner.run_async([test_job])
-                if failing_side == "publisher":
+                await self.test_runner.run_next_stage(
+                    "publisher_id", "partner_id", stage, poll_interval=5
+                )
+                if publisher_fails:
                     mock_publisher_run_stage.assert_called_once()
                     mock_partner_run_stage.assert_not_called()
                 else:
@@ -462,56 +460,6 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                         job=test_job,
                         stage_flow=PrivateComputationStageFlow,
                     )
-
-    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
-    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
-    def _prepare_one_sided_failure_retry(
-        self, mock_publisher_args, mock_partner_args, failing_side: str
-    ) -> Tuple[mock.AsyncMock, mock.AsyncMock, BoltJob]:
-        mock_publisher_run_stage = mock.AsyncMock()
-        mock_partner_run_stage = mock.AsyncMock()
-        self.test_runner.publisher_client.run_stage = mock_publisher_run_stage
-        self.test_runner.partner_client.run_stage = mock_partner_run_stage
-        if failing_side == "publisher":
-            self.test_runner.publisher_client.update_instance = mock.AsyncMock(
-                side_effect=[
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                ]
-            )
-            self.test_runner.partner_client.update_instance = mock.AsyncMock(
-                side_effect=[
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                ]
-            )
-        if failing_side == "partner":
-            self.test_runner.publisher_client.update_instance = mock.AsyncMock(
-                side_effect=[
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                ]
-            )
-            self.test_runner.partner_client.update_instance = mock.AsyncMock(
-                side_effect=[
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_STARTED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_FAILED),
-                    BoltState(PrivateComputationInstanceStatus.PID_SHARD_COMPLETED),
-                ]
-            )
-        test_job = BoltJob(
-            job_name="test",
-            publisher_bolt_args=mock_publisher_args,
-            partner_bolt_args=mock_partner_args,
-        )
-        return mock_publisher_run_stage, mock_partner_run_stage, test_job
 
     def _prepare_mock_client_functions(
         self,

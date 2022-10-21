@@ -175,27 +175,11 @@ class BoltRunner(Generic[T, U]):
         logger: Optional[logging.Logger] = None,
     ) -> None:
         logger = logger or self.logger
-        publisher_status = (
-            await self.publisher_client.update_instance(publisher_id)
-        ).pc_instance_status
-        if publisher_status not in [
-            stage.started_status,
-            stage.initialized_status,
-            stage.completed_status,
-        ]:
-            # don't retry if started, initialized, or completed status
+        if await self.publisher_client.should_invoke_stage(publisher_id, stage):
             logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
 
-        partner_status = (
-            await self.partner_client.update_instance(partner_id)
-        ).pc_instance_status
-        if partner_status not in [
-            stage.started_status,
-            stage.initialized_status,
-            stage.completed_status,
-        ]:
-            # don't retry if started, initialized, or completed status
+        if await self.partner_client.should_invoke_stage(partner_id, stage):
             server_ips = None
             if stage.is_joint_stage:
                 server_ips = await self.get_server_ips_after_start(

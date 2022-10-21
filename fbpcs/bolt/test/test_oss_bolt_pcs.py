@@ -293,3 +293,26 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             product_config=product_config,
         )
         return test_instance
+
+    async def test_should_invoke(self) -> None:
+        stage = PrivateComputationStageFlow.ID_MATCH
+        for status, expected_result in (
+            (PrivateComputationInstanceStatus.PID_PREPARE_COMPLETED, True),
+            (PrivateComputationInstanceStatus.ID_MATCHING_STARTED, False),
+            (
+                PrivateComputationInstanceStatus.ID_MATCHING_INITIALIZED,
+                False,
+            ),
+            (PrivateComputationInstanceStatus.ID_MATCHING_FAILED, True),
+            (PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED, False),
+            (PrivateComputationInstanceStatus.PROCESSING_REQUEST, False),
+            (PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED, False),
+        ):
+            with self.subTest(status=status, expected_result=expected_result):
+                self.bolt_pcs_client.update_instance = mock.AsyncMock(
+                    return_value=BoltState(status)
+                )
+                actual_result = await self.bolt_pcs_client.should_invoke_stage(
+                    "instance_id", stage
+                )
+                self.assertEqual(expected_result, actual_result)
