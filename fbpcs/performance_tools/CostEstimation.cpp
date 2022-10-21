@@ -134,7 +134,9 @@ void CostEstimation::calculateCost() {
   double ecr_cost = binarySizeInGB * ECR_PER_GB_COST;
   // Total estimated cost
   estimatedCost_ = cpu_cost + memory_cost + network_cost + ecr_cost;
-  calculateCostCheckPoints();
+  if (checkPoints_ > 0) {
+    calculateCostCheckPoints();
+  }
 }
 
 std::unordered_map<std::string, long> CostEstimation::readNetworkSnapshot() {
