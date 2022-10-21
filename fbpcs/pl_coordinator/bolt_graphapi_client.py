@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
 import json
 import logging
 import os
@@ -18,6 +19,7 @@ from fbpcs.pl_coordinator.exceptions import (
     GraphAPIGenericException,
     GraphAPITokenNotFound,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -196,6 +198,14 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         else:
             self.logger.info("instance_id is empty, fetching a valid one")
             return False
+
+    async def has_feature(self, instance_id: str, feature: PCSFeature) -> bool:
+        response = json.loads((await self.get_instance(instance_id)).text)
+        feature_list = response.get("feature_list")
+        if feature_list:
+            if feature.value in feature_list:
+                return True
+        return False
 
     async def get_instance(self, instance_id: str) -> requests.Response:
         r = requests.get(f"{self.graphapi_url}/{instance_id}", self.params)

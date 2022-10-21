@@ -295,6 +295,10 @@ class BoltRunner(Generic[T, U]):
                                 instance_id=partner_id
                             ),
                         )
+                        await self.publisher_client.cancel_current_stage(
+                            instance_id=publisher_id
+                        )
+
                     except Exception as e:
                         logger.error(
                             f"Unable to cancel current stage {stage.name}. Error: type: {type(e)}, message: {e}."

@@ -19,6 +19,7 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltPLGraphAPICreateInstanceArgs,
 )
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -180,6 +181,24 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             PrivateComputationInstanceStatus.COMPUTATION_STARTED,
         )
         self.assertEqual(state.server_ips, "1.1.1.1")
+
+    @patch(
+        "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient.get_instance",
+        new_callable=AsyncMock,
+    )
+    def test_bolt_has_feature(self, mock_get_instance) -> None:
+        data = {"status": 200, "feature_list": [PCSFeature.PCS_DUMMY.value]}
+        mock_get_instance.return_value = self._get_graph_api_output(data)
+        for pcs_feature, expected_result in [
+            (PCSFeature.PCS_DUMMY, True),
+            (PCSFeature.PRIVATE_LIFT_PCF2_RELEASE, False),
+        ]:
+            with self.subTest(
+                pcs_feature=pcs_feature,
+                expected_result=expected_result,
+            ):
+                is_feature_enabled = self.test_client.has_feature("id,", pcs_feature)
+                self.assertEqual(is_feature_enabled, expected_result)
 
     async def test_validate_results_without_path(self) -> None:
         valid = await self.test_client.validate_results("id")

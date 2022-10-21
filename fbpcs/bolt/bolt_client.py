@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Generic, List, Optional, Type, TypeVar
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -63,6 +64,10 @@ class BoltClient(ABC, Generic[T]):
 
     @abstractmethod
     async def update_instance(self, instance_id: str) -> BoltState:
+        pass
+
+    @abstractmethod
+    async def has_feature(self, instance_id: str, feature: PCSFeature) -> bool:
         pass
 
     @abstractmethod
