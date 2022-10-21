@@ -28,6 +28,7 @@ from fbpcs.bolt.exceptions import (
     WaitValidStatusTimeout,
 )
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSCreateInstanceArgs
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -283,18 +284,22 @@ class BoltRunner(Generic[T, U]):
                 # stage failed, cancel publisher and partner side only in joint stage
                 if stage.is_joint_stage:
                     try:
-                        logger.error(
-                            f"Publisher status: {publisher_state.pc_instance_status}. Canceling publisher and partner stage {stage.name}."
+                        is_coretry_enabled = await self.partner_client.has_feature(
+                            partner_id, PCSFeature.PC_COORDINATED_RETRY
                         )
+                        if is_coretry_enabled:
+                            logger.error(
+                                f"Publisher status: {publisher_state.pc_instance_status}. Canceling publisher and partner stage {stage.name}."
+                            )
+                            await asyncio.gather(
+                                self.publisher_client.cancel_current_stage(
+                                    instance_id=publisher_id
+                                ),
+                                self.partner_client.cancel_current_stage(
+                                    instance_id=partner_id
+                                ),
+                            )
 
-                        await asyncio.gather(
-                            self.publisher_client.cancel_current_stage(
-                                instance_id=publisher_id
-                            ),
-                            self.partner_client.cancel_current_stage(
-                                instance_id=partner_id
-                            ),
-                        )
                     except Exception as e:
                         logger.error(
                             f"Unable to cancel current stage {stage.name}. Error: type: {type(e)}, message: {e}."
