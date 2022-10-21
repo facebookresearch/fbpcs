@@ -88,6 +88,17 @@ class BoltClient(ABC, Generic[T]):
         return status in [
             previous_stage.completed_status if previous_stage else None,
             stage.started_status,
+            stage.initialized_status,
+            stage.failed_status,
+        ]
+
+    async def should_invoke_stage(
+        self, instance_id: str, stage: PrivateComputationBaseStageFlow
+    ) -> bool:
+        previous_stage = stage.previous_stage
+        status = (await self.update_instance(instance_id)).pc_instance_status
+        return status in [
+            previous_stage.completed_status if previous_stage else None,
             stage.failed_status,
         ]
 
