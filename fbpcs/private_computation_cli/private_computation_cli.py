@@ -111,7 +111,8 @@ def transform_path(path_to_check: str) -> str:
     """
     # If the file exists on the local system,
     # the path is good and nothing else to do
-    if os.path.exists(path_to_check):
+    # Short term fix for checking if the GCS path is valid.
+    if os.path.exists(path_to_check) or "storage.cloud.google.com" in path_to_check:
         return path_to_check
     # Otherwise, check if the path is an S3 path and
     # carry out any necessary transformation into virtual-hosted format
