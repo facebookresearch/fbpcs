@@ -123,10 +123,14 @@ validateDeploymentResources () {
     then
         echo "PCE validator found some issue..please analyze further to debug the issue"
         log_streaming_data "validator might have found some issue..please analyze the logs further to debug the issue"
+    elif [ "$SHOULD_SKIP_VPC_PEERING_VALIDATION" -ne 0 ]
+        then
+        log_streaming_data "PCE validation successful"
     else
         log_streaming_data "PCE validation successful"
         log_streaming_data "Action: Please contact META representative to accept the VPC peering request using META's AWS account"
     fi
+
     echo "##### validating through PCE validator end"
 }
 

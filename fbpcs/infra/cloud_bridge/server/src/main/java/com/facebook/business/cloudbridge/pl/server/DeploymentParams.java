@@ -27,6 +27,7 @@ public class DeploymentParams {
   public String awsAccessKeyId;
   public String awsSecretAccessKey;
   public String awsSessionToken;
+  public String publisherPCEId;
   private final Logger logger = LoggerFactory.getLogger(DeploymentParams.class);
 
   enum LogLevel {
@@ -177,6 +178,8 @@ public class DeploymentParams {
             .append(", Data Storage: ")
             .append(dataStorage)
             .append(", Tag: ")
+            .append(", publisherPCEId: ")
+            .append(publisherPCEId)
             .append(tag)
             .append(", Enable Semi-Automated Data Ingestion: ")
             .append(String.valueOf(enableSemiAutomatedDataIngestion));
