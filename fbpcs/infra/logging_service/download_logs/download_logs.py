@@ -127,13 +127,13 @@ class AwsContainerLogs(AwsCloud):
             # store logs in local
             self.utils.create_folder(folder_location=local_folder_location)
 
-            if enable_data_pipeline_logs:
-                # upload computation run container logs
-                self._upload_computation_run_container_logs(
-                    container_arn_list=container_arn_list,
-                    local_log_folder_location=local_folder_location,
-                )
+            # upload computation run container logs
+            self._upload_computation_run_container_logs(
+                container_arn_list=container_arn_list,
+                local_log_folder_location=local_folder_location,
+            )
 
+            if enable_data_pipeline_logs:
                 # upload kinesis firehose error and config logs
                 self._upload_kinesis_logs(
                     local_log_folder_location=local_folder_location
@@ -186,6 +186,9 @@ class AwsContainerLogs(AwsCloud):
         """
         Uploads computation run stage container logs from AWS cloudwatch to S3
         """
+        self.log.info(
+            f"Downloading worker container logs. Containers: {len(container_arn_list)}"
+        )
         # Call threading function to download logs locally and upload to S3
         computaion_run_container_log_folder = self.utils.string_formatter(
             StringFormatter.FILE_LOCATION,
@@ -642,6 +645,6 @@ class AwsContainerLogs(AwsCloud):
         """
         Copy logs from temp dir for local debugging
         """
-        self.log.info(f"Copying compressed logs to {destination}")
+        self.log.info(f"Copying compressed logs from {source} to {destination}")
         self.utils.copy_file(source=source, destination=destination)
         self.log.info(f"Copied compressed logs to {destination}")
