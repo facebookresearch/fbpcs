@@ -10,6 +10,7 @@ package com.facebook.business.cloudbridge.pl.server;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.io.*;
 import java.util.*;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +122,9 @@ public class DeploymentRunner extends Thread {
     environmentVariables = new HashMap<String, String>();
     environmentVariables.put("AWS_ACCESS_KEY_ID", deployment.awsAccessKeyId);
     environmentVariables.put("AWS_SECRET_ACCESS_KEY", deployment.awsSecretAccessKey);
+    environmentVariables.put(
+        "SHOULD_SKIP_VPC_PEERING_VALIDATION",
+        StringUtils.isEmpty(deployment.publisherPCEId) ? "1" : "0");
     if (!deployment.awsSessionToken.isEmpty()) {
       environmentVariables.put("AWS_SESSION_TOKEN", deployment.awsSessionToken);
     }
