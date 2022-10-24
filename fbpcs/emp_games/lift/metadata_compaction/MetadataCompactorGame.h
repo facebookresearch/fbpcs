@@ -7,7 +7,10 @@
 
 #pragma once
 
+#include "fbpcs/data_processing/unified_data_process/adapter/AdapterFactory.h"
+#include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessorFactory.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/IMetadataCompactorGame.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/CompactionBasedInputProcessor.h"
 
 namespace private_lift {
 
@@ -17,18 +20,38 @@ class MetadataCompactorGame : public IMetadataCompactorGame<schedulerId>,
  public:
   MetadataCompactorGame<schedulerId>(
       const int party,
-      std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler)
+      std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler,
+      fbpcf::engine::communication::IPartyCommunicationAgentFactory&
+          agentFactory)
       : fbpcf::frontend::MpcGame<schedulerId>(std::move(scheduler)),
-        party_{party} {}
+        party_{party},
+        agentFactory_{agentFactory} {}
 
   std::unique_ptr<IInputProcessor<schedulerId>> play(
       InputData inputData,
       int32_t numConversionPerUser) override {
-    throw std::runtime_error("Not implemented");
+    int partnerParty =
+        party_ == common::PUBLISHER ? common::PARTNER : common::PUBLISHER;
+    auto adapter = unified_data_process::adapter::
+                       getAdapterFactoryWithAsWaksmanBasedShuffler<schedulerId>(
+                           party_ == common::PUBLISHER, party_, partnerParty)
+                           ->create();
+    auto dataProcessor =
+        unified_data_process::data_processor::getDataProcessorFactoryWithAesCtr<
+            schedulerId>(party_, partnerParty, agentFactory_)
+            ->create();
+
+    return std::make_unique<CompactionBasedInputProcessor<schedulerId>>(
+        party_,
+        std::move(adapter),
+        std::move(dataProcessor),
+        inputData,
+        numConversionPerUser);
   }
 
  private:
   const int party_;
+  fbpcf::engine::communication::IPartyCommunicationAgentFactory& agentFactory_;
 };
 
 } // namespace private_lift

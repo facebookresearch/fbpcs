@@ -16,6 +16,7 @@
 
 #include "fbpcs/emp_games/lift/metadata_compaction/DummyMetadataCompactorGameFactory.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorApp.h"
+
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/SecretShareInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/GenFakeData.h"
 

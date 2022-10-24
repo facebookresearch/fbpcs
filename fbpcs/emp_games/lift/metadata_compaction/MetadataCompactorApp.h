@@ -21,7 +21,7 @@ class MetadataCompactorApp {
  public:
   MetadataCompactorApp(
       int party,
-      std::unique_ptr<
+      std::shared_ptr<
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>
           communicationAgentFactory,
       std::unique_ptr<IMetadataCompactorGameFactory<schedulerId>>
@@ -59,7 +59,7 @@ class MetadataCompactorApp {
       std::unique_ptr<fbpcf::scheduler::IScheduler>,
       int)>
       metadataCompactorGameCreator_;
-  std::unique_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+  std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
       communicationAgentFactory_;
   std::unique_ptr<IMetadataCompactorGameFactory<schedulerId>>
       compactorGameFactory_;
