@@ -242,6 +242,7 @@ def run_attribution(
             num_files_per_mpc_container=num_files_per_mpc_container,
             k_anonymity_threshold=k_anonymity_threshold,
             pcs_features=pcs_features,
+            pid_configs=config["pid"],
             run_id=run_id,
         )
     )
