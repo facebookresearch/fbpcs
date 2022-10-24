@@ -13,7 +13,9 @@ Types of changes
 - `Security` in case This project adheres to
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 2.4.0] - put release date here
+## [Unreleased - 2.5.0] - put release date here
+
+## [2.4.0] - 2022-10-24
 ### Changed
 * Client max concurrency increased from 3 to 5
 * PID Version pinned to 0.0.4
