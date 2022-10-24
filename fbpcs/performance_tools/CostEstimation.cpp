@@ -121,13 +121,14 @@ void CostEstimation::calculateCostCheckPoints() {
 
 void CostEstimation::calculateCost() {
   // CPU cost
-  double cpu_cost = vCPUS * (PER_CPU_HOUR_COST / 60) * (runningTimeInSec_ / 60);
+  double cpu_cost =
+      vCPUS * (PER_CPU_HOUR_COST / 60) * ((double)runningTimeInSec_ / 60);
   // Memory cost
   double memory_cost =
-      MEMORY_SIZE * (PER_GB_HOUR_COST / 60) * (runningTimeInSec_ / 60);
+      MEMORY_SIZE * (PER_GB_HOUR_COST / 60) * ((double)runningTimeInSec_ / 60);
   // Network cost
   double network_cost =
-      (((networkRXBytes_ + networkTXBytes_) / 1024) / 1024 / 1024) *
+      (((double)(networkRXBytes_ + networkTXBytes_) / 1024) / 1024 / 1024) *
       NETWORK_PER_GB_COST;
   // ECR cost
   double binarySizeInGB = 0.2; // The PA binary file is about ~200MB

@@ -16,9 +16,9 @@ namespace fbpcs::performance_tools {
 const int64_t MEMORY_SIZE = 30;
 const int64_t vCPUS = 4;
 const double PER_CPU_HOUR_COST =
-    0.04656; // Source: https://aws.amazon.com/fargate/pricing/
+    0.04048; // Source: https://aws.amazon.com/fargate/pricing/
 const double PER_GB_HOUR_COST =
-    0.00511; // Source: https://aws.amazon.com/fargate/pricing/
+    0.004445; // Source: https://aws.amazon.com/fargate/pricing/
 const double NETWORK_PER_GB_COST = 0.01;
 const double ECR_PER_GB_COST =
     0.01; // Source: https://aws.amazon.com/ecr/pricing/
