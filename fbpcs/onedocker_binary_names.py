@@ -12,6 +12,7 @@ from enum import Enum
 class OneDockerBinaryNames(Enum):
     ATTRIBUTION_ID_SPINE_COMBINER = "data_processing/attribution_id_combiner"
     LIFT_ID_SPINE_COMBINER = "data_processing/lift_id_combiner"
+    PRIVATE_ID_DFCA_SPINE_COMBINER = "data_processing/private_id_dfca_id_combiner"
     SHARDER = "data_processing/sharder"
     SHARDER_HASHED_FOR_PID = "data_processing/sharder_hashed_for_pid"
     UNION_PID_PREPARER = "data_processing/pid_preparer"
@@ -35,5 +36,7 @@ class OneDockerBinaryNames(Enum):
     LIFT_COMPUTE = "private_lift/lift"
     PCF2_LIFT = "private_lift/pcf2_lift"
     PCF2_LIFT_METADATA_COMPACTION = "private_lift/pcf2_lift_metadata_compaction"
+
+    PRIVATE_ID_DFCA_AGGREGATOR = "private_id_dfca/private_id_dfca_aggregator"
 
     PC_PRE_VALIDATION = "validation/pc_pre_validation_cli"

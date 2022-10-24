@@ -262,6 +262,10 @@ class PrivateComputationInstance(InstanceBase):
     def pcf2_shard_combine_stage_output_path(self) -> str:
         return self._get_stage_output_path("pcf2_shard_combiner_stage", "json")
 
+    @property
+    def private_id_dfca_aggregate_stage_output_path(self) -> str:
+        return self._get_stage_output_path("private_id_dfca_aggregation_stage", "csv")
+
     def _get_stage_output_path(self, stage: str, extension_type: str) -> str:
         return os.path.join(
             self.product_config.common.output_dir,

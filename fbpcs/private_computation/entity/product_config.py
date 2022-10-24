@@ -143,3 +143,14 @@ class LiftConfig(ProductConfig):
         default=None,
         metadata=DataclassHookMixin.get_metadata(frozen_breakdown_key_hook),
     )
+
+
+@dataclass_json
+@dataclass
+class PrivateIdDfcaConfig(ProductConfig):
+    """Stores metadata of private id dfca config in product config in a private computation instance
+
+    Public attributes:
+    """
+
+    pass
