@@ -125,6 +125,12 @@ class PrivateComputationServiceData:
         service=None,
     )
 
+    PRIVATE_ID_DFCA_COMBINER_STAGE_DATA: StageData = StageData(
+        binary_name=OneDockerBinaryNames.PRIVATE_ID_DFCA_SPINE_COMBINER.value,
+        game_name=None,
+        service=IdSpineCombinerService(),
+    )
+
     @classmethod
     def get(
         cls, game_type: PrivateComputationGameType
@@ -138,6 +144,11 @@ class PrivateComputationServiceData:
             return cls(
                 combiner_stage=PrivateComputationServiceData.ATTRIBUTION_COMBINER_STAGE_DATA,
                 compute_stage=PrivateComputationServiceData.DECOUPLED_ATTRIBUTION_STAGE_DATA,
+            )
+        elif game_type is PrivateComputationGameType.PRIVATE_ID_DFCA:
+            return cls(
+                combiner_stage=PrivateComputationServiceData.PRIVATE_ID_DFCA_COMBINER_STAGE_DATA,
+                compute_stage=StageData(""),
             )
         else:
             raise ValueError("Unknown game type")

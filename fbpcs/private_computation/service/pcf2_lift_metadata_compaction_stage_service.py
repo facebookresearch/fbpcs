@@ -13,6 +13,7 @@ from fbpcp.service.mpc import MPCService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -24,7 +25,7 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.service.argument_helper import get_tls_arguments
 from fbpcs.private_computation.service.constants import (
     DEFAULT_LOG_COST_TO_S3,
-    LIFT_DEFAULT_PADDING_SIZE,
+    DEFAULT_PADDING_SIZE,
 )
 
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
@@ -57,7 +58,9 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
         self,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         mpc_service: MPCService,
-        padding_size: int = LIFT_DEFAULT_PADDING_SIZE,
+        padding_size: Optional[int] = DEFAULT_PADDING_SIZE[
+            PrivateComputationGameType.LIFT
+        ],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         container_timeout: Optional[int] = None,
     ) -> None:

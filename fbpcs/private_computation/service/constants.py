@@ -6,7 +6,11 @@
 
 # pyre-strict
 
+import typing
+
 from fbpcs.pid.entity.pid_instance import PIDProtocol
+
+from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 
 """
 43200 s = 12 hrs
@@ -32,8 +36,11 @@ DEFAULT_PID_PROTOCOL: PIDProtocol = PIDProtocol.UNION_PID
 DEFAULT_HMAC_KEY: str = ""
 DEFAULT_CONCURRENCY = 4
 ATTRIBUTION_TEST_CONCURRENCY = 1
-LIFT_DEFAULT_PADDING_SIZE = 25
-ATTRIBUTION_DEFAULT_PADDING_SIZE = 4
+DEFAULT_PADDING_SIZE: typing.Dict[PrivateComputationGameType, typing.Optional[int]] = {
+    PrivateComputationGameType.LIFT: 25,
+    PrivateComputationGameType.ATTRIBUTION: 4,
+    PrivateComputationGameType.PRIVATE_ID_DFCA: None,
+}
 DEFAULT_LOG_COST_TO_S3 = True
 DEFAULT_SORT_STRATEGY = "sort"
 DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT = 6

@@ -52,6 +52,7 @@ from fbpcs.private_computation.entity.product_config import (
     AttributionRule,
     CommonProductConfig,
     LiftConfig,
+    PrivateIdDfcaConfig,
     ProductConfig,
     ResultVisibility,
 )
@@ -59,12 +60,11 @@ from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
 from fbpcs.private_computation.service.constants import (
-    ATTRIBUTION_DEFAULT_PADDING_SIZE,
     DEFAULT_CONCURRENCY,
     DEFAULT_HMAC_KEY,
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
-    LIFT_DEFAULT_PADDING_SIZE,
+    DEFAULT_PADDING_SIZE,
     NUM_NEW_SHARDS_PER_FILE,
 )
 from fbpcs.private_computation.service.errors import (
@@ -243,9 +243,7 @@ class PrivateComputationService:
             hmac_key=unwrap_or_default(optional=hmac_key, default=DEFAULT_HMAC_KEY),
             padding_size=unwrap_or_default(
                 optional=padding_size,
-                default=LIFT_DEFAULT_PADDING_SIZE
-                if game_type is PrivateComputationGameType.LIFT
-                else ATTRIBUTION_DEFAULT_PADDING_SIZE,
+                default=DEFAULT_PADDING_SIZE[game_type],
             ),
             result_visibility=result_visibility or ResultVisibility.PUBLIC,
             pid_use_row_numbers=pid_should_use_row_numbers(
@@ -278,6 +276,10 @@ class PrivateComputationService:
                     else DEFAULT_K_ANONYMITY_THRESHOLD_PL,
                 ),
                 breakdown_key=breakdown_key,
+            )
+        elif game_type is PrivateComputationGameType.PRIVATE_ID_DFCA:
+            product_config = PrivateIdDfcaConfig(
+                common=common,
             )
         instance = PrivateComputationInstance(
             infra_config=infra_config,

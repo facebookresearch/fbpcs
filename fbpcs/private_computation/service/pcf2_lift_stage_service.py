@@ -30,7 +30,7 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.service.argument_helper import get_tls_arguments
 from fbpcs.private_computation.service.constants import (
     DEFAULT_LOG_COST_TO_S3,
-    LIFT_DEFAULT_PADDING_SIZE,
+    DEFAULT_PADDING_SIZE,
 )
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
@@ -59,7 +59,9 @@ class PCF2LiftStageService(PrivateComputationStageService):
         self,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         mpc_service: MPCService,
-        padding_size: int = LIFT_DEFAULT_PADDING_SIZE,
+        padding_size: Optional[int] = DEFAULT_PADDING_SIZE[
+            PrivateComputationGameType.LIFT
+        ],
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         container_timeout: Optional[int] = None,
     ) -> None:

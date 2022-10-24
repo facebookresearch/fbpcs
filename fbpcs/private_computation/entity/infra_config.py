@@ -37,7 +37,6 @@ from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
-from fbpcs.private_computation.service.constants import FBPCS_BUNDLE_ID
 from marshmallow import fields
 from marshmallow_enum import EnumField
 
@@ -191,4 +190,5 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
         super().__post_init__()
         # note: The reason can't make it fbpcs_bundle_id = immutable_field(default=os.getenv(FBPCS_BUNDLE_ID)),
         # is because that will happend in static varible when module been loaded, moved it to __post_init__ for better init control
-        self.fbpcs_bundle_id = os.getenv(FBPCS_BUNDLE_ID)
+        # TODO: T135712075 Use constant from fbpcs.private_computation.service.constants, fix circular import
+        self.fbpcs_bundle_id = os.getenv("FBPCS_BUNDLE_ID")
