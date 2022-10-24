@@ -10,7 +10,6 @@
 #include <emmintrin.h>
 #include "fbpcf/engine/communication/IPartyCommunicationAgent.h"
 #include "fbpcf/engine/util/util.h"
-#include "fbpcf/mpc_std_lib/aes_circuit/AesCircuit_impl.h"
 #include "fbpcf/mpc_std_lib/aes_circuit/IAesCircuitCtr.h"
 #include "fbpcs/data_processing/unified_data_process/data_processor/IDataProcessor.h"
 namespace unified_data_process::data_processor {
