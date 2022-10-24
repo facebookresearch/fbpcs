@@ -53,6 +53,11 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
     extractCompactedData();
   }
 
+  const LiftGameProcessedData<schedulerId>& getLiftGameProcessedData()
+      const override {
+    return liftGameProcessedData_;
+  }
+
  private:
   // shuffles the input data and returns the union map
   std::vector<int32_t> shuffleAndGetUnionMap();

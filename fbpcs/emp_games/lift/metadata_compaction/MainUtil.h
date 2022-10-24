@@ -35,7 +35,7 @@ inline common::SchedulerStatistics startMetadataCompactionApp(
           PartyInfo>
       partyInfos({{0, {serverIp, port}}, {1, {serverIp, port}}});
 
-  auto communicationAgentFactory = std::make_unique<
+  auto communicationAgentFactory = std::make_shared<
       fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
       PARTY, partyInfos, tlsInfo, "metadata_compaction_traffic");
 
