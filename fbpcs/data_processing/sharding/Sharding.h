@@ -7,9 +7,12 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include "fbpcf/engine/communication/IPartyCommunicationAgent.h"
 
 namespace data_processing::sharder {
+
 void runShard(
     const std::string& inputFilename,
     const std::string& outputFilenames,
@@ -26,4 +29,16 @@ void runShardPid(
     int32_t numOutputFiles,
     int32_t logEveryN,
     const std::string& hmacBase64Key);
+
+void runSecureRandomShard(
+    const std::string& inputFilename,
+    const std::string& outputFilenames,
+    const std::string& outputBasePath,
+    int32_t fileStartIndex,
+    int32_t numOutputFiles,
+    int32_t logEveryN,
+    bool amISendingFirst,
+    std::unique_ptr<fbpcf::engine::communication::IPartyCommunicationAgent>
+        agent);
+
 } // namespace data_processing::sharder

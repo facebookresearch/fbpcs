@@ -37,4 +37,26 @@ void expectFileRowsEqual(
   // Ensure the file wasn't too *short*
   EXPECT_EQ(idx, rows.size());
 }
+
+std::vector<std::string> getRowsInFile(const std::string& filePath) {
+  std::vector<std::string> rst;
+  std::ifstream iFile{filePath};
+  std::string line;
+  while (std::getline(iFile, line)) {
+    rst.push_back(line);
+  }
+  return rst;
+}
+
+void expectFilesEqual(
+    const std::string& filePath1,
+    const std::string& filePath2) {
+  auto row1 = getRowsInFile(filePath1);
+  auto row2 = getRowsInFile(filePath2);
+  ASSERT_EQ(row1.size(), row2.size());
+  for (size_t i = 0; i < row1.size(); i++) {
+    EXPECT_EQ(row1.at(i), row2.at(i));
+  }
+}
+
 } // namespace data_processing::test_utils
