@@ -26,6 +26,7 @@ class GameNames(Enum):
     DECOUPLED_AGGREGATION = "decoupled_aggregation"
     PCF2_ATTRIBUTION = "pcf2_attribution"
     PCF2_AGGREGATION = "pcf2_aggregation"
+    PRIVATE_ID_DFCA_AGGREGATION = "private_id_dfca_aggregation"
 
 
 @dataclass
@@ -216,6 +217,19 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="ca_cert_path", required=False),
             OneDockerArgument(name="server_cert_path", required=False),
             OneDockerArgument(name="private_key_path", required=False),
+        ],
+    },
+    GameNames.PRIVATE_ID_DFCA_AGGREGATION.value: {
+        "onedocker_package_name": OneDockerBinaryNames.PRIVATE_ID_DFCA_AGGREGATOR.value,
+        "arguments": [
+            OneDockerArgument(name="input_path", required=True),
+            OneDockerArgument(name="output_path", required=True),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
         ],
     },
 }
