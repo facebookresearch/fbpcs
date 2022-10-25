@@ -29,7 +29,7 @@ function usage() {
 https://<s3_conversion_data_file_path_for_objective_2> \
 --log_path=/fbpcs_instances/output.txt"
 
-  example2="$example1 -- --version=latest"
+  example2="$example1 -- --version=latest [--image_version=latest]"
 
   echo "Usage :  $0 [PC-CLI options] -- [$0 options]
     PC-CLI Options:
@@ -122,8 +122,12 @@ function parse_args() {
     case $arg in
       --version=*)
         tag="${arg#*=}"
-        echo "Overriding docker version tag and config.yml binary tag with $tag"
+        echo "Overriding config.yml binary tag with $tag"
         replace_config_var binary_version "$tag" "$real_config_path"
+        ;;
+      --image_version=*)
+        image_version="${arg#*=}"
+        echo "Overriding docker version tag with $image_version"
         ;;
       *)
         echo >&2 "$arg is not a valid argument"
@@ -134,7 +138,12 @@ function parse_args() {
     shift
   done
 
-  docker_image="${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${tag}"
+  if [ -z "$image_version" ]; then
+    image_version=$tag
+  fi
+
+  echo "Using docker version tag with $image_version"
+  docker_image="${FBPCS_CONTAINER_REPO_URL}/${FBPCS_IMAGE_NAME}:${image_version}"
 }
 
 function run_fbpcs() {
