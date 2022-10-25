@@ -39,7 +39,7 @@ DEFINE_bool(
     add_dp_noise,
     true,
     "If true, dp noise will not be added to the output.");
-DEFINE_string(log_cost_s3_bucket, "cost-estimation-logs", "s3 bucket name");
+DEFINE_string(log_cost_s3_bucket, "", "s3 bucket name");
 DEFINE_string(
     log_cost_s3_region,
     ".s3.us-west-2.amazonaws.com/",
