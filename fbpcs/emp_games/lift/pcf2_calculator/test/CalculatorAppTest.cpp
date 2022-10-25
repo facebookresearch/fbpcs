@@ -21,10 +21,10 @@
 #include "fbpcf/engine/communication/test/SocketInTestHelper.h"
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 #include "fbpcs/emp_games/common/Csv.h"
-#include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorApp.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/sample_input/SampleInput.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/GenFakeData.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftCalculator.h"
 
@@ -258,14 +258,11 @@ class CalculatorAppTestFixture
 
 TEST_P(CalculatorAppTestFixture, TestCorrectness) {
   int numConversionsPerUser = 2;
-  std::string baseDir =
-      private_measurement::test_util::getBaseDirFromPath(__FILE__);
-  std::string publisherInputPath =
-      baseDir + "../sample_input/publisher_unittest3.csv";
-  std::string partnerInputPath =
-      baseDir + "../sample_input/partner_2_convs_unittest.csv";
+  std::string publisherInputPath = sample_input::getPublisherInput3().native();
+  std::string partnerInputPath = sample_input::getPartnerInput2().native();
   std::string expectedOutputPath =
-      baseDir + "../sample_input/correctness_output.json";
+      sample_input::getCorrectnessOutput().native();
+
   bool useTls = std::get<0>(GetParam());
   bool useXorEncryption = std::get<1>(GetParam());
 
