@@ -7,8 +7,8 @@
 from pathlib import Path
 from typing import Any, Dict
 
-from fbpcp.util import yaml
-from fbpcs.utils.config_yaml.exceptions import (
+from fbpcp.util import yaml  # @manual=//measurement/private_measurement/pcp:pcp"
+from fbpcs.utils.config_yaml.exceptions import (  # @manual=//measurement/private_measurement/pcp:pcp"
     ConfigYamlFieldNotFoundError,
     ConfigYamlFileParsingError,
     ConfigYamlValidationError,
