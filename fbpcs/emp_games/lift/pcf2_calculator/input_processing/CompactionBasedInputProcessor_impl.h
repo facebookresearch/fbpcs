@@ -34,43 +34,61 @@ CompactionBasedInputProcessor<schedulerId>::getIntersectionMap(
 
 template <int schedulerId>
 std::vector<std::vector<unsigned char>>
-CompactionBasedInputProcessor<schedulerId>::preparePlaintextData() {
+CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
+    const std::vector<int32_t>& unionMap) {
   throw std::runtime_error("Not implemented");
 }
 
 template <int schedulerId>
-void CompactionBasedInputProcessor<schedulerId>::compactData(
+std::pair<
+    typename CompactionBasedInputProcessor<schedulerId>::SecString,
+    typename CompactionBasedInputProcessor<schedulerId>::SecString>
+CompactionBasedInputProcessor<schedulerId>::compactData(
     const std::vector<int32_t>& intersectionMap,
     const std::vector<std::vector<unsigned char>>& plaintextData) {
-  int32_t myDataWidth = plaintextData[0].size();
+  int32_t myRows = plaintextData.size();
 
-  auto publisherDataSize = common::shareIntFrom<
+  auto publisherRows = common::shareIntFrom<
       schedulerId,
-      sizeof(myDataWidth) * 8,
+      sizeof(myRows) * 8,
       common::PUBLISHER,
-      common::PARTNER>(myRole_, myDataWidth);
+      common::PARTNER>(myRole_, myRows);
 
-  auto partnerDataSize = common::shareIntFrom<
+  auto partnerRows = common::shareIntFrom<
       schedulerId,
-      sizeof(myDataWidth) * 8,
+      sizeof(myRows) * 8,
       common::PARTNER,
-      common::PUBLISHER>(myRole_, myDataWidth);
+      common::PUBLISHER>(myRole_, myRows);
+  SecString publisherDataShares;
+  SecString partnerDataShares;
 
   if (myRole_ == common::PUBLISHER) {
-    publisherDataShares_ =
+    publisherDataShares =
         dataProcessor_->processMyData(plaintextData, intersectionMap.size());
-    partnerDataShares_ = dataProcessor_->processPeersData(
-        inputData_.getNumRows(), intersectionMap, partnerDataSize);
+    partnerDataShares = dataProcessor_->processPeersData(
+        partnerRows,
+        intersectionMap,
+        PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_ +
+            PARTNER_ROW_SIZE_BYTES);
   } else if (myRole_ == common::PARTNER) {
-    publisherDataShares_ = dataProcessor_->processPeersData(
-        inputData_.getNumRows(), intersectionMap, publisherDataSize);
-    partnerDataShares_ =
+    publisherDataShares = dataProcessor_->processPeersData(
+        publisherRows, intersectionMap, PUBLISHER_ROW_BYTES);
+    partnerDataShares =
         dataProcessor_->processMyData(plaintextData, intersectionMap.size());
   }
+
+  return std::make_pair<
+      typename CompactionBasedInputProcessor<schedulerId>::SecString,
+      typename CompactionBasedInputProcessor<schedulerId>::SecString>(
+      std::move(publisherDataShares), std::move(partnerDataShares));
 }
 
 template <int schedulerId>
-void CompactionBasedInputProcessor<schedulerId>::extractCompactedData() {
+void CompactionBasedInputProcessor<schedulerId>::extractCompactedData(
+    const typename CompactionBasedInputProcessor<schedulerId>::SecString&
+        publisherDataShares,
+    const typename CompactionBasedInputProcessor<schedulerId>::SecString&
+        partnerDataShares) {
   throw std::runtime_error("Not implemented");
 }
 

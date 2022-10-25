@@ -47,10 +47,14 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
     auto unionMap = shuffleAndGetUnionMap();
     auto intersectionMap = getIntersectionMap(unionMap);
 
-    auto plaintextData = preparePlaintextData();
+    auto plaintextData = preparePlaintextData(unionMap);
 
-    compactData(intersectionMap, plaintextData);
-    extractCompactedData();
+    auto publisherPartnerJointMetadataShares =
+        compactData(intersectionMap, plaintextData);
+
+    extractCompactedData(
+        std::get<0>(publisherPartnerJointMetadataShares),
+        std::get<1>(publisherPartnerJointMetadataShares));
   }
 
   const LiftGameProcessedData<schedulerId>& getLiftGameProcessedData()
@@ -59,7 +63,36 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
   }
 
  private:
-  // shuffles the input data and returns the union map
+  struct PartnerRow {
+    bool anyValidPurchaseTimestamp;
+    uint32_t cohortGroupId;
+  };
+
+  struct PartnerConversionRow {
+    uint32_t purchaseTimestamp;
+    uint32_t thresholdTimestamp;
+    int32_t purchaseValue;
+    int64_t purchaseValueSquared;
+  };
+
+  struct PublisherRow {
+    bool breakdownId;
+    bool controlPopulation;
+    bool isValidOpportunityTimestamp;
+    bool testReach;
+    uint32_t opportunityTimestamp;
+  };
+
+  // Update the values if changing the structs above. This class handles it's
+  // own serialization / deserialization. using sizeof() will not work because a
+  // bool will take 1 byte in memory
+  const int PARTNER_ROW_SIZE_BYTES = 5;
+  const int PARTNER_CONVERSION_ROW_SIZE_BYTES = 20;
+  const int PUBLISHER_ROW_BYTES = 5;
+
+  // unionMap[i] = j indicates PID i will point to index j in plaintext data
+  // note that j in [0,intersectionSize) rather than [0, unionSize)
+  // unionMap[i] = -1 indicates PID i is a dummy row
   std::vector<int32_t> shuffleAndGetUnionMap();
 
   // runs adapter algorithm to get intsersection map
@@ -67,18 +100,21 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
 
   // Serializes input data into rows of fixed width. Different implementations
   // for publisher and partner
-  std::vector<std::vector<unsigned char>> preparePlaintextData();
+  std::vector<std::vector<unsigned char>> preparePlaintextData(
+      const std::vector<int32_t>& unionMap);
 
   /* Runs data processor algorithm to get intersected secret share data
-   * intersectionMap is the map of other player. Results are stored in
-   * publisherDataShares_ and partnerDataShares_
+   * intersectionMap is the map of other player. First element is publisher
+   * metadata shares, second is partner metadata shares
    */
-  void compactData(
+  std::pair<SecString, SecString> compactData(
       const std::vector<int32_t>& intersectionMap,
       const std::vector<std::vector<unsigned char>>& plaintextData);
 
   // deserializes the compacted data into MPC structured values
-  void extractCompactedData();
+  void extractCompactedData(
+      const SecString& publisherDataShares,
+      const SecString& partnerDataShares);
 
   int32_t myRole_;
 
@@ -89,9 +125,6 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
 
   InputData inputData_;
   int32_t numConversionsPerUser_;
-
-  SecString publisherDataShares_;
-  SecString partnerDataShares_;
 
   LiftGameProcessedData<schedulerId> liftGameProcessedData_;
 };
