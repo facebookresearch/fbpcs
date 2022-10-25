@@ -34,3 +34,4 @@ DEFINE_string(
     run_id,
     "",
     "A run_id used to identify all the logs in a PL/PA run.");
+DEFINE_string(log_cost_s3_bucket, "", "s3 bucket name");

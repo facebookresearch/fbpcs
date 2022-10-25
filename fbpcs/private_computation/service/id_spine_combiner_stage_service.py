@@ -236,6 +236,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             multi_conversion_limit=multi_conversion_limit,
             log_cost=log_cost,
             run_id=private_computation_instance.infra_config.run_id,
+            log_cost_bucket=private_computation_instance.infra_config.log_cost_bucket,
         )
         env_vars = {}
         if binary_config.repository_path:

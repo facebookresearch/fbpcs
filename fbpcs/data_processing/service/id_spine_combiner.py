@@ -38,6 +38,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
         run_name: Optional[str] = None,
         log_cost: Optional[bool] = False,
         run_id: Optional[str] = None,
+        log_cost_bucket: Optional[str] = None,
     ) -> List[str]:
         # TODO: Combiner could be made async so we don't have to spawn our
         # own ThreadPoolExecutor here and instead use async primitives
@@ -59,6 +60,7 @@ class IdSpineCombinerService(RunBinaryBaseService):
                 log_cost=log_cost,
                 run_id=run_id,
                 protocol_type=protocol_type,
+                log_cost_s3_bucket=log_cost_bucket,
             )
             cmd_args_list.append(cmd_args)
         return cmd_args_list
