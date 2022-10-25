@@ -145,6 +145,7 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             hmac_key=self.test_hmac_key,
             pcs_features=[PCSFeature.PCS_DUMMY.value],
+            log_cost_bucket="test_log_cost",
         )
 
     async def test_create_instance(self) -> None:
