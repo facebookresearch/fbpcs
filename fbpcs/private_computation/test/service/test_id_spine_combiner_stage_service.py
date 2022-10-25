@@ -52,8 +52,13 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
 
     async def test_id_spine_combiner(self) -> None:
 
-        for test_run_id in (None, "2621fda2-0eca-11ed-861d-0242ac120002"):
-            with self.subTest(test_run_id=test_run_id):
+        for test_run_id, test_log_cost_bucket in (
+            (None, "test-log-bucket"),
+            ("2621fda2-0eca-11ed-861d-0242ac120002", "test-log-bucket"),
+        ):
+            with self.subTest(
+                test_run_id=test_run_id, test_log_cost_bucket=test_log_cost_bucket
+            ):
                 private_computation_instance = self.create_sample_instance(test_run_id)
 
                 with patch.object(
@@ -66,6 +71,9 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
                     )
                     mock_combine.assert_called()
                     self.assertEqual(pc_instance.infra_config.run_id, test_run_id)
+                    self.assertEqual(
+                        pc_instance.infra_config.log_cost_bucket, test_log_cost_bucket
+                    )
 
     def create_sample_instance(
         self, test_run_id: Optional[str] = None
@@ -82,6 +90,7 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
             run_id=test_run_id,
+            log_cost_bucket="test-log-bucket",
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
