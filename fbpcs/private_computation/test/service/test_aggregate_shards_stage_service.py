@@ -89,6 +89,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
                 "log_cost": True,
                 "run_id": self.run_id,
                 "pc_feature_flags": private_computation_instance.feature_flags,
+                "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
             }
         ]
 
@@ -119,6 +120,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             run_id=self.run_id,
             pcs_features={PCSFeature.PCS_DUMMY},
+            log_cost_bucket="test_log_cost_bucket",
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
