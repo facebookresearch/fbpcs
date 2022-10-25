@@ -31,4 +31,8 @@ void writeVecToFile(
 void expectFileRowsEqual(
     const std::string& filePath,
     std::vector<std::string>& rows);
+
+void expectFilesEqual(
+    const std::string& filePath1,
+    const std::string& filePath2);
 } // namespace data_processing::test_utils

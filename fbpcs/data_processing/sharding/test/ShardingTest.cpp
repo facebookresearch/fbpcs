@@ -14,6 +14,8 @@
 #include <folly/Random.h>
 #include <folly/String.h>
 
+#include "fbpcf/engine/communication/SocketPartyCommunicationAgent.h"
+#include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcs/data_processing/sharding/Sharding.h"
 #include "fbpcs/data_processing/test_utils/FileIOTestUtils.h"
 
@@ -183,4 +185,158 @@ TEST(ShardPidTest, RunWithOutputBasePath) {
 
 TEST(ShardPidTest, RunWithNoOutputFatal) {
   ASSERT_DEATH(runShardPid("/test/input", "", "", 0, 0, 0, ""), "Error");
+}
+
+TEST(SecureRandomShardTest, RunWithOutputFilenames) {
+  auto rand =
+      folly::Random::secureRand64() % std::numeric_limits<int32_t>::max();
+
+  std::string inputPath1 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames1_in" +
+      std::to_string(rand);
+
+  std::string inputPath2 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames2_in" +
+      std::to_string(rand);
+  data_processing::test_utils::writeVecToFile(inputLines, inputPath1);
+  data_processing::test_utils::writeVecToFile(inputLines, inputPath2);
+
+  std::string outputBasePath1 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames1_out_";
+  std::string outputBasePath2 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames2_out_";
+
+  std::vector<std::string> outputFilenames1{
+      outputBasePath1 + std::to_string(rand),
+      outputBasePath1 + std::to_string(rand + 1),
+  };
+
+  std::vector<std::string> outputFilenames2{
+      outputBasePath2 + std::to_string(rand),
+      outputBasePath2 + std::to_string(rand + 1),
+  };
+
+  auto outputFilenamesStr1 = folly::join(',', outputFilenames1);
+  auto outputFilenamesStr2 = folly::join(',', outputFilenames2);
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+
+  tlsInfo.certPath = "";
+  tlsInfo.keyPath = "";
+  tlsInfo.passphrasePath = "";
+  tlsInfo.useTls = false;
+
+  std::vector<std::unique_ptr<fbpcf::engine::communication::
+                                  SocketPartyCommunicationAgentFactoryForTests>>
+      factories(2);
+  fbpcf::engine::communication::getSocketFactoriesForMultipleParties(
+      2, tlsInfo, factories);
+  auto task =
+      [&inputPath1, &outputFilenamesStr1](
+          bool amISendingFirst,
+          std::reference_wrapper<
+              fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+              factory) {
+        runSecureRandomShard(
+            inputPath1,
+            outputFilenamesStr1,
+            "",
+            0,
+            2,
+            1'000'000,
+            amISendingFirst,
+            factory.get().create(amISendingFirst ? 0 : 1, "test"));
+      };
+
+  auto t0 = std::async(task, false, std::reference_wrapper(*factories.at(0)));
+  runSecureRandomShard(
+      inputPath2,
+      outputFilenamesStr2,
+      "",
+      0,
+      2,
+      1'000'000,
+      true,
+      factories.at(1)->create(0, "test"));
+  t0.get();
+  data_processing::test_utils::expectFilesEqual(
+      outputFilenames1.at(0), outputFilenames2.at(0));
+  data_processing::test_utils::expectFilesEqual(
+      outputFilenames1.at(1), outputFilenames2.at(1));
+}
+
+TEST(SecureRandomShardTest, RunWithOutputBasePath) {
+  auto rand =
+      folly::Random::secureRand64() % std::numeric_limits<int32_t>::max();
+
+  std::string inputPath1 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames1_in" +
+      std::to_string(rand);
+
+  std::string inputPath2 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames2_in" +
+      std::to_string(rand);
+  data_processing::test_utils::writeVecToFile(inputLines, inputPath1);
+  data_processing::test_utils::writeVecToFile(inputLines, inputPath2);
+
+  std::string outputBasePath1 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames1_out_";
+  std::string outputBasePath2 =
+      "/tmp/SecureRandomShardTest_RunWithOutputFilenames2_out_";
+
+  std::vector<std::string> outputFilenames1{
+      outputBasePath1 + std::to_string(rand),
+      outputBasePath1 + std::to_string(rand + 1),
+  };
+
+  std::vector<std::string> outputFilenames2{
+      outputBasePath2 + std::to_string(rand),
+      outputBasePath2 + std::to_string(rand + 1),
+  };
+
+  auto outputFilenamesStr1 = folly::join(',', outputFilenames1);
+  auto outputFilenamesStr2 = folly::join(',', outputFilenames2);
+  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
+
+  tlsInfo.certPath = "";
+  tlsInfo.keyPath = "";
+  tlsInfo.passphrasePath = "";
+  tlsInfo.useTls = false;
+
+  std::vector<std::unique_ptr<fbpcf::engine::communication::
+                                  SocketPartyCommunicationAgentFactoryForTests>>
+      factories(2);
+  fbpcf::engine::communication::getSocketFactoriesForMultipleParties(
+      2, tlsInfo, factories);
+  auto task =
+      [&inputPath1, &outputBasePath1, &rand](
+          bool amISendingFirst,
+          std::reference_wrapper<
+              fbpcf::engine::communication::IPartyCommunicationAgentFactory>
+              factory) {
+        runSecureRandomShard(
+            inputPath1,
+            "",
+            outputBasePath1,
+            static_cast<int32_t>(rand),
+            2,
+            1'000'000,
+            amISendingFirst,
+            factory.get().create(amISendingFirst ? 0 : 1, "test"));
+      };
+
+  auto t0 = std::async(task, false, std::reference_wrapper(*factories.at(0)));
+  runSecureRandomShard(
+      inputPath2,
+      "",
+      outputBasePath2,
+      static_cast<int32_t>(rand),
+      2,
+      1'000'000,
+      true,
+      factories.at(1)->create(0, "test"));
+  t0.get();
+  data_processing::test_utils::expectFilesEqual(
+      outputFilenames1.at(0), outputFilenames2.at(0));
+  data_processing::test_utils::expectFilesEqual(
+      outputFilenames1.at(1), outputFilenames2.at(1));
 }
