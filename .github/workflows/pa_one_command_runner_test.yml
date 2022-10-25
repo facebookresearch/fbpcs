@@ -1,4 +1,5 @@
 name: PA One command runner test
+run-name: ${{ inputs.test_name }} on ${{ inputs.tag }} for build ${{ inputs.build_id }}
 
 on:
   workflow_dispatch:
@@ -15,6 +16,17 @@ on:
         description: S3 path to expected results from synthetic run
         required: true
         default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click.json
+      build_id:
+        description: The build id
+        required: false
+        default: null
+      test_name:
+        description: The name of the type of tests that are being run
+        default: 'PA E2E Tests'
+        type: 'choice'
+        options:
+          - PA E2E Tests
+          - Multi-key PA E2E Tests
       tag:
         description: Version tag to use
         required: true
