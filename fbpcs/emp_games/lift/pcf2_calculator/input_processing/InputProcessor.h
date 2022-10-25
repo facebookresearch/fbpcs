@@ -12,6 +12,7 @@
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/GlobalSharingUtils.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 
@@ -28,9 +29,12 @@ class InputProcessor : public IInputProcessor<schedulerId> {
         numConversionsPerUser_{numConversionsPerUser} {
     liftGameProcessedData_.numRows = inputData.getNumRows();
 
-    validateNumRowsStep();
-    shareNumGroupsStep();
-    shareBitsForValuesStep();
+    input_processing::validateNumRowsStep(myRole_, liftGameProcessedData_);
+    input_processing::shareNumGroupsStep(
+        myRole_, inputData_, liftGameProcessedData_);
+    input_processing::shareBitsForValuesStep(
+        myRole_, inputData_, liftGameProcessedData_);
+
     privatelyShareGroupIdsStep();
     privatelySharePopulationStep();
     privatelyShareIndexSharesStep();
@@ -48,15 +52,6 @@ class InputProcessor : public IInputProcessor<schedulerId> {
   }
 
  private:
-  // Make sure input files have the same size
-  void validateNumRowsStep();
-
-  // Share number of groups, including cohorts and publisher breakdowns.
-  void shareNumGroupsStep();
-
-  // Share number of bits needed to store the input value and its square
-  void shareBitsForValuesStep();
-
   // Privately share cohort ids and breakdown ids.
   void privatelyShareGroupIdsStep();
 
