@@ -36,4 +36,6 @@ class OneDockerBinaryNames(Enum):
     PCF2_LIFT = "private_lift/pcf2_lift"
     PCF2_LIFT_METADATA_COMPACTION = "private_lift/pcf2_lift_metadata_compaction"
 
+    PRIVATE_ID_DFCA_AGGREGATOR = "private_id_dfca/private_id_dfca_aggregator"
+
     PC_PRE_VALIDATION = "validation/pc_pre_validation_cli"
