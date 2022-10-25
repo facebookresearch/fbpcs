@@ -10,8 +10,13 @@ import contextlib
 import os
 import pathlib
 
-from fbpcp.service.storage_s3 import S3StorageService
-from fbpcs.utils.buffered_s3_file_handler import BufferedS3Reader, BufferedS3Writer
+from fbpcp.service.storage_s3 import (  # @manual=//measurement/private_measurement/pcp:pcp"
+    S3StorageService,
+)
+from fbpcs.utils.buffered_s3_file_handler import (  # @manual=//measurement/private_measurement/pcp:pcp"
+    BufferedS3Reader,
+    BufferedS3Writer,
+)
 
 
 S3_PATH_DRIVE = "https:"
