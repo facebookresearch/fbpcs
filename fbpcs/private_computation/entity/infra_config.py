@@ -155,6 +155,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     )
     pce_config: Optional[PCEConfig] = None
     run_id: Optional[str] = immutable_field(default=None)
+    log_cost_bucket: Optional[str] = immutable_field(default=None)
 
     # stored as a string because the enum was refusing to serialize to json, no matter what I tried.
     # TODO(T103299005): [BE] Figure out how to serialize StageFlow objects to json instead of using their class name
