@@ -192,6 +192,7 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
                 "num_conversions_per_user": pc_instance.product_config.common.padding_size,
                 "run_name": f"{run_name_base}_{shard}" if self._log_cost_to_s3 else "",
                 "log_cost": self._log_cost_to_s3,
+                "log_cost_s3_bucket": pc_instance.infra_config.log_cost_bucket,
                 # TODO T133330151 Add run_id support to PL UDP binary
                 # "run_id": private_computation_instance.infra_config.run_id,
                 **tls_args,

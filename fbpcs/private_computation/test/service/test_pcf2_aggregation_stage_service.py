@@ -105,6 +105,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             "ca_cert_path": "",
             "server_cert_path": "",
             "private_key_path": "",
+            "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
         }
         test_game_args = [
             {
@@ -138,6 +139,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
             run_id=self.run_id,
+            log_cost_bucket="test_log_cost_bucket",
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",

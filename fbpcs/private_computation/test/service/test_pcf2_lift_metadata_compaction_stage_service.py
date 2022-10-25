@@ -99,6 +99,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
                 "server_cert_path": "",
                 "private_key_path": "",
                 "pc_feature_flags": "private_lift_unified_data_process",
+                "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
             }
             for i in range(2)
         ]
@@ -124,6 +125,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
             pcs_features={PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS},
+            log_cost_bucket="test_log_cost_bucket",
         )
 
         common: CommonProductConfig = CommonProductConfig(

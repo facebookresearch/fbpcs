@@ -138,6 +138,7 @@ class ShardCombinerStageService(PrivateComputationStageService):
             else pc_instance.product_config.k_anonymity_threshold,
             "run_name": run_name,
             "log_cost": self._log_cost_to_s3,
+            "log_cost_s3_bucket": pc_instance.infra_config.log_cost_bucket,
         }
         compute_args.update(tls_args)
         # Create and start MPC instance
