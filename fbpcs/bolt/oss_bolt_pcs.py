@@ -85,6 +85,7 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
     pid_configs: Optional[Dict[str, Any]] = None
     pcs_features: Optional[List[str]] = None
     run_id: Optional[str] = None
+    log_cost_bucket: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.stage_flow_cls is PrivateComputationBaseStageFlow:
@@ -143,6 +144,7 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
             pid_configs=instance_args.pid_configs,
             pcs_features=instance_args.pcs_features,
             run_id=instance_args.run_id,
+            log_cost_bucket=instance_args.log_cost_bucket,
         )
         return instance.infra_config.instance_id
 
