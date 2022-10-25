@@ -186,6 +186,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.test_output_dir = "out_dir"
         self.test_game_type = PrivateComputationGameType.LIFT
         self.test_concurrency = 1
+        self.log_cost_bucket = "test_log_bucket"
         self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
@@ -1144,6 +1145,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             mpc_compute_concurrency=self.test_concurrency,
             status_updates=[],
+            log_cost_bucket=self.log_cost_bucket,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,
