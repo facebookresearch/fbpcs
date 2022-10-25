@@ -20,9 +20,9 @@
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/test/TestHelper.h"
 #include "fbpcs/emp_games/common/Csv.h"
-#include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorGame.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/sample_input/SampleInput.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/GenFakeData.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftCalculator.h"
 
@@ -171,19 +171,17 @@ TEST_P(CalculatorGameTestFixture, TestCorrectness) {
 
   // test with and w/o computing publisher breakdowns
   bool computePublisherBreakdowns = std::get<1>(GetParam());
-  std::string baseDir =
-      private_measurement::test_util::getBaseDirFromPath(__FILE__);
   CalculatorGameConfig publisherConfig =
       CalculatorGameTestFixture::getInputData(
-          baseDir + "../sample_input/publisher_unittest3.csv",
+          sample_input::getPublisherInput3().native(),
           numConversionsPerUser,
           computePublisherBreakdowns);
   CalculatorGameConfig partnerConfig = CalculatorGameTestFixture::getInputData(
-      baseDir + "../sample_input/partner_2_convs_unittest.csv",
+      sample_input::getPartnerInput2().native(),
       numConversionsPerUser,
       computePublisherBreakdowns);
   std::string expectedOutputFilename =
-      baseDir + "../sample_input/correctness_output.json";
+      sample_input::getCorrectnessOutput().native();
 
   // Run calculator game with input files
   const bool unsafe = true;
