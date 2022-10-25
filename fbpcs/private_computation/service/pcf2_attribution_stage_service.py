@@ -189,6 +189,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             "use_xor_encryption": True,
             "use_postfix": True,
             "run_id": private_computation_instance.infra_config.run_id,
+            "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
         }
         if private_computation_instance.feature_flags is not None:
             common_game_args[
