@@ -182,6 +182,7 @@ class PCF2AggregationStageService(PrivateComputationStageService):
             "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
             "max_num_conversions": private_computation_instance.product_config.common.padding_size,
             "log_cost": self._log_cost_to_s3,
+            "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
             "use_new_output_format": False,
             "run_id": private_computation_instance.infra_config.run_id,
         }
