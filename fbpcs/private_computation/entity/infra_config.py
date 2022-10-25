@@ -50,6 +50,7 @@ class PrivateComputationRole(Enum):
 class PrivateComputationGameType(Enum):
     LIFT = "LIFT"
     ATTRIBUTION = "ATTRIBUTION"
+    PRIVATE_ID_DFCA = "PRIVATE_ID_DFCA"
 
 
 UnionedPCInstance = Union[PCSMPCInstance, PostProcessingInstance, StageStateInstance]
