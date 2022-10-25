@@ -239,7 +239,6 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             token = os.getenv(FBPCS_GRAPH_API_TOKEN)
             if not token:
                 no_token_exception = GraphAPITokenNotFound.make_error()
-                self.logger.exception(no_token_exception)
                 raise no_token_exception from None
             self.logger.info(
                 f"successfully read graph api token from {FBPCS_GRAPH_API_TOKEN} env var"
