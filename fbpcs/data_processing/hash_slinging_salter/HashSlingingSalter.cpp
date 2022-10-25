@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "HashSlingingSalter.hpp"
-#include "base64.h"
+#include "fbpcs/data_processing/hash_slinging_salter/HashSlingingSalter.hpp"
+#include "fbpcs/data_processing/hash_slinging_salter/base64.h"
 
 #include <openssl/hmac.h>
 #include <array>

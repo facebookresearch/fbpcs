@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "HashSlingingSalter.hpp"
+#include "fbpcs/data_processing/hash_slinging_salter/HashSlingingSalter.hpp"
 #include <gtest/gtest.h>
 #include <string>
 
