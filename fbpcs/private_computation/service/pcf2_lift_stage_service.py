@@ -187,6 +187,7 @@ class PCF2LiftStageService(PrivateComputationStageService):
             "run_name": run_name,
             "log_cost": self._log_cost_to_s3,
             "run_id": private_computation_instance.infra_config.run_id,
+            "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
         }
         if private_computation_instance.feature_flags is not None:
             common_compute_game_args[
