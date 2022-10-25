@@ -6,6 +6,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <utility>
@@ -16,11 +17,11 @@
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcf/test/TestHelper.h"
 
-#include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/SecretShareInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/test/TestUtil.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/sample_input/SampleInput.h"
 
 namespace private_lift {
 const bool unsafe = true;
@@ -66,44 +67,42 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
   bool computePublisherBreakdowns_;
 
   void SetUp() override {
-    std::string baseDir =
-        private_measurement::test_util::getBaseDirFromPath(__FILE__);
-    std::string publisherInputFilename =
-        baseDir + "../../sample_input/publisher_unittest3.csv";
-    std::string partnerInputFilename =
-        baseDir + "../../sample_input/partner_2_convs_unittest.csv";
+    std::string tempDir = std::filesystem::temp_directory_path();
+
+    auto publisherInputFile = private_lift::sample_input::getPublisherInput3();
+    auto partnerInputFile = private_lift::sample_input::getPartnerInput2();
 
     std::string publisherGlobalParamsOutput = folly::sformat(
-        "{}../../sample_input/publisher_global_params_{}.json",
-        baseDir,
+        "{}/publisher_global_params_{}.json",
+        tempDir,
         folly::Random::secureRand64());
 
     std::string publisherSecretSharesOutput = folly::sformat(
-        "{}../../sample_input/publisher_secret_shares_{}.json",
-        baseDir,
+        "{}/publisher_secret_shares_{}.json",
+        tempDir,
         folly::Random::secureRand64());
 
     std::string partnerGlobalParamsOutput = folly::sformat(
-        "{}../../sample_input/partner_global_params_{}.json",
-        baseDir,
+        "{}/partner_global_params_{}.json",
+        tempDir,
         folly::Random::secureRand64());
 
     std::string partnerSecretSharesOutput = folly::sformat(
-        "{}../../sample_input/partner_secret_shares_{}.json",
-        baseDir,
+        "{}/partner_secret_shares_{}.json",
+        tempDir,
         folly::Random::secureRand64());
 
     int numConversionsPerUser = 2;
     int epoch = 1546300800;
     computePublisherBreakdowns_ = GetParam();
     auto publisherInputData = InputData(
-        publisherInputFilename,
+        publisherInputFile.native(),
         InputData::LiftMPCType::Standard,
         computePublisherBreakdowns_,
         epoch,
         numConversionsPerUser);
     auto partnerInputData = InputData(
-        partnerInputFilename,
+        partnerInputFile.native(),
         InputData::LiftMPCType::Standard,
         computePublisherBreakdowns_,
         epoch,

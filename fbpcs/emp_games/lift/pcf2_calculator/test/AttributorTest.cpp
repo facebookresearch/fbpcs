@@ -11,9 +11,9 @@
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcf/test/TestHelper.h"
 
-#include "fbpcs/emp_games/common/TestUtil.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Attributor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/sample_input/SampleInput.h"
 
 namespace private_lift {
 const bool unsafe = true;
@@ -41,12 +41,11 @@ class AttributorTest : public ::testing::Test {
   std::unique_ptr<Attributor<1>> partnerAttributor_;
 
   void SetUp() override {
-    std::string baseDir =
-        private_measurement::test_util::getBaseDirFromPath(__FILE__);
     std::string publisherInputFilename =
-        baseDir + "../sample_input/publisher_unittest3.csv";
+        sample_input::getPublisherInput3().native();
     std::string partnerInputFilename =
-        baseDir + "../sample_input/partner_2_convs_unittest.csv";
+        sample_input::getPartnerInput2().native();
+
     int numConversionsPerUser = 2;
     int epoch = 1546300800;
     bool computePublisherBreakdowns = true;
