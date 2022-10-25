@@ -12,7 +12,9 @@ import tempfile
 from types import TracebackType
 from typing import Optional, Type
 
-from fbpcp.service.storage_s3 import S3StorageService
+from fbpcp.service.storage_s3 import (  # @manual=//measurement/private_measurement/pcp:pcp"
+    S3StorageService,
+)
 
 
 class BufferedS3Reader(contextlib.AbstractContextManager):
