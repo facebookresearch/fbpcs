@@ -20,6 +20,7 @@
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/SecretShareInputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/test/TestUtil.h"
 
 namespace private_lift {
 const bool unsafe = true;
@@ -183,479 +184,193 @@ class InputProcessorTest : public ::testing::TestWithParam<bool> {
   }
 };
 
-template <int schedulerId>
-void assertNumRows(
-    const LiftGameProcessedData<schedulerId>& liftGameProcessedData) {
-  EXPECT_EQ(liftGameProcessedData.numRows, 33);
-}
-
 TEST_P(InputProcessorTest, testNumRows) {
-  assertNumRows(publisherInputProcessor_.getLiftGameProcessedData());
-  assertNumRows(partnerInputProcessor_.getLiftGameProcessedData());
-  assertNumRows(publisherSecretInputProcessor_.getLiftGameProcessedData());
-  assertNumRows(partnerSecretInputProcessor_.getLiftGameProcessedData());
-  assertNumRows(publisherDeserialized_);
-  assertNumRows(partnerDeserialized_);
-}
-
-template <int schedulerId>
-void assertValueBits(
-    const LiftGameProcessedData<schedulerId>& liftGameProcessedData) {
-  EXPECT_EQ(liftGameProcessedData.valueBits, 10);
-  EXPECT_EQ(liftGameProcessedData.valueSquaredBits, 15);
+  util::assertNumRows(publisherInputProcessor_.getLiftGameProcessedData());
+  util::assertNumRows(partnerInputProcessor_.getLiftGameProcessedData());
+  util::assertNumRows(
+      publisherSecretInputProcessor_.getLiftGameProcessedData());
+  util::assertNumRows(partnerSecretInputProcessor_.getLiftGameProcessedData());
+  util::assertNumRows(publisherDeserialized_);
+  util::assertNumRows(partnerDeserialized_);
 }
 
 TEST_P(InputProcessorTest, testBitsForValues) {
-  assertValueBits(publisherInputProcessor_.getLiftGameProcessedData());
-  assertValueBits(partnerInputProcessor_.getLiftGameProcessedData());
-  assertValueBits(publisherSecretInputProcessor_.getLiftGameProcessedData());
-  assertValueBits(partnerSecretInputProcessor_.getLiftGameProcessedData());
-  assertValueBits(publisherDeserialized_);
-  assertValueBits(partnerDeserialized_);
-}
-
-template <int schedulerId>
-void assertPartnerCohorts(
-    const LiftGameProcessedData<schedulerId>& liftGameProcessedData) {
-  EXPECT_EQ(liftGameProcessedData.numPartnerCohorts, 3);
+  util::assertValueBits(publisherInputProcessor_.getLiftGameProcessedData());
+  util::assertValueBits(partnerInputProcessor_.getLiftGameProcessedData());
+  util::assertValueBits(
+      publisherSecretInputProcessor_.getLiftGameProcessedData());
+  util::assertValueBits(
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
+  util::assertValueBits(publisherDeserialized_);
+  util::assertValueBits(partnerDeserialized_);
 }
 
 TEST_P(InputProcessorTest, testNumPartnerCohorts) {
-  assertPartnerCohorts(publisherInputProcessor_.getLiftGameProcessedData());
-  assertPartnerCohorts(partnerInputProcessor_.getLiftGameProcessedData());
-  assertPartnerCohorts(
+  util::assertPartnerCohorts(
+      publisherInputProcessor_.getLiftGameProcessedData());
+  util::assertPartnerCohorts(partnerInputProcessor_.getLiftGameProcessedData());
+  util::assertPartnerCohorts(
       publisherSecretInputProcessor_.getLiftGameProcessedData());
-  assertPartnerCohorts(partnerSecretInputProcessor_.getLiftGameProcessedData());
-  assertPartnerCohorts(publisherDeserialized_);
-  assertPartnerCohorts(partnerDeserialized_);
-}
-
-template <int schedulerId>
-void assertNumBreakdowns(
-    const LiftGameProcessedData<schedulerId>& liftGameProcessedData,
-    bool computePublisherBreakdowns) {
-  if (computePublisherBreakdowns) {
-    EXPECT_EQ(liftGameProcessedData.numPublisherBreakdowns, 2);
-  } else {
-    EXPECT_EQ(liftGameProcessedData.numPublisherBreakdowns, 0);
-  }
+  util::assertPartnerCohorts(
+      partnerSecretInputProcessor_.getLiftGameProcessedData());
+  util::assertPartnerCohorts(publisherDeserialized_);
+  util::assertPartnerCohorts(partnerDeserialized_);
 }
 
 TEST_P(InputProcessorTest, testNumBreakdowns) {
-  assertNumBreakdowns(
+  util::assertNumBreakdowns(
       publisherInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumBreakdowns(
+  util::assertNumBreakdowns(
       partnerInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumBreakdowns(
+  util::assertNumBreakdowns(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumBreakdowns(
+  util::assertNumBreakdowns(
       partnerSecretInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumBreakdowns(publisherDeserialized_, computePublisherBreakdowns_);
-  assertNumBreakdowns(partnerDeserialized_, computePublisherBreakdowns_);
-}
-
-template <int schedulerId>
-void assertNumGroups(
-    const LiftGameProcessedData<schedulerId>& liftGameProcessedData,
-    bool computePublisherBreakdowns) {
-  if (computePublisherBreakdowns) {
-    EXPECT_EQ(liftGameProcessedData.numGroups, 12);
-  } else {
-    EXPECT_EQ(liftGameProcessedData.numGroups, 6);
-  }
+  util::assertNumBreakdowns(
+      publisherDeserialized_, computePublisherBreakdowns_);
+  util::assertNumBreakdowns(partnerDeserialized_, computePublisherBreakdowns_);
 }
 
 TEST_P(InputProcessorTest, testNumGroups) {
-  assertNumGroups(
+  util::assertNumGroups(
       publisherInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumGroups(
+  util::assertNumGroups(
       partnerInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumGroups(
+  util::assertNumGroups(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumGroups(
+  util::assertNumGroups(
       partnerSecretInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumGroups(publisherDeserialized_, computePublisherBreakdowns_);
-  assertNumGroups(partnerDeserialized_, computePublisherBreakdowns_);
-}
-
-template <int schedulerId>
-void assertNumTestGroups(
-    const LiftGameProcessedData<schedulerId>& liftGameProcessedData,
-    bool computePublisherBreakdowns) {
-  if (computePublisherBreakdowns) {
-    EXPECT_EQ(liftGameProcessedData.numTestGroups, 7);
-  } else {
-    EXPECT_EQ(liftGameProcessedData.numTestGroups, 4);
-  }
+  util::assertNumGroups(publisherDeserialized_, computePublisherBreakdowns_);
+  util::assertNumGroups(partnerDeserialized_, computePublisherBreakdowns_);
 }
 
 TEST_P(InputProcessorTest, testNumTestGroups) {
-  assertNumTestGroups(
+  util::assertNumTestGroups(
       publisherInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumTestGroups(
+  util::assertNumTestGroups(
       partnerInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumTestGroups(
+  util::assertNumTestGroups(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumTestGroups(
+  util::assertNumTestGroups(
       partnerSecretInputProcessor_.getLiftGameProcessedData(),
       computePublisherBreakdowns_);
-  assertNumTestGroups(publisherDeserialized_, computePublisherBreakdowns_);
-  assertNumTestGroups(partnerDeserialized_, computePublisherBreakdowns_);
-}
-
-// Convert input boolean index shares to group ids
-std::vector<uint32_t> convertIndexSharesToGroupIds(
-    std::vector<std::vector<bool>> indexShares) {
-  std::vector<uint32_t> groupIds;
-  if (indexShares.size() == 0) {
-    return groupIds;
-  }
-  for (auto i = 0; i < indexShares.at(0).size(); ++i) {
-    uint32_t groupId = 0;
-    for (auto j = 0; j < indexShares.size(); ++j) {
-      groupId += indexShares.at(j).at(i) << j;
-    }
-    groupIds.push_back(groupId);
-  }
-  return groupIds;
+  util::assertNumTestGroups(
+      publisherDeserialized_, computePublisherBreakdowns_);
+  util::assertNumTestGroups(partnerDeserialized_, computePublisherBreakdowns_);
 }
 
 TEST_P(InputProcessorTest, testIndexShares) {
-  auto publisherShares =
-      publisherInputProcessor_.getLiftGameProcessedData().indexShares;
-  size_t groupWidth = std::ceil(
-      std::log2(publisherInputProcessor_.getLiftGameProcessedData().numGroups));
-  EXPECT_EQ(publisherShares.size(), groupWidth);
-  std::vector<uint32_t> expectGroupIds;
-  if (computePublisherBreakdowns_) {
-    expectGroupIds = {3, 1, 9, 0, 0, 7, 1, 4, 6, 1, 4, 6, 3, 1, 7, 3, 3,
-                      6, 0, 0, 6, 3, 3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 11};
-  } else {
-    expectGroupIds = {0, 1, 3, 0, 0, 4, 1, 1, 3, 1, 1, 3, 0, 1, 4, 0, 0,
-                      3, 0, 0, 3, 0, 0, 3, 0, 0, 2, 2, 0, 0, 2, 2, 5};
-  }
-  auto groupIds = convertIndexSharesToGroupIds(publisherShares);
-  EXPECT_EQ(expectGroupIds, groupIds);
-
-  auto deserializedGroupIds =
-      convertIndexSharesToGroupIds(publisherDeserialized_.indexShares);
-  EXPECT_EQ(groupIds, deserializedGroupIds);
-
-  deserializedGroupIds = convertIndexSharesToGroupIds(
-      publisherSecretInputProcessor_.getLiftGameProcessedData().indexShares);
-
-  EXPECT_EQ(deserializedGroupIds, groupIds);
+  util::assertIndexShares(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  util::assertIndexShares(publisherDeserialized_, computePublisherBreakdowns_);
+  util::assertIndexShares(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
 }
 
 TEST_P(InputProcessorTest, testTestIndexShares) {
-  auto publisherShares =
-      publisherInputProcessor_.getLiftGameProcessedData().testIndexShares;
-  size_t testGroupWidth = std::ceil(std::log2(
-      publisherInputProcessor_.getLiftGameProcessedData().numTestGroups));
-  EXPECT_EQ(publisherShares.size(), testGroupWidth);
-  std::vector<uint32_t> expectTestGroupIds;
-  if (computePublisherBreakdowns_) {
-    expectTestGroupIds = {3, 1, 6, 0, 0, 6, 1, 4, 6, 1, 4, 6, 3, 1, 6, 3, 3,
-                          6, 0, 0, 6, 3, 3, 6, 3, 0, 2, 5, 3, 3, 5, 2, 6};
-  } else {
-    expectTestGroupIds = {0, 1, 3, 0, 0, 3, 1, 1, 3, 1, 1, 3, 0, 1, 3, 0, 0,
-                          3, 0, 0, 3, 0, 0, 3, 0, 0, 2, 2, 0, 0, 2, 2, 3};
-  }
-  auto testGroupIds = convertIndexSharesToGroupIds(publisherShares);
-  EXPECT_EQ(expectTestGroupIds, testGroupIds);
-
-  auto deserializedTestGroupIds =
-      convertIndexSharesToGroupIds(publisherDeserialized_.testIndexShares);
-  EXPECT_EQ(testGroupIds, deserializedTestGroupIds);
-
-  deserializedTestGroupIds = convertIndexSharesToGroupIds(
-      publisherSecretInputProcessor_.getLiftGameProcessedData()
-          .testIndexShares);
-
-  EXPECT_EQ(deserializedTestGroupIds, testGroupIds);
-}
-
-void assertOpportunityTimestamps(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async([&] {
-    return publisherData.opportunityTimestamps.openToParty(0).getValue();
-  });
-  auto future1 = std::async([&] {
-    return partnerData.opportunityTimestamps.openToParty(0).getValue();
-  });
-
-  auto opportunityTimestamps = future0.get();
-  future1.get();
-
-  std::vector<uint64_t> expectOpportunityTimestamps = {
-      0,   0,   0,   100, 100, 100, 100, 100, 100, 100, 100,
-      100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-      100, 100, 0,   100, 100, 100, 100, 100, 100, 100, 100};
-  EXPECT_EQ(opportunityTimestamps, expectOpportunityTimestamps);
+  util::assertTestIndexShares(
+      publisherInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
+  util::assertTestIndexShares(
+      publisherDeserialized_, computePublisherBreakdowns_);
+  util::assertTestIndexShares(
+      publisherSecretInputProcessor_.getLiftGameProcessedData(),
+      computePublisherBreakdowns_);
 }
 
 TEST_P(InputProcessorTest, testOpportunityTimestamps) {
-  assertOpportunityTimestamps(
+  util::assertOpportunityTimestamps(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertOpportunityTimestamps(publisherDeserialized_, partnerDeserialized_);
-  assertOpportunityTimestamps(
+  util::assertOpportunityTimestamps(
+      publisherDeserialized_, partnerDeserialized_);
+  util::assertOpportunityTimestamps(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
-}
-
-void assertIsValidOpportunityTimestamps(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async([&] {
-    return publisherData.isValidOpportunityTimestamp.openToParty(0).getValue();
-  });
-  auto future1 = std::async([&] {
-    return partnerData.isValidOpportunityTimestamp.openToParty(0).getValue();
-  });
-
-  auto isValidOpportunityTimestamp = future0.get();
-  future1.get();
-
-  std::vector<bool> expectIsValidOpportunityTimestamp = {
-      0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1,
-      1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1};
-  EXPECT_EQ(isValidOpportunityTimestamp, expectIsValidOpportunityTimestamp);
 }
 
 TEST_P(InputProcessorTest, testIsValidOpportunityTimestamp) {
-  assertOpportunityTimestamps(
+  util::assertOpportunityTimestamps(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertOpportunityTimestamps(publisherDeserialized_, partnerDeserialized_);
-  assertOpportunityTimestamps(
+  util::assertOpportunityTimestamps(
+      publisherDeserialized_, partnerDeserialized_);
+  util::assertOpportunityTimestamps(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
-}
-
-template <int schedulerId>
-std::vector<std::vector<uint64_t>> revealTimestamps(
-    std::reference_wrapper<const std::vector<SecTimestamp<schedulerId>>>
-        timestamps) {
-  std::vector<std::vector<uint64_t>> result;
-  for (size_t i = 0; i < timestamps.get().size(); ++i) {
-    result.push_back(
-        std::move(timestamps.get().at(i).openToParty(0).getValue()));
-  }
-  return result;
-}
-
-void assertPurchaseTimestamps(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async(
-      revealTimestamps<0>,
-      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
-          publisherData.purchaseTimestamps));
-  auto future1 = std::async(
-      revealTimestamps<1>,
-      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
-          partnerData.purchaseTimestamps));
-  auto purchaseTimestamps = future0.get();
-  future1.get();
-  std::vector<std::vector<uint64_t>> expectPurchaseTimestamps = {
-      {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  150, 150, 150, 50, 50,
-       50, 30, 30, 30, 0, 0, 0, 0, 0, 0, 150, 50, 30,  0,   0,   0},
-      {100, 100, 100, 50,  50,  50,  100, 100, 100, 90,  90,
-       90,  200, 200, 200, 150, 150, 150, 50,  50,  50,  0,
-       0,   0,   100, 50,  150, 200, 150, 50,  200, 200, 200}};
-  EXPECT_EQ(purchaseTimestamps, expectPurchaseTimestamps);
 }
 
 TEST_P(InputProcessorTest, testPurchaseTimestamps) {
-  assertPurchaseTimestamps(
+  util::assertPurchaseTimestamps(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertPurchaseTimestamps(publisherDeserialized_, partnerDeserialized_);
-  assertPurchaseTimestamps(
+  util::assertPurchaseTimestamps(publisherDeserialized_, partnerDeserialized_);
+  util::assertPurchaseTimestamps(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
-}
-
-void assertThresholdTimestamps(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async(
-      revealTimestamps<0>,
-      std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
-          publisherData.thresholdTimestamps));
-  auto future1 = std::async(
-      revealTimestamps<1>,
-      std::reference_wrapper<const std::vector<SecTimestamp<1>>>(
-          partnerData.thresholdTimestamps));
-  auto thresholdTimestamps = future0.get();
-  future1.get();
-  std::vector<std::vector<uint64_t>> expectThresholdTimestamps = {
-      {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,   0,  160, 160, 160, 60, 60,
-       60, 40, 40, 40, 0, 0, 0, 0, 0, 0, 160, 60, 40,  0,   0,   0},
-      {110, 110, 110, 60,  60,  60,  110, 110, 110, 100, 100,
-       100, 210, 210, 210, 160, 160, 160, 60,  60,  60,  0,
-       0,   0,   110, 60,  160, 210, 160, 60,  210, 210, 210}};
-  EXPECT_EQ(thresholdTimestamps, expectThresholdTimestamps);
 }
 
 TEST_P(InputProcessorTest, testThresholdTimestamps) {
-  assertThresholdTimestamps(
+  util::assertThresholdTimestamps(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertThresholdTimestamps(publisherDeserialized_, partnerDeserialized_);
-  assertThresholdTimestamps(
+  util::assertThresholdTimestamps(publisherDeserialized_, partnerDeserialized_);
+  util::assertThresholdTimestamps(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
-}
-
-void assertAnyValidPurchaseTimestamp(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async([&] {
-    return publisherData.anyValidPurchaseTimestamp.openToParty(0).getValue();
-  });
-  auto future1 = std::async([&] {
-    return partnerData.anyValidPurchaseTimestamp.openToParty(0).getValue();
-  });
-  auto anyValidPurchaseTimestamp = future0.get();
-  future1.get();
-  std::vector<bool> expectAnyValidPurchaseTimestamp = {
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  EXPECT_EQ(anyValidPurchaseTimestamp, expectAnyValidPurchaseTimestamp);
 }
 
 TEST_P(InputProcessorTest, testAnyValidPurchaseTimestamp) {
-  assertAnyValidPurchaseTimestamp(
+  util::assertAnyValidPurchaseTimestamp(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertAnyValidPurchaseTimestamp(publisherDeserialized_, partnerDeserialized_);
-  assertAnyValidPurchaseTimestamp(
+  util::assertAnyValidPurchaseTimestamp(
+      publisherDeserialized_, partnerDeserialized_);
+  util::assertAnyValidPurchaseTimestamp(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
-}
-
-template <int schedulerId>
-std::vector<std::vector<int64_t>> revealValues(
-    std::reference_wrapper<const std::vector<SecValue<schedulerId>>> values) {
-  std::vector<std::vector<int64_t>> result;
-  for (size_t i = 0; i < values.get().size(); ++i) {
-    result.push_back(std::move(values.get().at(i).openToParty(0).getValue()));
-  }
-  return result;
-}
-
-void assertPurchaseValues(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async(
-      revealValues<0>,
-      std::reference_wrapper<const std::vector<SecValue<0>>>(
-          publisherData.purchaseValues));
-  auto future1 = std::async(
-      revealValues<1>,
-      std::reference_wrapper<const std::vector<SecValue<1>>>(
-          partnerData.purchaseValues));
-  auto purchaseValues = future0.get();
-  future1.get();
-  std::vector<std::vector<int64_t>> expectPurchaseValues = {
-      {0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0,  0,  10, 10, 10, 10, 10,
-       10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 10, 10, 10, 0,  0,  0},
-      {0,  0,  0,  20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,  20,  20, 20,
-       20, 20, 20, 20, 0,  0,  0,  50, 50, 50, 20, 20, 20, -50, -50, -50}};
-  EXPECT_EQ(purchaseValues, expectPurchaseValues);
 }
 
 TEST_P(InputProcessorTest, testPurchaseValues) {
-  assertPurchaseValues(
+  util::assertPurchaseValues(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertPurchaseValues(publisherDeserialized_, partnerDeserialized_);
-  assertPurchaseValues(
+  util::assertPurchaseValues(publisherDeserialized_, partnerDeserialized_);
+  util::assertPurchaseValues(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
-}
-
-template <int schedulerId>
-std::vector<std::vector<int64_t>> revealValueSquared(
-    std::reference_wrapper<const std::vector<SecValueSquared<schedulerId>>>
-        values) {
-  std::vector<std::vector<int64_t>> result;
-  for (size_t i = 0; i < values.get().size(); ++i) {
-    result.push_back(std::move(values.get().at(i).openToParty(0).getValue()));
-  }
-  return result;
-}
-
-void assertPurchaseValuesSquared(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async(
-      revealValueSquared<0>,
-      std::reference_wrapper<const std::vector<SecValueSquared<0>>>(
-          publisherData.purchaseValueSquared));
-  auto future1 = std::async(
-      revealValueSquared<1>,
-      std::reference_wrapper<const std::vector<SecValueSquared<1>>>(
-          partnerData.purchaseValueSquared));
-  auto purchaseValueSquared = future0.get();
-  future1.get();
-  // squared sum of purchase value in each row
-  std::vector<std::vector<int64_t>> expectPurchaseValueSquared = {
-      {0,   0,   0,    400,  400,  400, 400, 400, 400,  400,  400,
-       400, 900, 900,  900,  900,  900, 900, 900, 900,  900,  0,
-       0,   0,   2500, 2500, 2500, 900, 900, 900, 2500, 2500, 2500},
-      {0,   0,   0,    400,  400,  400, 400, 400, 400,  400,  400,
-       400, 400, 400,  400,  400,  400, 400, 400, 400,  400,  0,
-       0,   0,   2500, 2500, 2500, 400, 400, 400, 2500, 2500, 2500}};
-  EXPECT_EQ(purchaseValueSquared, expectPurchaseValueSquared);
 }
 
 TEST_P(InputProcessorTest, testPurchaseValueSquared) {
-  assertPurchaseValuesSquared(
+  util::assertPurchaseValuesSquared(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertPurchaseValuesSquared(publisherDeserialized_, partnerDeserialized_);
-  assertPurchaseValuesSquared(
+  util::assertPurchaseValuesSquared(
+      publisherDeserialized_, partnerDeserialized_);
+  util::assertPurchaseValuesSquared(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
 }
 
-void assertReach(
-    const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
-  auto future0 = std::async(
-      [&] { return publisherData.testReach.openToParty(0).getValue(); });
-  auto future1 = std::async(
-      [&] { return partnerData.testReach.openToParty(0).getValue(); });
-  auto testReach = future0.get();
-  future1.get();
-
-  std::vector<bool> expectTestReach = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0};
-  EXPECT_EQ(testReach, expectTestReach);
-}
-
 TEST_P(InputProcessorTest, testReach) {
-  assertReach(
+  util::assertReach(
       publisherInputProcessor_.getLiftGameProcessedData(),
       partnerInputProcessor_.getLiftGameProcessedData());
-  assertReach(publisherDeserialized_, partnerDeserialized_);
-  assertReach(
+  util::assertReach(publisherDeserialized_, partnerDeserialized_);
+  util::assertReach(
       publisherSecretInputProcessor_.getLiftGameProcessedData(),
       partnerSecretInputProcessor_.getLiftGameProcessedData());
 }
