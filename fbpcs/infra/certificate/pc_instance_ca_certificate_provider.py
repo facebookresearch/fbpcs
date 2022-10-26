@@ -9,6 +9,7 @@
 from typing import Optional
 
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.sample_tls_certificates import SAMPLE_CA_CERTIFICATE
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
@@ -26,4 +27,4 @@ class PCInstanceCaCertificateProvider(CertificateProvider):
     def get_certificate(self) -> Optional[str]:
         # TODO: implement this by retrieving ca certificate
         # from pc instance repo.
-        raise NotImplementedError
+        return SAMPLE_CA_CERTIFICATE
