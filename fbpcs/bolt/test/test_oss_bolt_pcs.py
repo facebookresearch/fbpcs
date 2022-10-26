@@ -44,6 +44,7 @@ from fbpcs.private_computation.entity.product_config import (
     AttributionRule,
     CommonProductConfig,
     LiftConfig,
+    PrivateIdDfcaConfig,
     ProductConfig,
 )
 from fbpcs.private_computation.service.errors import (
@@ -289,6 +290,8 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             )
         elif self.test_game_type is PrivateComputationGameType.LIFT:
             product_config = LiftConfig(common=common)
+        elif self.test_game_type is PrivateComputationGameType.PRIVATE_ID_DFCA:
+            product_config = PrivateIdDfcaConfig(common=common)
         test_instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
