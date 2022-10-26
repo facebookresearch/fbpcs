@@ -184,13 +184,26 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             )
             multi_conversion_limit = None
             log_cost = log_cost_to_s3
-        else:
+        elif (
+            private_computation_instance.infra_config.game_type
+            is PrivateComputationGameType.LIFT
+        ):
             run_name = None
             padding_size = None
             multi_conversion_limit = (
                 private_computation_instance.product_config.common.padding_size
             )
             log_cost = None
+        # private_computation_instance.infra_config.game_type is PrivateComputationGameType.PRIVATE_ID_DFCA
+        else:
+            run_name = (
+                private_computation_instance.infra_config.instance_id
+                if log_cost_to_s3
+                else ""
+            )
+            padding_size = None
+            multi_conversion_limit = None
+            log_cost = log_cost_to_s3
 
         combiner_service = checked_cast(
             IdSpineCombinerService,
