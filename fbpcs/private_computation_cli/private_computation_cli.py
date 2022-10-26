@@ -218,7 +218,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                 None,
                 schema.And(
                     schema.Use(str.upper),
-                    lambda s: s in ("LIFT", "ATTRIBUTION"),
+                    lambda s: s in ("LIFT", "ATTRIBUTION", "PRIVATE_ID_DFCA"),
                     schema.Use(PrivateComputationGameType),
                 ),
             ),

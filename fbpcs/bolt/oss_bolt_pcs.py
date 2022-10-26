@@ -16,7 +16,7 @@ from dataclasses_json import config, DataClassJsonMixin
 
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
-from fbpcs.bolt.constants import DEFAULT_ATTRIBUTION_STAGE_FLOW, DEFAULT_LIFT_STAGE_FLOW
+from fbpcs.bolt.constants import DEFAULT_STAGE_FLOW
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
 from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
@@ -89,11 +89,7 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
 
     def __post_init__(self) -> None:
         if self.stage_flow_cls is PrivateComputationBaseStageFlow:
-            self.stage_flow_cls = (
-                DEFAULT_ATTRIBUTION_STAGE_FLOW
-                if self.game_type is PrivateComputationGameType.ATTRIBUTION
-                else DEFAULT_LIFT_STAGE_FLOW
-            )
+            self.stage_flow_cls = DEFAULT_STAGE_FLOW[self.game_type]
         if not self.output_dir:
             self.output_dir = self.input_path[: self.input_path.rfind("/")]
 
