@@ -9,6 +9,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
 from fbpcs.data_processing.service.sharding_service import ShardingService
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -54,7 +55,11 @@ class TestShardStageService(IsolatedAsyncioTestCase):
             "start_containers",
         ) as mock_shard:
             # call re-sharding
-            await self.stage_svc.run_async(private_computation_instance)
+            await self.stage_svc.run_async(
+                private_computation_instance,
+                NullCertificateProvider(),
+                NullCertificateProvider(),
+            )
             mock_shard.assert_called()
 
     def create_sample_instance(self) -> PrivateComputationInstance:

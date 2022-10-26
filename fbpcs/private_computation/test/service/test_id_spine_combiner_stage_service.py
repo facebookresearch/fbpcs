@@ -10,6 +10,8 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
+
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -67,7 +69,9 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
                 ) as mock_combine:
                     # call id_spine_combiner
                     pc_instance = await self.stage_svc.run_async(
-                        private_computation_instance
+                        private_computation_instance,
+                        NullCertificateProvider(),
+                        NullCertificateProvider(),
                     )
                     mock_combine.assert_called()
                     self.assertEqual(pc_instance.infra_config.run_id, test_run_id)

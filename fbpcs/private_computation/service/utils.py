@@ -21,13 +21,18 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstanceStatus
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+from fbpcs.private_computation.service.constants import (
+    CA_CERTIFICATE_ENV_VAR,
+    DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+    SERVER_CERTIFICATE_ENV_VAR,
+)
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 
 
@@ -38,6 +43,8 @@ async def create_and_start_mpc_instance(
     mpc_party: MPCParty,
     num_containers: int,
     binary_version: str,
+    server_certificate_provider: CertificateProvider,
+    ca_certificate_provider: CertificateProvider,
     server_ips: Optional[List[str]] = None,
     game_args: Optional[List[Dict[str, Any]]] = None,
     container_timeout: Optional[int] = None,
@@ -78,6 +85,13 @@ async def create_and_start_mpc_instance(
     env_vars = {}
     if repository_path:
         env_vars[ONEDOCKER_REPOSITORY_PATH] = repository_path
+    server_cert = server_certificate_provider.get_certificate()
+    ca_cert = ca_certificate_provider.get_certificate()
+    if server_cert:
+        env_vars[SERVER_CERTIFICATE_ENV_VAR] = server_cert
+    if ca_cert:
+        env_vars[CA_CERTIFICATE_ENV_VAR] = ca_cert
+    # TODO: get certificate paths and add them to env_vars
 
     return await mpc_svc.start_instance_async(
         instance_id=instance_id,

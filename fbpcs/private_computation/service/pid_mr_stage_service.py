@@ -12,6 +12,7 @@ from typing import List, Optional
 from fbpcp.util.s3path import S3Path
 
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -42,6 +43,8 @@ class PIDMRStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """This function run mr workflow service

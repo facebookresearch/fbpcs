@@ -7,6 +7,8 @@
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
+
 from fbpcs.post_processing_handler.post_processing_handler import (
     PostProcessingHandlerStatus,
 )
@@ -61,7 +63,11 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         )
 
         private_computation_instance = self._create_pc_instance()
-        await stage_svc.run_async(private_computation_instance)
+        await stage_svc.run_async(
+            private_computation_instance,
+            NullCertificateProvider(),
+            NullCertificateProvider(),
+        )
 
         post_processing_instance = private_computation_instance.infra_config.instances[
             0
@@ -105,7 +111,11 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         )
 
         private_computation_instance = self._create_pc_instance()
-        await stage_svc.run_async(private_computation_instance)
+        await stage_svc.run_async(
+            private_computation_instance,
+            NullCertificateProvider(),
+            NullCertificateProvider(),
+        )
 
         post_processing_instance = private_computation_instance.infra_config.instances[
             0
@@ -149,7 +159,11 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
         )
 
         private_computation_instance = self._create_pc_instance()
-        await stage_svc.run_async(private_computation_instance)
+        await stage_svc.run_async(
+            private_computation_instance,
+            NullCertificateProvider(),
+            NullCertificateProvider(),
+        )
 
         post_processing_instance = private_computation_instance.infra_config.instances[
             0

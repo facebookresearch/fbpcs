@@ -8,6 +8,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -91,7 +92,9 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
                 stage_svc = PIDMRStageService(
                     service,
                 )
-                await stage_svc.run_async(pc_instance)
+                await stage_svc.run_async(
+                    pc_instance, NullCertificateProvider(), NullCertificateProvider()
+                )
 
                 self.assertEqual(
                     stage_svc.get_status(pc_instance),
