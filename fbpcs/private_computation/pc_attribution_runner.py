@@ -101,6 +101,44 @@ def run_attribution(
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
 ) -> None:
+    asyncio.run(
+        run_attribution_async(
+            config=config,
+            dataset_id=dataset_id,
+            input_path=input_path,
+            timestamp=timestamp,
+            attribution_rule=attribution_rule,
+            aggregation_type=aggregation_type,
+            concurrency=concurrency,
+            num_files_per_mpc_container=num_files_per_mpc_container,
+            k_anonymity_threshold=k_anonymity_threshold,
+            stage_flow=stage_flow,
+            logger=logger,
+            num_tries=num_tries,
+            final_stage=final_stage,
+            run_id=run_id,
+            graphapi_version=graphapi_version,
+        )
+    )
+
+
+async def run_attribution_async(
+    config: Dict[str, Any],
+    dataset_id: str,
+    input_path: str,
+    timestamp: str,
+    attribution_rule: AttributionRule,
+    aggregation_type: AggregationType,
+    concurrency: int,
+    num_files_per_mpc_container: int,
+    k_anonymity_threshold: int,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
+    logger: logging.Logger,
+    num_tries: Optional[int] = None,  # this is number of tries per stage
+    final_stage: Optional[PrivateComputationBaseStageFlow] = None,
+    run_id: Optional[str] = None,
+    graphapi_version: Optional[str] = None,
+) -> None:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
@@ -185,7 +223,7 @@ def run_attribution(
 
     if instance_id is None:
         try:
-            instance_id = _create_new_instance(
+            instance_id = await _create_new_instance(
                 dataset_id,
                 int(dt_arg),
                 attribution_rule_val,
@@ -200,7 +238,7 @@ def run_attribution(
                 exit_code=OneCommandRunnerExitCode.ERROR_CREATE_PA_INSTANCE,
             )
 
-    instance_data = _get_pa_instance_info(client, instance_id, logger)
+    instance_data = await _get_pa_instance_info(client, instance_id, logger)
     _check_version(instance_data, config)
     # override stage flow based on pcs feature gate. Please contact PSI team to have a similar adoption
     stage_flow_override = stage_flow
@@ -257,13 +295,11 @@ def run_attribution(
     # Step 4. Run instances async
 
     logger.info(f"Started running instance {instance_id}.")
-    all_run_success = asyncio.run(
-        run_bolt(
-            config=config,
-            logger=logger,
-            job_list=[job],
-            graphapi_version=graphapi_version,
-        )
+    all_run_success = await run_bolt(
+        config=config,
+        logger=logger,
+        job_list=[job],
+        graphapi_version=graphapi_version,
     )
     logger.info(f"Finished running instance {instance_id}.")
     if not all(all_run_success):
@@ -326,21 +362,19 @@ async def run_bolt(
     return await runner.run_async(job_list)
 
 
-def _create_new_instance(
+async def _create_new_instance(
     dataset_id: str,
     timestamp: int,
     attribution_rule: str,
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
     logger: logging.Logger,
 ) -> str:
-    instance_id = asyncio.run(
-        client.create_instance(
-            BoltPAGraphAPICreateInstanceArgs(
-                instance_id="",
-                dataset_id=dataset_id,
-                timestamp=str(timestamp),
-                attribution_rule=attribution_rule,
-            )
+    instance_id = await client.create_instance(
+        BoltPAGraphAPICreateInstanceArgs(
+            instance_id="",
+            dataset_id=dataset_id,
+            timestamp=str(timestamp),
+            attribution_rule=attribution_rule,
         )
     )
     logger.info(
@@ -415,12 +449,12 @@ def get_attribution_dataset_info(
     )
 
 
-def _get_pa_instance_info(
+async def _get_pa_instance_info(
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
     instance_id: str,
     logger: logging.Logger,
 ) -> Any:
-    return json.loads(asyncio.run(client.get_instance(instance_id)).text)
+    return json.loads((await client.get_instance(instance_id)).text)
 
 
 def _iso_date_validator(timestamp: str) -> Any:
