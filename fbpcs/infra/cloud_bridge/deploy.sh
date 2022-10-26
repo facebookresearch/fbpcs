@@ -93,6 +93,25 @@ undeploy_aws_resources() {
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pce$tag_postfix.tfstate" "$aws_account_id"
     echo "Related tfstate file exists. Continue..."
+
+    echo "Start undeploying AWS resource under VPC peering..."
+    log_streaming_data "starting to undeploy VPC peering related resources "
+    cd /terraform_deployment/terraform_scripts/partner/vpc_peering
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
+    echo "######################## Initializing terraform working directory completed ########################"
+    echo "########################Deleting########################"
+    terraform destroy \
+        -auto-approve \
+        -var "aws_region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "pce_id=$pce_id"
+
+    echo "Finished undeploying AWS resource under VPC peering."
+    log_streaming_data "Finished undeploying AWS resource under VPC peering."
+
     echo "######################## Initializing terraform working directory before deleting resources ########################"
     cd /terraform_deployment/terraform_scripts/common/pce
     terraform init -reconfigure \
@@ -108,26 +127,12 @@ undeploy_aws_resources() {
         -var "tag_postfix=$tag_postfix" \
         -var "pce_id=$pce_id"
     echo "Finished undeploying AWS resource under PCE."
-    echo "Start undeploying AWS resource under VPC peering..."
-    log_streaming_data "starting to undeploy VPC related resources "
+
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/vpcpeering$tag_postfix.tfstate" "$aws_account_id"
     echo "Related tfstate file exists. Continue..."
     echo "######################## Initializing terraform working directory before deleting resources ########################"
-    cd /terraform_deployment/terraform_scripts/partner/vpc_peering
-    terraform init -reconfigure \
-        -backend-config "bucket=$s3_bucket_for_storage" \
-        -backend-config "region=$region" \
-        -backend-config "key=tfstate/vpcpeering$tag_postfix.tfstate"
-    echo "######################## Initializing terraform working directory completed ########################"
-    echo "########################Deleting########################"
-    terraform destroy \
-        -auto-approve \
-        -var "aws_region=$region" \
-        -var "tag_postfix=$tag_postfix" \
-        -var "pce_id=$pce_id"
 
-    echo "Finished undeploying AWS resource under VPC peering."
     echo "Start undeploying AWS resource under Data Ingestion..."
     echo "########################Check tfstate files########################"
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/data_ingestion$tag_postfix.tfstate" "$aws_account_id"
