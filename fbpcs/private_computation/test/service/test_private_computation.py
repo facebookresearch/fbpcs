@@ -25,6 +25,7 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
 )
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
@@ -827,6 +828,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             mpc_party=mpc_party,
             num_containers=num_containers,
             binary_version=binary_version,
+            server_certificate_provider=NullCertificateProvider(),
+            ca_certificate_provider=NullCertificateProvider(),
             container_timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
             server_ips=server_ips,
             game_args=game_args,

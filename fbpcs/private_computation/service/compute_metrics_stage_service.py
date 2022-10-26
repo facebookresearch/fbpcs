@@ -13,6 +13,7 @@ from typing import Any, DefaultDict, Dict, List, Optional
 from fbpcp.service.mpc import MPCService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
@@ -74,6 +75,8 @@ class ComputeMetricsStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation compute metrics stage
@@ -97,7 +100,10 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                 "As private_lift_pcf2_release feature is enabled, running PCF2 lift stage, instead of compute stage."
             )
             return await self._pcf2_lift_service.run_async(
-                pc_instance=pc_instance, server_ips=server_ips
+                pc_instance=pc_instance,
+                server_certificate_provider=server_certificate_provider,
+                ca_certificate_provider=ca_certificate_provider,
+                server_ips=server_ips,
             )
 
         # Prepare arguments for lift game
@@ -134,6 +140,8 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             ),
             num_containers=len(game_args),
             binary_version=binary_config.binary_version,
+            server_certificate_provider=server_certificate_provider,
+            ca_certificate_provider=ca_certificate_provider,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,

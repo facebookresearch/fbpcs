@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -68,7 +69,12 @@ class TestPrivateIdDfcaAggregateStageService(IsolatedAsyncioTestCase):
             f"192.0.2.{i}"
             for i in range(private_computation_instance.infra_config.num_mpc_containers)
         ]
-        await self.stage_svc.run_async(private_computation_instance, test_server_ips)
+        await self.stage_svc.run_async(
+            private_computation_instance,
+            NullCertificateProvider(),
+            NullCertificateProvider(),
+            test_server_ips,
+        )
         test_game_args = [
             {
                 "input_path": f"{private_computation_instance.data_processing_output_path}_combine_{i}",

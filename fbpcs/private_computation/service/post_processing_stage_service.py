@@ -12,6 +12,7 @@ import logging
 from typing import Dict, List, Optional
 
 from fbpcp.service.storage import StorageService
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.post_processing_handler.post_processing_handler import (
     PostProcessingHandler,
     PostProcessingHandlerStatus,
@@ -54,6 +55,8 @@ class PostProcessingStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation post processing handlers stage

@@ -12,9 +12,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+
 from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
@@ -105,7 +107,10 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 return_value=containers
             )
             updated_pc_instance = await stage_svc.run_async(
-                pc_instance=pc_instance, server_ips=self.server_ips
+                pc_instance=pc_instance,
+                server_certificate_provider=NullCertificateProvider(),
+                ca_certificate_provider=NullCertificateProvider(),
+                server_ips=self.server_ips,
             )
 
             binary_name = PIDRunProtocolBinaryService.get_binary_name(

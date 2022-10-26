@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 
 from fbpcs.private_computation.entity.infra_config import (
@@ -78,7 +79,11 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
             self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
                 return_value=containers
             )
-            updated_pc_instance = await stage_svc.run_async(pc_instance=pc_instance)
+            updated_pc_instance = await stage_svc.run_async(
+                pc_instance=pc_instance,
+                server_certificate_provider=NullCertificateProvider(),
+                ca_certificate_provider=NullCertificateProvider(),
+            )
             env_vars = {}
             if self.onedocker_binary_config.repository_path:
                 env_vars[

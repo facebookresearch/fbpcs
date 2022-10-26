@@ -6,6 +6,8 @@
 
 # pyre-strict
 
+from typing import Optional
+
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -21,7 +23,7 @@ class PCInstanceServerCertificateProvider(CertificateProvider):
     def __init__(self, pc_instance: PrivateComputationInstance) -> None:
         self.pc_instance = pc_instance
 
-    def get_certificate(self) -> str:
+    def get_certificate(self) -> Optional[str]:
         """
         Get certificate value from pc instance repo.
         """

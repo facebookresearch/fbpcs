@@ -11,6 +11,7 @@ from typing import DefaultDict, List, Optional
 
 from fbpcp.service.mpc import MPCService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
@@ -63,6 +64,8 @@ class AggregateShardsStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation aggregate metrics stage
@@ -176,6 +179,8 @@ class AggregateShardsStageService(PrivateComputationStageService):
             ),
             num_containers=1,
             binary_version=binary_config.binary_version,
+            server_certificate_provider=server_certificate_provider,
+            ca_certificate_provider=ca_certificate_provider,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,

@@ -11,10 +11,12 @@ from fbpcp.entity.container_instance import ContainerInstance
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
+
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.pid_prepare_binary_service import (
     PIDPrepareBinaryService,
 )
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
@@ -62,6 +64,8 @@ class PIDPrepareStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the PID prepare stage

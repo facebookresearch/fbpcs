@@ -15,6 +15,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.trace_logging_service import TraceLoggingService
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
@@ -54,6 +55,8 @@ class PrivateComputationStageService(abc.ABC):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         # TODO(T102471612): remove server_ips from run_async, move to subclass constructor instead
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:

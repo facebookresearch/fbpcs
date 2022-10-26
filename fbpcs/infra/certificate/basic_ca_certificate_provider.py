@@ -6,6 +6,8 @@
 
 # pyre-strict
 
+from typing import Optional
+
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 
 
@@ -18,5 +20,5 @@ class BasicCaCertificateProvider(CertificateProvider):
     def __init__(self, ca_certificate: str) -> None:
         self.ca_certificate = ca_certificate
 
-    def get_certificate(self) -> str:
+    def get_certificate(self) -> Optional[str]:
         return self.ca_certificate

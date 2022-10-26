@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
@@ -24,6 +25,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationRole,
 )
+
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
@@ -125,7 +127,9 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
-        await stage_service.run_async(pc_instance)
+        await stage_service.run_async(
+            pc_instance, NullCertificateProvider(), NullCertificateProvider()
+        )
 
         env_vars = {ONEDOCKER_REPOSITORY_PATH: "test_path/"}
         mock_run_binary_base_service_start_containers.assert_called_with(
@@ -165,7 +169,9 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
         )
 
-        await stage_service.run_async(pc_instance)
+        await stage_service.run_async(
+            pc_instance, NullCertificateProvider(), NullCertificateProvider()
+        )
         status = stage_service.get_status(pc_instance)
 
         mock_onedocker_svc.start_container.assert_not_called()
@@ -191,7 +197,9 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             self.onedocker_binary_config_map,
         )
 
-        await stage_service.run_async(pc_instance)
+        await stage_service.run_async(
+            pc_instance, NullCertificateProvider(), NullCertificateProvider()
+        )
         status = stage_service.get_status(pc_instance)
 
         mock_onedocker_svc.start_container.assert_not_called()
@@ -239,7 +247,9 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         )
 
         with self.assertRaisesRegex(RuntimeError, exception_message):
-            await stage_service.run_async(pc_instance)
+            await stage_service.run_async(
+                pc_instance, NullCertificateProvider(), NullCertificateProvider()
+            )
 
     @patch(
         "fbpcs.private_computation.service.pc_pre_validation_stage_service.get_pc_status_from_stage_state"

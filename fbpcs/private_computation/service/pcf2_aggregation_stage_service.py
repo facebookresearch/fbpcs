@@ -13,6 +13,7 @@ from typing import Any, DefaultDict, Dict, List, Optional
 from fbpcp.service.mpc import MPCService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
@@ -69,6 +70,8 @@ class PCF2AggregationStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the pcf2.0 based private aggregation stage
@@ -115,6 +118,8 @@ class PCF2AggregationStageService(PrivateComputationStageService):
             ),
             num_containers=len(game_args),
             binary_version=binary_config.binary_version,
+            server_certificate_provider=server_certificate_provider,
+            ca_certificate_provider=ca_certificate_provider,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,

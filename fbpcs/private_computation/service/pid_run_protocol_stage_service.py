@@ -15,6 +15,7 @@ from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
@@ -62,6 +63,8 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the PID run protocol stage

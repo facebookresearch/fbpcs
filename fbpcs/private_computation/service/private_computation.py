@@ -30,6 +30,8 @@ from fbpcs.common.service.trace_logging_service import (
 )
 from fbpcs.experimental.cloud_logs.dummy_log_retriever import DummyLogRetriever
 from fbpcs.experimental.cloud_logs.log_retriever import LogRetriever
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -443,13 +445,22 @@ class PrivateComputationService:
             )
 
     def run_next(
-        self, instance_id: str, server_ips: Optional[List[str]] = None
+        self,
+        instance_id: str,
+        server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_next")
-        return asyncio.run(self.run_next_async(instance_id, server_ips))
+        return asyncio.run(
+            self.run_next_async(
+                instance_id,
+                server_ips,
+            )
+        )
 
     async def run_next_async(
-        self, instance_id: str, server_ips: Optional[List[str]] = None
+        self,
+        instance_id: str,
+        server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Fetches the next eligible stage in the instance's stage flow and runs it"""
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_next_async")
@@ -466,7 +477,9 @@ class PrivateComputationService:
             )
 
         return await self.run_stage_async(
-            instance_id, next_stage, server_ips=server_ips
+            instance_id,
+            next_stage,
+            server_ips=server_ips,
         )
 
     def run_stage(
@@ -479,7 +492,13 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_stage")
         return asyncio.run(
-            self.run_stage_async(instance_id, stage, stage_svc, server_ips, dry_run)
+            self.run_stage_async(
+                instance_id,
+                stage,
+                stage_svc,
+                server_ips,
+                dry_run,
+            )
         )
 
     def _get_validated_instance(
@@ -525,6 +544,14 @@ class PrivateComputationService:
 
         return pc_instance
 
+    def _get_server_certificate_provider(self, instance_id: str) -> CertificateProvider:
+        # TODO: Return appropriate provider class based on PC role
+        return NullCertificateProvider()
+
+    def _get_ca_certificate_provider(self, instance_id: str) -> CertificateProvider:
+        # TODO: Return appropriate provider class based on PC role
+        return NullCertificateProvider()
+
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
     # Make an async version of run_stage_async() so that it can be called by Thrift
     async def run_stage_async(
@@ -544,6 +571,8 @@ class PrivateComputationService:
         pc_instance = self._get_validated_instance(
             instance_id, stage, server_ips, dry_run
         )
+        server_certificate_provider = self._get_server_certificate_provider(instance_id)
+        ca_certificate_provider = self._get_ca_certificate_provider(instance_id)
 
         # update initial status
         pc_instance.update_status(
@@ -561,7 +590,12 @@ class PrivateComputationService:
 
         try:
             stage_svc = stage_svc or stage.get_stage_service(self.stage_service_args)
-            pc_instance = await stage_svc.run_async(pc_instance, server_ips)
+            pc_instance = await stage_svc.run_async(
+                pc_instance,
+                server_certificate_provider,
+                ca_certificate_provider,
+                server_ips,
+            )
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage}\n{e}")
             self.trace_logging_svc.write_checkpoint(

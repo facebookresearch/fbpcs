@@ -20,6 +20,7 @@ from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
@@ -77,6 +78,8 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
     async def run_async(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation prepare data stage - spine combiner stage
