@@ -27,6 +27,7 @@ class PCEConfig:
     cloud_account_id: Optional[str] = None
     partner_id: Optional[str] = None
     pce_id: Optional[str] = None
+    role: Optional[str] = None
 
     def __str__(self) -> str:
         # pyre-ignore
