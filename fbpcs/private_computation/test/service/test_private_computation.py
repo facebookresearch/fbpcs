@@ -908,6 +908,57 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 expected_result_path="expected_result_path",
             )
 
+    def test_validate_pid_dfca_csv_match(self) -> None:
+        self.test_num_containers = 1
+
+        private_computation_instance = self.create_sample_instance(
+            status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+            role=PrivateComputationRole.PUBLISHER,
+            game_type=PrivateComputationGameType.PRIVATE_ID_DFCA,
+        )
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=private_computation_instance
+        )
+
+        self.private_computation_service.storage_svc.read = MagicMock()
+        # pyre-fixme[16]: Callable `read` has no attribute `side_effect`.
+        self.private_computation_service.storage_svc.read.side_effect = [
+            "publisher_user_id,partner_user_id\nc0f2421d-ea40-4f89-a489-44b824de8e14,4e89ad4a-245f-4a92-b3af-535d927fd1d4\n7a317fb7-e92d-4c29-882e-adad32c31000,283d0555-d2dd-4558-9775-b9a99353b560\n897a7026-af23-4994-8e37-cf807648b288,8345ea97-df26-499a-9d11-a99249eb0182\nd7bf6641-5004-4337-909c-19c7c65efc06,48cbaeea-ad08-4fbc-ad08-0e7d963715b1\nfde8494b-b02b-4946-b33c-87f7cc2f5e58,37b8907c-a4b9-4556-9e9e-efc0cfbaa697\n652ef7e5-d827-4366-8790-0c8137cd9079,a9511c9c-e643-49d3-b2c5-bca45509efdd\nbed88de1-7c5c-4e4e-9570-c0096f54d722,880e7c7f-91cd-48a4-ae6f-f9ea92ee0132\n7fadac6d-a795-4923-b4b5-3f54e0d2c7b2,00a8f8c3-25bf-4e6d-8997-811afe97e1cb\n187ffc5c-d0d6-4350-9d44-b5b51f091f97,2da9c08c-585c-4eba-b8df-15f5da1458b5\n65e7cc16-bb59-4c87-9598-5d4d47d5e11f,72b2f924-c92b-430f-b223-878672301d5b\na2f08fc4-a637-49ed-99c1-6fba7906970c,d6df91fa-6ef9-4466-aa5d-acd3042f811f\n89b5aed4-aa65-452e-9532-aaa164c06ad4,2f035d2a-48d2-4c57-8d7e-5b0fba788099\n4411390e-62cc-4f59-a7ae-a58a30306893,d91fcfe0-7a0d-4169-ba0d-5e3de3c468f2\nea199c58-3b81-4ec9-9d66-3754969bd46c,e7eb0fd6-5b54-491b-bede-0ed3d1f6a6cc\n64772612-5889-449c-8571-000fd8b0c9fb,7ce0e7b2-6a20-4acc-95a7-d9a6cd48c7f2",
+            "publisher_user_id,partner_user_id\n7a317fb7-e92d-4c29-882e-adad32c31000,283d0555-d2dd-4558-9775-b9a99353b560\nc0f2421d-ea40-4f89-a489-44b824de8e14,4e89ad4a-245f-4a92-b3af-535d927fd1d4\n897a7026-af23-4994-8e37-cf807648b288,8345ea97-df26-499a-9d11-a99249eb0182\nd7bf6641-5004-4337-909c-19c7c65efc06,48cbaeea-ad08-4fbc-ad08-0e7d963715b1\nfde8494b-b02b-4946-b33c-87f7cc2f5e58,37b8907c-a4b9-4556-9e9e-efc0cfbaa697\n652ef7e5-d827-4366-8790-0c8137cd9079,a9511c9c-e643-49d3-b2c5-bca45509efdd\nbed88de1-7c5c-4e4e-9570-c0096f54d722,880e7c7f-91cd-48a4-ae6f-f9ea92ee0132\n7fadac6d-a795-4923-b4b5-3f54e0d2c7b2,00a8f8c3-25bf-4e6d-8997-811afe97e1cb\n187ffc5c-d0d6-4350-9d44-b5b51f091f97,2da9c08c-585c-4eba-b8df-15f5da1458b5\n65e7cc16-bb59-4c87-9598-5d4d47d5e11f,72b2f924-c92b-430f-b223-878672301d5b\na2f08fc4-a637-49ed-99c1-6fba7906970c,d6df91fa-6ef9-4466-aa5d-acd3042f811f\n89b5aed4-aa65-452e-9532-aaa164c06ad4,2f035d2a-48d2-4c57-8d7e-5b0fba788099\n4411390e-62cc-4f59-a7ae-a58a30306893,d91fcfe0-7a0d-4169-ba0d-5e3de3c468f2\nea199c58-3b81-4ec9-9d66-3754969bd46c,e7eb0fd6-5b54-491b-bede-0ed3d1f6a6cc\n64772612-5889-449c-8571-000fd8b0c9fb,7ce0e7b2-6a20-4acc-95a7-d9a6cd48c7f2",
+        ]
+
+        self.private_computation_service.validate_metrics(
+            instance_id=self.test_private_computation_id,
+            aggregated_result_path="aggregated_result_path",
+            expected_result_path="expected_result_path",
+        )
+
+    def test_validate_pid_dfca_csv_no_match(self) -> None:
+        self.test_num_containers = 1
+
+        private_computation_instance = self.create_sample_instance(
+            status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+            role=PrivateComputationRole.PUBLISHER,
+            game_type=PrivateComputationGameType.PRIVATE_ID_DFCA,
+        )
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=private_computation_instance
+        )
+
+        self.private_computation_service.storage_svc.read = MagicMock()
+        # pyre-fixme[16]: Callable `read` has no attribute `side_effect`.
+        self.private_computation_service.storage_svc.read.side_effect = [
+            "publisher_user_id,partner_user_id\nd0f2421d-ea40-4f89-a489-44b824de8e14,4e89ad4a-245f-4a92-b3af-535d927fd1d4\n7a317fb7-e92d-4c29-882e-adad32c31000,283d0555-d2dd-4558-9775-b9a99353b560\n897a7026-af23-4994-8e37-cf807648b288,8345ea97-df26-499a-9d11-a99249eb0182\nd7bf6641-5004-4337-909c-19c7c65efc06,48cbaeea-ad08-4fbc-ad08-0e7d963715b1\nfde8494b-b02b-4946-b33c-87f7cc2f5e58,37b8907c-a4b9-4556-9e9e-efc0cfbaa697\n652ef7e5-d827-4366-8790-0c8137cd9079,a9511c9c-e643-49d3-b2c5-bca45509efdd\nbed88de1-7c5c-4e4e-9570-c0096f54d722,880e7c7f-91cd-48a4-ae6f-f9ea92ee0132\n7fadac6d-a795-4923-b4b5-3f54e0d2c7b2,00a8f8c3-25bf-4e6d-8997-811afe97e1cb\n187ffc5c-d0d6-4350-9d44-b5b51f091f97,2da9c08c-585c-4eba-b8df-15f5da1458b5\n65e7cc16-bb59-4c87-9598-5d4d47d5e11f,72b2f924-c92b-430f-b223-878672301d5b\na2f08fc4-a637-49ed-99c1-6fba7906970c,d6df91fa-6ef9-4466-aa5d-acd3042f811f\n89b5aed4-aa65-452e-9532-aaa164c06ad4,2f035d2a-48d2-4c57-8d7e-5b0fba788099\n4411390e-62cc-4f59-a7ae-a58a30306893,d91fcfe0-7a0d-4169-ba0d-5e3de3c468f2\nea199c58-3b81-4ec9-9d66-3754969bd46c,e7eb0fd6-5b54-491b-bede-0ed3d1f6a6cc\n64772612-5889-449c-8571-000fd8b0c9fb,7ce0e7b2-6a20-4acc-95a7-d9a6cd48c7f2",
+            "publisher_user_id,partner_user_id\n7a317fb7-e92d-4c29-882e-adad32c31000,283d0555-d2dd-4558-9775-b9a99353b560\nc0f2421d-ea40-4f89-a489-44b824de8e14,4e89ad4a-245f-4a92-b3af-535d927fd1d4\n897a7026-af23-4994-8e37-cf807648b288,8345ea97-df26-499a-9d11-a99249eb0182\nd7bf6641-5004-4337-909c-19c7c65efc06,48cbaeea-ad08-4fbc-ad08-0e7d963715b1\nfde8494b-b02b-4946-b33c-87f7cc2f5e58,37b8907c-a4b9-4556-9e9e-efc0cfbaa697\n652ef7e5-d827-4366-8790-0c8137cd9079,a9511c9c-e643-49d3-b2c5-bca45509efdd\nbed88de1-7c5c-4e4e-9570-c0096f54d722,880e7c7f-91cd-48a4-ae6f-f9ea92ee0132\n7fadac6d-a795-4923-b4b5-3f54e0d2c7b2,00a8f8c3-25bf-4e6d-8997-811afe97e1cb\n187ffc5c-d0d6-4350-9d44-b5b51f091f97,2da9c08c-585c-4eba-b8df-15f5da1458b5\n65e7cc16-bb59-4c87-9598-5d4d47d5e11f,72b2f924-c92b-430f-b223-878672301d5b\na2f08fc4-a637-49ed-99c1-6fba7906970c,d6df91fa-6ef9-4466-aa5d-acd3042f811f\n89b5aed4-aa65-452e-9532-aaa164c06ad4,2f035d2a-48d2-4c57-8d7e-5b0fba788099\n4411390e-62cc-4f59-a7ae-a58a30306893,d91fcfe0-7a0d-4169-ba0d-5e3de3c468f2\nea199c58-3b81-4ec9-9d66-3754969bd46c,e7eb0fd6-5b54-491b-bede-0ed3d1f6a6cc\n64772612-5889-449c-8571-000fd8b0c9fb,7ce0e7b2-6a20-4acc-95a7-d9a6cd48c7f2",
+        ]
+
+        with self.assertRaises(PrivateComputationServiceValidationError):
+            self.private_computation_service.validate_metrics(
+                instance_id=self.test_private_computation_id,
+                aggregated_result_path="aggregated_result_path",
+                expected_result_path="expected_result_path",
+            )
+
     def test_cancel_current_stage(self) -> None:
         test_mpc_id = self.test_private_computation_id + "_compute_metrics"
         test_game_name = GameNames.LIFT.value
@@ -1135,6 +1186,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         status: PrivateComputationInstanceStatus,
         role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
         instances: Optional[List[UnionedPCInstance]] = None,
+        game_type: PrivateComputationGameType = PrivateComputationGameType.LIFT,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.test_private_computation_id,
@@ -1142,7 +1194,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             status=status,
             status_update_ts=1600000000,
             instances=instances or [],
-            game_type=PrivateComputationGameType.LIFT,
+            game_type=game_type,
             num_pid_containers=self.test_num_containers,
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
