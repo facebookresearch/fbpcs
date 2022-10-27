@@ -25,7 +25,7 @@ private_computation:
       default:
         constructor:
           tmp_directory: /tmp
-          binary_version: rc
+          binary_version: latest
     OneDockerServiceConfig:
       constructor:
         task_definition: onedocker-task-qae2e:1#onedocker-container-qae2e
