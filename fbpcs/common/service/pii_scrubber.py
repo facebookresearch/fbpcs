@@ -30,6 +30,7 @@ class PiiLoggingScrubber(SecretScrubber):
             r"([a-z0-9!#\$%&\'\*\+/=\?^_`\{\|\}~-]+(?:(?:\.|%2(E|e))[a-z0-9!#\$%&\'\*\+/=\?^_`\{\|\}~-]+)*(?:%40|@)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.|%2(E|e)))+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)",
             0,
         ),
+        Secret("Athena Hash Key", r"(\bFROM_BASE64\('\b)([^\s]*)'", 1),
     ]
 
     def __init__(self) -> None:
