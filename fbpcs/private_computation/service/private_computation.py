@@ -674,14 +674,47 @@ class PrivateComputationService:
     ) -> None:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "validate_metrics")
         private_computation_instance = self.get_instance(instance_id)
-        expected_results_dict = json.loads(self.storage_svc.read(expected_result_path))
-        aggregated_results_dict = json.loads(
-            self.storage_svc.read(
-                aggregated_result_path
-                or private_computation_instance.shard_aggregate_stage_output_path
+        if (
+            private_computation_instance.infra_config.game_type
+            is PrivateComputationGameType.PRIVATE_ID_DFCA
+        ):
+            if (
+                private_computation_instance.infra_config.role
+                is PrivateComputationRole.PARTNER
+            ):
+                return
+
+            expected_results = [
+                sorted(
+                    self.storage_svc.read(f"{expected_result_path}_{shard_n}").split(
+                        "\n"
+                    )
+                )
+                for shard_n in range(
+                    private_computation_instance.infra_config.num_pid_containers
+                )
+            ]
+            aggregated_results = [
+                sorted(
+                    self.storage_svc.read(
+                        f"{aggregated_result_path or private_computation_instance.private_id_dfca_aggregate_stage_output_path}_{shard_n}"
+                    ).split("\n")
+                )
+                for shard_n in range(
+                    private_computation_instance.infra_config.num_pid_containers
+                )
+            ]
+
+        else:
+            expected_results = json.loads(self.storage_svc.read(expected_result_path))
+            aggregated_results = json.loads(
+                self.storage_svc.read(
+                    aggregated_result_path
+                    or private_computation_instance.shard_aggregate_stage_output_path
+                )
             )
-        )
-        if expected_results_dict == aggregated_results_dict:
+
+        if expected_results == aggregated_results:
             self.logger.info(
                 colored(
                     f"Aggregated results for instance {instance_id} on synthetic data is as expected.",
