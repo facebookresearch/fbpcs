@@ -44,7 +44,7 @@ class PiiLoggingScrubber(SecretScrubber):
         name_to_num_subs: Dict[str, int] = {}
         for name, pattern in self.patterns.items():
             patterns_group = self.pattern_group.get(name, 0)
-            if patterns_group:
+            if not patterns_group:
                 string, num_substitutes = re.subn(pattern, self.REPLACEMENT_STR, string)
             else:
                 string, num_substitutes = re.subn(
