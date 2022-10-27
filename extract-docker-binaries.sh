@@ -72,6 +72,7 @@ docker cp temp_container:/usr/local/bin/pcf2_attribution_calculator "$SCRIPT_DIR
 docker cp temp_container:/usr/local/bin/pcf2_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/shard_aggregator "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/pcf2_shard_combiner "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/usr/local/bin/private_id_dfca_aggregator "$SCRIPT_DIR/binaries_out/."
 docker rm -f temp_container
 fi
 
@@ -82,6 +83,7 @@ docker cp temp_container:/usr/local/bin/sharder_hashed_for_pid "$SCRIPT_DIR/bina
 docker cp temp_container:/usr/local/bin/pid_preparer "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/lift_id_combiner "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/attribution_id_combiner "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/usr/local/bin/private_id_dfca_id_combiner "$SCRIPT_DIR/binaries_out/."
 docker rm -f temp_container
 fi
 

@@ -176,3 +176,18 @@ target_link_libraries(
   empgamecommon
   perftools)
 install(TARGETS pcf2_shard_combiner DESTINATION bin)
+
+# private_id_dfca_aggregator
+file(GLOB private_id_dfca_aggregator_src
+  "fbpcs/emp_games/private_id_dfca_aggregator/**.cpp"
+  "fbpcs/emp_games/private_id_dfca_aggregator/**.h"
+  "fbpcs/emp_games/private_id_dfca_aggregator/util/**.h")
+list(FILTER private_id_dfca_aggregator_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  private_id_dfca_aggregator
+  ${private_id_dfca_aggregator_src})
+target_link_libraries(
+  private_id_dfca_aggregator
+  empgamecommon
+  perftools)
+install(TARGETS private_id_dfca_aggregator DESTINATION bin)

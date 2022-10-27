@@ -147,3 +147,18 @@ target_link_libraries(
   gflags
 )
 install(TARGETS gen_fake_data DESTINATION bin)
+
+# private_id_dfca id combiner
+add_executable(
+  private_id_dfca_id_combiner
+  "fbpcs/data_processing/private_id_dfca_id_combiner/PrivateIdDfcaIdSpineCombiner.cpp"
+  "fbpcs/data_processing/private_id_dfca_id_combiner/PrivateIdDfcaIdSpineCombinerOptions.cpp"
+  "fbpcs/data_processing/private_id_dfca_id_combiner/PrivateIdDfcaIdSpineFileCombiner.cpp"
+  "fbpcs/data_processing/private_id_dfca_id_combiner/PidPrivateIdDfcaIdCombiner.cpp"
+  "fbpcs/data_processing/private_id_dfca_id_combiner/MrPidPrivateIdDfcaIdCombiner.cpp"
+  "fbpcs/data_processing/private_id_dfca_id_combiner/PrivateIdDfcaStrategy.cpp")
+target_link_libraries(
+  private_id_dfca_id_combiner
+  idcombiner
+  perftools)
+install(TARGETS private_id_dfca_id_combiner DESTINATION bin)
