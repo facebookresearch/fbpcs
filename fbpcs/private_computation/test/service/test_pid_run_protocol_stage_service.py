@@ -21,7 +21,6 @@ from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
 )
-
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -136,6 +135,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 cmd_args_list=args_str_expect,
                 timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
                 env_vars=env_vars,
+                container_type=None,
             )
             # test the return value is as expected
             self.assertEqual(

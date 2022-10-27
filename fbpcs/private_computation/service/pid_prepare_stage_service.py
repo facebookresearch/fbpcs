@@ -8,6 +8,7 @@ import logging
 from typing import DefaultDict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.container_type import ContainerType
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
@@ -21,6 +22,7 @@ from fbpcs.onedocker_binary_config import (
     ONEDOCKER_REPOSITORY_PATH,
     OneDockerBinaryConfig,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -141,6 +143,15 @@ class PIDPrepareStageService(PrivateComputationStageService):
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
+
+        container_type = None
+        if num_shards == 1 and pc_instance.has_feature(
+            PCSFeature.PID_SNMK_LARGER_CONTAINER_TYPE
+        ):
+            # Use large FARGATE container for SNMK
+            logging.info("Setting pid prepare stage container to LARGE")
+            container_type = ContainerType.LARGE
+
         return await pid_prepare_binary_service.start_containers(
             cmd_args_list=args_list,
             onedocker_svc=self._onedocker_svc,
@@ -150,6 +161,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
             env_vars=env_vars,
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
+            container_type=container_type,
         )
 
     def stop_service(

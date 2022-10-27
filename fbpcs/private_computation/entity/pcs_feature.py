@@ -19,6 +19,7 @@ class PCSFeature(Enum):
     PRIVATE_ATTRIBUTION_MR_PID = "private_attribution_with_mr_pid"
     SHARD_COMBINER_PCF2_RELEASE = "shard_combiner_pcf2_release"
     NUM_MPC_CONTAINER_MUTATION = "num_mpc_container_mutation"
+    PID_SNMK_LARGER_CONTAINER_TYPE = "pid_snmk_larger_container_type"
     PCF_TLS = "pcf_tls"
     UNKNOWN = "unknown"
 

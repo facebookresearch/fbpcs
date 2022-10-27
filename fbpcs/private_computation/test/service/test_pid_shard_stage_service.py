@@ -100,6 +100,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
                 cmd_args_list=args_ls_expect,
                 timeout=self.container_timeout,
                 env_vars=env_vars,
+                container_type=None,
             )
             # test the return value is as expected
             self.assertEqual(

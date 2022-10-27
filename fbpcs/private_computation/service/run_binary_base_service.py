@@ -11,6 +11,7 @@ import logging
 from typing import Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
@@ -32,6 +33,7 @@ class RunBinaryBaseService:
         env_vars: Optional[Dict[str, str]] = None,
         wait_for_containers_to_start_up: bool = True,
         existing_containers: Optional[List[ContainerInstance]] = None,
+        container_type: Optional[ContainerType] = None,
     ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
 
@@ -51,6 +53,7 @@ class RunBinaryBaseService:
                 cmd_args_list=[cmd_args_list[i] for i in containers_to_start],
                 timeout=timeout,
                 env_vars=env_vars,
+                container_type=container_type,
             )
 
             pending_containers = MPCService.get_pending_containers(

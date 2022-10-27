@@ -14,9 +14,10 @@ from math import ceil
 from typing import DefaultDict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
+
+from fbpcp.entity.container_type import ContainerType
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
@@ -258,6 +259,17 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         if binary_config.repository_path:
             env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
 
+        container_type = None
+        if (
+            private_computation_instance.infra_config.num_pid_containers == 1
+            and private_computation_instance.has_feature(
+                PCSFeature.PID_SNMK_LARGER_CONTAINER_TYPE
+            )
+        ):
+            # Use large FARGATE container for SNMK
+            logging.info("Setting id spine combiner stage container to LARGE")
+            container_type = ContainerType.LARGE
+
         return await combiner_service.start_containers(
             cmd_args_list=args,
             onedocker_svc=onedocker_svc,
@@ -268,6 +280,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             env_vars=env_vars,
             wait_for_containers_to_start_up=wait_for_containers_to_start_up,
             existing_containers=private_computation_instance.get_existing_containers_for_retry(),
+            container_type=container_type,
         )
 
     async def get_mutated_num_mpc_containers(
