@@ -22,7 +22,7 @@ namespace pid::combiner {
 /*
 PidPrivateIdDfcaIdCombiner is a child class that inherited
 PrivateIdDfcaStrategy. It takes the data file and the spine id file (output from
-pid match step) and prepare the format for the compute stage.
+pid match step) and prepare the format for the aggregation stage.
 
 It assumes that the publisher columns are:
 id_, publisher_user_id
@@ -44,7 +44,7 @@ id_, private_id
 
 
 Then the output would be:
-id_,     partner_user_id
+id_,     publisher_user_id
 AAA               a1
 BBB               a2
 */
