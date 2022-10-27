@@ -29,6 +29,7 @@ binary_names=(
     'private_attribution/pcf2_aggregation'
     'private_attribution/shard-aggregator'
     'private_attribution/pcf2_shard-combiner'
+    'private_id_dfca/private_id_dfca_aggregator'
     'pid/private-id-client'
     'pid/private-id-server'
     'pid/private-id-multi-key-client'
@@ -38,6 +39,7 @@ binary_names=(
     'data_processing/pid_preparer'
     'data_processing/lift_id_combiner'
     'data_processing/attribution_id_combiner'
+    'data_processing/private_id_dfca_id_combiner'
     'validation/pc_pre_validation_cli'
 )
 
