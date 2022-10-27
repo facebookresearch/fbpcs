@@ -8,8 +8,8 @@ private_computation:
       class: fbpcp.service.container_aws.AWSContainerService
       constructor:
         region: us-west-2
-        cluster: onedocker-cluster-rc-tier-partner
-        subnets: [subnet-0f2b6cf90a5bfc8fa,subnet-006b6437e79d33d06,subnet-07c5bd3358e70e157,subnet-0968c31c698e17908,]
+        cluster: onedocker-cluster-qae2e
+        subnets: [subnet-0b361ed54352fd2a5, subnet-0ca8356d3d42e9e3a,subnet-06f25db1e6de8b5f5,subnet-01f5818def8a449d3]
         access_key_id:
         access_key_data:
     StorageService:
@@ -25,10 +25,10 @@ private_computation:
       default:
         constructor:
           tmp_directory: /tmp
-          binary_version: latest
+          binary_version: rc
     OneDockerServiceConfig:
       constructor:
-        task_definition: onedocker-task-rc-tier-partner:1#onedocker-container-rc-tier-partner
+        task_definition: onedocker-task-qae2e:1#onedocker-container-qae2e
 pid:
   dependency:
 mpc:
