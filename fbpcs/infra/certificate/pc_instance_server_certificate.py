@@ -9,6 +9,7 @@
 from typing import Optional
 
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.sample_tls_certificates import SAMPLE_SERVER_CERTIFICATE
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
@@ -29,4 +30,8 @@ class PCInstanceServerCertificateProvider(CertificateProvider):
         """
         # TODO: implement this by retrieving server certificate
         # from pc instance repo.
-        raise NotImplementedError
+
+        # This is a intermediate stage for us to do testing and
+        # there is no security risk of returning a sample
+        # static certificate
+        return SAMPLE_SERVER_CERTIFICATE
