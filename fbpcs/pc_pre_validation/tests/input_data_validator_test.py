@@ -18,6 +18,7 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
     PL_FIELDS,
+    PRIVATE_ID_DFCA_FIELDS,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
@@ -312,7 +313,7 @@ class TestInputDataValidator(TestCase):
     def test_run_validations_errors_when_pa_pl_data_fields_not_found(
         self, time_mock: Mock
     ) -> None:
-        exception_message = f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS}"
+        exception_message = f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
             b"id_,header,row\n",
@@ -700,6 +701,33 @@ class TestInputDataValidator(TestCase):
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_success_for_private_id_dfca_fields(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        cloud_provider = CloudProvider.AWS
+        lines = [
+            b"id_,partner_user_id\n",
+            b"abcd/1234+WXYZ=,\n",
+            b"abcd/1234+WXYZ=,1\n",
+            b"abcd/1234+WXYZ=,0\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
+            details={"rows_processed_count": 3},
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
         )
         report = validator.validate()
 

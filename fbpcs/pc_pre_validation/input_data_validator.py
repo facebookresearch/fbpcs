@@ -31,6 +31,7 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
     PL_FIELDS,
+    PRIVATE_ID_DFCA_FIELDS,
     VALID_LINE_ENDING_REGEX,
     VALIDATION_REGEXES,
 )
@@ -181,15 +182,18 @@ class InputDataValidator(Validator):
         match_pl_fields = len(set(PL_FIELDS).intersection(set(header_row))) == len(
             PL_FIELDS
         )
+        match_private_id_dfca_fields = len(
+            set(PRIVATE_ID_DFCA_FIELDS).intersection(set(header_row))
+        ) == len(PRIVATE_ID_DFCA_FIELDS)
 
         if not match_id_fields:
             raise InputDataValidationException(
                 f"Failed to parse the header row. The header row fields must have columns with prefix {ID_FIELD_PREFIX}"
             )
 
-        if not (match_pa_fields or match_pl_fields):
+        if not (match_pa_fields or match_pl_fields or match_private_id_dfca_fields):
             raise InputDataValidationException(
-                f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS}"
+                f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
             )
 
     def _validate_line_ending(self, line: str) -> None:
