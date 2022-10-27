@@ -46,6 +46,11 @@ DEFAULT_SORT_STRATEGY = "sort"
 DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT = 6
 FBPCS_BUNDLE_ID = "FBPCS_BUNDLE_ID"
 
+# RUN PID has separate timeout to accommodate for 20M rows capacity on SNMK
+# According to the capacity test, 20M 6keys on both side would take 3.5 hrs total.
+# We set default time out to 5 hrs as the buffer.
+DEFAULT_RUN_PID_TIMEOUT_IN_SEC = 18000
+
 CA_CERT_PATH = "tls/ca_cert.pem"
 SERVER_CERT_PATH = "tls/server_cert.pem"
 PRIVATE_KEY_PATH = "tls/private_key.pem"

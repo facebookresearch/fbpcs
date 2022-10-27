@@ -9,6 +9,7 @@ import logging
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_RUN_PID_TIMEOUT_IN_SEC
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
@@ -64,6 +65,7 @@ class PrivateComputationPIDOnlyTestStageFlow(PrivateComputationBaseStageFlow):
         failed_status=PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
         is_joint_stage=True,
         is_retryable=True,
+        timeout=DEFAULT_RUN_PID_TIMEOUT_IN_SEC,
     )
     ID_MATCH_POST_PROCESS = PrivateComputationStageFlowData(
         initialized_status=PrivateComputationInstanceStatus.ID_MATCHING_POST_PROCESS_INITIALIZED,
