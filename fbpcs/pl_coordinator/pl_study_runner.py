@@ -485,6 +485,43 @@ def _get_chunks(
     return chunks
 
 
+def get_runnable_objectives(
+    study_id: str,
+    config: Dict[str, Any],
+    logger: logging.Logger,
+    graphapi_version: Optional[str] = None,
+) -> List[str]:
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
+        config=config,
+        logger=logger,
+        graphapi_version=graphapi_version,
+    )
+
+    study_data = _get_study_data(study_id, client)
+    mpc_objective_ids = [
+        objective_dict["id"]
+        for objective_dict in study_data["objectives"]["data"]
+        if objective_dict["type"] == MPC_CONVERSION
+    ]
+    cell_obj_instances = _get_cell_obj_instance(
+        study_data, mpc_objective_ids, ["fake_input_path.csv"] * len(mpc_objective_ids)
+    )
+
+    runnable_objective_ids = [
+        objective_id
+        for cell_id in cell_obj_instances
+        for objective_id in cell_obj_instances[cell_id]
+        # if instance_id *is* in the dict, it means there is either an ongoing run
+        # or a completed run within 24 hours
+        if "instance_id" not in cell_obj_instances[cell_id][objective_id]
+    ]
+
+    logger.info(f"MPC objectives: {mpc_objective_ids}")
+    logger.info(f"Runnable objectives: {runnable_objective_ids}")
+
+    return runnable_objective_ids
+
+
 def _get_cell_obj_instance(
     study_data: Dict[str, Any],
     objective_ids: List[str],
