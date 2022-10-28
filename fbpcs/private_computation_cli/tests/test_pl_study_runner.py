@@ -218,6 +218,82 @@ class TestPlStudyRunner(TestCase):
 
                 self.assertEqual(expected_results, actual_results)
 
+    @patch("time.time", new=MagicMock(return_value=1665458111.3078792))
+    def test_get_runnable_objectives(self) -> None:
+
+        study_data = {
+            "type": "LIFT",
+            "start_time": "2022-10-03T07:00:00+0000",
+            "observation_end_time": "2023-04-01T07:00:00+0000",
+            "objectives": {
+                "data": [
+                    {
+                        "id": "11111111111111",
+                        "name": "Objective",
+                        "type": "MPC_CONVERSION",
+                    },
+                    {
+                        "id": "44444444444444",
+                        "name": "Objective",
+                        "type": "MPC_CONVERSION",
+                    },
+                    {
+                        "id": "77777777777777",
+                        "name": "Objective",
+                        "type": "MPC_CONVERSION",
+                    },
+                ]
+            },
+            "opp_data_information": [
+                '{"breakdowns":{"cell_id":22222222222222},"latest_data_ts":1658355374,"num_shards":2,"data_file_path_url":"https:\\/\\/test-bucket.s3.us-west-2.amazonaws.com\\/lift\\/publisher\\/publisher_e2e_input.csv","hash_key":"0"}'
+            ],
+            "instances": {
+                "data": [
+                    # ongoing run
+                    {
+                        "id": "33333333333333",
+                        "breakdown_key": '{"cell_id":22222222222222,"objective_id":11111111111111}',
+                        "status": "PC_PRE_VALIDATION_COMPLETED",
+                        "server_ips": ["11.1.11.11"],
+                        "tier": "private_measurement.private_computation_service_rc",
+                        "feature_list": [
+                            "bolt_runner",
+                            "private_lift_pcf2_release",
+                        ],
+                        "created_time": "2022-10-10T14:31:11+0000",
+                        "latest_status_update_time": "2022-10-10T14:35:25+0000",
+                    },
+                    # expired instance, so the objective id is runnable
+                    {
+                        "id": "55555555555555",
+                        "breakdown_key": '{"cell_id":22222222222222,"objective_id":44444444444444}',
+                        "status": "PC_PRE_VALIDATION_COMPLETED",
+                        "server_ips": ["11.1.11.11"],
+                        "tier": "private_measurement.private_computation_service_rc",
+                        "feature_list": [
+                            "bolt_runner",
+                            "private_lift_pcf2_release",
+                        ],
+                        "created_time": "2022-10-07T14:31:11+0000",
+                        "latest_status_update_time": "2022-10-07T14:35:25+0000",
+                    },
+                ]
+            },
+        }
+
+        self.response_mock.text = json.dumps(study_data)
+        self.client_mock.get_study_data.return_value = self.response_mock
+
+        expected_results = ["44444444444444", "77777777777777"]
+
+        actual_results = pl_study_runner.get_runnable_objectives(
+            study_id=self.TEST_STUDY_ID,
+            config=self.config,
+            logger=self.test_logger,
+        )
+
+        self.assertEqual(expected_results, actual_results)
+
     def _validate_error(
         self, cause: str, remediation: str, logger_mock: MagicMock, **kwargs
     ) -> None:
