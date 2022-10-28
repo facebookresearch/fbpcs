@@ -6,11 +6,11 @@ on:
       study_id:
         description: Lift study id
         required: true
-        default: 619791979506548
+        default: 322561936733136
       objective_id:
         description: Lift objective id
         required: true
-        default: 1349568402234048
+        default: 465652472226695
       input_path:
         description: S3 path to synthetic data
         required: true
@@ -18,7 +18,7 @@ on:
       expected_result_path:
         description: S3 path to expected results from synthetic run
         required: true
-        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
       tag:
         description: Version tag to use
         required: true
