@@ -40,7 +40,7 @@ InputData::InputData(
   }
 }
 
-void InputData::setTimestamps(
+bool InputData::setTimestamps(
     std::string& str,
     std::vector<std::vector<uint32_t>>& timestampArrays) {
   timestampArrays.emplace_back();
@@ -48,6 +48,7 @@ void InputData::setTimestamps(
   auto innerString = str.substr(1, str.size() - 1);
   auto timestamps = private_measurement::csv::splitByComma(innerString, false);
 
+  bool allZeroTimestamps = true;
   // Take up to numConversionsPerUser_ elements and ignore the rest
   for (std::size_t i = 0; i < timestamps.size() && i < numConversionsPerUser_;
        ++i) {
@@ -64,7 +65,9 @@ void InputData::setTimestamps(
                  << ", which is unexpected.";
     }
     timestampArrays.back().push_back(parsed < epoch_ ? 0 : parsed - epoch_);
+    allZeroTimestamps &= parsed == 0;
   }
+  return allZeroTimestamps;
 }
 
 void InputData::setValuesFields(std::string& str) {
@@ -123,6 +126,7 @@ void InputData::addFromCSV(
   bool sawTestFlag = false;
   int64_t storedOpportunityFlag = 0;
   int64_t storedTestFlag = 0;
+  bool isADummyRow = true;
 
   for (std::size_t i = 0; i < header.size(); ++i) {
     auto column = header[i];
@@ -164,6 +168,7 @@ void InputData::addFromCSV(
                    << ", which is unexpected.";
       }
       opportunityTimestamps_.push_back(parsed < epoch_ ? 0 : parsed - epoch_);
+      isADummyRow &= parsed == 0;
     } else if (column == "num_impressions") {
       numImpressions_.push_back(parsed);
     } else if (column == "num_clicks") {
@@ -186,12 +191,13 @@ void InputData::addFromCSV(
       // input), parse it as arrays of size 1.
       if (liftMpcType_ == LiftMPCType::Standard) {
         value = "[" + value + "]";
-        setTimestamps(value, purchaseTimestampArrays_);
+        isADummyRow &= setTimestamps(value, purchaseTimestampArrays_);
       } else {
         purchaseTimestamps_.push_back(parsed < epoch_ ? 0 : parsed - epoch_);
+        isADummyRow &= parsed == 0;
       }
     } else if (column == "event_timestamps") {
-      setTimestamps(value, purchaseTimestampArrays_);
+      isADummyRow &= setTimestamps(value, purchaseTimestampArrays_);
     } else if (column == "value") {
       totalValue_ += parsed;
       purchaseValues_.push_back(parsed);
@@ -213,7 +219,7 @@ void InputData::addFromCSV(
       // This column is only valid in secret_share lift
       // otherwise, we just use single opportunity_timestamp
       if (liftMpcType_ == LiftMPCType::SecretShare) {
-        setTimestamps(value, opportunityTimestampArrays_);
+        isADummyRow &= setTimestamps(value, opportunityTimestampArrays_);
       }
     } else if (column == "purchase_flag") {
       // When purchase_flag column presents (in standard Converter Lift
@@ -232,6 +238,7 @@ void InputData::addFromCSV(
     }
   }
 
+  isDummyRow_.push_back(isADummyRow);
   // Once we've gone through every column, we need to check if we've added the
   // test/control values yet. From the input dataset, opp_flag is *optional*
   // so this can be interpreted as "this is a valid opportunity"
