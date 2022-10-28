@@ -2,6 +2,44 @@ name: One command runner test
 run-name: ${{ inputs.test_name }} on ${{ inputs.tag }} for build ${{ inputs.build_id }}
 
 on:
+  workflow_call:
+    inputs:
+      study_id:
+        description: Lift study id
+        required: true
+        default: 32102205110410
+      objective_id:
+        description: Lift objective id
+        required: true
+        default: 23502204952992
+      input_path:
+        description: S3 path to synthetic data
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      expected_result_path:
+        description: S3 path to expected results from synthetic run
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
+      tag:
+        description: Version tag to use
+        required: true
+        default: rc
+      build_id:
+        description: The build id
+        required: false
+        default: null
+      test_name:
+        description: The name of the type of tests that are being run
+        default: 'PL E2E Tests'
+        type: 'choice'
+        options:
+          - PL E2E Tests
+          - Multi-key PL E2E Tests
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
+
   workflow_dispatch:
     inputs:
       study_id:

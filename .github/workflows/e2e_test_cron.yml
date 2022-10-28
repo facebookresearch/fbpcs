@@ -1,0 +1,88 @@
+name: End to End Test on RC on a Schedule
+run-name: End to End test on RC
+
+on:
+  schedule:
+    - cron: '0 16-22/2 * * 1-5' # Every 2 hours from 16:00 - 22:00 UTC (8-2 PST and 9-3 PDT) M-F
+
+
+env:
+  PL_STUDY_ID: 32102205110410
+  MK_PL_STUDY_ID: 38402205691678
+  PL_OBJECTIVE_IDS: [26302205209752,48202203915710,12702205218446,47602203893549]
+  MK_PL_OBJECTIVE_IDS: [51102205479562,13102207513846,32102207325119,27202207265494]
+  PA_DATASET: 1127612294482487
+  MK_PA_DATASET: 3204590196477122
+
+
+jobs:
+  select_pl_objective_id:
+    id: select_pl_objective_id
+    runs-on: ubuntu-latest
+    outputs:
+      pl_objective_id: ${{ steps.select_pl_objective.outputs.objective_id }}
+    steps:
+      - name: Select PL Objective ID
+        id: select_pl_objective_id
+        run: |
+          hour=$(date +"%H")
+          let "idx = ($hour - 16)/2"
+          OBJECTIVE_ID=${${{ env.PL_OBJECTIVE_IDS }}[$idx]}
+          echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
+
+  select_mk_pl_objective_id:
+    id: select_mk_pl_objective_id
+    runs-on: ubuntu-latest
+    outputs:
+      pl_objective_id: ${{ steps.select_pl_objective.outputs.objective_id }}
+    steps:
+      - name: Select MK PL Objective ID
+        id: select_pl_objective_id
+        run: |
+          hour=$(date +"%H")
+          if [ $hour != "00" ]; then
+            let "idx = ($hour - 16)/2"
+          else
+            idx=5
+          fi
+          OBJECTIVE_ID=${${{ env.MK_PL_OBJECTIVE_IDS }}[$idx]}
+          echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
+
+  pl_test:
+    name: Run PL for objective ${{ needs.select_pl_objective_id.outputs.pl_objective_id }}
+    needs: select_pl_objective_id
+    uses: ./one_command_runner_test.yml
+    with:
+      study_id: ${{ env.PL_STUDY_ID }}
+      objective_id: ${{ needs.select_pl_objective_id.outputs.pl_objective_id }}
+      build_id: cron
+      test_name: PL E2E Tests
+
+  mk_pl_test:
+    needs: select_mk_pl_objective_id
+    uses: ./one_command_runner_test.yml
+    with:
+      study_id: ${{ env.MK_PL_STUDY_ID }}
+      objective_id: ${{ needs.select_mk_pl_objective_id.outputs.pl_objective_id }}
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_multikey_input.csv
+      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_multikey.json
+      build_id: cron
+      test_name: Multi-key PL E2E Tests
+
+  pa_test:
+    name: PA run for dataset ${{ env.PA_DATASET }}
+    uses: ./pa_one_command_runner_test.yml
+    with:
+      data_set_id: ${{ env.PA_DATASET }}
+      build_id: cron
+      test_name: PA E2E Tests
+
+  mk_pa_test:
+    name: Multi Key PA run for dataset ${{ env.MK_PA_DATASET }}
+    uses: ./pa_one_command_runner_test.yml
+    with:
+      data_set_id: ${{ env.MK_PA_DATASET }}
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_multikey_input.csv
+      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click_multikey.json
+      build_id: cron
+      test_name: Multi-key PA E2E Tests
