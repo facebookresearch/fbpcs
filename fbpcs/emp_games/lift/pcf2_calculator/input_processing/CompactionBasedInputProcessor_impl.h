@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include "fbpcf/mpc_std_lib/util/secureRandomPermutation.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/CompactionBasedInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
 
@@ -17,10 +18,15 @@ namespace private_lift {
 template <int schedulerId>
 std::vector<int32_t>
 CompactionBasedInputProcessor<schedulerId>::shuffleAndGetUnionMap() {
-  // dummy implementation. Assume each PID is a match
-  std::vector<int32_t> unionMap(inputData_.getNumRows());
+  int32_t unionSize = inputData_.getNumRows();
+  const std::vector<uint32_t> randomPermutation =
+      fbpcf::mpc_std_lib::util::secureRandomPermutation(unionSize, *prg_);
+  std::vector<int32_t> unionMap(unionSize);
+  const std::vector<bool>& dummyRows = inputData_.getDummyRows();
+  int32_t nonDummyRows = 0;
   for (int32_t i = 0; i < unionMap.size(); i++) {
-    unionMap[i] = i;
+    unionMap[randomPermutation[i]] =
+        dummyRows[randomPermutation[i]] ? -1 : nonDummyRows++;
   }
   return unionMap;
 }

@@ -40,11 +40,14 @@ class MetadataCompactorGame : public IMetadataCompactorGame<schedulerId>,
         unified_data_process::data_processor::getDataProcessorFactoryWithAesCtr<
             schedulerId>(party_, partnerParty, agentFactory_)
             ->create();
+    auto prg = std::make_unique<fbpcf::engine::util::AesPrgFactory>()->create(
+        fbpcf::engine::util::getRandomM128iFromSystemNoise());
 
     return std::make_unique<CompactionBasedInputProcessor<schedulerId>>(
         party_,
         std::move(adapter),
         std::move(dataProcessor),
+        std::move(prg),
         inputData,
         numConversionPerUser);
   }

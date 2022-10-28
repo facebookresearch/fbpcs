@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdexcept>
+#include "fbpcf/engine/util/IPrg.h"
 #include "fbpcs/data_processing/unified_data_process/adapter/IAdapter.h"
 #include "fbpcs/data_processing/unified_data_process/data_processor/IDataProcessor.h"
 #include "fbpcs/emp_games/common/Constants.h"
@@ -33,11 +34,13 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
       std::unique_ptr<
           unified_data_process::data_processor::IDataProcessor<schedulerId>>
           dataProcessor,
+      std::unique_ptr<fbpcf::engine::util::IPrg> prg,
       InputData inputData,
       int32_t numConversionsPerUser)
       : myRole_{myRole},
         adapter_{std::move(adapter)},
         dataProcessor_{std::move(dataProcessor)},
+        prg_{std::move(prg)},
         inputData_{inputData},
         numConversionsPerUser_{numConversionsPerUser} {
     if (inputData.getNumRows() == 0) {
@@ -122,7 +125,7 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
   std::unique_ptr<
       unified_data_process::data_processor::IDataProcessor<schedulerId>>
       dataProcessor_;
-
+  std::unique_ptr<fbpcf::engine::util::IPrg> prg_;
   InputData inputData_;
   int32_t numConversionsPerUser_;
 
