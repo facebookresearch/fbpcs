@@ -13,6 +13,8 @@ import sys
 from datetime import datetime
 from ipaddress import ip_address, IPv4Address, IPv6Address
 
+from urllib.parse import unquote_plus
+
 from awsglue.context import GlueContext
 from awsglue.dynamicframe import DynamicFrame
 from awsglue.transforms import DropNullFields, Map
@@ -46,7 +48,10 @@ args = getResolvedOptions(sys.argv, ["JOB_NAME", "s3_read_path", "s3_write_path"
 
 # Parameters
 
-s3_options = {"paths": ["s3://" + args["s3_read_path"]]}
+# Unquote the read path in case it has any escaped characters in it
+s3_read_path = unquote_plus(args["s3_read_path"], encoding="utf-8")
+
+s3_options = {"paths": ["s3://" + s3_read_path]}
 s3_write_path = "s3://" + args["s3_write_path"]
 
 #########################################
