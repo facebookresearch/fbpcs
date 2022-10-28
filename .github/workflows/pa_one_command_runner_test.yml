@@ -2,6 +2,40 @@ name: PA One command runner test
 run-name: ${{ inputs.test_name }} on ${{ inputs.tag }} for build ${{ inputs.build_id }}
 
 on:
+  workflow_call:
+    inputs:
+      dataset_id:
+        description: Attribution Dataset id
+        required: true
+        default: 1127612294482487
+      input_path:
+        description: S3 path to synthetic attribution data
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_input.csv
+      expected_result_path:
+        description: S3 path to expected results from synthetic run
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click.json
+      build_id:
+        description: The build id
+        required: false
+        default: null
+      test_name:
+        description: The name of the type of tests that are being run
+        default: 'PA E2E Tests'
+        type: 'choice'
+        options:
+          - PA E2E Tests
+          - Multi-key PA E2E Tests
+      tag:
+        description: Version tag to use
+        required: true
+        default: rc
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
+
   workflow_dispatch:
     inputs:
       dataset_id:
