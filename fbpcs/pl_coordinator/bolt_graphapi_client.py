@@ -33,11 +33,6 @@ GRAPHAPI_DEFAULT_VERSION = "v13.0"
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     **{status.value: status for status in PrivateComputationInstanceStatus},
     **{
-        # INPUT_DATA_VALIDATION_XXX statuses mapping to PC_PRE_VALIDATION_XXX
-        # for backwards compatibility see context here: https://fburl.com/dkol8bma
-        "INPUT_DATA_VALIDATION_STARTED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
-        "INPUT_DATA_VALIDATION_COMPLETED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
-        "INPUT_DATA_VALIDATION_FAILED": PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
         "INSTANCE_FAILURE": PrivateComputationInstanceStatus.UNKNOWN,
         "ID_MATCH_STARTED": PrivateComputationInstanceStatus.ID_MATCHING_STARTED,
         "ID_MATCH_COMPLETED": PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
