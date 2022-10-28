@@ -171,4 +171,55 @@ TEST_F(InputDataTest, TestGetBitmaskFor) {
   EXPECT_EQ(bitmask2, inputData.bitmaskFor(2));
 }
 
+TEST_F(InputDataTest, TestGetDummyRowsPublisher) {
+  InputData inputData0{
+      aliceInputFilename_,
+      InputData::LiftMPCType::Standard,
+      true,
+      1546300800, /* epoch */
+      4 /* num_conversions_per_user */};
+  std::vector<bool> expectDummyRows0 = {
+      false, false, true,  true,  true,  false, false, false, false, false,
+      true,  true,  false, false, false, false, false, false, false, false};
+  auto resDummyRows0 = inputData0.getDummyRows();
+  EXPECT_EQ(expectDummyRows0, resDummyRows0);
+
+  InputData inputData1{
+      aliceInputFilename2_,
+      InputData::LiftMPCType::Standard,
+      true,
+      1546300800, /* epoch */
+      4 /* num_conversions_per_user */};
+  std::vector<bool> expectDummyRows1 = {
+      false, false, true,  true,  true,  false, false, false, false, false,
+      true,  true,  false, false, false, false, false, false, false, false};
+  auto resDummyRows1 = inputData1.getDummyRows();
+  EXPECT_EQ(expectDummyRows1, resDummyRows1);
+}
+
+TEST_F(InputDataTest, TestGetDummyRowsPartner) {
+  InputData inputData0{
+      bobInputFilename_,
+      InputData::LiftMPCType::Standard,
+      true,
+      1546300800, /* epoch */
+      4 /* num_conversions_per_user */};
+  std::vector<bool> expectDummyRows0 = {
+      true, false, true, true, false, true,  true, true, true, true,
+      true, true,  true, true, false, false, true, true, true, true};
+  auto resDummyRows0 = inputData0.getDummyRows();
+  EXPECT_EQ(expectDummyRows0, resDummyRows0);
+
+  InputData inputData1{
+      bobInputFilename2_,
+      InputData::LiftMPCType::Standard,
+      true,
+      1546300800, /* epoch */
+      4 /* num_conversions_per_user */};
+  std::vector<bool> expectDummyRows1 = {
+      true, false, true, true, false, true,  true, true, true, true,
+      true, true,  true, true, false, false, true, true, true, true};
+  auto resDummyRows1 = inputData1.getDummyRows();
+  EXPECT_EQ(expectDummyRows1, resDummyRows1);
+}
 } // namespace private_lift

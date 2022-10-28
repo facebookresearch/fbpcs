@@ -119,6 +119,10 @@ class InputData {
     return numRows_;
   }
 
+  const std::vector<bool>& getDummyRows() const {
+    return isDummyRow_;
+  }
+
  private:
   // Set the features header (only matters for partner, not publisher)
   void setFeaturesHeader(const std::vector<std::string>& header);
@@ -132,7 +136,7 @@ class InputData {
    * timestampArrays = an array to which input data from str append
    * offset = add offset to each value from str before append
    */
-  void setTimestamps(
+  bool setTimestamps(
       std::string& str,
       std::vector<std::vector<uint32_t>>& timestampArrays);
 
@@ -172,6 +176,7 @@ class InputData {
   std::vector<std::vector<uint32_t>> purchaseTimestampArrays_;
   std::vector<std::vector<int64_t>> purchaseValueArrays_;
   std::vector<std::vector<int64_t>> purchaseValueSquaredArrays_;
+  std::vector<bool> isDummyRow_;
 
   int64_t totalValue_ = 0;
   int64_t totalValueSquared_ = 0;
