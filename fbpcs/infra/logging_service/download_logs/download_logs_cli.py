@@ -16,12 +16,12 @@ Usage:
 
 
 Options:
-    -h --help                       Show this help
-    --input_ids                     The input log file has container ID's, with one ID per line
-    --log_path=<path>               Override the default path where logs are saved
-    --get_deployment_logs           Fetche and add deployment logs in the log zip folder
-    --get_data_pipeline_logs        Fetche and add data infra pipeline logs in the log zip folder
-    --verbose                       Set logging level to DEBUG
+    -h --help                           Show this help
+    --input_ids                         The input log file has container ID's, with one ID per line
+    --log_path=<path>                   Override the default path where logs are saved
+    --get_deployment_logs               Fetch and add deployment logs in the log zip folder
+    --get_data_pipeline_logs            Fetch and add data infra pipeline logs in the log zip folder
+    --verbose                           Set logging level to DEBUG
 """
 
 import logging
@@ -53,7 +53,7 @@ class DownloadLogsCli:
         self.logger: logging.Logger = logging.getLogger(__name__)
         self.s3_bucket = ""
         self.container_ids: List[str] = []
-        self.aws_region = ""
+        self.deployment_tag = ""
         self.aws_container_logs: Optional[AwsContainerLogs] = None
         self.utils = Utils()
 
@@ -95,10 +95,14 @@ class DownloadLogsCli:
         self.logger = logging.getLogger(__name__)
         log_level = logging.DEBUG if arguments["--verbose"] else logging.INFO
         self.logger.setLevel(log_level)
+
         # Concatenate all arguments to a string, with every argument wrapped by quotes.
         all_options = f"{sys.argv[1:]}"[1:-1].replace("', '", "' '")
         # E.g. Command line: log_analyzer 'sample_log/intern-output.txt' '--log_path=a.intern.log' ...
         logging.info(f"Command line: {Path(__file__).stem} {all_options}")
+
+        self.deployment_tag = deployment_tag or ""
+        self.logger.info(f"Found deployment tag: {self.deployment_tag}")
 
         self.s3_bucket = self._get_s3_bucket_name(arguments["<s3_bucket>"])
         self.logger.info(f"Will upload log archive to S3 bucket: {self.s3_bucket}")
@@ -123,13 +127,11 @@ class DownloadLogsCli:
         self.container_ids = [
             container_id for container_id, instance_id in container_infos
         ]
-        self.aws_region = self._get_aws_region(self.container_ids)
-        self.logger.info(f"Found aws_region: {self.aws_region}")
 
         self.aws_container_logs = AwsContainerLogs(
             tag_name=archive_tag,
-            aws_region=self.aws_region,
-            deployment_tag=deployment_tag,
+            s3_bucket_name=self.s3_bucket,
+            deployment_tag=self.deployment_tag,
         )
 
         with tempfile.TemporaryDirectory(prefix=self.TEMP_DIR_PREFIX) as tempdir:
@@ -159,24 +161,6 @@ class DownloadLogsCli:
         if match := re.compile(r"^https://([^\.]+)\.s3\.").match(s3_bucket):
             return match.group(1)
         return s3_bucket
-
-    def _get_aws_region(
-        self,
-        container_ids: List[str],
-    ) -> str:
-        # container_id is like "arn:aws:ecs:us-west-2:5592513842793:task/onedocker-cluster-pc-e2e-test/70b0b78386774e14afccd92762f4b10d"
-        pattern = re.compile("^arn:aws:ecs:([^:]+):")
-        regions = set()
-        for container_id in container_ids:
-            if match := pattern.match(container_id):
-                regions.add(match.group(1))
-        if not regions:
-            return ""
-        if len(regions) > 1:
-            error_message = f"Failed to handle two or more regions: {regions}."
-            self.logger.error(error_message)
-            raise ValueError(error_message)
-        return list(regions)[0]
 
     def _extract_container_infos(
         self,

@@ -22,6 +22,7 @@ from fbpcs.infra.logging_service.download_logs.cloud_error.cloud_error import (
     AwsCloudwatchLogStreamFetchException,
     AwsInvalidCredentials,
     AwsKinesisFirehoseDeliveryStreamFetchException,
+    AwsRegionNotFound,
     AwsS3BucketVerificationException,
     AwsS3FolderContentFetchException,
     AwsS3FolderCreationException,
@@ -43,8 +44,8 @@ class AwsCloud(CloudBaseClass):
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
         aws_session_token: Optional[str] = None,
-        aws_region: Optional[str] = None,
         logger_name: Optional[str] = None,
+        s3_bucket_name: Optional[str] = None,
     ) -> None:
 
         aws_access_key_id = aws_access_key_id or os.environ.get("AWS_ACCESS_KEY_ID")
@@ -52,9 +53,17 @@ class AwsCloud(CloudBaseClass):
             "AWS_SECRET_ACCESS_KEY"
         )
         aws_session_token = aws_session_token or os.environ.get("AWS_SESSION_TOKEN")
-        aws_region = aws_region or os.environ.get("AWS_REGION")
+        bucket_name = s3_bucket_name or ""
         self.log: logging.Logger = logging.getLogger(logger_name or __name__)
         self.utils = Utils()
+
+        self.s3_client: botocore.client.BaseClient = self.get_boto3_object(
+            "s3",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+        )
+        aws_region = self.get_aws_region(s3_bucket_name=bucket_name)
 
         sts = self.get_boto3_object(
             "sts",
@@ -144,6 +153,27 @@ class AwsCloud(CloudBaseClass):
         except NoRegionError as error:
             self.log.error(f"Couldn't find region in AWS config." f"{error}")
         return return_value
+
+    def get_aws_region(
+        self, s3_bucket_name: str, aws_region: Optional[str] = None
+    ) -> str:
+        ret_value = ""
+        if aws_region is not None:
+            return aws_region
+
+        self.verify_s3_bucket(s3_bucket_name=s3_bucket_name)
+
+        for attempt in range(self.DEFAULT_RETRIES_LIMIT):
+            try:
+                response = self.s3_client.get_bucket_location(Bucket=s3_bucket_name)
+            except ClientError as error:
+                if attempt < self.DEFAULT_RETRIES_LIMIT - 1:
+                    continue
+                else:
+                    raise AwsRegionNotFound(f"AWS Region not found: {error}")
+            ret_value = response.get("LocationConstraint")
+            break
+        return ret_value if ret_value is not None else "us-east-1"
 
     def get_cloudwatch_logs(
         self,
