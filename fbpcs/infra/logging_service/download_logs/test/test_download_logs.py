@@ -118,7 +118,6 @@ class TestDownloadLogs(unittest.TestCase):
                 ]
             )
         self.assertEqual("bucket-name", cli.s3_bucket)
-        self.assertEqual("us-west-2", cli.aws_region)
         self.assertEqual(
             [
                 "arn:aws:ecs:us-west-2:5592513842793:task/onedocker-container-comp-ui-e2e/00a04af576dd454784a4af543925c8de",

@@ -49,13 +49,13 @@ class AwsContainerLogs(AwsCloud):
         tag_name: str,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
-        aws_region: Optional[str] = None,
         deployment_tag: Optional[str] = None,
+        s3_bucket_name: Optional[str] = None,
     ) -> None:
         super().__init__(
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
+            s3_bucket_name=s3_bucket_name,
         )
         self.utils = Utils()
         self.tag_name: str = tag_name

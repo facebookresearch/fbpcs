@@ -56,3 +56,7 @@ class AwsS3BucketVerificationException(AwsS3Exception):
 
 class AwsKinesisFirehoseDeliveryStreamFetchException(AwsKinesisException):
     pass
+
+
+class AwsRegionNotFound(AwsException):
+    pass
