@@ -8,33 +8,35 @@ on:
         description: Attribution Dataset id
         required: true
         default: 1127612294482487
+        type: number
       input_path:
         description: S3 path to synthetic attribution data
         required: true
         default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_input.csv
+        type: string
       expected_result_path:
         description: S3 path to expected results from synthetic run
         required: true
         default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click.json
+        type: string
       build_id:
         description: The build id
         required: false
         default: null
+        type: string
       test_name:
         description: The name of the type of tests that are being run
         default: 'PA E2E Tests'
-        type: 'choice'
-        options:
-          - PA E2E Tests
-          - Multi-key PA E2E Tests
+        type: string
       tag:
         description: Version tag to use
         required: true
         default: rc
+        type: string
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
-        type: str
+        type: string
 
   workflow_dispatch:
     inputs:
@@ -68,7 +70,7 @@ on:
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
-        type: str
+        type: string
 
 env:
   FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
