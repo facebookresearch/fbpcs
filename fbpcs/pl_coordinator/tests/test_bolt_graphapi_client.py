@@ -10,13 +10,14 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
 import requests
-
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
-
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPAGraphAPICreateInstanceArgs,
     BoltPLGraphAPICreateInstanceArgs,
+    GRAPHAPI_DEFAULT_DOMAIN,
+    GRAPHAPI_DEFAULT_VERSION,
+    GRAPHAPI_HTTPS,
 )
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenNotFound
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
@@ -28,9 +29,7 @@ from fbpcs.private_computation.stage_flows.private_computation_stage_flow import
 )
 
 ACCESS_TOKEN = "access_token"
-GRAPHPI_BASE_URL = "https://graph.facebook.com"
-GRAPHAPI_DEFAULT_VERSION = "v13.0"
-URL = f"{GRAPHPI_BASE_URL}/{GRAPHAPI_DEFAULT_VERSION}"
+URL = f"{GRAPHAPI_HTTPS}{GRAPHAPI_DEFAULT_DOMAIN}/{GRAPHAPI_DEFAULT_VERSION}"
 
 
 class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
@@ -41,10 +40,24 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
         self.test_client = BoltGraphAPIClient(config, mock_logger)
         self.test_client._check_err = MagicMock()
 
+    def test_customize_graphapi_domain(self) -> None:
+        config = {"access_token": ACCESS_TOKEN}
+        domain = "graph.bookface.com"
+        test_client = BoltGraphAPIClient(
+            config, self.mock_logger, graphapi_domain=domain
+        )
+        self.assertEqual(
+            test_client.graphapi_url,
+            f"{GRAPHAPI_HTTPS}{domain}/{GRAPHAPI_DEFAULT_VERSION}",
+        )
+
     def test_customize_graphapi_version(self) -> None:
         config = {"access_token": ACCESS_TOKEN}
         test_client = BoltGraphAPIClient(config, self.mock_logger, "v15.0")
-        self.assertEqual(test_client.graphapi_url, f"{GRAPHPI_BASE_URL}/v15.0")
+        self.assertEqual(
+            test_client.graphapi_url,
+            f"{GRAPHAPI_HTTPS}{GRAPHAPI_DEFAULT_DOMAIN}/v15.0",
+        )
 
     def test_get_graph_api_token_from_env_empty_config(self) -> None:
         expected_token = "from_env"

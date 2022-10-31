@@ -28,8 +28,10 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 from fbpcs.utils.config_yaml.exceptions import ConfigYamlBaseException
 
-GRAPHPI_BASE_URL = "https://graph.facebook.com"
+GRAPHAPI_HTTPS = "https://"
+GRAPHAPI_DEFAULT_DOMAIN = "graph.facebook.com"
 GRAPHAPI_DEFAULT_VERSION = "v13.0"
+
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     **{status.value: status for status in PrivateComputationInstanceStatus},
     **{
@@ -71,18 +73,23 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         config: Dict[str, Any],
         logger: Optional[logging.Logger] = None,
         graphapi_version: Optional[str] = None,
+        graphapi_domain: Optional[str] = None,
     ) -> None:
         """Bolt GraphAPI Client
 
         Args:
             - config: the graphapi section of the larger config dictionary: config["graphapi"]
             - logger: logger
+            - graphapi_version: version to use, e.g. "v13.0" or "v14.0"
+            - graphapi_domain: domain, e.g. "graph.facebook.com"
         """
+
         self.logger: logging.Logger = (
             logging.getLogger(__name__) if logger is None else logger
         )
         _graphapi_version = graphapi_version or GRAPHAPI_DEFAULT_VERSION
-        self.graphapi_url = f"{GRAPHPI_BASE_URL}/{_graphapi_version}"
+        _graphapi_domain = graphapi_domain or GRAPHAPI_DEFAULT_DOMAIN
+        self.graphapi_url = f"{GRAPHAPI_HTTPS}{_graphapi_domain}/{_graphapi_version}"
         self.logger.info(f"GraphAPI URL: {self.graphapi_url}")
         self.access_token = self._get_graph_api_token(config)
         self.params = {"access_token": self.access_token}
