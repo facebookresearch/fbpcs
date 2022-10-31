@@ -10,7 +10,7 @@ import json
 import logging
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Iterable, List, Optional, Type
 
 import dateutil.parser
 import pytz
@@ -208,16 +208,7 @@ async def run_attribution_async(
 
     existing_instances = dataset_instance_data["data"]
     for inst in existing_instances:
-        inst_time = dateutil.parser.parse(inst[TIMESTAMP])
-        creation_time = dateutil.parser.parse(inst[CREATED_TIME])
-        exp_time = datetime.now(tz=timezone.utc) - timedelta(days=1)
-        expired = exp_time > creation_time
-        if (
-            inst[ATTRIBUTION_RULE] == attribution_rule_val
-            and inst_time == dt
-            and inst[STATUS] not in TERMINAL_STATUSES
-            and not expired
-        ):
+        if _should_resume_instance(inst, dt, attribution_rule):
             instance_id = inst["id"]
             break
 
@@ -411,6 +402,21 @@ def _check_version(
         )
 
 
+def _should_resume_instance(
+    inst: Dict[str, Any], dt: datetime, attribution_rule: AttributionRule
+) -> bool:
+    inst_time = dateutil.parser.parse(inst[TIMESTAMP])
+    creation_time = dateutil.parser.parse(inst[CREATED_TIME])
+    exp_time = datetime.now(tz=timezone.utc) - timedelta(days=1)
+    expired = exp_time > creation_time
+    return (
+        inst[ATTRIBUTION_RULE] == attribution_rule.value
+        and inst_time == dt
+        and inst[STATUS] not in TERMINAL_STATUSES
+        and not expired
+    )
+
+
 def _get_pcs_features(instance: Dict[str, Any]) -> Optional[List[str]]:
     return instance.get(FEATURE_LIST)
 
@@ -447,6 +453,49 @@ def get_attribution_dataset_info(
             [DATASETS_INFORMATION, TARGET_ID],
         ).text
     )
+
+
+def get_runnable_timestamps(
+    config: Dict[str, Any],
+    dataset_id: str,
+    logger: logging.Logger,
+    attribution_rule: AttributionRule,
+    graphapi_version: Optional[str] = None,
+) -> Iterable[str]:
+
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
+        config=config,
+        logger=logger,
+        graphapi_version=graphapi_version,
+    )
+
+    datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
+    datasets = datasets_info[DATASETS_INFORMATION]
+    matching_datasets = [
+        data["value"] for data in datasets if data["key"] == attribution_rule.name
+    ]
+
+    if not matching_datasets:
+        return []
+
+    possible_timestamps = {d[TIMESTAMP] for d in matching_datasets[0]}
+
+    dataset_instance_data = _get_existing_pa_instances(client, dataset_id)
+    existing_instances = dataset_instance_data["data"]
+
+    timestamps_to_exclude = set()
+    for inst in existing_instances:
+        timestamp = inst[TIMESTAMP]
+        dt = dateutil.parser.parse(timestamp)
+        if _should_resume_instance(inst, dt, attribution_rule):
+            timestamps_to_exclude.add(timestamp)
+
+    runnable_timestamps = possible_timestamps.difference(timestamps_to_exclude)
+
+    logger.info(f"Non-runnable timestamps: {timestamps_to_exclude}")
+    logger.info(f"Runnable timestamps: {runnable_timestamps}")
+
+    return runnable_timestamps
 
 
 async def _get_pa_instance_info(
