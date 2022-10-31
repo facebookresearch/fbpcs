@@ -7,32 +7,30 @@ on:
       study_id:
         description: Lift study id
         required: true
-        default: 32102205110410
-        type: number
+        type: string
       objective_id:
         description: Lift objective id
         required: true
-        default: 23502204952992
-        type: number
+        type: string
       input_path:
         description: S3 path to synthetic data
-        required: true
+        required: false
         default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
         type: string
       expected_result_path:
         description: S3 path to expected results from synthetic run
-        required: true
+        required: false
         default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
         type: string
       tag:
         description: Version tag to use
-        required: true
+        required: false
         default: rc
         type: string
       build_id:
         description: The build id
         required: false
-        default: null
+        default: "test build"
         type: string
       test_name:
         description: The name of the type of tests that are being run
@@ -48,11 +46,11 @@ on:
       study_id:
         description: Lift study id
         required: true
-        default: 32102205110410
+        default: '32102205110410'
       objective_id:
         description: Lift objective id
         required: true
-        default: 23502204952992
+        default: '23502204952992'
       input_path:
         description: S3 path to synthetic data
         required: true
@@ -68,7 +66,7 @@ on:
       build_id:
         description: The build id
         required: false
-        default: null
+        default: "test build"
       test_name:
         description: The name of the type of tests that are being run
         default: 'PL E2E Tests'
