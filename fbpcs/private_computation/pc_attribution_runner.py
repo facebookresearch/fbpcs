@@ -165,13 +165,8 @@ async def run_attribution_async(
     attribution_rule_str = attribution_rule.name
     attribution_rule_val = attribution_rule.value
     instance_id = None
-    pacific_timezone = pytz.timezone("US/Pacific")
-    # Validate if input is datetime or timestamp
-    is_date_format = _iso_date_validator(timestamp)
-    if is_date_format:
-        dt = pacific_timezone.localize(datetime.strptime(timestamp, "%Y-%m-%d"))
-    else:
-        dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
+
+    dt = timestamp_to_dt(timestamp)
 
     # Compute the argument after the timestamp has been input
     dt_arg = int(datetime.timestamp(dt))
@@ -400,6 +395,26 @@ def _check_version(
         raise IncorrectVersionError.make_error(
             instance["id"], expected_tier, config_tier
         )
+
+
+def _is_unix_ts(timestamp: str) -> bool:
+    try:
+        int(timestamp)
+        return True
+    except ValueError:
+        return False
+
+
+def timestamp_to_dt(timestamp: str) -> datetime:
+    pacific_timezone = pytz.timezone("US/Pacific")
+    # Validate if input is datetime or timestamp
+    is_date_format = _iso_date_validator(timestamp)
+    if is_date_format:
+        return pacific_timezone.localize(datetime.strptime(timestamp, "%Y-%m-%d"))
+    elif _is_unix_ts(timestamp):
+        return datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
+    else:
+        return dateutil.parser.parse(timestamp)
 
 
 def _should_resume_instance(
