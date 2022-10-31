@@ -93,7 +93,11 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
                     service,
                 )
                 await stage_svc.run_async(
-                    pc_instance, NullCertificateProvider(), NullCertificateProvider()
+                    pc_instance,
+                    NullCertificateProvider(),
+                    NullCertificateProvider(),
+                    "",
+                    "",
                 )
 
                 self.assertEqual(

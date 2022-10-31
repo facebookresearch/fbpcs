@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
-
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -78,6 +77,8 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
             test_server_ips,
         )
 
@@ -124,9 +125,8 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
                 "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
             },
         ]
-
         actual_value = self.stage_svc._get_compute_metrics_game_args(
-            private_computation_instance
+            private_computation_instance, "", ""
         )
         self.assertEqual(
             test_game_args,

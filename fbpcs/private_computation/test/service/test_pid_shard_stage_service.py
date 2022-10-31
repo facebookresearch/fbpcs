@@ -83,6 +83,8 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
                 pc_instance=pc_instance,
                 server_certificate_provider=NullCertificateProvider(),
                 ca_certificate_provider=NullCertificateProvider(),
+                server_certificate_path="",
+                ca_certificate_path="",
             )
             env_vars = {}
             if self.onedocker_binary_config.repository_path:

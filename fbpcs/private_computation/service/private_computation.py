@@ -62,12 +62,14 @@ from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
 from fbpcs.private_computation.service.constants import (
+    CA_CERT_PATH,
     DEFAULT_CONCURRENCY,
     DEFAULT_HMAC_KEY,
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
     DEFAULT_PADDING_SIZE,
     NUM_NEW_SHARDS_PER_FILE,
+    SERVER_CERT_PATH,
 )
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
@@ -587,13 +589,16 @@ class PrivateComputationService:
             checkpoint_name=checkpoint_name,
             status=CheckpointStatus.STARTED,
         )
-
+        # TODO: T136265785 refactor the tls input validation logic into a TLS config class
+        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
         try:
             stage_svc = stage_svc or stage.get_stage_service(self.stage_service_args)
             pc_instance = await stage_svc.run_async(
                 pc_instance,
                 server_certificate_provider,
                 ca_certificate_provider,
+                SERVER_CERT_PATH if enable_tls else "",
+                CA_CERT_PATH if enable_tls else "",
                 server_ips,
             )
         except Exception as e:

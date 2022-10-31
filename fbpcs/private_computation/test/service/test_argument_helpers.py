@@ -16,7 +16,7 @@ from fbpcs.private_computation.service.constants import (
 
 class TestArgumentHelpers(TestCase):
     def test_get_tls_arguments_no_feature(self):
-        tls_arguments = get_tls_arguments(False)
+        tls_arguments = get_tls_arguments(False, "some path", "some path")
 
         self.assertFalse(tls_arguments["use_tls"])
         self.assertEqual(tls_arguments["ca_cert_path"], "")
@@ -24,7 +24,7 @@ class TestArgumentHelpers(TestCase):
         self.assertEqual(tls_arguments["private_key_path"], "")
 
     def test_get_tls_arguments_with_feature(self):
-        tls_arguments = get_tls_arguments(True)
+        tls_arguments = get_tls_arguments(True, SERVER_CERT_PATH, CA_CERT_PATH)
 
         self.assertTrue(tls_arguments["use_tls"])
         self.assertEqual(tls_arguments["ca_cert_path"], CA_CERT_PATH)
