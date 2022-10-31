@@ -100,6 +100,7 @@ def run_attribution(
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> None:
     asyncio.run(
         run_attribution_async(
@@ -118,6 +119,7 @@ def run_attribution(
             final_stage=final_stage,
             run_id=run_id,
             graphapi_version=graphapi_version,
+            graphapi_domain=graphapi_domain,
         )
     )
 
@@ -138,6 +140,7 @@ async def run_attribution_async(
     final_stage: Optional[PrivateComputationBaseStageFlow] = None,
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> None:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
@@ -146,6 +149,7 @@ async def run_attribution_async(
         config=config,
         logger=logger,
         graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
     try:
         datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
@@ -286,6 +290,7 @@ async def run_attribution_async(
         logger=logger,
         job_list=[job],
         graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
     logger.info(f"Finished running instance {instance_id}.")
     if not all(all_run_success):
@@ -299,6 +304,7 @@ async def run_bolt(
         BoltJob[BoltPAGraphAPICreateInstanceArgs, BoltPCSCreateInstanceArgs]
     ],
     graphapi_version: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> List[bool]:
     """Run private attribution with the BoltRunner in a dedicated function to ensure that
     the BoltRunner semaphore and runner.run_async share the same event loop.
@@ -317,7 +323,10 @@ async def run_bolt(
 
     # We create the publisher_client here so we can reuse the access_token in our trace logger svc
     publisher_client = BoltGraphAPIClient(
-        config=config, logger=logger, graphapi_version=graphapi_version
+        config=config,
+        logger=logger,
+        graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
 
     # Create a GraphApiTraceLoggingService specific for this study_id
@@ -455,11 +464,13 @@ def get_attribution_dataset_info(
     dataset_id: str,
     logger: logging.Logger,
     graphapi_version: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> str:
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
         config=config,
         logger=logger,
         graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
 
     return json.loads(
@@ -476,12 +487,14 @@ def get_runnable_timestamps(
     logger: logging.Logger,
     attribution_rule: AttributionRule,
     graphapi_version: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> Iterable[str]:
 
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
         config=config,
         logger=logger,
         graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
 
     datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)

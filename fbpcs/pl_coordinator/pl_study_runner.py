@@ -91,6 +91,7 @@ def run_study(
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
     output_dir: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> None:
     asyncio.run(
         run_study_async(
@@ -107,6 +108,7 @@ def run_study(
             run_id,
             graphapi_version,
             output_dir,
+            graphapi_domain,
         )
     )
 
@@ -125,6 +127,7 @@ async def run_study_async(
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
     output_dir: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> None:
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
     _validate_input(objective_ids, input_paths)
@@ -134,6 +137,7 @@ async def run_study_async(
         config=config,
         logger=logger,
         graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
     try:
         study_data = _get_study_data(study_id, client)
@@ -264,7 +268,13 @@ async def run_study_async(
         )
         job_list.append(job)
 
-    await run_bolt(config, logger, job_list, graphapi_version=graphapi_version)
+    await run_bolt(
+        config,
+        logger,
+        job_list,
+        graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
+    )
 
     ## Step 4: Print out the initial and end states
     new_cell_obj_instances = _get_cell_obj_instance(
@@ -302,6 +312,7 @@ async def run_bolt(
         BoltJob[BoltPLGraphAPICreateInstanceArgs, BoltPCSCreateInstanceArgs]
     ],
     graphapi_version: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> None:
     """Run private lift with the BoltRunner in a dedicated function to ensure that
     the BoltRunner semaphore and runner.run_async share the same event loop.
@@ -323,6 +334,7 @@ async def run_bolt(
         config=config,
         logger=logger,
         graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
 
     # Create a GraphApiTraceLoggingService specific for this study_id
@@ -490,11 +502,13 @@ def get_runnable_objectives(
     config: Dict[str, Any],
     logger: logging.Logger,
     graphapi_version: Optional[str] = None,
+    graphapi_domain: Optional[str] = None,
 ) -> List[str]:
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs] = BoltGraphAPIClient(
         config=config,
         logger=logger,
         graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
     )
 
     study_data = _get_study_data(study_id, client)
