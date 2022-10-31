@@ -30,8 +30,18 @@ from fbpcs.common.service.trace_logging_service import (
 )
 from fbpcs.experimental.cloud_logs.dummy_log_retriever import DummyLogRetriever
 from fbpcs.experimental.cloud_logs.log_retriever import LogRetriever
+from fbpcs.infra.certificate.basic_ca_certificate_provider import (
+    BasicCaCertificateProvider,
+)
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
+from fbpcs.infra.certificate.pc_instance_ca_certificate_provider import (
+    PCInstanceCaCertificateProvider,
+)
+from fbpcs.infra.certificate.pc_instance_server_certificate import (
+    PCInstanceServerCertificateProvider,
+)
+from fbpcs.infra.certificate.sample_tls_certificates import SAMPLE_CA_CERTIFICATE
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -88,6 +98,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.service.workflow import WorkflowService
 from fbpcs.utils.color import colored
 from fbpcs.utils.optional import unwrap_or_default
+
 
 T = TypeVar("T")
 
@@ -544,12 +555,31 @@ class PrivateComputationService:
 
         return pc_instance
 
-    def _get_server_certificate_provider(self, instance_id: str) -> CertificateProvider:
-        # TODO: Return appropriate provider class based on PC role
-        return NullCertificateProvider()
+    def _get_server_certificate_provider(
+        self, pc_instance: PrivateComputationInstance
+    ) -> CertificateProvider:
+        if (
+            pc_instance.infra_config.role == PrivateComputationRole.PUBLISHER
+            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+        ):
+            return PCInstanceServerCertificateProvider(pc_instance)
+        else:
+            return NullCertificateProvider()
 
-    def _get_ca_certificate_provider(self, instance_id: str) -> CertificateProvider:
-        # TODO: Return appropriate provider class based on PC role
+    def _get_ca_certificate_provider(
+        self, pc_instance: PrivateComputationInstance, ca_certificate: Optional[str]
+    ) -> CertificateProvider:
+        if (
+            pc_instance.infra_config.role == PrivateComputationRole.PUBLISHER
+            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+        ):
+            return PCInstanceCaCertificateProvider(pc_instance)
+        if (
+            pc_instance.infra_config.role == PrivateComputationRole.PARTNER
+            and ca_certificate
+            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+        ):
+            return BasicCaCertificateProvider(ca_certificate)
         return NullCertificateProvider()
 
     # TODO T88759390: Make this function truly async. It is not because it calls blocking functions.
@@ -571,8 +601,11 @@ class PrivateComputationService:
         pc_instance = self._get_validated_instance(
             instance_id, stage, server_ips, dry_run
         )
-        server_certificate_provider = self._get_server_certificate_provider(instance_id)
-        ca_certificate_provider = self._get_ca_certificate_provider(instance_id)
+        server_certificate_provider = self._get_server_certificate_provider(pc_instance)
+        # TODO: T136677371 replace SAMPLE_CA_CERTIFICATE with dynamically generated certificate
+        ca_certificate_provider = self._get_ca_certificate_provider(
+            pc_instance, SAMPLE_CA_CERTIFICATE
+        )
 
         # update initial status
         pc_instance.update_status(
