@@ -1,4 +1,4 @@
-name: End to End Test on RC on a Schedule
+name: End to End Tests on RC
 run-name: End to End test on RC
 
 on:
@@ -7,17 +7,13 @@ on:
 
 
 env:
-  PL_STUDY_ID: 32102205110410
-  MK_PL_STUDY_ID: 38402205691678
-  PL_OBJECTIVE_IDS: [26302205209752,48202203915710,12702205218446,47602203893549]
-  MK_PL_OBJECTIVE_IDS: [51102205479562,13102207513846,32102207325119,27202207265494]
-  PA_DATASET: 1127612294482487
-  MK_PA_DATASET: 3204590196477122
+  PL_OBJECTIVE_IDS: '26302205209752 48202203915710 12702205218446 47602203893549'
+  MK_PL_OBJECTIVE_IDS: '51102205479562 13102207513846 32102207325119 27202207265494'
 
 
 jobs:
   select_pl_objective_id:
-    id: select_pl_objective_id
+    name: Select the PL Objective ID
     runs-on: ubuntu-latest
     outputs:
       pl_objective_id: ${{ steps.select_pl_objective.outputs.objective_id }}
@@ -25,13 +21,14 @@ jobs:
       - name: Select PL Objective ID
         id: select_pl_objective_id
         run: |
-          hour=$(date +"%H")
+          hour=$(date -u +"%H")
           let "idx = ($hour - 16)/2"
-          OBJECTIVE_ID=${${{ env.PL_OBJECTIVE_IDS }}[$idx]}
+          objective_ids_array=(${{ env.PL_OBJECTIVE_IDS }})
+          OBJECTIVE_ID=${objective_ids_array[$idx]}
           echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
 
   select_mk_pl_objective_id:
-    id: select_mk_pl_objective_id
+    name: Select the Multi-Key PL Objective ID
     runs-on: ubuntu-latest
     outputs:
       pl_objective_id: ${{ steps.select_pl_objective.outputs.objective_id }}
@@ -40,29 +37,27 @@ jobs:
         id: select_pl_objective_id
         run: |
           hour=$(date +"%H")
-          if [ $hour != "00" ]; then
-            let "idx = ($hour - 16)/2"
-          else
-            idx=5
-          fi
-          OBJECTIVE_ID=${${{ env.MK_PL_OBJECTIVE_IDS }}[$idx]}
+          let "idx = ($hour - 16)/2"
+          objective_ids_array=(${{ env.MK_PL_OBJECTIVE_IDS }})
+          OBJECTIVE_ID=${objective_ids_array[$idx]}
           echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
 
   pl_test:
-    name: Run PL for objective ${{ needs.select_pl_objective_id.outputs.pl_objective_id }}
+    name: PL E2E Test
     needs: select_pl_objective_id
-    uses: ./one_command_runner_test.yml
+    uses: ./.github/workflows/one_command_runner_test.yml
     with:
-      study_id: ${{ env.PL_STUDY_ID }}
+      study_id: '32102205110410'
       objective_id: ${{ needs.select_pl_objective_id.outputs.pl_objective_id }}
       build_id: cron
       test_name: PL E2E Tests
 
   mk_pl_test:
+    name: Multi-Key PL E2E Test
     needs: select_mk_pl_objective_id
-    uses: ./one_command_runner_test.yml
+    uses: ./.github/workflows/one_command_runner_test.yml
     with:
-      study_id: ${{ env.MK_PL_STUDY_ID }}
+      study_id: '38402205691678'
       objective_id: ${{ needs.select_mk_pl_objective_id.outputs.pl_objective_id }}
       input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_multikey_input.csv
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_multikey.json
@@ -70,18 +65,18 @@ jobs:
       test_name: Multi-key PL E2E Tests
 
   pa_test:
-    name: PA run for dataset ${{ env.PA_DATASET }}
-    uses: ./pa_one_command_runner_test.yml
+    name: PA Test Run
+    uses: ./.github/workflows/pa_one_command_runner_test.yml
     with:
-      data_set_id: ${{ env.PA_DATASET }}
+      dataset_id: 1127612294482487
       build_id: cron
       test_name: PA E2E Tests
 
   mk_pa_test:
-    name: Multi Key PA run for dataset ${{ env.MK_PA_DATASET }}
-    uses: ./pa_one_command_runner_test.yml
+    name: Multi Key PA Test Run
+    uses: ./.github/workflows/pa_one_command_runner_test.yml
     with:
-      data_set_id: ${{ env.MK_PA_DATASET }}
+      dataset_id: 3204590196477122
       input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_multikey_input.csv
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click_multikey.json
       build_id: cron
