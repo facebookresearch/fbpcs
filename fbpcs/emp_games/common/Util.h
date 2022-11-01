@@ -193,6 +193,18 @@ std::vector<O> privatelyShareTransposedArraysWithPaddingFrom(
   return output;
 }
 
+template <typename T, typename O>
+T createPublicBatchConstant(O ele, size_t size) {
+  std::vector<O> copies(size, ele);
+  return T(copies);
+}
+
+template <typename T, typename O>
+T createSecretBatchConstant(O ele, size_t size, int partyId) {
+  std::vector<O> copies(size, ele);
+  return T(copies, partyId);
+}
+
 /**
  * Convert a vector to a string, used for debug logging.
  */
