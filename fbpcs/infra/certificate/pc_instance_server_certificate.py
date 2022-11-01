@@ -28,10 +28,4 @@ class PCInstanceServerCertificateProvider(CertificateProvider):
         """
         Get certificate value from pc instance repo.
         """
-        # TODO: implement this by retrieving server certificate
-        # from pc instance repo.
-
-        # This is a intermediate stage for us to do testing and
-        # there is no security risk of returning a sample
-        # static certificate
-        return SAMPLE_SERVER_CERTIFICATE
+        return self.pc_instance.infra_config.server_certificate
