@@ -16,6 +16,7 @@
 
 #include "fbpcs/emp_games/lift/metadata_compaction/DummyMetadataCompactorGameFactory.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorApp.h"
+#include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorGameFactory.h"
 
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/SecretShareInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/GenFakeData.h"
@@ -238,6 +239,54 @@ TEST_P(
 
   EXPECT_EQ(publisherResults->getLiftGameProcessedData().numRows, 100);
   EXPECT_EQ(partnerResults->getLiftGameProcessedData().numRows, 100);
+}
+
+TEST_P(
+    MetadataCompactionAppTestFixture,
+    TestRandomOutputWithRealCompactorGame) {
+  int numConversionsPerUser = 25;
+  GenFakeData testDataGenerator;
+  LiftFakeDataParams params;
+
+  // make sure no rows get filtered by adapter
+  params.setNumRows(25)
+      .setOpportunityRate(1.0)
+      .setTestRate(1.0)
+      .setPurchaseRate(1.0)
+      .setIncrementalityRate(0.0)
+      .setEpoch(1546300800)
+      .setNumConversions(numConversionsPerUser);
+  testDataGenerator.genFakePublisherInputFile(publisherInputPath_, params);
+  testDataGenerator.genFakePartnerInputFile(partnerInputPath_, params);
+
+  bool useXorEncryption = std::get<0>(GetParam());
+  bool computePublisherBreakdowns = std::get<1>(GetParam());
+
+  auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
+
+  auto res = runTest(
+      publisherInputPath_,
+      partnerInputPath_,
+      publisherGlobalParamsOutputPath_,
+      publisherSecretSharesOutputPath_,
+      partnerGlobalParamsOutputPath_,
+      partnerSecretSharesOutputPath_,
+      numConversionsPerUser,
+      computePublisherBreakdowns,
+      useXorEncryption,
+      std::make_unique<MetadataCompactorGameFactory<0>>(
+          std::move(factories[0])),
+      std::make_unique<MetadataCompactorGameFactory<1>>(
+          std::move(factories[1])));
+
+  std::unique_ptr<IInputProcessor<2>> publisherResults =
+      std::move(std::get<0>(res));
+
+  std::unique_ptr<IInputProcessor<3>> partnerResults =
+      std::move(std::get<1>(res));
+
+  EXPECT_EQ(publisherResults->getLiftGameProcessedData().numRows, 25);
+  EXPECT_EQ(partnerResults->getLiftGameProcessedData().numRows, 25);
 }
 
 INSTANTIATE_TEST_SUITE_P(
