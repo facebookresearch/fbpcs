@@ -117,11 +117,12 @@ class CalculatorGameTestFixture
         .setIncrementalityRate(0.0)
         .setEpoch(1546300800)
         .setNumBreakdowns(numBreakdown)
-        .setNumCohorts(numCohort);
-    testDataGenerator.genFakePublisherInputFile(
-        publisherInputFilename_, params);
-    params.setNumConversions(numConversionsPerUser).setOmitValuesColumn(false);
-    testDataGenerator.genFakePartnerInputFile(partnerInputFilename_, params);
+        .setNumCohorts(numCohort)
+        .setNumConversions(numConversionsPerUser)
+        .setOmitValuesColumn(false);
+    testDataGenerator.genFakeInputFiles(
+        publisherInputFilename_, partnerInputFilename_, params);
+
     CalculatorGameConfig publisherConfig =
         CalculatorGameTestFixture::getInputData(
             publisherInputFilename_,
@@ -217,10 +218,11 @@ TEST_P(CalculatorGameTestFixture, TestCorrectnessRandomInput) {
       .setTestRate(0.5)
       .setPurchaseRate(0.5)
       .setIncrementalityRate(0.0)
+      .setNumConversions(numConversionsPerUser)
+      .setOmitValuesColumn(false)
       .setEpoch(1546300800);
-  testDataGenerator.genFakePublisherInputFile(publisherInputFilename_, params);
-  params.setNumConversions(numConversionsPerUser).setOmitValuesColumn(false);
-  testDataGenerator.genFakePartnerInputFile(partnerInputFilename_, params);
+  testDataGenerator.genFakeInputFiles(
+      publisherInputFilename_, partnerInputFilename_, params);
   CalculatorGameConfig publisherConfig =
       CalculatorGameTestFixture::getInputData(
           publisherInputFilename_,
