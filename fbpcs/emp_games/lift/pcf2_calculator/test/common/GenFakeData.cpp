@@ -50,11 +50,21 @@ GenFakeData::LiftInputColumns GenFakeData::genOneFakeLine(
   LiftInputColumns oneLine;
   oneLine.id = id;
   oneLine.opportunity = folly::Random::secureRandDouble01() < opportunityRate;
-  oneLine.test_flag =
-      oneLine.opportunity && folly::Random::secureRandDouble01() < testRate;
   purchaseRate = genAdjustedPurchaseRate(
       oneLine.test_flag, purchaseRate, incrementalityRate);
   bool hasPurchase = folly::Random::secureRandDouble01() < purchaseRate;
+
+  // Lift input has an invariant that each PID must have an opportunity or
+  // timestamp
+  if (!oneLine.opportunity && !hasPurchase) {
+    if (folly::Random::secureOneIn(2)) {
+      oneLine.opportunity = true;
+    } else {
+      hasPurchase = true;
+    }
+  }
+  oneLine.test_flag =
+      oneLine.opportunity && folly::Random::secureRandDouble01() < testRate;
   oneLine.opportunity_timestamp =
       oneLine.opportunity ? folly::Random::secureRand32(1, 100) + epoch : 0;
   if (oneLine.test_flag) {
@@ -100,12 +110,31 @@ GenFakeData::LiftInputColumns GenFakeData::genOneFakeLine(
   return oneLine;
 }
 
-void GenFakeData::genFakePublisherInputFile(
-    std::string filename,
+void GenFakeData::genFakeInputFiles(
+    const std::string& publisherInputFile,
+    const std::string& partnerInputFile,
     const LiftFakeDataParams& params) {
-  auto fileWriter = std::make_unique<fbpcf::io::FileWriter>(filename);
-  auto bufferedWriter =
-      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter));
+  auto partnerFileWriter =
+      std::make_unique<fbpcf::io::FileWriter>(partnerInputFile);
+  auto partnerBufferedWriter =
+      std::make_unique<fbpcf::io::BufferedWriter>(std::move(partnerFileWriter));
+
+  // partner header: id_,event_timestamps,values,cohort_id
+  std::string partnerFileHeader = "id_,event_timestamps";
+  if (!params.omitValuesColumn_) {
+    partnerFileHeader += ",values";
+  }
+
+  if (params.numCohorts_) {
+    partnerFileHeader += ",cohort_id";
+  }
+  partnerFileHeader += '\n';
+  partnerBufferedWriter->writeString(partnerFileHeader);
+
+  auto publisherFileWriter =
+      std::make_unique<fbpcf::io::FileWriter>(publisherInputFile);
+  auto publisherBufferedWriter = std::make_unique<fbpcf::io::BufferedWriter>(
+      std::move(publisherFileWriter));
 
   // publisher header: id_,opportunity,test_flag,opportunity_timestamp,
   //   num_impressions,num_clicks
@@ -118,7 +147,7 @@ void GenFakeData::genFakePublisherInputFile(
     publisherFileHeader =
         "id_,opportunity,test_flag,opportunity_timestamp,num_impressions,num_clicks,total_spend,breakdown_id\n";
   }
-  bufferedWriter->writeString(publisherFileHeader);
+  publisherBufferedWriter->writeString(publisherFileHeader);
 
   for (std::size_t i = 0; i < params.numRows_; i++) {
     // generate one row of fake data
@@ -129,7 +158,34 @@ void GenFakeData::genFakePublisherInputFile(
         params.purchaseRate_,
         params.incrementalityRate_,
         params.epoch_,
-        1);
+        params.numConversions_);
+
+    // write one row to partner fake data file
+    std::string eventTSString = "[";
+    std::string valuesString = "[";
+    for (auto j = 0; j < params.numConversions_; j++) {
+      eventTSString += std::to_string(oneLine.event_timestamps[j]);
+      valuesString += std::to_string(oneLine.values[j]);
+      if (j < params.numConversions_ - 1) {
+        eventTSString += ",";
+        valuesString += ",";
+      } else {
+        eventTSString += "]";
+        valuesString += "]";
+      }
+    }
+    std::string partnerLine = oneLine.id + "," + eventTSString;
+    if (!params.omitValuesColumn_) {
+      partnerLine += "," + valuesString;
+    }
+    if (params.numCohorts_) {
+      // generate a random cohort id between 0 and numCohorts - 1
+      int32_t randomCohortId =
+          folly::Random::secureRand32(0, params.numCohorts_);
+      partnerLine += "," + std::to_string(randomCohortId);
+    }
+    partnerLine += '\n';
+    partnerBufferedWriter->writeString(partnerLine);
 
     // write one row to publisher fake data file
     std::string publisherRow = oneLine.id + "," +
@@ -147,68 +203,9 @@ void GenFakeData::genFakePublisherInputFile(
       publisherRow += "," + std::to_string(randomBreakdownId);
     }
     publisherRow += '\n';
-    bufferedWriter->writeString(publisherRow);
+    publisherBufferedWriter->writeString(publisherRow);
   }
-  bufferedWriter->close();
-}
-
-void GenFakeData::genFakePartnerInputFile(
-    std::string filename,
-    const LiftFakeDataParams& params) {
-  auto fileWriter = std::make_unique<fbpcf::io::FileWriter>(filename);
-  auto bufferedWriter =
-      std::make_unique<fbpcf::io::BufferedWriter>(std::move(fileWriter));
-
-  // partner header: id_,event_timestamps,values,cohort_id
-  std::string partnerFileHeader = "id_,event_timestamps";
-  if (!params.omitValuesColumn_) {
-    partnerFileHeader += ",values";
-  }
-
-  if (params.numCohorts_) {
-    partnerFileHeader += ",cohort_id";
-  }
-  partnerFileHeader += '\n';
-  bufferedWriter->writeString(partnerFileHeader);
-
-  for (std::size_t i = 0; i < params.numRows_; i++) {
-    // generate one row of fake data
-    LiftInputColumns oneLine = genOneFakeLine(
-        std::to_string(i),
-        params.opportunityRate_,
-        params.testRate_,
-        params.purchaseRate_,
-        params.incrementalityRate_,
-        params.epoch_,
-        params.numConversions_);
-
-    // write one row to publisher fake data file
-    std::string eventTSString = "[";
-    std::string valuesString = "[";
-    for (auto j = 0; j < params.numConversions_; j++) {
-      eventTSString += std::to_string(oneLine.event_timestamps[j]);
-      valuesString += std::to_string(oneLine.values[j]);
-      if (j < params.numConversions_ - 1) {
-        eventTSString += ",";
-        valuesString += ",";
-      } else {
-        eventTSString += "]";
-        valuesString += "]";
-      }
-    }
-    std::string line = oneLine.id + "," + eventTSString;
-    if (!params.omitValuesColumn_) {
-      line += "," + valuesString;
-    }
-    if (params.numCohorts_) {
-      // generate a random cohort id between 0 and numCohorts - 1
-      int32_t randomCohortId =
-          folly::Random::secureRand32(0, params.numCohorts_);
-      line += "," + std::to_string(randomCohortId);
-    }
-    line += '\n';
-    bufferedWriter->writeString(line);
-  }
-  bufferedWriter->close();
+  partnerBufferedWriter->close();
+  publisherBufferedWriter->close();
 }
 } // namespace private_lift
