@@ -29,9 +29,11 @@ class MetadataCompactorApp {
       int numConversionsPerUser,
       bool computePublisherBreakdowns,
       int epoch,
-      const std::string& inputPath,
-      const std::string& outputGlobalParamsPath,
-      const std::string& outputSecretSharesPath,
+      const std::vector<std::string>& inputPaths,
+      const std::vector<std::string>& outputGlobalParamsPaths,
+      const std::vector<std::string>& outputSecretSharesPaths,
+      int startFileIndex,
+      int numFiles,
       bool useXorEncryption = true)
       : party_{party},
         communicationAgentFactory_{std::move(communicationAgentFactory)},
@@ -39,9 +41,11 @@ class MetadataCompactorApp {
         numConversionsPerUser_{numConversionsPerUser},
         computePublisherBreakdowns_{computePublisherBreakdowns},
         epoch_{epoch},
-        inputPath_{inputPath},
-        outputGlobalParamsPath_{outputGlobalParamsPath},
-        outputSecretSharesPath_{outputSecretSharesPath},
+        inputPaths_{inputPaths},
+        outputGlobalParamsPaths_{outputGlobalParamsPaths},
+        outputSecretSharesPaths_{outputSecretSharesPaths},
+        startFileIndex_{startFileIndex},
+        numFiles_{numFiles},
         useXorEncryption_{useXorEncryption} {}
 
   void run();
@@ -51,6 +55,8 @@ class MetadataCompactorApp {
   }
 
  protected:
+  InputData getInputData(const std::string& inputPath);
+
   std::unique_ptr<fbpcf::scheduler::IScheduler> createScheduler();
 
  private:
@@ -66,9 +72,11 @@ class MetadataCompactorApp {
   int numConversionsPerUser_;
   bool computePublisherBreakdowns_;
   int epoch_;
-  std::string inputPath_;
-  std::string outputGlobalParamsPath_;
-  std::string outputSecretSharesPath_;
+  std::vector<std::string> inputPaths_;
+  std::vector<std::string> outputGlobalParamsPaths_;
+  std::vector<std::string> outputSecretSharesPaths_;
+  int startFileIndex_;
+  int numFiles_;
   bool useXorEncryption_;
   common::SchedulerStatistics schedulerStatistics_;
 };

@@ -36,6 +36,9 @@ void runMetadataCompactionApp(
         communicationAgentFactory,
     std::unique_ptr<IMetadataCompactorGameFactory<schedulerId>>
         metadataCompactorGameFactory) {
+  std::vector<std::string> inputPaths = {inputPath};
+  std::vector<std::string> outputGlobalParamsPaths = {outputGlobalParamsPath};
+  std::vector<std::string> outputSecretSharesPaths = {outputSecretSharesPath};
   auto app = std::make_unique<MetadataCompactorApp<schedulerId>>(
       myId,
       std::move(communicationAgentFactory),
@@ -43,9 +46,11 @@ void runMetadataCompactionApp(
       numConversionsPerUser,
       computePublisherBreakdowns,
       epoch,
-      inputPath,
-      outputGlobalParamsPath,
-      outputSecretSharesPath,
+      inputPaths,
+      outputGlobalParamsPaths,
+      outputSecretSharesPaths,
+      0,
+      1,
       useXorEncryption);
 
   app->run();
