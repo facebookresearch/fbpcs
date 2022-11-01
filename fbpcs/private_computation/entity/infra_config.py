@@ -171,6 +171,9 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     # TODO: concurrency should be immutable eventually
     mpc_compute_concurrency: int = 1
 
+    server_certificate: Optional[str] = immutable_field(default=None)
+    ca_certificate: Optional[str] = immutable_field(default=None)
+
     @property
     def stage_flow(self) -> Type["PrivateComputationBaseStageFlow"]:
         # this inner-function import allow us to call PrivateComputationBaseStageFlow.cls_name_to_cls
