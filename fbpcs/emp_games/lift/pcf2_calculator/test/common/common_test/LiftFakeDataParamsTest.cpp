@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "common/LiftFakeDataParams.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftFakeDataParams.h"
 #include <gtest/gtest.h>
 
 namespace private_lift {
