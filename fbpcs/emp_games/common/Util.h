@@ -236,13 +236,14 @@ inline folly::dynamic getCostExtraInfo(
         ("mpc_traffic_details", schedulerStatistics.details);
 }
 
-inline fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo
-getTlsInfoFromArgs(
-    bool useTls,
-    std::string ca_cert_path,
-    std::string server_cert_path,
-    std::string private_key_path,
-    std::string passphrase_path) {
+[[deprecated("Use the one in fbpcf/ instead.")]] inline fbpcf::engine::
+    communication::SocketPartyCommunicationAgent::TlsInfo
+    getTlsInfoFromArgs(
+        bool useTls,
+        std::string ca_cert_path,
+        std::string server_cert_path,
+        std::string private_key_path,
+        std::string passphrase_path) {
   const char* home_dir = std::getenv("HOME");
   if (home_dir == nullptr) {
     home_dir = "";
