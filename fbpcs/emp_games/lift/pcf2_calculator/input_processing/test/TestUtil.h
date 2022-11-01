@@ -89,7 +89,8 @@ inline std::vector<uint32_t> convertIndexSharesToGroupIds(
 template <int schedulerId>
 inline void assertIndexShares(
     const LiftGameProcessedData<schedulerId>& publisherProcessedData,
-    bool computePublisherBreakdowns) {
+    bool computePublisherBreakdowns,
+    bool sortData = false) {
   auto indexShares = publisherProcessedData.indexShares;
   size_t groupWidth = std::ceil(std::log2(publisherProcessedData.numGroups));
   EXPECT_EQ(indexShares.size(), groupWidth);
@@ -102,13 +103,20 @@ inline void assertIndexShares(
                       3, 0, 0, 3, 0, 0, 3, 0, 0, 2, 2, 0, 0, 2, 2, 5};
   }
   auto groupIds = util::convertIndexSharesToGroupIds(indexShares);
+
+  if (sortData) {
+    std::sort(expectGroupIds.begin(), expectGroupIds.end());
+    std::sort(groupIds.begin(), groupIds.end());
+  }
+
   EXPECT_EQ(expectGroupIds, groupIds);
 }
 
 template <int schedulerId>
 inline void assertTestIndexShares(
     const LiftGameProcessedData<schedulerId>& publisherProcessedData,
-    bool computePublisherBreakdowns) {
+    bool computePublisherBreakdowns,
+    bool sortData = false) {
   auto testIndexShares = publisherProcessedData.testIndexShares;
   size_t testGroupWidth =
       std::ceil(std::log2(publisherProcessedData.numTestGroups));
@@ -122,12 +130,19 @@ inline void assertTestIndexShares(
                           3, 0, 0, 3, 0, 0, 3, 0, 0, 2, 2, 0, 0, 2, 2, 3};
   }
   auto testGroupIds = util::convertIndexSharesToGroupIds(testIndexShares);
+
+  if (sortData) {
+    std::sort(expectTestGroupIds.begin(), expectTestGroupIds.end());
+    std::sort(testGroupIds.begin(), testGroupIds.end());
+  }
+
   EXPECT_EQ(expectTestGroupIds, testGroupIds);
 }
 
 inline void assertOpportunityTimestamps(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async([&] {
     return publisherData.opportunityTimestamps.openToParty(0).getValue();
   });
@@ -142,12 +157,20 @@ inline void assertOpportunityTimestamps(
       0,   0,   0,   100, 100, 100, 100, 100, 100, 100, 100,
       100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
       100, 100, 0,   100, 100, 100, 100, 100, 100, 100, 100};
+
+  if (sortData) {
+    std::sort(
+        expectOpportunityTimestamps.begin(), expectOpportunityTimestamps.end());
+    std::sort(opportunityTimestamps.begin(), opportunityTimestamps.end());
+  }
+
   EXPECT_EQ(opportunityTimestamps, expectOpportunityTimestamps);
 }
 
 inline void assertIsValidOpportunityTimestamps(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async([&] {
     return publisherData.isValidOpportunityTimestamp.openToParty(0).getValue();
   });
@@ -161,6 +184,14 @@ inline void assertIsValidOpportunityTimestamps(
   std::vector<bool> expectIsValidOpportunityTimestamp = {
       0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1,
       1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1};
+
+  if (sortData) {
+    std::sort(
+        expectIsValidOpportunityTimestamp.begin(),
+        expectIsValidOpportunityTimestamp.end());
+    std::sort(
+        isValidOpportunityTimestamp.begin(), isValidOpportunityTimestamp.end());
+  }
   EXPECT_EQ(isValidOpportunityTimestamp, expectIsValidOpportunityTimestamp);
 }
 
@@ -178,7 +209,8 @@ inline std::vector<std::vector<uint64_t>> revealTimestamps(
 
 inline void assertPurchaseTimestamps(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async(
       revealTimestamps<0>,
       std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
@@ -195,12 +227,23 @@ inline void assertPurchaseTimestamps(
       {100, 100, 100, 50,  50,  50,  100, 100, 100, 90,  90,
        90,  200, 200, 200, 150, 150, 150, 50,  50,  50,  0,
        0,   0,   100, 50,  150, 200, 150, 50,  200, 200, 200}};
+
+  if (sortData) {
+    for (int i = 0; i < expectPurchaseTimestamps.size(); i++) {
+      std::sort(
+          expectPurchaseTimestamps[i].begin(),
+          expectPurchaseTimestamps[i].end());
+      std::sort(purchaseTimestamps[i].begin(), purchaseTimestamps[i].end());
+    }
+  }
+
   EXPECT_EQ(purchaseTimestamps, expectPurchaseTimestamps);
 }
 
 inline void assertThresholdTimestamps(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async(
       revealTimestamps<0>,
       std::reference_wrapper<const std::vector<SecTimestamp<0>>>(
@@ -217,12 +260,22 @@ inline void assertThresholdTimestamps(
       {110, 110, 110, 60,  60,  60,  110, 110, 110, 100, 100,
        100, 210, 210, 210, 160, 160, 160, 60,  60,  60,  0,
        0,   0,   110, 60,  160, 210, 160, 60,  210, 210, 210}};
+
+  if (sortData) {
+    for (int i = 0; i < expectThresholdTimestamps.size(); i++) {
+      std::sort(
+          expectThresholdTimestamps[i].begin(),
+          expectThresholdTimestamps[i].end());
+      std::sort(thresholdTimestamps[i].begin(), thresholdTimestamps[i].end());
+    }
+  }
   EXPECT_EQ(thresholdTimestamps, expectThresholdTimestamps);
 }
 
 inline void assertAnyValidPurchaseTimestamp(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async([&] {
     return publisherData.anyValidPurchaseTimestamp.openToParty(0).getValue();
   });
@@ -234,6 +287,14 @@ inline void assertAnyValidPurchaseTimestamp(
   std::vector<bool> expectAnyValidPurchaseTimestamp = {
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
       1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+  if (sortData) {
+    std::sort(
+        expectAnyValidPurchaseTimestamp.begin(),
+        expectAnyValidPurchaseTimestamp.end());
+    std::sort(
+        anyValidPurchaseTimestamp.begin(), anyValidPurchaseTimestamp.end());
+  }
   EXPECT_EQ(anyValidPurchaseTimestamp, expectAnyValidPurchaseTimestamp);
 }
 
@@ -249,7 +310,8 @@ inline std::vector<std::vector<int64_t>> revealValues(
 
 inline void assertPurchaseValues(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async(
       revealValues<0>,
       std::reference_wrapper<const std::vector<SecValue<0>>>(
@@ -265,12 +327,20 @@ inline void assertPurchaseValues(
        10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 10, 10, 10, 0,  0,  0},
       {0,  0,  0,  20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,  20,  20, 20,
        20, 20, 20, 20, 0,  0,  0,  50, 50, 50, 20, 20, 20, -50, -50, -50}};
+
+  if (sortData) {
+    for (int i = 0; i < expectPurchaseValues.size(); i++) {
+      std::sort(expectPurchaseValues[i].begin(), expectPurchaseValues[i].end());
+      std::sort(purchaseValues[i].begin(), purchaseValues[i].end());
+    }
+  }
   EXPECT_EQ(purchaseValues, expectPurchaseValues);
 }
 
 inline void assertReach(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async(
       [&] { return publisherData.testReach.openToParty(0).getValue(); });
   auto future1 = std::async(
@@ -281,6 +351,12 @@ inline void assertReach(
   std::vector<bool> expectTestReach = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                        0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0};
+
+  if (sortData) {
+    std::sort(expectTestReach.begin(), expectTestReach.end());
+    std::sort(testReach.begin(), testReach.end());
+  }
+
   EXPECT_EQ(testReach, expectTestReach);
 }
 
@@ -297,7 +373,8 @@ inline std::vector<std::vector<int64_t>> revealValueSquared(
 
 inline void assertPurchaseValuesSquared(
     const LiftGameProcessedData<0>& publisherData,
-    const LiftGameProcessedData<1>& partnerData) {
+    const LiftGameProcessedData<1>& partnerData,
+    bool sortData = false) {
   auto future0 = std::async(
       revealValueSquared<0>,
       std::reference_wrapper<const std::vector<SecValueSquared<0>>>(
@@ -316,6 +393,15 @@ inline void assertPurchaseValuesSquared(
       {0,   0,   0,    400,  400,  400, 400, 400, 400,  400,  400,
        400, 400, 400,  400,  400,  400, 400, 400, 400,  400,  0,
        0,   0,   2500, 2500, 2500, 400, 400, 400, 2500, 2500, 2500}};
+
+  if (sortData) {
+    for (int i = 0; i < expectPurchaseValueSquared.size(); i++) {
+      std::sort(
+          expectPurchaseValueSquared[i].begin(),
+          expectPurchaseValueSquared[i].end());
+      std::sort(purchaseValueSquared[i].begin(), purchaseValueSquared[i].end());
+    }
+  }
   EXPECT_EQ(purchaseValueSquared, expectPurchaseValueSquared);
 }
 
