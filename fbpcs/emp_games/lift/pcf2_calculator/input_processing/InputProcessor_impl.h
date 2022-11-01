@@ -103,14 +103,14 @@ void InputProcessor<schedulerId>::privatelyShareTimestampsStep() {
   XLOG(INFO) << "Share threshold timestamps";
   // Threshold timestamps are valid (positive) purchase timestamp with added
   // attribution window
-  const int window = 10;
   std::vector<std::vector<uint32_t>> thresholdTimestampArrays;
   for (const auto& purchaseTimestampArray :
        inputData_.getPurchaseTimestampArrays()) {
     std::vector<uint32_t> thresholdTimestampArray;
     for (auto purchaseTimestamp : purchaseTimestampArray) {
-      auto thresholdTimestamp =
-          purchaseTimestamp > 0 ? purchaseTimestamp + window : 0;
+      auto thresholdTimestamp = purchaseTimestamp > 0
+          ? purchaseTimestamp + kPurchaseTimestampThresholdWindow
+          : 0;
       thresholdTimestampArray.push_back(thresholdTimestamp);
     }
     thresholdTimestampArrays.push_back(std::move(thresholdTimestampArray));
