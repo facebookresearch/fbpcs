@@ -173,6 +173,8 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
 
     server_certificate: Optional[str] = immutable_field(default=None)
     ca_certificate: Optional[str] = immutable_field(default=None)
+    server_key_ref: Optional[str] = immutable_field(default=None)
+    server_domain: Optional[str] = immutable_field(default=None)
 
     @property
     def stage_flow(self) -> Type["PrivateComputationBaseStageFlow"]:

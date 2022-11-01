@@ -284,6 +284,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     int(yesterday_timestamp),
                     args.product_config.common.post_processing_data.dataset_timestamp,
                 )
+                self.assertEqual(args.infra_config.server_domain, None)
+                self.assertEqual(args.infra_config.server_key_ref, None)
                 if pcs_features is not None:
                     if PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value in pcs_features:
                         self.assertTrue(
