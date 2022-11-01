@@ -21,6 +21,10 @@ const size_t valueSquaredWidth = 64;
 const size_t numBitsForValuesWidth = 8;
 const size_t timeStampWidth = 32;
 
+// Threshold timestamps are valid (positive) purchase timestamp with added
+// attribution window
+const int kPurchaseTimestampThresholdWindow = 10;
+
 template <int schedulerId, bool usingBatch = true>
 using PubBit =
     typename fbpcf::frontend::MpcGame<schedulerId>::template PubBit<usingBatch>;

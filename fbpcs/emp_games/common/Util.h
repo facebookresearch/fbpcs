@@ -124,6 +124,45 @@ std::vector<uint64_t> privatelyShareIntArrayFrom(
   return (myRole == sender) ? inputArray : outputArray;
 }
 
+template <typename T>
+std::vector<T>
+padArray(const std::vector<T>& inputArray, size_t size, T paddingValue) {
+  std::vector<T> paddedInput;
+  for (size_t i = 0; i < size; ++i) {
+    if (i < inputArray.size()) {
+      paddedInput.push_back(inputArray.at(i));
+    } else {
+      paddedInput.push_back(paddingValue);
+    }
+  }
+  return paddedInput;
+}
+
+template <typename T>
+std::vector<std::vector<T>> padNestedArrays(
+    const std::vector<std::vector<T>>& inputArrays,
+    size_t numRows,
+    size_t numCols,
+    T paddingValue) {
+  std::vector<std::vector<T>> paddedArrays;
+  paddedArrays.reserve(numRows);
+  for (size_t i = 0; i < inputArrays.size(); ++i) {
+    std::vector<T> paddedArray(numCols);
+    for (int j = 0; j < inputArrays[i].size(); j++) {
+      paddedArray[j] = inputArrays[i][j];
+    }
+
+    for (int j = inputArrays[i].size(); j < numCols; j++) {
+      paddedArray[j] = paddingValue;
+    }
+    paddedArrays.push_back(paddedArray);
+  }
+  for (size_t i = inputArrays.size(); i < numRows; ++i) {
+    paddedArrays.push_back(std::vector<T>(numCols, paddingValue));
+  }
+  return paddedArrays;
+}
+
 /**
  * Privately share array of type T from sender, with secret batch output type O
  * and input size. If the input has a different size, resize it accordingly and
@@ -134,14 +173,7 @@ O privatelyShareArrayWithPaddingFrom(
     const std::vector<T>& inputArray,
     size_t size,
     T paddingValue) {
-  std::vector<T> paddedInput;
-  for (size_t i = 0; i < size; ++i) {
-    if (i < inputArray.size()) {
-      paddedInput.push_back(inputArray.at(i));
-    } else {
-      paddedInput.push_back(paddingValue);
-    }
-  }
+  auto paddedInput = padArray(inputArray, size, paddingValue);
   return O{paddedInput, sender};
 }
 
@@ -169,6 +201,24 @@ std::vector<std::vector<T>> transposeArraysWithPadding(
     outputArrays.push_back(std::move(outputArray));
   }
   return outputArrays;
+}
+
+template <typename T>
+std::vector<std::vector<T>> transpose(const std::vector<std::vector<T>>& data) {
+  std::vector<std::vector<T>> result;
+  if (data.size() == 0) {
+    return result;
+  }
+
+  result.reserve(data[0].size());
+  for (size_t column = 0; column < data[0].size(); column++) {
+    std::vector<T> innerArray(data.size());
+    result.push_back(std::vector<T>(data.size()));
+    for (size_t row = 0; row < data.size(); row++) {
+      result[column][row] = data[row][column];
+    }
+  }
+  return result;
 }
 
 /**
