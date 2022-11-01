@@ -42,6 +42,10 @@ from fbpcs.infra.certificate.pc_instance_server_certificate import (
     PCInstanceServerCertificateProvider,
 )
 from fbpcs.infra.certificate.sample_tls_certificates import SAMPLE_CA_CERTIFICATE
+from fbpcs.infra.certificate.sample_tls_certificates import (
+    SAMPLE_CA_CERTIFICATE,
+    SAMPLE_SERVER_CERTIFICATE,
+)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -217,7 +221,18 @@ class PrivateComputationService:
             self.metric_svc.bump_entity_key(
                 PCSERVICE_ENTITY_NAME, f"pcs_feature_{feature.lower()}_enabled"
             )
-
+        # TODO: T136500624 Replace SAMPLE_SERVER_CERTIFICATE with dynamically generated certificates.
+        # The certificates returned below do not provide any security and
+        # are being used for intermediate testing purposes only.
+        server_certificate = (
+            SAMPLE_SERVER_CERTIFICATE
+            if PCSFeature.PCF_TLS in pcs_feature_enums
+            and role is PrivateComputationRole.PUBLISHER
+            else None
+        )
+        ca_certificate = (
+            SAMPLE_CA_CERTIFICATE if PCSFeature.PCF_TLS in pcs_feature_enums else None
+        )
         infra_config: InfraConfig = InfraConfig(
             instance_id=instance_id,
             role=role,
@@ -244,6 +259,8 @@ class PrivateComputationService:
             status_updates=[],
             run_id=run_id,
             log_cost_bucket=log_cost_bucket,
+            server_certificate=server_certificate,
+            ca_certificate=ca_certificate,
         )
         multikey_enabled = True
         if pid_configs and "multikey_enabled" in pid_configs.keys():
