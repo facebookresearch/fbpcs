@@ -76,6 +76,8 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
             test_server_ips,
         )
 
@@ -121,7 +123,11 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
 
         self.assertEqual(
             test_game_args,
-            self.stage_svc._get_compute_metrics_game_args(private_computation_instance),
+            self.stage_svc._get_compute_metrics_game_args(
+                private_computation_instance,
+                "",
+                "",
+            ),
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:

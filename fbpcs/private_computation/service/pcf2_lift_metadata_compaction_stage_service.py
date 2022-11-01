@@ -76,18 +76,28 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
         pc_instance: PrivateComputationInstance,
         server_certificate_provider: CertificateProvider,
         ca_certificate_provider: CertificateProvider,
+        server_certificate_path: str,
+        ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """
         Args:
-            pc_instance: the private computation instance to run lift with
+            pc_instance: the private computation instance to run lift with.
+            server_certificate_providder: A provider class to get TLS server certificate.
+            ca_certificate_provider: A provider class to get TLS CA certificate.
+            server_certificate_path: The path to write server certificate on a container.
+            ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
 
         Returns:
             An updated version of pc_instance that stores an MPCInstance
         """
 
-        game_args = self._get_lift_metadata_compaction_game_args(pc_instance)
+        game_args = self._get_lift_metadata_compaction_game_args(
+            pc_instance,
+            server_certificate_path,
+            ca_certificate_path,
+        )
 
         # We do this check here because depends on how game_args is generated, len(game_args) could be different,
         #   but we will always expect server_ips == len(game_args)
@@ -120,6 +130,8 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
             binary_version=binary_config.binary_version,
             server_certificate_provider=server_certificate_provider,
             ca_certificate_provider=ca_certificate_provider,
+            server_certificate_path=server_certificate_path,
+            ca_certificate_path=ca_certificate_path,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,
@@ -155,6 +167,8 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
     def _get_lift_metadata_compaction_game_args(
         self,
         pc_instance: PrivateComputationInstance,
+        server_certificate_path: str,
+        ca_certificate_path: str,
     ) -> List[Dict[str, Any]]:
         """Gets the game args passed to game binaries by onedocker
 
@@ -163,6 +177,8 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
 
         Args:
             pc_instance: the private computation instance to generate game args for
+            server_certificate_path: The path to write server certificate on a container.
+            ca_certificate_path: The path to write CA certificate on a container.
 
         Returns:
             MPC game args to be used by onedocker
@@ -185,7 +201,11 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
             + GameNames.PCF2_LIFT_METADATA_COMPACTION.value
         )
 
-        tls_args = get_tls_arguments(pc_instance.has_feature(PCSFeature.PCF_TLS))
+        tls_args = get_tls_arguments(
+            pc_instance.has_feature(PCSFeature.PCF_TLS),
+            server_certificate_path,
+            ca_certificate_path,
+        )
 
         cmd_args_list = []
         for shard in range(num_metadata_compaction_containers):

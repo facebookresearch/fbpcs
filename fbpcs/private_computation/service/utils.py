@@ -30,8 +30,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.service.constants import (
     CA_CERTIFICATE_ENV_VAR,
+    CA_CERTIFICATE_PATH_ENV_VAR,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     SERVER_CERTIFICATE_ENV_VAR,
+    SERVER_CERTIFICATE_PATH_ENV_VAR,
 )
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 
@@ -45,6 +47,8 @@ async def create_and_start_mpc_instance(
     binary_version: str,
     server_certificate_provider: CertificateProvider,
     ca_certificate_provider: CertificateProvider,
+    server_certificate_path: str,
+    ca_certificate_path: str,
     server_ips: Optional[List[str]] = None,
     game_args: Optional[List[Dict[str, Any]]] = None,
     container_timeout: Optional[int] = None,
@@ -87,11 +91,12 @@ async def create_and_start_mpc_instance(
         env_vars[ONEDOCKER_REPOSITORY_PATH] = repository_path
     server_cert = server_certificate_provider.get_certificate()
     ca_cert = ca_certificate_provider.get_certificate()
-    if server_cert:
+    if server_cert and server_certificate_path:
         env_vars[SERVER_CERTIFICATE_ENV_VAR] = server_cert
-    if ca_cert:
+        env_vars[SERVER_CERTIFICATE_PATH_ENV_VAR] = server_certificate_path
+    if ca_cert and ca_certificate_path:
         env_vars[CA_CERTIFICATE_ENV_VAR] = ca_cert
-    # TODO: get certificate paths and add them to env_vars
+        env_vars[CA_CERTIFICATE_PATH_ENV_VAR] = ca_certificate_path
 
     return await mpc_svc.start_instance_async(
         instance_id=instance_id,

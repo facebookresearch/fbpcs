@@ -128,7 +128,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         )
 
         await stage_service.run_async(
-            pc_instance, NullCertificateProvider(), NullCertificateProvider()
+            pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
         )
 
         env_vars = {ONEDOCKER_REPOSITORY_PATH: "test_path/"}
@@ -170,7 +170,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         )
 
         await stage_service.run_async(
-            pc_instance, NullCertificateProvider(), NullCertificateProvider()
+            pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
         )
         status = stage_service.get_status(pc_instance)
 
@@ -198,7 +198,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         )
 
         await stage_service.run_async(
-            pc_instance, NullCertificateProvider(), NullCertificateProvider()
+            pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
         )
         status = stage_service.get_status(pc_instance)
 
@@ -248,7 +248,11 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(RuntimeError, exception_message):
             await stage_service.run_async(
-                pc_instance, NullCertificateProvider(), NullCertificateProvider()
+                pc_instance,
+                NullCertificateProvider(),
+                NullCertificateProvider(),
+                "",
+                "",
             )
 
     @patch(

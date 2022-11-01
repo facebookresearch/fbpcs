@@ -77,6 +77,8 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         pc_instance: PrivateComputationInstance,
         server_certificate_provider: CertificateProvider,
         ca_certificate_provider: CertificateProvider,
+        server_certificate_path: str,
+        ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation compute metrics stage
@@ -103,6 +105,8 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                 pc_instance=pc_instance,
                 server_certificate_provider=server_certificate_provider,
                 ca_certificate_provider=ca_certificate_provider,
+                server_certificate_path=server_certificate_path,
+                ca_certificate_path=ca_certificate_path,
                 server_ips=server_ips,
             )
 
@@ -142,6 +146,8 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             binary_version=binary_config.binary_version,
             server_certificate_provider=server_certificate_provider,
             ca_certificate_provider=ca_certificate_provider,
+            server_certificate_path=server_certificate_path,
+            ca_certificate_path=ca_certificate_path,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,

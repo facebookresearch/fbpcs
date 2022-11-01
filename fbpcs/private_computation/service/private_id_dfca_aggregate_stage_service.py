@@ -58,12 +58,18 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
         pc_instance: PrivateComputationInstance,
         server_certificate_provider: CertificateProvider,
         ca_certificate_provider: CertificateProvider,
+        server_certificate_path: str,
+        ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation aggregate metrics stage
 
         Args:
-            pc_instance: the private computation instance to run aggregate metrics with
+            pc_instance: the private computation instance to run aggregate metrics with.
+            server_certificate_providder: A provider class to get TLS server certificate.
+            ca_certificate_provider: A provider class to get TLS CA certificate.
+            server_certificate_path: The path to write server certificate on a container.
+            ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
 
         Returns:
@@ -115,6 +121,8 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
             binary_version=binary_config.binary_version,
             server_certificate_provider=server_certificate_provider,
             ca_certificate_provider=ca_certificate_provider,
+            server_certificate_path=server_certificate_path,
+            ca_certificate_path=ca_certificate_path,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,

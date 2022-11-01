@@ -74,6 +74,8 @@ class TestAggregationStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
             test_server_ips,
         )
 

@@ -72,6 +72,8 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
                         private_computation_instance,
                         NullCertificateProvider(),
                         NullCertificateProvider(),
+                        "",
+                        "",
                     )
                     mock_combine.assert_called()
                     self.assertEqual(pc_instance.infra_config.run_id, test_run_id)

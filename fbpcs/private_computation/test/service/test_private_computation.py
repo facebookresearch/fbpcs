@@ -867,6 +867,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             binary_version=binary_version,
             server_certificate_provider=NullCertificateProvider(),
             ca_certificate_provider=NullCertificateProvider(),
+            server_certificate_path="",
+            ca_certificate_path="",
             container_timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
             server_ips=server_ips,
             game_args=game_args,

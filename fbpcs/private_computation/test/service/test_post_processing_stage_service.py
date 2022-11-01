@@ -67,6 +67,8 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
         )
 
         post_processing_instance = private_computation_instance.infra_config.instances[
@@ -115,6 +117,8 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
         )
 
         post_processing_instance = private_computation_instance.infra_config.instances[
@@ -163,6 +167,8 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
         )
 
         post_processing_instance = private_computation_instance.infra_config.instances[

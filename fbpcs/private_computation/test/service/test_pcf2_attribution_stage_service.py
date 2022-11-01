@@ -73,6 +73,8 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
             test_server_ips,
         )
 
@@ -116,10 +118,11 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
                 "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
             },
         ]
-
         self.assertEqual(
             test_game_args,
-            self.stage_svc._get_compute_metrics_game_args(private_computation_instance),
+            self.stage_svc._get_compute_metrics_game_args(
+                private_computation_instance, "", ""
+            ),
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:

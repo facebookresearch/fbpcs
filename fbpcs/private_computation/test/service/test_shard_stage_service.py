@@ -59,6 +59,8 @@ class TestShardStageService(IsolatedAsyncioTestCase):
                 private_computation_instance,
                 NullCertificateProvider(),
                 NullCertificateProvider(),
+                "",
+                "",
             )
             mock_shard.assert_called()
 

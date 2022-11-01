@@ -78,6 +78,8 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             private_computation_instance,
             NullCertificateProvider(),
             NullCertificateProvider(),
+            "",
+            "",
             test_server_ips,
         )
 
@@ -110,11 +112,10 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             }
             for i in range(2)
         ]
-
         self.assertEqual(
             test_game_args,
             self.stage_svc._get_lift_metadata_compaction_game_args(
-                private_computation_instance
+                private_computation_instance, "", ""
             ),
         )
 

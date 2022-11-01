@@ -109,6 +109,8 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 pc_instance=pc_instance,
                 server_certificate_provider=NullCertificateProvider(),
                 ca_certificate_provider=NullCertificateProvider(),
+                server_certificate_path="",
+                ca_certificate_path="",
                 server_ips=self.server_ips,
             )
 

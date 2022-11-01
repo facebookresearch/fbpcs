@@ -72,12 +72,18 @@ class PCF2AggregationStageService(PrivateComputationStageService):
         pc_instance: PrivateComputationInstance,
         server_certificate_provider: CertificateProvider,
         ca_certificate_provider: CertificateProvider,
+        server_certificate_path: str,
+        ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the pcf2.0 based private aggregation stage
 
         Args:
             pc_instance: the private computation instance to run aggregation stage
+            server_certificate_providder: A provider class to get TLS server certificate.
+            ca_certificate_provider: A provider class to get TLS CA certificate.
+            server_certificate_path: The path to write server certificate on a container.
+            ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
 
         Returns:
@@ -87,6 +93,8 @@ class PCF2AggregationStageService(PrivateComputationStageService):
         # Prepare arguments for attribution game
         game_args = self._get_compute_metrics_game_args(
             pc_instance,
+            server_certificate_path,
+            ca_certificate_path,
         )
 
         # We do this check here because depends on how game_args is generated, len(game_args) could be different,
@@ -120,6 +128,8 @@ class PCF2AggregationStageService(PrivateComputationStageService):
             binary_version=binary_config.binary_version,
             server_certificate_provider=server_certificate_provider,
             ca_certificate_provider=ca_certificate_provider,
+            server_certificate_path=server_certificate_path,
+            ca_certificate_path=ca_certificate_path,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=self._container_timeout,
@@ -139,6 +149,8 @@ class PCF2AggregationStageService(PrivateComputationStageService):
     def _get_compute_metrics_game_args(
         self,
         private_computation_instance: PrivateComputationInstance,
+        server_certificate_path: str,
+        ca_certificate_path: str,
     ) -> List[Dict[str, Any]]:
         """Gets the game args passed to game binaries by onedocker
 
@@ -147,6 +159,8 @@ class PCF2AggregationStageService(PrivateComputationStageService):
 
         Args:
             pc_instance: the private computation instance to generate game args for
+            server_certificate_path: The path to write server certificate on a container.
+            ca_certificate_path: The path to write CA certificate on a container.
 
         Returns:
             MPC game args to be used by onedocker
@@ -192,7 +206,9 @@ class PCF2AggregationStageService(PrivateComputationStageService):
             "run_id": private_computation_instance.infra_config.run_id,
         }
         tls_args = get_tls_arguments(
-            private_computation_instance.has_feature(PCSFeature.PCF_TLS)
+            private_computation_instance.has_feature(PCSFeature.PCF_TLS),
+            server_certificate_path,
+            ca_certificate_path,
         )
         if private_computation_instance.feature_flags is not None:
             common_game_args[

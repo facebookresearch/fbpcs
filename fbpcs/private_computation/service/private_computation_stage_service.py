@@ -57,6 +57,8 @@ class PrivateComputationStageService(abc.ABC):
         pc_instance: PrivateComputationInstance,
         server_certificate_provider: CertificateProvider,
         ca_certificate_provider: CertificateProvider,
+        server_certificate_path: str,
+        ca_certificate_path: str,
         # TODO(T102471612): remove server_ips from run_async, move to subclass constructor instead
         server_ips: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
