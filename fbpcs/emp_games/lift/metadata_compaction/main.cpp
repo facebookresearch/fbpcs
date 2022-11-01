@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <sstream>
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
 
@@ -30,16 +31,47 @@ int main(int argc, char** argv) {
 
   fbpcf::AwsSdk::aquire();
 
+  // since DEFINE_INT16 is not supported, cast int32_t FLAGS_concurrency to
+  // int16_t is necessary here
+  int16_t concurrency = static_cast<int16_t>(FLAGS_concurrency);
+  CHECK_LE(concurrency, private_lift::kMaxConcurrency)
+      << "Concurrency must be at most " << private_lift::kMaxConcurrency;
+
+  auto filepaths = private_lift::getIOFilepaths(
+      FLAGS_input_path,
+      FLAGS_output_global_params_path,
+      FLAGS_output_secret_shares_path,
+      FLAGS_input_base_path,
+      FLAGS_output_global_params_base_path,
+      FLAGS_output_secret_shares_base_path,
+      FLAGS_num_files,
+      FLAGS_file_start_index);
+
+  std::ostringstream inputFileLogList;
+  for (auto filepath : filepaths.inputFilePaths) {
+    inputFileLogList << "\t\t" << filepath << "\n";
+  }
+
+  std::ostringstream outputGlobalParamsFileLogList;
+  for (auto filepath : filepaths.outputGlobalParamsFilePaths) {
+    outputGlobalParamsFileLogList << "\t\t" << filepath << "\n";
+  }
+
+  std::ostringstream outputSecretSharesFileLogList;
+  for (auto filepath : filepaths.outputSecretSharesFilePaths) {
+    outputSecretSharesFileLogList << "\t\t" << filepath << "\n";
+  }
+
   XLOG(INFO) << "Running lift metadata compaction with settings:\n"
              << "\tparty: " << FLAGS_party << "\n"
              << "\tuse_xor_encryption: " << FLAGS_use_xor_encryption << "\n"
              << "\tserver_ip_address: " << FLAGS_server_ip << "\n"
              << "\tport: " << FLAGS_port << "\n"
-             << "\tinput: " << FLAGS_input_path << "\n"
-             << "\tglobal params output: " << FLAGS_output_global_params_path
-             << "\n"
-             << "\tsecret shares output: " << FLAGS_output_secret_shares_path
-             << "\n"
+             << "\tinput: " << inputFileLogList.str() << "\n"
+             << "\tglobal params output: "
+             << outputGlobalParamsFileLogList.str() << "\n"
+             << "\tsecret shares output: "
+             << outputSecretSharesFileLogList.str() << "\n"
              << "\tepoch: " << FLAGS_epoch << "\n"
              << "\tnumber of conversions per user: "
              << FLAGS_num_conversions_per_user << "\n"
@@ -69,9 +101,10 @@ int main(int argc, char** argv) {
         << "Starting Metadata Compaction as Publisher, will wait for Partner...";
     schedulerStatistics =
         private_lift::startMetadataCompactionApp<common::PUBLISHER>(
-            FLAGS_input_path,
-            FLAGS_output_global_params_path,
-            FLAGS_output_secret_shares_path,
+            filepaths.inputFilePaths,
+            filepaths.outputGlobalParamsFilePaths,
+            filepaths.outputSecretSharesFilePaths,
+            FLAGS_concurrency,
             FLAGS_server_ip,
             FLAGS_port,
             FLAGS_num_conversions_per_user,
@@ -84,9 +117,10 @@ int main(int argc, char** argv) {
         << "Starting Metadata Compaction as Partner, will wait for Publisher...";
     schedulerStatistics =
         private_lift::startMetadataCompactionApp<common::PARTNER>(
-            FLAGS_input_path,
-            FLAGS_output_global_params_path,
-            FLAGS_output_secret_shares_path,
+            filepaths.inputFilePaths,
+            filepaths.outputGlobalParamsFilePaths,
+            filepaths.outputSecretSharesFilePaths,
+            FLAGS_concurrency,
             FLAGS_server_ip,
             FLAGS_port,
             FLAGS_num_conversions_per_user,
