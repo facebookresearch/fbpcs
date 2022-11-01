@@ -476,12 +476,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     elif arguments["bolt_e2e"]:
         bolt_config = ConfigYamlDict.from_file(arguments["--bolt_config"])
         bolt_runner, jobs = parse_bolt_config(config=bolt_config, logger=logger)
-        run_results = asyncio.run(bolt_runner.run_async(jobs))
-        if not all(run_results):
-            failed_job_names = [
-                job.job_name for job, result in zip(jobs, run_results) if not result
-            ]
-            raise RuntimeError(f"Jobs failed: {failed_job_names}")
+        bolt_summary = asyncio.run(bolt_runner.run_async(jobs))
+        if bolt_summary.is_failure:
+            raise RuntimeError(f"Jobs failed: {bolt_summary.failed_job_names}")
         else:
             print("Jobs succeeded")
     elif arguments["secret_scrubber"]:

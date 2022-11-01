@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Type
 
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
+from fbpcs.bolt.bolt_summary import BoltSummary
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 from fbpcs.common.service.graphapi_trace_logging_service import (
@@ -93,7 +94,7 @@ def run_study(
     output_dir: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
 ) -> None:
-    asyncio.run(
+    bolt_summary = asyncio.run(
         run_study_async(
             config,
             study_id,
@@ -112,6 +113,19 @@ def run_study(
         )
     )
 
+    # TODO(T136692970): [BE] use is_success instead of hacky status check
+    for s in bolt_summary.job_summaries:
+        instance_id = s.partner_instance_id
+        if (
+            get_instance(config, instance_id, logger).infra_config.status
+            is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
+        ):
+            raise OneCommandRunnerBaseException(
+                f"{instance_id=} FAILED.",
+                "Status is not aggregation completed",
+                "Check logs for more information",
+            )
+
 
 async def run_study_async(
     config: Dict[str, Any],
@@ -128,7 +142,7 @@ async def run_study_async(
     graphapi_version: Optional[str] = None,
     output_dir: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
-) -> None:
+) -> BoltSummary:
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
     _validate_input(objective_ids, input_paths)
 
@@ -268,7 +282,7 @@ async def run_study_async(
         )
         job_list.append(job)
 
-    await run_bolt(
+    bolt_summary = await run_bolt(
         config,
         logger,
         job_list,
@@ -293,16 +307,8 @@ async def run_study_async(
         logger,
     )
 
-    for instance_id in all_instance_ids:
-        if (
-            get_instance(config, instance_id, logger).infra_config.status
-            is not PrivateComputationInstanceStatus.AGGREGATION_COMPLETED
-        ):
-            raise OneCommandRunnerBaseException(
-                f"{instance_id=} FAILED.",
-                "Status is not aggregation completed",
-                "Check logs for more information",
-            )
+    logger.info(bolt_summary)
+    return bolt_summary
 
 
 async def run_bolt(
@@ -313,7 +319,7 @@ async def run_bolt(
     ],
     graphapi_version: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
-) -> None:
+) -> BoltSummary:
     """Run private lift with the BoltRunner in a dedicated function to ensure that
     the BoltRunner semaphore and runner.run_async share the same event loop.
 
@@ -363,7 +369,7 @@ async def run_bolt(
     )
 
     # run all jobs
-    await runner.run_async(job_list)
+    return await runner.run_async(job_list)
 
 
 def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
