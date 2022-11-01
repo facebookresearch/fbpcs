@@ -29,6 +29,24 @@ DEFINE_string(
     "",
     "Output file to write compacted metadata secret share results.");
 DEFINE_int32(
+    file_start_index,
+    0,
+    "First file that will be read with base path");
+DEFINE_int32(num_files, 0, "Number of files that should be read");
+DEFINE_string(
+    input_base_path,
+    "",
+    "Local or s3 base path for the sharded input files");
+DEFINE_string(
+    output_global_params_base_path,
+    "",
+    "Local or s3 base path where output global param files are written to");
+DEFINE_string(
+    output_secret_shares_base_path,
+    "",
+    "Local or s3 base path where output secret share files are written to");
+DEFINE_int32(concurrency, 1, "max number of games that will run concurrently");
+DEFINE_int32(
     epoch,
     1546300800,
     "Unixtime of 2019-01-01. Used as our 'new epoch' for timestamps");
