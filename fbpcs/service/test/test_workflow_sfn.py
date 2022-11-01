@@ -25,7 +25,9 @@ class TestSfnWorkflowService(unittest.TestCase):
 
     @patch("boto3.client")
     def test_start_workflow_with_conf(self, MockBoto3):
-        service = SfnWorkflowService("us-west-2", "access_key", "access_data")
+        service = SfnWorkflowService(
+            "us-west-2", "access_key", "access_data", session_token="session_token"
+        )
         service.client.start_execution = MagicMock(
             return_value={"executionArn": "execution_arn"}
         )
