@@ -26,6 +26,10 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstanceStatus,
 )
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
+from fbpcs.infra.certificate.sample_tls_certificates import (
+    SAMPLE_CA_CERTIFICATE,
+    SAMPLE_SERVER_CERTIFICATE,
+)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
@@ -222,6 +226,15 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
                 ],
             ),
+            # test PCSFeature.PCF_TLS for lift
+            (
+                PrivateComputationGameType.LIFT,
+                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                [
+                    PCSFeature.PCS_DUMMY.value,
+                    PCSFeature.PCF_TLS.value,
+                ],
+            ),
         ):
             with self.subTest(
                 test_game_type=test_game_type,
@@ -276,7 +289,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                         self.assertTrue(
                             args.has_feature(PCSFeature.PRIVATE_ATTRIBUTION_MR_PID)
                         )
-                    else:
+                    elif PCSFeature.PCF_TLS.value not in pcs_features:
                         self.assertTrue(args.has_feature(PCSFeature.PCS_DUMMY))
                         # feature flags is unsorted
                         self.assertEqual(
@@ -305,6 +318,30 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     )
                 else:
                     self.assertEqual(args.stage_flow, PrivateComputationStageFlow)
+
+                # assert PCSFeature.PCF_TLS will generate certificates and store
+                # them in InfraConfig
+                if (
+                    pcs_features is not None
+                    and PCSFeature.PCF_TLS.value in pcs_features
+                ):
+                    self.assertEqual(
+                        args.infra_config.server_certificate,
+                        SAMPLE_SERVER_CERTIFICATE,
+                    )
+                    self.assertEqual(
+                        args.infra_config.ca_certificate,
+                        SAMPLE_CA_CERTIFICATE,
+                    )
+                else:
+                    self.assertEqual(
+                        args.infra_config.server_certificate,
+                        None,
+                    )
+                    self.assertEqual(
+                        args.infra_config.ca_certificate,
+                        None,
+                    )
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance_mr_workflow(self) -> None:
@@ -1201,6 +1238,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             mpc_compute_concurrency=self.test_concurrency,
             status_updates=[],
             log_cost_bucket=self.log_cost_bucket,
+            server_certificate=SAMPLE_SERVER_CERTIFICATE,
+            ca_certificate=SAMPLE_CA_CERTIFICATE,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,
