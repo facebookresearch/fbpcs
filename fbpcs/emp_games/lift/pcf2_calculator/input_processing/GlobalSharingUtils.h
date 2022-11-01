@@ -110,4 +110,120 @@ inline void shareBitsForValuesStep(
              << liftGameProcessedData.valueSquaredBits;
 }
 
+template <int schedulerId>
+inline void computeIndexSharesAndSetTestGroupIds(
+    LiftGameProcessedData<schedulerId>& liftGameProcessedData,
+    const SecGroup<schedulerId>& cohortGroupIds,
+    const SecBit<schedulerId>& controlPopulation,
+    const SecBit<schedulerId>& breakdownGroupIds,
+    SecGroup<schedulerId>& testGroupIds) {
+  // We compute the metrics for test/control populations, 0/1 publisher
+  // breakdowns, and partner cohorts. In order to compute the ORAM aggregation
+  // for these 3 different types of groups, we have to differentiate them from
+  // each other when assigning the group ids. There are up to
+  // 4 * numPartnerCohorts_ group ids in total, and we assign the first
+  // 2 * numPartnerCohorts_ group ids to the test population, and the second
+  // half to the control population. Within the test population, we assign the
+  // group ids 0 to numPartnerCohorts_ - 1 to breakdown id 0, and the group ids
+  // from numPartnerCohorts_ to 2 * numPartnerCohorts_ - 1 to breakdown id 1. We
+  // similarly assign the group ids for the control population.
+  bool usingCohorts = liftGameProcessedData.numPartnerCohorts > 0;
+  bool usingPublisherBreakdowns =
+      liftGameProcessedData.numPublisherBreakdowns > 0;
+
+  SecGroup<schedulerId> secGroupIds;
+
+  if (usingCohorts) {
+    auto pubNumPartnerCohorts =
+        common::createPublicBatchConstant<PubGroup<schedulerId>>(
+            liftGameProcessedData.numPartnerCohorts,
+            liftGameProcessedData.numRows);
+
+    if (usingPublisherBreakdowns) {
+      // We now set the group ids depending on whether each row is a test or
+      // control, and whether the breakdown id is 0 or 1.
+      auto group0 = common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          0UL, liftGameProcessedData.numRows);
+
+      auto breakdownMux = group0.mux(breakdownGroupIds, pubNumPartnerCohorts);
+      testGroupIds = cohortGroupIds + breakdownMux;
+
+      auto secControlGroupIds = pubNumPartnerCohorts + pubNumPartnerCohorts +
+          cohortGroupIds + breakdownMux;
+      secGroupIds = testGroupIds.mux(controlPopulation, secControlGroupIds);
+    } else {
+      testGroupIds = cohortGroupIds;
+      secGroupIds = cohortGroupIds.mux(
+          controlPopulation, cohortGroupIds + pubNumPartnerCohorts);
+    }
+  } else {
+    if (usingPublisherBreakdowns) {
+      // We set the publisher breakdown groups to 0, 1, 2, 3 if no cohorts
+      auto group0 = common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          0UL, liftGameProcessedData.numRows);
+      auto group1 = common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          1UL, liftGameProcessedData.numRows);
+      auto group2 = common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          2UL, liftGameProcessedData.numRows);
+      auto group3 = common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          3UL, liftGameProcessedData.numRows);
+
+      // We now set the group ids depending on whether each row is a test or
+      // control, and whether the breakdown id is 0 or 1.
+      testGroupIds = group0.mux(breakdownGroupIds, group1);
+      auto secControlGroupIds = group2.mux(breakdownGroupIds, group3);
+
+      secGroupIds = testGroupIds.mux(controlPopulation, secControlGroupIds);
+
+    } else {
+      testGroupIds = cohortGroupIds; // 0
+
+      auto group0 = common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          0UL, liftGameProcessedData.numRows);
+      auto group1 = common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          1UL, liftGameProcessedData.numRows);
+
+      secGroupIds = group0.mux(controlPopulation, group1);
+    }
+  }
+
+  // Generate index shares from group ids
+  liftGameProcessedData.indexShares =
+      secGroupIds.extractIntShare().getBooleanShares();
+  // Resize to width needed for the number of groups
+  size_t groupWidth = std::ceil(std::log2(liftGameProcessedData.numGroups));
+  liftGameProcessedData.indexShares.resize(groupWidth);
+}
+
+template <int schedulerId>
+inline void computeTestIndexShares(
+    LiftGameProcessedData<schedulerId>& liftGameProcessedData,
+    const SecBit<schedulerId>& controlPopulation,
+    const SecGroup<schedulerId>& testGroupIds) {
+  // We only compute the reach metrics for the test population, hence we also
+  // contruct index shares for just the test population. Similarly to how we
+  // construct index shares in privatelyShareIndexSharesStep, we have to
+  // differentiate the publisher breakdowns and partner cohorts when assigning
+  // the group ids. There are now up to 2 * numPartnerCohorts_ + 1 group ids
+  // in total, and we assign the first numPartnerCohorts_ to breakdown id 0, the
+  // second numPartnerCohorts_ to breakdown id 1, and the last group id to the
+  // control population.
+  auto pubControlGroupId =
+      common::createPublicBatchConstant<PubGroup<schedulerId>>(
+          liftGameProcessedData.numTestGroups - 1,
+          liftGameProcessedData.numRows);
+
+  // We now set the group ids depending on whether each row is a test or
+  // control
+  auto secGroupIds = testGroupIds.mux(controlPopulation, pubControlGroupId);
+
+  // Generate index shares from group ids
+  liftGameProcessedData.testIndexShares =
+      secGroupIds.extractIntShare().getBooleanShares();
+  // Resize to width needed for the number of groups
+  size_t testGroupWidth =
+      std::ceil(std::log2(liftGameProcessedData.numTestGroups));
+  liftGameProcessedData.testIndexShares.resize(testGroupWidth);
+}
+
 } // namespace private_lift::input_processing
