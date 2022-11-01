@@ -22,6 +22,7 @@
 #include "fbpcf/engine/communication/test/TlsCommunicationUtils.h"
 #include "fbpcs/emp_games/common/Csv.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
+#include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorGameFactory.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorApp.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/sample_input/SampleInput.h"
@@ -64,9 +65,11 @@ void runCalculatorApp(
 }
 
 template <int schedulerId>
-InputProcessor<schedulerId> createInputProcessorWithScheduler(
+void runUDPInputProcessorWithScheduler(
     int party,
     const std::string& inputPath,
+    const std::string& globalParamsOutputPath,
+    const std::string& secretSharesOutputPath,
     bool computePublisherBreakdowns,
     int epoch,
     int numConversionsPerUser,
@@ -82,9 +85,6 @@ InputProcessor<schedulerId> createInputProcessorWithScheduler(
             party, *communicationAgentFactory)
             .create();
 
-  fbpcf::scheduler::SchedulerKeeper<schedulerId>::setScheduler(
-      std::move(scheduler));
-
   InputData inputData(
       inputPath,
       InputData::LiftMPCType::Standard,
@@ -92,7 +92,13 @@ InputProcessor<schedulerId> createInputProcessorWithScheduler(
       epoch,
       numConversionsPerUser);
 
-  return InputProcessor<schedulerId>(party, inputData, numConversionsPerUser);
+  auto compactorGameFactory = MetadataCompactorGameFactory<schedulerId>(
+      std::move(communicationAgentFactory));
+
+  auto compactorGame = compactorGameFactory.create(std::move(scheduler), party);
+  auto inputProcessor = compactorGame->play(inputData, numConversionsPerUser);
+  inputProcessor->getLiftGameProcessedData().writeToCSV(
+      globalParamsOutputPath, secretSharesOutputPath);
 }
 
 class CalculatorAppTestFixture
@@ -148,7 +154,7 @@ class CalculatorAppTestFixture
     fbpcf::engine::communication::deleteTlsFiles(tlsDir_);
   }
 
-  void setupSecretShareInputs(
+  void setupUDPSecretShareInputs(
       const std::string& publisherInputPath,
       const std::string& partnerInputPath,
       const std::string& publisherOutputPath,
@@ -172,9 +178,11 @@ class CalculatorAppTestFixture
     int epoch = 1546300800;
 
     auto future0 = std::async(
-        createInputProcessorWithScheduler<0>,
+        runUDPInputProcessorWithScheduler<0>,
         0,
         publisherInputPath,
+        publisherGlobalParamsOutputPath,
+        publisherOutputPath,
         computePublisherBreakdowns,
         epoch_,
         numConversionsPerUser,
@@ -182,22 +190,19 @@ class CalculatorAppTestFixture
         std::move(communicationAgentFactory0));
 
     auto future1 = std::async(
-        createInputProcessorWithScheduler<1>,
+        runUDPInputProcessorWithScheduler<1>,
         1,
         partnerInputPath,
+        partnerGlobalParamsOutputPath,
+        partnerOutputPath,
         computePublisherBreakdowns,
         epoch_,
         numConversionsPerUser,
         useXorEncryption,
         std::move(communicationAgentFactory1));
 
-    auto inputProcessor0 = future0.get();
-    auto inputProcessor1 = future1.get();
-
-    inputProcessor0.getLiftGameProcessedData().writeToCSV(
-        publisherGlobalParamsOutputPath, publisherOutputPath);
-    inputProcessor1.getLiftGameProcessedData().writeToCSV(
-        partnerGlobalParamsOutputPath, partnerOutputPath);
+    future0.get();
+    future1.get();
   }
 
   GroupedLiftMetrics runTest(
@@ -254,6 +259,43 @@ class CalculatorAppTestFixture
 
     return useXorEncryption ? publisherResult ^ partnerResult : publisherResult;
   }
+
+  GroupedLiftMetrics runUdpTest(
+      const std::string& publisherInputPath,
+      const std::string& partnerInputPath,
+      const std::string& publisherGlobalParamsPath,
+      const std::string& partnerGlobalParamsPath,
+      const std::string& publisherSecretSharesPath,
+      const std::string& partnerSecretSharesPath,
+      const std::string& publisherOutputPath,
+      const std::string& partnerOutputPath,
+      const int numConversionsPerUser,
+      const bool computePublisherBreakdowns,
+      bool useTls,
+      bool useXorEncryption) {
+    setupUDPSecretShareInputs(
+        publisherInputPath,
+        partnerInputPath,
+        publisherSecretSharesPath,
+        partnerSecretSharesPath,
+        publisherGlobalParamsPath,
+        partnerGlobalParamsPath,
+        numConversionsPerUser,
+        computePublisherBreakdowns,
+        useTls,
+        useXorEncryption);
+
+    return runTest(
+        publisherSecretSharesPath,
+        partnerSecretSharesPath,
+        publisherGlobalParamsPath,
+        publisherOutputPath,
+        partnerOutputPath,
+        numConversionsPerUser,
+        computePublisherBreakdowns,
+        useTls,
+        useXorEncryption);
+  }
 };
 
 TEST_P(CalculatorAppTestFixture, TestCorrectness) {
@@ -270,41 +312,30 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
   bool computePublisherBreakdowns = std::get<2>(GetParam());
   bool readInputFromSecretShares = std::get<3>(GetParam());
 
-  GroupedLiftMetrics result;
-  if (readInputFromSecretShares) {
-    setupSecretShareInputs(
-        publisherInputPath,
-        partnerInputPath,
-        publisherSecretInputPath_,
-        partnerSecretInputPath_,
-        publisherGlobalParamsInputPath_,
-        partnerGlobalParamsInputPath_,
-        numConversionsPerUser,
-        computePublisherBreakdowns,
-        useTls,
-        useXorEncryption);
-    result = runTest(
-        publisherSecretInputPath_,
-        partnerSecretInputPath_,
-        publisherGlobalParamsInputPath_,
-        publisherOutputPath_,
-        partnerOutputPath_,
-        numConversionsPerUser,
-        computePublisherBreakdowns,
-        useTls,
-        useXorEncryption);
-  } else {
-    result = runTest(
-        publisherInputPath,
-        partnerInputPath,
-        "",
-        publisherOutputPath_,
-        partnerOutputPath_,
-        numConversionsPerUser,
-        computePublisherBreakdowns,
-        useTls,
-        useXorEncryption);
-  }
+  GroupedLiftMetrics result = readInputFromSecretShares
+      ? runUdpTest(
+            publisherInputPath,
+            partnerInputPath,
+            publisherGlobalParamsInputPath_,
+            partnerGlobalParamsInputPath_,
+            publisherSecretInputPath_,
+            partnerSecretInputPath_,
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption)
+      : runTest(
+            publisherInputPath,
+            partnerInputPath,
+            "",
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption);
 
   auto expectedResult = GroupedLiftMetrics::fromJson(
       fbpcf::io::FileIOWrappers::readFile(expectedOutputPath));
@@ -318,68 +349,16 @@ TEST_P(CalculatorAppTestFixture, TestCorrectness) {
   EXPECT_EQ(expectedResult, result);
 }
 
-TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
-  // Generate test input files with random data
-  int numConversionsPerUser = 25;
-  GenFakeData testDataGenerator;
-  LiftFakeDataParams params;
-  params.setNumRows(15)
-      .setOpportunityRate(0.5)
-      .setTestRate(0.5)
-      .setPurchaseRate(0.5)
-      .setIncrementalityRate(0.0)
-      .setNumConversions(numConversionsPerUser)
-      .setOmitValuesColumn(false)
-      .setEpoch(1546300800);
-  testDataGenerator.genFakeInputFiles(
-      publisherPlaintextInputPath_, partnerPlaintextInputPath_, params);
-
-  // Run calculator app with test input
-  bool useTls = std::get<0>(GetParam());
-  bool useXorEncryption = std::get<1>(GetParam());
-  bool computePublisherBreakdowns = std::get<2>(GetParam());
-  bool readInputFromSecretShares = std::get<3>(GetParam());
-
-  GroupedLiftMetrics res;
-  if (readInputFromSecretShares) {
-    setupSecretShareInputs(
-        publisherPlaintextInputPath_,
-        partnerPlaintextInputPath_,
-        publisherSecretInputPath_,
-        partnerSecretInputPath_,
-        publisherGlobalParamsInputPath_,
-        partnerGlobalParamsInputPath_,
-        numConversionsPerUser,
-        computePublisherBreakdowns,
-        useTls,
-        useXorEncryption);
-    res = runTest(
-        publisherSecretInputPath_,
-        partnerSecretInputPath_,
-        publisherGlobalParamsInputPath_,
-        publisherOutputPath_,
-        partnerOutputPath_,
-        numConversionsPerUser,
-        computePublisherBreakdowns,
-        useTls,
-        useXorEncryption);
-  } else {
-    res = runTest(
-        publisherPlaintextInputPath_,
-        partnerPlaintextInputPath_,
-        "",
-        publisherOutputPath_,
-        partnerOutputPath_,
-        numConversionsPerUser,
-        computePublisherBreakdowns,
-        useTls,
-        useXorEncryption);
-  }
-
+GroupedLiftMetrics computeCorrectResults(
+    const std::string& publisherPlaintextInputPath,
+    const std::string& partnerPlaintextInputPath,
+    bool usingPublisherBreakdowns,
+    bool usingCohorts) {
   // Calculate expected results with simple lift calculator
-  LiftCalculator liftCalculator(0, 0, 0);
-  std::ifstream inFilePublisher{publisherPlaintextInputPath_};
-  std::ifstream inFilePartner{partnerPlaintextInputPath_};
+  LiftCalculator liftCalculator(
+      usingCohorts ? 4 : 0, usingPublisherBreakdowns ? 2 : 0, 0);
+  std::ifstream inFilePublisher{publisherPlaintextInputPath};
+  std::ifstream inFilePartner{partnerPlaintextInputPath};
   int32_t tsOffset = 10;
   std::string linePublisher;
   std::string linePartner;
@@ -391,8 +370,143 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       private_measurement::csv::splitByComma(linePartner, false);
   std::unordered_map<std::string, int> colNameToIndex =
       liftCalculator.mapColToIndex(headerPublisher, headerPartner);
-  GroupedLiftMetrics expectedResult = liftCalculator.compute(
+  GroupedLiftMetrics results = liftCalculator.compute(
       inFilePublisher, inFilePartner, colNameToIndex, tsOffset, false);
+
+  if (!usingPublisherBreakdowns) {
+    results.publisherBreakdowns.clear();
+  }
+
+  return results;
+}
+
+void generateSyntheticData(
+    const std::string& publisherPlaintextInputPath,
+    const std::string& partnerPlaintextInputPath,
+    int numConversionsPerUser,
+    bool generatePublisherBreakdowns,
+    bool useCohorts) {
+  // Generate test input files with random data
+  GenFakeData testDataGenerator;
+  LiftFakeDataParams params;
+  params.setNumRows(15)
+      .setOpportunityRate(0.5)
+      .setTestRate(0.5)
+      .setPurchaseRate(0.5)
+      .setIncrementalityRate(0.0)
+      .setNumConversions(numConversionsPerUser)
+      .setOmitValuesColumn(false)
+      .setEpoch(1546300800);
+
+  if (generatePublisherBreakdowns) {
+    params.setNumBreakdowns(2);
+  }
+
+  if (useCohorts) {
+    params.setNumCohorts(4);
+  }
+
+  testDataGenerator.genFakeInputFiles(
+      publisherPlaintextInputPath, partnerPlaintextInputPath, params);
+}
+
+TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
+  // Run calculator app with test input
+  bool useTls = std::get<0>(GetParam());
+  bool useXorEncryption = std::get<1>(GetParam());
+  bool computePublisherBreakdowns = std::get<2>(GetParam());
+  bool readInputFromSecretShares = std::get<3>(GetParam());
+
+  // Generate test input files with random data
+  int numConversionsPerUser = 25;
+  generateSyntheticData(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      numConversionsPerUser,
+      computePublisherBreakdowns,
+      false);
+
+  GroupedLiftMetrics res = readInputFromSecretShares
+      ? runUdpTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            publisherGlobalParamsInputPath_,
+            partnerGlobalParamsInputPath_,
+            publisherSecretInputPath_,
+            partnerSecretInputPath_,
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption)
+      : runTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            "",
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption);
+
+  GroupedLiftMetrics expectedResult = computeCorrectResults(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      computePublisherBreakdowns,
+      false);
+
+  EXPECT_EQ(expectedResult, res);
+}
+
+TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInputAndCohort) {
+  // Run calculator app with test input
+  bool useTls = std::get<0>(GetParam());
+  bool useXorEncryption = std::get<1>(GetParam());
+  bool computePublisherBreakdowns = std::get<2>(GetParam());
+  bool readInputFromSecretShares = std::get<3>(GetParam());
+
+  // Generate test input files with random data
+  int numConversionsPerUser = 25;
+
+  generateSyntheticData(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      numConversionsPerUser,
+      computePublisherBreakdowns,
+      true);
+
+  GroupedLiftMetrics res = readInputFromSecretShares
+      ? runUdpTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            publisherGlobalParamsInputPath_,
+            partnerGlobalParamsInputPath_,
+            publisherSecretInputPath_,
+            partnerSecretInputPath_,
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption)
+      : runTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            "",
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption);
+
+  GroupedLiftMetrics expectedResult = computeCorrectResults(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      computePublisherBreakdowns,
+      true);
 
   EXPECT_EQ(expectedResult, res);
 }
