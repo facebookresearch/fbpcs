@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <signal.h>
 #include <algorithm>
