@@ -22,19 +22,36 @@ void MetadataCompactorApp<schedulerId>::run() {
 
   auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
-  InputData inputData(
-      inputPath_,
-      InputData::LiftMPCType::Standard,
-      computePublisherBreakdowns_,
-      epoch_,
-      numConversionsPerUser_);
-
   auto metadataCompactorGame =
       compactorGameFactory_->create(std::move(scheduler), party_);
 
-  auto inputProcessor =
-      metadataCompactorGame->play(inputData, numConversionsPerUser_);
-  writeToCSV(*inputProcessor, outputGlobalParamsPath_, outputSecretSharesPath_);
+  for (size_t i = startFileIndex_; i < startFileIndex_ + numFiles_; i++) {
+    try {
+      CHECK_LT(i, inputPaths_.size()) << "File index exceeds number of files.";
+      CHECK_LT(i, outputGlobalParamsPaths_.size())
+          << "File index exceeds number of files.";
+      CHECK_LT(i, outputSecretSharesPaths_.size())
+          << "File index exceeds number of files.";
+
+      auto inputData = getInputData(inputPaths_.at(i));
+      XLOG(INFO) << "Have " << inputData.getNumRows()
+                 << " values in inputData.";
+      auto inputProcessor =
+          metadataCompactorGame->play(inputData, numConversionsPerUser_);
+      XLOG(INFO) << "done calculating";
+      writeToCSV(
+          *inputProcessor,
+          outputGlobalParamsPaths_.at(i),
+          outputSecretSharesPaths_.at(i));
+    } catch (const std::exception& e) {
+      XLOGF(
+          ERR,
+          "Error: Exception caught in CalculatorApp run.\n \t error msg: {} \n \t input shard: {}.",
+          e.what(),
+          inputPaths_.at(i));
+      std::exit(1);
+    }
+  }
 
   auto gateStatistics =
       fbpcf::scheduler::SchedulerKeeper<schedulerId>::getGateStatistics();
@@ -59,6 +76,17 @@ void MetadataCompactorApp<schedulerId>::run() {
   schedulerStatistics_.receivedNetwork = trafficStatistics.second;
   fbpcf::scheduler::SchedulerKeeper<schedulerId>::deleteEngine();
   schedulerStatistics_.details = metricsCollector->collectMetrics();
+}
+
+template <int schedulerId>
+InputData MetadataCompactorApp<schedulerId>::getInputData(
+    const std::string& inputPath) {
+  return InputData(
+      inputPath,
+      InputData::LiftMPCType::Standard,
+      computePublisherBreakdowns_,
+      epoch_,
+      numConversionsPerUser_);
 }
 
 template <int schedulerId>
