@@ -13,6 +13,7 @@ from typing import Generic, List, Optional, Type, TypeVar
 
 from fbpcs.bolt.bolt_client import BoltClient
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
+from fbpcs.bolt.bolt_summary import BoltJobSummary, BoltSummary
 from fbpcs.bolt.constants import (
     DEFAULT_MAX_PARALLEL_RUNS,
     DEFAULT_NUM_TRIES,
@@ -63,10 +64,14 @@ class BoltRunner(Generic[T, U]):
     async def run_async(
         self,
         jobs: List[BoltJob[T, U]],
-    ) -> List[bool]:
-        return list(await asyncio.gather(*[self.run_one(job=job) for job in jobs]))
+    ) -> BoltSummary:
+        return BoltSummary(
+            job_summaries=list(
+                await asyncio.gather(*[self.run_one(job=job) for job in jobs])
+            )
+        )
 
-    async def run_one(self, job: BoltJob[T, U]) -> bool:
+    async def run_one(self, job: BoltJob[T, U]) -> BoltJobSummary:
         async with self.semaphore:
             try:
                 publisher_id, partner_id = await asyncio.gather(
@@ -115,7 +120,12 @@ class BoltRunner(Generic[T, U]):
                                     logger.info(
                                         f"View {job.job_name} publisher results at {job.publisher_bolt_args.create_instance_args.output_dir}"
                                     )
-                                return True
+                                return BoltJobSummary(
+                                    job_name=job.job_name,
+                                    publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
+                                    partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
+                                    is_success=True,
+                                )
 
                             # disable retries if stage is not retryable by setting tries to max_tries+1
                             if not stage.is_retryable:
@@ -139,7 +149,12 @@ class BoltRunner(Generic[T, U]):
                         except Exception as e:
                             if tries >= max_tries:
                                 logger.exception(e)
-                                return False
+                                return BoltJobSummary(
+                                    job_name=job.job_name,
+                                    publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
+                                    partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
+                                    is_success=False,
+                                )
                             logger.error(f"Error: type: {type(e)}, message: {e}")
                             logger.info(
                                 f"Retrying stage {stage}, Retries left: {self.num_tries - tries}."
@@ -161,10 +176,20 @@ class BoltRunner(Generic[T, U]):
                         ),
                     ]
                 )
-                return all(results)
+                return BoltJobSummary(
+                    job_name=job.job_name,
+                    publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
+                    partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
+                    is_success=all(results),
+                )
             except Exception as e:
                 self.logger.exception(e)
-                return False
+                return BoltJobSummary(
+                    job_name=job.job_name,
+                    publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
+                    partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
+                    is_success=False,
+                )
 
     async def run_next_stage(
         self,

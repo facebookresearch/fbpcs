@@ -6,6 +6,7 @@
 
 
 import asyncio
+
 import json
 import logging
 import sys
@@ -16,6 +17,7 @@ import dateutil.parser
 import pytz
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
+from fbpcs.bolt.bolt_summary import BoltSummary
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
 from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 from fbpcs.common.service.graphapi_trace_logging_service import (
@@ -102,7 +104,7 @@ def run_attribution(
     graphapi_version: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
 ) -> None:
-    asyncio.run(
+    bolt_summary = asyncio.run(
         run_attribution_async(
             config=config,
             dataset_id=dataset_id,
@@ -123,6 +125,9 @@ def run_attribution(
         )
     )
 
+    if bolt_summary.is_failure:
+        sys.exit(1)
+
 
 async def run_attribution_async(
     config: Dict[str, Any],
@@ -141,7 +146,7 @@ async def run_attribution_async(
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
-) -> None:
+) -> BoltSummary:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
     # obtain the values in the dataset info vector.
@@ -285,7 +290,7 @@ async def run_attribution_async(
     # Step 4. Run instances async
 
     logger.info(f"Started running instance {instance_id}.")
-    all_run_success = await run_bolt(
+    bolt_summary = await run_bolt(
         config=config,
         logger=logger,
         job_list=[job],
@@ -293,8 +298,8 @@ async def run_attribution_async(
         graphapi_domain=graphapi_domain,
     )
     logger.info(f"Finished running instance {instance_id}.")
-    if not all(all_run_success):
-        sys.exit(1)
+    logger.info(bolt_summary)
+    return bolt_summary
 
 
 async def run_bolt(
@@ -305,7 +310,7 @@ async def run_bolt(
     ],
     graphapi_version: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
-) -> List[bool]:
+) -> BoltSummary:
     """Run private attribution with the BoltRunner in a dedicated function to ensure that
     the BoltRunner semaphore and runner.run_async share the same event loop.
 
