@@ -20,7 +20,7 @@
 #include <fbpcs/emp_games/common/Csv.h>
 #include <fbpcs/emp_games/lift/common/GroupedLiftMetrics.h>
 #include <sys/types.h>
-#include "../../OutputMetricsData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/OutputMetricsData.h"
 
 namespace private_lift {
 
