@@ -10,8 +10,8 @@
 #include <memory>
 
 #include "fbpcf/frontend/mpcGame.h"
-#include "fbpcs/data_processing/unified_data_process/adapter/IAdapterFactory.h"
-#include "fbpcs/data_processing/unified_data_process/data_processor/IDataProcessorFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/adapter/IAdapterFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/IDataProcessorFactory.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 
@@ -26,11 +26,12 @@ class UdpProcessGame : public fbpcf::frontend::MpcGame<schedulerId> {
   explicit UdpProcessGame(
       int32_t myId,
       std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler,
-      std::unique_ptr<unified_data_process::adapter::IAdapterFactory>
-          adapterFactory,
       std::unique_ptr<
-          unified_data_process::data_processor::IDataProcessorFactory<
-              schedulerId>> dataProcessorFactory)
+          fbpcf::mpc_std_lib::unified_data_process::adapter::IAdapterFactory>
+          adapterFactory,
+      std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::data_processor::
+                          IDataProcessorFactory<schedulerId>>
+          dataProcessorFactory)
       : fbpcf::frontend::MpcGame<schedulerId>(std::move(scheduler)),
         myId_(myId),
         adapterFactory_(std::move(adapterFactory)),
@@ -46,10 +47,11 @@ class UdpProcessGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
  private:
   int32_t myId_;
-  std::unique_ptr<unified_data_process::adapter::IAdapterFactory>
-      adapterFactory_;
   std::unique_ptr<
-      unified_data_process::data_processor::IDataProcessorFactory<schedulerId>>
+      fbpcf::mpc_std_lib::unified_data_process::adapter::IAdapterFactory>
+      adapterFactory_;
+  std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::data_processor::
+                      IDataProcessorFactory<schedulerId>>
       dataProcessorFactory_;
 };
 

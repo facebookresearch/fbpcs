@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "fbpcs/data_processing/unified_data_process/adapter/AdapterFactory.h"
-#include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessorFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/adapter/AdapterFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/DataProcessorFactory.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/IMetadataCompactorGame.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/CompactionBasedInputProcessor.h"
 
@@ -32,14 +32,15 @@ class MetadataCompactorGame : public IMetadataCompactorGame<schedulerId>,
       int32_t numConversionPerUser) override {
     int partnerParty =
         party_ == common::PUBLISHER ? common::PARTNER : common::PUBLISHER;
-    auto adapter = unified_data_process::adapter::
+    auto adapter = fbpcf::mpc_std_lib::unified_data_process::adapter::
                        getAdapterFactoryWithAsWaksmanBasedShuffler<schedulerId>(
                            party_ == common::PUBLISHER, party_, partnerParty)
                            ->create();
     auto dataProcessor =
-        unified_data_process::data_processor::getDataProcessorFactoryWithAesCtr<
-            schedulerId>(party_, partnerParty, agentFactory_)
-            ->create();
+        fbpcf::mpc_std_lib::unified_data_process::data_processor::
+            getDataProcessorFactoryWithAesCtr<schedulerId>(
+                party_, partnerParty, agentFactory_)
+                ->create();
     auto prg = std::make_unique<fbpcf::engine::util::AesPrgFactory>()->create(
         fbpcf::engine::util::getRandomM128iFromSystemNoise());
 
