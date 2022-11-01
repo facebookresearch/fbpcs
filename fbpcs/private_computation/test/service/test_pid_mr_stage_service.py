@@ -84,7 +84,12 @@ class TestPIDMRStageService(IsolatedAsyncioTestCase):
                     product_config=product_config,
                 )
 
-                service = SfnWorkflowService("us-west-2", "access_key", "access_data")
+                service = SfnWorkflowService(
+                    "us-west-2",
+                    "access_key",
+                    "access_data",
+                    session_token="session_token",
+                )
                 service.start_workflow = MagicMock(return_value="execution_arn")
                 service.get_workflow_status = MagicMock(
                     return_value=WorkflowStatus.COMPLETED

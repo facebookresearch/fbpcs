@@ -7,6 +7,8 @@
 # pyre-strict
 
 import logging
+import random
+import string
 from typing import List, Optional
 
 from fbpcp.util.s3path import S3Path
@@ -28,10 +30,10 @@ PIDMR = "pid_mr"
 INTPUT = "inputPath"
 OUTPUT = "outputPath"
 INSTANCE = "instanceId"
-RUNID = "run_id"
 S3URIFORMAT = "s3://{bucket}/{key}"
 PUB_PREFIX = "publisher_"
 PARTNER_PREFIX = "partner_"
+RANDOM_POSTFIX_LENGTH = 6
 
 
 class PIDMRStageService(PrivateComputationStageService):
@@ -83,7 +85,6 @@ class PIDMRStageService(PrivateComputationStageService):
                 INSTANCE: self.removePrefixForInstance(
                     pc_instance.infra_config.instance_id
                 ),
-                RUNID: pc_instance.infra_config.run_id,
             }
             pid_overall_configs = {
                 **pid_configs[PIDMR][PID_RUN_CONFIGS],
@@ -93,7 +94,7 @@ class PIDMRStageService(PrivateComputationStageService):
 
             stage_state.instance_id = self.workflow_svc.start_workflow(
                 pid_configs[PIDMR][PID_WORKFLOW_CONFIGS],
-                pc_instance.infra_config.instance_id,
+                self.generate_execution_name(pc_instance.infra_config.instance_id),
                 pid_overall_configs,
             )
         else:
@@ -153,3 +154,14 @@ class PIDMRStageService(PrivateComputationStageService):
             instance_id.startswith(PARTNER_PREFIX) and len(PARTNER_PREFIX) :
         ]
         return instance_id
+
+    # Generate the unique execution name for the Step Functions execution
+    def generate_execution_name(self, instance_id: str) -> str:
+        return (
+            instance_id
+            + "_"
+            + "".join(
+                random.choice(string.ascii_lowercase + string.digits)
+                for _ in range(RANDOM_POSTFIX_LENGTH)
+            )
+        )
