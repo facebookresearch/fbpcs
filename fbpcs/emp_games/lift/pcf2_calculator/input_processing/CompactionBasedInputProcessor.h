@@ -11,8 +11,8 @@
 #include "fbpcf/engine/util/IPrg.h"
 #include "folly/logging/xlog.h"
 
-#include "fbpcs/data_processing/unified_data_process/adapter/IAdapter.h"
-#include "fbpcs/data_processing/unified_data_process/data_processor/IDataProcessor.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/adapter/IAdapter.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/IDataProcessor.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
@@ -28,16 +28,15 @@ namespace private_lift {
 template <int schedulerId>
 class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
  public:
-  using SecString =
-      typename unified_data_process::data_processor::IDataProcessor<
-          schedulerId>::SecString;
+  using SecString = typename fbpcf::mpc_std_lib::unified_data_process::
+      data_processor::IDataProcessor<schedulerId>::SecString;
 
   CompactionBasedInputProcessor(
       int myRole,
-      std::unique_ptr<unified_data_process::adapter::IAdapter> adapter,
       std::unique_ptr<
-          unified_data_process::data_processor::IDataProcessor<schedulerId>>
-          dataProcessor,
+          fbpcf::mpc_std_lib::unified_data_process::adapter::IAdapter> adapter,
+      std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::data_processor::
+                          IDataProcessor<schedulerId>> dataProcessor,
       std::unique_ptr<fbpcf::engine::util::IPrg> prg,
       InputData inputData,
       int32_t numConversionsPerUser)
@@ -197,9 +196,10 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
 
   int32_t myRole_;
 
-  std::unique_ptr<unified_data_process::adapter::IAdapter> adapter_;
-  std::unique_ptr<
-      unified_data_process::data_processor::IDataProcessor<schedulerId>>
+  std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::adapter::IAdapter>
+      adapter_;
+  std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::data_processor::
+                      IDataProcessor<schedulerId>>
       dataProcessor_;
   std::unique_ptr<fbpcf::engine::util::IPrg> prg_;
   InputData inputData_;

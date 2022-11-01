@@ -14,8 +14,8 @@
 #include "fbpcf/mpc_std_lib/shuffler/IShuffler.h"
 #include "fbpcf/mpc_std_lib/shuffler/IShufflerFactory.h"
 #include "fbpcf/mpc_std_lib/shuffler/PermuteBasedShufflerFactory.h"
-#include "fbpcs/data_processing/unified_data_process/adapter/AdapterFactory.h"
-#include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessorFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/adapter/AdapterFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/DataProcessorFactory.h"
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpProcessGame.h"
 
 namespace unified_data_process {
@@ -33,7 +33,8 @@ class UdpProcessGameFactory {
   std::unique_ptr<UdpProcessGame<schedulerId>> create(
       std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler) {
     auto adapterFactory = std::make_unique<
-        unified_data_process::adapter::AdapterFactory<schedulerId>>(
+        fbpcf::mpc_std_lib::unified_data_process::adapter::AdapterFactory<
+            schedulerId>>(
         partyId_ == common::PUBLISHER,
         0,
         1,
@@ -48,8 +49,8 @@ class UdpProcessGameFactory {
                 partyId_, 1 - partyId_),
             std::make_unique<fbpcf::engine::util::AesPrgFactory>()));
     auto dataProcessorFactory = std::make_unique<
-        unified_data_process::data_processor::DataProcessorFactory<
-            schedulerId>>(
+        fbpcf::mpc_std_lib::unified_data_process::data_processor::
+            DataProcessorFactory<schedulerId>>(
         partyId_,
         1 - partyId_,
         communicationAgentFactory_,
