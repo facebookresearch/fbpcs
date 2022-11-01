@@ -212,8 +212,8 @@ TEST_P(
       .setIncrementalityRate(0.0)
       .setEpoch(1546300800)
       .setNumConversions(numConversionsPerUser);
-  testDataGenerator.genFakePublisherInputFile(publisherInputPath_, params);
-  testDataGenerator.genFakePartnerInputFile(partnerInputPath_, params);
+  testDataGenerator.genFakeInputFiles(
+      publisherInputPath_, partnerInputPath_, params);
 
   bool useXorEncryption = std::get<0>(GetParam());
   bool computePublisherBreakdowns = std::get<1>(GetParam());
@@ -256,8 +256,8 @@ TEST_P(
       .setIncrementalityRate(0.0)
       .setEpoch(1546300800)
       .setNumConversions(numConversionsPerUser);
-  testDataGenerator.genFakePublisherInputFile(publisherInputPath_, params);
-  testDataGenerator.genFakePartnerInputFile(partnerInputPath_, params);
+  testDataGenerator.genFakeInputFiles(
+      publisherInputPath_, partnerInputPath_, params);
 
   bool useXorEncryption = std::get<0>(GetParam());
   bool computePublisherBreakdowns = std::get<1>(GetParam());

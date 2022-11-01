@@ -328,11 +328,11 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       .setTestRate(0.5)
       .setPurchaseRate(0.5)
       .setIncrementalityRate(0.0)
+      .setNumConversions(numConversionsPerUser)
+      .setOmitValuesColumn(false)
       .setEpoch(1546300800);
-  testDataGenerator.genFakePublisherInputFile(
-      publisherPlaintextInputPath_, params);
-  params.setNumConversions(numConversionsPerUser).setOmitValuesColumn(false);
-  testDataGenerator.genFakePartnerInputFile(partnerPlaintextInputPath_, params);
+  testDataGenerator.genFakeInputFiles(
+      publisherPlaintextInputPath_, partnerPlaintextInputPath_, params);
 
   // Run calculator app with test input
   bool useTls = std::get<0>(GetParam());
