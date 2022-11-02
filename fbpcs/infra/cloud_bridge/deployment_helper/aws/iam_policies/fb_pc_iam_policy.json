@@ -118,6 +118,13 @@
                 "ecr:GetRepositoryPolicy"
             ],
             "Resource": "*"
+        },
+        {
+            "Action": [
+                "logs:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
         }
     ]
 }
