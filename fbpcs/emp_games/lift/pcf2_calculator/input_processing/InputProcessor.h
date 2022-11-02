@@ -37,8 +37,14 @@ class InputProcessor : public IInputProcessor<schedulerId> {
 
     privatelyShareGroupIdsStep();
     privatelySharePopulationStep();
-    privatelyShareIndexSharesStep();
-    privatelyShareTestIndexSharesStep();
+    input_processing::computeIndexSharesAndSetTestGroupIds(
+        liftGameProcessedData_,
+        cohortGroupIds_,
+        controlPopulation_,
+        breakdownGroupIds_,
+        testGroupIds_);
+    input_processing::computeTestIndexShares(
+        liftGameProcessedData_, controlPopulation_, testGroupIds_);
     privatelyShareTimestampsStep();
     privatelySharePurchaseValuesStep();
     privatelyShareTestReachStep();
