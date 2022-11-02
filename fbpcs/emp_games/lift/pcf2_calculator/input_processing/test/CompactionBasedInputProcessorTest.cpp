@@ -16,8 +16,8 @@
 #include "fbpcf/scheduler/SchedulerHelper.h"
 #include "fbpcf/test/TestHelper.h"
 
-#include "fbpcs/data_processing/unified_data_process/adapter/AdapterFactory.h"
-#include "fbpcs/data_processing/unified_data_process/data_processor/DataProcessorFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/adapter/AdapterFactory.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/DataProcessorFactory.h"
 
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/CompactionBasedInputProcessor.h"
@@ -41,14 +41,15 @@ CompactionBasedInputProcessor<schedulerId> createInputProcessorWithScheduler(
       std::move(scheduler));
   int partnerParty =
       myRole == common::PUBLISHER ? common::PARTNER : common::PUBLISHER;
-  auto adapter = unified_data_process::adapter::
+  auto adapter = fbpcf::mpc_std_lib::unified_data_process::adapter::
                      getAdapterFactoryWithAsWaksmanBasedShuffler<schedulerId>(
                          myRole == common::PUBLISHER, myRole, partnerParty)
                          ->create();
   auto dataProcessor =
-      unified_data_process::data_processor::getDataProcessorFactoryWithAesCtr<
-          schedulerId>(myRole, partnerParty, *agentFactory)
-          ->create();
+      fbpcf::mpc_std_lib::unified_data_process::data_processor::
+          getDataProcessorFactoryWithAesCtr<schedulerId>(
+              myRole, partnerParty, *agentFactory)
+              ->create();
   auto prg = std::make_unique<fbpcf::engine::util::AesPrgFactory>()->create(
       fbpcf::engine::util::getRandomM128iFromSystemNoise());
   return CompactionBasedInputProcessor<schedulerId>(
