@@ -80,6 +80,7 @@ if [ "$PACKAGE" = "data_processing" ]; then
 docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
 docker cp temp_container:/usr/local/bin/sharder "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/sharder_hashed_for_pid "$SCRIPT_DIR/binaries_out/."
+docker cp temp_container:/usr/local/bin/secure_random_sharder "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/pid_preparer "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/lift_id_combiner "$SCRIPT_DIR/binaries_out/."
 docker cp temp_container:/usr/local/bin/attribution_id_combiner "$SCRIPT_DIR/binaries_out/."
