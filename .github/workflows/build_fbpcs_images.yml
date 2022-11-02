@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 env:
-  FBPCF_VERSION: 2.1.79  # Please also update line 29 in .github/workflows/docker-publish.yml
+  FBPCF_VERSION: 2.1.88  # Please also update line 29 in .github/workflows/docker-publish.yml
   REGISTRY: ghcr.io
 
 jobs:
