@@ -17,7 +17,7 @@ validate_pce () {
     local pce_id=$2
     log_pce_validator "validate_pce $region $pce_id"
     local pceValidatorOutput
-    pceValidatorOutput=$(python3 -m pce.validator --region="$region" --pce-id="$pce_id" 2>&1)
+    pceValidatorOutput=$(python3 -m pce.validator --region="$region" --pce-id="$pce_id" --skip-step=iam_roles 2>&1)
     local pceValidatorExitCode=$?
     log_pce_validator "$pceValidatorOutput"
     log_pce_validator "validator exitcode: $pceValidatorExitCode"
