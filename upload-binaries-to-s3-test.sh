@@ -65,6 +65,7 @@ cd binaries_out || exit
 echo "$data_processing_repo/sharder/${TAG}/sharder"
 aws s3 cp sharder "$data_processing_repo/sharder/${TAG}/sharder"
 aws s3 cp sharder_hashed_for_pid "$data_processing_repo/sharder_hashed_for_pid/${TAG}/sharder_hashed_for_pid"
+aws s3 cp secure_random_sharder "$data_processing_repo/secure_random_sharder/${TAG}/secure_random_sharder"
 aws s3 cp pid_preparer "$data_processing_repo/pid_preparer/${TAG}/pid_preparer"
 aws s3 cp lift_id_combiner "$data_processing_repo/lift_id_combiner/${TAG}/lift_id_combiner"
 aws s3 cp attribution_id_combiner "$data_processing_repo/attribution_id_combiner/${TAG}/attribution_id_combiner"

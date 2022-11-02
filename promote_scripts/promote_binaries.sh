@@ -36,6 +36,7 @@ binary_names=(
     'pid/private-id-multi-key-server'
     'data_processing/sharder'
     'data_processing/sharder_hashed_for_pid'
+    'data_processing/secure_random_sharder'
     'data_processing/pid_preparer'
     'data_processing/lift_id_combiner'
     'data_processing/attribution_id_combiner'
