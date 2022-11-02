@@ -22,6 +22,8 @@ class AwsDeploymentHelper:
 
     # policy_arn is fixed string. So defining it as a macro.
     POLICY_ARN = "arn:aws:iam::{}:policy/{}"
+    IAM_POLICIES_DIRECTORY = "iam_policies"
+    SEMI_AUTOMATED_TEMPLATE_FILE = "semi_automated_statement.json"
 
     def __init__(
         self,
@@ -301,6 +303,25 @@ class AwsDeploymentHelper:
             content = "".join(file_obj.readlines())
             template = Template(content)
             json_data = json.loads(template.substitute(interpolation_data))
+
+        # Append the semi-automated Glue job permission if the job has been provisioned
+        if policy_params.semi_automated_glue_job_arn:
+            statement_file_path = os.path.join(
+                os.path.dirname(__file__),
+                self.IAM_POLICIES_DIRECTORY,
+                self.SEMI_AUTOMATED_TEMPLATE_FILE,
+            )
+            with open(statement_file_path, read_mode) as file_obj:
+                content = "".join(file_obj.readlines())
+                template = Template(content)
+                interpolation_data = {
+                    "SEMI_AUTOMATED_GLUE_JOB_ARN": policy_params.semi_automated_glue_job_arn,
+                }
+                semi_automated_statement = json.loads(
+                    template.substitute(interpolation_data)
+                )
+                json_data["Statement"].append(semi_automated_statement)
+
         return json_data
 
     def create_user_workflow(self, user_name: str) -> None:

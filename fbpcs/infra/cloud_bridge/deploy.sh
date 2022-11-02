@@ -371,6 +371,8 @@ deploy_aws_resources() {
             -var "app_data_input_bucket_arn=$data_bucket_arn" \
             -var "data_upload_key_path=$data_upload_key_path"
         echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
+        # Store the outputs into variables
+        semi_automated_glue_job_arn=$(terraform output semi_automated_glue_job_arn | tr -d '"')
     fi
 
     echo "########################Finished AWS Infrastructure Deployment########################"
@@ -413,7 +415,8 @@ deploy_aws_resources() {
         --table_name "$table_name" \
         --cluster_name "$aws_ecs_cluster_name" \
         --ecs_task_execution_role_name "$ecs_task_execution_role_name" \
-        --events_data_crawler_arn "$events_data_crawler_arn"
+        --events_data_crawler_arn "$events_data_crawler_arn" \
+        --semi_automated_glue_job_arn "$semi_automated_glue_job_arn"
     echo "######################## Finished deploy resources policy ########################"
     log_streaming_data "validating generated resoureces and policies..."
     # validate generated resources through PCE validator

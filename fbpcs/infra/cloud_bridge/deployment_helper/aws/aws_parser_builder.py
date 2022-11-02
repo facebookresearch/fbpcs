@@ -132,6 +132,13 @@ class AwsParserBuilder:
             help="The events_data Glue crawler ARN",
         )
 
+        iam_policy_command_group.add_argument(
+            "--semi_automated_glue_job_arn",
+            type=str,
+            required=False,
+            help="The semi-automated Glue job ARN",
+        )
+
         return self
 
     def with_attach_iam_policy_parser_arguments(
