@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftFakeDataParams.h"
@@ -14,11 +15,9 @@
 namespace private_lift {
 class GenFakeData {
  public:
-  void genFakePublisherInputFile(
-      std::string filename,
-      const LiftFakeDataParams& params);
-  void genFakePartnerInputFile(
-      std::string filename,
+  void genFakeInputFiles(
+      const std::string& publisherInputFile,
+      const std::string& partnerInputFile,
       const LiftFakeDataParams& params);
 
  private:
