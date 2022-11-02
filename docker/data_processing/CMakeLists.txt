@@ -66,6 +66,7 @@ list(FILTER sharding_src EXCLUDE REGEX ".*Test.*")
 # Exclude the two files with a `main` function
 list(FILTER sharding_src EXCLUDE REGEX "^.*/shard\.cpp$")
 list(FILTER sharding_src EXCLUDE REGEX "^.*/shard_pid\.cpp$")
+list(FILTER sharding_src EXCLUDE REGEX "^.*/SecureRandomShard\.cpp$")
 
 # sharder executables
 add_executable(
@@ -86,6 +87,16 @@ target_link_libraries(
   sharder_hashed_for_pid
   dpcommon)
 install(TARGETS sharder_hashed_for_pid DESTINATION bin)
+
+# secure random sharder
+add_executable(
+  secure_random_sharder
+  "fbpcs/data_processing/sharding/SecureRandomShard.cpp"
+  ${sharding_src})
+target_link_libraries(
+  secure_random_sharder
+  dpcommon)
+install(TARGETS secure_random_sharder DESTINATION bin)
 
 # pid preparer
 add_executable(

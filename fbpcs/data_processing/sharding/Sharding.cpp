@@ -9,6 +9,7 @@
 
 #include <folly/String.h>
 #include <folly/logging/xlog.h>
+#include <xmmintrin.h>
 
 #include "fbpcs/data_processing/sharding/HashBasedSharder.h"
 #include "fbpcs/data_processing/sharding/RoundRobinBasedSharder.h"
@@ -88,6 +89,13 @@ void runSecureRandomShard(
         agent) {
   auto prgKey =
       fbpcf::mpc_std_lib::util::secureSamplePublicSeed(amISendingFirst, *agent);
+
+  char keyMessage[100];
+  alignas(16) uint32_t v[4];
+  _mm_store_si128((__m128i*)v, prgKey);
+  sprintf(keyMessage, "%04x%04x%04x%04x", v[0], v[1], v[2], v[3]);
+  XLOG(INFO) << "Public prg key is: " << keyMessage;
+
   agent = nullptr; // release the agent as it is not needed anymore.
 
   fbpcf::engine::util::AesPrgFactory aesPrgFactory;
