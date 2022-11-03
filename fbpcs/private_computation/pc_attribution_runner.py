@@ -280,7 +280,7 @@ async def run_attribution_async(
         )
     )
     job = BoltJob(
-        job_name=f"Job [dataset_id: {dataset_id}][timestamp: {dt_arg}",
+        job_name=f"Job [dataset_id: {dataset_id}][timestamp: {dt_arg}]",
         publisher_bolt_args=publisher_args,
         partner_bolt_args=partner_args,
         num_tries=num_tries,
