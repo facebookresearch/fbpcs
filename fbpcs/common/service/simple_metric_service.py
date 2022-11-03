@@ -20,3 +20,6 @@ class SimpleMetricService(MetricService):
             "value": value,
         }
         self.logger.info(json.dumps(result))
+
+    def bump_entity_key_avg(self, entity: str, key: str, value: int) -> None:
+        pass
