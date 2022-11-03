@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner
   // instead of 1 and 2
 
-  auto tlsInfo = common::getTlsInfoFromArgs(
+  auto tlsInfo = fbpcf::engine::communication::getTlsInfoFromArgs(
       FLAGS_use_tls,
       FLAGS_ca_cert_path,
       FLAGS_server_cert_path,

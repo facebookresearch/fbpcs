@@ -298,30 +298,4 @@ inline folly::dynamic getCostExtraInfo(
         ("mpc_traffic_details", schedulerStatistics.details);
 }
 
-[[deprecated("Use the one in fbpcf/ instead.")]] inline fbpcf::engine::
-    communication::SocketPartyCommunicationAgent::TlsInfo
-    getTlsInfoFromArgs(
-        bool useTls,
-        std::string ca_cert_path,
-        std::string server_cert_path,
-        std::string private_key_path,
-        std::string passphrase_path) {
-  const char* home_dir = std::getenv("HOME");
-  if (home_dir == nullptr) {
-    home_dir = "";
-  }
-
-  std::string home_dir_string(home_dir);
-
-  fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
-  tlsInfo.useTls = useTls;
-  tlsInfo.rootCaCertPath = useTls ? (home_dir_string + "/" + ca_cert_path) : "";
-  tlsInfo.certPath = useTls ? (home_dir_string + "/" + server_cert_path) : "";
-  tlsInfo.keyPath = useTls ? (home_dir_string + "/" + private_key_path) : "";
-  tlsInfo.passphrasePath =
-      useTls ? (home_dir_string + "/" + passphrase_path) : "";
-
-  return tlsInfo;
-}
-
 } // namespace common

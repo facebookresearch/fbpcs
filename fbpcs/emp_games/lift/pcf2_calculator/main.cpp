@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
   auto inputFilepaths = filepaths.first;
   auto outputFilepaths = filepaths.second;
 
-  auto tlsInfo = common::getTlsInfoFromArgs(
+  auto tlsInfo = fbpcf::engine::communication::getTlsInfoFromArgs(
       FLAGS_use_tls,
       FLAGS_ca_cert_path,
       FLAGS_server_cert_path,
