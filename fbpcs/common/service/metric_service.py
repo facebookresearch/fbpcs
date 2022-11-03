@@ -18,3 +18,7 @@ class MetricService(abc.ABC):
     @abc.abstractmethod
     def bump_entity_key(self, entity: str, key: str, value: int = 1) -> None:
         pass
+
+    @abc.abstractmethod
+    def bump_entity_key_avg(self, entity: str, key: str, value: int = 1) -> None:
+        pass
