@@ -523,6 +523,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             expected_elapsed_time,
             private_computation_instance.elapsed_time,
         )
+        self.assertEqual(updated_mpc_instance.server_uris, None)
 
     def test_update_instance_throttling_error(self) -> None:
         # Arrange

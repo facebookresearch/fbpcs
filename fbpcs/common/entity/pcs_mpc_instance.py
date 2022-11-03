@@ -21,10 +21,13 @@ class PCSMPCInstance(MPCInstance, InstanceBase):
     game_name: str
     mpc_party: MPCParty
     num_workers: int
-    server_ips: Optional[List[str]]
+    server_ips: Optional[List[str]]  # used to establish vpc peering between containers
     containers: List[Union[PCSContainerInstance, ContainerInstance]]
     status: MPCInstanceStatus
     game_args: Optional[List[Dict[str, Any]]]
+    server_uris: Optional[
+        List[str]
+    ]  # used to establish TLS connection between containers
 
     @classmethod
     def create_instance(
@@ -39,6 +42,7 @@ class PCSMPCInstance(MPCInstance, InstanceBase):
         ] = None,
         status: MPCInstanceStatus = MPCInstanceStatus.UNKNOWN,
         game_args: Optional[List[Dict[str, Any]]] = None,
+        server_uris: Optional[List[str]] = None,
     ) -> "PCSMPCInstance":
         return cls(
             instance_id,
@@ -49,6 +53,7 @@ class PCSMPCInstance(MPCInstance, InstanceBase):
             containers or [],
             status,
             game_args,
+            server_uris,
         )
 
     @classmethod
@@ -62,4 +67,5 @@ class PCSMPCInstance(MPCInstance, InstanceBase):
             mpc_instance.containers,
             mpc_instance.status,
             mpc_instance.game_args,
+            mpc_instance.server_uris,
         )
