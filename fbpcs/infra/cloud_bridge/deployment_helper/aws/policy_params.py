@@ -19,3 +19,4 @@ class PolicyParams:
     ecs_task_execution_role_name: str
     data_ingestion_lambda_name: str
     events_data_crawler_arn: str
+    semi_automated_glue_job_arn: str

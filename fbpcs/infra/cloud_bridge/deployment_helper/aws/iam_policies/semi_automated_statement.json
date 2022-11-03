@@ -1,0 +1,14 @@
+{
+    "Effect": "Allow",
+    "Action": [
+        "glue:Get*",
+        "glue:BatchGet*",
+        "glue:List*",
+        "glue:QuerySchemaVersionMetadata",
+        "glue:CheckSchemaVersionValidity",
+        "glue:SearchTables"
+    ],
+    "Resource": [
+        "${SEMI_AUTOMATED_GLUE_JOB_ARN}"
+    ]
+}

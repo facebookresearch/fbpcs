@@ -64,8 +64,13 @@ class TestAwsDeploymentHelper(unittest.TestCase):
         test_policy_name = "TestIamPolicyName"
         test_policy_params = {"test-key-1": "test-val-1"}
         test_user_name = "test-user-name"
-        test_policy_json_data = {"test-key-2": "test-val-2"}
-        test_policy_json_data_string = '{"test-key-2": "test-val-2"}'
+        test_policy_json_data = {
+            "test-key-2": "test-val-2",
+            "Statement": [
+                {"Effect": "Allow", "Action": "logs:Describe*", "Resource": "*"}
+            ],
+        }
+        test_policy_json_data_string = '{"test-key-2": "test-val-2", "Statement": [{"Effect": "Allow", "Action": "logs:Describe*", "Resource": "*"}]}'
         self.aws_deployment_helper.read_json_file = MagicMock()
         self.aws_deployment_helper.read_json_file.return_value = test_policy_json_data
         self.aws_deployment_helper.iam.create_policy.return_value = {}
@@ -337,6 +342,7 @@ class TestAwsDeploymentHelper(unittest.TestCase):
         self.aws_deployment_helper.region = "test_region"
         test_policy = MagicMock()
         test_policy.cluster_name = "test_cluster_name"
+        test_policy.semi_automated_glue_job_arn = ""
 
         test_file = (
             pathlib.Path(__file__).parent
