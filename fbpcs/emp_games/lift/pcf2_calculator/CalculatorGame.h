@@ -32,6 +32,12 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
         communicationAgentFactory_(communicationAgentFactory) {}
 
   std::string play(const CalculatorGameConfig& config) {
+    if (config.inputData.getNumRows() == 0) {
+      XLOG(INFO) << "skipped calculating as numRows==0.";
+      // skip game::run(), just output the default metrics.
+      return GroupedLiftMetrics().toJson();
+    }
+
     auto inputProcessor = InputProcessor<schedulerId>(
         party_, config.inputData, config.numConversionsPerUser);
     auto attributor = std::make_unique<Attributor<schedulerId>>(
@@ -54,6 +60,12 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
         globalParamsInputPath, secretSharesInputPath);
     XLOG(INFO) << "Have " << inputProcessor.getLiftGameProcessedData().numRows
                << " values in inputData.";
+    if (inputProcessor.getLiftGameProcessedData().numRows == 0) {
+      XLOG(INFO) << "skipped calculating as numRows==0.";
+      // skip game::run(), just output the default metrics.
+      return GroupedLiftMetrics().toJson();
+    }
+
     auto attributor = std::make_unique<Attributor<schedulerId>>(
         party_,
         std::make_unique<SecretShareInputProcessor<schedulerId>>(

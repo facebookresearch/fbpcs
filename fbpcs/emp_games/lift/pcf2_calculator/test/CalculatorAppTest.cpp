@@ -511,6 +511,69 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInputAndCohort) {
   EXPECT_EQ(expectedResult, res);
 }
 
+void generateSyntheticData_ZeroRow(
+    const std::string& publisherPlaintextInputPath,
+    const std::string& partnerPlaintextInputPath,
+    int numConversionsPerUser,
+    bool generatePublisherBreakdowns,
+    bool useCohorts) {
+  // Generate test input files with random data
+  GenFakeData testDataGenerator;
+  LiftFakeDataParams params;
+  params.setNumRows(0)
+      .setOpportunityRate(0.5)
+      .setTestRate(0.5)
+      .setPurchaseRate(0.5)
+      .setIncrementalityRate(0.0)
+      .setNumConversions(numConversionsPerUser)
+      .setOmitValuesColumn(false)
+      .setEpoch(1546300800);
+
+  if (generatePublisherBreakdowns) {
+    params.setNumBreakdowns(2);
+  }
+
+  if (useCohorts) {
+    params.setNumCohorts(4);
+  }
+
+  testDataGenerator.genFakeInputFiles(
+      publisherPlaintextInputPath, partnerPlaintextInputPath, params);
+}
+
+TEST_P(CalculatorAppTestFixture, TestWithEmptyInput) {
+  // Run calculator app with test input
+  bool useTls = std::get<0>(GetParam());
+  bool useXorEncryption = std::get<1>(GetParam());
+  bool computePublisherBreakdowns = std::get<2>(GetParam());
+  bool readInputFromSecretShares = std::get<3>(GetParam());
+
+  // Generate test input files with random data
+  int numConversionsPerUser = 25;
+
+  generateSyntheticData_ZeroRow(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      numConversionsPerUser,
+      computePublisherBreakdowns,
+      true);
+
+  GroupedLiftMetrics res = runTest(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      "",
+      publisherOutputPath_,
+      partnerOutputPath_,
+      numConversionsPerUser,
+      computePublisherBreakdowns,
+      useTls,
+      useXorEncryption);
+
+  GroupedLiftMetrics expectedResult = {};
+
+  EXPECT_EQ(expectedResult, res);
+}
+
 INSTANTIATE_TEST_SUITE_P(
     CalculatorAppTest,
     CalculatorAppTestFixture,
