@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     CHECK_LE(concurrency, pcf2_attribution::kMaxConcurrency)
         << "Concurrency must be at most " << pcf2_attribution::kMaxConcurrency;
 
-    auto tlsInfo = common::getTlsInfoFromArgs(
+    auto tlsInfo = fbpcf::engine::communication::getTlsInfoFromArgs(
         FLAGS_use_tls,
         FLAGS_ca_cert_path,
         FLAGS_server_cert_path,

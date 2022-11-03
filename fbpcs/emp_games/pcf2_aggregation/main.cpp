@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
       inputEncryption = common::InputEncryption::Plaintext;
     }
 
-    auto tlsInfo = common::getTlsInfoFromArgs(
+    auto tlsInfo = fbpcf::engine::communication::getTlsInfoFromArgs(
         FLAGS_use_tls,
         FLAGS_ca_cert_path,
         FLAGS_server_cert_path,

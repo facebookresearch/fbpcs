@@ -48,7 +48,8 @@ int main(int argc, char** argv) {
   FLAGS_party--; // subtract 1 because we use 0 and 1 for publisher and partner
   // instead of 1 and 2
 
-  auto tlsInfo = common::getTlsInfoFromArgs(false, "", "", "", "");
+  auto tlsInfo =
+      fbpcf::engine::communication::getTlsInfoFromArgs(false, "", "", "", "");
 
   common::SchedulerStatistics schedulerStatistics;
 

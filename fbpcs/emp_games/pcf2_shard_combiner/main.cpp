@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
 
   common::SchedulerStatistics schedulerStatistics;
 
-  auto tlsInfo = common::getTlsInfoFromArgs(
+  auto tlsInfo = fbpcf::engine::communication::getTlsInfoFromArgs(
       FLAGS_use_tls,
       FLAGS_ca_cert_path,
       FLAGS_server_cert_path,
