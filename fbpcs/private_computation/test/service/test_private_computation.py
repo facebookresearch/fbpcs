@@ -36,6 +36,7 @@ from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
+    StatusUpdate,
     UnionedPCInstance,
 )
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
@@ -78,6 +79,7 @@ from fbpcs.private_computation.service.pid_shard_stage_service import (
 )
 
 from fbpcs.private_computation.service.private_computation import (
+    PCSERVICE_ENTITY_NAME,
     PrivateComputationService,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
@@ -399,6 +401,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
     @mock.patch("time.time", new=mock.MagicMock(side_effect=range(1, 100)))
     def test_update_instance(self) -> None:
+        mock_metric_svc = MagicMock()
+        self.private_computation_service.metric_svc = mock_metric_svc
         stage_state_instance = StageStateInstance(
             instance_id=self.test_private_computation_id,
             stage_name="test_stage",
@@ -452,9 +456,16 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             num_workers=2,
         )
 
+        initialized_time = int(time.time())
         private_computation_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+            status=PrivateComputationInstanceStatus.COMPUTATION_INITIALIZED,
             instances=[mpc_instance],
+            status_updates=[
+                StatusUpdate(
+                    status=PrivateComputationInstanceStatus.COMPUTATION_INITIALIZED,
+                    status_update_ts=initialized_time,
+                )
+            ],
         )
 
         updated_mpc_instance = mpc_instance
@@ -497,6 +508,15 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             time.time() - private_computation_instance.infra_config.creation_ts + 1,
             private_computation_instance.elapsed_time,
+        )
+        mock_metric_svc.bump_entity_key_avg.assert_called_with(
+            PCSERVICE_ENTITY_NAME,
+            f"{private_computation_instance.current_stage.name}.time_ms",
+            (
+                private_computation_instance.infra_config.status_update_ts
+                - initialized_time
+            )
+            * 1000,
         )
 
         before_end_time = time.time()
@@ -1237,6 +1257,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
         instances: Optional[List[UnionedPCInstance]] = None,
         game_type: PrivateComputationGameType = PrivateComputationGameType.LIFT,
+        status_updates: Optional[List[StatusUpdate]] = None,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.test_private_computation_id,
@@ -1249,7 +1270,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             mpc_compute_concurrency=self.test_concurrency,
-            status_updates=[],
+            status_updates=status_updates or [],
             log_cost_bucket=self.log_cost_bucket,
             server_certificate=SAMPLE_SERVER_CERTIFICATE,
             ca_certificate=SAMPLE_CA_CERTIFICATE,
