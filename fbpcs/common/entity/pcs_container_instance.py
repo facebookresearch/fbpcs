@@ -17,6 +17,8 @@ from fbpcp.entity.container_instance import ContainerInstance
 @dataclass
 class PCSContainerInstance(ContainerInstance):
     log_url: Optional[str] = None
+    cpu: Optional[int] = None
+    memory: Optional[int] = None
 
     @classmethod
     def from_container_instance(
@@ -27,4 +29,6 @@ class PCSContainerInstance(ContainerInstance):
             ip_address=container_instance.ip_address,
             status=container_instance.status,
             log_url=log_url,
+            cpu=container_instance.cpu,
+            memory=container_instance.memory,
         )
