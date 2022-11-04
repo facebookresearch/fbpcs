@@ -15,6 +15,7 @@ class OneDockerBinaryNames(Enum):
     PRIVATE_ID_DFCA_SPINE_COMBINER = "data_processing/private_id_dfca_id_combiner"
     SHARDER = "data_processing/sharder"
     SHARDER_HASHED_FOR_PID = "data_processing/sharder_hashed_for_pid"
+    SECURE_RANDOM_SHARDER = "data_processing/secure_random_sharder"
     UNION_PID_PREPARER = "data_processing/pid_preparer"
 
     DECOUPLED_ATTRIBUTION = "private_attribution/decoupled_attribution"

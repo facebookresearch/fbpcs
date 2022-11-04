@@ -22,6 +22,7 @@ CPP_SHARDER_HASHED_FOR_PID_PATH = pathlib.Path(
     os.environ.get("CPP_SHARDER_HASHED_FOR_PID_PATH", "cpp_bin/sharder_hashed_for_pid")
 )
 
+
 # 10800 s = 3 hrs
 DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 10800
 
@@ -29,6 +30,7 @@ DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 10800
 class ShardType(enum.Enum):
     ROUND_ROBIN = 1
     HASHED_FOR_PID = 2
+    SECURE_RANDOM = 3
 
 
 class ShardingService(RunBinaryBaseService):
@@ -66,5 +68,7 @@ class ShardingService(RunBinaryBaseService):
             return OneDockerBinaryNames.SHARDER.value
         elif shard_type is ShardType.HASHED_FOR_PID:
             return OneDockerBinaryNames.SHARDER_HASHED_FOR_PID.value
+        elif shard_type is ShardType.SECURE_RANDOM:
+            return OneDockerBinaryNames.SECURE_RANDOM_SHARDER.value
         else:
             raise RuntimeError(f"Unsupported ShardType passed: {shard_type}")
