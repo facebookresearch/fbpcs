@@ -184,7 +184,7 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
         """
 
         # id_combiner_output_path = pc_instance.data_processing_output_path + "_combine"
-        sharder_output_path = pc_instance.data_processing_output_path + "_combine"
+        sharder_output_path = pc_instance.secure_random_sharder_output_base_path
         num_metadata_compaction_containers = pc_instance.infra_config.num_mpc_containers
         output_global_params_base_path = (
             pc_instance.pcf2_lift_metadata_compaction_output_base_path

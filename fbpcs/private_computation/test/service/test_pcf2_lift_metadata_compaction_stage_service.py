@@ -97,7 +97,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
 
         test_game_args = [
             {
-                "input_base_path": f"{private_computation_instance.data_processing_output_path}_combine",
+                "input_base_path": private_computation_instance.secure_random_sharder_output_base_path,
                 "output_global_params_base_path": f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params",
                 "output_secret_shares_base_path": f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_secret_shares",
                 "file_start_index": i
