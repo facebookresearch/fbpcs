@@ -34,7 +34,23 @@ struct LiftMetrics {
   std::vector<int64_t> testConvHistogram;
   std::vector<int64_t> controlConvHistogram;
 
-  LiftMetrics() {}
+  LiftMetrics()
+      : testConversions(0),
+        controlConversions(0),
+        testConverters(0),
+        controlConverters(0),
+        testValue(0),
+        controlValue(0),
+        testValueSquared(0),
+        controlValueSquared(0),
+        testNumConvSquared(0),
+        controlNumConvSquared(0),
+        testMatchCount(0),
+        controlMatchCount(0),
+        reachedConversions(0),
+        reachedValue(0),
+        testConvHistogram(),
+        controlConvHistogram() {}
 
   LiftMetrics(
       int64_t testConversions_,

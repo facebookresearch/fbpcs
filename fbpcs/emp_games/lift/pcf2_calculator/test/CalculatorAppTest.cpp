@@ -383,13 +383,14 @@ GroupedLiftMetrics computeCorrectResults(
 void generateSyntheticData(
     const std::string& publisherPlaintextInputPath,
     const std::string& partnerPlaintextInputPath,
+    int numRows,
     int numConversionsPerUser,
     bool generatePublisherBreakdowns,
     bool useCohorts) {
   // Generate test input files with random data
   GenFakeData testDataGenerator;
   LiftFakeDataParams params;
-  params.setNumRows(15)
+  params.setNumRows(numRows)
       .setOpportunityRate(0.5)
       .setTestRate(0.5)
       .setPurchaseRate(0.5)
@@ -422,6 +423,7 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
   generateSyntheticData(
       publisherPlaintextInputPath_,
       partnerPlaintextInputPath_,
+      15,
       numConversionsPerUser,
       computePublisherBreakdowns,
       false);
@@ -473,6 +475,7 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInputAndCohort) {
   generateSyntheticData(
       publisherPlaintextInputPath_,
       partnerPlaintextInputPath_,
+      15,
       numConversionsPerUser,
       computePublisherBreakdowns,
       true);
@@ -511,36 +514,6 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInputAndCohort) {
   EXPECT_EQ(expectedResult, res);
 }
 
-void generateSyntheticData_ZeroRow(
-    const std::string& publisherPlaintextInputPath,
-    const std::string& partnerPlaintextInputPath,
-    int numConversionsPerUser,
-    bool generatePublisherBreakdowns,
-    bool useCohorts) {
-  // Generate test input files with random data
-  GenFakeData testDataGenerator;
-  LiftFakeDataParams params;
-  params.setNumRows(0)
-      .setOpportunityRate(0.5)
-      .setTestRate(0.5)
-      .setPurchaseRate(0.5)
-      .setIncrementalityRate(0.0)
-      .setNumConversions(numConversionsPerUser)
-      .setOmitValuesColumn(false)
-      .setEpoch(1546300800);
-
-  if (generatePublisherBreakdowns) {
-    params.setNumBreakdowns(2);
-  }
-
-  if (useCohorts) {
-    params.setNumCohorts(4);
-  }
-
-  testDataGenerator.genFakeInputFiles(
-      publisherPlaintextInputPath, partnerPlaintextInputPath, params);
-}
-
 TEST_P(CalculatorAppTestFixture, TestWithEmptyInput) {
   // Run calculator app with test input
   bool useTls = std::get<0>(GetParam());
@@ -551,25 +524,61 @@ TEST_P(CalculatorAppTestFixture, TestWithEmptyInput) {
   // Generate test input files with random data
   int numConversionsPerUser = 25;
 
-  generateSyntheticData_ZeroRow(
+  generateSyntheticData(
       publisherPlaintextInputPath_,
       partnerPlaintextInputPath_,
+      0,
       numConversionsPerUser,
       computePublisherBreakdowns,
       true);
 
-  GroupedLiftMetrics res = runTest(
-      publisherPlaintextInputPath_,
-      partnerPlaintextInputPath_,
-      "",
-      publisherOutputPath_,
-      partnerOutputPath_,
-      numConversionsPerUser,
-      computePublisherBreakdowns,
-      useTls,
-      useXorEncryption);
+  GroupedLiftMetrics res = readInputFromSecretShares
+      ? runUdpTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            publisherGlobalParamsInputPath_,
+            partnerGlobalParamsInputPath_,
+            publisherSecretInputPath_,
+            partnerSecretInputPath_,
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption)
+      : runTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            "",
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption);
 
-  GroupedLiftMetrics expectedResult = {};
+  XLOG(INFO, res.toJson());
+
+  GroupedLiftMetrics expectedResult(
+      LiftMetrics(
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          std::vector<int64_t>(),
+          std::vector<int64_t>()),
+      std::vector<LiftMetrics>(),
+      std::vector<LiftMetrics>());
 
   EXPECT_EQ(expectedResult, res);
 }

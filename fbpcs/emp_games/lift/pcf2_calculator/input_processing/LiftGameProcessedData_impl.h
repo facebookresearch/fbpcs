@@ -31,6 +31,12 @@ void LiftGameProcessedData<schedulerId>::writeToCSV(
   private_measurement::csv::writeCsv(
       globalParamsOutputPath, GLOBAL_PARAMS_HEADER, globalParams);
 
+  if (numRows == 0) {
+    private_measurement::csv::writeCsv(
+        secretSharesOutputPath, SECRET_SHARES_HEADER, {});
+    return;
+  }
+
   std::vector<std::vector<std::string>> secretShares(numRows);
 
   std::vector<uint64_t> opportunityTimestampsShares =

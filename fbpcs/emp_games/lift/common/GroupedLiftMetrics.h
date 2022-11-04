@@ -24,7 +24,7 @@ struct GroupedLiftMetrics {
   std::vector<LiftMetrics> cohortMetrics;
   std::vector<LiftMetrics> publisherBreakdowns;
 
-  GroupedLiftMetrics();
+  GroupedLiftMetrics() : metrics(), cohortMetrics(), publisherBreakdowns() {}
   GroupedLiftMetrics(uint64_t numCohorts, uint64_t numPublisheBreakdown);
 
   GroupedLiftMetrics(
