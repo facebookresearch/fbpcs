@@ -8,7 +8,9 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
+#include <numeric>
 #include <stdexcept>
 #include <tuple>
 #include <vector>
@@ -241,6 +243,31 @@ CompactionBasedInputProcessor<schedulerId>::compactData(
     partnerDataShares =
         dataProcessor_->processMyData(plaintextData, intersectionMap.size());
   }
+
+  auto expectedIntersectionSize = std::transform_reduce(
+      intersectionMap.begin(),
+      intersectionMap.end(),
+      0,
+      [](const int32_t& left, const int32_t& right) { return left + right; },
+      [](const int32_t& ele) { return ele == -1 ? 0 : 1; });
+
+  if (expectedIntersectionSize != publisherDataShares.getBatchSize()) {
+    throw std::runtime_error(folly::sformat(
+        "Publisher rows do not match up expected intersection size. Expected {} but got {} rows.",
+        expectedIntersectionSize,
+        publisherDataShares.getBatchSize()));
+  }
+
+  if (expectedIntersectionSize != partnerDataShares.getBatchSize()) {
+    throw std::runtime_error(folly::sformat(
+        "Partner rows do not match up expected intersection size. Expected {} but got {} rows.",
+        expectedIntersectionSize,
+        partnerDataShares.getBatchSize()));
+  }
+
+  XLOG(INFO) << folly::format(
+      "{} rows in intersection after running data processor",
+      expectedIntersectionSize);
 
   return std::make_pair<
       typename CompactionBasedInputProcessor<schedulerId>::SecString,
