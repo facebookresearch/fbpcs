@@ -52,3 +52,20 @@ class TestSimpleMetricService(TestCase):
 
         # Assert
         self.logger.info.assert_called_once_with(expected_dump)
+
+    def test_bump_entity_key_avg_custom_value(self) -> None:
+        # Arrange
+        expected_dump = json.dumps(
+            {
+                "operation": "bump_entity_key_avg",
+                "entity": "default.entity",
+                "key": "key",
+                "value": 123,
+            }
+        )
+
+        # Act
+        self.svc.bump_entity_key_avg("entity", "key", 123)
+
+        # Assert
+        self.logger.info.assert_called_once_with(expected_dump)
