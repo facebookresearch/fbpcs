@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <stdexcept>
 #include <string>
 
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/LiftGameProcessedData.h"
@@ -134,7 +135,7 @@ LiftGameProcessedData<schedulerId>::readFromCSV(
           testReachShares));
 
   if (result.numRows == 0) {
-    XLOG(FATAL, "Lift Game shares file was empty");
+    return LiftGameProcessedData<schedulerId>{};
   }
 
   result.indexShares = transpose(indexShares);
