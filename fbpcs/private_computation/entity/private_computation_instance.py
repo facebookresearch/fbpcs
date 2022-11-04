@@ -314,6 +314,24 @@ class PrivateComputationInstance(InstanceBase):
                 f"Updating status of {self.infra_config.instance_id} from {old_status} to {self.infra_config.status} at time {self.infra_config.status_update_ts}"
             )
 
+    def get_status_elapsed_time(
+        self,
+        start_status: PrivateComputationInstanceStatus,
+        end_status: PrivateComputationInstanceStatus,
+    ) -> int:
+        start_update_ts = end_update_ts = 0
+        # reversed traverse from the last stage status
+        for status_update in reversed(self.infra_config.status_updates):
+            if start_status is status_update.status:
+                start_update_ts = status_update.status_update_ts
+            if end_status is status_update.status:
+                end_update_ts = status_update.status_update_ts
+
+        if start_update_ts and end_update_ts:
+            return end_update_ts - start_update_ts
+
+        return -1
+
     @property
     def server_ips(self) -> List[str]:
         server_ips_list = []
