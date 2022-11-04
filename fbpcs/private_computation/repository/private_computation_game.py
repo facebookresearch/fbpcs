@@ -17,6 +17,7 @@ from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 
 
 class GameNames(Enum):
+    SECURE_RANDOM_SHARDER = "secure_random_sharder"
     LIFT = "lift"
     PCF2_LIFT = "pcf2_lift"
     PCF2_LIFT_METADATA_COMPACTION = "pcf2_lift_metadata_compaction"
@@ -80,12 +81,33 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
     GameNames.PCF2_LIFT_METADATA_COMPACTION.value: {
         "onedocker_package_name": OneDockerBinaryNames.PCF2_LIFT_METADATA_COMPACTION.value,
         "arguments": [
-            OneDockerArgument(name="input_path", required=True),
-            OneDockerArgument(name="output_global_params_path", required=True),
-            OneDockerArgument(name="output_secret_shares_path", required=True),
+            OneDockerArgument(name="input_path", required=False),
+            OneDockerArgument(name="output_global_params_path", required=False),
+            OneDockerArgument(name="output_secret_shares_path", required=False),
+            OneDockerArgument(name="input_base_path", required=False),
+            OneDockerArgument(name="output_global_params_base_path", required=False),
+            OneDockerArgument(name="output_secret_shares_base_path", required=False),
+            OneDockerArgument(name="file_start_index", required=False),
+            OneDockerArgument(name="num_files", required=False),
             OneDockerArgument(name="epoch", required=False),
             OneDockerArgument(name="num_conversions_per_user", required=False),
             OneDockerArgument(name="compute_publisher_breakdowns", required=False),
+            OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="log_cost", required=False),
+            OneDockerArgument(name="log_cost_s3_bucket", required=False),
+            OneDockerArgument(name="log_cost_s3_region", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
+            OneDockerArgument(name="use_tls", required=False),
+            OneDockerArgument(name="ca_cert_path", required=False),
+            OneDockerArgument(name="server_cert_path", required=False),
+            OneDockerArgument(name="private_key_path", required=False),
+        ],
+    },
+    GameNames.SECURE_RANDOM_SHARDER.value: {
+        "onedocker_package_name": OneDockerBinaryNames.SECURE_RANDOM_SHARDER.value,
+        "arguments": [
+            OneDockerArgument(name="input_path", required=True),
+            OneDockerArgument(name="output_shards_base_path", required=True),
             OneDockerArgument(name="run_name", required=False),
             OneDockerArgument(name="log_cost", required=False),
             OneDockerArgument(name="log_cost_s3_bucket", required=False),

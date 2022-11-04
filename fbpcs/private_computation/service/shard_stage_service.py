@@ -75,14 +75,14 @@ class ShardStageService(PrivateComputationStageService):
             An updated version of pc_instance
         """
 
-        if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS):
-            output_path = pc_instance.pcf2_lift_metadata_compaction_output_base_path
-            combine_output_path = output_path + "_secret_shares"
-            self._logger.info("Resharding on Metadata Compaction Stage Output")
-        else:
-            output_path = pc_instance.data_processing_output_path
-            combine_output_path = output_path + "_combine"
-            self._logger.info("Resharding on ID Spine Combiner Stage Output")
+        # if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS):
+        #     output_path = pc_instance.pcf2_lift_metadata_compaction_output_base_path
+        #     combine_output_path = output_path + "_secret_shares"
+        #     self._logger.info("Resharding on Metadata Compaction Stage Output")
+        # else:
+        output_path = pc_instance.data_processing_output_path
+        combine_output_path = output_path + "_combine"
+        self._logger.info("Resharding on ID Spine Combiner Stage Output")
 
         self._logger.info(f"[{self}] Starting reshard service")
 

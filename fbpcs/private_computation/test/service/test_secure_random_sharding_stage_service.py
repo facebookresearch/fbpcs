@@ -6,6 +6,7 @@
 
 # pyre-strict
 
+import math
 from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -20,7 +21,6 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
-from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -34,12 +34,12 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 
-from fbpcs.private_computation.service.pcf2_lift_metadata_compaction_stage_service import (
-    PCF2LiftMetadataCompactionStageService,
+from fbpcs.private_computation.service.secure_random_sharder_stage_service import (
+    SecureRandomShardStageService,
 )
 
 
-class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
+class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
     @patch("fbpcp.service.mpc.MPCService")
     def setUp(self, mock_mpc_svc: MPCService) -> None:
         self.mock_mpc_svc = mock_mpc_svc
@@ -53,7 +53,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
                 repository_path="test_path/",
             )
         )
-        self.stage_svc = PCF2LiftMetadataCompactionStageService(
+        self.stage_svc = SecureRandomShardStageService(
             onedocker_binary_config_map,
             self.mock_mpc_svc,
         )
@@ -62,17 +62,17 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
         private_computation_instance = self._create_pc_instance()
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=private_computation_instance.infra_config.instance_id
-            + "_pcf2_lift_metadata_compaction",
-            game_name=GameNames.PCF2_LIFT_METADATA_COMPACTION.value,
+            + "_secure_random_sharder",
+            game_name=GameNames.SECURE_RANDOM_SHARDER.value,
             mpc_party=MPCParty.CLIENT,
-            num_workers=private_computation_instance.infra_config.num_mpc_containers,
+            num_workers=private_computation_instance.infra_config.num_pid_containers,
         )
 
         self.mock_mpc_svc.start_instance_async = AsyncMock(return_value=mpc_instance)
 
         test_server_ips = [
             f"192.0.2.{i}"
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
+            for i in range(private_computation_instance.infra_config.num_pid_containers)
         ]
         await self.stage_svc.run_async(
             private_computation_instance,
@@ -87,37 +87,39 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             mpc_instance, private_computation_instance.infra_config.instances[0]
         )
 
-    def test_get_game_args_with_udp(self) -> None:
+    def test_get_game_args_with_secure_random_sharding(self) -> None:
         private_computation_instance = self._create_pc_instance()
         base_run_name = (
             private_computation_instance.infra_config.instance_id
             + "_"
-            + GameNames.PCF2_LIFT_METADATA_COMPACTION.value
+            + GameNames.SECURE_RANDOM_SHARDER.value
         )
-
+        shards_per_file = (
+            math.ceil(
+                private_computation_instance.infra_config.num_mpc_containers
+                / private_computation_instance.infra_config.num_pid_containers
+            )
+            * private_computation_instance.infra_config.num_files_per_mpc_container
+        )
         test_game_args = [
             {
-                "input_base_path": private_computation_instance.secure_random_sharder_output_base_path,
-                "output_global_params_base_path": f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params",
-                "output_secret_shares_base_path": f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_secret_shares",
-                "file_start_index": i
-                * private_computation_instance.infra_config.num_files_per_mpc_container,
-                "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
-                "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
+                "input_path": f"{private_computation_instance.data_processing_output_path}_combine_{i}",
+                "output_base_path": f"{private_computation_instance.secure_random_sharder_output_base_path}_{i}",
+                "file_start_index": shards_per_file * i,
+                "num_output_files": shards_per_file,
                 "run_name": f"{base_run_name}_{i}",
                 "log_cost": True,
                 "use_tls": False,
                 "ca_cert_path": "",
                 "server_cert_path": "",
                 "private_key_path": "",
-                "pc_feature_flags": "private_lift_unified_data_process",
                 "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
             }
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
+            for i in range(private_computation_instance.infra_config.num_pid_containers)
         ]
         self.assertEqual(
             test_game_args,
-            self.stage_svc._get_lift_metadata_compaction_game_args(
+            self.stage_svc._get_secure_random_sharder_args(
                 private_computation_instance, "", ""
             ),
         )
@@ -135,7 +137,6 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=4,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
-            pcs_features={PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS},
             log_cost_bucket="test_log_cost_bucket",
         )
 
