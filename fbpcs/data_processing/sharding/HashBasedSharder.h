@@ -18,6 +18,14 @@
 namespace data_processing::sharder {
 namespace detail {
 /**
+ * Convert network byte order uint64_t to a host uint64_t.
+ *
+ * @param in the uint64_t with network byte order
+ * @returns uint64_t with host ordere
+ */
+uint64_t ntohl_64(uint64_t in);
+
+/**
  * Convert a string of characters into its component bytes
  *
  * @param key the string to be converted into a vector of bytes
@@ -26,17 +34,17 @@ namespace detail {
 std::vector<uint8_t> toBytes(const std::string& key);
 
 /**
- * Read a vector of bytes and convert it into an int32_t in a way that will be
+ * Read a vector of bytes and convert it into an uint64_t in a way that will be
  * consistent no matter the endianness of the client machine. We assume the data
- * in the string is interpreted in "network byte order" and call `ntohl` to
- * transform it into a system-independent int32_t value.
+ * in the string is interpreted in "network byte order" and call `ntohl_64` to
+ * transform it into a system-independent uint64_t value.
  *
  * @param bytes a vector of bytes to convert into an integer
  * @returns a system-independent integer representation of the bytes' value
  * @notes only the first four elements of `bytes` are used since that's how
- *     many will fit into an `int32_t` in practice.
+ *     many will fit into an `uint64_t` in practice.
  */
-int32_t bytesToInt(const std::vector<uint8_t>& bytes);
+uint64_t bytesToUInt64(const std::vector<uint8_t>& bytes);
 } // namespace detail
 
 class HashBasedSharder final : public GenericSharder {

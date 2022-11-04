@@ -27,38 +27,42 @@ TEST(HashBasedSharderTest, TestToBytes) {
   EXPECT_EQ(detail::toBytes(key), expected);
 }
 
-TEST(HashBasedSharderTest, TestBytesToIntSimple) {
-  // First a very simple test (but still important for endianness correctness!)
+TEST(HashBasedSharderTest, TestBytesToUInt64) {
+  // ntohl reverse the byte order on a little-endian machine, and are no-ops on
+  // big-endian machines.
+  // big-endian 0x0000'0001'0000'0000 is equivalent to integer 1 << 32.
   std::vector<unsigned char> bytes{0, 0, 0, 1};
-  EXPECT_EQ(1, detail::bytesToInt(bytes));
+  EXPECT_EQ(1ll << 32, detail::bytesToUInt64(bytes));
 
-  // Assuming network byte order, big-endian 0x1 | 0x0 | 0x0 | 0x0
-  // is equivalent to integer 16777216 (2^24). In binary, we recognize this
-  // number as 0b 0000 0001 0000 0000 0000 0000 0000 0000
-  std::vector<unsigned char> bytes2{1, 0, 0, 0};
-  EXPECT_EQ(1 << 24, detail::bytesToInt(bytes2));
-}
-
-TEST(HashBasedSharderTest, TestBytesToIntAdvanced) {
   // Don't throw std::out_of_range if bytes is empty
-  std::vector<unsigned char> bytes{};
-  EXPECT_EQ(0, detail::bytesToInt(bytes));
+  std::vector<unsigned char> bytes1{};
+  // The big-endian is 0x0000'0000'0000'0000
+  EXPECT_EQ(0, detail::bytesToUInt64(bytes1));
 
-  // If bytes are missing, we still copy the bytes array from the "start" so
-  // this is equivalent to the test in TestBytesToIntSimple. In other words,
-  // this is like copying [0b 0000 0001 0000 0000 [implicit 0000 0000 0000 0000]
-  // Hopefully this is clear -- the lower two bytes were never "overridden" so
-  // they still contain zero.
-  std::vector<unsigned char> bytes2{1, 0};
-  EXPECT_EQ(1 << 24, detail::bytesToInt(bytes2));
+  // Assuming network byte order, big-endian 0x0100'0000'0000'0000 is equivalent
+  // to integer 1 << 56.
+  std::vector<unsigned char> bytes2{1, 0, 0, 0};
+  EXPECT_EQ(1ll << 56, detail::bytesToUInt64(bytes2));
+
+  // If bytes are missing, we still copy the bytes array from the "start".
+  // big-endian 0x0100'0000'0000'0000 is equivalent
+  // to integer 1 << 56.
+  std::vector<unsigned char> bytes3{1, 0};
+  EXPECT_EQ(1ll << 56, detail::bytesToUInt64(bytes3));
+
+  // If bytes are missing, we still copy the bytes array from the "start". We
+  // will trucncate the array if the size of array is large than 8 big-endian
+  // 0x0100'0000'0000'0000 is equivalent to integer 1 << 56.
+  std::vector<unsigned char> bytes4{1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  EXPECT_EQ(1ll << 56, detail::bytesToUInt64(bytes3));
 }
 
 TEST(HashBasedSharderTest, TestGetShardFor) {
-  // Assuming toBytes and bytesToInt have been tested elsewhere, this is a
+  // Assuming toBytes and bytesToUInt64 have been tested elsewhere, this is a
   // straightforward modulo operation.
   HashBasedSharder sharder{"unused", {/* unused */}, 123, ""};
   std::string key = "abcd";
-  auto integerValue = detail::bytesToInt(detail::toBytes(key));
+  auto integerValue = detail::bytesToUInt64(detail::toBytes(key));
   EXPECT_EQ(sharder.getShardFor(key, 123), integerValue % 123);
   // Anything % 1 should be zero
   EXPECT_EQ(sharder.getShardFor(key, 1), 0);
@@ -195,11 +199,11 @@ TEST(HashBasedSharderTest, TestShardNoHmacKey) {
       "id_,a,b,c",
       "abcd,1,2,3",
       "abcd,4,5,6",
+      "defg,7,8,9",
+      "hijk,0,0,0",
   };
   std::vector<std::string> expected1{
       "id_,a,b,c",
-      "defg,7,8,9",
-      "hijk,0,0,0",
   };
   data_processing::test_utils::expectFileRowsEqual(
       outputPaths.at(0), expected0);
@@ -234,13 +238,13 @@ TEST(HashBasedSharderTest, TestShardWithHmacKey) {
   // good way to generate more of these given our I/O specification.
   std::vector<std::string> expected0{
       "id_,a,b,c",
-      "bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // defg line
-      "ZGCVov/c63+N2Swslf6pY6pWsNzS1IkXKVi+lmAD6yU=,0,0,0", // hijk line
   };
   std::vector<std::string> expected1{
       "id_,a,b,c",
       "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,1,2,3", // first abcd line
       "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,4,5,6", // second abcd line
+      "bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // defg line
+      "ZGCVov/c63+N2Swslf6pY6pWsNzS1IkXKVi+lmAD6yU=,0,0,0", // hijk line
   };
   data_processing::test_utils::expectFileRowsEqual(
       outputPaths.at(0), expected0);
@@ -275,12 +279,12 @@ TEST(HashBasedSharderTest, TestShardMultiKeyWithHmacKey) {
   // good way to generate more of these given our I/O specification.
   std::vector<std::string> expected0{
       "id_email,id_phone,a,b,c",
-      ",bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // ,defg line
   };
   std::vector<std::string> expected1{
       "id_email,id_phone,a,b,c",
       "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,,1,2,3", // abcd, line
       "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,ZGCVov/c63+N2Swslf6pY6pWsNzS1IkXKVi+lmAD6yU=,4,5,6", // abcd,hijk line
+      ",bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // ,defg line
   };
   data_processing::test_utils::expectFileRowsEqual(
       outputPaths.at(0), expected0);
@@ -315,12 +319,12 @@ TEST(HashBasedSharderTest, TestShardMultiKeyWithNullsQuotes) {
   // good way to generate more of these given our I/O specification.
   std::vector<std::string> expected0{
       "id_email,id_phone,a,b,c",
-      ",bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // ,defg line
   };
   std::vector<std::string> expected1{
       "id_email,id_phone,a,b,c",
       "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,,1,2,3", // abcd, line
       "9BX9ClsYtFj3L8N023K3mJnw1vemIGqenY5vfAY0/cg=,ZGCVov/c63+N2Swslf6pY6pWsNzS1IkXKVi+lmAD6yU=,4,5,6", // abcd,hijk line
+      ",bSRNJ92+ML97JRfp1lEvqssXNCX+lI2T/HQtHRTkBk4=,7,8,9", // ,defg line
   };
   data_processing::test_utils::expectFileRowsEqual(
       outputPaths.at(0), expected0);
