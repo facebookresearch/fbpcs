@@ -25,13 +25,28 @@
 
 namespace data_processing::sharder {
 namespace detail {
+uint64_t ntohl_64(uint64_t in) {
+  // There is not ntohl_64 function in stanard library.
+  // We reuse ntohl to create ntohl_64.
+  // swap 0-3 bytes to 4-7 bytes
+  // move byte 7 to byte 4
+  // move byte 5 to byte 6
+  // move byte 6 to byte 5
+  // move byte 4 to byte 7
+  // move byte 3 to byte 0
+  // move byte 1 to byte 2
+  // move byte 2 to byte 1
+  // move byte 0 to byte 3
+  return ((uint64_t)ntohl((in)&0xFFFFFFFF) << 32) | ntohl((in) >> 32);
+}
+
 std::vector<uint8_t> toBytes(const std::string& key) {
   std::vector<uint8_t> res(key.begin(), key.end());
   return res;
 }
 
-int32_t bytesToInt(const std::vector<uint8_t>& bytes) {
-  int32_t res = 0;
+uint64_t bytesToUInt64(const std::vector<uint8_t>& bytes) {
+  uint64_t res = 0;
 
   auto bytesInSizeT = sizeof(res) / sizeof(uint8_t);
   auto end = bytes.begin() + std::min(bytesInSizeT, bytes.size());
@@ -41,14 +56,14 @@ int32_t bytesToInt(const std::vector<uint8_t>& bytes) {
   // endianness differs from the partner machine's endianness, we rearrange the
   // bytes now to ensure a consistent representation. We assume the previously
   // copied bytes are in "network byte order" and convert them to a host long.
-  return ntohl(res);
+  return ntohl_64(res);
 }
 } // namespace detail
 
 std::size_t HashBasedSharder::getShardFor(
     const std::string& id,
     std::size_t numShards) {
-  auto toInt = detail::bytesToInt(detail::toBytes(id));
+  auto toInt = detail::bytesToUInt64(detail::toBytes(id));
   return toInt % numShards;
 }
 
