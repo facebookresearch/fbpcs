@@ -40,7 +40,7 @@ class PrivateComputationPCF2LiftUDPStageFlow(PrivateComputationBaseStageFlow):
 
     # Specifies the order of the stages. Don't change this unless you know what you are doing.
     # pyre-fixme[15]: `_order_` overrides attribute defined in `Enum` inconsistently.
-    _order_ = "CREATED PC_PRE_VALIDATION PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER PCF2_LIFT_METADATA_COMPACTION RESHARD PCF2_LIFT AGGREGATE POST_PROCESSING_HANDLERS"
+    _order_ = "CREATED PC_PRE_VALIDATION PID_SHARD PID_PREPARE ID_MATCH ID_MATCH_POST_PROCESS ID_SPINE_COMBINER RESHARD PCF2_LIFT_METADATA_COMPACTION PCF2_LIFT AGGREGATE POST_PROCESSING_HANDLERS"
     # Regarding typing fixme above, Pyre appears to be wrong on this one. _order_ only appears in the EnumMeta metaclass __new__ method
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
@@ -95,19 +95,19 @@ class PrivateComputationPCF2LiftUDPStageFlow(PrivateComputationBaseStageFlow):
         failed_status=PrivateComputationInstanceStatus.ID_SPINE_COMBINER_FAILED,
         is_joint_stage=False,
     )
-    PCF2_LIFT_METADATA_COMPACTION = PrivateComputationStageFlowData(
-        initialized_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_INITIALIZED,
-        started_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_STARTED,
-        completed_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_COMPLETED,
-        failed_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_FAILED,
-        is_joint_stage=True,
-    )
     RESHARD = PrivateComputationStageFlowData(
         initialized_status=PrivateComputationInstanceStatus.RESHARD_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.RESHARD_STARTED,
         completed_status=PrivateComputationInstanceStatus.RESHARD_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.RESHARD_FAILED,
         is_joint_stage=False,
+    )
+    PCF2_LIFT_METADATA_COMPACTION = PrivateComputationStageFlowData(
+        initialized_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_INITIALIZED,
+        started_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_STARTED,
+        completed_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_COMPLETED,
+        failed_status=PrivateComputationInstanceStatus.PCF2_LIFT_METADATA_COMPACTION_FAILED,
+        is_joint_stage=True,
     )
     PCF2_LIFT = PrivateComputationStageFlowData(
         initialized_status=PrivateComputationInstanceStatus.PCF2_LIFT_INITIALIZED,

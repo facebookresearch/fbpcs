@@ -29,7 +29,6 @@ from fbpcs.private_computation.service.constants import (
     DEFAULT_PADDING_SIZE,
 )
 
-from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -126,7 +125,7 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
             mpc_party=map_private_computation_role_to_mpc_party(
                 pc_instance.infra_config.role
             ),
-            num_containers=pc_instance.infra_config.num_pid_containers,
+            num_containers=pc_instance.infra_config.num_mpc_containers,
             binary_version=binary_config.binary_version,
             server_certificate_provider=server_certificate_provider,
             ca_certificate_provider=ca_certificate_provider,
@@ -184,8 +183,9 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
             MPC game args to be used by onedocker
         """
 
-        id_combiner_output_path = pc_instance.data_processing_output_path + "_combine"
-        num_metadata_compaction_containers = pc_instance.infra_config.num_pid_containers
+        # id_combiner_output_path = pc_instance.data_processing_output_path + "_combine"
+        sharder_output_path = pc_instance.data_processing_output_path + "_combine"
+        num_metadata_compaction_containers = pc_instance.infra_config.num_mpc_containers
         output_global_params_base_path = (
             pc_instance.pcf2_lift_metadata_compaction_output_base_path
             + "_global_params"
@@ -210,13 +210,12 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
         cmd_args_list = []
         for shard in range(num_metadata_compaction_containers):
             game_args: Dict[str, Any] = {
-                "input_path": get_sharded_filepath(id_combiner_output_path, shard),
-                "output_global_params_path": get_sharded_filepath(
-                    output_global_params_base_path, shard
-                ),
-                "output_secret_shares_path": get_sharded_filepath(
-                    output_secret_shares_base_path, shard
-                ),
+                "input_base_path": sharder_output_path,
+                "output_global_params_base_path": output_global_params_base_path,
+                "output_secret_shares_base_path": output_secret_shares_base_path,
+                "file_start_index": shard
+                * pc_instance.infra_config.num_files_per_mpc_container,
+                "num_files": pc_instance.infra_config.num_files_per_mpc_container,
                 "num_conversions_per_user": pc_instance.product_config.common.padding_size,
                 "run_name": f"{run_name_base}_{shard}" if self._log_cost_to_s3 else "",
                 "log_cost": self._log_cost_to_s3,
