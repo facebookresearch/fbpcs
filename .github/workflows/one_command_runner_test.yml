@@ -98,19 +98,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Print Tracker Hash
-        run: echo ${{ github.event.inputs.tracker_hash}}
+        run: echo ${{ inputs.tracker_hash}}
 
       - name: One command runner
         id: runner
         continue-on-error: true
         run: |
           ./fbpcs/scripts/run_fbpcs.sh run_study \
-          ${{ github.event.inputs.study_id }} \
-          --objective_ids=${{ github.event.inputs.objective_id }} \
-          --input_paths=${{ github.event.inputs.input_path }} \
+          ${{ inputs.study_id }} \
+          --objective_ids=${{ inputs.objective_id }} \
+          --input_paths=${{ inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \
-          --version=${{ github.event.inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2>&1
+          --version=${{ inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2>&1
 
       - name: Print runner console output
         continue-on-error: true
@@ -132,13 +132,13 @@ jobs:
           validate \
           "/{}" \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
-          --expected_result_path=${{ github.event.inputs.expected_result_path }} \
+          --expected_result_path=${{ inputs.expected_result_path }} \
           -- \
-          --version=${{ github.event.inputs.tag }}
+          --version=${{ inputs.tag }}
 
       - name: Validate runner logs
         # First command extracts the pc-cli log lines starting with "... ! Command line: ..." into a file.
         run: |
           sed -n '/^.* ! Command line: .*/,$p' < ${{env.CONSOLE_OUTPUT_FILE}} > ${{env.CONSOLE_OUTPUT_FILE}}.extracted
-          docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}.extracted:${{env.CONSOLE_OUTPUT_FILE}}" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{github.event.inputs.tag}} \
+          docker run --rm -v "${{env.CONSOLE_OUTPUT_FILE}}.extracted:${{env.CONSOLE_OUTPUT_FILE}}" ${{env.FBPCS_CONTAINER_REPO_URL}}/${{env.FBPCS_IMAGE_NAME}}:${{inputs.tag}} \
           python -m fbpcs.infra.logging_service.log_analyzer.log_analyzer ${{env.CONSOLE_OUTPUT_FILE}} --validate_one_runner_logs

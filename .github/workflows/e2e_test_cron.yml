@@ -16,7 +16,7 @@ jobs:
     name: Select the PL Objective ID
     runs-on: ubuntu-latest
     outputs:
-      pl_objective_id: ${{ steps.select_pl_objective.outputs.objective_id }}
+      pl_objective_id: ${{ steps.select_pl_objective_id.outputs.objective_id }}
     steps:
       - name: Select PL Objective ID
         id: select_pl_objective_id
@@ -31,7 +31,7 @@ jobs:
     name: Select the Multi-Key PL Objective ID
     runs-on: ubuntu-latest
     outputs:
-      pl_objective_id: ${{ steps.select_pl_objective.outputs.objective_id }}
+      pl_objective_id: ${{ steps.select_pl_objective_id.outputs.objective_id }}
     steps:
       - name: Select MK PL Objective ID
         id: select_pl_objective_id

@@ -91,14 +91,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Print Tracker Hash
-        run: echo ${{ github.event.inputs.tracker_hash}}
+        run: echo ${{ inputs.tracker_hash}}
 
       - name: One Command runner
         run: |
           ./fbpcs/scripts/run_fbpcs.sh run_attribution \
-          --dataset_id=${{ github.event.inputs.dataset_id}} \
+          --dataset_id=${{ inputs.dataset_id }} \
           --attribution_rule="last_click_1d" \
-          --input_path=${{ github.event.inputs.input_path}} \
+          --input_path=${{ inputs.input_path }} \
           --aggregation_type="measurement" \
           --concurrency=4 \
           --num_files_per_mpc_container=4 \
@@ -106,7 +106,7 @@ jobs:
           --timestamp="1646870400" \
           --k_anonymity_threshold=0 \
           -- \
-          --version=${{ github.event.inputs.tag }}
+          --version=${{ inputs.tag }}
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
         # the fbpcs_instances directory is where instances are written to (feature of run_fbpcs.sh)
@@ -116,6 +116,6 @@ jobs:
           validate \
           "/{}" \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
-          --expected_result_path=${{ github.event.inputs.expected_result_path }} \
+          --expected_result_path=${{ inputs.expected_result_path }} \
           -- \
-          --version=${{ github.event.inputs.tag }}
+          --version=${{ inputs.tag }}
