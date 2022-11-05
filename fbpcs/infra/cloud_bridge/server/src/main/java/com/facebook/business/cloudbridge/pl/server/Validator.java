@@ -92,7 +92,9 @@ public class Validator {
     if (currentVPCsInThisRegion >= quota.getValue()) {
       return new ValidatorResult(
           false,
-          "VPC limit is at peek in this region, please choose another region or delete some unused VPC to continue deploy");
+          String.format(
+              "VPC limit is at peek in region %s . Contact your Meta representatives for more information if needed",
+              deploymentParams.region));
     }
 
     return new ValidatorResult(true, "VPC limit validation successful");
