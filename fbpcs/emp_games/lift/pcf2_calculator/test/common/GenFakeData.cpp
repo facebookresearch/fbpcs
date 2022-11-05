@@ -182,6 +182,13 @@ void GenFakeData::genFakeInputFiles(
       // generate a random cohort id between 0 and numCohorts - 1
       int32_t randomCohortId =
           folly::Random::secureRand32(0, params.numCohorts_);
+
+      if (i == 0) {
+        // Artificially trick the synthetic data generator to assign at least
+        // one user to last cohort. In prod use case the partner should not have
+        // last cohort is empty, as that would imply numCohorts is 1 less value.
+        randomCohortId = params.numCohorts_ - 1;
+      }
       partnerLine += "," + std::to_string(randomCohortId);
     }
     partnerLine += '\n';
