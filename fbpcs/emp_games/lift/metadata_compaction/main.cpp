@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <signal.h>
 #include <sstream>
 #include "folly/init/Init.h"
 #include "folly/logging/xlog.h"
@@ -30,6 +31,8 @@ int main(int argc, char** argv) {
   cost.start();
 
   fbpcf::AwsSdk::aquire();
+
+  signal(SIGPIPE, SIG_IGN);
 
   // since DEFINE_INT16 is not supported, cast int32_t FLAGS_concurrency to
   // int16_t is necessary here
