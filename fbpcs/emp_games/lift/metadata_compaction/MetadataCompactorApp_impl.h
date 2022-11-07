@@ -18,10 +18,12 @@ namespace private_lift {
 
 template <int schedulerId>
 void MetadataCompactorApp<schedulerId>::run() {
+  // first communication agent created
   auto scheduler = createScheduler();
 
   auto metricsCollector = communicationAgentFactory_->getMetricsCollector();
 
+  // second communication agent created
   auto metadataCompactorGame =
       compactorGameFactory_->create(std::move(scheduler), party_);
 

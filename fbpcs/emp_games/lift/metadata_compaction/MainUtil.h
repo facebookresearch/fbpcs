@@ -11,9 +11,9 @@
 #include "folly/Format.h"
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
-#include "fbpcs/emp_games/lift/metadata_compaction/DummyMetadataCompactorGame.h"
-#include "fbpcs/emp_games/lift/metadata_compaction/DummyMetadataCompactorGameFactory.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorApp.h"
+#include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorGame.h"
+#include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorGameFactory.h"
 
 namespace private_lift {
 
@@ -88,12 +88,19 @@ startMetadataCompactionAppForShardedFileHelper(
             {{0, {serverIp, port + index * 100}},
              {1, {serverIp, port + index * 100}}});
 
+    /** It is safe to use a shared pointer to the same factory rather than a
+     * whole new factory as the usage order is consistent across parties
+     * 1. App will create scheduler -> creates first communicationAgent
+     * 2. App will create CompactorGame -> creates DataProcessor -> creates
+     * second communicationAgent
+     */
     auto communicationAgentFactory = std::make_shared<
         fbpcf::engine::communication::SocketPartyCommunicationAgentFactory>(
         PARTY, partyInfos, tlsInfo, "metadata_compaction_traffic");
 
-    auto compactorGameFactory = std::make_unique<
-        DummyMetadataCompactorGameFactory<2 * index + PARTY>>();
+    auto compactorGameFactory =
+        std::make_unique<MetadataCompactorGameFactory<2 * index + PARTY>>(
+            communicationAgentFactory);
 
     auto app = std::make_unique<MetadataCompactorApp<2 * index + PARTY>>(
         PARTY,
