@@ -1,4 +1,5 @@
-name: RC new features one command runner test
+name: RC One command runner test
+run-name: ${{ inputs.test_name }} on ${{ inputs.tag }} for build ${{ inputs.build_id }}
 
 on:
   workflow_dispatch:
@@ -27,6 +28,13 @@ on:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
         type: str
+      build_id:
+        description: The build id
+        required: false
+        default: "test build"
+      test_name:
+        description: The name of the type of tests that are being run
+        default: 'PL RC E2E Tests'
 
 env:
   FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
@@ -36,7 +44,7 @@ env:
 jobs:
   ### Private Lift E2E tests
   pl_test:
-    name: Private Lift E2E Tests
+    name: Private Lift RC E2E Tests
     runs-on: [self-hosted, fbpcs-e2e-test-runner]
     timeout-minutes: 60
     permissions:
