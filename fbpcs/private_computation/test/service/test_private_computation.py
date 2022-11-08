@@ -1235,7 +1235,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(non_empty_instance.server_ips, ["1.1.1.1"])
 
     def test_server_uris(self) -> None:
-        test_uri = "study123.pci.facebook.com"
+        test_uris = ["study123.pci.facebook.com"]
 
         stage_state_instance = StageStateInstance(
             instance_id=self.test_private_computation_id,
@@ -1248,10 +1248,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     status=ContainerInstanceStatus.COMPLETED,
                 )
             ],
-            server_uris=test_uri,
+            server_uris=test_uris,
         )
 
-        self.assertEqual(stage_state_instance.server_uris, test_uri)
+        self.assertEqual(stage_state_instance.server_uris, test_uris)
 
     def test_fbpcs_bundle_id(self) -> None:
         TEST_BUNDLE_ID = str(random.randint(100, 200))
