@@ -500,11 +500,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         before_end_time = time.time()
+        before_update_time = private_computation_instance.infra_config.status_update_ts
         private_computation_instance.update_status(
             private_computation_instance.stage_flow.get_last_stage().completed_status,
             logging.getLogger(),
         )
         after_end_time = time.time()
+        after_update_time = private_computation_instance.infra_config.status_update_ts
         # We have this somewhat complicated assert because `time.time` will be called
         # multiple times inside the `update_status` statement and don't want any
         # *really* specific testing like "end_ts = time.time() + 2" since that would
@@ -522,6 +524,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             expected_elapsed_time,
             private_computation_instance.elapsed_time,
+        )
+        self.assertEqual(
+            private_computation_instance.get_status_elapsed_time(
+                start_status=PrivateComputationInstanceStatus.COMPUTATION_COMPLETED,
+                end_status=private_computation_instance.stage_flow.get_last_stage().completed_status,
+            ),
+            after_update_time - before_update_time,
         )
 
     def test_update_instance_throttling_error(self) -> None:
