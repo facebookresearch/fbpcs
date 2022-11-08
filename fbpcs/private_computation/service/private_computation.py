@@ -319,7 +319,7 @@ class PrivateComputationService:
             product_config=product_config,
         )
 
-        self.instance_repository.create(instance)
+        self._instance_repo_create(instance)
 
         self.trace_logging_svc.write_checkpoint(
             run_id=instance.infra_config.run_id,
@@ -329,6 +329,30 @@ class PrivateComputationService:
         )
 
         return instance
+
+    def _instance_repo_create(self, instance: PrivateComputationInstance) -> None:
+        with self.metric_svc.bump_num_times_called_and_error_count(
+            entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_create"
+        ), self.metric_svc.timer(
+            entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_create"
+        ):
+            self.instance_repository.create(instance=instance)
+
+    def _instance_repo_read(self, instance_id: str) -> PrivateComputationInstance:
+        with self.metric_svc.bump_num_times_called_and_error_count(
+            entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_read"
+        ), self.metric_svc.timer(
+            entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_read"
+        ):
+            return self.instance_repository.read(instance_id=instance_id)
+
+    def _instance_repo_update(self, instance: PrivateComputationInstance) -> None:
+        with self.metric_svc.bump_num_times_called_and_error_count(
+            entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_update"
+        ), self.metric_svc.timer(
+            entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_update"
+        ):
+            self.instance_repository.update(instance=instance)
 
     def _get_number_of_mpc_containers(
         self,
@@ -350,7 +374,7 @@ class PrivateComputationService:
     # TODO T88759390: make an async version of this function
     def get_instance(self, instance_id: str) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "get_instance")
-        return self.instance_repository.read(instance_id=instance_id)
+        return self._instance_repo_read(instance_id=instance_id)
 
     def update_input_path(
         self, instance_id: str, input_path: str
@@ -359,17 +383,17 @@ class PrivateComputationService:
         override input path only allow partner side
         """
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "update_input_path")
-        pc_instance = self.get_instance(instance_id)
+        pc_instance = self._instance_repo_read(instance_id)
         if pc_instance.infra_config.role is PrivateComputationRole.PARTNER:
             pc_instance.product_config.common.input_path = input_path
-            self.instance_repository.update(pc_instance)
+            self._instance_repo_update(pc_instance)
 
         return pc_instance
 
     # TODO T88759390: make an async version of this function
     def update_instance(self, instance_id: str) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "update_instance")
-        private_computation_instance = self.instance_repository.read(instance_id)
+        private_computation_instance = self._instance_repo_read(instance_id)
         # if the status is initialized or started, then we need to update the instance
         # to either failed, started, or completed
         if private_computation_instance.stage_flow.is_initialized_status(
@@ -399,7 +423,7 @@ class PrivateComputationService:
         try:
             new_status = stage_svc.get_status(private_computation_instance)
             private_computation_instance.update_status(new_status, self.logger)
-            self.instance_repository.update(private_computation_instance)
+            self._instance_repo_update(private_computation_instance)
             if private_computation_instance.stage_flow.is_completed_status(new_status):
                 stage_elapsed_time = (
                     private_computation_instance.get_status_elapsed_time(
@@ -431,7 +455,7 @@ class PrivateComputationService:
         checkpoint_name = "log_failed_containers"
         checkpoint_data = {}
         try:
-            private_computation_instance = self.get_instance(pc_instance_id)
+            private_computation_instance = self._instance_repo_read(pc_instance_id)
             self.trace_logging_svc.write_checkpoint(
                 run_id=private_computation_instance.infra_config.run_id,
                 instance_id=pc_instance_id,
@@ -505,7 +529,7 @@ class PrivateComputationService:
     ) -> PrivateComputationInstance:
         """Fetches the next eligible stage in the instance's stage flow and runs it"""
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_next_async")
-        pc_instance = self.get_instance(instance_id)
+        pc_instance = self._instance_repo_read(instance_id)
         if pc_instance.is_stage_flow_completed():
             raise PrivateComputationServiceInvalidStageError(
                 f"Instance {instance_id} stage flow completed. (status: {pc_instance.infra_config.status}). Ignored"
@@ -553,7 +577,7 @@ class PrivateComputationService:
         Gets a private computation instance and checks that it's ready to run a given
         stage service
         """
-        pc_instance = self.get_instance(instance_id)
+        pc_instance = self._instance_repo_read(instance_id)
         if (
             stage.is_joint_stage
             and pc_instance.infra_config.role is PrivateComputationRole.PARTNER
@@ -675,7 +699,7 @@ class PrivateComputationService:
             )
             raise e
         finally:
-            self.instance_repository.update(pc_instance)
+            self._instance_repo_update(pc_instance)
 
         try:
             log_urls = self.get_log_urls(pc_instance)
@@ -705,7 +729,7 @@ class PrivateComputationService:
         """
 
         if isinstance(instance_or_id, str):
-            private_computation_instance = self.get_instance(instance_or_id)
+            private_computation_instance = self._instance_repo_read(instance_or_id)
         elif isinstance(instance_or_id, PrivateComputationInstance):
             private_computation_instance = instance_or_id
         else:
@@ -739,7 +763,7 @@ class PrivateComputationService:
         aggregated_result_path: Optional[str] = None,
     ) -> None:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "validate_metrics")
-        private_computation_instance = self.get_instance(instance_id)
+        private_computation_instance = self._instance_repo_read(instance_id)
         if (
             private_computation_instance.infra_config.game_type
             is PrivateComputationGameType.PRIVATE_ID_DFCA
@@ -797,7 +821,7 @@ class PrivateComputationService:
         instance_id: str,
     ) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "cancel_current_stage")
-        private_computation_instance = self.get_instance(instance_id)
+        private_computation_instance = self._instance_repo_read(instance_id)
 
         # pre-checks to make sure it's in a cancel-able state
         if private_computation_instance.stage_flow.is_completed_status(

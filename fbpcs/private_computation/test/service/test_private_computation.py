@@ -262,10 +262,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
                 self.private_computation_service.instance_repository.create.assert_called()
                 # pyre-fixme[16]: Callable `create` has no attribute `call_args`.
-                args = self.private_computation_service.instance_repository.create.call_args[
-                    0
-                ][
-                    0
+                args = self.private_computation_service.instance_repository.create.call_args.kwargs[
+                    "instance"
                 ]
                 self.assertEqual(
                     self.test_private_computation_id, args.infra_config.instance_id
@@ -376,10 +374,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
                 self.private_computation_service.instance_repository.create.assert_called()
                 # pyre-fixme[16]: Callable `create` has no attribute `call_args`.
-                args = self.private_computation_service.instance_repository.create.call_args[
-                    0
-                ][
-                    0
+                args = self.private_computation_service.instance_repository.create.call_args.kwargs[
+                    "instance"
                 ]
                 self.assertEqual(
                     instance.get_flow_cls_name,
@@ -434,12 +430,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             instance_id=self.test_private_computation_id
         )
         # check update instance called on the right private lift instance
-        # pyre-fixme[16]: Callable `update` has no attribute `assert_called`.
-        self.private_computation_service.instance_repository.update.assert_called()
-        self.assertEqual(
-            private_computation_instance,
-            # pyre-fixme[16]: Callable `update` has no attribute `call_args`.
-            self.private_computation_service.instance_repository.update.call_args[0][0],
+        # pyre-fixme[16]: Callable `update` has no attribute `assert_called_with`.
+        self.private_computation_service.instance_repository.update.assert_called_with(
+            instance=private_computation_instance
         )
         # check updated_instance has new status
         self.assertEqual(
@@ -492,10 +485,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         # check update instance called on the right private lift instance
-        self.private_computation_service.instance_repository.update.assert_called()
-        self.assertEqual(
-            private_computation_instance,
-            self.private_computation_service.instance_repository.update.call_args[0][0],
+        self.private_computation_service.instance_repository.update.assert_called_with(
+            instance=private_computation_instance
         )
 
         # check updated_instance has new status
