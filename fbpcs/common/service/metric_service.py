@@ -15,6 +15,8 @@ from typing import Iterator
 
 class MetricService(abc.ABC):
     RUNTIME_KEY = "time_ms"
+    NUM_ERRORS_KEY = "num_errors"
+    NUM_CALLS_KEY = "num_calls"
 
     def __init__(self, category: str = "default") -> None:
         self.category = category
@@ -41,3 +43,26 @@ class MetricService(abc.ABC):
             key=f"{prefix}.{MetricService.RUNTIME_KEY}",
             value=int(elapsed_ns / 1e6),
         )
+
+    @contextmanager
+    def bump_num_times_called_and_error_count(
+        self, entity: str, prefix: str
+    ) -> Iterator[None]:
+        """Context manager that bumps num calls and error counts for a given prefix.
+
+        expected usage is:
+
+        with ods_client.bump_num_times_called_and_error_count(prefix):
+            <do something>
+        """
+        try:
+            yield
+        except Exception:
+            self.bump_entity_key(
+                entity=entity, key=f"{prefix}.{MetricService.NUM_ERRORS_KEY}"
+            )
+            raise
+        finally:
+            self.bump_entity_key(
+                entity=entity, key=f"{prefix}.{MetricService.NUM_CALLS_KEY}"
+            )
