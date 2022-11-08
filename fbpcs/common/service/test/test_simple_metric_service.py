@@ -9,6 +9,7 @@
 import json
 import logging
 from unittest import mock, TestCase
+from unittest.mock import call
 
 from fbpcs.common.service.simple_metric_service import SimpleMetricService
 
@@ -91,3 +92,35 @@ class TestSimpleMetricService(TestCase):
 
         # Assert
         self.logger.info.assert_called_once_with(expected_dump)
+
+    def test_bump_num_times_called_and_error_count(self) -> None:
+        # Arrange
+        expected_err_dump = json.dumps(
+            {
+                "operation": "bump_entity_key",
+                "entity": "default.entity",
+                "key": "prefix.num_errors",
+                "value": 1,
+            }
+        )
+        expected_dump = json.dumps(
+            {
+                "operation": "bump_entity_key",
+                "entity": "default.entity",
+                "key": "prefix.num_calls",
+                "value": 1,
+            }
+        )
+
+        # Act
+        try:
+            with self.svc.bump_num_times_called_and_error_count("entity", "prefix"):
+                raise RuntimeError("Force Fail")
+        except Exception:
+            pass
+
+        # Assert
+        self.assertEqual(2, self.logger.info.call_count)
+        self.logger.info.assert_has_calls(
+            [call(expected_err_dump), call(expected_dump)]
+        )
