@@ -400,6 +400,18 @@ class PrivateComputationService:
             new_status = stage_svc.get_status(private_computation_instance)
             private_computation_instance.update_status(new_status, self.logger)
             self.instance_repository.update(private_computation_instance)
+            if private_computation_instance.stage_flow.is_completed_status(new_status):
+                stage_elapsed_time = (
+                    private_computation_instance.get_status_elapsed_time(
+                        start_status=stage.initialized_status, end_status=new_status
+                    )
+                )
+                self.metric_svc.bump_entity_key_avg(
+                    PCSERVICE_ENTITY_NAME,
+                    f"{stage.name}.time_ms",
+                    stage_elapsed_time * 1000,
+                )
+
         except ThrottlingError as e:
             self.logger.warning(
                 f"Got ThrottlingError when updating instance. Skipping update! Error: {e}"
