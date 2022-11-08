@@ -198,19 +198,20 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance(self) -> None:
-        test_role = PrivateComputationRole.PUBLISHER
-        for test_game_type, expected_k_anon, pcs_features in (
+        for test_game_type, expected_k_anon, pcs_features, test_role in (
             (
                 PrivateComputationGameType.LIFT,
                 DEFAULT_K_ANONYMITY_THRESHOLD_PL,
                 [PCSFeature.PCS_DUMMY.value, PCSFeature.UNKNOWN.value],
+                PrivateComputationRole.PUBLISHER,
             ),
             (
                 PrivateComputationGameType.ATTRIBUTION,
                 DEFAULT_K_ANONYMITY_THRESHOLD_PA,
                 None,
+                PrivateComputationRole.PUBLISHER,
             ),
-            # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for attribution
+            # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for attribution with publisher
             (
                 PrivateComputationGameType.ATTRIBUTION,
                 DEFAULT_K_ANONYMITY_THRESHOLD_PA,
@@ -218,8 +219,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PCS_DUMMY.value,
                     PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
                 ],
+                PrivateComputationRole.PUBLISHER,
             ),
-            # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for lift
+            # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for lift with publisher
             (
                 PrivateComputationGameType.LIFT,
                 DEFAULT_K_ANONYMITY_THRESHOLD_PL,
@@ -227,8 +229,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PCS_DUMMY.value,
                     PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
                 ],
+                PrivateComputationRole.PUBLISHER,
             ),
-            # test PCSFeature.PCF_TLS for lift
+            # test PCSFeature.PCF_TLS for lift with publisher
             (
                 PrivateComputationGameType.LIFT,
                 DEFAULT_K_ANONYMITY_THRESHOLD_PL,
@@ -236,6 +239,17 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PCS_DUMMY.value,
                     PCSFeature.PCF_TLS.value,
                 ],
+                PrivateComputationRole.PUBLISHER,
+            ),
+            # test PCSFeature.PCF_TLS for lift with partner
+            (
+                PrivateComputationGameType.LIFT,
+                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                [
+                    PCSFeature.PCS_DUMMY.value,
+                    PCSFeature.PCF_TLS.value,
+                ],
+                PrivateComputationRole.PARTNER,
             ),
         ):
             with self.subTest(
@@ -284,7 +298,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     int(yesterday_timestamp),
                     args.product_config.common.post_processing_data.dataset_timestamp,
                 )
-                self.assertEqual(args.infra_config.server_domain, None)
                 self.assertEqual(args.infra_config.server_key_ref, None)
                 if pcs_features is not None:
                     if PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value in pcs_features:
@@ -326,6 +339,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 if (
                     pcs_features is not None
                     and PCSFeature.PCF_TLS.value in pcs_features
+                    and test_role is PrivateComputationRole.PUBLISHER
                 ):
                     self.assertEqual(
                         args.infra_config.server_certificate,
@@ -335,13 +349,26 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                         args.infra_config.ca_certificate,
                         SAMPLE_CA_CERTIFICATE,
                     )
-                else:
+                    self.assertEqual(
+                        args.infra_config.server_domain,
+                        "study123.pci.facebook.com",
+                    )
+
+                if (
+                    pcs_features is not None
+                    and PCSFeature.PCF_TLS.value in pcs_features
+                    and test_role is PrivateComputationRole.PARTNER
+                ):
                     self.assertEqual(
                         args.infra_config.server_certificate,
                         None,
                     )
                     self.assertEqual(
                         args.infra_config.ca_certificate,
+                        SAMPLE_CA_CERTIFICATE,
+                    )
+                    self.assertEqual(
+                        args.infra_config.server_domain,
                         None,
                     )
 

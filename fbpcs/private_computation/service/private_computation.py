@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, DefaultDict, Dict, List, Optional, Set, Type, TypeVar, Union
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance
@@ -234,6 +234,8 @@ class PrivateComputationService:
         ca_certificate = (
             SAMPLE_CA_CERTIFICATE if PCSFeature.PCF_TLS in pcs_feature_enums else None
         )
+        server_domain = self._get_server_domain(instance_id, role, pcs_feature_enums)
+
         infra_config: InfraConfig = InfraConfig(
             instance_id=instance_id,
             role=role,
@@ -262,6 +264,7 @@ class PrivateComputationService:
             log_cost_bucket=log_cost_bucket,
             server_certificate=server_certificate,
             ca_certificate=ca_certificate,
+            server_domain=server_domain,
         )
         multikey_enabled = True
         if pid_configs and "multikey_enabled" in pid_configs.keys():
@@ -353,6 +356,23 @@ class PrivateComputationService:
             entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_update"
         ):
             self.instance_repository.update(instance=instance)
+
+    def _get_server_domain(
+        self,
+        instance_id: str,
+        role: PrivateComputationRole,
+        pcs_feature_enums: Set[PCSFeature],
+    ) -> Optional[str]:
+        if (
+            role is not PrivateComputationRole.PUBLISHER
+            or PCSFeature.PCF_TLS not in pcs_feature_enums
+        ):
+            return None
+        # TODO: T136704156 Replace the static server domain value with a
+        # dynamically composed server domain for publisher side
+        # when tls feature is enabled.
+        # return f"publisher.study{instance_id}.pci.facebook.com"
+        return "study123.pci.facebook.com"
 
     def _get_number_of_mpc_containers(
         self,
