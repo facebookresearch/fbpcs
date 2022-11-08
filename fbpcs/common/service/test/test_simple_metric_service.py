@@ -69,3 +69,25 @@ class TestSimpleMetricService(TestCase):
 
         # Assert
         self.logger.info.assert_called_once_with(expected_dump)
+
+    @mock.patch(
+        "time.perf_counter_ns",
+        new=mock.MagicMock(side_effect=[28000000000000, 29000000000000]),
+    )
+    def test_timer(self) -> None:
+        # Arrange
+        expected_dump = json.dumps(
+            {
+                "operation": "bump_entity_key_avg",
+                "entity": "default.entity",
+                "key": "prefix.time_ms",
+                "value": 1000000,
+            }
+        )
+
+        # Act
+        with self.svc.timer("entity", "prefix"):
+            pass
+
+        # Assert
+        self.logger.info.assert_called_once_with(expected_dump)
