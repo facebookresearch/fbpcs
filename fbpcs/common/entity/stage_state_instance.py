@@ -36,7 +36,7 @@ class StageStateInstance(InstanceBase):
     )
     creation_ts: int = field(default_factory=lambda: int(time.time()))
     end_ts: Optional[int] = None
-    server_uris: Optional[str] = None
+    server_uris: Optional[List[str]] = None
 
     @property
     def server_ips(self) -> List[str]:
