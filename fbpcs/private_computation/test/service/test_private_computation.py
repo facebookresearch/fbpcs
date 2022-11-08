@@ -280,7 +280,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
                 yesterday_date = datetime.now(tz=timezone.utc) - timedelta(days=1)
                 yesterday_timestamp = datetime.timestamp(yesterday_date)
-                self.assertEqual(
+                self.assertAlmostEqual(
                     int(yesterday_timestamp),
                     args.product_config.common.post_processing_data.dataset_timestamp,
                 )
@@ -543,6 +543,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ),
             after_update_time - before_update_time,
         )
+        self.assertEqual(updated_mpc_instance.server_uris, None)
 
     def test_update_instance_throttling_error(self) -> None:
         # Arrange
