@@ -117,6 +117,14 @@ class PrivateComputationServiceData:
         service=None,
     )
 
+    SECURE_RANDOM_SHARDER_DATA: StageData = StageData(
+        binary_name=OneDockerBinaryNames.SECURE_RANDOM_SHARDER.value,
+        game_name=BINARY_NAME_TO_GAME_NAME[
+            OneDockerBinaryNames.SECURE_RANDOM_SHARDER.value
+        ],
+        service=None,
+    )
+
     PCF2_SHARD_COMBINE_STAGE_DATA: StageData = StageData(
         binary_name=OneDockerBinaryNames.PCF2_SHARD_COMBINER.value,
         game_name=BINARY_NAME_TO_GAME_NAME[
