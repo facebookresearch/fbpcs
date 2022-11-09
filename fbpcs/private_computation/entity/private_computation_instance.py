@@ -238,6 +238,10 @@ class PrivateComputationInstance(InstanceBase):
         return self._get_stage_output_path("metadata_compaction_stage", "csv")
 
     @property
+    def secure_random_sharder_output_base_path(self) -> str:
+        return self._get_stage_output_path("secure_random_sharder_stage", "csv")
+
+    @property
     def pcf2_lift_stage_output_base_path(self) -> str:
         return self._get_stage_output_path("pcf2_lift_stage", "json")
 
