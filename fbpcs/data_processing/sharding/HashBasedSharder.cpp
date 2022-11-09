@@ -23,33 +23,22 @@
 #include "fbpcs/data_processing/hash_slinging_salter/HashSlingingSalter.hpp"
 #include "folly/String.h"
 
+DEFINE_int32(hashing_prime, 37, "Prime number to assist in consistent hashing");
+
 namespace data_processing::sharder {
-namespace detail {
-std::vector<uint8_t> toBytes(const std::string& key) {
-  std::vector<uint8_t> res(key.begin(), key.end());
+std::size_t hashString(const std::string& s, uint64_t hashing_prime) {
+  std::size_t res = 0;
+  for (auto i = 0; i < s.length(); ++i) {
+    res = hashing_prime * res + s[i];
+  }
   return res;
 }
-
-int32_t bytesToInt(const std::vector<uint8_t>& bytes) {
-  int32_t res = 0;
-
-  auto bytesInSizeT = sizeof(res) / sizeof(uint8_t);
-  auto end = bytes.begin() + std::min(bytesInSizeT, bytes.size());
-  std::copy(bytes.begin(), end, reinterpret_cast<uint8_t*>(&res));
-
-  // Because we could be in a bizarre scenario where the publisher machine's
-  // endianness differs from the partner machine's endianness, we rearrange the
-  // bytes now to ensure a consistent representation. We assume the previously
-  // copied bytes are in "network byte order" and convert them to a host long.
-  return ntohl(res);
-}
-} // namespace detail
 
 std::size_t HashBasedSharder::getShardFor(
     const std::string& id,
     std::size_t numShards) {
-  auto toInt = detail::bytesToInt(detail::toBytes(id));
-  return toInt % numShards;
+  auto hashed = hashString(id, FLAGS_hashing_prime); // returns std::size_t
+  return hashed % numShards;
 }
 
 void HashBasedSharder::shardLine(

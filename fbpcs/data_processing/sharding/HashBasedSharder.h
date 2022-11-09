@@ -16,28 +16,12 @@
 #include "fbpcs/data_processing/sharding/GenericSharder.h"
 
 namespace data_processing::sharder {
-namespace detail {
-/**
- * Convert a string of characters into its component bytes
- *
- * @param key the string to be converted into a vector of bytes
- * @returns a vector of bytes by casting each character to `uint8_t`
+/* Utility to hash a string to an unsigned machine size integer.
+ * Unsigned is important so overflow is properly defined.
+ * Adapted from
+ * https://stackoverflow.com/questions/8567238/hash-function-in-c-for-string-to-int
  */
-std::vector<uint8_t> toBytes(const std::string& key);
-
-/**
- * Read a vector of bytes and convert it into an int32_t in a way that will be
- * consistent no matter the endianness of the client machine. We assume the data
- * in the string is interpreted in "network byte order" and call `ntohl` to
- * transform it into a system-independent int32_t value.
- *
- * @param bytes a vector of bytes to convert into an integer
- * @returns a system-independent integer representation of the bytes' value
- * @notes only the first four elements of `bytes` are used since that's how
- *     many will fit into an `int32_t` in practice.
- */
-int32_t bytesToInt(const std::vector<uint8_t>& bytes);
-} // namespace detail
+std::size_t hashString(const std::string& s, uint64_t hashing_prime);
 
 class HashBasedSharder final : public GenericSharder {
  public:
