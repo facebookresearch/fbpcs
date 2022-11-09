@@ -266,10 +266,9 @@ class PCF2LiftStageService(PrivateComputationStageService):
         if private_computation_instance.has_feature(
             PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS
         ):
-            common_compute_game_args[
-                "input_base_path"
-            ] = (
+            common_compute_game_args["input_base_path"] = (
                 private_computation_instance.pcf2_lift_metadata_compaction_output_base_path
+                + "_secret_shares"
             )
             common_compute_game_args[
                 "input_global_params_path"
