@@ -86,5 +86,6 @@ BINARY_INFOS: List[BinaryInfo] = [
     BinaryInfo("private_attribution/pcf2_attribution"),
     BinaryInfo("private_attribution/shard-aggregator"),
     BinaryInfo("private_lift/lift"),
+    # TODO: Add UDP-ralted binaries when rolling out
 ]
 ONEDOCKER_EXE_PATH = "ONEDOCKER_EXE_PATH"
