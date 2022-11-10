@@ -16,6 +16,11 @@ from dataclasses_json import dataclass_json
 
 from fbpcs.pl_coordinator.constants import INSTANCE_SLA
 
+
+class TokenRuleException(RuntimeError):
+    pass
+
+
 """
 required token scopes defined here:
 https://github.com/facebookresearch/fbpcs/blob/main/docs/PCS_Partner_Playbook_UI.pdf
@@ -28,6 +33,10 @@ REQUIRED_TOKEN_SCOPES = {
     "private_computation_access",
 }
 
+VALID_USER_TYPE = (
+    "USER",
+    "SYSTEM_USER",
+)
 
 """
 data models define here
@@ -59,45 +68,63 @@ Token validation rule data model
 class TokenValidationRuleData:
     rule_name: str
     rule_type: TokenValidationRuleType
-    rule_checker: Callable[[DebugTokenData], bool]
+    rule_checker: Callable[[DebugTokenData], None]
 
 
 """
 rule checkers
 """
-user_type_checker: Callable[[DebugTokenData], bool] = lambda data: data.type in (
-    "USER",
-    "SYSTEM_USER",
-)
-
-valid_checker: Callable[[DebugTokenData], bool] = lambda data: data.is_valid
 
 
-def expiry_checker(data: DebugTokenData) -> bool:
+def user_type_checker(data: DebugTokenData) -> None:
+    if data.type not in VALID_USER_TYPE:
+        raise TokenRuleException(
+            f"unexpected token user type {data.type}; expected: {VALID_USER_TYPE}"
+        )
+
+
+def valid_checker(data: DebugTokenData) -> None:
+    if not data.is_valid:
+        raise TokenRuleException("token is not valid")
+
+
+def expiry_checker(data: DebugTokenData) -> None:
     expires_at = data.expires_at
     if expires_at is None:
-        return False
+        raise TokenRuleException("token missing 'expires_at' field")
 
-    return expires_at == 0 or (
+    if expires_at == 0 or (
         expires_at > 0 and expires_at - int(time.time()) >= INSTANCE_SLA
+    ):
+        return None
+
+    raise TokenRuleException(
+        f"token 'expires_at': {expires_at} (unix time). Token is supposed to be valid in next {int(INSTANCE_SLA/3600)} hours."
     )
 
 
-def data_access_expiry_checker(data: DebugTokenData) -> bool:
+def data_access_expiry_checker(data: DebugTokenData) -> None:
     expires_at = data.data_access_expires_at
     if expires_at is None:
-        return False
+        raise TokenRuleException("token missing 'expires_at' field")
 
-    return expires_at == 0 or (
+    if expires_at == 0 or (
         expires_at > 0 and expires_at - int(time.time()) >= INSTANCE_SLA
+    ):
+        return None
+
+    raise TokenRuleException(
+        f"token 'expires_at': {expires_at} (unix time). Token is supposed to be valid in next {int(INSTANCE_SLA/3600)} hours."
     )
 
 
-def permission_checker(data: DebugTokenData) -> bool:
+def permission_checker(data: DebugTokenData) -> None:
     if data.scopes is None:
-        return False
+        raise TokenRuleException("token missing 'scopes' field")
 
-    return set(data.scopes).issuperset(REQUIRED_TOKEN_SCOPES)
+    missing_perm = REQUIRED_TOKEN_SCOPES - set(data.scopes)
+    if missing_perm:
+        raise TokenRuleException(f"permission scopes missing: {missing_perm}")
 
 
 """
@@ -135,4 +162,4 @@ class TokenValidationRule(Enum):
     def __init__(self, data: TokenValidationRuleData) -> None:
         super().__init__()
         self.rule_type: TokenValidationRuleType = data.rule_type
-        self.rule_checker: Callable[[DebugTokenData], bool] = data.rule_checker
+        self.rule_checker: Callable[[DebugTokenData], None] = data.rule_checker

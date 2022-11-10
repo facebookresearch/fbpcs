@@ -164,10 +164,12 @@ class GraphAPITokenValidationError(
     OneCommandRunnerBaseException, GraphAPIGenericException
 ):
     @classmethod
-    def make_error(cls, rule: TokenValidationRule) -> "GraphAPITokenValidationError":
+    def make_error(
+        cls, rule: TokenValidationRule, cause: str = ""
+    ) -> "GraphAPITokenValidationError":
         return cls(
             msg="Graph API token didn't pass the validation.",
-            cause=f"Graph API token didn't pass. rule={rule}",
+            cause=f"Graph API token didn't pass. rule={rule} cause={cause}",
             remediation="Please check your Graph API token meet the requirements",
             exit_code=cls._determine_exit_code(rule),
         )
