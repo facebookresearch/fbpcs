@@ -16,6 +16,7 @@ from fbpcs.pl_coordinator.bolt_graphapi_client import (
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenValidationError
 from fbpcs.pl_coordinator.token_validation_rules import (
     DebugTokenData,
+    TokenRuleException,
     TokenValidationRule,
     TokenValidationRuleType,
 )
@@ -56,9 +57,12 @@ class TokenValidator:
         ## prepare data
         self._load_data(rule=rule)
         if rule.rule_type is TokenValidationRuleType.COMMON:
-            if self.debug_token_data is not None and rule.rule_checker(
-                self.debug_token_data
-            ):
-                return
+            if self.debug_token_data is None:
+                raise GraphAPITokenValidationError.make_error(rule=rule)
 
-        raise GraphAPITokenValidationError.make_error(rule)
+            try:
+                rule.rule_checker(self.debug_token_data)
+            except TokenRuleException as e:
+                raise GraphAPITokenValidationError.make_error(rule=rule, cause=str(e))
+
+        return None

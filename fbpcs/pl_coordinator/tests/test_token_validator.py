@@ -60,12 +60,14 @@ class TestTokenValidator(TestCase):
             test_rule,
             debug_data,
             is_valid,
+            cause_msg_regex,
         ) in self.get_token_common_test_data():
             with self.subTest(
                 sub_test_title,
                 test_rule=test_rule,
                 debug_data=debug_data,
                 is_valid=is_valid,
+                cause_msg_regex=cause_msg_regex,
             ):
                 self.validator.debug_token_data = None
                 self.client.reset_mock()
@@ -75,11 +77,13 @@ class TestTokenValidator(TestCase):
                 if is_valid:
                     self.validator.validate_rule(test_rule)
                 else:
-                    with self.assertRaises(GraphAPITokenValidationError):
+                    with self.assertRaises(GraphAPITokenValidationError) as cm:
                         self.validator.validate_rule(test_rule)
 
+                    self.assertRegex(str(cm.exception), cause_msg_regex)
+
     def get_token_common_test_data(self):
-        # sub_test_title, test_rule, debug_data, is_valid
+        # sub_test_title, test_rule, debug_data, is_valid, cause_msg_regex
         return (
             (
                 "Token valid during computation",
@@ -92,36 +96,42 @@ class TestTokenValidator(TestCase):
                     )
                 ),
                 True,
+                "",
             ),
             (
                 "Token never expired",
                 TokenValidationRule.TOKEN_EXPIRY,
                 self._gen_debug_data(expires_at=0),
                 True,
+                "",
             ),
             (
                 "Token never expire data access",
                 TokenValidationRule.TOKEN_DATA_ACCESS_EXPIRY,
                 self._gen_debug_data(data_access_expires_at=0),
                 True,
+                "",
             ),
             (
                 "Token miss User type",
                 TokenValidationRule.TOKEN_USER_TYPE,
                 self._gen_debug_data(type=None),
                 False,
+                "unexpected token user type None; expected: (.+)",
             ),
             (
                 "Token is User type",
                 TokenValidationRule.TOKEN_USER_TYPE,
                 self._gen_debug_data(type="USER"),
                 True,
+                "",
             ),
             (
                 "Token is System User type",
                 TokenValidationRule.TOKEN_USER_TYPE,
                 self._gen_debug_data(type="SYSTEM_USER"),
                 True,
+                "",
             ),
             (
                 "Token expire soon",
@@ -132,6 +142,7 @@ class TestTokenValidator(TestCase):
                     )
                 ),
                 False,
+                "token 'expires_at': [0-9]+ \\(unix time\\). Token is supposed to be valid in next [0-9]+ hours",
             ),
             (
                 "Token data access valid during computation",
@@ -144,6 +155,7 @@ class TestTokenValidator(TestCase):
                     )
                 ),
                 True,
+                "",
             ),
             (
                 "Token data access expire soon",
@@ -154,18 +166,27 @@ class TestTokenValidator(TestCase):
                     )
                 ),
                 False,
+                "token 'expires_at': [0-9]+ \\(unix time\\). Token is supposed to be valid in next [0-9]+ hours",
             ),
             (
                 "Token not valid",
                 TokenValidationRule.TOKEN_VALID,
                 self._gen_debug_data(is_valid=False),
                 False,
+                "token is not valid",
             ),
             (
                 "Token not meet permission",
-                TokenValidationRule.TOKEN_VALID,
-                self._gen_debug_data(is_valid=False),
+                TokenValidationRule.TOKEN_PERMISSIONS,
+                self._gen_debug_data(
+                    scopes=[
+                        "ads_management",
+                        "ads_read",
+                        "business_management",
+                    ]
+                ),
                 False,
+                "permission scopes missing: {'private_computation_access'}",
             ),
         )
 
