@@ -13,7 +13,6 @@ from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.repository.mpc_game_repository import MPCGameRepository
 from fbpcp.repository.mpc_instance import MPCInstanceRepository
 from fbpcp.service.container import ContainerService
-from fbpcp.service.mpc import MPCService
 from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
@@ -43,6 +42,7 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )

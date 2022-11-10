@@ -13,10 +13,10 @@ from typing import Dict, List, Optional
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import ThrottlingError
-from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.service.retry_handler import RetryHandler
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 
 DEFAULT_WAIT_FOR_CONTAINER_POLL = 5
 

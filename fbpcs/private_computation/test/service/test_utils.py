@@ -9,8 +9,6 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
 from fbpcp.entity.mpc_instance import MPCParty
-
-from fbpcp.service.mpc import MPCService
 from fbpcs.infra.certificate.basic_ca_certificate_provider import (
     BasicCaCertificateProvider,
 )
@@ -46,6 +44,8 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_ENV_VAR,
     SERVER_CERTIFICATE_PATH_ENV_VAR,
 )
+
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.utils import create_and_start_mpc_instance
 
 ca_cert_content = "ca certificate"

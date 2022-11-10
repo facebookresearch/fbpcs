@@ -15,7 +15,6 @@ from typing import Any, DefaultDict, Dict, List, Optional, Set, Type, TypeVar, U
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.error.pcp import ThrottlingError
-from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -88,6 +87,7 @@ from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
 )
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.pid_utils import (
     get_max_id_column_cnt,
     get_pid_protocol_from_num_shards,

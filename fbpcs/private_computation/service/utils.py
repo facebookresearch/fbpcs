@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional
 
 from fbpcp.entity.certificate_request import CertificateRequest
 from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
-from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -35,6 +34,7 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_ENV_VAR,
     SERVER_CERTIFICATE_PATH_ENV_VAR,
 )
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 
 

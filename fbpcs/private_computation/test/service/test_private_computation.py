@@ -18,7 +18,6 @@ from unittest.mock import AsyncMock, call, MagicMock, Mock, patch
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 
 from fbpcp.error.pcp import ThrottlingError
-from fbpcp.service.mpc import MPCInstanceStatus, MPCParty, MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
@@ -64,6 +63,11 @@ from fbpcs.private_computation.service.constants import (
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
+)
+from fbpcs.private_computation.service.mpc.mpc import (
+    MPCInstanceStatus,
+    MPCParty,
+    MPCService,
 )
 from fbpcs.private_computation.service.pcf2_attribution_stage_service import (
     PCF2AttributionStageService,
@@ -880,7 +884,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             with self.subTest(stage=stage):
                 _run_sub_test(stage)
 
-    @patch("fbpcp.service.mpc.MPCService")
+    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
     async def test_create_and_start_mpc_instance(self, mock_mpc_svc) -> None:
         mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())
         mock_mpc_svc.create_instance = MagicMock()
