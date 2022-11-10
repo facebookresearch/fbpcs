@@ -10,7 +10,6 @@ import abc
 from dataclasses import dataclass
 from typing import DefaultDict, Dict, List, Optional
 
-from fbpcp.service.mpc import MPCService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.service.metric_service import MetricService
@@ -23,6 +22,8 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
 )
+
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.service.workflow import WorkflowService
 
 

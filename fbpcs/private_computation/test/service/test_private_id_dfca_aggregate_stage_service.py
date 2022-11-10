@@ -35,7 +35,7 @@ from fbpcs.private_computation.service.private_id_dfca_aggregate_stage_service i
 
 
 class TestPrivateIdDfcaAggregateStageService(IsolatedAsyncioTestCase):
-    @patch("fbpcp.service.mpc.MPCService")
+    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
     def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())

@@ -11,7 +11,6 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.mpc_instance import MPCParty
-from fbpcp.service.mpc import MPCService
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -31,6 +30,7 @@ from fbpcs.private_computation.entity.product_config import (
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 
 from fbpcs.private_computation.service.pcf2_lift_stage_service import (
     PCF2LiftStageService,
@@ -38,7 +38,7 @@ from fbpcs.private_computation.service.pcf2_lift_stage_service import (
 
 
 class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
-    @patch("fbpcp.service.mpc.MPCService")
+    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
     def setUp(self, mock_mpc_svc: MPCService) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()

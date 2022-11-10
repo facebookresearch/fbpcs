@@ -36,7 +36,7 @@ from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 
 
 class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
-    @patch("fbpcp.service.mpc.MPCService")
+    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
     def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())

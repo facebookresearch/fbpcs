@@ -38,7 +38,7 @@ from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_f
 
 
 class TestAggregationStageService(IsolatedAsyncioTestCase):
-    @patch("fbpcp.service.mpc.MPCService")
+    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
     def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.create_instance = MagicMock()

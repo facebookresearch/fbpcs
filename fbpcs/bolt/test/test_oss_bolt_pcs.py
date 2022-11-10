@@ -12,8 +12,6 @@ from unittest.mock import patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 
-from fbpcp.service.mpc import MPCService
-
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.bolt.bolt_client import BoltState
 
@@ -50,6 +48,8 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
+
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.private_computation import (
     NUM_NEW_SHARDS_PER_FILE,
     PrivateComputationService,

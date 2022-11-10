@@ -36,7 +36,7 @@ from fbpcs.private_computation.service.pcf2_shard_combiner_stage_service import 
 
 
 class TestShardCombinerStageService(IsolatedAsyncioTestCase):
-    @patch("fbpcp.service.mpc.MPCService")
+    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
     def setUp(self, mock_mpc_svc) -> None:
         self.mock_mpc_svc = mock_mpc_svc
         self.mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())
