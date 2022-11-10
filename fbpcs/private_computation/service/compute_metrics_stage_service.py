@@ -10,7 +10,6 @@
 import logging
 from typing import Any, DefaultDict, Dict, List, Optional
 
-from fbpcp.service.mpc import MPCService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
@@ -28,6 +27,8 @@ from fbpcs.private_computation.entity.product_config import (
     AttributionRule,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+
+from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.pcf2_lift_stage_service import (
     PCF2LiftStageService,
 )
