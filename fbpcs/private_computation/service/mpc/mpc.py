@@ -17,9 +17,9 @@ from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcp.error.pcp import PcpError
 from fbpcp.repository.mpc_instance import MPCInstanceRepository
 from fbpcp.service.container import ContainerService
-from fbpcp.service.mpc_game import MPCGameService
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
+from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
 
 DEFAULT_BINARY_VERSION = "latest"
 

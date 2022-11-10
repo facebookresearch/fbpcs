@@ -35,7 +35,7 @@ pid:
 mpc:
   dependency:
     MPCGameService:
-      class: fbpcp.service.mpc_game.MPCGameService
+      class: fbpcs.private_computation.service.mpc.mpc_game.MPCGameService
       dependency:
         PrivateComputationGameRepository:
           class: fbpcs.private_computation.repository.private_computation_game.PrivateComputationGameRepository
