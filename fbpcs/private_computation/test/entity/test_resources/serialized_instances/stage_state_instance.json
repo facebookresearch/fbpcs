@@ -1,1 +1,17 @@
-{"creation_ts": 1661800194, "status": "COMPLETED", "stage_name": "PC_PRE_VALIDATION", "instance_id": "stage_state_instance_id", "end_ts": null, "containers": [{"status": "COMPLETED", "ip_address": "1.1.1.1", "cpu": null, "instance_id": "test_container_instance_0", "memory": null, "__type": "ContainerInstance"}]}
+{
+  "creation_ts": 1661800194,
+  "status": "COMPLETED",
+  "stage_name": "PC_PRE_VALIDATION",
+  "instance_id": "stage_state_instance_id",
+  "end_ts": null,
+  "containers": [
+    {
+      "status": "COMPLETED",
+      "ip_address": "1.1.1.1",
+      "cpu": null,
+      "instance_id": "test_container_instance_0",
+      "memory": null,
+      "__type": "ContainerInstance"
+    }
+  ]
+}
