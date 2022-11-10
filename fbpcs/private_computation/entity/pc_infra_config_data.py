@@ -37,7 +37,7 @@ class PrivateComputationInfraConfigInfo(Enum):
     )
 
     MPC_GAME_SERVICE = PrivateComputationInfraConfigData(
-        "fbpcp.service.mpc_game.MPCGameService",
+        "fbpcs.private_computation.service.mpc.mpc_game.MPCGameService",
         set(),
     )
 
