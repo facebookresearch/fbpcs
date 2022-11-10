@@ -9,10 +9,13 @@
 import logging
 from typing import Any, Dict, Optional, Tuple
 
-from fbpcp.entity.mpc_game_config import MPCGameConfig
 from fbpcp.entity.mpc_instance import MPCParty
-from fbpcp.repository.mpc_game_repository import MPCGameRepository
 from fbpcp.util.arg_builder import build_cmd_args
+
+from fbpcs.private_computation.service.mpc.entity.mpc_game_config import MPCGameConfig
+from fbpcs.private_computation.service.mpc.repository.mpc_game_repository import (
+    MPCGameRepository,
+)
 
 LIFT_GAME_NAME = "lift"
 LIFT_AGGREGATOR_GAME_NAME = "aggregator"

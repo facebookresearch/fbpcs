@@ -11,9 +11,16 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, TypedDict
 
-from fbpcp.entity.mpc_game_config import MPCGameArgument, MPCGameConfig
-from fbpcp.repository.mpc_game_repository import MPCGameRepository
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+
+from fbpcs.private_computation.service.mpc.entity.mpc_game_config import (
+    MPCGameArgument,
+    MPCGameConfig,
+)
+
+from fbpcs.private_computation.service.mpc.repository.mpc_game_repository import (
+    MPCGameRepository,
+)
 
 
 class GameNames(Enum):

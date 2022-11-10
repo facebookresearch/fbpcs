@@ -10,11 +10,12 @@ import unittest
 from typing import List
 from unittest.mock import patch
 
-from fbpcp.entity.mpc_game_config import MPCGameArgument
 from fbpcs.private_computation.repository.private_computation_game import (
     OneDockerArgument,
     PrivateComputationGameRepository,
 )
+
+from fbpcs.private_computation.service.mpc.entity.mpc_game_config import MPCGameArgument
 
 
 class TestPrivateComputationGameRepository(unittest.TestCase):
