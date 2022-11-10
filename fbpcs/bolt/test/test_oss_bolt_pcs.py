@@ -69,7 +69,9 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         private_computation_instance_repo_patcher = patch(
             "fbpcs.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository"
         )
-        mpc_game_svc_patcher = patch("fbpcp.service.mpc_game.MPCGameService")
+        mpc_game_svc_patcher = patch(
+            "fbpcs.private_computation.service.mpc.mpc_game.MPCGameService"
+        )
         container_svc = container_svc_patcher.start()
         storage_svc = storage_svc_patcher.start()
         mpc_instance_repository = mpc_instance_repo_patcher.start()

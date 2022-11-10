@@ -11,6 +11,7 @@ from typing import Any, Dict, Type, TypeVar
 from fbpcp.util.reflect import (  # @manual=//measurement/private_measurement/pcp:pcp"
     get_class as fbpcp_get_class,
 )
+from fbpcs.private_computation.service.utils import deprecated_msg
 from fbpcs.utils.config_yaml.exceptions import (  # @manual=//measurement/private_measurement/pcp:pcp"
     ConfigYamlClassNotFoundError,
     ConfigYamlModuleImportError,
@@ -18,6 +19,13 @@ from fbpcs.utils.config_yaml.exceptions import (  # @manual=//measurement/privat
     ConfigYamlWrongClassConfiguredError,
     ConfigYamlWrongConstructorError,
 )
+
+
+# Backward compatible for partners still using the old config settins
+DEPRECATED_CLASSES = {
+    "fbpcp.service.mpc_game.MPCGameService": "fbpcs.private_computation.service.mpc.mpc_game.MPCGameService"
+}
+
 
 T = TypeVar("T")
 
@@ -38,6 +46,12 @@ def get_class(class_path: str, target_class: Type[T]) -> Type[T]:
         A class object of type target_class
     """
     try:
+        if class_path in DEPRECATED_CLASSES:
+            deprecated_msg(
+                f"'{class_path}' is deprecated, please replace with '{DEPRECATED_CLASSES[class_path]}' instead."
+            )
+            class_path = DEPRECATED_CLASSES[class_path]
+
         cls = fbpcp_get_class(class_path)
         assert issubclass(cls, target_class)
     except ImportError:

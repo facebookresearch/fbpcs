@@ -40,7 +40,9 @@ class TestMPCService(IsolatedAsyncioTestCase):
     def setUp(self):
         cspatcher = patch("fbpcp.service.container.ContainerService")
         irpatcher = patch("fbpcp.repository.mpc_instance.MPCInstanceRepository")
-        gspatcher = patch("fbpcp.service.mpc_game.MPCGameService")
+        gspatcher = patch(
+            "fbpcs.private_computation.service.mpc.mpc_game.MPCGameService"
+        )
         container_svc = cspatcher.start()
         instance_repository = irpatcher.start()
         mpc_game_svc = gspatcher.start()
