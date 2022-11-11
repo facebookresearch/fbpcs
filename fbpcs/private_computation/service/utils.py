@@ -59,6 +59,7 @@ async def create_and_start_mpc_instance(
     repository_path: Optional[str] = None,
     certificate_request: Optional[CertificateRequest] = None,
     wait_for_containers_to_start_up: bool = True,
+    server_domain: Optional[str] = None,
 ) -> MPCInstance:
     """Creates an MPC instance and runs MPC service with it
 
@@ -82,12 +83,14 @@ async def create_and_start_mpc_instance(
         mpc_svc.get_instance(instance_id)
     except Exception:
         logging.info(f"Failed to fetch MPC instance {instance_id} - trying to create")
+        server_uris = _get_server_uris(server_domain, mpc_party, num_containers)
         mpc_svc.create_instance(
             instance_id=instance_id,
             game_name=game_name,
             mpc_party=mpc_party,
             num_workers=num_containers,
             game_args=game_args,
+            server_uris=server_uris,
         )
 
     env_vars = {}
@@ -111,6 +114,18 @@ async def create_and_start_mpc_instance(
         certificate_request=certificate_request,
         wait_for_containers_to_start_up=wait_for_containers_to_start_up,
     )
+
+
+def _get_server_uris(
+    server_domain: Optional[str], mpc_party: MPCParty, num_containers: int
+) -> Optional[List[str]]:
+    """For each container, create a unique server_uri based
+    on the server_domain when the MPCParty is server.
+    """
+    if mpc_party is MPCParty.CLIENT or not server_domain:
+        return None
+    else:
+        return [f"node{i}.{server_domain}" for i in range(num_containers)]
 
 
 def map_private_computation_role_to_mpc_party(
