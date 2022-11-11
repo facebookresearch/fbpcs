@@ -33,7 +33,7 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   std::string play(const CalculatorGameConfig& config) {
     if (config.inputData.getNumRows() == 0) {
-      XLOG(INFO) << "skipped calculating as numRows==0.";
+      XLOG(WARN) << "skipped calculating as numRows==0.";
       // skip game::run(), just output the default metrics.
       return GroupedLiftMetrics().toJson();
     }
@@ -61,7 +61,7 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
     XLOG(INFO) << "Have " << inputProcessor.getLiftGameProcessedData().numRows
                << " values in inputData.";
     if (inputProcessor.getLiftGameProcessedData().numRows == 0) {
-      XLOG(INFO) << "skipped calculating as numRows==0.";
+      XLOG(WARN) << "skipped calculating as numRows==0.";
       // skip game::run(), just output the default metrics.
       return GroupedLiftMetrics().toJson();
     }

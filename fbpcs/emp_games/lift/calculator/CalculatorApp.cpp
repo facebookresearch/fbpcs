@@ -38,7 +38,7 @@ void CalculatorApp::run() {
 
       putOutputData(output);
     } else {
-      XLOG(INFO) << "skipped calculating as numValues==0.";
+      XLOG(WARN) << "skipped calculating as numValues==0.";
       // skip game::run(), just output the default metrics.
       if (party_ == fbpcf::Party::Alice) {
         putOutputData(OutputMetrics<PUBLISHER>{
