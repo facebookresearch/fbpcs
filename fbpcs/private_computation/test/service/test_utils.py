@@ -65,6 +65,8 @@ class TestUtils(IsolatedAsyncioTestCase):
         )
         self.test_binary_version = "latest"
         self.mpc_svc = self._create_mpc_svc()
+        self.server_domain = "study123.pci.facebook.com"
+        self.game_name = "private_lift"
 
     @patch.object(MPCService, "start_instance_async")
     @patch.object(
@@ -109,6 +111,7 @@ class TestUtils(IsolatedAsyncioTestCase):
             game_args=game_args,
             server_certificate_provider=self.server_certificate_provider,
             ca_certificate_provider=self.ca_certificate_provider,
+            server_domain=self.server_domain,
         )
 
         # Assert
@@ -121,6 +124,65 @@ class TestUtils(IsolatedAsyncioTestCase):
             env_vars=expected_env_vars,
             certificate_request=None,
             wait_for_containers_to_start_up=True,
+        )
+
+    @patch.object(MPCService, "start_instance_async")
+    @patch.object(
+        BasicCaCertificateProvider, "get_certificate", return_value=ca_cert_content
+    )
+    @patch.object(
+        PCInstanceServerCertificateProvider,
+        "get_certificate",
+        return_value=server_cert_content,
+    )
+    @patch.object(MPCService, "create_instance")
+    @patch.object(
+        MPCService, "get_instance", side_effect=Exception("Instance Not Found")
+    )
+    async def test_create_and_start_mpc_instance_server_uris(
+        self,
+        getInstanceMock,
+        createInstanceMock,
+        serverCertProviderMock,
+        caCertProviderMock,
+        startInstanceAsyncMock,
+    ) -> None:
+        # Arrange
+        game_args = [
+            {
+                TLS_ARG_KEY_CA_CERT_PATH: CA_CERT_PATH,
+                TLS_ARG_KEY_SERVER_CERT_PATH: SERVER_CERT_PATH,
+            }
+        ]
+        expected_server_uris = [
+            f"node0.{self.server_domain}",
+            f"node1.{self.server_domain}",
+        ]
+        # Act
+        await create_and_start_mpc_instance(
+            self.mpc_svc,
+            self.instance_id,
+            self.game_name,
+            MPCParty.SERVER,
+            num_containers=2,
+            binary_version=self.test_binary_version,
+            server_certificate_path=SERVER_CERT_PATH,
+            ca_certificate_path=CA_CERT_PATH,
+            game_args=game_args,
+            server_certificate_provider=self.server_certificate_provider,
+            ca_certificate_provider=self.ca_certificate_provider,
+            server_domain=self.server_domain,
+        )
+
+        # Assert
+        getInstanceMock.assert_called_once_with(self.instance_id)
+        createInstanceMock.assert_called_once_with(
+            instance_id=self.instance_id,
+            game_name=self.game_name,
+            mpc_party=MPCParty.SERVER,
+            num_workers=2,
+            game_args=game_args,
+            server_uris=expected_server_uris,
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
