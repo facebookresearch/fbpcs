@@ -8,7 +8,11 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import (
+    MPCInstance,
+    MPCInstanceStatus,
+    MPCParty,
+)
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 
 
@@ -39,7 +43,9 @@ GAME_ARGS = [
 class TestMPCService(IsolatedAsyncioTestCase):
     def setUp(self):
         cspatcher = patch("fbpcp.service.container.ContainerService")
-        irpatcher = patch("fbpcp.repository.mpc_instance.MPCInstanceRepository")
+        irpatcher = patch(
+            "fbpcs.private_computation.service.mpc.repository.mpc_instance.MPCInstanceRepository"
+        )
         gspatcher = patch(
             "fbpcs.private_computation.service.mpc.mpc_game.MPCGameService"
         )

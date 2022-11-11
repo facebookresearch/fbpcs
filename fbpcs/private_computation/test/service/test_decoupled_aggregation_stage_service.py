@@ -8,7 +8,6 @@ from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -32,6 +31,8 @@ from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.decoupled_aggregation_stage_service import (
     AggregationStageService,
 )
+
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
     PrivateComputationInstanceStatus,
 )

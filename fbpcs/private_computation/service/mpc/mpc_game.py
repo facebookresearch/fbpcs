@@ -9,10 +9,11 @@
 import logging
 from typing import Any, Dict, Optional, Tuple
 
-from fbpcp.entity.mpc_instance import MPCParty
 from fbpcp.util.arg_builder import build_cmd_args
 
 from fbpcs.private_computation.service.mpc.entity.mpc_game_config import MPCGameConfig
+
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.repository.mpc_game_repository import (
     MPCGameRepository,
 )

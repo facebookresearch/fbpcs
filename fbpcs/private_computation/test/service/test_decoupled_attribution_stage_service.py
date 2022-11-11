@@ -8,7 +8,6 @@ from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 
@@ -34,6 +33,8 @@ from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.decoupled_attribution_stage_service import (
     AttributionStageService,
 )
+
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 
 
 class TestAttributionStageService(IsolatedAsyncioTestCase):
