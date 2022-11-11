@@ -10,7 +10,6 @@ from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 
@@ -32,6 +31,8 @@ from fbpcs.private_computation.entity.product_config import (
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
+
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 
 from fbpcs.private_computation.service.pcf2_lift_metadata_compaction_stage_service import (
