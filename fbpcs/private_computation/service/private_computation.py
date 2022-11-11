@@ -108,6 +108,7 @@ from fbpcs.utils.optional import unwrap_or_default
 T = TypeVar("T")
 
 PCSERVICE_ENTITY_NAME = "pcservice"
+DEFAULT_SERVER_DOMAIN = "study123.pci.facebook.com"
 
 
 class PrivateComputationService:
@@ -372,7 +373,7 @@ class PrivateComputationService:
         # dynamically composed server domain for publisher side
         # when tls feature is enabled.
         # return f"publisher.study{instance_id}.pci.facebook.com"
-        return "study123.pci.facebook.com"
+        return DEFAULT_SERVER_DOMAIN
 
     def _get_number_of_mpc_containers(
         self,
