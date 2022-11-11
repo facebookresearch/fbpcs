@@ -7,7 +7,6 @@
 from unittest import TestCase
 from unittest.mock import ANY, call, MagicMock, patch
 
-from fbpcp.repository.mpc_game_repository import MPCGameRepository
 from fbpcp.repository.mpc_instance import MPCInstanceRepository
 from fbpcp.service.container import ContainerService
 from fbpcp.service.storage import StorageService
@@ -22,6 +21,10 @@ from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
 from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
+
+from fbpcs.private_computation.service.mpc.repository.mpc_game_repository import (
+    MPCGameRepository,
+)
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
