@@ -7,10 +7,12 @@
 # pyre-strict
 
 
-from fbpcp.entity.mpc_instance import MPCInstance
-from fbpcp.repository.mpc_instance import MPCInstanceRepository
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.repository.instance_local import LocalInstanceRepository
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCInstance
+from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
+    MPCInstanceRepository,
+)
 
 
 class LocalMPCInstanceRepository(MPCInstanceRepository):

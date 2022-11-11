@@ -10,9 +10,13 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
 from fbpcp.entity.container_instance import ContainerInstance
-from fbpcp.entity.mpc_instance import MPCInstance, MPCInstanceStatus, MPCParty
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import (
+    MPCInstance,
+    MPCInstanceStatus,
+    MPCParty,
+)
 
 DEFAULT_SERVER_URIS = [
     "node0.study123.pci.facebook.com"

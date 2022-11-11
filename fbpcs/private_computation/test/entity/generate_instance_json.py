@@ -10,7 +10,6 @@ import os
 import time
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcp.entity.mpc_instance import MPCInstanceStatus, MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
@@ -40,6 +39,10 @@ from fbpcs.private_computation.entity.product_config import (
     CommonProductConfig,
     LiftConfig,
     ProductConfig,
+)
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import (
+    MPCInstanceStatus,
+    MPCParty,
 )
 
 LIFT_PC_PATH: str = os.path.join(

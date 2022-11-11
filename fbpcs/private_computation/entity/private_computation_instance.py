@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 from pathlib import Path
 
 from fbpcp.entity.container_instance import ContainerInstance
-from fbpcp.entity.mpc_instance import MPCInstanceStatus
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
@@ -51,6 +50,7 @@ from fbpcs.private_computation.entity.product_config import (
     PrivateIdDfcaConfig,
     ProductConfig,
 )
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCInstanceStatus
 
 UnionedPCInstanceStatus = Union[
     MPCInstanceStatus,

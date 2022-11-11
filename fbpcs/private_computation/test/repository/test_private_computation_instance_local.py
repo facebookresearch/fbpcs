@@ -10,7 +10,6 @@ import random
 import string
 import unittest
 
-from fbpcp.entity.mpc_instance import MPCParty
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -29,6 +28,8 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.repository.private_computation_instance_local import (
     LocalPrivateComputationInstanceRepository,
 )
+
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 
 
 class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):

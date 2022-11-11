@@ -13,7 +13,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, DefaultDict, Dict, List, Optional, Set, Type, TypeVar, Union
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
-from fbpcp.entity.mpc_instance import MPCInstance
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
@@ -87,6 +86,7 @@ from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
 )
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCInstance
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.pid_utils import (
     get_max_id_column_cnt,

@@ -8,12 +8,12 @@ import unittest
 from typing import List
 from unittest.mock import MagicMock, Mock
 
-from fbpcp.entity.mpc_instance import MPCParty
-
 from fbpcs.private_computation.service.mpc.entity.mpc_game_config import (
     MPCGameArgument,
     MPCGameConfig,
 )
+
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
 
 
