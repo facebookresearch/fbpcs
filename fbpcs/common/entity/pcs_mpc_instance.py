@@ -77,7 +77,5 @@ class PCSMPCInstance(MPCInstance, InstanceBase):
             mpc_instance.containers,
             mpc_instance.status,
             mpc_instance.game_args,
-            # TODO: Replace this static value with dynamic value returned from MPCInstance
-            # when fbpcp is released (D40948331) with the changes in (D40917008)
-            DEFAULT_SERVER_URIS if tls_enabled else None,
+            mpc_instance.server_uris,
         )
