@@ -68,7 +68,7 @@ void ShardAggregatorApp::run() {
       putOutputData(result);
     }
   } else {
-    XLOG(INFO) << "inputData is empty().";
+    XLOG(WARN) << "inputData is empty().";
     putOutputData(nullptr);
   }
 };
@@ -97,7 +97,7 @@ std::vector<std::shared_ptr<AggMetrics>> ShardAggregatorApp::getInputData() {
             XLOG(INFO) << "Opening file at <" << inputPath << ">";
             auto contents = fbpcf::io::FileIOWrappers::readFile(inputPath);
             if (contents.empty()) {
-              XLOG(INFO) << "Empty file: <" << inputPath << ">";
+              XLOG(WARN) << "Empty file: <" << inputPath << ">";
               return nullptr;
             }
             return std::make_shared<AggMetrics>(
