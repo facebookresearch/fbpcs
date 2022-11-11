@@ -938,6 +938,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 mpc_party=mpc_party,
                 num_workers=num_containers,
                 game_args=game_args,
+                server_uris=None,
             ),
             mock_mpc_svc.create_instance.call_args,
         )
