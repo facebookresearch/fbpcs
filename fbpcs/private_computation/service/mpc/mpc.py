@@ -111,6 +111,7 @@ class MPCService:
         num_workers: int,
         server_ips: Optional[List[str]] = None,
         game_args: Optional[List[Dict[str, Any]]] = None,
+        server_uris: Optional[List[str]] = None,
     ) -> MPCInstance:
         self.logger.info(f"Creating MPC instance: {instance_id}")
 
@@ -123,7 +124,7 @@ class MPCService:
             [],
             MPCInstanceStatus.CREATED,
             game_args,
-            [],
+            server_uris,
         )
 
         self.instance_repository.create(instance)
