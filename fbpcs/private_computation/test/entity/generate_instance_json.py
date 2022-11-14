@@ -6,6 +6,8 @@
 
 # pyre-strict
 
+
+import json
 import os
 import time
 
@@ -179,5 +181,30 @@ if __name__ == "__main__":
         ),
     ):
         json_output = instance.dumps_schema()
+        if path == STAGE_STATE_PATH:
+            instance_dict = json.loads(json_output)
+            instance_dict[
+                "invalid_parameter_to_exclude"
+            ] = "This instance value should be excluded."
+            json_output = json.dumps(instance_dict)
+        elif path == LIFT_MPC_PATH:
+            instance_dict = json.loads(json_output)
+            instance_dict[
+                "invalid_parameter_to_exclude"
+            ] = "This instance value should be excluded."
+            json_output = json.dumps(instance_dict)
+        elif path == LIFT_PC_PATH:
+            instance_dict = json.loads(json_output)
+            instance_dict["infra_config"][
+                "invalid_parameter_to_exclude"
+            ] = "This instance value should be excluded."
+            instance_dict["infra_config"]["instances"][0][
+                "invalid_parameter_to_exclude"
+            ] = "This instance value should be excluded."
+            instance_dict["infra_config"]["instances"][1][
+                "invalid_parameter_to_exclude"
+            ] = "This instance value should be excluded."
+            json_output = json.dumps(instance_dict)
+
         with open(path, "w") as f:
             f.write(json_output)

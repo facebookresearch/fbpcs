@@ -71,7 +71,7 @@ class TestInstanceSerde(unittest.TestCase):
         except Exception as e:
             raise RuntimeError(ERR_MSG) from e
 
-    def test_pc_deserialiation(self) -> None:
+    def test_pc_deserialization(self) -> None:
         # this tests that old fields (and instances) can be deserialized
         with open(LIFT_PC_PATH) as f:
             instance_json = f.read().strip()
