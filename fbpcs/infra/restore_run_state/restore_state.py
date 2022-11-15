@@ -18,6 +18,7 @@ Options:
 
 import logging
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -98,23 +99,11 @@ class RestoreRunState:
         return parts[-1]
 
     def _split_path(self, s3_path: str) -> Optional[Tuple[str, str]]:
-        # TODO Use regex match  s3://(.*)/(.*)
-        if s3_path.startswith("s3://"):
-            s3_path = s3_path.replace("s3://", "")
-            parts = s3_path.split("/")
-            bucket = parts[0]
-            first = True
-            prefix = ""
-            for part in parts:
-                if first:
-                    first = False
-                    continue
-                if prefix != "":
-                    prefix += "/"
-                prefix += part
+        p = re.compile("s3://(.+?)/(.+)")
+        m = p.match(s3_path)
 
-            return bucket, prefix
-
+        if m is not None:
+            return m.group(1, 2)
         return None
 
     def _init_s3(self, region_name: str) -> None:
