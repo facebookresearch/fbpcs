@@ -22,7 +22,6 @@ binary_names=(
     'private_lift/lift'
     'private_lift/pcf2_lift'
     'private_lift/pcf2_lift_metadata_compaction'
-    'private_lift/aggregator'
     'private_attribution/decoupled_attribution'
     'private_attribution/decoupled_aggregation'
     'private_attribution/pcf2_attribution'

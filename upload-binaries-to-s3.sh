@@ -32,7 +32,7 @@ shift
 one_docker_repo="one-docker-repository-prod"
 lift_package="s3://$one_docker_repo/private_lift/lift/${TAG}/lift"
 pcf2_lift_package="s3://$one_docker_repo/private_lift/pcf2_lift/${TAG}/pcf2_lift"
-pcf2_lift_metadata_compaction_package="s3://$one_docker_repo/private_lift/pcf2_lift_metadata_compaction${TAG}/pcf2_lift_metadata_compaction"
+pcf2_lift_metadata_compaction_package="s3://$one_docker_repo/private_lift/pcf2_lift_metadata_compaction/${TAG}/pcf2_lift_metadata_compaction"
 attribution_repo="s3://$one_docker_repo/private_attribution"
 decoupled_attribution="$attribution_repo/decoupled_attribution/${TAG}/decoupled_attribution"
 decoupled_aggregation="$attribution_repo/decoupled_aggregation/${TAG}/decoupled_aggregation"
