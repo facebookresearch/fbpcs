@@ -30,17 +30,17 @@ from fbpcs.private_computation.repository.private_computation_game import GameNa
 from fbpcs.private_computation.service.argument_helper import get_tls_arguments
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 
-from fbpcs.private_computation.service.mpc.mpc import MPCService
+from fbpcs.private_computation.service.mpc.mpc import (
+    create_and_start_mpc_instance,
+    get_updated_pc_status_mpc_game,
+    map_private_computation_role_to_mpc_party,
+    MPCService,
+)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
-)
-from fbpcs.private_computation.service.utils import (
-    create_and_start_mpc_instance,
-    get_updated_pc_status_mpc_game,
-    map_private_computation_role_to_mpc_party,
 )
 
 

@@ -46,8 +46,10 @@ from fbpcs.private_computation.service.constants import (
 
 from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 
-from fbpcs.private_computation.service.mpc.mpc import MPCService
-from fbpcs.private_computation.service.utils import create_and_start_mpc_instance
+from fbpcs.private_computation.service.mpc.mpc import (
+    create_and_start_mpc_instance,
+    MPCService,
+)
 
 ca_cert_content = "ca certificate"
 server_cert_content = "server certificate"
