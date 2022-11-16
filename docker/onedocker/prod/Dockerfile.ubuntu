@@ -1,0 +1,47 @@
+ARG os_release="20.04"
+
+FROM ubuntu:${os_release}
+
+ENV TZ=America/Los_Angeles
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN useradd -ms /bin/bash onedocker
+
+USER onedocker
+RUN mkdir -p /home/onedocker/package
+
+USER root
+RUN mkdir -p /root/onedocker/package
+WORKDIR /root
+
+RUN apt-get update && apt-get install -y \
+  git \
+  wget \
+  software-properties-common \
+  python3.8 \
+  python3-pip \
+  ca-certificates \
+  libboost-regex1.71.0 \
+  libcurl4 \
+  libdouble-conversion3 \
+  libgflags2.2 \
+  libgmp10 \
+  libgoogle-glog0v5 \
+  libssl1.1 \
+  libre2-5 \
+  zlib1g \
+  sudo
+
+# installing pip requirements
+RUN mkdir -p /home/onedocker/src
+ADD pip_requirements.txt /home/onedocker/src
+RUN python3.8 -m pip install -r /home/onedocker/src/pip_requirements.txt
+
+# limit execution permission only to the directory where binaries are downloaded
+RUN chown -R onedocker /home/onedocker/package/
+RUN chmod -R u-x ~/
+RUN chmod -R u+rw /tmp
+RUN chmod -R u+rwx /home/onedocker/package/
+
+CMD ["/bin/bash"]
+WORKDIR /home/onedocker
