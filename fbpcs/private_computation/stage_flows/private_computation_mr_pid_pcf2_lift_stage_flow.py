@@ -4,13 +4,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import logging
-
 from fbpcs.private_computation.entity.pid_mr_config import Protocol
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
     IdSpineCombinerStageService,
 )
@@ -22,7 +21,6 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
     PrivateComputationStageServiceArgs,
 )
-from fbpcs.private_computation.service.utils import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
     PrivateComputationStageFlowData,

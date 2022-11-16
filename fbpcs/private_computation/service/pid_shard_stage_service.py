@@ -23,11 +23,11 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
-    DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     get_pc_status_from_stage_state,
     stop_stage_service,
 )
