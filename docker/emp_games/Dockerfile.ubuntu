@@ -24,7 +24,7 @@ COPY fbpcs/emp_games/private_id_dfca_aggregator/ ./fbpcs/emp_games/private_id_df
 COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
 
-RUN cmake . -DTHREADING=ON -DEMP_USE_RANDOM_DEVICE=ON
+RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
 RUN make && make install
 
 CMD ["/bin/sh"]
