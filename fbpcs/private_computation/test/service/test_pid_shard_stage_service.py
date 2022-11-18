@@ -103,6 +103,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
                 timeout=self.container_timeout,
                 env_vars=env_vars,
                 container_type=None,
+                certificate_request=None,
             )
             # test the return value is as expected
             self.assertEqual(
