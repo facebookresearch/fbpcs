@@ -43,11 +43,14 @@ from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
 from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
     MPCInstanceRepository,
 )
+from fbpcs.private_computation.service.run_binary_base_service import (
+    RunBinaryBaseService,
+)
 
 DEFAULT_BINARY_VERSION = "latest"
 
 
-class MPCService:
+class MPCService(RunBinaryBaseService):
     """MPCService is responsible for distributing a larger MPC game to multiple
     MPC workers
     """
@@ -193,39 +196,42 @@ class MPCService:
             raise ValueError("Missing server_ips")
 
         existing_containers = instance.containers
+        game_args = instance.game_args
+        if game_args is not None and len(game_args) != instance.num_workers:
+            raise ValueError(
+                "The number of containers is not consistent with the number of game argument dictionary."
+            )
+        if server_ips is not None and len(server_ips) != instance.num_workers:
+            raise ValueError(
+                "The number of containers is not consistent with number of ip addresses."
+            )
+        cmd_tuple_list = []
+        for i in range(instance.num_workers):
+            game_arg = game_args[i] if game_args is not None else {}
+            server_ip = server_ips[i] if server_ips is not None else None
+            cmd_tuple_list.append(
+                self.mpc_game_svc.build_onedocker_args(
+                    game_name=instance.game_name,
+                    mpc_party=instance.mpc_party,
+                    server_ip=server_ip,
+                    **game_arg,
+                )
+            )
 
-        containers_to_start = self.get_containers_to_start(
-            instance.num_workers, existing_containers
+        cmd_args_list = [cmd_args for (package_name, cmd_args) in cmd_tuple_list]
+        pending_containers = await self.start_containers(
+            cmd_args_list=cmd_args_list,
+            onedocker_svc=self.onedocker_svc,
+            binary_version=version,
+            binary_name=cmd_tuple_list[0][0],
+            timeout=timeout,
+            env_vars=env_vars,
+            wait_for_containers_to_start_up=wait_for_containers_to_start_up,
+            existing_containers=existing_containers,
+            certificate_request=certificate_request,
         )
-
-        if containers_to_start:
-            # spin up containers
-            self.logger.info(f"Spinning up {len(containers_to_start)} containers")
-            self.logger.info(f"Containers to start: {containers_to_start}")
-            game_args = instance.game_args
-            new_pending_containers = await self._spin_up_containers_onedocker(
-                instance.game_name,
-                instance.mpc_party,
-                len(containers_to_start),
-                game_args=[game_args[i] for i in containers_to_start]
-                if game_args
-                else game_args,
-                ip_addresses=[server_ips[i] for i in containers_to_start]
-                if server_ips
-                else server_ips,
-                timeout=timeout,
-                version=version,
-                env_vars=env_vars,
-                certificate_request=certificate_request,
-                wait_for_containers_to_start_up=wait_for_containers_to_start_up,
-            )
-            instance.containers = self.get_pending_containers(
-                new_pending_containers, containers_to_start, existing_containers
-            )
-        else:
-            self.logger.info(
-                "No containers are in a failed state - skipping container start-up"
-            )
+        if pending_containers:
+            instance.containers = pending_containers
 
         if len(instance.containers) != instance.num_workers:
             self.logger.warning(
@@ -305,61 +311,6 @@ class MPCService:
 
         return instance
 
-    async def _spin_up_containers_onedocker(
-        self,
-        game_name: str,
-        mpc_party: MPCParty,
-        num_containers: int,
-        game_args: Optional[List[Dict[str, Any]]] = None,
-        ip_addresses: Optional[List[str]] = None,
-        timeout: Optional[int] = None,
-        version: str = DEFAULT_BINARY_VERSION,
-        env_vars: Optional[Dict[str, str]] = None,
-        certificate_request: Optional[CertificateRequest] = None,
-        wait_for_containers_to_start_up: bool = True,
-    ) -> List[ContainerInstance]:
-        if game_args is not None and len(game_args) != num_containers:
-            raise ValueError(
-                "The number of containers is not consistent with the number of game argument dictionary."
-            )
-        if ip_addresses is not None and len(ip_addresses) != num_containers:
-            raise ValueError(
-                "The number of containers is not consistent with number of ip addresses."
-            )
-        cmd_tuple_list = []
-        for i in range(num_containers):
-            game_arg = game_args[i] if game_args is not None else {}
-            server_ip = ip_addresses[i] if ip_addresses is not None else None
-            cmd_tuple_list.append(
-                self.mpc_game_svc.build_onedocker_args(
-                    game_name=game_name,
-                    mpc_party=mpc_party,
-                    server_ip=server_ip,
-                    **game_arg,
-                )
-            )
-        cmd_args_list = [cmd_args for (package_name, cmd_args) in cmd_tuple_list]
-
-        containers = self.onedocker_svc.start_containers(
-            task_definition=self.task_definition,
-            package_name=cmd_tuple_list[0][0],
-            version=version,
-            cmd_args_list=cmd_args_list,
-            timeout=timeout,
-            env_vars=env_vars,
-            certificate_request=certificate_request,
-        )
-        if not wait_for_containers_to_start_up:
-            return containers
-
-        self.logger.info(
-            f"Waiting for {len(containers)} container(s) to become started"
-        )
-
-        return await self.onedocker_svc.wait_for_pending_containers(
-            [container.instance_id for container in containers]
-        )
-
     def _update_container_instances(
         self, containers: List[ContainerInstance]
     ) -> List[ContainerInstance]:
@@ -414,48 +365,6 @@ class MPCService:
                 status = MPCInstanceStatus.STARTED
 
         return status
-
-    @classmethod
-    def get_containers_to_start(
-        cls,
-        num_containers: int,
-        existing_containers: Optional[List[ContainerInstance]] = None,
-    ) -> List[int]:
-        if not existing_containers:
-            # if there are no existing containers, we need to spin containers up for
-            # every command
-            return list(range(num_containers))
-
-        if num_containers != len(existing_containers):
-            raise ValueError(
-                "Cannot retry stage - list of existing containers is not consistent with number of requested containers"
-            )
-
-        # only start containers that previously failed
-        return [
-            i
-            for i, container in enumerate(existing_containers)
-            if container.status is ContainerInstanceStatus.FAILED
-        ]
-
-    @classmethod
-    def get_pending_containers(
-        cls,
-        new_pending_containers: List[ContainerInstance],
-        containers_to_start: List[int],
-        existing_containers: Optional[List[ContainerInstance]] = None,
-    ) -> List[ContainerInstance]:
-        if not existing_containers:
-            return new_pending_containers
-
-        pending_containers = existing_containers.copy()
-        for i, new_pending_container in zip(
-            containers_to_start, new_pending_containers
-        ):
-            # replace existing container with the new pending container
-            pending_containers[i] = new_pending_container
-
-        return pending_containers
 
 
 async def create_and_start_mpc_instance(

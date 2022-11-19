@@ -138,6 +138,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
                 env_vars=env_vars,
                 container_type=None,
+                certificate_request=None,
             )
             # test the return value is as expected
             self.assertEqual(
