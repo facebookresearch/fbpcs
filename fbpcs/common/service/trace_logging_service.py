@@ -7,12 +7,15 @@
 # pyre-strict
 
 import abc
+import functools
 import inspect
 import logging
 import sys
+import time
 import traceback
+from contextlib import contextmanager, suppress
 from enum import auto, Enum
-from typing import Dict, Optional
+from typing import Dict, Iterator, Optional
 
 
 class CheckpointStatus(Enum):
@@ -35,12 +38,14 @@ class TraceLoggingService(abc.ABC):
         checkpoint_name: str,
         status: CheckpointStatus,
         checkpoint_data: Optional[Dict[str, str]] = None,
+        extract_caller_info: bool = True,
     ) -> None:
         # since we want write_checkpoint to be an infallible operation,
         # all changes to this method should be within the try/except block
         try:
             checkpoint_data = checkpoint_data or {}
-            checkpoint_data.update(self._extract_caller_info())
+            if extract_caller_info:
+                checkpoint_data.update(self._extract_caller_info())
             if status is CheckpointStatus.FAILED:
                 checkpoint_data.update(self._extract_error_info())
 
@@ -53,6 +58,61 @@ class TraceLoggingService(abc.ABC):
             )
         except Exception as e:
             self.logger.error(f"Failed to write checkpoint: {e}")
+
+    @contextmanager
+    def write_checkpoint_cm(
+        self,
+        run_id: Optional[str],
+        instance_id: str,
+        checkpoint_name: str,
+        checkpoint_data: Optional[Dict[str, str]] = None,
+    ) -> Iterator[Dict[str, str]]:
+        checkpoint_data = checkpoint_data or {}
+        try:
+            write_checkpoint = functools.partial(
+                self.write_checkpoint,
+                run_id=run_id,
+                instance_id=instance_id,
+                checkpoint_name=checkpoint_name,
+                # this gets weird in a decorator / context manager
+                extract_caller_info=False,
+            )
+            start_ns = time.perf_counter_ns()
+        except Exception:
+            self.logger.debug(
+                "Could not instantiate checkpoint writer context manager", exc_info=True
+            )
+            yield checkpoint_data
+        else:
+            try:
+                with suppress(BaseException):
+                    write_checkpoint(
+                        status=CheckpointStatus.STARTED,
+                        checkpoint_data=checkpoint_data.copy(),
+                    )
+                # allow caller to further mutate checkpoint data as they see fit
+                yield checkpoint_data
+            except BaseException:
+                with suppress(BaseException):
+                    elapsed_ms = int((time.perf_counter_ns() - start_ns) / 1e6)
+                    write_checkpoint(
+                        status=CheckpointStatus.FAILED,
+                        checkpoint_data={
+                            "runtime_ms": str(elapsed_ms),
+                            **checkpoint_data,
+                        },
+                    )
+                raise
+            else:
+                with suppress(BaseException):
+                    elapsed_ms = int((time.perf_counter_ns() - start_ns) / 1e6)
+                    write_checkpoint(
+                        status=CheckpointStatus.COMPLETED,
+                        checkpoint_data={
+                            "runtime_ms": str(elapsed_ms),
+                            **checkpoint_data,
+                        },
+                    )
 
     @abc.abstractmethod
     def _write_checkpoint_impl(
