@@ -233,8 +233,8 @@ def get_instance(
 ) -> PrivateComputationInstance:
     """
     To get the updated status of the pc instance with id instance_id.
-    We only call pc_service.update_instance() under XXX_STARTED status because otherwise we could run into
-    a race condition: when status is not XXX_STARTED, PrivateComputationService might be writing a new PID or
+    We only call pc_service.update_instance() under XXX_STARTED and XXX_INITIALIZED statuses because otherwise we could run into
+    a race condition: when status is not XXX_STARTED or XXX_INITIALIZED, PrivateComputationService might be writing a new PID or
     MPCInstance to this pc instance. Because pc_service.update_instance() also writes to this pc instance, it could
     accidentally erase that PID or MPCInstance.
     """
@@ -246,7 +246,9 @@ def get_instance(
         config.get("pid_post_processing_handlers", {}),
     )
     instance = pc_service.get_instance(instance_id)
-    if instance.current_stage.is_started_status(instance.infra_config.status):
+    if instance.current_stage.is_started_status(
+        instance.infra_config.status
+    ) or instance.current_stage.is_initialized_status(instance.infra_config.status):
         instance = pc_service.update_instance(instance_id)
     return instance
 
@@ -269,13 +271,7 @@ def get_server_ips(
         logger.warning("Unable to get server ips from a partner instance")
         return []
 
-    server_ips_list = None
-    last_instance = pc_instance.infra_config.instances[-1]
-    if isinstance(last_instance, MPCInstance):
-        server_ips_list = last_instance.server_ips
-
-    if server_ips_list is None:
-        server_ips_list = []
+    server_ips_list = pc_instance.server_ips
 
     print(*server_ips_list, sep=",")
     return server_ips_list
