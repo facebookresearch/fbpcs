@@ -10,6 +10,7 @@ import abc
 import functools
 import inspect
 import logging
+import os
 import sys
 import time
 import traceback
@@ -48,6 +49,8 @@ class TraceLoggingService(abc.ABC):
                 checkpoint_data.update(self._extract_caller_info())
             if status is CheckpointStatus.FAILED:
                 checkpoint_data.update(self._extract_error_info())
+            if bundle_id := os.getenv("FBPCS_BUNDLE_ID"):
+                checkpoint_data["FBPCS_BUNDLE_ID"] = bundle_id
 
             self._write_checkpoint_impl(
                 run_id=run_id,
