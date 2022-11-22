@@ -757,6 +757,10 @@ class PrivateComputationService:
             raise ValueError(
                 "instance_or_id must be either a str or PrivateComputationInstance"
             )
+
+        if not private_computation_instance.infra_config.instances:
+            return {}
+
         # Get the last pid or mpc instance
         last_instance = private_computation_instance.infra_config.instances[-1]
 
