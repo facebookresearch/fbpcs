@@ -4,6 +4,12 @@ locals {
   k8s_sa = kubernetes_service_account.k8s_sa.metadata[0].name
 }
 
+resource "google_project_iam_member" "project" {
+  project = var.project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.gke_sa.email}"
+}
+
 resource "google_service_account" "gke_sa" {
   account_id   = local.gke_sa
   display_name = local.gke_sa
