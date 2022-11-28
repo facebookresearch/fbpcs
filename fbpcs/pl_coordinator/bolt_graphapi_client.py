@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import requests
+from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 from fbpcs.bolt.constants import FBPCS_GRAPH_API_TOKEN
@@ -94,6 +95,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         self.access_token = self._get_graph_api_token(config)
         self.params = {"access_token": self.access_token}
 
+    @bolt_checkpoint(dump_params=True, dump_return_val=True)
     async def create_instance(
         self,
         instance_args: BoltGraphAPICreateInstanceArgs,
@@ -127,6 +129,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         """GraphAPI didn't return stageflow info"""
         return None
 
+    @bolt_checkpoint()
     async def run_stage(
         self,
         instance_id: str,
@@ -142,6 +145,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             msg = "running next stage"
         self._check_err(r, msg)
 
+    @bolt_checkpoint()
     async def cancel_current_stage(
         self,
         instance_id: str,
@@ -157,6 +161,9 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             msg = "cancel current stage."
         self._check_err(r, msg)
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def update_instance(self, instance_id: str) -> BoltState:
         response = json.loads((await self.get_instance(instance_id)).text)
         response_status = response.get("status")
@@ -169,6 +176,9 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         server_ips = response.get("server_ips")
         return BoltState(status, server_ips)
 
+    @bolt_checkpoint(
+        dump_params=True,
+    )
     async def validate_results(
         self, instance_id: str, expected_result_path: Optional[str] = None
     ) -> bool:
@@ -182,6 +192,9 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
                 "This method should not be called with expected results"
             )
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def is_existing_instance(
         self,
         instance_args: BoltGraphAPICreateInstanceArgs,
@@ -200,6 +213,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             self.logger.info("instance_id is empty, fetching a valid one")
             return False
 
+    @bolt_checkpoint(dump_params=True, dump_return_val=True)
     async def has_feature(self, instance_id: str, feature: PCSFeature) -> bool:
         response = json.loads((await self.get_instance(instance_id)).text)
         feature_list = response.get("feature_list")
@@ -253,6 +267,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
             self.logger.error(err_msg)
             raise GraphAPIGenericException(err_msg)
 
+    @bolt_checkpoint(dump_params=True, include=["adspixels_id"])
     def get_adspixels(self, adspixels_id: str, fields: List[str]) -> requests.Response:
         params = self.params.copy()
         params["fields"] = ",".join(fields)
@@ -267,6 +282,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         self._check_err(r, "getting debug token data")
         return r
 
+    @bolt_checkpoint(dump_params=True, include=["study_id"])
     def get_study_data(self, study_id: str, fields: List[str]) -> requests.Response:
         params = self.params.copy()
         params["fields"] = ",".join(fields)
@@ -274,6 +290,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         self._check_err(r, "getting study data")
         return r
 
+    @bolt_checkpoint(dump_params=True, include=["dataset_id"])
     def get_attribution_dataset_info(
         self, dataset_id: str, fields: List[str]
     ) -> requests.Response:
@@ -283,6 +300,9 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         self._check_err(r, "getting dataset information")
         return r
 
+    @bolt_checkpoint(
+        dump_params=True,
+    )
     def get_existing_pa_instances(self, dataset_id: str) -> requests.Response:
         params = self.params.copy()
         r = requests.get(f"{self.graphapi_url}/{dataset_id}/instances", params=params)
