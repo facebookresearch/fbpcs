@@ -15,6 +15,7 @@ from typing import Any, Dict, Iterable, List, Optional, Type
 
 import dateutil.parser
 import pytz
+from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.bolt_summary import BoltSummary
@@ -23,6 +24,7 @@ from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 from fbpcs.common.service.graphapi_trace_logging_service import (
     GraphApiTraceLoggingService,
 )
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltPAGraphAPICreateInstanceArgs,
@@ -52,6 +54,7 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     build_private_computation_service,
     get_tier,
+    get_trace_logging_service,
 )
 
 
@@ -156,6 +159,24 @@ async def run_attribution_async(
         graphapi_version=graphapi_version,
         graphapi_domain=graphapi_domain,
     )
+
+    # Create a GraphApiTraceLoggingService specific for this study_id
+    endpoint_url = f"{client.graphapi_url}/{dataset_id}/checkpoint"
+    default_trace_logger = GraphApiTraceLoggingService(
+        access_token=client.access_token,
+        endpoint_url=endpoint_url,
+    )
+    # if the user configured a trace logging service via the config.yml file, use that
+    # instead of the default trace logger
+    trace_logging_svc = get_trace_logging_service(
+        config, default_trace_logger=default_trace_logger
+    )
+    # register the trace_logging_svc as a Bolt global default
+    bolt_checkpoint.register_trace_logger(trace_logging_svc)
+    # register the run id as a Bolt global default
+    # sets a unique default run id if run_id was None
+    run_id = bolt_checkpoint.register_run_id(run_id)
+
     try:
         datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
     except GraphAPIGenericException as err:
@@ -291,6 +312,8 @@ async def run_attribution_async(
 
     logger.info(f"Started running instance {instance_id}.")
     bolt_summary = await run_bolt(
+        publisher_client=client,
+        trace_logging_svc=trace_logging_svc,
         config=config,
         logger=logger,
         job_list=[job],
@@ -303,6 +326,8 @@ async def run_attribution_async(
 
 
 async def run_bolt(
+    publisher_client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
+    trace_logging_svc: TraceLoggingService,
     config: Dict[str, Any],
     logger: logging.Logger,
     job_list: List[
@@ -326,22 +351,6 @@ async def run_bolt(
             "Submit at least one job to call this API",
         )
 
-    # We create the publisher_client here so we can reuse the access_token in our trace logger svc
-    publisher_client = BoltGraphAPIClient(
-        config=config,
-        logger=logger,
-        graphapi_version=graphapi_version,
-        graphapi_domain=graphapi_domain,
-    )
-
-    # Create a GraphApiTraceLoggingService specific for this study_id
-    dataset_id = job_list[0].publisher_bolt_args.create_instance_args.dataset_id
-    endpoint_url = f"{publisher_client.graphapi_url}/{dataset_id}/checkpoint"
-    graphapi_trace_logging_svc = GraphApiTraceLoggingService(
-        access_token=publisher_client.access_token,
-        endpoint_url=endpoint_url,
-    )
-
     runner = BoltRunner(
         publisher_client=publisher_client,
         partner_client=BoltPCSClient(
@@ -351,8 +360,8 @@ async def run_bolt(
                 pid_config=config["pid"],
                 pph_config=config.get("post_processing_handlers", {}),
                 pid_pph_config=config.get("pid_post_processing_handlers", {}),
-                trace_logging_svc=graphapi_trace_logging_svc,
-            )
+                trace_logging_svc=trace_logging_svc,
+            ),
         ),
         logger=logger,
         max_parallel_runs=MAX_NUM_INSTANCES,
