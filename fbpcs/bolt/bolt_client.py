@@ -11,6 +11,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Generic, List, Optional, Type, TypeVar
 
+from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
+
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 
@@ -76,6 +78,7 @@ class BoltClient(ABC, Generic[T]):
     ) -> bool:
         pass
 
+    @bolt_checkpoint()
     async def cancel_current_stage(self, instance_id: str) -> None:
         pass
 
@@ -92,6 +95,7 @@ class BoltClient(ABC, Generic[T]):
             stage.failed_status,
         ]
 
+    @bolt_checkpoint(dump_params=True, dump_return_val=True)
     async def should_invoke_stage(
         self, instance_id: str, stage: PrivateComputationBaseStageFlow
     ) -> bool:
@@ -102,6 +106,7 @@ class BoltClient(ABC, Generic[T]):
             stage.failed_status,
         ]
 
+    @bolt_checkpoint(dump_params=True, dump_return_val=True)
     async def get_valid_stage(
         self, instance_id: str, stage_flow: Type[PrivateComputationBaseStageFlow]
     ) -> Optional[PrivateComputationBaseStageFlow]:
@@ -113,6 +118,9 @@ class BoltClient(ABC, Generic[T]):
                 return stage
         return None
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def is_existing_instance(self, instance_args: T) -> bool:
         """Returns whether the instance with instance_args exists
 
@@ -133,6 +141,7 @@ class BoltClient(ABC, Generic[T]):
             self.logger.info(f"{instance_id} not found.")
             return False
 
+    @bolt_checkpoint()
     async def get_or_create_instance(self, instance_args: T) -> str:
         if await self.is_existing_instance(instance_args):
             self.logger.info(f"instance {instance_args.instance_id} exists - returning")
@@ -143,5 +152,6 @@ class BoltClient(ABC, Generic[T]):
             )
             return await self.create_instance(instance_args)
 
+    @bolt_checkpoint()
     async def log_failed_containers(self, instance_id: str) -> None:
         pass
