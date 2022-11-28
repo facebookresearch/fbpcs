@@ -13,6 +13,7 @@ from time import time
 from typing import Any, Dict, List, Optional, Type
 
 from dataclasses_json import config, DataClassJsonMixin
+from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs
@@ -114,6 +115,7 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
             logging.getLogger(__name__) if logger is None else logger
         )
 
+    @bolt_checkpoint()
     async def create_instance(self, instance_args: BoltPCSCreateInstanceArgs) -> str:
         instance = self.pcs.create_instance(
             instance_id=instance_args.instance_id,
@@ -144,12 +146,18 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
         )
         return instance.infra_config.instance_id
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def get_stage_flow(
         self, instance_id: str
     ) -> Optional[Type[PrivateComputationBaseStageFlow]]:
         pc_instance = self.pcs.get_instance(instance_id)
         return pc_instance.stage_flow
 
+    @bolt_checkpoint(
+        dump_params=True,
+    )
     async def run_stage(
         self,
         instance_id: str,
@@ -170,6 +178,9 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
         # the following log is used by log_analyzer
         self.logger.info(f"[{instance_id}] {pc_instance}")
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def update_instance(self, instance_id: str) -> BoltState:
         loop = asyncio.get_running_loop()
         pc_instance = await loop.run_in_executor(
@@ -187,14 +198,15 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
         )
         return state
 
+    @bolt_checkpoint(dump_params=True, dump_return_val=True)
     async def has_feature(self, instance_id: str, feature: PCSFeature) -> bool:
-
         loop = asyncio.get_running_loop()
         pc_instance = await loop.run_in_executor(
             None, self.pcs.get_instance, instance_id
         )
         return pc_instance.has_feature(feature)
 
+    @bolt_checkpoint(dump_params=True, dump_return_val=True)
     async def validate_results(
         self, instance_id: str, expected_result_path: Optional[str] = None
     ) -> bool:
@@ -226,10 +238,12 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
                 )
                 return True
 
+    @bolt_checkpoint()
     async def cancel_current_stage(self, instance_id: str) -> None:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.pcs.cancel_current_stage, instance_id)
 
+    @bolt_checkpoint()
     async def get_or_create_instance(
         self, instance_args: BoltPCSCreateInstanceArgs
     ) -> str:
@@ -237,6 +251,7 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
         self.pcs.update_input_path(instance_id, instance_args.input_path)
         return instance_id
 
+    @bolt_checkpoint()
     async def log_failed_containers(self, instance_id: str) -> None:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self.pcs.log_failed_containers, instance_id)
