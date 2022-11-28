@@ -24,6 +24,10 @@ class RegistryFactory(ABC, Generic[R]):
         cls._REGISTRY[key] = value
 
     @classmethod
+    def override_default(cls, value: R) -> None:
+        cls.register_object(cls._DEFAULT_KEY, value)
+
+    @classmethod
     def get(cls, key: Optional[str] = None) -> R:
         # get the value associated with the key or the default (if the default is set)
         key = key or cls._DEFAULT_KEY
@@ -35,7 +39,7 @@ class RegistryFactory(ABC, Generic[R]):
         val = cls._REGISTRY.get(cls._DEFAULT_KEY)
         if not val:
             val = cls._get_default_value()
-            cls.register_object(cls._DEFAULT_KEY, val)
+            cls.override_default(val)
 
         # set the key equal to the default
         cls.register_object(key, val)
