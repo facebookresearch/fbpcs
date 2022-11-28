@@ -444,11 +444,25 @@ def _build_metric_service(config: Optional[Dict[str, Any]]) -> MetricService:
 
 
 def _build_trace_logging_service(
-    config: Optional[Dict[str, Any]]
+    config: Optional[Dict[str, Any]],
+    default_trace_logging_svc: Optional[TraceLoggingService] = None,
 ) -> TraceLoggingService:
+    logger = logging.getLogger(f"{__name__}._build_trace_logging_service")
     if config is None:
-        return SimpleTraceLoggingService()
+        logger.info("No trace logger configured in config.yml - returning default.")
+        return default_trace_logging_svc or SimpleTraceLoggingService()
+    logger.info("Returning trace logger configured in config.yml - ignoring default.")
     return reflect.get_instance(config, TraceLoggingService)
+
+
+def get_trace_logging_service(
+    pc_config: Dict[str, Any],
+    default_trace_logger: Optional[TraceLoggingService] = None,
+) -> TraceLoggingService:
+    pc_config = pc_config.get("private_computation", pc_config)
+    return _build_trace_logging_service(
+        pc_config["dependency"].get("TraceLoggingService"), default_trace_logger
+    )
 
 
 def build_private_computation_service(
@@ -490,13 +504,7 @@ def build_private_computation_service(
 
     metric_svc = _build_metric_service(pc_config["dependency"].get("MetricService"))
 
-    trace_logging_svc = trace_logging_svc
-    # If a trace_logging_svc exists in the config, use that instead
-    logging.info("Overriding default trace_logging_svc since settings found in config")
-    if trace_logging_svc is None or "TraceLoggingService" in pc_config["dependency"]:
-        trace_logging_svc = _build_trace_logging_service(
-            pc_config["dependency"].get("TraceLoggingService")
-        )
+    trace_logging_svc = get_trace_logging_service(pc_config, trace_logging_svc)
 
     return PrivateComputationService(
         instance_repository=repository_service,
