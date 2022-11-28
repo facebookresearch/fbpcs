@@ -8,6 +8,11 @@
 from typing import Any, Dict, Optional
 
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob, BoltPlayerArgs
+from fbpcs.common.service.trace_logging_registry import (
+    InstanceIdtoRunIdRegistry,
+    TraceLoggingRegistry,
+)
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.common.service.write_checkpoint import write_checkpoint
 
 
@@ -41,3 +46,26 @@ class bolt_checkpoint(write_checkpoint):
             return super()._param_to_instance_id(
                 instance_id_param=instance_id_param, kwargs=kwargs
             )
+
+    # Bolt is the client-side coordinator component of a PC run and is most
+    # likely to use the registries first. It is in the best position to set
+    # reasonable global defaults for a run. Thus, we can set the default here
+    # so that other components, such as PCS, can default to whatever Bolt
+    # chooses to be the default.
+
+    @classmethod
+    def register_run_id(
+        cls, run_id: Optional[str], *, key: Optional[str] = None
+    ) -> str:
+        run_id = super().register_run_id(run_id, key=key)
+        if not key:
+            InstanceIdtoRunIdRegistry.override_default(run_id)
+        return run_id
+
+    @classmethod
+    def register_trace_logger(
+        cls, trace_logging_service: TraceLoggingService, *, key: Optional[str] = None
+    ) -> None:
+        super().register_trace_logger(trace_logging_service, key=key)
+        if not key:
+            TraceLoggingRegistry.override_default(trace_logging_service)
