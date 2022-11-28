@@ -11,6 +11,8 @@ import logging
 from time import time
 from typing import Generic, List, Optional, Type, TypeVar
 
+from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
+
 from fbpcs.bolt.bolt_client import BoltClient
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
 from fbpcs.bolt.bolt_summary import BoltJobSummary, BoltSummary
@@ -71,6 +73,9 @@ class BoltRunner(Generic[T, U]):
             )
         )
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def run_one(self, job: BoltJob[T, U]) -> BoltJobSummary:
         async with self.semaphore:
             try:
@@ -136,14 +141,14 @@ class BoltRunner(Generic[T, U]):
                                 partner_id=partner_id,
                                 stage=stage,
                                 poll_interval=job.poll_interval,
-                                logger=logger,  # pyre-ignore
+                                logger=logger,
                             )
                             await self.wait_stage_complete(
                                 publisher_id=publisher_id,
                                 partner_id=partner_id,
                                 stage=stage,
                                 poll_interval=job.poll_interval,
-                                logger=logger,  # pyre-ignore
+                                logger=logger,
                             )
                             break
                         except Exception as e:
@@ -191,6 +196,7 @@ class BoltRunner(Generic[T, U]):
                     is_success=False,
                 )
 
+    @bolt_checkpoint(dump_params=True, include=["stage"])
     async def run_next_stage(
         self,
         publisher_id: str,
@@ -222,6 +228,11 @@ class BoltRunner(Generic[T, U]):
                 instance_id=partner_id, stage=stage, server_ips=server_ips
             )
 
+    @bolt_checkpoint(
+        dump_params=True,
+        include=["stage"],
+        dump_return_val=True,
+    )
     async def get_server_ips_after_start(
         self,
         instance_id: str,
@@ -253,6 +264,7 @@ class BoltRunner(Generic[T, U]):
             f"Poll {instance_id} status timed out after {timeout}s expecting status {stage.started_status}."
         )
 
+    @bolt_checkpoint(dump_params=True, include=["stage"])
     async def wait_stage_complete(
         self,
         publisher_id: str,
@@ -325,6 +337,9 @@ class BoltRunner(Generic[T, U]):
             f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
         )
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def job_is_finished(
         self,
         job: BoltJob[T, U],
@@ -345,6 +360,9 @@ class BoltRunner(Generic[T, U]):
             stage_flow=stage_flow,
         )
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def get_stage_flow(
         self,
         job: BoltJob[T, U],
@@ -373,6 +391,9 @@ class BoltRunner(Generic[T, U]):
         # pyre-ignore Incompatible return type [7]
         return partner_stage_flow or publisher_stage_flow
 
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
     async def get_next_valid_stage(
         self,
         job: BoltJob[T, U],
@@ -449,6 +470,7 @@ class BoltRunner(Generic[T, U]):
             )
         return None
 
+    @bolt_checkpoint()
     async def wait_valid_publisher_status(
         self, instance_id: str, poll_interval: int, timeout: int
     ) -> None:
