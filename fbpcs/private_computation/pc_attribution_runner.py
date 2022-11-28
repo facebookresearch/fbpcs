@@ -79,6 +79,9 @@ TERMINAL_STATUSES = [
     "INSTANCE_FAILURE",
 ]
 
+
+LOG_COMPONENT = "pc_attribution_runner"
+
 """
 The input to this function will be the input path, the dataset_id as well as the following params to choose
 a specific dataset range to create and run a PA instance on
@@ -176,6 +179,66 @@ async def run_attribution_async(
     # register the run id as a Bolt global default
     # sets a unique default run id if run_id was None
     run_id = bolt_checkpoint.register_run_id(run_id)
+
+    return await _run_attribution_async_helper(
+        client=client,
+        trace_logging_svc=trace_logging_svc,
+        config=config,
+        dataset_id=dataset_id,
+        input_path=input_path,
+        timestamp=timestamp,
+        attribution_rule=attribution_rule,
+        aggregation_type=aggregation_type,
+        concurrency=concurrency,
+        num_files_per_mpc_container=num_files_per_mpc_container,
+        k_anonymity_threshold=k_anonymity_threshold,
+        stage_flow=stage_flow,
+        logger=logger,
+        num_tries=num_tries,
+        final_stage=final_stage,
+        run_id=run_id,
+        graphapi_version=graphapi_version,
+        graphapi_domain=graphapi_domain,
+    )
+
+
+@bolt_checkpoint(
+    dump_params=True,
+    include=[
+        "dataset_id",
+        "input_path",
+        "timestamp",
+        "attribution_rule",
+        "aggregation_type",
+        "concurrency",
+        "num_files_per_mpc_container",
+        "k_anonymity_threshold",
+    ],
+    dump_return_val=True,
+    checkpoint_name="RUN_ATTRIBUTION",
+    component=LOG_COMPONENT,
+)
+async def _run_attribution_async_helper(
+    client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
+    trace_logging_svc: TraceLoggingService,
+    *,
+    config: Dict[str, Any],
+    dataset_id: str,
+    input_path: str,
+    timestamp: str,
+    attribution_rule: AttributionRule,
+    aggregation_type: AggregationType,
+    concurrency: int,
+    num_files_per_mpc_container: int,
+    k_anonymity_threshold: int,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
+    logger: logging.Logger,
+    num_tries: Optional[int],
+    final_stage: Optional[PrivateComputationBaseStageFlow],
+    run_id: Optional[str],
+    graphapi_version: Optional[str],
+    graphapi_domain: Optional[str],
+) -> BoltSummary:
 
     try:
         datasets_info = _get_attribution_dataset_info(client, dataset_id, logger)
@@ -325,6 +388,7 @@ async def run_attribution_async(
     return bolt_summary
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 async def run_bolt(
     publisher_client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
     trace_logging_svc: TraceLoggingService,
@@ -371,6 +435,12 @@ async def run_bolt(
     return await runner.run_async(job_list)
 
 
+@bolt_checkpoint(
+    dump_params=True,
+    include=["dataset_id", "timestamp", "attribution_rule"],
+    dump_return_val=True,
+    component=LOG_COMPONENT,
+)
 async def _create_new_instance(
     dataset_id: str,
     timestamp: int,
@@ -392,6 +462,7 @@ async def _create_new_instance(
     return instance_id
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 def _check_version(
     instance: Dict[str, Any],
     config: Dict[str, Any],
@@ -440,6 +511,7 @@ def timestamp_to_dt(timestamp: str) -> datetime:
         return dateutil.parser.parse(timestamp)
 
 
+@bolt_checkpoint(dump_params=True, dump_return_val=True, component=LOG_COMPONENT)
 def _should_resume_instance(
     inst: Dict[str, Any], dt: datetime, attribution_rule: AttributionRule
 ) -> bool:
@@ -455,10 +527,12 @@ def _should_resume_instance(
     )
 
 
+@bolt_checkpoint(dump_params=True, dump_return_val=True, component=LOG_COMPONENT)
 def _get_pcs_features(instance: Dict[str, Any]) -> Optional[List[str]]:
     return instance.get(FEATURE_LIST)
 
 
+@bolt_checkpoint(dump_params=True, include=["adpixels_id"], component=LOG_COMPONENT)
 def _verify_adspixel(
     adspixels_id: str, client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs]
 ) -> None:
@@ -540,6 +614,7 @@ def get_runnable_timestamps(
     return runnable_timestamps
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 async def _get_pa_instance_info(
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
     instance_id: str,
@@ -558,6 +633,11 @@ def _iso_date_validator(timestamp: str) -> Any:
         return False
 
 
+@bolt_checkpoint(
+    dump_params=True,
+    include=["dataset_id"],
+    component=LOG_COMPONENT,
+)
 def _get_attribution_dataset_info(
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
     dataset_id: str,
@@ -571,6 +651,11 @@ def _get_attribution_dataset_info(
     )
 
 
+@bolt_checkpoint(
+    dump_params=True,
+    include=["dataset_id"],
+    component=LOG_COMPONENT,
+)
 def _get_existing_pa_instances(
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs], dataset_id: str
 ) -> Any:
