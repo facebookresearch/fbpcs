@@ -77,6 +77,8 @@ INSTANCE_LIFESPAN: int = SEC_IN_DAY
 STUDY_EXPIRE_TIME: int = 90 * SEC_IN_DAY
 CREATE_INSTANCE_TRIES = 3
 
+LOG_COMPONENT = "pl_study_runner"
+
 
 # TODO(T116497329): don't use unstructured entities in pl_study_runner.py
 
@@ -171,6 +173,52 @@ async def run_study_async(
     # sets a unique default run id if run_id was None
     run_id = bolt_checkpoint.register_run_id(run_id)
 
+    return await _run_study_async_helper(
+        client=client,
+        trace_logging_svc=trace_logging_svc,
+        config=config,
+        study_id=study_id,
+        objective_ids=objective_ids,
+        input_paths=input_paths,
+        logger=logger,
+        stage_flow=stage_flow,
+        num_tries=num_tries,
+        dry_run=dry_run,
+        result_visibility=result_visibility,
+        final_stage=final_stage,
+        run_id=run_id,
+        graphapi_version=graphapi_version,
+        output_dir=output_dir,
+        graphapi_domain=graphapi_domain,
+    )
+
+
+@bolt_checkpoint(
+    dump_params=True,
+    include=["study_id", "objective_ids", "input_paths", "result_visibility"],
+    dump_return_val=True,
+    checkpoint_name="RUN_STUDY",
+    component=LOG_COMPONENT,
+)
+async def _run_study_async_helper(
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
+    trace_logging_svc: TraceLoggingService,
+    *,
+    config: Dict[str, Any],
+    study_id: str,
+    objective_ids: List[str],
+    input_paths: List[str],
+    logger: logging.Logger,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
+    num_tries: Optional[int],
+    dry_run: Optional[bool],
+    result_visibility: Optional[ResultVisibility],
+    final_stage: Optional[PrivateComputationBaseStageFlow],
+    run_id: Optional[str],
+    graphapi_version: Optional[str],
+    output_dir: Optional[str],
+    graphapi_domain: Optional[str],
+) -> BoltSummary:
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
     _validate_input(objective_ids, input_paths)
 
@@ -335,6 +383,7 @@ async def run_study_async(
     return bolt_summary
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 async def run_bolt(
     publisher_client: BoltGraphAPIClient,
     trace_logging_svc: TraceLoggingService,
@@ -382,6 +431,7 @@ async def run_bolt(
     return await runner.run_async(job_list)
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
     err_msgs = []
     # verify that input is valid.
@@ -405,6 +455,7 @@ def _validate_input(objective_ids: List[str], input_paths: List[str]) -> None:
         )
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 def _verify_study_type(study_data: Dict[str, Any]) -> None:
     # Deny if study is
     #   a. not LIFT
@@ -431,6 +482,7 @@ def _verify_study_type(study_data: Dict[str, Any]) -> None:
         )
 
 
+@bolt_checkpoint(dump_params=True, include=["adpixels_ids"], component=LOG_COMPONENT)
 def _verify_adspixels_if_exist(
     adspixels_ids: List[str],
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
@@ -447,6 +499,7 @@ def _verify_adspixels_if_exist(
             )
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 def _verify_mpc_objs(
     study_data: Dict[str, Any],
     objective_ids: List[str],
@@ -486,6 +539,11 @@ def _verify_mpc_objs(
             )
 
 
+@bolt_checkpoint(
+    dump_params=True,
+    include=["study_id"],
+    component=LOG_COMPONENT,
+)
 def _get_study_data(
     study_id: str, client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs]
 ) -> Any:
@@ -502,15 +560,6 @@ def _get_study_data(
             ],
         ).text
     )
-
-
-def _get_chunks(
-    data: Dict[str, Dict[str, str]], size: int
-) -> List[Dict[str, Dict[str, str]]]:
-    chunks = []
-    for i in range(0, len(data), size):
-        chunks.append(dict(list(data.items())[i : i + size]))
-    return chunks
 
 
 def get_runnable_objectives(
@@ -552,6 +601,7 @@ def get_runnable_objectives(
     return runnable_objective_ids
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 def _get_cell_obj_instance(
     study_data: Dict[str, Any],
     objective_ids: List[str],
@@ -617,6 +667,7 @@ def _get_cell_obj_instance(
     return cell_obj_instance
 
 
+@bolt_checkpoint(dump_params=True, include=["study_id"], component=LOG_COMPONENT)
 async def _create_new_instances(
     cell_obj_instances: Dict[str, Dict[str, Any]],
     study_id: str,
@@ -638,6 +689,12 @@ async def _create_new_instances(
                 ] = PrivateComputationInstanceStatus.CREATED.value
 
 
+@bolt_checkpoint(
+    dump_params=True,
+    include=["study_id", "cell_id", "objective_id"],
+    dump_return_val=True,
+    component=LOG_COMPONENT,
+)
 async def _create_instance_retry(
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
     study_id: str,
@@ -677,6 +734,7 @@ async def _create_instance_retry(
     return ""  # this is to make pyre happy
 
 
+@bolt_checkpoint(dump_return_val=True, component=LOG_COMPONENT)
 def _instance_to_input_path(
     cell_obj_instance: Dict[str, Dict[str, Dict[str, Any]]]
 ) -> Dict[str, Dict[str, str]]:
@@ -699,6 +757,7 @@ def _instance_to_input_path(
     return instance_input_path
 
 
+@bolt_checkpoint(component=LOG_COMPONENT)
 async def _check_versions(
     cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
     config: Dict[str, Any],
@@ -734,6 +793,7 @@ async def _check_versions(
                     )
 
 
+@bolt_checkpoint(dump_return_val=True, component=LOG_COMPONENT)
 async def _get_pcs_features(
     cell_obj_instances: Dict[str, Dict[str, Dict[str, Any]]],
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
