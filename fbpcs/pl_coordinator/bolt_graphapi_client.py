@@ -59,6 +59,7 @@ class BoltPAGraphAPICreateInstanceArgs(BoltCreateInstanceArgs):
     dataset_id: str
     timestamp: str
     attribution_rule: str
+    run_id: Optional[str]
 
 
 BoltGraphAPICreateInstanceArgs = TypeVar(
@@ -113,6 +114,8 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         elif isinstance(instance_args, BoltPAGraphAPICreateInstanceArgs):
             params["attribution_rule"] = instance_args.attribution_rule
             params["timestamp"] = instance_args.timestamp
+            if instance_args.run_id is not None:
+                params["run_id"] = instance_args.run_id
             r = requests.post(
                 f"{self.graphapi_url}/{instance_args.dataset_id}/instance",
                 params=params,

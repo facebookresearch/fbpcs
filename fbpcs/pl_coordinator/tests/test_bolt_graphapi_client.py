@@ -144,6 +144,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             dataset_id="dataset_id",
             timestamp="0",
             attribution_rule="attribution_rule",
+            run_id="test-run-id",
         )
         await self.test_client.create_instance(test_pa_args)
         mock_post.assert_called_once_with(
@@ -152,6 +153,7 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
                 "access_token": ACCESS_TOKEN,
                 "attribution_rule": "attribution_rule",
                 "timestamp": "0",
+                "run_id": test_pa_args.run_id,
             },
         )
 

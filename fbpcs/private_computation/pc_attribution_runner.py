@@ -306,6 +306,7 @@ async def _run_attribution_async_helper(
                 dataset_id,
                 int(dt_arg),
                 attribution_rule_val,
+                run_id,
                 client,
                 logger,
             )
@@ -342,6 +343,7 @@ async def _run_attribution_async_helper(
             dataset_id=dataset_id,
             timestamp=str(dt_arg),
             attribution_rule=attribution_rule.name,
+            run_id=run_id,
         )
     )
     partner_args = BoltPlayerArgs(
@@ -445,6 +447,7 @@ async def _create_new_instance(
     dataset_id: str,
     timestamp: int,
     attribution_rule: str,
+    run_id: Optional[str],
     client: BoltGraphAPIClient[BoltPAGraphAPICreateInstanceArgs],
     logger: logging.Logger,
 ) -> str:
@@ -454,6 +457,7 @@ async def _create_new_instance(
             dataset_id=dataset_id,
             timestamp=str(timestamp),
             attribution_rule=attribution_rule,
+            run_id=run_id,
         )
     )
     logger.info(
