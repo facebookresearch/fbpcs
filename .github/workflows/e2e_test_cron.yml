@@ -70,7 +70,7 @@ jobs:
     name: PA Test Run
     uses: ./.github/workflows/pa_one_command_runner_test.yml
     with:
-      dataset_id: 1127612294482487
+      dataset_id: '1127612294482487'
       build_id: cron
       test_name: PA E2E Tests
     secrets: inherit # pass all secrets
@@ -79,7 +79,7 @@ jobs:
     name: Multi Key PA Test Run
     uses: ./.github/workflows/pa_one_command_runner_test.yml
     with:
-      dataset_id: 3204590196477122
+      dataset_id: '3204590196477122'
       input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_multikey_input.csv
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result_last_click_multikey.json
       build_id: cron

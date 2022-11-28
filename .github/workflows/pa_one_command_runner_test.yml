@@ -7,7 +7,7 @@ on:
       dataset_id:
         description: Attribution Dataset id
         required: true
-        type: number
+        type: string
       input_path:
         description: S3 path to synthetic attribution data
         required: false

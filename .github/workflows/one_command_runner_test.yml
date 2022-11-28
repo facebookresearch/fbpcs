@@ -113,6 +113,7 @@ jobs:
           --version=${{ inputs.tag }} > ${{env.CONSOLE_OUTPUT_FILE}} 2>&1
 
       - name: Print runner console output
+        if: ${{ always() }}
         continue-on-error: true
         run: |
           cat ${{env.CONSOLE_OUTPUT_FILE}}
