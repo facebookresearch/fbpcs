@@ -73,6 +73,9 @@ class CommonProductConfig(DataclassMutabilityMixin):
 
     post_processing_data: Optional[PostProcessingData] = immutable_field(default=None)
 
+    input_path_start_ts: Optional[str] = None
+    input_path_end_ts: Optional[str] = None
+
 
 @dataclass
 class ProductConfig(DataClassJsonMixin, DataclassMutabilityMixin):

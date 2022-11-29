@@ -44,7 +44,13 @@ class PreValidateService:
             env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
 
         cmd_args = [
-            get_cmd_args(input_path, region, binary_config)
+            get_cmd_args(
+                input_path,
+                region,
+                binary_config,
+                None,
+                None,
+            )
             for input_path in input_paths
         ]
 

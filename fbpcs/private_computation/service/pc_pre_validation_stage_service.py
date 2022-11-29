@@ -113,6 +113,8 @@ class PCPreValidationStageService(PrivateComputationStageService):
             pc_instance.product_config.common.input_path,
             region,
             binary_config,
+            pc_instance.product_config.common.input_path_start_ts,
+            pc_instance.product_config.common.input_path_end_ts,
         )
         env_vars = {}
         if binary_config.repository_path:
