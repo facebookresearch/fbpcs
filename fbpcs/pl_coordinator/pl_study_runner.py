@@ -22,6 +22,7 @@ from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 from fbpcs.common.service.graphapi_trace_logging_service import (
     GraphApiTraceLoggingService,
 )
+from fbpcs.common.service.input_data_service import InputDataService, TimestampValues
 from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
@@ -257,9 +258,23 @@ async def _run_study_async_helper(
     _print_json(
         "Existing valid instances for cell-obj pairs", cell_obj_instance, logger
     )
+
+    instance_ids_to_timestamps: Dict[str, TimestampValues] = {}
+
     # create new instances
     try:
-        await _create_new_instances(cell_obj_instance, study_id, client, logger, run_id)
+        study_start_time = str(_date_to_timestamp(study_data[START_TIME]))
+        observation_end_time = str(_date_to_timestamp(study_data[OBSERVATION_END_TIME]))
+        await _create_new_instances(
+            cell_obj_instance,
+            study_id,
+            client,
+            logger,
+            instance_ids_to_timestamps,
+            study_start_time,
+            observation_end_time,
+            run_id,
+        )
     except GraphAPIGenericException as err:
         logger.error(err)
         raise PCStudyValidationException(
@@ -308,7 +323,9 @@ async def _run_study_async_helper(
     # create the jobs
     all_instance_ids = []
     job_list = []
+
     for instance_id in instances_input_path.keys():
+        timestamps = instance_ids_to_timestamps[instance_id]
         all_instance_ids.append(instance_id)
         data = instances_input_path[instance_id]
         input_path = data["input_path"]
@@ -340,6 +357,8 @@ async def _run_study_async_helper(
                 pcs_features=pcs_features,
                 pid_configs=config["pid"],
                 run_id=run_id,
+                input_path_start_ts=timestamps.start_timestamp,
+                input_path_end_ts=timestamps.end_timestamp,
             )
         )
         job = BoltJob(
@@ -673,6 +692,9 @@ async def _create_new_instances(
     study_id: str,
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
     logger: logging.Logger,
+    instance_ids_to_timestamps: Dict[str, TimestampValues],
+    study_start_time: str,
+    observation_end_time: str,
     run_id: Optional[str] = None,
 ) -> None:
     for cell_id in cell_obj_instances:
@@ -687,6 +709,12 @@ async def _create_new_instances(
                 cell_obj_instances[cell_id][objective_id][
                     STATUS
                 ] = PrivateComputationInstanceStatus.CREATED.value
+
+            timestamps = InputDataService.get_lift_study_timestamps(
+                study_start_time, observation_end_time
+            )
+            instance_id = cell_obj_instances[cell_id][objective_id]["instance_id"]
+            instance_ids_to_timestamps[instance_id] = timestamps
 
 
 @bolt_checkpoint(
