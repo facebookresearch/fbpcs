@@ -32,6 +32,8 @@ from fbpcs.pc_pre_validation.constants import (
     PA_FIELDS,
     PL_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
+    TIMESTAMP,
+    TIMESTAMP_REGEX,
     VALID_LINE_ENDING_REGEX,
     VALIDATION_REGEXES,
 )
@@ -62,6 +64,23 @@ class InputDataValidator(Validator):
         self._storage_service = S3StorageService(region, access_key_id, access_key_data)
         self._name: str = INPUT_DATA_VALIDATOR_NAME
         self._num_id_columns = 0
+
+        start = None
+        end = None
+        if start_timestamp and TIMESTAMP_REGEX.match(start_timestamp):
+            start = int(start_timestamp)
+
+        if end_timestamp and TIMESTAMP_REGEX.match(end_timestamp):
+            end = int(end_timestamp)
+
+        # Skip setting the timestamps and log a warning if the range is not valid
+        if start and end and start > end:
+            print("Warning: the start_timestamp is after the end_timestamp")
+            self._start_timestamp: Optional[int] = None
+            self._end_timestamp: Optional[int] = None
+        else:
+            self._start_timestamp: Optional[int] = start
+            self._end_timestamp: Optional[int] = end
 
     @property
     def name(self) -> str:
@@ -212,6 +231,28 @@ class InputDataValidator(Validator):
             validation_issues.count_empty_field(field)
         elif field in VALIDATION_REGEXES and not VALIDATION_REGEXES[field].match(value):
             validation_issues.count_format_error_field(field)
+        elif field.endswith(TIMESTAMP):
+            # The timestamp is 10 digits, now we validate if it's in the expected time range when present
+            self._validate_timestamp(validation_issues, field, value)
+
+    # This is the timestamp range that gets validated:
+    # * timestamp >= start_timestamp
+    # * timestamp <= end_timestamp
+    def _validate_timestamp(
+        self, validation_issues: InputDataValidationIssues, field: str, timestamp: str
+    ) -> None:
+        # When at least one of the timestamp requirements is specified it will run the validation
+        if not (self._start_timestamp or self._end_timestamp):
+            return
+        timestamp_int = int(timestamp)
+        start = self._start_timestamp
+        end = self._end_timestamp
+
+        if start and timestamp_int < start:
+            validation_issues.count_format_out_of_range_field(field)
+
+        if end and timestamp_int > end:
+            validation_issues.count_format_out_of_range_field(field)
 
     def _format_validation_report(
         self,

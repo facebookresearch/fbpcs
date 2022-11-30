@@ -7,7 +7,7 @@
 
 
 import re
-from typing import Dict, List, Pattern
+from typing import Dict, List, Pattern, Set
 
 from fbpcs.pc_pre_validation.binary_path import BinaryInfo
 
@@ -25,6 +25,7 @@ CONVERSION_TIMESTAMP_FIELD = "conversion_timestamp"
 CONVERSION_METADATA_FIELD = "conversion_metadata"
 VALUE_FIELD = "value"
 EVENT_TIMESTAMP_FIELD = "event_timestamp"
+TIMESTAMP = "timestamp"
 
 PA_FIELDS: List[str] = [
     CONVERSION_VALUE_FIELD,
@@ -53,6 +54,10 @@ ALL_FIELDS: List[str] = [
     CONVERSION_VALUE_FIELD,
     CONVERSION_TIMESTAMP_FIELD,
 ]
+RANGE_FIELDS: Set[str] = {
+    EVENT_TIMESTAMP_FIELD,
+    CONVERSION_TIMESTAMP_FIELD,
+}
 
 INTEGER_REGEX: Pattern[str] = re.compile(r"^[0-9]+$")
 TIMESTAMP_REGEX: Pattern[str] = re.compile(r"^[0-9]{10}$")
