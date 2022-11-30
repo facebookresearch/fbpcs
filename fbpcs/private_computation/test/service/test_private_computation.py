@@ -473,11 +473,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         # create one MPC instance to be put into PrivateComputationInstance
         test_mpc_id = "test_mpc_id"
-        mpc_instance = PCSMPCInstance.create_instance(
+        mpc_instance = StageStateInstance(
             instance_id=test_mpc_id,
-            game_name=GameNames.LIFT.value,
-            mpc_party=MPCParty.SERVER,
-            num_workers=2,
+            stage_name="COMPUTE",
         )
 
         initialized_time = int(time.time())
@@ -493,10 +491,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         updated_mpc_instance = mpc_instance
-        updated_mpc_instance.status = MPCInstanceStatus.COMPLETED
-        self.private_computation_service.mpc_svc.update_instance = MagicMock(
-            return_value=updated_mpc_instance
-        )
+        updated_mpc_instance.status = StageStateInstanceStatus.COMPLETED
 
         self.private_computation_service.instance_repository.read = MagicMock(
             return_value=private_computation_instance
@@ -507,12 +502,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
 
         # check update instance called on the right mpc instance
-        # pyre-fixme[16]: Callable `update_instance` has no attribute `assert_called`.
-        self.private_computation_service.mpc_svc.update_instance.assert_called()
-        self.assertEqual(
-            test_mpc_id,
-            # pyre-fixme[16]: Callable `update_instance` has no attribute `call_args`.
-            self.private_computation_service.mpc_svc.update_instance.call_args[0][0],
+        self.private_computation_service.instance_repository.update.assert_called_with(
+            instance=private_computation_instance
         )
 
         # check update instance called on the right private lift instance
@@ -1052,57 +1043,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 aggregated_result_path="aggregated_result_path",
                 expected_result_path="expected_result_path",
             )
-
-    def test_cancel_current_stage(self) -> None:
-        test_mpc_id = self.test_private_computation_id + "_compute_metrics"
-        test_game_name = GameNames.LIFT.value
-        test_mpc_party = MPCParty.CLIENT
-
-        # prepare the pl instance that will be read in to memory from the repository
-        # at the beginning of the cancel_current_stage function
-        mpc_instance_started = PCSMPCInstance.create_instance(
-            instance_id=test_mpc_id,
-            game_name=test_game_name,
-            mpc_party=test_mpc_party,
-            num_workers=self.test_num_containers,
-            status=MPCInstanceStatus.STARTED,
-        )
-        private_computation_instance = self.create_sample_instance(
-            status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
-            role=PrivateComputationRole.PARTNER,
-            instances=[mpc_instance_started],
-        )
-        self.private_computation_service.instance_repository.read = MagicMock(
-            return_value=private_computation_instance
-        )
-
-        # prepare the mpc instance that's returned from mpc_service.stop_instance()
-        mpc_instance_canceled = PCSMPCInstance.create_instance(
-            instance_id=test_mpc_id,
-            game_name=test_game_name,
-            mpc_party=test_mpc_party,
-            num_workers=self.test_num_containers,
-            status=MPCInstanceStatus.CANCELED,
-        )
-        self.private_computation_service.mpc_svc.stop_instance = MagicMock(
-            return_value=mpc_instance_canceled
-        )
-        self.private_computation_service.mpc_svc.instance_repository.read = MagicMock(
-            return_value=mpc_instance_canceled
-        )
-
-        # call cancel, expect no exception
-        private_computation_instance = (
-            self.private_computation_service.cancel_current_stage(
-                instance_id=self.test_private_computation_id,
-            )
-        )
-
-        # assert the pl instance returned has the correct status
-        self.assertEqual(
-            PrivateComputationInstanceStatus.COMPUTATION_FAILED,
-            private_computation_instance.infra_config.status,
-        )
 
     def test_get_default_pid_stage_service(self) -> None:
         """

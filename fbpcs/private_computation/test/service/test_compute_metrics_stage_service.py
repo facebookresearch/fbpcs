@@ -9,9 +9,9 @@
 from collections import defaultdict
 from typing import Set
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
@@ -29,21 +29,17 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
-
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 
 
 class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
-    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
-    def setUp(self, mock_mpc_svc: MPCService) -> None:
-        self.mock_mpc_svc = mock_mpc_svc
-        self.mock_mpc_svc.create_instance = MagicMock()
+    def setUp(self) -> None:
+        self.mock_mpc_svc = MagicMock(spec=MPCService)
+        self.mock_mpc_svc.onedocker_svc = MagicMock()
         self.run_id = "681ba82c-16d9-11ed-861d-0242ac120002"
 
         onedocker_binary_config_map = defaultdict(
@@ -58,38 +54,37 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
         )
 
     async def test_compute_metrics(self) -> None:
-        for stage_service_name, pcs_feature_set in (
+        containers = [
+            ContainerInstance(
+                instance_id="test_container_id", status=ContainerInstanceStatus.STARTED
+            )
+        ]
+        self.mock_mpc_svc.start_containers.return_value = containers
+
+        for binary_name, pcs_feature_set in (
             (
-                "compute_metrics",
+                "private_lift/lift",
                 {PCSFeature.PCS_DUMMY},
             ),
             (
-                "pcf2_lift",
+                "private_lift/pcf2_lift",
                 {PCSFeature.PRIVATE_LIFT_PCF2_RELEASE},
             ),
         ):
-            with self.subTest(
-                stage_service_name=stage_service_name, pcs_feature_set=pcs_feature_set
-            ):
+            with self.subTest(binary_name=binary_name, pcs_feature_set=pcs_feature_set):
                 private_computation_instance = self._create_pc_instance(pcs_feature_set)
-                mpc_instance = PCSMPCInstance.create_instance(
-                    instance_id=private_computation_instance.infra_config.instance_id
-                    + "_{stage_service_name}0",
-                    game_name=GameNames.LIFT.value,
-                    mpc_party=MPCParty.CLIENT,
-                    num_workers=private_computation_instance.infra_config.num_mpc_containers,
-                )
-
-                self.mock_mpc_svc.start_instance_async = AsyncMock(
-                    return_value=mpc_instance
-                )
-
                 test_server_ips = [
                     f"192.0.2.{i}"
                     for i in range(
                         private_computation_instance.infra_config.num_mpc_containers
                     )
                 ]
+                self.mock_mpc_svc.convert_cmd_args_list.return_value = (
+                    binary_name,
+                    ["cmd_1", "cmd_2"],
+                )
+                self.mock_mpc_svc.start_containers.reset_mock(return_value=False)
+                # act
                 await self.stage_svc.run_async(
                     private_computation_instance,
                     NullCertificateProvider(),
@@ -99,8 +94,26 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                     test_server_ips,
                 )
 
+                # asserts
+                self.mock_mpc_svc.start_containers.assert_called_once_with(
+                    cmd_args_list=["cmd_1", "cmd_2"],
+                    onedocker_svc=self.mock_mpc_svc.onedocker_svc,
+                    binary_version="latest",
+                    binary_name=binary_name,
+                    timeout=None,
+                    env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
+                    wait_for_containers_to_start_up=True,
+                    existing_containers=None,
+                )
                 self.assertEqual(
-                    mpc_instance, private_computation_instance.infra_config.instances[0]
+                    containers,
+                    # pyre-ignore
+                    private_computation_instance.infra_config.instances[-1].containers,
+                )
+                self.assertEqual(
+                    "COMPUTE",
+                    # pyre-ignore
+                    private_computation_instance.infra_config.instances[-1].stage_name,
                 )
 
     def test_get_game_args(self) -> None:
@@ -139,7 +152,7 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
-            status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            status=PrivateComputationInstanceStatus.COMPUTATION_STARTED,
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.LIFT,
