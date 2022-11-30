@@ -55,6 +55,20 @@ class TestSecretScrubber(TestCase):
         for c in scrub_summary.name_to_num_subs.values():
             self.assertEqual(c, 1)
 
+    def test_scrub_nonmatch(self) -> None:
+        test_message = f"""
+        "access_key_id": "{self.aws_access_key_id}a"
+        https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/$252Fecs$252Fonedocker-container-pc-e2e-test/log-events/ecs$252Fonedocker-container-pc-e2e-test$252F3602965181734511a5b83196531b80df
+        """
+
+        scrub_summary = self.scrubber.scrub(test_message)
+
+        # output message should be the same as input
+        self.assertEqual(scrub_summary.scrubbed_output, test_message)
+        self.assertEqual(scrub_summary.total_substitutions, 0)
+        for c in scrub_summary.name_to_num_subs.values():
+            self.assertEqual(c, 0)
+
     def test_pii_scrubber_regex(self) -> None:
         # Adding Logging Service PII scubber related regex
         # These regex are not expected to be scrubbed

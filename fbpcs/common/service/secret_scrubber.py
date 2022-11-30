@@ -35,7 +35,7 @@ class ScrubSummary:
 class SecretScrubber:
     SECRETS: List[Secret] = [
         # https://aws.amazon.com/blogs/security/a-safer-way-to-distribute-aws-credentials-to-ec2/
-        Secret("AWS access key id", "(?<![A-Z0-9])[A-Z0-9]{20}(?![A-Z0-9])"),
+        Secret("AWS access key id", "(?<![A-Za-z0-9])[A-Z0-9]{20}(?![A-Za-z0-9])"),
         # https://aws.amazon.com/blogs/security/a-safer-way-to-distribute-aws-credentials-to-ec2/
         Secret(
             "AWS secret access key",
