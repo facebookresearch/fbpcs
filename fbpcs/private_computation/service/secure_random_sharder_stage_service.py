@@ -6,7 +6,9 @@
 
 import logging
 import math
-from typing import Any, DefaultDict, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple
+
+from fbpcp.service.storage import StorageService
 
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -27,7 +29,12 @@ from fbpcs.private_computation.service.mpc.mpc import (
     map_private_computation_role_to_mpc_party,
     MPCService,
 )
-from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
+
+from fbpcs.private_computation.service.pid_utils import (
+    get_metrics_filepath,
+    get_pid_metrics,
+    get_sharded_filepath,
+)
 from fbpcs.private_computation.service.private_computation_service_data import (
     PrivateComputationServiceData,
 )
@@ -48,11 +55,13 @@ class SecureRandomShardStageService(PrivateComputationStageService):
 
     def __init__(
         self,
+        storage_svc: StorageService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
         mpc_service: MPCService,
         log_cost_to_s3: bool = DEFAULT_LOG_COST_TO_S3,
         container_timeout: Optional[int] = None,
     ) -> None:
+        self._storage_svc = storage_svc
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._mpc_service = mpc_service
         self._log_cost_to_s3 = log_cost_to_s3
@@ -76,10 +85,12 @@ class SecureRandomShardStageService(PrivateComputationStageService):
             An updated version of pc_instance that stores an MPCInstance
         """
         logging.info(f"[{self}] Starting Secure Random Sharding.")
-        game_args = self._get_secure_random_sharder_args(
-            pc_instance,
-            server_certificate_path,
-            ca_certificate_path,
+        game_args = await (
+            self._get_secure_random_sharder_args(
+                pc_instance,
+                server_certificate_path,
+                ca_certificate_path,
+            )
         )
 
         if server_ips and len(server_ips) != len(game_args):
@@ -136,7 +147,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
         """
         return get_updated_pc_status_mpc_game(pc_instance, self._mpc_service)
 
-    def _get_secure_random_sharder_args(
+    async def _get_secure_random_sharder_args(
         self,
         pc_instance: PrivateComputationInstance,
         server_certificate_path: str,
@@ -167,6 +178,13 @@ class SecureRandomShardStageService(PrivateComputationStageService):
             ca_certificate_path,
         )
 
+        union_sizes, intersection_sizes = await self.get_union_stats(pc_instance)
+
+        for i in range(num_secure_random_sharder_containers):
+            logging.info(
+                f"[{self}] {i}-th ID spine stats: union_size is {union_sizes[i]}, intersection_size is {intersection_sizes[i]}"
+            )
+
         shards_per_file = math.ceil(
             (
                 pc_instance.infra_config.num_mpc_containers
@@ -192,3 +210,41 @@ class SecureRandomShardStageService(PrivateComputationStageService):
 
             cmd_args_list.append(args_per_shard)
         return cmd_args_list
+
+    async def get_union_stats(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> Tuple[List[int], List[int]]:
+        """
+        Return union size and the intersection size in each shard from the PID metric logging.
+        """
+        spine_path = pc_instance.pid_stage_output_spine_path
+        num_pid_containers = pc_instance.infra_config.num_pid_containers
+
+        union_sizes = []
+        intersection_sizes = []
+
+        for shard in range(num_pid_containers):
+            pid_match_metric_dict = await get_pid_metrics(
+                self._storage_svc, spine_path, shard
+            )
+            pid_match_metric_path = get_metrics_filepath(spine_path, shard)
+            if "union_file_size" not in pid_match_metric_dict:
+                raise ValueError(
+                    f"PID metrics file doesn't have union_file_size in {pid_match_metric_path}"
+                )
+            if "partner_input_size" not in pid_match_metric_dict:
+                raise ValueError(
+                    f"PID metrics file doesn't have partner_input_size in {pid_match_metric_path}"
+                )
+            if "publisher_input_size" not in pid_match_metric_dict:
+                raise ValueError(
+                    f"PID metrics file doesn't have publisher_input_size in {pid_match_metric_path}"
+                )
+            union_sizes.append(pid_match_metric_dict["union_file_size"])
+            intersection_sizes.append(
+                pid_match_metric_dict["partner_input_size"]
+                + pid_match_metric_dict["publisher_input_size"]
+                - pid_match_metric_dict["union_file_size"]
+            )
+        return union_sizes, intersection_sizes

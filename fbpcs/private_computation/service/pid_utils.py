@@ -6,6 +6,12 @@
 
 # pyre-strict
 
+import asyncio
+import json
+from typing import Dict
+
+from fbpcp.service.storage import StorageService
+
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.service.constants import (
     DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT,
@@ -60,3 +66,22 @@ def get_metrics_filepath(path: str, shard: int) -> str:
     that there's some special function to use to log PID metrics.
     """
     return get_sharded_filepath(path, shard) + "_metrics"  # noqa
+
+
+async def get_pid_metrics(
+    storage_svc: StorageService, path: str, shard: int
+) -> Dict[str, int]:
+    """
+    This function reads PID metrics from AWS S3 bucket and return the metrics as a dict.
+    """
+    loop = asyncio.get_running_loop()
+    pid_match_metric_path = get_metrics_filepath(path, shard)
+    if not await loop.run_in_executor(
+        None, storage_svc.file_exists, pid_match_metric_path
+    ):
+        raise Exception(f"PID metrics file doesn't exist at {pid_match_metric_path}")
+    pid_match_metric_json_str = await loop.run_in_executor(
+        None, storage_svc.read, pid_match_metric_path
+    )
+    pid_match_metric_dict = json.loads(pid_match_metric_json_str)
+    return pid_match_metric_dict
