@@ -111,7 +111,23 @@ class TestMPCGameService(unittest.TestCase):
             self.mpc_game_svc._prepare_args(
                 mpc_game_config=self.mpc_game_config,
                 mpc_party=MPCParty.SERVER,
-                output_file=OUTPUT_PATH_1,
+                output_filenames=OUTPUT_PATH_1,
+            )
+
+    def test_prepare_args_with_extra_arg(self) -> None:
+        with self.assertRaisesRegexp(
+            ValueError,
+            r"Unexpected kwargs: \['extra_arg'\].*",
+        ):
+            self.mpc_game_svc._prepare_args(
+                mpc_game_config=self.mpc_game_config,
+                mpc_party=MPCParty.SERVER,
+                input_filenames=INPUT_PATH_1,
+                input_directory=INPUT_DIRECTORY,
+                output_filenames=OUTPUT_PATH_1,
+                output_directory=OUTPUT_DIRECTORY,
+                concurrency=CONCURRENCY,
+                extra_arg="dummy_value",
             )
 
     def test_build_cmd(self):

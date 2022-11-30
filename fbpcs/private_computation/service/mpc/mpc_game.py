@@ -86,6 +86,15 @@ class MPCGameService:
         if port is not None:
             all_arguments["port"] = port
 
+        argument_names = {argument.name for argument in mpc_game_config.arguments}
+        extra_kwargs = [
+            argument for argument in kwargs if argument not in argument_names
+        ]
+        if extra_kwargs:
+            raise ValueError(
+                f"Unexpected kwargs: {extra_kwargs}. Expected only {argument_names}"
+            )
+
         # push game specific arguments to dict all_arguments
         for argument in mpc_game_config.arguments:
             key = argument.name
