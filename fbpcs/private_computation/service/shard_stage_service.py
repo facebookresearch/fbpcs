@@ -17,12 +17,8 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
-from fbpcs.onedocker_binary_config import (
-    ONEDOCKER_REPOSITORY_PATH,
-    OneDockerBinaryConfig,
-)
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
-from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -32,7 +28,10 @@ from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-from fbpcs.private_computation.service.utils import get_pc_status_from_stage_state
+from fbpcs.private_computation.service.utils import (
+    generate_env_vars_dict,
+    get_pc_status_from_stage_state,
+)
 
 
 class ShardStageService(PrivateComputationStageService):
@@ -178,10 +177,7 @@ class ShardStageService(PrivateComputationStageService):
             args_list.append(args_per_shard)
 
         binary_name = sharder.get_binary_name(ShardType.ROUND_ROBIN)
-        env_vars = {}
-        if binary_config.repository_path:
-            env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
-
+        env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
         return await sharder.start_containers(
             cmd_args_list=args_list,
             onedocker_svc=onedocker_svc,

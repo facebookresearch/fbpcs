@@ -20,20 +20,13 @@ from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
-from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
 
-from fbpcs.private_computation.service.constants import (
-    CA_CERTIFICATE_ENV_VAR,
-    CA_CERTIFICATE_PATH_ENV_VAR,
-    DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
-    SERVER_CERTIFICATE_ENV_VAR,
-    SERVER_CERTIFICATE_PATH_ENV_VAR,
-)
+from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 from fbpcs.private_computation.service.mpc.entity.mpc_instance import (
     MPCInstance,
     MPCInstanceStatus,
@@ -46,6 +39,7 @@ from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
+from fbpcs.private_computation.service.utils import generate_env_vars_dict
 
 DEFAULT_BINARY_VERSION = "latest"
 
@@ -451,17 +445,13 @@ async def create_and_start_mpc_instance(
             server_uris=server_uris,
         )
 
-    env_vars = {}
-    if repository_path:
-        env_vars[ONEDOCKER_REPOSITORY_PATH] = repository_path
-    server_cert = server_certificate_provider.get_certificate()
-    ca_cert = ca_certificate_provider.get_certificate()
-    if server_cert and server_certificate_path:
-        env_vars[SERVER_CERTIFICATE_ENV_VAR] = server_cert
-        env_vars[SERVER_CERTIFICATE_PATH_ENV_VAR] = server_certificate_path
-    if ca_cert and ca_certificate_path:
-        env_vars[CA_CERTIFICATE_ENV_VAR] = ca_cert
-        env_vars[CA_CERTIFICATE_PATH_ENV_VAR] = ca_certificate_path
+    env_vars = generate_env_vars_dict(
+        repository_path=repository_path,
+        server_certificate_provider=server_certificate_provider,
+        server_certificate_path=server_certificate_path,
+        ca_certificate_provider=ca_certificate_provider,
+        ca_certificate_path=ca_certificate_path,
+    )
 
     return await mpc_svc.start_instance_async(
         instance_id=instance_id,

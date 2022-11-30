@@ -22,10 +22,7 @@ from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
-from fbpcs.onedocker_binary_config import (
-    ONEDOCKER_REPOSITORY_PATH,
-    OneDockerBinaryConfig,
-)
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.pid_mr_config import Protocol
@@ -47,7 +44,10 @@ from fbpcs.private_computation.service.private_computation_service_data import (
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
-from fbpcs.private_computation.service.utils import get_pc_status_from_stage_state
+from fbpcs.private_computation.service.utils import (
+    generate_env_vars_dict,
+    get_pc_status_from_stage_state,
+)
 
 
 class IdSpineCombinerStageService(PrivateComputationStageService):
@@ -261,10 +261,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             run_id=private_computation_instance.infra_config.run_id,
             log_cost_bucket=private_computation_instance.infra_config.log_cost_bucket,
         )
-        env_vars = {}
-        if binary_config.repository_path:
-            env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
-
+        env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
         container_type = None
         if (
             private_computation_instance.infra_config.num_pid_containers == 1

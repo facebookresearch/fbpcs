@@ -17,10 +17,7 @@ from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
-from fbpcs.onedocker_binary_config import (
-    ONEDOCKER_REPOSITORY_PATH,
-    OneDockerBinaryConfig,
-)
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
@@ -39,6 +36,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    generate_env_vars_dict,
     get_pc_status_from_stage_state,
     stop_stage_service,
 )
@@ -152,14 +150,10 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             pid_protocol, pc_role
         )
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
-        env_vars = {
-            "RUST_LOG": "info",
-        }
-        if onedocker_binary_config.repository_path:
-            env_vars[
-                ONEDOCKER_REPOSITORY_PATH
-            ] = onedocker_binary_config.repository_path
-
+        env_vars = generate_env_vars_dict(
+            repository_path=onedocker_binary_config.repository_path,
+            RUST_LOG="info",
+        )
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )

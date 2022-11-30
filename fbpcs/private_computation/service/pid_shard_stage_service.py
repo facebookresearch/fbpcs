@@ -14,10 +14,7 @@ from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
-from fbpcs.onedocker_binary_config import (
-    ONEDOCKER_REPOSITORY_PATH,
-    OneDockerBinaryConfig,
-)
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -28,6 +25,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    generate_env_vars_dict,
     get_pc_status_from_stage_state,
     stop_stage_service,
 )
@@ -126,12 +124,9 @@ class PIDShardStageService(PrivateComputationStageService):
         )
         # start containers
         logging.info(f"{pc_role} spinning up containers")
-        env_vars = {}
-        if onedocker_binary_config.repository_path:
-            env_vars[
-                ONEDOCKER_REPOSITORY_PATH
-            ] = onedocker_binary_config.repository_path
-
+        env_vars = generate_env_vars_dict(
+            repository_path=onedocker_binary_config.repository_path
+        )
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )

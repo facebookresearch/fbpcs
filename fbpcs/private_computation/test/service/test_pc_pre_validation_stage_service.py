@@ -11,10 +11,7 @@ from unittest.mock import MagicMock, patch
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
-from fbpcs.onedocker_binary_config import (
-    ONEDOCKER_REPOSITORY_PATH,
-    OneDockerBinaryConfig,
-)
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -40,6 +37,7 @@ from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
+from fbpcs.private_computation.service.utils import generate_env_vars_dict
 
 
 class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
@@ -131,7 +129,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
         )
 
-        env_vars = {ONEDOCKER_REPOSITORY_PATH: "test_path/"}
+        env_vars = generate_env_vars_dict(repository_path="test_path/")
         mock_run_binary_base_service_start_containers.assert_called_with(
             cmd_args_list=[expected_cmd_args],
             onedocker_svc=mock_onedocker_svc,
