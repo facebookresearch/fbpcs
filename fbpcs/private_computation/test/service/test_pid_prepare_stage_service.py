@@ -35,6 +35,7 @@ from fbpcs.private_computation.service.constants import (
 from fbpcs.private_computation.service.pid_prepare_stage_service import (
     PIDPrepareStageService,
 )
+from fbpcs.private_computation.service.utils import generate_env_vars_dict
 
 
 class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
@@ -102,12 +103,9 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 server_certificate_path="",
                 ca_certificate_path="",
             )
-            env_vars = {}
-            if self.onedocker_binary_config.repository_path:
-                env_vars[
-                    "ONEDOCKER_REPOSITORY_PATH"
-                ] = self.onedocker_binary_config.repository_path
-
+            env_vars = generate_env_vars_dict(
+                repository_path=self.onedocker_binary_config.repository_path
+            )
             args_ls_expect = self.get_args_expected(
                 pc_role,
                 test_num_containers,

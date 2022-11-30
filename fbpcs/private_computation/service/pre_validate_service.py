@@ -11,7 +11,6 @@ import logging
 from typing import Any, Dict, List
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
-from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
     PRE_VALIDATION_CHECKS_TIMEOUT,
@@ -23,6 +22,7 @@ from fbpcs.private_computation.service.private_computation import (
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
+from fbpcs.private_computation.service.utils import generate_env_vars_dict
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     build_private_computation_service,
 )
@@ -39,9 +39,7 @@ class PreValidateService:
         onedocker_svc = pc_service.onedocker_svc
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = pc_service.onedocker_binary_config_map[binary_name]
-        env_vars = {}
-        if binary_config.repository_path:
-            env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
+        env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
 
         cmd_args = [
             get_cmd_args(

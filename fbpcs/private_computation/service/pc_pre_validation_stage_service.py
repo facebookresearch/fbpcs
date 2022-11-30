@@ -16,10 +16,7 @@ from fbpcs.common.service.trace_logging_service import (
     TraceLoggingService,
 )
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
-from fbpcs.onedocker_binary_config import (
-    ONEDOCKER_REPOSITORY_PATH,
-    OneDockerBinaryConfig,
-)
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -36,7 +33,10 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
-from fbpcs.private_computation.service.utils import get_pc_status_from_stage_state
+from fbpcs.private_computation.service.utils import (
+    generate_env_vars_dict,
+    get_pc_status_from_stage_state,
+)
 
 # 20 minutes
 PRE_VALIDATION_CHECKS_TIMEOUT: int = 1200
@@ -116,10 +116,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
             pc_instance.product_config.common.input_path_start_ts,
             pc_instance.product_config.common.input_path_end_ts,
         )
-        env_vars = {}
-        if binary_config.repository_path:
-            env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
-
+        env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )

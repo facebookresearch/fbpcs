@@ -17,10 +17,7 @@ from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
-from fbpcs.onedocker_binary_config import (
-    ONEDOCKER_REPOSITORY_PATH,
-    OneDockerBinaryConfig,
-)
+from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -46,6 +43,7 @@ from fbpcs.private_computation.service.pid_utils import (
     pid_should_use_row_numbers,
     PIDProtocol,
 )
+from fbpcs.private_computation.service.utils import generate_env_vars_dict
 
 
 class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
@@ -118,12 +116,10 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 pid_protocol, pc_role
             )
             binary_config = self.onedocker_binary_config_map[binary_name]
-            env_vars = {
-                "RUST_LOG": "info",
-            }
-            if binary_config.repository_path:
-                env_vars[ONEDOCKER_REPOSITORY_PATH] = binary_config.repository_path
-
+            env_vars = generate_env_vars_dict(
+                repository_path=binary_config.repository_path,
+                RUST_LOG="info",
+            )
             args_str_expect = self.get_args_expect(
                 pc_role,
                 pid_protocol,

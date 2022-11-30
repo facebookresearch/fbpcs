@@ -11,14 +11,22 @@ import asyncio
 import functools
 import re
 import warnings
-from typing import Optional
+from typing import Dict, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstanceStatus
+from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
+)
+from fbpcs.private_computation.service.constants import (
+    CA_CERTIFICATE_ENV_VAR,
+    CA_CERTIFICATE_PATH_ENV_VAR,
+    SERVER_CERTIFICATE_ENV_VAR,
+    SERVER_CERTIFICATE_PATH_ENV_VAR,
 )
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 
@@ -220,3 +228,40 @@ def stop_stage_service(
         stage_instance.stop_containers(onedocker_svc)
     else:
         raise ValueError("Have no StageState for stop_service")
+
+
+def generate_env_vars_dict(
+    repository_path: Optional[str] = None,
+    server_certificate_provider: Optional[CertificateProvider] = None,
+    server_certificate_path: Optional[str] = None,
+    ca_certificate_provider: Optional[CertificateProvider] = None,
+    ca_certificate_path: Optional[str] = None,
+    **kwargs: Optional[str],
+) -> Dict[str, str]:
+    """Generate Env Vars for onedocker svc container spin up.
+
+    Generate env_vars dictionary to pass to container svc like ECS as environment {"var_name": var_value,} variable.
+
+    Args:
+        **kwargs: Arbitrary keyword arguments, will be upated in return dictionary as key-value pair.
+
+    Returns:
+        return: Dict of container enviroment name and value.
+    """
+    env_vars = {k: v for k, v in kwargs.items() if v is not None}
+    if repository_path:
+        env_vars[ONEDOCKER_REPOSITORY_PATH] = repository_path
+
+    if server_certificate_provider is not None:
+        server_cert = server_certificate_provider.get_certificate()
+        if server_cert and server_certificate_path:
+            env_vars[SERVER_CERTIFICATE_ENV_VAR] = server_cert
+            env_vars[SERVER_CERTIFICATE_PATH_ENV_VAR] = server_certificate_path
+
+    if ca_certificate_provider is not None:
+        ca_cert = ca_certificate_provider.get_certificate()
+        if ca_cert and ca_certificate_path:
+            env_vars[CA_CERTIFICATE_ENV_VAR] = ca_cert
+            env_vars[CA_CERTIFICATE_PATH_ENV_VAR] = ca_certificate_path
+
+    return env_vars
