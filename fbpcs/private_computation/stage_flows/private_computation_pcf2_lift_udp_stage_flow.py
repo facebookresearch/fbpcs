@@ -161,7 +161,7 @@ class PrivateComputationPCF2LiftUDPStageFlow(PrivateComputationBaseStageFlow):
             )
         elif self is self.SECURE_RANDOM_RESHARDER:
             return SecureRandomShardStageService(
-                args.onedocker_binary_config_map, args.mpc_svc
+                args.storage_svc, args.onedocker_binary_config_map, args.mpc_svc
             )
         else:
             return self.get_default_stage_service(args)
