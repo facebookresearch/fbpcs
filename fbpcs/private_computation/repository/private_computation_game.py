@@ -179,6 +179,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="use_postfix", required=True),
             OneDockerArgument(name="log_cost", required=False),
             OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="max_num_touchpoints", required=False),
+            OneDockerArgument(name="max_num_conversions", required=False),
         ],
     },
     GameNames.DECOUPLED_AGGREGATION.value: {
@@ -196,6 +198,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="use_postfix", required=True),
             OneDockerArgument(name="log_cost", required=False),
             OneDockerArgument(name="run_name", required=False),
+            OneDockerArgument(name="max_num_touchpoints", required=False),
+            OneDockerArgument(name="max_num_conversions", required=False),
         ],
     },
     GameNames.PCF2_ATTRIBUTION.value: {
@@ -221,6 +225,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="ca_cert_path", required=False),
             OneDockerArgument(name="server_cert_path", required=False),
             OneDockerArgument(name="private_key_path", required=False),
+            OneDockerArgument(name="max_num_touchpoints", required=False),
+            OneDockerArgument(name="max_num_conversions", required=False),
         ],
     },
     GameNames.PCF2_AGGREGATION.value: {
@@ -247,6 +253,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="ca_cert_path", required=False),
             OneDockerArgument(name="server_cert_path", required=False),
             OneDockerArgument(name="private_key_path", required=False),
+            OneDockerArgument(name="max_num_touchpoints", required=False),
+            OneDockerArgument(name="max_num_conversions", required=False),
         ],
     },
     GameNames.PRIVATE_ID_DFCA_AGGREGATION.value: {
