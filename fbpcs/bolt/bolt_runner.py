@@ -15,7 +15,8 @@ from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 
 from fbpcs.bolt.bolt_client import BoltClient
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
-from fbpcs.bolt.bolt_summary import BoltJobSummary, BoltSummary
+from fbpcs.bolt.bolt_job_summary import BoltJobSummary, BoltMetric, BoltMetricType
+from fbpcs.bolt.bolt_summary import BoltSummary
 from fbpcs.bolt.constants import (
     DEFAULT_MAX_PARALLEL_RUNS,
     DEFAULT_NUM_TRIES,
@@ -31,6 +32,7 @@ from fbpcs.bolt.exceptions import (
     WaitValidStatusTimeout,
 )
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSCreateInstanceArgs
+from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -38,6 +40,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+
 from fbpcs.utils.logger_adapter import LoggerAdapter
 
 T = TypeVar("T", bound=BoltCreateInstanceArgs)
@@ -67,17 +70,26 @@ class BoltRunner(Generic[T, U]):
         self,
         jobs: List[BoltJob[T, U]],
     ) -> BoltSummary:
-        return BoltSummary(
-            job_summaries=list(
-                await asyncio.gather(*[self.run_one(job=job) for job in jobs])
-            )
-        )
+        start_time = time()
+        results = list(await asyncio.gather(*[self.run_one(job=job) for job in jobs]))
+        end_time = time()
+        self.logger.info(f"BoltSummary: overall runtime: {end_time - start_time}")
+        return BoltSummary(job_summaries=results)
 
     @bolt_checkpoint(
         dump_return_val=True,
     )
     async def run_one(self, job: BoltJob[T, U]) -> BoltJobSummary:
+        bolt_metrics = []
+        queue_start_time = time()
         async with self.semaphore:
+            bolt_metrics.append(
+                BoltMetric(
+                    BoltMetricType.JOB_QUEUE_TIME,
+                    time() - queue_start_time,
+                )
+            )
+            job_start_time = time()
             try:
                 publisher_id, partner_id = await asyncio.gather(
                     self.publisher_client.get_or_create_instance(
@@ -99,6 +111,7 @@ class BoltRunner(Generic[T, U]):
                 # hierarchy: BoltJob num_tries --> BoltRunner num_tries --> default
                 max_tries = job.num_tries or self.num_tries
                 while stage is not None:
+                    stage_time = time()
                     # the following log is used by log_analyzer
                     logger.info(f"Valid stage found: {stage}")
                     tries = 0
@@ -130,19 +143,31 @@ class BoltRunner(Generic[T, U]):
                                     publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
                                     partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
                                     is_success=True,
+                                    bolt_metrics=bolt_metrics,
                                 )
 
                             # disable retries if stage is not retryable by setting tries to max_tries+1
                             if not stage.is_retryable:
                                 tries = max_tries + 1
 
-                            await self.run_next_stage(
+                            stage_startup_time = time()
+                            next_stage_metrics = await self.run_next_stage(
                                 publisher_id=publisher_id,
                                 partner_id=partner_id,
                                 stage=stage,
                                 poll_interval=job.poll_interval,
                                 logger=logger,
                             )
+                            bolt_metrics.append(
+                                BoltMetric(
+                                    BoltMetricType.STAGE_START_UP_TIME,
+                                    time() - stage_startup_time,
+                                    stage,
+                                )
+                            )
+                            bolt_metrics.extend(next_stage_metrics)
+
+                            stage_wait_time = time()
                             await self.wait_stage_complete(
                                 publisher_id=publisher_id,
                                 partner_id=partner_id,
@@ -150,21 +175,44 @@ class BoltRunner(Generic[T, U]):
                                 poll_interval=job.poll_interval,
                                 logger=logger,
                             )
+
+                            bolt_metrics.append(
+                                BoltMetric(
+                                    BoltMetricType.STAGE_WAIT_FOR_COMPLETED,
+                                    time() - stage_wait_time,
+                                    stage,
+                                )
+                            )
                             break
                         except Exception as e:
                             if tries >= max_tries:
                                 logger.exception(e)
+                                bolt_metrics.append(
+                                    BoltMetric(
+                                        BoltMetricType.STAGE_TOTAL_RUNTIME,
+                                        time() - stage_time,
+                                        stage,
+                                    )
+                                )
                                 return BoltJobSummary(
                                     job_name=job.job_name,
                                     publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
                                     partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
                                     is_success=False,
+                                    bolt_metrics=bolt_metrics,
                                 )
                             logger.error(f"Error: type: {type(e)}, message: {e}")
                             logger.info(
                                 f"Retrying stage {stage}, Retries left: {self.num_tries - tries}."
                             )
                             await asyncio.sleep(RETRY_INTERVAL)
+                    bolt_metrics.append(
+                        BoltMetric(
+                            BoltMetricType.STAGE_TOTAL_RUNTIME,
+                            time() - stage_time,
+                            stage,
+                        )
+                    )
                     # update stage
                     stage = await self.get_next_valid_stage(
                         job=job, stage_flow=stage_flow
@@ -181,11 +229,18 @@ class BoltRunner(Generic[T, U]):
                         ),
                     ]
                 )
+                bolt_metrics.append(
+                    BoltMetric(
+                        BoltMetricType.JOB_RUN_TIME,
+                        time() - job_start_time,
+                    )
+                )
                 return BoltJobSummary(
                     job_name=job.job_name,
                     publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
                     partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
                     is_success=all(results),
+                    bolt_metrics=bolt_metrics,
                 )
             except Exception as e:
                 self.logger.exception(e)
@@ -194,6 +249,7 @@ class BoltRunner(Generic[T, U]):
                     publisher_instance_id=job.publisher_bolt_args.create_instance_args.instance_id,
                     partner_instance_id=job.partner_bolt_args.create_instance_args.instance_id,
                     is_success=False,
+                    bolt_metrics=bolt_metrics,
                 )
 
     @bolt_checkpoint(dump_params=True, include=["stage"])
@@ -204,8 +260,10 @@ class BoltRunner(Generic[T, U]):
         stage: PrivateComputationBaseStageFlow,
         poll_interval: int,
         logger: Optional[logging.Logger] = None,
-    ) -> None:
+    ) -> List[BoltMetric]:
         logger = logger or self.logger
+        bolt_metrics = []
+        publisher_time = time()
         if await self.publisher_client.should_invoke_stage(publisher_id, stage):
             logger.info(f"Publisher {publisher_id} starting stage {stage.name}.")
             await self.publisher_client.run_stage(instance_id=publisher_id, stage=stage)
@@ -223,10 +281,37 @@ class BoltRunner(Generic[T, U]):
                     raise NoServerIpsException(
                         f"{stage.name} requires server ips but got none."
                     )
+            bolt_metrics.append(
+                BoltMetric(
+                    BoltMetricType.PLAYER_STAGE_START_UP_TIME,
+                    time() - publisher_time,
+                    stage,
+                    PrivateComputationRole.PUBLISHER,
+                )
+            )
+            partner_time = time()
             logger.info(f"Partner {partner_id} starting stage {stage.name}.")
             await self.partner_client.run_stage(
                 instance_id=partner_id, stage=stage, server_ips=server_ips
             )
+            bolt_metrics.append(
+                BoltMetric(
+                    BoltMetricType.PLAYER_STAGE_START_UP_TIME,
+                    time() - partner_time,
+                    stage,
+                    PrivateComputationRole.PARTNER,
+                )
+            )
+        else:
+            bolt_metrics.append(
+                BoltMetric(
+                    BoltMetricType.PLAYER_STAGE_START_UP_TIME,
+                    time() - publisher_time,
+                    stage,
+                    PrivateComputationRole.PUBLISHER,
+                )
+            )
+        return bolt_metrics
 
     @bolt_checkpoint(
         dump_params=True,

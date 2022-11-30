@@ -8,13 +8,7 @@
 from dataclasses import dataclass
 from typing import List
 
-
-@dataclass
-class BoltJobSummary:
-    job_name: str
-    publisher_instance_id: str
-    partner_instance_id: str
-    is_success: bool
+from fbpcs.bolt.bolt_job_summary import BoltJobSummary
 
 
 @dataclass

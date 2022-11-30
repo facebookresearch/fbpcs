@@ -7,7 +7,9 @@
 # pyre-strict
 from unittest import TestCase
 
-from fbpcs.bolt.bolt_summary import BoltJobSummary, BoltSummary
+from fbpcs.bolt.bolt_job_summary import BoltJobSummary
+
+from fbpcs.bolt.bolt_summary import BoltSummary
 
 
 class TestBoltSummary(TestCase):
