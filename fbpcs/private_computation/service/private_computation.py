@@ -197,6 +197,8 @@ class PrivateComputationService:
         pcs_features: Optional[List[str]] = None,
         run_id: Optional[str] = None,
         log_cost_bucket: Optional[str] = None,
+        input_path_start_ts: Optional[str] = None,
+        input_path_end_ts: Optional[str] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "create_instance")
@@ -291,6 +293,8 @@ class PrivateComputationService:
             multikey_enabled=multikey_enabled,
             pid_protocol=pid_protocol,
             pid_max_column_count=pid_max_column_count,
+            input_path_start_ts=input_path_start_ts,
+            input_path_end_ts=input_path_end_ts,
         )
         product_config: ProductConfig
         if game_type is PrivateComputationGameType.ATTRIBUTION:

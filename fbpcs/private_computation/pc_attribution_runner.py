@@ -24,6 +24,7 @@ from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 from fbpcs.common.service.graphapi_trace_logging_service import (
     GraphApiTraceLoggingService,
 )
+from fbpcs.common.service.input_data_service import InputDataService
 from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
@@ -346,6 +347,9 @@ async def _run_attribution_async_helper(
             run_id=run_id,
         )
     )
+
+    data_ts = matched_data[TIMESTAMP]
+    timestamps = InputDataService.get_attribution_timestamps(data_ts)
     partner_args = BoltPlayerArgs(
         create_instance_args=BoltPCSCreateInstanceArgs(
             instance_id=instance_id,
@@ -363,6 +367,8 @@ async def _run_attribution_async_helper(
             pcs_features=pcs_features,
             pid_configs=config["pid"],
             run_id=run_id,
+            input_path_start_ts=timestamps.start_timestamp,
+            input_path_end_ts=timestamps.end_timestamp,
         )
     )
     job = BoltJob(
