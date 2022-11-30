@@ -8,7 +8,7 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fbpcp.entity.certificate_request import CertificateRequest
 
@@ -174,6 +174,50 @@ class MPCService(RunBinaryBaseService):
             )
         )
 
+    def convert_cmd_args_list(
+        self,
+        game_name: str,
+        game_args: List[Dict[str, Any]],
+        mpc_party: MPCParty,
+        server_ips: Optional[List[str]] = None,
+    ) -> Tuple[str, List[str]]:
+        """Convert Game args (MPC) to Cmd args be used by Onedocker service.
+
+        Args:
+            game_name: the name of the MPC game to run, e.g. lift
+            game_args: arguments that are passed to game binaries by onedocker
+            mpc_party: The role played by the MPC instance, e.g. SERVER or CLIENT
+            server_ips: ip addresses of the publisher's containers.
+
+        Returns:
+            return: Tuple of (binary_name, cmd_args_list - compatible with oneDocker API)
+        """
+        if not game_args:
+            raise ValueError("Missing game_args or it's empty")
+        if mpc_party is MPCParty.CLIENT and not server_ips:
+            raise ValueError("Missing server_ips")
+
+        cmd_args_list = []
+        binary_name = None
+        for i in range(len(game_args)):
+            game_arg = game_args[i] if game_args is not None else {}
+            server_ip = server_ips[i] if server_ips is not None else None
+            package_name, cmd_args = self.mpc_game_svc.build_onedocker_args(
+                game_name=game_name,
+                mpc_party=mpc_party,
+                server_ip=server_ip,
+                **game_arg,
+            )
+            if binary_name is None:
+                binary_name = package_name
+
+            cmd_args_list.append(cmd_args)
+
+        if binary_name is None:
+            raise ValueError("Can't get binary_name from game_args")
+
+        return (binary_name, cmd_args_list)
+
     async def start_instance_async(
         self,
         instance_id: str,
@@ -192,12 +236,9 @@ class MPCService(RunBinaryBaseService):
         instance = self.instance_repository.read(instance_id)
         self.logger.info(f"Starting MPC instance: {instance_id}")
 
-        if instance.mpc_party is MPCParty.CLIENT and not server_ips:
-            raise ValueError("Missing server_ips")
-
         existing_containers = instance.containers
         game_args = instance.game_args
-        if game_args is not None and len(game_args) != instance.num_workers:
+        if game_args is None or len(game_args) != instance.num_workers:
             raise ValueError(
                 "The number of containers is not consistent with the number of game argument dictionary."
             )
@@ -205,25 +246,17 @@ class MPCService(RunBinaryBaseService):
             raise ValueError(
                 "The number of containers is not consistent with number of ip addresses."
             )
-        cmd_tuple_list = []
-        for i in range(instance.num_workers):
-            game_arg = game_args[i] if game_args is not None else {}
-            server_ip = server_ips[i] if server_ips is not None else None
-            cmd_tuple_list.append(
-                self.mpc_game_svc.build_onedocker_args(
-                    game_name=instance.game_name,
-                    mpc_party=instance.mpc_party,
-                    server_ip=server_ip,
-                    **game_arg,
-                )
-            )
-
-        cmd_args_list = [cmd_args for (package_name, cmd_args) in cmd_tuple_list]
+        binary_name, cmd_args_list = self.convert_cmd_args_list(
+            game_name=instance.game_name,
+            game_args=game_args,
+            mpc_party=instance.mpc_party,
+            server_ips=server_ips,
+        )
         pending_containers = await self.start_containers(
             cmd_args_list=cmd_args_list,
             onedocker_svc=self.onedocker_svc,
             binary_version=version,
-            binary_name=cmd_tuple_list[0][0],
+            binary_name=binary_name,
             timeout=timeout,
             env_vars=env_vars,
             wait_for_containers_to_start_up=wait_for_containers_to_start_up,
