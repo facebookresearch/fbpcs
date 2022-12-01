@@ -6,8 +6,16 @@
 
 from unittest import TestCase
 
-from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
-from fbpcs.stage_flow.test.dummy_stage_flow import DummyStageFlow, DummyStageFlowStatus
+from fbpcs.stage_flow.exceptions import (
+    StageFlowDuplicateStatusError,
+    StageFlowStageNotFoundError,
+)
+from fbpcs.stage_flow.stage_flow import StageFlow
+from fbpcs.stage_flow.test.dummy_stage_flow import (
+    DummyStageFlow,
+    DummyStageFlowData,
+    DummyStageFlowStatus,
+)
 
 
 class TestStageFlow(TestCase):
@@ -182,3 +190,20 @@ class TestStageFlow(TestCase):
             DummyStageFlow.get_stage_from_str(
                 "do not name your stage this or you will be fired"
             )
+
+    def test_duplicate_status_stage_flow(self) -> None:
+        with self.assertRaises(StageFlowDuplicateStatusError):
+
+            class DoNotCreateAStageFlowLikeThisOrYouWillBeFired(StageFlow):
+                STAGE_1 = DummyStageFlowData(
+                    initialized_status=DummyStageFlowStatus.STAGE_1_INITIALIZED,
+                    started_status=DummyStageFlowStatus.STAGE_1_STARTED,
+                    completed_status=DummyStageFlowStatus.STAGE_1_COMPLETED,
+                    failed_status=DummyStageFlowStatus.STAGE_1_FAILED,
+                )
+                CLOWNY_STAGE = DummyStageFlowData(
+                    initialized_status=DummyStageFlowStatus.STAGE_1_INITIALIZED,  # bad
+                    started_status=DummyStageFlowStatus.STAGE_2_STARTED,
+                    completed_status=DummyStageFlowStatus.STAGE_2_COMPLETED,
+                    failed_status=DummyStageFlowStatus.STAGE_2_FAILED,
+                )
