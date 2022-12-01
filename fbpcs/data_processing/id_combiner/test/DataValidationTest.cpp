@@ -5,13 +5,15 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "../DataValidation.h"
+#include "fbpcs/data_processing/id_combiner/DataValidation.h"
 
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 
+#include <folly/Conv.h>
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
 
@@ -55,9 +57,7 @@ TEST_F(DataValidationTest, TestInvalidData) {
       "222,375,300",
       "333,400,400"};
 
-  ASSERT_DEATH(
-      runTest(dataInput),
-      ".*in input file is not a number. Please validate your input.*");
+  ASSERT_DEATH(runTest(dataInput), ".*abc failed to parse to int*");
 }
 
 TEST_F(DataValidationTest, TestRowMismatch) {
