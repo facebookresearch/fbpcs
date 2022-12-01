@@ -18,7 +18,7 @@ COPY fbpcs/performance_tools/ ./fbpcs/performance_tools
 COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
 
-RUN cmake . -DTHREADING=ON -DEMP_USE_RANDOM_DEVICE=ON
+RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
 RUN make && make install
 
 CMD ["/bin/sh"]

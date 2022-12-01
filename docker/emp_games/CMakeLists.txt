@@ -8,6 +8,10 @@ project(game)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Don't compile with AVX512 instructions since many of the AWS
+# instances won't have access to that instruction set.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mno-avx512f")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-avx512f")
 
 include("common.cmake")
 include("perf_tools.cmake")
