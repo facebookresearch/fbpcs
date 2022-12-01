@@ -13,3 +13,7 @@ class StageFlowException(Exception):
 
 class StageFlowStageNotFoundError(KeyError, StageFlowException):
     pass
+
+
+class StageFlowDuplicateStatusError(ValueError, StageFlowException):
+    pass

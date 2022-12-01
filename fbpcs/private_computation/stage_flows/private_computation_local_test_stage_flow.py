@@ -38,7 +38,7 @@ class PrivateComputationLocalTestStageFlow(PrivateComputationBaseStageFlow):
     # and is not actually added as a variable on the enum class. I think this is why pyre gets confused.
 
     CREATED = PrivateComputationStageFlowData(
-        initialized_status=PrivateComputationInstanceStatus.CREATION_STARTED,
+        initialized_status=PrivateComputationInstanceStatus.CREATION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.CREATION_STARTED,
         completed_status=PrivateComputationInstanceStatus.CREATED,
         failed_status=PrivateComputationInstanceStatus.CREATION_FAILED,

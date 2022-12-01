@@ -103,7 +103,7 @@ class PrivateComputationDecoupledStageFlow(PrivateComputationBaseStageFlow):
         is_joint_stage=False,
     )
     DECOUPLED_ATTRIBUTION = PrivateComputationStageFlowData(
-        initialized_status=PrivateComputationInstanceStatus.DECOUPLED_AGGREGATION_INITIALIZED,
+        initialized_status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_INITIALIZED,
         started_status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_STARTED,
         completed_status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.DECOUPLED_ATTRIBUTION_FAILED,

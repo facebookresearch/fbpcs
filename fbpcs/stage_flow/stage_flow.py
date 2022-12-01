@@ -10,7 +10,10 @@ from enum import Enum, EnumMeta
 from functools import cached_property
 from typing import Any, Dict, Generic, Optional, Tuple, Type, TypeVar
 
-from fbpcs.stage_flow.exceptions import StageFlowStageNotFoundError
+from fbpcs.stage_flow.exceptions import (
+    StageFlowDuplicateStatusError,
+    StageFlowStageNotFoundError,
+)
 from fbpcs.utils.color import colored
 
 
@@ -133,10 +136,17 @@ class StageFlow(Enum, metaclass=StageFlowMeta):
         member = object.__new__(cls)
         member._value_ = data
 
-        cls._value2member_map_[data.initialized_status] = member
-        cls._value2member_map_[data.started_status] = member
-        cls._value2member_map_[data.completed_status] = member
-        cls._value2member_map_[data.failed_status] = member
+        for status in (
+            data.initialized_status,
+            data.started_status,
+            data.completed_status,
+            data.failed_status,
+        ):
+            if status in cls._value2member_map_:
+                raise StageFlowDuplicateStatusError(
+                    f"{status} already used in stage flow!"
+                )
+            cls._value2member_map_[status] = member
 
         if data.initialized_status:
             cls._stage_flow_initialized_statuses.add(data.initialized_status)
