@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 from fbpcs.pc_pre_validation.constants import (
     ALL_FIELDS,
     FORMATTED_FIELDS,
+    RANGE_FIELDS,
     REQUIRED_FIELDS,
 )
 
@@ -19,6 +20,7 @@ class InputDataValidationIssues:
     def __init__(self) -> None:
         self.empty_counter: Counter[str] = Counter()
         self.format_error_counter: Counter[str] = Counter()
+        self.range_error_counter: Counter[str] = Counter()
         self.max_issue_count_til_error: Dict[str, Dict[str, int]] = {}
 
     def get_errors(self) -> Dict[str, Any]:
@@ -30,6 +32,10 @@ class InputDataValidationIssues:
                 )
             if field in FORMATTED_FIELDS + list(self.max_issue_count_til_error.keys()):
                 self.set_format_error_count_for_field(
+                    errors, field, False, self.max_issue_count_til_error.get(field)
+                )
+            if field in RANGE_FIELDS:
+                self.set_range_error_count_for_field(
                     errors, field, False, self.max_issue_count_til_error.get(field)
                 )
 
@@ -54,6 +60,9 @@ class InputDataValidationIssues:
 
     def count_format_error_field(self, field: str) -> None:
         self.format_error_counter[field] += 1
+
+    def count_format_out_of_range_field(self, field: str) -> None:
+        self.range_error_counter[field] += 1
 
     def set_max_issue_count_til_error(
         self, max_issue_count_til_error: Dict[str, Dict[str, int]]
@@ -103,6 +112,38 @@ class InputDataValidationIssues:
                 return
         if format_error_count > 0:
             counts["bad_format_count"] = format_error_count
+        else:
+            return
+
+        if field in fields_counts:
+            fields_counts[field].update(counts)
+        else:
+            fields_counts[field] = counts
+
+    """
+    The max_issue_count is used to determine if the error count will be
+    reported in the fields_counts which will cause the validation to fail.
+    """
+
+    def set_range_error_count_for_field(
+        self,
+        fields_counts: Dict[str, Dict[str, int]],
+        field: str,
+        warning: bool,
+        max_issue_count: Optional[Dict[str, int]],
+    ) -> None:
+        counts = {}
+        format_error_count = self.range_error_counter[field]
+        if max_issue_count and ("out_of_range_count" in max_issue_count):
+            if (
+                not warning
+                and format_error_count <= max_issue_count["out_of_range_count"]
+            ):
+                return
+            if warning and format_error_count > max_issue_count["out_of_range_count"]:
+                return
+        if format_error_count > 0:
+            counts["out_of_range_count"] = format_error_count
         else:
             return
 

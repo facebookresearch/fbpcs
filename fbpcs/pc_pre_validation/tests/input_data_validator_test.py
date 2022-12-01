@@ -732,3 +732,115 @@ class TestInputDataValidator(TestCase):
         report = validator.validate()
 
         self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_validator_it_does_not_set_incorrect_timestamps(
+        self, time_mock: Mock
+    ) -> None:
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            start_timestamp="1650000000",
+            end_timestamp="1640000000",
+        )
+
+        self.assertIsNone(validator._start_timestamp)
+        self.assertIsNone(validator._end_timestamp)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_validator_it_ignores_bad_timestamps(self, time_mock: Mock) -> None:
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            start_timestamp="bad-timestamp",
+            end_timestamp="",
+        )
+
+        self.assertIsNone(validator._start_timestamp)
+        self.assertIsNone(validator._end_timestamp)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_reports_for_pa_when_timestamps_are_not_valid(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,conversion_value,conversion_timestamp,conversion_metadata\n",
+            b"abcd/1234+WXYZ=,25,1645157987,0\n",
+            b"abcd/1234+WXYZ=,25,1645157987,0\n",
+            b"abcd/1234+WXYZ=,25,1639999999,0\n",
+            b"abcd/1234+WXYZ=,25,1645157987,0\n",
+            b"abcd/1234+WXYZ=,25,9999999999,0\n",
+            b"abcd/1234+WXYZ=,25,1640000000,0\n",
+            b"abcd/1234+WXYZ=,25,1650000000,0\n",
+        ]
+        self.write_lines_to_file(lines)
+        error_fields = "conversion_timestamp"
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on '{error_fields}'.",
+            details={
+                "rows_processed_count": 7,
+                "validation_errors": {
+                    "conversion_timestamp": {
+                        "out_of_range_count": 2,
+                    },
+                },
+            },
+        )
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            start_timestamp="1640000000",
+            end_timestamp="1650000000",
+        )
+
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_reports_for_pl_when_timestamps_are_not_valid(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,25,1645157987\n",
+            b"abcd/1234+WXYZ=,25,1645157987\n",
+            b"abcd/1234+WXYZ=,25,1639999999\n",
+            b"abcd/1234+WXYZ=,25,1645157987\n",
+            b"abcd/1234+WXYZ=,25,9999999999\n",
+            b"abcd/1234+WXYZ=,25,1640000000\n",
+            b"abcd/1234+WXYZ=,25,1650000000\n",
+        ]
+        self.write_lines_to_file(lines)
+        error_fields = "event_timestamp"
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on '{error_fields}'.",
+            details={
+                "rows_processed_count": 7,
+                "validation_errors": {
+                    "event_timestamp": {
+                        "out_of_range_count": 2,
+                    },
+                },
+            },
+        )
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            start_timestamp="1640000000",
+            end_timestamp="1650000000",
+        )
+
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
