@@ -18,6 +18,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+
+## 2022-11-16
+### Changed
+  - Changed `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`: current version of Dec-02-22
+
+
 ## 2022-11-16
 ### Changed
   - Updated PCS Partner Playbook `PCS Partner Playbook - UI Version` and `PCS Partner Playbook - version approved for online publishing for non-NDA users` (identical, duplicated for historical reasons) to include PC Q4 releases. current version of Nov-16-22
