@@ -38,7 +38,6 @@ class PrivateComputationStageFlowData(StageFlowData[PrivateComputationInstanceSt
 
 
 class PrivateComputationBaseStageFlow(StageFlow):
-    # TODO(T103297566): [BE] document PrivateComputationBaseStageFlow
     def __init__(self, data: PrivateComputationStageFlowData) -> None:
         super().__init__()
         self.initialized_status: PrivateComputationInstanceStatus = (
