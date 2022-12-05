@@ -301,6 +301,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 self.assertAlmostEqual(
                     int(yesterday_timestamp),
                     args.product_config.common.post_processing_data.dataset_timestamp,
+                    # pyre-ignore
+                    delta=1,
                 )
                 self.assertEqual(args.infra_config.server_key_ref, None)
                 if pcs_features is not None:
