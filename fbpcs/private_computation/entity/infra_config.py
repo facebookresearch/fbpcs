@@ -122,7 +122,9 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
         end_ts: the time of the the end when finishing a computation run
         mpc_compute_concurrency: number of threads to run per container at the MPC compute metrics stage
         run_id: field that can be used to identify all the logs for a run.
-
+        num_secure_random_shards: total number of shards in secure random sharding stage, which is also the total number of files in following lift-udp stages
+        num_udp_containers: the number of containers used in udp
+        num_lift_containers: the number of containers used in lift with udp
     Private attributes:
         _stage_flow_cls_name: the name of a PrivateComputationBaseStageFlow subclass (cls.__name__)
     """
@@ -175,6 +177,10 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     ca_certificate: Optional[str] = immutable_field(default=None)
     server_key_ref: Optional[str] = immutable_field(default=None)
     server_domain: Optional[str] = immutable_field(default=None)
+
+    num_secure_random_shards: int = 1
+    num_udp_containers: int = 1
+    num_lift_containers: int = 1
 
     @property
     def stage_flow(self) -> Type["PrivateComputationBaseStageFlow"]:

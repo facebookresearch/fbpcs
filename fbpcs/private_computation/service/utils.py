@@ -11,7 +11,7 @@ import asyncio
 import functools
 import re
 import warnings
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
@@ -265,3 +265,13 @@ def generate_env_vars_dict(
             env_vars[CA_CERTIFICATE_PATH_ENV_VAR] = ca_certificate_path
 
     return env_vars
+
+
+# distribute number_files files into number_containers of containers evenly so that the maximum difference will be at most 1
+def distribute_files_among_containers(
+    number_files: int, number_containers: int
+) -> List[int]:
+    files_per_container = [number_files // number_containers] * number_containers
+    for i in range(number_files % number_containers):
+        files_per_container[i] += 1
+    return files_per_container

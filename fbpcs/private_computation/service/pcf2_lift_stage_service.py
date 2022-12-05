@@ -44,6 +44,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    distribute_files_among_containers,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
     stop_stage_service,
@@ -295,17 +296,38 @@ class PCF2LiftStageService(PrivateComputationStageService):
             common_compute_game_args[
                 "input_global_params_path"
             ] = f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params_0"
-
-        game_args = [
-            {
-                **common_compute_game_args,
-                **{
-                    "file_start_index": i
-                    * private_computation_instance.infra_config.num_files_per_mpc_container
-                },
-            }
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
-        ]
+        game_args = []
+        if private_computation_instance.has_feature(
+            PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS
+        ):
+            num_lift_containers = (
+                private_computation_instance.infra_config.num_lift_containers
+            )
+            shards_per_file = distribute_files_among_containers(
+                private_computation_instance.infra_config.num_secure_random_shards,
+                num_lift_containers,
+            )
+            game_args = [
+                {
+                    **common_compute_game_args,
+                    **{"file_start_index": sum(shards_per_file[0:i])},
+                    **{"num_files": shards_per_file[i]},
+                }
+                for i in range(num_lift_containers)
+            ]
+        else:
+            game_args = [
+                {
+                    **common_compute_game_args,
+                    **{
+                        "file_start_index": i
+                        * private_computation_instance.infra_config.num_files_per_mpc_container
+                    },
+                }
+                for i in range(
+                    private_computation_instance.infra_config.num_mpc_containers
+                )
+            ]
         return game_args
 
     def _get_attribution_game_args(

@@ -7,7 +7,6 @@
 # pyre-strict
 
 import json
-import math
 from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -59,6 +58,18 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
                         "union_file_size": 1894,
                         "partner_input_size": 196,
                         "publisher_input_size": 1793,
+                    }
+                )
+            )
+        )
+        # normal case when union_file_size is large and intersection rate is over 1%, number of shards per file is determined by union_file_size
+        self.magic_mocks_read.append(
+            MagicMock(
+                return_value=json.dumps(
+                    {
+                        "union_file_size": 5569966,
+                        "partner_input_size": 1057038,
+                        "publisher_input_size": 4569271,
                     }
                 )
             )
@@ -134,27 +145,26 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
 
     async def test_get_game_args_with_secure_random_sharding(self) -> None:
         private_computation_instance = self._create_pc_instance()
+        test_shards_per_file = [
+            [1] * private_computation_instance.infra_config.num_pid_containers,
+            [23] * private_computation_instance.infra_config.num_pid_containers,
+            [1] * private_computation_instance.infra_config.num_pid_containers,
+            [1] * private_computation_instance.infra_config.num_pid_containers,
+        ]
         for i in range(len(self.magic_mocks_read)):
             self.mock_storage_svc.read = self.magic_mocks_read[i]
-            shards_per_file = (
-                math.ceil(
-                    private_computation_instance.infra_config.num_mpc_containers
-                    / private_computation_instance.infra_config.num_pid_containers
-                )
-                * private_computation_instance.infra_config.num_files_per_mpc_container
-            )
             test_game_args = [
                 {
-                    "input_filename": f"{private_computation_instance.data_processing_output_path}_combine_{i}",
+                    "input_filename": f"{private_computation_instance.data_processing_output_path}_combine_{j}",
                     "output_base_path": f"{private_computation_instance.secure_random_sharder_output_base_path}",
-                    "file_start_index": shards_per_file * i,
-                    "num_output_files": shards_per_file,
+                    "file_start_index": sum(test_shards_per_file[i][0:j]),
+                    "num_output_files": test_shards_per_file[i][j],
                     "use_tls": False,
                     "ca_cert_path": "",
                     "server_cert_path": "",
                     "private_key_path": "",
                 }
-                for i in range(
+                for j in range(
                     private_computation_instance.infra_config.num_pid_containers
                 )
             ]
@@ -169,11 +179,13 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
         private_computation_instance = self._create_pc_instance()
         test_union_sizes = [
             [1894] * private_computation_instance.infra_config.num_pid_containers,
+            [5569966] * private_computation_instance.infra_config.num_pid_containers,
             [1894] * private_computation_instance.infra_config.num_pid_containers,
             [386240] * private_computation_instance.infra_config.num_pid_containers,
         ]
         test_intersection_sizes = [
             [95] * private_computation_instance.infra_config.num_pid_containers,
+            [56343] * private_computation_instance.infra_config.num_pid_containers,
             [0] * private_computation_instance.infra_config.num_pid_containers,
             [170] * private_computation_instance.infra_config.num_pid_containers,
         ]
@@ -184,6 +196,52 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
             )
             self.assertEqual(test_union_sizes[i], union_sizes)
             self.assertEqual(test_intersection_sizes[i], intersection_sizes)
+
+    async def test_get_dynamic_shards_num(self) -> None:
+        private_computation_instance = self._create_pc_instance()
+        test_shards_per_file = [
+            [1] * private_computation_instance.infra_config.num_pid_containers,
+            [23] * private_computation_instance.infra_config.num_pid_containers,
+            [1] * private_computation_instance.infra_config.num_pid_containers,
+            [1] * private_computation_instance.infra_config.num_pid_containers,
+        ]
+        for i in range(len(self.magic_mocks_read)):
+            self.mock_storage_svc.read = self.magic_mocks_read[i]
+            union_sizes, intersection_sizes = await (
+                self.stage_svc.get_union_stats(private_computation_instance)
+            )
+            shards_per_file = self.stage_svc.get_dynamic_shards_num(
+                union_sizes, intersection_sizes
+            )
+            self.assertEqual(test_shards_per_file[i], shards_per_file)
+
+    async def test_setup_udp_lift_stages(self) -> None:
+        test_num_lift_containers = [1, 2, 1, 1]
+        test_num_udp_containers = [2, 46, 2, 2]
+        for i in range(len(self.magic_mocks_read)):
+            private_computation_instance = self._create_pc_instance()
+            self.mock_storage_svc.read = self.magic_mocks_read[i]
+            union_sizes, intersection_sizes = await (
+                self.stage_svc.get_union_stats(private_computation_instance)
+            )
+            shards_per_file = self.stage_svc.get_dynamic_shards_num(
+                union_sizes, intersection_sizes
+            )
+            self.stage_svc.setup_udp_lift_stages(
+                private_computation_instance,
+                union_sizes,
+                intersection_sizes,
+                shards_per_file,
+            )
+
+            self.assertEqual(
+                test_num_lift_containers[i],
+                private_computation_instance.infra_config.num_lift_containers,
+            )
+            self.assertEqual(
+                test_num_udp_containers[i],
+                private_computation_instance.infra_config.num_udp_containers,
+            )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
 

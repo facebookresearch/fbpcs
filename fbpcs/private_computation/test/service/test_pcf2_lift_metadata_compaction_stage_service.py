@@ -38,6 +38,7 @@ from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.pcf2_lift_metadata_compaction_stage_service import (
     PCF2LiftMetadataCompactionStageService,
 )
+from fbpcs.private_computation.service.utils import distribute_files_among_containers
 
 
 class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
@@ -66,14 +67,14 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             + "_pcf2_lift_metadata_compaction",
             game_name=GameNames.PCF2_LIFT_METADATA_COMPACTION.value,
             mpc_party=MPCParty.CLIENT,
-            num_workers=private_computation_instance.infra_config.num_mpc_containers,
+            num_workers=private_computation_instance.infra_config.num_udp_containers,
         )
 
         self.mock_mpc_svc.start_instance_async = AsyncMock(return_value=mpc_instance)
 
         test_server_ips = [
             f"192.0.2.{i}"
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
+            for i in range(private_computation_instance.infra_config.num_udp_containers)
         ]
         await self.stage_svc.run_async(
             private_computation_instance,
@@ -95,15 +96,22 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             + "_"
             + GameNames.PCF2_LIFT_METADATA_COMPACTION.value
         )
-
+        total_num_files = (
+            private_computation_instance.infra_config.num_secure_random_shards
+        )
+        num_udp_containers = (
+            private_computation_instance.infra_config.num_udp_containers
+        )
+        files_per_container = distribute_files_among_containers(
+            total_num_files, num_udp_containers
+        )
         test_game_args = [
             {
                 "input_base_path": private_computation_instance.secure_random_sharder_output_base_path,
                 "output_global_params_base_path": f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params",
                 "output_secret_shares_base_path": f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_secret_shares",
-                "file_start_index": i
-                * private_computation_instance.infra_config.num_files_per_mpc_container,
-                "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
+                "file_start_index": sum(files_per_container[0:i]),
+                "num_files": files_per_container[i],
                 "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
                 "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
                 "run_name": f"{base_run_name}_{i}",
@@ -115,7 +123,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
                 "pc_feature_flags": "private_lift_unified_data_process",
                 "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
             }
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
+            for i in range(num_udp_containers)
         ]
         self.assertEqual(
             test_game_args,

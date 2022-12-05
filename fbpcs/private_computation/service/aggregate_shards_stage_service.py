@@ -6,7 +6,6 @@
 
 # pyre-strict
 
-
 from typing import DefaultDict, List, Optional
 
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
@@ -84,11 +83,13 @@ class AggregateShardsStageService(PrivateComputationStageService):
         Returns:
             An updated version of pc_instance that stores an MPCInstance
         """
-
-        num_shards = (
-            pc_instance.infra_config.num_mpc_containers
-            * pc_instance.infra_config.num_files_per_mpc_container
-        )
+        if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS):
+            num_shards = pc_instance.infra_config.num_secure_random_shards
+        else:
+            num_shards = (
+                pc_instance.infra_config.num_mpc_containers
+                * pc_instance.infra_config.num_files_per_mpc_container
+            )
 
         # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type
         metrics_format_type = (
