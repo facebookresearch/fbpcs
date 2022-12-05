@@ -42,6 +42,36 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 
+# This constant array are calcualted by SAFETY_FACTOR and K_ANON
+INTERSECTION_THRESHOLD = [
+    270,
+    407,
+    547,
+    688,
+    832,
+    970,
+    1109,
+    1256,
+    1395,
+    1546,
+    1687,
+    1827,
+    1968,
+    2123,
+    2264,
+    2406,
+    2547,
+    2689,
+    2851,
+    2993,
+    3136,
+]
+# When SAFETY_FACTOR or K_ANON changes, INTERSECTION_THRESHOLD should be recalculated using the notebook in summay of this diff
+SAFETY_FACTOR = 0.692
+K_ANON = 100
+TARGET_ROWS_UDP_THREAD = 250000
+TARGET_ROWS_LIFT_THREAD = 100000
+
 
 class SecureRandomShardStageService(PrivateComputationStageService):
     """Handles business logic for the SECURE_RANDOM_SHARDER stage
@@ -180,18 +210,14 @@ class SecureRandomShardStageService(PrivateComputationStageService):
 
         union_sizes, intersection_sizes = await self.get_union_stats(pc_instance)
 
+        shards_per_file = self.get_dynamic_shards_num(union_sizes, intersection_sizes)
+        self.setup_udp_lift_stages(
+            pc_instance, union_sizes, intersection_sizes, shards_per_file
+        )
         for i in range(num_secure_random_sharder_containers):
             logging.info(
-                f"[{self}] {i}-th ID spine stats: union_size is {union_sizes[i]}, intersection_size is {intersection_sizes[i]}"
+                f"[{self}] {i}-th ID spine stats: union_size is {union_sizes[i]}, intersection_size is {intersection_sizes[i]}, shards_per_file is {shards_per_file[i]}"
             )
-
-        shards_per_file = math.ceil(
-            (
-                pc_instance.infra_config.num_mpc_containers
-                / pc_instance.infra_config.num_pid_containers
-            )
-            * pc_instance.infra_config.num_files_per_mpc_container
-        )
 
         cmd_args_list = []
         for shard_index in range(num_secure_random_sharder_containers):
@@ -201,13 +227,12 @@ class SecureRandomShardStageService(PrivateComputationStageService):
             args_per_shard: Dict[str, Any] = {
                 "input_filename": path_to_input_shard,
                 "output_base_path": output_shards_base_path,
-                "file_start_index": shard_index * shards_per_file,
-                "num_output_files": shards_per_file,
+                "file_start_index": sum(shards_per_file[0:shard_index]),
+                "num_output_files": shards_per_file[shard_index],
                 # TODO T133330151 Add run_id support to PL UDP binary
                 # "run_id": private_computation_instance.infra_config.run_id,
                 **tls_args,
             }
-
             cmd_args_list.append(args_per_shard)
         return cmd_args_list
 
@@ -248,3 +273,65 @@ class SecureRandomShardStageService(PrivateComputationStageService):
                 - pid_match_metric_dict["union_file_size"]
             )
         return union_sizes, intersection_sizes
+
+    def setup_udp_lift_stages(
+        self,
+        pc_instance: PrivateComputationInstance,
+        union_sizes: List[int],
+        intersection_sizes: List[int],
+        num_shards_per_file: List[int],
+    ) -> None:
+        total_num_of_shards = sum(num_shards_per_file)
+        total_rows_of_intersection = sum(intersection_sizes)
+        if total_rows_of_intersection == 0:
+            logging.warning(f"[{self}] total intersection size is 0!")
+            pc_instance.infra_config.num_udp_containers = math.ceil(
+                total_num_of_shards / pc_instance.infra_config.mpc_compute_concurrency
+            )
+            pc_instance.infra_config.num_lift_containers = 1
+            return
+        pc_instance.infra_config.num_secure_random_shards = total_num_of_shards
+        pc_instance.infra_config.num_udp_containers = math.ceil(
+            total_num_of_shards / pc_instance.infra_config.mpc_compute_concurrency
+        )
+        rows_per_file = math.floor(total_rows_of_intersection / total_num_of_shards)
+        files_per_lift_thread = math.ceil(TARGET_ROWS_LIFT_THREAD / rows_per_file)
+        pc_instance.infra_config.num_lift_containers = math.ceil(
+            total_num_of_shards
+            / (pc_instance.infra_config.mpc_compute_concurrency * files_per_lift_thread)
+        )
+
+    # The number of shares per file is determined by the minimun of the following two parameters:
+    # 1) INTERSECTION_THRESHOLD, the upper bound for shards per files calculated from k_anon requirements
+    # 2) target number of shards per files, calculated by union_size / target_rows_per_thread
+    # A note here: The first one is chosen only when the intersection rate is extremely low (< 0.1%)
+    def get_dynamic_shards_num(
+        self, union_sizes: List[int], intersection_sizes: List[int]
+    ) -> List[int]:
+        shards_by_union_sizes = []
+        for union_size in union_sizes:
+            shards_by_union_sizes.append(math.ceil(union_size / TARGET_ROWS_UDP_THREAD))
+        shards_by_intersection_sizes = []
+        for intersection_size in intersection_sizes:
+            # Check if K-anon violation occurs
+            if intersection_size < K_ANON:
+                logging.warning(
+                    f"[{self}] intersection size {intersection_size} in file is smaller than K_ANON threshold {K_ANON}"
+                )
+            # Check if the intersection_size is in range of precalculated INTERSECTION_THRESHOLD
+            # If so, use the corresponding number of shards
+            # Otherwise, calculate the max number of shards using safty factor and k_anon
+            if intersection_size <= INTERSECTION_THRESHOLD[-1]:
+                num_shard = 1
+                for threshold in INTERSECTION_THRESHOLD:
+                    if intersection_size >= threshold:
+                        num_shard += 1
+                    else:
+                        break
+            else:
+                num_shard = intersection_size // (K_ANON * SAFETY_FACTOR)
+            shards_by_intersection_sizes.append(num_shard)
+        return [
+            min(i, j)
+            for (i, j) in zip(shards_by_union_sizes, shards_by_intersection_sizes)
+        ]

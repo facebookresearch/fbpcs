@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import random
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
@@ -50,6 +51,7 @@ from fbpcs.private_computation.service.mpc.mpc import (
     create_and_start_mpc_instance,
     MPCService,
 )
+from fbpcs.private_computation.service.utils import distribute_files_among_containers
 
 ca_cert_content = "ca certificate"
 server_cert_content = "server certificate"
@@ -186,6 +188,25 @@ class TestUtils(IsolatedAsyncioTestCase):
             game_args=game_args,
             server_uris=expected_server_uris,
         )
+
+    def test_distribute_files_among_containers(self) -> None:
+        test_size = random.randint(10, 20)
+        test_number_files = []
+        test_number_conatiners = []
+        for _ in range(test_size):
+            test_number_files.append(random.randint(1, 100))
+            test_number_conatiners.append(random.randint(1, 50))
+        test_files_per_conatiners = [
+            distribute_files_among_containers(
+                test_number_files[i], test_number_conatiners[i]
+            )
+            for i in range(test_size)
+        ]
+        for i in range(test_size):
+            self.assertEqual(test_number_files[i], sum(test_files_per_conatiners[i]))
+            self.assertLessEqual(
+                max(test_files_per_conatiners[i]) - min(test_files_per_conatiners[i]), 1
+            )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
