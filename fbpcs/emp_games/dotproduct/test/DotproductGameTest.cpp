@@ -36,10 +36,12 @@ class MockDotProductGame : public DotproductGame<schedulerId> {
       std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler,
       std::shared_ptr<
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-          communicationAgentFactory)
+          communicationAgentFactory,
+      std::shared_ptr<fbpcf::util::MetricCollector> metricCollector)
       : DotproductGame<schedulerId>(
             std::move(scheduler),
-            std::move(communicationAgentFactory)) {}
+            std::move(communicationAgentFactory),
+            metricCollector) {}
 
   MOCK_METHOD(
       std::vector<double>,
@@ -55,8 +57,11 @@ std::vector<bool> runORLabelsGame(
     fbpcf::SchedulerCreator schedulerCreator,
     std::vector<std::vector<bool>> labels) {
   auto scheduler = schedulerCreator(PARTY, *factory);
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("dotproduct_test");
 
-  DotproductGame<schedulerId> game(std::move(scheduler), std::move(factory));
+  DotproductGame<schedulerId> game(
+      std::move(scheduler), std::move(factory), metricCollector);
 
   // Create label secret shares
   auto labelShare = game.createSecretLabelShare(labels);
@@ -84,9 +89,11 @@ std::vector<double> runGame(
     std::vector<double> dpNoise) {
   auto scheduler = schedulerCreator(PARTY, *factory);
 
+  auto metricCollector =
+      std::make_shared<fbpcf::util::MetricCollector>("dotproduct_test");
   // create a mock Dotproduct Game
   MockDotProductGame<schedulerId> mockGame(
-      std::move(scheduler), std::move(factory));
+      std::move(scheduler), std::move(factory), metricCollector);
 
   // mock the dpNoise generation in DotproductGame
   ON_CALL(mockGame, generateDpNoise(numFeatures, delta, eps, addDpNoise))
