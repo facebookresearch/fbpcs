@@ -21,11 +21,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.entity.product_config import (
-    AggregationType,
-    AttributionConfig,
-    AttributionRule,
-)
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.argument_helper import get_tls_arguments
 from fbpcs.private_computation.service.constants import (
@@ -209,94 +204,15 @@ class PCF2LiftStageService(PrivateComputationStageService):
         Returns:
             MPC game args to be used by onedocker
         """
-        if self._log_cost_to_s3:
-            run_name = (
-                private_computation_instance.infra_config.instance_id
-                + "_"
-                + GameNames.PCF2_LIFT.value
-            )
-            if private_computation_instance.product_config.common.post_processing_data:
-                private_computation_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
-                    f"pl-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json"
-                )
-        else:
-            run_name = ""
 
-        common_compute_game_args = {
-            "input_base_path": private_computation_instance.data_processing_output_path,
-            "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
-            "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
-            "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
-            "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
-            "run_name": run_name,
-            "log_cost": self._log_cost_to_s3,
-            "run_id": private_computation_instance.infra_config.run_id,
-            "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
-        }
-        if private_computation_instance.feature_flags is not None:
-            common_compute_game_args[
-                "pc_feature_flags"
-            ] = private_computation_instance.feature_flags
+        run_name_base = f"{private_computation_instance.infra_config.instance_id}_{GameNames.PCF2_LIFT.value}"
+
         tls_args = get_tls_arguments(
             private_computation_instance.has_feature(PCSFeature.PCF_TLS),
             server_certificate_path,
             ca_certificate_path,
         )
 
-        common_compute_game_args.update(tls_args)
-
-        game_args = []
-
-        # TODO: we eventually will want to get rid of the if-else here, which will be
-        #   easy to do once the Lift and Attribution MPC compute games are consolidated
-        if (
-            private_computation_instance.infra_config.game_type
-            is PrivateComputationGameType.ATTRIBUTION
-        ):
-            game_args = self._get_attribution_game_args(
-                private_computation_instance,
-                common_compute_game_args,
-            )
-
-        elif (
-            private_computation_instance.infra_config.game_type
-            is PrivateComputationGameType.LIFT
-        ):
-            game_args = self._get_lift_game_args(
-                private_computation_instance, common_compute_game_args
-            )
-
-        return game_args
-
-    def _get_lift_game_args(
-        self,
-        private_computation_instance: PrivateComputationInstance,
-        common_compute_game_args: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        """Gets lift specific game args to be passed to game binaries by onedocker
-
-        When onedocker spins up containers to run games, it unpacks a dictionary containing the
-        arguments required by the game binary being ran. This function prepares arguments specific to
-        lift games.
-
-        Args:
-            pc_instance: the private computation instance to generate game args for
-
-        Returns:
-            MPC game args to be used by onedocker
-        """
-
-        if private_computation_instance.has_feature(
-            PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS
-        ):
-            common_compute_game_args["input_base_path"] = (
-                private_computation_instance.pcf2_lift_metadata_compaction_output_base_path
-                + "_secret_shares"
-            )
-            common_compute_game_args[
-                "input_global_params_path"
-            ] = f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params_0"
-        game_args = []
         if private_computation_instance.has_feature(
             PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS
         ):
@@ -307,72 +223,56 @@ class PCF2LiftStageService(PrivateComputationStageService):
                 private_computation_instance.infra_config.num_secure_random_shards,
                 num_lift_containers,
             )
-            game_args = [
-                {
-                    **common_compute_game_args,
-                    **{"file_start_index": sum(shards_per_file[0:i])},
-                    **{"num_files": shards_per_file[i]},
-                }
-                for i in range(num_lift_containers)
-            ]
         else:
-            game_args = [
-                {
-                    **common_compute_game_args,
-                    **{
-                        "file_start_index": i
-                        * private_computation_instance.infra_config.num_files_per_mpc_container
-                    },
-                }
-                for i in range(
-                    private_computation_instance.infra_config.num_mpc_containers
-                )
-            ]
-        return game_args
+            num_lift_containers = (
+                private_computation_instance.infra_config.num_mpc_containers
+            )
 
-    def _get_attribution_game_args(
-        self,
-        private_computation_instance: PrivateComputationInstance,
-        common_compute_game_args: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        """Gets attribution specific game args to be passed to game binaries by onedocker
+        cmd_args_list = []
+        for shard in range(num_lift_containers):
+            run_name = f"{run_name_base}_{shard}" if self._log_cost_to_s3 else ""
 
-        When onedocker spins up containers to run games, it unpacks a dictionary containing the
-        arguments required by the game binary being ran. This function prepares arguments specific to
-        attribution games.
-
-        Args:
-            pc_instance: the private computation instance to generate game args for
-
-        Returns:
-            MPC game args to be used by onedocker
-        """
-        game_args = []
-
-        attribution_config: AttributionConfig = checked_cast(
-            AttributionConfig,
-            private_computation_instance.product_config,
-        )
-        attribution_rule: AttributionRule = attribution_config.attribution_rule
-
-        aggregation_type: AggregationType = attribution_config.aggregation_type
-
-        game_args = [
-            {
-                **common_compute_game_args,
-                **{
-                    "aggregators": aggregation_type.value,
-                    "attribution_rules": attribution_rule.value,
-                    "file_start_index": i
-                    * private_computation_instance.infra_config.num_files_per_mpc_container,
-                    "use_xor_encryption": True,
-                    "run_name": private_computation_instance.infra_config.instance_id
-                    if self._log_cost_to_s3
-                    else "",
-                    "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
-                    "max_num_conversions": private_computation_instance.product_config.common.padding_size,
-                },
+            game_args: Dict[str, Any] = {
+                "input_base_path": private_computation_instance.data_processing_output_path,
+                "output_base_path": private_computation_instance.pcf2_lift_stage_output_base_path,
+                "file_start_index": shard
+                * private_computation_instance.infra_config.num_files_per_mpc_container,
+                "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
+                "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
+                "num_conversions_per_user": private_computation_instance.product_config.common.padding_size,
+                "run_name": run_name,
+                "log_cost": self._log_cost_to_s3,
+                "run_id": private_computation_instance.infra_config.run_id,
+                "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
+                **tls_args,
             }
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
-        ]
-        return game_args
+
+            if private_computation_instance.feature_flags is not None:
+                game_args[
+                    "pc_feature_flags"
+                ] = private_computation_instance.feature_flags
+
+            if private_computation_instance.has_feature(
+                PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS
+            ):
+                game_args["file_start_index"] = sum(shards_per_file[0:shard])
+                game_args["num_files"] = shards_per_file[shard]
+                game_args["input_base_path"] = (
+                    private_computation_instance.pcf2_lift_metadata_compaction_output_base_path
+                    + "_secret_shares"
+                )
+                game_args[
+                    "input_global_params_path"
+                ] = f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params_{shard}"
+
+            if (
+                self._log_cost_to_s3
+                and private_computation_instance.product_config.common.post_processing_data
+            ):
+                private_computation_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
+                    f"pl-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json"
+                )
+
+            cmd_args_list.append(game_args)
+
+        return cmd_args_list

@@ -179,56 +179,58 @@ class PCF2AggregationStageService(PrivateComputationStageService):
 
         aggregation_type: AggregationType = attribution_config.aggregation_type
 
-        if self._log_cost_to_s3:
-            run_name = private_computation_instance.infra_config.instance_id
-            if private_computation_instance.product_config.common.post_processing_data:
-                private_computation_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
-                    f"agg-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json",
-                )
-        else:
-            run_name = ""
+        run_name_base = f"{private_computation_instance.infra_config.instance_id}_{GameNames.PCF2_AGGREGATION.value}"
 
-        common_game_args = {
-            "input_base_path": private_computation_instance.data_processing_output_path,
-            "output_base_path": private_computation_instance.pcf2_aggregation_stage_output_base_path,
-            "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
-            "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
-            "aggregators": aggregation_type.value,
-            "attribution_rules": attribution_rule.value,
-            "input_base_path_secret_share": private_computation_instance.pcf2_attribution_stage_output_base_path,
-            "use_xor_encryption": True,
-            "use_postfix": True,
-            "run_name": run_name,
-            "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
-            "max_num_conversions": private_computation_instance.product_config.common.padding_size,
-            "log_cost": self._log_cost_to_s3,
-            "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
-            "use_new_output_format": False,
-            "run_id": private_computation_instance.infra_config.run_id,
-        }
         tls_args = get_tls_arguments(
             private_computation_instance.has_feature(PCSFeature.PCF_TLS),
             server_certificate_path,
             ca_certificate_path,
         )
-        if private_computation_instance.feature_flags is not None:
-            common_game_args[
-                "pc_feature_flags"
-            ] = private_computation_instance.feature_flags
 
-        game_args = [
-            {
-                **common_game_args,
-                **{
-                    "file_start_index": i
-                    * private_computation_instance.infra_config.num_files_per_mpc_container,
-                },
+        cmd_args_list = []
+        for shard in range(
+            private_computation_instance.infra_config.num_mpc_containers
+        ):
+            run_name = f"{run_name_base}_{shard}" if self._log_cost_to_s3 else ""
+
+            game_args: Dict[str, Any] = {
+                "input_base_path": private_computation_instance.data_processing_output_path,
+                "output_base_path": private_computation_instance.pcf2_aggregation_stage_output_base_path,
+                "file_start_index": shard
+                * private_computation_instance.infra_config.num_files_per_mpc_container,
+                "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
+                "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
+                "aggregators": aggregation_type.value,
+                "attribution_rules": attribution_rule.value,
+                "input_base_path_secret_share": private_computation_instance.pcf2_attribution_stage_output_base_path,
+                "use_xor_encryption": True,
+                "use_postfix": True,
+                "run_name": run_name,
+                "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
+                "max_num_conversions": private_computation_instance.product_config.common.padding_size,
+                "log_cost": self._log_cost_to_s3,
+                "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
+                "use_new_output_format": False,
+                "run_id": private_computation_instance.infra_config.run_id,
                 **tls_args,
             }
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
-        ]
 
-        return game_args
+            if private_computation_instance.feature_flags is not None:
+                game_args[
+                    "pc_feature_flags"
+                ] = private_computation_instance.feature_flags
+
+            if (
+                self._log_cost_to_s3
+                and private_computation_instance.product_config.common.post_processing_data
+            ):
+                private_computation_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
+                    f"agg-logs/{run_name}_{private_computation_instance.infra_config.role.value.title()}.json",
+                )
+
+            cmd_args_list.append(game_args)
+
+        return cmd_args_list
 
     def get_status(
         self,
