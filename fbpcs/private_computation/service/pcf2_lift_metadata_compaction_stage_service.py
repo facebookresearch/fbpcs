@@ -216,6 +216,7 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
             logging.info(
                 f"[{self}] {shard}-th metadata_compaction_containers stats: shards_per_container is {shards_per_container[shard]}"
             )
+            run_name = f"{run_name_base}_{shard}" if self._log_cost_to_s3 else ""
             game_args: Dict[str, Any] = {
                 "input_base_path": sharder_output_path,
                 "output_global_params_base_path": output_global_params_base_path,
@@ -224,7 +225,7 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
                 "num_files": shards_per_container[shard],
                 "concurrency": pc_instance.infra_config.mpc_compute_concurrency,
                 "num_conversions_per_user": pc_instance.product_config.common.padding_size,
-                "run_name": f"{run_name_base}_{shard}" if self._log_cost_to_s3 else "",
+                "run_name": run_name,
                 "log_cost": self._log_cost_to_s3,
                 "log_cost_s3_bucket": pc_instance.infra_config.log_cost_bucket,
                 # TODO T133330151 Add run_id support to PL UDP binary
@@ -234,9 +235,12 @@ class PCF2LiftMetadataCompactionStageService(PrivateComputationStageService):
             if pc_instance.feature_flags is not None:
                 game_args["pc_feature_flags"] = pc_instance.feature_flags
 
-            if pc_instance.product_config.common.post_processing_data:
+            if (
+                pc_instance.product_config.common.post_processing_data
+                and self._log_cost_to_s3
+            ):
                 pc_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
-                    f"pl-logs/{run_name_base}_{shard}_{pc_instance.infra_config.role.value.title()}.json"
+                    f"pl-logs/{run_name}_{pc_instance.infra_config.role.value.title()}.json"
                 )
 
             cmd_args_list.append(game_args)

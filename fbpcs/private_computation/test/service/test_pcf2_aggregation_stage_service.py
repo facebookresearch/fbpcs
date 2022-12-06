@@ -96,9 +96,6 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             "output_base_path": private_computation_instance.pcf2_aggregation_stage_output_base_path,
             "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
             "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
-            "run_name": private_computation_instance.infra_config.instance_id
-            if self.stage_svc._log_cost_to_s3
-            else "",
             "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
             "max_num_conversions": private_computation_instance.product_config.common.padding_size,
             # pyre-fixme[16]: Optional type has no attribute `value`.
@@ -119,10 +116,16 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
         test_game_args = [
             {
                 **common_game_args,
+                "run_name": f"{private_computation_instance.infra_config.instance_id}_{GameNames.PCF2_AGGREGATION.value}_0"
+                if self.stage_svc._log_cost_to_s3
+                else "",
                 "file_start_index": 0,
             },
             {
                 **common_game_args,
+                "run_name": f"{private_computation_instance.infra_config.instance_id}_{GameNames.PCF2_AGGREGATION.value}_1"
+                if self.stage_svc._log_cost_to_s3
+                else "",
                 "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
             },
         ]
