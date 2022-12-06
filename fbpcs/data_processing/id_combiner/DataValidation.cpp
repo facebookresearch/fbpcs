@@ -15,11 +15,11 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
+#include <folly/Conv.h>
 #include <folly/String.h>
 #include <folly/logging/xlog.h>
 #include <re2/re2.h>
 
-#include "../common/Parsing.h"
 #include "DataPreparationHelpers.h"
 
 namespace pid::combiner {
@@ -59,7 +59,7 @@ void validateCsvData(std::istream& dataFile) {
     }
     for (auto& v : rowVec) {
       try {
-        private_lift::parsing::parseStringToInt(v);
+        folly::to<std::uint64_t>(v);
       } catch (std::exception& e) {
         XLOG(FATAL) << v << " failed to parse to int";
       }
