@@ -258,3 +258,29 @@ class TestBoltJobSummary(TestCase):
                 ),
                 self.publisher_metrics[0:2],
             )
+
+    def test_bolt_metrics_repr(self) -> None:
+        with self.subTest("No stage, no role"):
+            metric = BoltMetric(BoltMetricType.JOB_QUEUE_TIME, 1)
+            self.assertEqual("JOB_QUEUE_TIME: (1, None, None)", repr(metric))
+
+        with self.subTest("Stage, no role"):
+            metric = BoltMetric(
+                BoltMetricType.JOB_QUEUE_TIME, 1, stage=DummyStageFlow.STAGE_1
+            )
+            self.assertEqual("JOB_QUEUE_TIME: (1, STAGE_1, None)", repr(metric))
+
+        with self.subTest("No stage, Role"):
+            metric = BoltMetric(
+                BoltMetricType.JOB_QUEUE_TIME, 1, role=PrivateComputationRole.PUBLISHER
+            )
+            self.assertEqual("JOB_QUEUE_TIME: (1, None, PUBLISHER)", repr(metric))
+
+        with self.subTest("Stage, Role"):
+            metric = BoltMetric(
+                BoltMetricType.JOB_QUEUE_TIME,
+                1,
+                stage=DummyStageFlow.STAGE_1,
+                role=PrivateComputationRole.PUBLISHER,
+            )
+            self.assertEqual("JOB_QUEUE_TIME: (1, STAGE_1, PUBLISHER)", repr(metric))
