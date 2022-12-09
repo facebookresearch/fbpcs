@@ -32,6 +32,11 @@ class BoltMetric:
     stage: Optional[PrivateComputationBaseStageFlow] = None
     role: Optional[PrivateComputationRole] = None
 
+    def __repr__(self) -> str:
+        stage_name = self.stage.name if self.stage else None
+        role_name = self.role.name if self.role else None
+        return f"{self.metric_type.name}: ({self.value}, {stage_name}, {role_name})"
+
 
 @dataclass
 class BoltJobSummary:
