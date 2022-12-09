@@ -243,6 +243,11 @@ def generate_env_vars_dict(
     Generate env_vars dictionary to pass to container svc like ECS as environment {"var_name": var_value,} variable.
 
     Args:
+        repository_path: package repository in OneDocker
+        server_certificate_provider: Server Certificate Provider to support TLS, need to also specify server_certificate_path
+        server_certificate_path: Server Certificate Path to support TLS, need to also specify server_certificate_provider
+        ca_certificate_provider: CA Certificate Provider to support TLS, need to also specify ca_certificate_path
+        ca_certificate_path: CA Certificate Path to support TLS, need to also specify ca_certificate_provider
         **kwargs: Arbitrary keyword arguments, will be upated in return dictionary as key-value pair.
 
     Returns:
