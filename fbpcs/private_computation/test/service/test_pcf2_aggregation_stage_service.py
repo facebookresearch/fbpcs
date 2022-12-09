@@ -19,6 +19,9 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.entity.private_computation_status import (
+    PrivateComputationInstanceStatus,
+)
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
     AttributionConfig,
@@ -32,9 +35,6 @@ from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
 from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.pcf2_aggregation_stage_service import (
     PCF2AggregationStageService,
-)
-from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
-    PrivateComputationInstanceStatus,
 )
 
 
