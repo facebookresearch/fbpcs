@@ -6,7 +6,8 @@
 
 # pyre-strict
 
-from typing import DefaultDict, List, Optional
+import logging
+from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
@@ -83,98 +84,13 @@ class AggregateShardsStageService(PrivateComputationStageService):
         Returns:
             An updated version of pc_instance that stores an MPCInstance
         """
-        if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS):
-            num_shards = pc_instance.infra_config.num_secure_random_shards
-        else:
-            num_shards = (
-                pc_instance.infra_config.num_mpc_containers
-                * pc_instance.infra_config.num_files_per_mpc_container
-            )
-
-        # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type
-        metrics_format_type = (
-            "lift"
-            if pc_instance.infra_config.game_type is PrivateComputationGameType.LIFT
-            else "ad_object"
-        )
-
         binary_name = self.get_onedocker_binary_name(pc_instance)
         binary_config = self._onedocker_binary_config_map[binary_name]
 
-        # Get output path of previous stage depending on what stage flow we are using
-        # Using "PrivateComputationDecoupledStageFlow" instead of PrivateComputationDecoupledStageFlow.get_cls_name() to avoid
-        # circular import error.
-        if pc_instance.get_flow_cls_name in [
-            "PrivateComputationDecoupledStageFlow",
-            "PrivateComputationDecoupledLocalTestStageFlow",
-        ]:
-            input_stage_path = pc_instance.decoupled_aggregation_stage_output_base_path
-        elif pc_instance.get_flow_cls_name in [
-            "PrivateComputationPCF2StageFlow",
-            "PrivateComputationMRStageFlow",
-            "PrivateComputationPCF2LocalTestStageFlow",
-            "PrivateComputationPIDPATestStageFlow",
-        ]:
-            input_stage_path = pc_instance.pcf2_aggregation_stage_output_base_path
-        elif pc_instance.get_flow_cls_name in [
-            "PrivateComputationPCF2LiftStageFlow",
-            "PrivateComputationPCF2LiftUDPStageFlow",
-            "PrivateComputationPCF2LiftLocalTestStageFlow",
-            "PrivateComputationMrPidPCF2LiftStageFlow",
-        ]:
-            input_stage_path = pc_instance.pcf2_lift_stage_output_base_path
-        else:
-            if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_PCF2_RELEASE):
-                input_stage_path = pc_instance.pcf2_lift_stage_output_base_path
-            else:
-                input_stage_path = pc_instance.compute_stage_output_base_path
-
-        if self._log_cost_to_s3:
-            run_name = pc_instance.infra_config.instance_id
-
-            log_name = (
-                "sc-logs"
-                if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE)
-                else "sa-logs"
-            )
-
-            if pc_instance.product_config.common.post_processing_data:
-                pc_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
-                    f"{log_name}/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
-                )
-        else:
-            run_name = ""
-
         # Create and start MPC instance
-        game_args = [
-            {
-                "input_base_path": input_stage_path,
-                "metrics_format_type": metrics_format_type,
-                "num_shards": num_shards,
-                "output_path": pc_instance.shard_aggregate_stage_output_path,
-                "threshold": 0
-                if isinstance(pc_instance.product_config, AttributionConfig)
-                # pyre-ignore Undefined attribute [16]
-                else pc_instance.product_config.k_anonymity_threshold,
-                "run_name": run_name,
-                "log_cost": self._log_cost_to_s3,
-                "log_cost_s3_bucket": pc_instance.infra_config.log_cost_bucket,
-                "run_id": pc_instance.infra_config.run_id,
-            },
-        ]
-        if pc_instance.feature_flags is not None:
-            for arg in game_args:
-                arg["pc_feature_flags"] = pc_instance.feature_flags
-
-        # We should only export visibility to scribe when it's set
-        if (
-            pc_instance.product_config.common.result_visibility
-            is not ResultVisibility.PUBLIC
-        ):
-            result_visibility = int(pc_instance.product_config.common.result_visibility)
-            for arg in game_args:
-                arg["visibility"] = result_visibility
-
+        game_args = self.get_game_args(
+            pc_instance, server_certificate_path, ca_certificate_path
+        )
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
@@ -201,17 +117,128 @@ class AggregateShardsStageService(PrivateComputationStageService):
         pc_instance.infra_config.instances.append(
             PCSMPCInstance.from_mpc_instance(mpc_instance)
         )
+        logging.info(
+            f"MPC instance started running for game {self.get_game_name(pc_instance)}"
+        )
         return pc_instance
 
-    @staticmethod
-    def get_game_name(pc_instance: PrivateComputationInstance) -> str:
+    def get_game_args(
+        self,
+        pc_instance: PrivateComputationInstance,
+        server_certificate_path: str,
+        ca_certificate_path: str,
+    ) -> List[Dict[str, Any]]:
+        if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS):
+            num_shards = pc_instance.infra_config.num_secure_random_shards
+        else:
+            num_shards = (
+                pc_instance.infra_config.num_mpc_containers
+                * pc_instance.infra_config.num_files_per_mpc_container
+            )
+
+        # TODO T101225989: map aggregation_type from the compute stage to metrics_format_type
+        metrics_format_type = (
+            "lift"
+            if pc_instance.infra_config.game_type is PrivateComputationGameType.LIFT
+            else "ad_object"
+        )
+
+        if self._log_cost_to_s3:
+            run_name = pc_instance.infra_config.instance_id
+            log_name = (
+                "sc-logs"
+                if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE)
+                else "sa-logs"
+            )
+            if pc_instance.product_config.common.post_processing_data:
+                pc_instance.product_config.common.post_processing_data.s3_cost_export_output_paths.add(
+                    f"{log_name}/{run_name}_{pc_instance.infra_config.role.value.title()}.json",
+                )
+        else:
+            run_name = ""
+
+        game_args = [
+            {
+                "input_base_path": self.get_input_stage_path(pc_instance),
+                "metrics_format_type": metrics_format_type,
+                "num_shards": num_shards,
+                "output_path": self.get_output_path(pc_instance),
+                "threshold": 0
+                if isinstance(pc_instance.product_config, AttributionConfig)
+                # pyre-ignore Undefined attribute [16]
+                else pc_instance.product_config.k_anonymity_threshold,
+                "run_name": run_name,
+                "log_cost": self._log_cost_to_s3,
+                "log_cost_s3_bucket": pc_instance.infra_config.log_cost_bucket,
+                "run_id": pc_instance.infra_config.run_id,
+            },
+        ]
+        if pc_instance.feature_flags is not None:
+            for arg in game_args:
+                arg["pc_feature_flags"] = pc_instance.feature_flags
+
+        # We should only export visibility to scribe when it's set
+        if (
+            pc_instance.product_config.common.result_visibility
+            is not ResultVisibility.PUBLIC
+        ):
+            result_visibility = int(pc_instance.product_config.common.result_visibility)
+            for arg in game_args:
+                arg["visibility"] = result_visibility
+
+        # remove shard_combiner_pcf2 unsupported arguments
+        if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
+            arg.pop("run_id", None)
+            arg.pop("pc_feature_flags", None)
+
+        return game_args
+
+    @classmethod
+    def get_input_stage_path(cls, pc_instance: PrivateComputationInstance) -> str:
+        # Get output path of previous stage depending on what stage flow we are using
+        # Using "PrivateComputationDecoupledStageFlow" instead of PrivateComputationDecoupledStageFlow.get_cls_name() to avoid
+        # circular import error.
+        if pc_instance.get_flow_cls_name in [
+            "PrivateComputationDecoupledStageFlow",
+            "PrivateComputationDecoupledLocalTestStageFlow",
+        ]:
+            return pc_instance.decoupled_aggregation_stage_output_base_path
+        elif pc_instance.get_flow_cls_name in [
+            "PrivateComputationPCF2StageFlow",
+            "PrivateComputationMRStageFlow",
+            "PrivateComputationPCF2LocalTestStageFlow",
+            "PrivateComputationPIDPATestStageFlow",
+        ]:
+            return pc_instance.pcf2_aggregation_stage_output_base_path
+        elif pc_instance.get_flow_cls_name in [
+            "PrivateComputationPCF2LiftStageFlow",
+            "PrivateComputationPCF2LiftUDPStageFlow",
+            "PrivateComputationPCF2LiftLocalTestStageFlow",
+            "PrivateComputationMrPidPCF2LiftStageFlow",
+        ]:
+            return pc_instance.pcf2_lift_stage_output_base_path
+        else:
+            if pc_instance.has_feature(PCSFeature.PRIVATE_LIFT_PCF2_RELEASE):
+                return pc_instance.pcf2_lift_stage_output_base_path
+            else:
+                return pc_instance.compute_stage_output_base_path
+
+    @classmethod
+    def get_output_path(cls, pc_instance: PrivateComputationInstance) -> str:
+        if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
+            return pc_instance.pcf2_shard_combine_stage_output_path
+
+        return pc_instance.shard_aggregate_stage_output_path
+
+    @classmethod
+    def get_game_name(cls, pc_instance: PrivateComputationInstance) -> str:
         if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
             return GameNames.PCF2_SHARD_COMBINER.value
 
         return GameNames.SHARD_AGGREGATOR.value
 
-    @staticmethod
-    def get_onedocker_binary_name(pc_instance: PrivateComputationInstance) -> str:
+    @classmethod
+    def get_onedocker_binary_name(cls, pc_instance: PrivateComputationInstance) -> str:
         if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
             return OneDockerBinaryNames.PCF2_SHARD_COMBINER.value
 
