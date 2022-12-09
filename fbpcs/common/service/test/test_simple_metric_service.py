@@ -35,7 +35,7 @@ class TestSimpleMetricService(TestCase):
         self.svc.bump_entity_key("entity", "key")
 
         # Assert
-        self.logger.info.assert_called_once_with(expected_dump)
+        self.logger.debug.assert_called_once_with(expected_dump)
 
     def test_bump_entity_key_custom_value(self) -> None:
         # Arrange
@@ -52,7 +52,7 @@ class TestSimpleMetricService(TestCase):
         self.svc.bump_entity_key("entity", "key", 123)
 
         # Assert
-        self.logger.info.assert_called_once_with(expected_dump)
+        self.logger.debug.assert_called_once_with(expected_dump)
 
     def test_bump_entity_key_avg_custom_value(self) -> None:
         # Arrange
@@ -69,7 +69,7 @@ class TestSimpleMetricService(TestCase):
         self.svc.bump_entity_key_avg("entity", "key", 123)
 
         # Assert
-        self.logger.info.assert_called_once_with(expected_dump)
+        self.logger.debug.assert_called_once_with(expected_dump)
 
     @mock.patch(
         "time.perf_counter_ns",
@@ -91,7 +91,7 @@ class TestSimpleMetricService(TestCase):
             pass
 
         # Assert
-        self.logger.info.assert_called_once_with(expected_dump)
+        self.logger.debug.assert_called_once_with(expected_dump)
 
     def test_bump_num_times_called_and_error_count(self) -> None:
         # Arrange
@@ -120,7 +120,7 @@ class TestSimpleMetricService(TestCase):
             pass
 
         # Assert
-        self.assertEqual(2, self.logger.info.call_count)
-        self.logger.info.assert_has_calls(
+        self.assertEqual(2, self.logger.debug.call_count)
+        self.logger.debug.assert_has_calls(
             [call(expected_err_dump), call(expected_dump)]
         )
