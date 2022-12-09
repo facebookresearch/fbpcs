@@ -31,7 +31,7 @@ from fbpcs.utils.config_yaml.exceptions import ConfigYamlBaseException
 
 GRAPHAPI_HTTPS = "https://"
 GRAPHAPI_DEFAULT_DOMAIN = "graph.facebook.com"
-GRAPHAPI_DEFAULT_VERSION = "v13.0"
+GRAPHAPI_DEFAULT_VERSION = "v15.0"
 
 GRAPHAPI_INSTANCE_STATUSES: Dict[str, PrivateComputationInstanceStatus] = {
     **{status.value: status for status in PrivateComputationInstanceStatus},
