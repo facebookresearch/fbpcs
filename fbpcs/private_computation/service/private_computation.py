@@ -692,7 +692,9 @@ class PrivateComputationService:
         )
         self.logger.info(repr(stage))
 
-        checkpoint_name = f"{pc_instance.infra_config.role.value}_{stage.name}"
+        checkpoint_name = (
+            f"{pc_instance.infra_config.role.value}_{stage.name}_run_async"
+        )
         self.trace_logging_svc.write_checkpoint(
             run_id=pc_instance.infra_config.run_id,
             instance_id=instance_id,
