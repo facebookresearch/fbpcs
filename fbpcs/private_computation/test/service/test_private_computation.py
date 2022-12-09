@@ -19,7 +19,6 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
@@ -68,7 +67,6 @@ from fbpcs.private_computation.service.errors import (
 from fbpcs.private_computation.service.mpc.mpc import (
     create_and_start_mpc_instance,
     map_private_computation_role_to_mpc_party,
-    MPCInstanceStatus,
     MPCParty,
     MPCService,
 )
@@ -958,22 +956,26 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             map_private_computation_role_to_mpc_party(PrivateComputationRole.PARTNER),
         )
 
-    def test_get_status_from_stage(self) -> None:
-        # Test get status from an MPC stage
-        mpc_instance = PCSMPCInstance.create_instance(
-            instance_id="test_mpc_id",
-            game_name=GameNames.SHARD_AGGREGATOR.value,
-            mpc_party=MPCParty.SERVER,
-            num_workers=2,
-            status=MPCInstanceStatus.FAILED,
+    @patch("fbpcp.service.onedocker.OneDockerService")
+    def test_get_status_from_stage(self, mock_onedocker_svc) -> None:
+        # prep
+        containers = [
+            ContainerInstance(instance_id="id", status=ContainerInstanceStatus.STARTED)
+        ]
+        # pyre-ignore
+        self.onedocker_service.container_svc.get_instance.return_value = (
+            ContainerInstance(instance_id="id", status=ContainerInstanceStatus.FAILED)
+        )
+        state_instance = StageStateInstance(
+            instance_id=self.test_private_computation_id,
+            stage_name="AGGREGATE",
+            containers=containers,
         )
         pc_instance = self.create_sample_instance(
             PrivateComputationInstanceStatus.AGGREGATION_STARTED,
-            instances=[mpc_instance],
+            instances=[state_instance],
         )
-        self.private_computation_service.mpc_svc.update_instance = MagicMock(
-            return_value=mpc_instance
-        )
+        # act & asserts
         self.assertEqual(
             PrivateComputationInstanceStatus.AGGREGATION_FAILED,
             self.private_computation_service._update_instance(
