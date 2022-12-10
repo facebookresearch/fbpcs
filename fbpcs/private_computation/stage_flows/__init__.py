@@ -14,8 +14,6 @@ that each subclass is imported whenever PrivateComputationBaseStageFlow is impor
 
 __all__ = [  # noqa: ignore=F405
     "private_computation_base_stage_flow",
-    "private_computation_decoupled_local_test_stage_flow",
-    "private_computation_decoupled_stage_flow",
     "private_computation_local_test_stage_flow",
     "private_computation_pcf2_lift_stage_flow",
     "private_computation_pcf2_lift_udp_stage_flow",

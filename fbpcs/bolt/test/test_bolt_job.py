@@ -9,8 +9,8 @@ from unittest import mock
 
 from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.exceptions import IncompatibleStageError
-from fbpcs.private_computation.stage_flows.private_computation_decoupled_stage_flow import (
-    PrivateComputationDecoupledStageFlow,
+from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
+    PrivateComputationPCF2StageFlow,
 )
 
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
@@ -94,7 +94,7 @@ class TestBoltJob(unittest.TestCase):
                 PrivateComputationStageFlow.AGGREGATE,
                 PrivateComputationStageFlow.AGGREGATE.completed_status,
                 PrivateComputationStageFlow.AGGREGATE.completed_status,
-                PrivateComputationDecoupledStageFlow,
+                PrivateComputationPCF2StageFlow,
                 False,
                 True,
             ),

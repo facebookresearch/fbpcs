@@ -209,14 +209,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
     @classmethod
     def get_input_stage_path(cls, pc_instance: PrivateComputationInstance) -> str:
         # Get output path of previous stage depending on what stage flow we are using
-        # Using "PrivateComputationDecoupledStageFlow" instead of PrivateComputationDecoupledStageFlow.get_cls_name() to avoid
-        # circular import error.
         if pc_instance.get_flow_cls_name in [
-            "PrivateComputationDecoupledStageFlow",
-            "PrivateComputationDecoupledLocalTestStageFlow",
-        ]:
-            return pc_instance.decoupled_aggregation_stage_output_base_path
-        elif pc_instance.get_flow_cls_name in [
             "PrivateComputationPCF2StageFlow",
             "PrivateComputationMRStageFlow",
             "PrivateComputationPCF2LocalTestStageFlow",
