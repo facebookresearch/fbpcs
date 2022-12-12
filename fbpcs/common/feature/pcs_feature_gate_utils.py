@@ -15,6 +15,9 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.private_computation.stage_flows.private_computation_mr_pid_pcf2_lift_stage_flow import (
     PrivateComputationMrPidPCF2LiftStageFlow,
 )
+from fbpcs.private_computation.stage_flows.private_computation_mr_pid_udp_pcf2_lift_stage_flow import (
+    PrivateComputationMrPidUDPPCF2LiftStageFlow,
+)
 from fbpcs.private_computation.stage_flows.private_computation_mr_stage_flow import (
     PrivateComputationMRStageFlow,
 )
@@ -43,13 +46,22 @@ def get_stage_flow(
     )
 
     # warning, enabled feature gating will override stage flow, Please contact PSI team to have a similar adoption
-    if PCSFeature.PRIVATE_ATTRIBUTION_MR_PID in pcs_feature_enums:
+    has_mr_pid = PCSFeature.PRIVATE_ATTRIBUTION_MR_PID in pcs_feature_enums
+    has_udp = PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS in pcs_feature_enums
+
+    if has_mr_pid and has_udp:
+        selected_stage_flow_cls = (
+            PrivateComputationMRStageFlow
+            if game_type is PrivateComputationGameType.ATTRIBUTION
+            else PrivateComputationMrPidUDPPCF2LiftStageFlow
+        )
+    elif has_mr_pid:
         selected_stage_flow_cls = (
             PrivateComputationMRStageFlow
             if game_type is PrivateComputationGameType.ATTRIBUTION
             else PrivateComputationMrPidPCF2LiftStageFlow
         )
-    if PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS in pcs_feature_enums:
+    elif has_udp:
         selected_stage_flow_cls = (
             PrivateComputationPCF2LiftUDPStageFlow
             if game_type is PrivateComputationGameType.LIFT

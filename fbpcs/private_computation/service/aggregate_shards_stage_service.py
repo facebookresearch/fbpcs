@@ -221,6 +221,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             "PrivateComputationPCF2LiftUDPStageFlow",
             "PrivateComputationPCF2LiftLocalTestStageFlow",
             "PrivateComputationMrPidPCF2LiftStageFlow",
+            "PrivateComputationMrPidUDPPCF2LiftStageFlow",
         ]:
             return pc_instance.pcf2_lift_stage_output_base_path
         else:
