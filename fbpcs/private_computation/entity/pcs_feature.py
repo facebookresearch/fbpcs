@@ -21,6 +21,8 @@ class PCSFeature(Enum):
     NUM_MPC_CONTAINER_MUTATION = "num_mpc_container_mutation"
     PID_SNMK_LARGER_CONTAINER_TYPE = "pid_snmk_larger_container_type"
     PCF_TLS = "pcf_tls"
+    PA_TIMESTAMP_VALIDATION = "pa_timestamp_validation"
+    PL_TIMESTAMP_VALIDATION = "pl_timestamp_validation"
     UNKNOWN = "unknown"
 
     @classmethod

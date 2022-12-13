@@ -349,7 +349,12 @@ async def _run_attribution_async_helper(
     )
 
     data_ts = matched_data[TIMESTAMP]
-    timestamps = InputDataService.get_attribution_timestamps(data_ts)
+    is_pa_timestamp_validation_enabled = client.has_feature(
+        instance_id, PCSFeature.PA_TIMESTAMP_VALIDATION
+    )
+    timestamps = InputDataService.get_attribution_timestamps(
+        data_ts, is_pa_timestamp_validation_enabled
+    )
     partner_args = BoltPlayerArgs(
         create_instance_args=BoltPCSCreateInstanceArgs(
             instance_id=instance_id,

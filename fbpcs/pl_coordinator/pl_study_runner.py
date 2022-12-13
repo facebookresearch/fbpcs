@@ -710,10 +710,15 @@ async def _create_new_instances(
                     STATUS
                 ] = PrivateComputationInstanceStatus.CREATED.value
 
-            timestamps = InputDataService.get_lift_study_timestamps(
-                study_start_time, observation_end_time
-            )
             instance_id = cell_obj_instances[cell_id][objective_id]["instance_id"]
+            is_pl_timestamp_validation_enabled = client.has_feature(
+                instance_id, PCSFeature.PL_TIMESTAMP_VALIDATION
+            )
+            timestamps = InputDataService.get_lift_study_timestamps(
+                study_start_time,
+                observation_end_time,
+                is_pl_timestamp_validation_enabled,
+            )
             instance_ids_to_timestamps[instance_id] = timestamps
 
 
