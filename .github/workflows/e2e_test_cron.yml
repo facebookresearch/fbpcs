@@ -22,7 +22,7 @@ jobs:
         id: select_pl_objective_id
         run: |
           hour=$(date -u +"%H")
-          let "idx = ($hour - 16)/2"
+          idx=$(( ($hour - 16)/2 ))
           objective_ids_array=(${{ env.PL_OBJECTIVE_IDS }})
           OBJECTIVE_ID=${objective_ids_array[$idx]}
           echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
@@ -36,8 +36,8 @@ jobs:
       - name: Select MK PL Objective ID
         id: select_pl_objective_id
         run: |
-          hour=$(date +"%H")
-          let "idx = ($hour - 16)/2"
+          hour=$(date -u +"%H")
+          idx=$(( ($hour - 16)/2 ))
           objective_ids_array=(${{ env.MK_PL_OBJECTIVE_IDS }})
           OBJECTIVE_ID=${objective_ids_array[$idx]}
           echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
