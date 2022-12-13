@@ -553,3 +553,49 @@ class TestAwsCloud(unittest.TestCase):
                     glue_etl_name=etl_name
                 ),
             )
+
+    def test_get_glue_etl_job_run_details(self) -> None:
+        mock_response = {"glue_etl": "test_etl_name"}
+        expected = {"glue_etl": "test_etl_name"}
+        self.aws_container_logs.glue_client.get_job_runs.return_value = mock_response
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_etl_job_run_details(
+                    glue_etl_name="test_etl_name"
+                ),
+            )
+
+        with self.subTest("EtlNameEmpty"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_etl_job_run_details(glue_etl_name=""),
+            )
+
+        with self.subTest("EtlNameNone"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_glue_etl_job_run_details(
+                    glue_etl_name=None
+                ),
+            )
+
+        with self.subTest("ExceptionCase"):
+            etl_name = "test_etl_name"
+            etl_exception = "getJobException"
+            expected = {"glue_etl": "test_etl_name"}
+            self.aws_container_logs.glue_client.get_job.reset_mock()
+            self.aws_container_logs.glue_client.get_job.side_effect = ClientError(
+                error_response={"Error": {"Code": etl_exception}},
+                operation_name="get_job_runs",
+            )
+            ret = self.aws_container_logs.get_glue_etl_job_run_details(
+                glue_etl_name=etl_name
+            )
+            self.assertEqual(
+                expected,
+                ret,
+            )
