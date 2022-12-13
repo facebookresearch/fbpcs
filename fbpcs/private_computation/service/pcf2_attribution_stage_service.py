@@ -11,7 +11,7 @@ import logging
 from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcp.util.typing import checked_cast
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
@@ -30,8 +30,6 @@ from fbpcs.private_computation.service.argument_helper import get_tls_arguments
 from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
 
 from fbpcs.private_computation.service.mpc.mpc import (
-    create_and_start_mpc_instance,
-    get_updated_pc_status_mpc_game,
     map_private_computation_role_to_mpc_party,
     MPCService,
 )
@@ -40,6 +38,11 @@ from fbpcs.private_computation.service.private_computation_service_data import (
 )
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
+)
+from fbpcs.private_computation.service.utils import (
+    generate_env_vars_dict,
+    get_pc_status_from_stage_state,
+    stop_stage_service,
 )
 
 
@@ -114,32 +117,40 @@ class PCF2AttributionStageService(PrivateComputationStageService):
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
-        mpc_instance = await create_and_start_mpc_instance(
-            mpc_svc=self._mpc_service,
-            instance_id=pc_instance.infra_config.instance_id + "_pcf2_attribution",
+        _, cmd_args_list = self._mpc_service.convert_cmd_args_list(
             game_name=game_name,
+            game_args=game_args,
             mpc_party=map_private_computation_role_to_mpc_party(
                 pc_instance.infra_config.role
             ),
-            num_containers=len(game_args),
-            binary_version=binary_config.binary_version,
-            server_certificate_provider=server_certificate_provider,
-            ca_certificate_provider=ca_certificate_provider,
-            server_certificate_path=server_certificate_path,
-            ca_certificate_path=ca_certificate_path,
             server_ips=server_ips,
-            game_args=game_args,
-            container_timeout=self._container_timeout,
+        )
+
+        env_vars = generate_env_vars_dict(
             repository_path=binary_config.repository_path,
+            server_certificate_provider=server_certificate_provider,
+            server_certificate_path=server_certificate_path,
+            ca_certificate_provider=ca_certificate_provider,
+            ca_certificate_path=ca_certificate_path,
+        )
+
+        container_instances = await self._mpc_service.start_containers(
+            cmd_args_list=cmd_args_list,
+            onedocker_svc=self._mpc_service.onedocker_svc,
+            binary_version=binary_config.binary_version,
+            binary_name=binary_name,
+            timeout=self._container_timeout,
+            env_vars=env_vars,
             wait_for_containers_to_start_up=should_wait_spin_up,
+            existing_containers=pc_instance.get_existing_containers_for_retry(),
         )
-
+        stage_state = StageStateInstance(
+            pc_instance.infra_config.instance_id,
+            pc_instance.current_stage.name,
+            containers=container_instances,
+        )
+        pc_instance.infra_config.instances.append(stage_state)
         logging.info("MPC instance started running for pcf2.0 attribution.")
-
-        # Push MPC instance to PrivateComputationInstance.instances and update PA Instance status
-        pc_instance.infra_config.instances.append(
-            PCSMPCInstance.from_mpc_instance(mpc_instance)
-        )
         return pc_instance
 
     def get_status(
@@ -154,7 +165,15 @@ class PCF2AttributionStageService(PrivateComputationStageService):
         Returns:
             The latest status for private_computation_instance
         """
-        return get_updated_pc_status_mpc_game(pc_instance, self._mpc_service)
+        return get_pc_status_from_stage_state(
+            pc_instance, self._mpc_service.onedocker_svc
+        )
+
+    def stop_service(
+        self,
+        pc_instance: PrivateComputationInstance,
+    ) -> None:
+        stop_stage_service(pc_instance, self._mpc_service.onedocker_svc)
 
     # For now, only passing the attribution game arguments, as this game is currently only used for PA.
     def _get_compute_metrics_game_args(
