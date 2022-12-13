@@ -36,9 +36,18 @@ class InputDataService:
 
     @classmethod
     def get_lift_study_timestamps(
-        cls, study_start_timestamp: str, observation_end_timestamp: str
+        cls,
+        study_start_timestamp: str,
+        observation_end_timestamp: str,
+        is_feature_enabled: bool,
     ) -> TimestampValues:
         try:
+            if not is_feature_enabled:
+                cls._logger().info("The PL timestamp validation feature is not enabled")
+                return TimestampValues(
+                    start_timestamp=None,
+                    end_timestamp=None,
+                )
             start_timestamp = None
             end_timestamp = None
             if TIMESTAMP_REGEX.match(study_start_timestamp):
@@ -64,8 +73,18 @@ class InputDataService:
     """
 
     @classmethod
-    def get_attribution_timestamps(cls, dataset_timestamp: str) -> TimestampValues:
+    def get_attribution_timestamps(
+        cls,
+        dataset_timestamp: str,
+        is_feature_enabled: bool,
+    ) -> TimestampValues:
         try:
+            if not is_feature_enabled:
+                cls._logger().info("The PA timestamp validation feature is not enabled")
+                return TimestampValues(
+                    start_timestamp=None,
+                    end_timestamp=None,
+                )
             dataset_datetime = cls._datetime_from_string(dataset_timestamp)
             previous_day = timedelta(days=-1) + dataset_datetime
             previous_day_ts = cls._datetime_to_timestamp_string(previous_day)

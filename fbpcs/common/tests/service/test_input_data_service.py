@@ -18,7 +18,7 @@ class TestInputDataService(unittest.TestCase):
     def test_get_lift_study_timestamps_returns_none_when_unparsable(
         self, _mock_logger
     ) -> None:
-        result = InputDataService.get_lift_study_timestamps("not", "valid")
+        result = InputDataService.get_lift_study_timestamps("not", "valid", True)
 
         self.assertIsNone(result.start_timestamp)
         self.assertIsNone(result.end_timestamp)
@@ -28,7 +28,7 @@ class TestInputDataService(unittest.TestCase):
         end_timestamp = "1658000000"
 
         result = InputDataService.get_lift_study_timestamps(
-            start_timestamp, end_timestamp
+            start_timestamp, end_timestamp, True
         )
 
         self.assertEqual(result.start_timestamp, start_timestamp)
@@ -38,7 +38,7 @@ class TestInputDataService(unittest.TestCase):
     def test_get_attribution_timestamps_returns_none_when_unparsable(
         self, _mock_logger
     ) -> None:
-        result = InputDataService.get_attribution_timestamps("not-valid")
+        result = InputDataService.get_attribution_timestamps("not-valid", True)
 
         self.assertIsNone(result.start_timestamp)
         self.assertIsNone(result.end_timestamp)
@@ -48,7 +48,31 @@ class TestInputDataService(unittest.TestCase):
         # Start + 2 days
         expected_end = str(int(expected_start) + (3600 * 48))
 
-        result = InputDataService.get_attribution_timestamps("2022-05-01T14:00:00+0000")
+        result = InputDataService.get_attribution_timestamps(
+            "2022-05-01T14:00:00+0000", True
+        )
 
         self.assertEqual(result.start_timestamp, expected_start)
         self.assertEqual(result.end_timestamp, expected_end)
+
+    @patch("fbpcs.common.service.input_data_service.logging.getLogger")
+    def test_when_pl_validation_is_not_enabled_it_returns_empty_timestamps(
+        self, _mock_logger
+    ):
+        result = InputDataService.get_lift_study_timestamps(
+            "1657090807", "1657090808", False
+        )
+
+        self.assertIsNone(result.start_timestamp)
+        self.assertIsNone(result.end_timestamp)
+
+    @patch("fbpcs.common.service.input_data_service.logging.getLogger")
+    def test_when_pa_validation_is_not_enabled_it_returns_empty_timestamps(
+        self, _mock_logger
+    ):
+        result = InputDataService.get_attribution_timestamps(
+            "2022-05-01T14:00:00+0000", False
+        )
+
+        self.assertIsNone(result.start_timestamp)
+        self.assertIsNone(result.end_timestamp)
