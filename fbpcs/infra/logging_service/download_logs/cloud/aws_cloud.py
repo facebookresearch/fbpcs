@@ -627,9 +627,7 @@ class AwsCloud(CloudBaseClass):
                 CatalogName=data_catalog_name, MaxResults=10
             )
         except ClientError as error:
-            error_message = (
-                f"Couldn't fetch databses for data catalog {data_catalog_name}: {error}"
-            )
+            error_message = f"Couldn't fetch databases for data catalog {data_catalog_name}: {error}"
             self.log.error(f"{error_message}")
             response = {"List_Databases_Error": error_message}
         return response
@@ -664,6 +662,7 @@ class AwsCloud(CloudBaseClass):
         List Athena execution IDs.
         Which can be used to get more information about the query execution
         """
+        response = {}
         try:
             response = self.athena_client.list_query_executions()
         except ClientError as error:
