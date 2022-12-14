@@ -652,3 +652,80 @@ class TestAwsCloud(unittest.TestCase):
                 expected,
                 ret,
             )
+
+    def test_get_athena_database_config(self) -> None:
+        data_catalog_name = "test_data_catalog_name"
+        database_name = "test_database_name"
+        data_catalog_exception = "getJobException"
+        mock_response = {"athena_database": "test_athena_database"}
+        expected = {"athena_database": "test_athena_database"}
+        self.aws_container_logs.athena_client.get_database.return_value = mock_response
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_config(
+                    catalog_name=data_catalog_name,
+                    database_name=database_name,
+                ),
+            )
+
+        with self.subTest("DataCatalogNameEmpty"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_config(
+                    catalog_name="",
+                    database_name=database_name,
+                ),
+            )
+
+        with self.subTest("DataCatalogNameNone"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_config(
+                    catalog_name=None,
+                    database_name=database_name,
+                ),
+            )
+
+        with self.subTest("DatabaseNameEmpty"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_config(
+                    catalog_name=data_catalog_name,
+                    database_name="",
+                ),
+            )
+
+        with self.subTest("DatabaseNameNone"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_config(
+                    catalog_name=data_catalog_name,
+                    database_name=None,
+                ),
+            )
+
+        with self.subTest("ExceptionCase"):
+            data_catalog_name_exception = "getJobException"
+            expected_error = f"Failed to fetch database config in Athena for catalog {data_catalog_name} and database {database_name}: An error occurred ({data_catalog_exception}) when calling the get_database operation: Unknown"
+            expected = {"Get_Database_Error": expected_error}
+            self.aws_container_logs.athena_client.get_database.reset_mock()
+            self.aws_container_logs.athena_client.get_database.side_effect = (
+                ClientError(
+                    error_response={"Error": {"Code": data_catalog_name_exception}},
+                    operation_name="get_database",
+                )
+            )
+            ret = self.aws_container_logs.get_athena_database_config(
+                catalog_name=data_catalog_name,
+                database_name=database_name,
+            )
+            self.assertEqual(
+                expected,
+                ret,
+            )
