@@ -38,6 +38,7 @@ class AwsCloud(CloudBaseClass):
     """
 
     DEFAULT_RETRIES_LIMIT = 3
+    DEFAULT_AWS_REGION = "us-east-1"
 
     def __init__(
         self,
@@ -157,7 +158,19 @@ class AwsCloud(CloudBaseClass):
     def get_aws_region(
         self, s3_bucket_name: str, aws_region: Optional[str] = None
     ) -> str:
-        ret_value = ""
+        """
+        Returns the aws region to be used in the boto3 objects
+        Supports 2 paths:
+            1. If the region is passed to the class AwsCloud, return the same
+            2. Derive the AWS region from the S3 bucket.
+
+        For path #2, boto3 API `get_bucket_location` is used, which returns `LocationConstraint`
+        with the bucket region. For the region `us-east-1` None is returned by this API.
+        In this function, we handle this case explicitly.
+
+         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.get_bucket_location
+        """
+        response = {}
         if aws_region is not None:
             return aws_region
 
@@ -171,9 +184,8 @@ class AwsCloud(CloudBaseClass):
                     continue
                 else:
                     raise AwsRegionNotFound(f"AWS Region not found: {error}")
-            ret_value = response.get("LocationConstraint")
             break
-        return ret_value if ret_value is not None else "us-east-1"
+        return response.get("LocationConstraint") or self.DEFAULT_AWS_REGION
 
     def get_cloudwatch_logs(
         self,
