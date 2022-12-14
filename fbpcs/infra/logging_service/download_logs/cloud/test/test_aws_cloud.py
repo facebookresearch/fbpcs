@@ -758,3 +758,60 @@ class TestAwsCloud(unittest.TestCase):
                 expected,
                 ret,
             )
+
+    def test_get_athena_query_execution_details(self) -> None:
+        mock_response = {
+            "athena_query_execution_details": "test_athena_query_execution_details"
+        }
+        expected = {
+            "athena_query_execution_details": "test_athena_query_execution_details"
+        }
+        self.aws_container_logs.glue_client.get_query_execution.return_value = (
+            mock_response
+        )
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_query_execution_details(
+                    query_execution_id="test_execution_id"
+                ),
+            )
+
+        with self.subTest("ExecutionIdEmpty"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_query_execution_details(
+                    query_execution_id=""
+                ),
+            )
+
+        with self.subTest("ExecutionIdNone"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_query_execution_details(
+                    query_execution_id=None
+                ),
+            )
+
+        with self.subTest("ExceptionCase"):
+            athena_query_execution_id = "test_athena_query_execution_id"
+            execution_id_exception = "getJobException"
+            expected_error = f"Failed to fetch query details with execution ID {athena_query_execution_id}: An error occurred ({execution_id_exception}) when calling the get_query_execution operation: Unknown"
+            expected = {"Get_Query_Execution_Error": expected_error}
+            self.aws_container_logs.glue_client.get_query_execution.reset_mock()
+            self.aws_container_logs.glue_client.get_query_execution.side_effect = (
+                ClientError(
+                    error_response={"Error": {"Code": execution_id_exception}},
+                    operation_name="get_query_execution",
+                )
+            )
+            ret = self.aws_container_logs.get_athena_query_execution_details(
+                query_execution_id=athena_query_execution_id
+            )
+            self.assertEqual(
+                expected,
+                ret,
+            )
