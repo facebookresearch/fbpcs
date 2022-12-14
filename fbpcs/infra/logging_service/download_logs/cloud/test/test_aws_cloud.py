@@ -599,3 +599,56 @@ class TestAwsCloud(unittest.TestCase):
                 expected,
                 ret,
             )
+
+    def test_get_athena_database_list(self) -> None:
+        data_catalog_name = "test_data_catalog_name"
+        data_catalog_exception = "getJobException"
+        mock_response = {"athena_catalog": "test_athena_catalog"}
+
+        expected = {"athena_catalog": "test_athena_catalog"}
+        self.aws_container_logs.athena_client.list_databases.return_value = (
+            mock_response
+        )
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_list(
+                    data_catalog_name=data_catalog_name
+                ),
+            )
+
+        with self.subTest("DataCatalogNameEmpty"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_list(data_catalog_name=""),
+            )
+
+        with self.subTest("DataCatalogNameNone"):
+            expected = {}
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_database_list(
+                    data_catalog_name=None
+                ),
+            )
+
+        with self.subTest("ExceptionCase"):
+            data_catalog_name_exception = "getJobException"
+            expected_error = f"Couldn't fetch databases for data catalog {data_catalog_name}: An error occurred ({data_catalog_exception}) when calling the list_databases operation: Unknown"
+            expected = {"List_Databases_Error": expected_error}
+            self.aws_container_logs.athena_client.list_databases.reset_mock()
+            self.aws_container_logs.athena_client.list_databases.side_effect = (
+                ClientError(
+                    error_response={"Error": {"Code": data_catalog_name_exception}},
+                    operation_name="list_databases",
+                )
+            )
+            ret = self.aws_container_logs.get_athena_database_list(
+                data_catalog_name=data_catalog_name
+            )
+            self.assertEqual(
+                expected,
+                ret,
+            )
