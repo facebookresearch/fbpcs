@@ -729,3 +729,32 @@ class TestAwsCloud(unittest.TestCase):
                 expected,
                 ret,
             )
+
+    def test_get_athena_query_executions(self) -> None:
+        mock_response = {"athena_query": "test_athena_query"}
+        expected = []
+        self.aws_container_logs.athena_client.list_query_executions.return_value = (
+            mock_response
+        )
+
+        with self.subTest("basic"):
+            self.assertEqual(
+                expected,
+                self.aws_container_logs.get_athena_query_executions(),
+            )
+
+        with self.subTest("ExceptionCase"):
+            query_execution_exception = "getJobException"
+            expected = []
+            self.aws_container_logs.athena_client.list_query_executions.reset_mock()
+            self.aws_container_logs.athena_client.list_query_executions.side_effect = (
+                ClientError(
+                    error_response={"Error": {"Code": query_execution_exception}},
+                    operation_name="list_query_executions",
+                )
+            )
+            ret = self.aws_container_logs.get_athena_query_executions()
+            self.assertEqual(
+                expected,
+                ret,
+            )
