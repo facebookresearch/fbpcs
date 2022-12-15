@@ -16,13 +16,19 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
+
+from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.retry_handler import RetryHandler
+from fbpcs.common.service.simple_metric_service import SimpleMetricService
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 
 DEFAULT_WAIT_FOR_CONTAINER_POLL = 5
 
 
 class RunBinaryBaseService:
+    def __init__(self, metric_svc: Optional[MetricService] = None) -> None:
+        self.metric_svc: MetricService = metric_svc or SimpleMetricService()
+
     async def start_containers(
         self,
         cmd_args_list: List[str],
@@ -43,6 +49,22 @@ class RunBinaryBaseService:
 
         containers_to_start = self.get_containers_to_start(
             len(cmd_args_list), existing_containers
+        )
+
+        self.metric_svc.bump_entity_key(
+            entity="run_binary_base_service",
+            key="len_cmd_args_list",
+            value=len(cmd_args_list),
+        )
+        self.metric_svc.bump_entity_key(
+            entity="run_binary_base_service",
+            key="len_existing_containers",
+            value=len(existing_containers or []),
+        )
+        self.metric_svc.bump_entity_key(
+            entity="run_binary_base_service",
+            key="len_containers_to_start",
+            value=len(containers_to_start),
         )
 
         if containers_to_start:
