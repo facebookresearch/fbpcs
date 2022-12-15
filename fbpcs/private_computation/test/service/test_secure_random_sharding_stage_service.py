@@ -9,10 +9,11 @@
 import json
 from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
+
+from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 
 from fbpcp.service.storage import StorageService
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -30,10 +31,7 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
-
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 
 from fbpcs.private_computation.service.secure_random_sharder_stage_service import (
@@ -42,13 +40,11 @@ from fbpcs.private_computation.service.secure_random_sharder_stage_service impor
 
 
 class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
-    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
     @patch("fbpcp.service.storage.StorageService")
-    def setUp(self, mock_storage_svc: StorageService, mock_mpc_svc: MPCService) -> None:
+    def setUp(self, mock_storage_svc: StorageService) -> None:
         self.mock_storage_svc = mock_storage_svc
-        self.mock_mpc_svc = mock_mpc_svc
-        self.mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())
-        self.mock_mpc_svc.create_instance = MagicMock()
+        self.mock_mpc_svc = MagicMock(spec=MPCService)
+        self.mock_mpc_svc.onedocker_svc = MagicMock()
         self.magic_mocks_read = []
         # normal case when intersection rate is over 1%, number of shards per file is determined by union_file_size
         self.magic_mocks_read.append(
@@ -113,22 +109,26 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
         )
 
     async def test_run_async_with_udp(self) -> None:
+        containers = [
+            ContainerInstance(
+                instance_id="test_container_id", status=ContainerInstanceStatus.STARTED
+            )
+        ]
+        self.mock_mpc_svc.start_containers.return_value = containers
         private_computation_instance = self._create_pc_instance()
-        mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=private_computation_instance.infra_config.instance_id
-            + "_secure_random_sharder",
-            game_name=GameNames.SECURE_RANDOM_SHARDER.value,
-            mpc_party=MPCParty.CLIENT,
-            num_workers=private_computation_instance.infra_config.num_pid_containers,
-        )
-
-        self.mock_mpc_svc.start_instance_async = AsyncMock(return_value=mpc_instance)
-
+        binary_name = "data_processing/secure_random_sharder"
         test_server_ips = [
             f"192.0.2.{i}"
             for i in range(private_computation_instance.infra_config.num_pid_containers)
         ]
+        self.mock_mpc_svc.convert_cmd_args_list.return_value = (
+            binary_name,
+            ["cmd_1", "cmd_2"],
+        )
+
+        # act
         for magic_mock in self.magic_mocks_read:
+            self.mock_mpc_svc.start_containers.reset_mock()
             self.mock_storage_svc.read = magic_mock
             await self.stage_svc.run_async(
                 private_computation_instance,
@@ -139,8 +139,26 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
                 test_server_ips,
             )
 
+            # asserts
+            self.mock_mpc_svc.start_containers.assert_called_once_with(
+                cmd_args_list=["cmd_1", "cmd_2"],
+                onedocker_svc=self.mock_mpc_svc.onedocker_svc,
+                binary_version="latest",
+                binary_name=binary_name,
+                timeout=None,
+                env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
+                wait_for_containers_to_start_up=True,
+                existing_containers=None,
+            )
             self.assertEqual(
-                mpc_instance, private_computation_instance.infra_config.instances[0]
+                containers,
+                # pyre-ignore
+                private_computation_instance.infra_config.instances[-1].containers,
+            )
+            self.assertEqual(
+                "SECURE_RANDOM_RESHARDER",
+                # pyre-ignore
+                private_computation_instance.infra_config.instances[-1].stage_name,
             )
 
     async def test_get_game_args_with_secure_random_sharding(self) -> None:
@@ -248,7 +266,8 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
-            status=PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
+            _stage_flow_cls_name="PrivateComputationPCF2LiftUDPStageFlow",
+            status=PrivateComputationInstanceStatus.SECURE_RANDOM_SHARDER_STARTED,
             status_update_ts=1600000000,
             instances=[],
             game_type=PrivateComputationGameType.LIFT,
