@@ -83,7 +83,7 @@ class Deploy:
             f"Terraform init output is: {self.publishe_pce_utils.parse_command_output(TerraformCommand.INIT, terraform_init_log)}"
         )
 
-        var_dict = self._get_apply_var()
+        var_dict = self._get_var()
         if self.vpc_logging_enabled:
             opt_params = self._get_vpc_var()
             var_dict.update(opt_params)
@@ -106,21 +106,61 @@ class Deploy:
             "########################Finished AWS Infrastructure Deployment########################"
         )
 
+    def undeploy_pce(self) -> None:
+        self.log.info("Start undeploying...")
+        self.log.info(
+            "########################Check tfstate files########################"
+        )
+        terraform_state_file = f"tfstate/pce{self.tag_postfix}.tfstate"
+        self.aws.check_s3_object_exists(
+            s3_bucket_name=self.s3_bucket_name, key_name=terraform_state_file
+        )
+        self.log.info("All tfstate files exist. Continue...")
+
+        self.terraform.working_directory = TerraformDefaults.PCE_TERRAFORM_FILE_LOCATION
+
+        backend_config = self._get_init_backend_config()
+
+        self.log.info(
+            "########################Delete PCE resources########################"
+        )
+        self.log.info("Running terraform init...")
+        terraform_init_log = self.terraform.terraform_init(
+            backend_config=backend_config, reconfigure=FlaggedOption
+        )
+        self.log.info(
+            f"Terraform init output is: {self.publishe_pce_utils.parse_command_output(TerraformCommand.INIT, terraform_init_log)}"
+        )
+
+        var_dict = self._get_var()
+        terraform_destroy_log = self.terraform.destroy(var=var_dict)
+        self.log.info(
+            f"Terraform init output is: {self.publishe_pce_utils.parse_command_output(TerraformCommand.DESTROY, terraform_destroy_log)}"
+        )
+
     def _get_init_backend_config(self) -> Dict[str, Any]:
         return {
             "bucket": self.s3_bucket_name,
             "region": self.aws_region,
-            "key": f"tfstate/pce-{self.tag_postfix}.tfstate",
+            "key": f"tfstate/pce{self.tag_postfix}.tfstate",
         }
 
-    def _get_apply_var(self) -> Dict[str, Any]:
-        return {
+    def _get_var(self, destroy: bool = False) -> Dict[str, Any]:
+        return_dict = {
             "aws_region": self.aws_region,
             "tag_postfix": self.tag_postfix,
-            "vpc_cidr": self.vpc_cidr,
-            "otherparty_vpc_cidr": self.partner_vpc_cidr,
             "pce_id": self.tag,
         }
+
+        if not destroy:
+            return_dict.update(
+                {
+                    "vpc_cidr": self.vpc_cidr,
+                    "otherparty_vpc_cidr": self.partner_vpc_cidr,
+                }
+            )
+
+        return return_dict
 
     def _get_vpc_var(self) -> Dict[str, Any]:
         return {

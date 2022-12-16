@@ -14,6 +14,12 @@ from fbpcs.infra.pce_deployment_library.errors_library.terraform_errors import (
 class PublisherPceUtils:
     def __init__(self):
         self.log: logging.Logger = logging.getLogger(__name__)
+        # set logger
+        self.log.setLevel(logging.DEBUG)
+        # create file handler which logs even debug messages
+        fh = logging.FileHandler("test.log")
+        fh.setLevel(logging.DEBUG)
+        self.log.addHandler(fh)
 
     def parse_command_output(self, command, command_result) -> str:
         ret_code = command_result.return_code
