@@ -6,6 +6,7 @@
 # pyre-strict
 
 import logging
+import os
 import sys
 from subprocess import PIPE, Popen
 from typing import Any, Dict, List, Optional, Type
@@ -37,6 +38,7 @@ class TerraformDeployment(DeployBase):
         parallelism: Optional[int] = None,
         resource_targets: Optional[List[str]] = None,
         var_definition_file: Optional[str] = None,
+        working_directory: Optional[str] = None,
     ) -> None:
         """
         Accepts options to create Terraform CLIs apply/destroy/plan/init
@@ -53,6 +55,7 @@ class TerraformDeployment(DeployBase):
                                 More information on terraform targets: https://learn.hashicorp.com/tutorials/terraform/resource-targeting
             var_definition_file: -var-file option in Terraform CLI. Used to define terraform variables in bulk though .tfvars file
                                  More information on var_definition_file :https://www.terraform.io/language/values/variables#variable-definitions-tfvars-files
+            working_directory:   Directory in which terraform files are present
         """
         self.log: logging.Logger = logging.getLogger(__name__)
         self.utils = TerraformDeploymentUtils(
@@ -62,11 +65,20 @@ class TerraformDeployment(DeployBase):
             parallelism=parallelism,
             var_definition_file=var_definition_file,
         )
+        self._working_directory: str = working_directory or os.path.dirname(__file__)
+
+    @property
+    def working_directory(self) -> str:
+        return self._working_directory
+
+    @working_directory.setter
+    def working_directory(self, working_dir: str) -> None:
+        self._working_directory = working_dir
 
     def create(
         self,
         terraform_input: bool = False,
-        auto_approve: bool = True,
+        auto_approve: Type[TerraformOptionFlag] = FlaggedOption,
         **kwargs: Dict[str, Any],
     ) -> RunCommandResult:
         """
@@ -212,7 +224,9 @@ class TerraformDeployment(DeployBase):
                 return_code=0, output=f"Dry run command: {command_str}", error=""
             )
 
-        with Popen(command_list, stdout=stdout, stderr=stderr) as p:
+        with Popen(
+            command_list, stdout=stdout, stderr=stderr, cwd=self.working_directory
+        ) as p:
             out, err = p.communicate()
             ret_code = p.returncode
             self.log.info(f"output: {out}")

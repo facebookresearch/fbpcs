@@ -85,7 +85,8 @@ class TerraformDeploymentUtils:
             commands_list.extend(func(key, value))
 
         # Add args to commands list
-        commands_list.extend(args)
+        # Check if args is None
+        commands_list.extend([x for x in args if x is not None])
         return commands_list
 
     def get_default_options(
@@ -119,10 +120,12 @@ class TerraformDeploymentUtils:
         t.get_command_list("terraform apply")
 
         Returns:
-        => ['terraform', 'apply', '-backend-config "region=us-west-2"', '-backend-config "access_key=fake_access_key"']
+        => ['terraform', 'apply', '-backend-config', 'region=us-west-2', '-backend-config', 'access_key=fake_access_key']
         """
         commands_list: List[str] = []
-        commands_list.extend([f'-{key} "{k}={v}"' for k, v in value.items()])
+        for k, v in value.items():
+            commands_list.append(f"-{key}")
+            commands_list.append(f"{k}={v}")
         return commands_list
 
     def add_list_options(self, key: str, value: List[str]) -> List[str]:
