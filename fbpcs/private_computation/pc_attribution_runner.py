@@ -349,7 +349,7 @@ async def _run_attribution_async_helper(
     )
 
     data_ts = matched_data[TIMESTAMP]
-    is_pa_timestamp_validation_enabled = client.has_feature(
+    is_pa_timestamp_validation_enabled = await client.has_feature(
         instance_id, PCSFeature.PA_TIMESTAMP_VALIDATION
     )
     timestamps = InputDataService.get_attribution_timestamps(
