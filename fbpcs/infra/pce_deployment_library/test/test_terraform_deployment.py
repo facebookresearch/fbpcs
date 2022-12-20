@@ -40,6 +40,7 @@ class TestTerraformDeployment(unittest.TestCase):
                 #  `Union[bytes, str]`.
                 error=test_error if test_error else "",
             )
+
             func_ret = self.terraform_deployment.run_command(command=command)
             self.assertEqual(test_command_return.return_code, func_ret.return_code)
             self.assertEqual(test_command_return.output, func_ret.output)
@@ -101,7 +102,7 @@ class TestTerraformDeployment(unittest.TestCase):
                 "region": "fake_region",
                 "access_key": "fake_access_key",
             }
-            expected_command = 'terraform init -input=false -dry-run=true -backend-config "region=fake_region" -backend-config "access_key=fake_access_key" -reconfigure'
+            expected_command = "terraform init -input=false -dry-run=true -backend-config region=fake_region -backend-config access_key=fake_access_key -reconfigure"
             expected_value = RunCommandResult(
                 return_code=0, output=f"Dry run command: {expected_command}", error=""
             )
@@ -115,7 +116,7 @@ class TestTerraformDeployment(unittest.TestCase):
                 "region": "fake_region ",
                 "access_key": "fake_access_key ",
             }
-            expected_command = 'terraform init -input=false -dry-run=true -backend-config "region=fake_region " -backend-config "access_key=fake_access_key " -reconfigure'
+            expected_command = "terraform init -input=false -dry-run=true -backend-config region=fake_region  -backend-config access_key=fake_access_key  -reconfigure"
             expected_value = RunCommandResult(
                 return_code=0, output=f"Dry run command: {expected_command}", error=""
             )

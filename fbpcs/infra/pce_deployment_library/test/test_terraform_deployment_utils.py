@@ -35,8 +35,10 @@ class TestTerraformDeploymentUtils(unittest.TestCase):
             expected_value = [
                 "terraform",
                 "apply",
-                '-backend-config "region=fake_region"',
-                '-backend-config "access_key=fake_access_key"',
+                "-backend-config",
+                "region=fake_region",
+                "-backend-config",
+                "access_key=fake_access_key",
             ]
             return_value = self.terraform_deployment_utils.get_command_list(
                 command, **kwargs
@@ -83,8 +85,10 @@ class TestTerraformDeploymentUtils(unittest.TestCase):
             expected_value = [
                 "terraform",
                 "apply",
-                '-backend-config "region=fake_region"',
-                '-backend-config "access_key=fake_access_key"',
+                "-backend-config",
+                "region=fake_region",
+                "-backend-config",
+                "access_key=fake_access_key",
                 "test_test",
             ]
             return_value = self.terraform_deployment_utils.get_command_list(
