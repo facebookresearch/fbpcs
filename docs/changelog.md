@@ -19,6 +19,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Removed
 
 
+## 2022-12-19
+### Changed
+  - Changed `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`: added instruction to for `phone` preparation. current version of Dec-19-22
+
+
 ## 2022-11-16
 ### Changed
   - Changed `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`: current version of Dec-02-22
