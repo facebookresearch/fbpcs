@@ -82,16 +82,30 @@ jobs:
 
   pa_test:
     name: Private Attribution E2E Tests
-    runs-on: [self-hosted, fbpcs-e2e-test-runner]
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
+      id-token: write
       contents: read
-      packages: write
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Print Tracker Hash
         run: echo ${{ inputs.tracker_hash}}
+
+      - name: Get AWS Session name
+        id: aws_session_name
+        run: |
+          echo session_name=$(echo ${{ inputs.test_name }}-${{ inputs.build_id }} | tr " " "-") >> $GITHUB_OUTPUT
+
+      - name: Set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_TEST_ROLE_TO_ASSUME }}
+          aws-region: us-west-2
+          role-duration-seconds: 5400
+          role-session-name: ${{ steps.aws_session_name.outputs.session_name }}
 
       - name: One Command runner
         run: |
@@ -106,7 +120,12 @@ jobs:
           --timestamp="1646870400" \
           --k_anonymity_threshold=0 \
           -- \
-          --version=${{ inputs.tag }}
+          --version=${{ inputs.tag }} \
+          --docker_env=AWS_ACCESS_KEY_ID \
+          --docker_env=AWS_SECRET_ACCESS_KEY \
+          --docker_env=AWS_SESSION_TOKEN \
+          --docker_env=AWS_DEFAULT_REGION
+
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
         # the fbpcs_instances directory is where instances are written to (feature of run_fbpcs.sh)
@@ -118,4 +137,8 @@ jobs:
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           --expected_result_path=${{ inputs.expected_result_path }} \
           -- \
-          --version=${{ inputs.tag }}
+          --version=${{ inputs.tag }} \
+          --docker_env=AWS_ACCESS_KEY_ID \
+          --docker_env=AWS_SECRET_ACCESS_KEY \
+          --docker_env=AWS_SESSION_TOKEN \
+          --docker_env=AWS_DEFAULT_REGION

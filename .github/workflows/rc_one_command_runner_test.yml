@@ -7,11 +7,11 @@ on:
       study_id:
         description: Lift study id
         required: true
-        default: 322561936733136
+        default: "322561936733136"
       objective_id:
         description: Lift objective id
         required: true
-        default: 465652472226695
+        default: "465652472226695"
       input_path:
         description: S3 path to synthetic data
         required: true
@@ -42,16 +42,30 @@ jobs:
   ### Private Lift E2E tests
   pl_test:
     name: Private Lift RC E2E Tests
-    runs-on: [self-hosted, fbpcs-e2e-test-runner]
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
+      id-token: write
       contents: read
-      packages: write
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Print Tracker Hash
         run: echo ${{ github.event.inputs.tracker_hash}}
+
+      - name: Get AWS Session name
+        id: aws_session_name
+        run: |
+          echo session_name=$(echo PL-RC-E2E-Tests-${{ inputs.build_id }} | tr " " "-") >> $GITHUB_OUTPUT
+
+      - name: Set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_TEST_ROLE_TO_ASSUME }}
+          aws-region: us-west-2
+          role-duration-seconds: 5400
+          role-session-name: ${{ steps.aws_session_name.outputs.session_name }}
 
       - name: One command runner
         run: |
@@ -61,7 +75,11 @@ jobs:
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/rc_config_one_command_runner_test.yml \
           -- \
-          --version=${{ github.event.inputs.tag }}
+          --version=${{ github.event.inputs.tag }} \
+          --docker_env=AWS_ACCESS_KEY_ID \
+          --docker_env=AWS_SECRET_ACCESS_KEY \
+          --docker_env=AWS_SESSION_TOKEN \
+          --docker_env=AWS_DEFAULT_REGION
 
       - name: Validate Results
         # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
@@ -74,4 +92,8 @@ jobs:
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
-          --version=${{ github.event.inputs.tag }}
+          --version=${{ github.event.inputs.tag }} \
+          --docker_env=AWS_ACCESS_KEY_ID \
+          --docker_env=AWS_SECRET_ACCESS_KEY \
+          --docker_env=AWS_SESSION_TOKEN \
+          --docker_env=AWS_DEFAULT_REGION
