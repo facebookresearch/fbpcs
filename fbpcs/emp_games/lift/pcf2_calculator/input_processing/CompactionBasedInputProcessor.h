@@ -64,7 +64,7 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
     auto intersectionMap = getIntersectionMap(unionMap);
 
     if (intersectionMap.size() == 0) {
-      liftGameProcessedData_ = {};
+      liftGameProcessedData_.numRows = 0;
       return;
     }
 

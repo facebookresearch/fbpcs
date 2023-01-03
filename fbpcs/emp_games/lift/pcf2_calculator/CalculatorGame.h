@@ -63,7 +63,11 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
     if (inputProcessor.getLiftGameProcessedData().numRows == 0) {
       XLOG(WARN) << "skipped calculating as numRows==0.";
       // skip game::run(), just output the default metrics.
-      return GroupedLiftMetrics().toJson();
+      return GroupedLiftMetrics(
+                 inputProcessor.getLiftGameProcessedData().numPartnerCohorts,
+                 inputProcessor.getLiftGameProcessedData()
+                     .numPublisherBreakdowns)
+          .toJson();
     }
 
     auto attributor = std::make_unique<Attributor<schedulerId>>(

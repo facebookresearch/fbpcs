@@ -31,6 +31,9 @@
 
 namespace private_lift {
 
+constexpr uint64_t kDefaultNumPublisherBreakdowns = 2;
+constexpr uint64_t kDefaultNumCohorts = 4;
+
 template <int schedulerId>
 void runCalculatorApp(
     int myId,
@@ -356,7 +359,9 @@ GroupedLiftMetrics computeCorrectResults(
     bool usingCohorts) {
   // Calculate expected results with simple lift calculator
   LiftCalculator liftCalculator(
-      usingCohorts ? 4 : 0, usingPublisherBreakdowns ? 2 : 0, 0);
+      usingCohorts ? kDefaultNumCohorts : 0,
+      usingPublisherBreakdowns ? kDefaultNumPublisherBreakdowns : 0,
+      0);
   std::ifstream inFilePublisher{publisherPlaintextInputPath};
   std::ifstream inFilePartner{partnerPlaintextInputPath};
   int32_t tsOffset = 10;
@@ -386,12 +391,13 @@ void generateSyntheticData(
     int numRows,
     int numConversionsPerUser,
     bool generatePublisherBreakdowns,
-    bool useCohorts) {
+    bool useCohorts,
+    bool forceEmptyIntersection) {
   // Generate test input files with random data
   GenFakeData testDataGenerator;
   LiftFakeDataParams params;
   params.setNumRows(numRows)
-      .setOpportunityRate(0.5)
+      .setOpportunityRate(forceEmptyIntersection ? 0 : 0.5)
       .setTestRate(0.5)
       .setPurchaseRate(0.5)
       .setIncrementalityRate(0.0)
@@ -426,7 +432,60 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInput) {
       15,
       numConversionsPerUser,
       computePublisherBreakdowns,
+      false,
       false);
+
+  GroupedLiftMetrics res = readInputFromSecretShares
+      ? runUdpTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            publisherGlobalParamsInputPath_,
+            partnerGlobalParamsInputPath_,
+            publisherSecretInputPath_,
+            partnerSecretInputPath_,
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption)
+      : runTest(
+            publisherPlaintextInputPath_,
+            partnerPlaintextInputPath_,
+            "",
+            publisherOutputPath_,
+            partnerOutputPath_,
+            numConversionsPerUser,
+            computePublisherBreakdowns,
+            useTls,
+            useXorEncryption);
+
+  GroupedLiftMetrics expectedResult = computeCorrectResults(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      computePublisherBreakdowns,
+      false);
+
+  EXPECT_EQ(expectedResult, res);
+}
+
+TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInputEmptyIntersection) {
+  // Run calculator app with test input
+  bool useTls = std::get<0>(GetParam());
+  bool useXorEncryption = std::get<1>(GetParam());
+  bool computePublisherBreakdowns = std::get<2>(GetParam());
+  bool readInputFromSecretShares = std::get<3>(GetParam());
+
+  // Generate test input files with random data
+  int numConversionsPerUser = 25;
+  generateSyntheticData(
+      publisherPlaintextInputPath_,
+      partnerPlaintextInputPath_,
+      15,
+      numConversionsPerUser,
+      computePublisherBreakdowns,
+      false,
+      true);
 
   GroupedLiftMetrics res = readInputFromSecretShares
       ? runUdpTest(
@@ -478,7 +537,8 @@ TEST_P(CalculatorAppTestFixture, TestCorrectnessRandomInputAndCohort) {
       15,
       numConversionsPerUser,
       computePublisherBreakdowns,
-      true);
+      true,
+      false);
 
   GroupedLiftMetrics res = readInputFromSecretShares
       ? runUdpTest(
@@ -530,7 +590,8 @@ TEST_P(CalculatorAppTestFixture, TestWithEmptyInput) {
       0,
       numConversionsPerUser,
       computePublisherBreakdowns,
-      true);
+      true,
+      false);
 
   GroupedLiftMetrics res = readInputFromSecretShares
       ? runUdpTest(
