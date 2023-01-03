@@ -29,7 +29,7 @@ function usage() {
 https://<s3_conversion_data_file_path_for_objective_2> \
 --log_path=/fbpcs_instances/output.txt"
 
-  example2="$example1 -- --version=latest [--image_version=latest]"
+  example2="$example1 -- --version=latest [--image_version=latest] [--docker_env=ENVIRONMENT_VAR]"
 
   echo "Usage :  $0 [PC-CLI options] -- [$0 options]
     PC-CLI Options:
@@ -37,6 +37,8 @@ https://<s3_conversion_data_file_path_for_objective_2> \
 
     $0 Options:
       --version=<version>   specify the release version of lift/attribution is used
+      --image_version=<image_version> specify the $FBPCS_IMAGE_NAME image version
+      --docker_env=<environment_variable_name> specify an existing environment variable that should be passed to the $FBPCS_IMAGE_NAME image
 
     Examples:
       $example1
@@ -87,6 +89,7 @@ function parse_args() {
   fi
 
   docker_cmd=(python3.8 -m fbpcs.private_computation_cli.private_computation_cli)
+  environment_vars=(-e FBPCS_GRAPH_API_TOKEN)
 
   # PC-CLI arguments
   for arg in "$@"; do
@@ -129,6 +132,10 @@ function parse_args() {
         image_version="${arg#*=}"
         echo "Overriding docker version tag with $image_version"
         ;;
+      --docker_env=*)
+        env_var_name=${arg#*=}
+        environment_vars+=(-e "$env_var_name")
+        ;;
       *)
         echo >&2 "$arg is not a valid argument"
         usage
@@ -151,7 +158,7 @@ function run_fbpcs() {
     aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin "$FBPCS_CONTAINER_REPO_URL"
   fi
   docker pull "$docker_image"
-  docker run -e FBPCS_GRAPH_API_TOKEN --rm \
+  docker run "${environment_vars[@]}" --rm \
     -v "$real_config_path":"$DOCKER_CONFIG_PATH" \
     -v "$REAL_INSTANCE_REPO":"$DOCKER_INSTANCE_REPO" \
     -v "$REAL_CREDENTIALS_PATH":"$DOCKER_CREDENTIALS_PATH" \
