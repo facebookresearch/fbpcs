@@ -42,6 +42,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.utils import (
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
+    get_server_uris,
     stop_stage_service,
 )
 
@@ -126,6 +127,12 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             server_ips=server_ips,
         )
 
+        server_uris = get_server_uris(
+            server_domain=pc_instance.infra_config.server_domain,
+            role=pc_instance.infra_config.role,
+            num_containers=len(cmd_args_list),
+        )
+
         env_vars = generate_env_vars_dict(
             repository_path=binary_config.repository_path,
             server_certificate_provider=server_certificate_provider,
@@ -148,6 +155,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             pc_instance.infra_config.instance_id,
             pc_instance.current_stage.name,
             containers=container_instances,
+            server_uris=server_uris,
         )
         pc_instance.infra_config.instances.append(stage_state)
         logging.info("MPC instance started running for pcf2.0 attribution.")

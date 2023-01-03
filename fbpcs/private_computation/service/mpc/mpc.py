@@ -39,7 +39,10 @@ from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
-from fbpcs.private_computation.service.utils import generate_env_vars_dict
+from fbpcs.private_computation.service.utils import (
+    generate_env_vars_dict,
+    get_server_uris,
+)
 
 DEFAULT_BINARY_VERSION = "latest"
 
@@ -435,7 +438,8 @@ async def create_and_start_mpc_instance(
         mpc_svc.get_instance(instance_id)
     except Exception:
         logging.info(f"Failed to fetch MPC instance {instance_id} - trying to create")
-        server_uris = _get_server_uris(server_domain, mpc_party, num_containers)
+        role = map_mpc_party_to_private_computation_role(mpc_party)
+        server_uris = get_server_uris(server_domain, role, num_containers)
         mpc_svc.create_instance(
             instance_id=instance_id,
             game_name=game_name,
@@ -464,18 +468,6 @@ async def create_and_start_mpc_instance(
     )
 
 
-def _get_server_uris(
-    server_domain: Optional[str], mpc_party: MPCParty, num_containers: int
-) -> Optional[List[str]]:
-    """For each container, create a unique server_uri based
-    on the server_domain when the MPCParty is server.
-    """
-    if mpc_party is MPCParty.CLIENT or not server_domain:
-        return None
-    else:
-        return [f"node{i}.{server_domain}" for i in range(num_containers)]
-
-
 def map_private_computation_role_to_mpc_party(
     private_computation_role: PrivateComputationRole,
 ) -> MPCParty:
@@ -496,6 +488,28 @@ def map_private_computation_role_to_mpc_party(
         return MPCParty.CLIENT
     else:
         raise ValueError(f"No mpc party defined for {private_computation_role}")
+
+
+def map_mpc_party_to_private_computation_role(
+    mpc_party: MPCParty,
+) -> PrivateComputationRole:
+    """Convert MPCParty to PrivateComputationRole
+
+    Args:
+        mpc_party: The party in the MPC game, e.g. server or client
+
+    Returns:
+        The PrivateComputationRole that corresponds to the given mpc_party, e.g. publisher or partner
+
+    Exceptions:
+        ValueError: raised when there is no PrivateComputationRole associated with mpc_party
+    """
+    if mpc_party is MPCParty.SERVER:
+        return PrivateComputationRole.PUBLISHER
+    elif mpc_party is MPCParty.CLIENT:
+        return PrivateComputationRole.PARTNER
+    else:
+        raise ValueError(f"No private computation role defined for {mpc_party}")
 
 
 def get_updated_pc_status_mpc_game(
