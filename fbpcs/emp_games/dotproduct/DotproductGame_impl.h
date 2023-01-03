@@ -95,7 +95,8 @@ std::vector<double> DotproductGame<schedulerId>::computeDotProduct(
         divisor,
         *communicationAgentFactory_,
         std::move(prgFactory),
-        std::move(cotWRMFactory));
+        std::move(cotWRMFactory),
+        metricCollector_);
 
     XLOG(INFO, "Created Matrix Multiplication Factory");
 
@@ -117,7 +118,8 @@ std::vector<double> DotproductGame<schedulerId>::computeDotProduct(
         divisor,
         *communicationAgentFactory_,
         std::move(prgFactory),
-        std::move(cotWRMFactory));
+        std::move(cotWRMFactory),
+        metricCollector_);
     XLOG(INFO, "Created Matrix Multiplication Factory");
 
     matMulFactoryPartner->create()->matrixVectorMultiplication(

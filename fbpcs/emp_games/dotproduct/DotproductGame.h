@@ -9,6 +9,7 @@
 
 #include "folly/logging/xlog.h"
 
+#include <fbpcf/util/MetricCollector.h>
 #include "fbpcf/frontend/mpcGame.h"
 #include "fbpcs/emp_games/common/Debug.h"
 #include "fbpcs/emp_games/common/Util.h"
@@ -23,9 +24,11 @@ class DotproductGame : public fbpcf::frontend::MpcGame<schedulerId> {
       std::unique_ptr<fbpcf::scheduler::IScheduler> scheduler,
       std::shared_ptr<
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>
-          communicationAgentFactory)
+          communicationAgentFactory,
+      std::shared_ptr<fbpcf::util::MetricCollector> metricCollector)
       : fbpcf::frontend::MpcGame<schedulerId>(std::move(scheduler)),
-        communicationAgentFactory_(communicationAgentFactory) {}
+        communicationAgentFactory_(communicationAgentFactory),
+        metricCollector_{metricCollector} {}
 
   std::vector<double> computeDotProduct(
       const int myRole,
@@ -43,6 +46,8 @@ class DotproductGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   std::shared_ptr<fbpcf::engine::communication::IPartyCommunicationAgentFactory>
       communicationAgentFactory_;
+
+  std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
 
   std::vector<fbpcf::frontend::Bit<true, schedulerId, true>>
   createSecretLabelShare(const std::vector<std::vector<bool>>& labelValues);

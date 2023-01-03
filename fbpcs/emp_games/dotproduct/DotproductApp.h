@@ -51,7 +51,9 @@ class DotproductApp {
                          ->create();
 
     DotproductGame<schedulerId> game(
-        std::move(scheduler), std::move(communicationAgentFactory_));
+        std::move(scheduler),
+        std::move(communicationAgentFactory_),
+        metricCollector_);
 
     XLOG(INFO) << "Start Reading input file ";
     auto inputTuple = readCSVInput(inputFilePath_, labelWidth_, numFeatures_);
