@@ -45,6 +45,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.utils import (
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
+    get_server_uris,
     stop_stage_service,
 )
 
@@ -168,10 +169,16 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
         )
+        server_uris = get_server_uris(
+            server_domain=pc_instance.infra_config.server_domain,
+            role=pc_instance.infra_config.role,
+            num_containers=len(cmd_args_list),
+        )
         stage_state = StageStateInstance(
             pc_instance.infra_config.instance_id,
             pc_instance.current_stage.name,
             containers=container_instances,
+            server_uris=server_uris,
         )
 
         logging.info("MPC instance started running.")

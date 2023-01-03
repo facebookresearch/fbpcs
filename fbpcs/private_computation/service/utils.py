@@ -18,6 +18,7 @@ from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstanceStatus
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
+from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -280,3 +281,15 @@ def distribute_files_among_containers(
     for i in range(number_files % number_containers):
         files_per_container[i] += 1
     return files_per_container
+
+
+def get_server_uris(
+    server_domain: Optional[str], role: PrivateComputationRole, num_containers: int
+) -> Optional[List[str]]:
+    """For each container, create a unique server_uri based
+    on the server_domain when the MPCParty is server.
+    """
+    if role is PrivateComputationRole.PARTNER or not server_domain:
+        return None
+    else:
+        return [f"node{i}.{server_domain}" for i in range(num_containers)]

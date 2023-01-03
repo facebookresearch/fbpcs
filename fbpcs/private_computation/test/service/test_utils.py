@@ -51,7 +51,10 @@ from fbpcs.private_computation.service.mpc.mpc import (
     create_and_start_mpc_instance,
     MPCService,
 )
-from fbpcs.private_computation.service.utils import distribute_files_among_containers
+from fbpcs.private_computation.service.utils import (
+    distribute_files_among_containers,
+    get_server_uris,
+)
 
 ca_cert_content = "ca certificate"
 server_cert_content = "server certificate"
@@ -207,6 +210,84 @@ class TestUtils(IsolatedAsyncioTestCase):
             self.assertLessEqual(
                 max(test_files_per_conatiners[i]) - min(test_files_per_conatiners[i]), 1
             )
+
+    @patch.object(MPCService, "start_instance_async")
+    @patch.object(
+        BasicCaCertificateProvider, "get_certificate", return_value=ca_cert_content
+    )
+    @patch.object(
+        PCInstanceServerCertificateProvider,
+        "get_certificate",
+        return_value=server_cert_content,
+    )
+    @patch.object(MPCService, "create_instance")
+    @patch.object(
+        MPCService, "get_instance", side_effect=Exception("Instance Not Found")
+    )
+    async def test_create_and_start_mpc_instance_null_server_domain(
+        self,
+        getInstanceMock,
+        createInstanceMock,
+        serverCertProviderMock,
+        caCertProviderMock,
+        startInstanceAsyncMock,
+    ) -> None:
+        # Arrange
+        game_args = [
+            {
+                TLS_ARG_KEY_CA_CERT_PATH: CA_CERT_PATH,
+                TLS_ARG_KEY_SERVER_CERT_PATH: SERVER_CERT_PATH,
+            }
+        ]
+
+        # Act
+        await create_and_start_mpc_instance(
+            self.mpc_svc,
+            self.instance_id,
+            self.game_name,
+            MPCParty.SERVER,
+            num_containers=2,
+            binary_version=self.test_binary_version,
+            server_certificate_path=SERVER_CERT_PATH,
+            ca_certificate_path=CA_CERT_PATH,
+            game_args=game_args,
+            server_certificate_provider=self.server_certificate_provider,
+            ca_certificate_provider=self.ca_certificate_provider,
+            server_domain=None,
+        )
+
+        # Assert
+        getInstanceMock.assert_called_once_with(self.instance_id)
+        createInstanceMock.assert_called_once_with(
+            instance_id=self.instance_id,
+            game_name=self.game_name,
+            mpc_party=MPCParty.SERVER,
+            num_workers=2,
+            game_args=game_args,
+            server_uris=None,
+        )
+
+    def test_get_server_uris(self) -> None:
+        # Arrange
+        expected_result_1 = [
+            "node0.study123.pci.facebook.com",
+            "node1.study123.pci.facebook.com",
+        ]
+        expected_result_2 = None
+
+        # Act
+        actual_result_1 = get_server_uris(
+            self.server_domain, PrivateComputationRole.PUBLISHER, 2
+        )
+        actual_result_2 = get_server_uris(
+            self.server_domain, PrivateComputationRole.PARTNER, 2
+        )
+        actual_result_3 = get_server_uris(None, PrivateComputationRole.PUBLISHER, 2)
+
+        # Assert
+        self.assertEqual(expected_result_1, actual_result_1)
+        self.assertEqual(expected_result_2, actual_result_2)
+        self.assertEqual(expected_result_2, actual_result_3)
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
