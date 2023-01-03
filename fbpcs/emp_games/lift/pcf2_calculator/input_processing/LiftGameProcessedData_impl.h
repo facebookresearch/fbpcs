@@ -141,7 +141,7 @@ LiftGameProcessedData<schedulerId>::readFromCSV(
           testReachShares));
 
   if (result.numRows == 0) {
-    return LiftGameProcessedData<schedulerId>{};
+    return result;
   }
 
   result.indexShares = transpose(indexShares);
