@@ -61,6 +61,7 @@ class PCSContainerService(ContainerService):
 
         return PCSContainerInstance.from_container_instance(instance, log_url)
 
+    # pyre-ignore[14]: Inconsistent override
     def create_instances(
         self,
         container_definition: str,
