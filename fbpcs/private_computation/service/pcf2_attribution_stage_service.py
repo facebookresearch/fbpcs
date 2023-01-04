@@ -79,6 +79,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
         server_certificate_path: str,
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the pcf2.0 based private attribution stage
 
@@ -89,6 +90,7 @@ class PCF2AttributionStageService(PrivateComputationStageService):
             server_certificate_path: The path to write server certificate on a container.
             ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
+            server_hostnames: ignored
 
         Returns:
             An updated version of pc_instance that stores an MPCInstance

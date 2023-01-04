@@ -86,12 +86,14 @@ class ComputeMetricsStageService(PrivateComputationStageService):
         server_certificate_path: str,
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation compute metrics stage
 
         Args:
             pc_instance: the private computation instance to run compute metrics with
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
+            server_hostnames: only used by the partner role. These are hostname addresses of the publisher's containers.
 
         Returns:
             An updated version of pc_instance that stores an MPCInstance
@@ -114,6 +116,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                 server_certificate_path=server_certificate_path,
                 ca_certificate_path=ca_certificate_path,
                 server_ips=server_ips,
+                server_hostnames=server_hostnames,
             )
 
         # Prepare arguments for lift game
@@ -151,12 +154,15 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             server_ips=server_ips,
         )
 
+        # TODO: T141115702 - Update to use env var collection per container with distinct server addresses, once supported
         env_vars = generate_env_vars_dict(
             repository_path=binary_config.repository_path,
             server_certificate_provider=server_certificate_provider,
             server_certificate_path=server_certificate_path,
             ca_certificate_provider=ca_certificate_provider,
             ca_certificate_path=ca_certificate_path,
+            server_ip_address=server_ips[0] if server_ips else None,
+            server_hostname=server_hostnames[0] if server_hostnames else None,
         )
 
         container_instances = await self._mpc_service.start_containers(
