@@ -11,7 +11,7 @@ import time
 import unittest
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 from unittest import mock
 from unittest.mock import AsyncMock, call, MagicMock, Mock, patch
 
@@ -53,12 +53,14 @@ from fbpcs.private_computation.entity.product_config import (
 )
 from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import (
+    CA_CERT_PATH,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
     DEFAULT_LOG_COST_TO_S3,
     FBPCS_BUNDLE_ID,
     NUM_NEW_SHARDS_PER_FILE,
+    SERVER_CERT_PATH,
 )
 from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
@@ -665,7 +667,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
         self.private_computation_service.run_next(instance.infra_config.instance_id)
         mock_run_stage_async.assert_called_with(
-            instance.infra_config.instance_id, flow.ID_MATCH, server_ips=None
+            instance.infra_config.instance_id,
+            flow.ID_MATCH,
+            server_ips=None,
+            ca_certificate=None,
+            server_hostnames=None,
         )
 
     @mock.patch(
@@ -837,6 +843,156 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             stage = data_test[0]
             with self.subTest(stage=stage):
                 _run_sub_test(stage)
+
+    def test_run_stage_partner_joint_tls_raises_on_invalid_data(
+        self,
+    ) -> None:
+        # Arrange
+        valid_cert = "test_cert"
+        valid_hostnames = ["example.test"]
+        joint_stage = PrivateComputationStageFlow.COMPUTE
+        non_joint_stage = PrivateComputationStageFlow.POST_PROCESSING_HANDLERS
+
+        def _run_sub_test(cert, hostnames, stage):
+            stage_svc = AsyncMock(spec=self._get_dummy_stage_svc())
+            pl_instance = self.create_sample_instance(
+                status=stage.previous_stage.completed_status,
+                role=PrivateComputationRole.PARTNER,
+                pcs_features={PCSFeature.PCF_TLS},
+            )
+            self.private_computation_service.instance_repository.read = MagicMock(
+                return_value=pl_instance
+            )
+
+            self.private_computation_service.run_stage(
+                pl_instance.infra_config.instance_id,
+                stage,
+                stage_svc,
+                server_ips=["127.0.0.1"],
+                ca_certificate=cert,
+                server_hostnames=hostnames,
+            )
+
+        # Act & Assert
+        with self.assertRaises(ValueError):
+            _run_sub_test(None, None, joint_stage)
+
+        with self.assertRaises(ValueError):
+            _run_sub_test(valid_cert, None, joint_stage)
+
+        with self.assertRaises(ValueError):
+            _run_sub_test(None, valid_hostnames, joint_stage)
+
+        _run_sub_test(None, None, non_joint_stage)
+
+    def test_run_stage_partner_tls(
+        self,
+    ) -> None:
+        # Arrange
+        expected_cert = "test_cert"
+        expected_hostnames = ["example.test"]
+
+        stage = PrivateComputationStageFlow.COMPUTE
+        mock_stage_svc = AsyncMock(spec=self._get_dummy_stage_svc())
+        pl_instance = self.create_sample_instance(
+            # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
+            status=stage.previous_stage.completed_status,
+            role=PrivateComputationRole.PARTNER,
+            pcs_features={PCSFeature.PCF_TLS},
+        )
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=pl_instance
+        )
+
+        # Act
+        self.private_computation_service.run_stage(
+            pl_instance.infra_config.instance_id,
+            stage,
+            mock_stage_svc,
+            server_ips=["127.0.0.1"],
+            ca_certificate=expected_cert,
+            server_hostnames=expected_hostnames,
+        )
+
+        # Assert
+        mock_stage_svc.run_async.assert_awaited_once()
+        call_args = mock_stage_svc.run_async.call_args[0]
+        (
+            instance,
+            server_cert_provider,
+            ca_cert_provider,
+            server_cert_path,
+            ca_cert_path,
+            server_ips,
+            server_hostnames,
+        ) = call_args
+
+        self.assertIsNotNone(server_cert_provider)
+        server_cert = server_cert_provider.get_certificate()
+        self.assertIsNone(server_cert, "Expect no server certificate on Partner")
+
+        self.assertIsNotNone(ca_cert_provider)
+        ca_cert = ca_cert_provider.get_certificate()
+        self.assertEqual(expected_cert, ca_cert)
+
+        self.assertIsNotNone(server_cert_path)
+        self.assertEqual(SERVER_CERT_PATH, server_cert_path)
+
+        self.assertIsNotNone(ca_cert_path)
+        self.assertEqual(CA_CERT_PATH, ca_cert_path)
+
+        self.assertIsNotNone(server_hostnames)
+        self.assertEqual(expected_hostnames, server_hostnames)
+
+    def test_run_stage_publisher_tls(
+        self,
+    ) -> None:
+        # Arrange
+        stage = PrivateComputationStageFlow.COMPUTE
+        mock_stage_svc = AsyncMock(spec=self._get_dummy_stage_svc())
+        pl_instance = self.create_sample_instance(
+            # pyre-fixme[16]: `Optional` has no attribute `completed_status`.
+            status=stage.previous_stage.completed_status,
+            role=PrivateComputationRole.PUBLISHER,
+            pcs_features={PCSFeature.PCF_TLS},
+        )
+        self.private_computation_service.instance_repository.read = MagicMock(
+            return_value=pl_instance
+        )
+
+        # Act
+        self.private_computation_service.run_stage(
+            pl_instance.infra_config.instance_id, stage, mock_stage_svc
+        )
+
+        # Assert
+        mock_stage_svc.run_async.assert_awaited_once()
+        call_args = mock_stage_svc.run_async.call_args[0]
+        (
+            instance,
+            server_cert_provider,
+            ca_cert_provider,
+            server_cert_path,
+            ca_cert_path,
+            server_ips,
+            server_hostnames,
+        ) = call_args
+
+        self.assertIsNotNone(server_cert_provider)
+        server_cert = server_cert_provider.get_certificate()
+        self.assertEqual(pl_instance.infra_config.server_certificate, server_cert)
+
+        self.assertIsNotNone(ca_cert_provider)
+        ca_cert = ca_cert_provider.get_certificate()
+        self.assertEqual(pl_instance.infra_config.ca_certificate, ca_cert)
+
+        self.assertIsNotNone(server_cert_path)
+        self.assertEqual(SERVER_CERT_PATH, server_cert_path)
+
+        self.assertIsNotNone(ca_cert_path)
+        self.assertEqual(CA_CERT_PATH, ca_cert_path)
+
+        self.assertIsNone(server_hostnames)
 
     def test_run_stage_fails(
         self,
@@ -1245,7 +1401,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         instances: Optional[List[UnionedPCInstance]] = None,
         game_type: PrivateComputationGameType = PrivateComputationGameType.LIFT,
         status_updates: Optional[List[StatusUpdate]] = None,
+        pcs_features: Optional[Set[PCSFeature]] = None,
     ) -> PrivateComputationInstance:
+        if not pcs_features:
+            pcs_features = set()
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.test_private_computation_id,
             role=role,
@@ -1261,6 +1420,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             log_cost_bucket=self.log_cost_bucket,
             server_certificate=SAMPLE_SERVER_CERTIFICATE,
             ca_certificate=SAMPLE_CA_CERTIFICATE,
+            pcs_features=pcs_features,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,
