@@ -10,14 +10,15 @@ import abc
 from dataclasses import dataclass
 from typing import Type, TypeVar
 
-from dataclasses_json import DataClassJsonMixin
+from dataclasses_json import dataclass_json, Undefined
 from fbpcs.common.entity.dataclasses_mutability import DataclassMutabilityMixin
 
 T = TypeVar("T", bound="InstanceBase")
 
 
+@dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass
-class InstanceBase(DataClassJsonMixin, DataclassMutabilityMixin):
+class InstanceBase(DataclassMutabilityMixin):
     @abc.abstractmethod
     def get_instance_id(self) -> str:
         pass
@@ -26,8 +27,10 @@ class InstanceBase(DataClassJsonMixin, DataclassMutabilityMixin):
         return self.dumps_schema()
 
     def dumps_schema(self) -> str:
+        # pyre-ignore[16] Undefined attribute
         return self.schema().dumps(self)
 
     @classmethod
     def loads_schema(cls: Type[T], json_schema_str: str) -> T:
+        # pyre-ignore[16] Undefined attribute
         return cls.schema().loads(json_schema_str, many=None)
