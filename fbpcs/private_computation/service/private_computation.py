@@ -200,6 +200,7 @@ class PrivateComputationService:
         server_certificate: Optional[str] = None,
         ca_certificate: Optional[str] = None,
         server_domain: Optional[str] = None,
+        server_key_secret_ref: Optional[str] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "create_instance")
@@ -255,6 +256,7 @@ class PrivateComputationService:
             log_cost_bucket=log_cost_bucket,
             server_certificate=server_certificate,
             ca_certificate=ca_certificate,
+            server_key_ref=server_key_secret_ref,
             server_domain=server_domain,
         )
         multikey_enabled = True
