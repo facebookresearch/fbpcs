@@ -199,6 +199,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         expected_server_certificate = "test server certificate"
         expected_ca_certificate = "test ca certificate"
         expected_server_domain = "example.com"
+        expected_server_key_secret_ref = "test_secret_id"
+
         for (
             test_game_type,
             expected_k_anon,
@@ -207,76 +209,70 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             server_certificate,
             ca_certificate,
             server_domain,
+            server_key_secret_ref,
         ) in (
             (
-                PrivateComputationGameType.LIFT,
-                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
-                [PCSFeature.PCS_DUMMY.value, PCSFeature.UNKNOWN.value],
-                PrivateComputationRole.PUBLISHER,
-                None,
-                None,
-                None,
+                self._get_subtest_args(
+                    PrivateComputationGameType.LIFT,
+                    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                    features=[PCSFeature.PCS_DUMMY, PCSFeature.UNKNOWN],
+                )
             ),
             (
-                PrivateComputationGameType.ATTRIBUTION,
-                DEFAULT_K_ANONYMITY_THRESHOLD_PA,
-                None,
-                PrivateComputationRole.PUBLISHER,
-                None,
-                None,
-                None,
+                self._get_subtest_args(
+                    PrivateComputationGameType.ATTRIBUTION,
+                    DEFAULT_K_ANONYMITY_THRESHOLD_PA,
+                )
             ),
             # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for attribution with publisher
             (
-                PrivateComputationGameType.ATTRIBUTION,
-                DEFAULT_K_ANONYMITY_THRESHOLD_PA,
-                [
-                    PCSFeature.PCS_DUMMY.value,
-                    PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
-                ],
-                PrivateComputationRole.PUBLISHER,
-                None,
-                None,
-                None,
+                self._get_subtest_args(
+                    PrivateComputationGameType.ATTRIBUTION,
+                    DEFAULT_K_ANONYMITY_THRESHOLD_PA,
+                    features=[
+                        PCSFeature.PCS_DUMMY,
+                        PCSFeature.PRIVATE_ATTRIBUTION_MR_PID,
+                    ],
+                )
             ),
             # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for lift with publisher
             (
-                PrivateComputationGameType.LIFT,
-                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
-                [
-                    PCSFeature.PCS_DUMMY.value,
-                    PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
-                ],
-                PrivateComputationRole.PUBLISHER,
-                None,
-                None,
-                None,
+                self._get_subtest_args(
+                    PrivateComputationGameType.LIFT,
+                    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                    features=[
+                        PCSFeature.PCS_DUMMY,
+                        PCSFeature.PRIVATE_ATTRIBUTION_MR_PID,
+                    ],
+                )
             ),
             # test PCSFeature.PCF_TLS for lift with publisher
             (
-                PrivateComputationGameType.LIFT,
-                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
-                [
-                    PCSFeature.PCS_DUMMY.value,
-                    PCSFeature.PCF_TLS.value,
-                ],
-                PrivateComputationRole.PUBLISHER,
-                expected_server_certificate,
-                expected_ca_certificate,
-                expected_server_domain,
+                self._get_subtest_args(
+                    PrivateComputationGameType.LIFT,
+                    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                    features=[
+                        PCSFeature.PCS_DUMMY,
+                        PCSFeature.PCF_TLS,
+                    ],
+                    server_certificate=expected_server_certificate,
+                    ca_certificate=expected_ca_certificate,
+                    server_domain=expected_server_domain,
+                    server_key_secret_ref=expected_server_key_secret_ref,
+                )
             ),
             # test PCSFeature.PCF_TLS for lift with partner
             (
-                PrivateComputationGameType.LIFT,
-                DEFAULT_K_ANONYMITY_THRESHOLD_PL,
-                [
-                    PCSFeature.PCS_DUMMY.value,
-                    PCSFeature.PCF_TLS.value,
-                ],
-                PrivateComputationRole.PARTNER,
-                None,
-                expected_ca_certificate,
-                None,
+                self._get_subtest_args(
+                    PrivateComputationGameType.LIFT,
+                    DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                    features=[
+                        PCSFeature.PCS_DUMMY,
+                        PCSFeature.PCF_TLS,
+                    ],
+                    role=PrivateComputationRole.PARTNER,
+                    ca_certificate=expected_ca_certificate,
+                )
             ),
         ):
             with self.subTest(
@@ -301,6 +297,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     server_certificate=server_certificate,
                     ca_certificate=ca_certificate,
                     server_domain=server_domain,
+                    server_key_secret_ref=server_key_secret_ref,
                 )
                 # check instance_repository.create is called with the correct arguments
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
@@ -330,7 +327,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     # pyre-ignore
                     delta=1,
                 )
-                self.assertEqual(args.infra_config.server_key_ref, None)
+
                 if pcs_features is not None:
                     if PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value in pcs_features:
                         self.assertTrue(
@@ -385,6 +382,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                         args.infra_config.server_domain,
                         expected_server_domain,
                     )
+                    self.assertEqual(
+                        args.infra_config.server_key_ref,
+                        expected_server_key_secret_ref,
+                    )
 
                 if (
                     pcs_features is not None
@@ -401,6 +402,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(
                         args.infra_config.server_domain,
+                        None,
+                    )
+                    self.assertEqual(
+                        args.infra_config.server_key_ref,
                         None,
                     )
 
@@ -1300,6 +1305,37 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         return PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
+        )
+
+    def _get_subtest_args(
+        self,
+        game_type: PrivateComputationGameType,
+        k_anonymity_threshold: int,
+        features: Optional[List[PCSFeature]] = None,
+        role: PrivateComputationRole = PrivateComputationRole.PUBLISHER,
+        server_certificate: Optional[str] = None,
+        ca_certificate: Optional[str] = None,
+        server_domain: Optional[str] = None,
+        server_key_secret_ref: Optional[str] = None,
+    ) -> Tuple[
+        PrivateComputationGameType,
+        int,
+        Optional[List[str]],
+        PrivateComputationRole,
+        Optional[str],
+        Optional[str],
+        Optional[str],
+        Optional[str],
+    ]:
+        return (
+            game_type,
+            k_anonymity_threshold,
+            [feature.value for feature in features] if features else None,
+            role,
+            server_certificate,
+            ca_certificate,
+            server_domain,
+            server_key_secret_ref,
         )
 
 
