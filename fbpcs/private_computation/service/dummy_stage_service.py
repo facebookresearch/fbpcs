@@ -37,6 +37,7 @@ class DummyStageService(PrivateComputationStageService):
         server_certificate_path: str,
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """
         Does nothing except return pc_instance back to caller

@@ -62,6 +62,7 @@ class PIDShardStageService(PrivateComputationStageService):
         server_certificate_path: str,
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the PID shard stage service
         Args:
@@ -71,6 +72,7 @@ class PIDShardStageService(PrivateComputationStageService):
             server_certificate_path: ignored
             ca_certificate_path: ignored
             server_ips: No need in this stage.
+            server_hostnames: ignored
         Returns:
             An updated version of pc_instance
         """

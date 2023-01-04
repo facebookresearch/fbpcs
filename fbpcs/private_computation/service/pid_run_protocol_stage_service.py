@@ -70,6 +70,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         server_certificate_path: str,
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Runs the PID run protocol stage
 
@@ -80,6 +81,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             server_certificate_path: ignored
             ca_certificate_path: ignored
             server_ips: only used by partner to get server hostnames
+            server_hostnames: ignored
         Returns:
             An updated version of pc_instance
         """
