@@ -109,6 +109,7 @@ T = TypeVar("T")
 
 PCSERVICE_ENTITY_NAME = "pcservice"
 DEFAULT_SERVER_DOMAIN = "study123.pci.facebook.com"
+TEST_SERVER_HOSTNAMES = [f"node0.{DEFAULT_SERVER_DOMAIN}"]
 
 
 class PrivateComputationService:
@@ -538,12 +539,16 @@ class PrivateComputationService:
         self,
         instance_id: str,
         server_ips: Optional[List[str]] = None,
+        ca_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_next")
         return asyncio.run(
             self.run_next_async(
                 instance_id,
                 server_ips,
+                ca_certificate,
+                server_hostnames,
             )
         )
 
@@ -551,6 +556,8 @@ class PrivateComputationService:
         self,
         instance_id: str,
         server_ips: Optional[List[str]] = None,
+        ca_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """Fetches the next eligible stage in the instance's stage flow and runs it"""
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_next_async")
@@ -570,6 +577,8 @@ class PrivateComputationService:
             instance_id,
             next_stage,
             server_ips=server_ips,
+            ca_certificate=ca_certificate,
+            server_hostnames=server_hostnames,
         )
 
     def run_stage(
@@ -579,6 +588,8 @@ class PrivateComputationService:
         stage_svc: Optional[PrivateComputationStageService] = None,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
+        ca_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "run_stage")
         return asyncio.run(
@@ -588,6 +599,8 @@ class PrivateComputationService:
                 stage_svc,
                 server_ips,
                 dry_run,
+                ca_certificate,
+                server_hostnames,
             )
         )
 
@@ -634,6 +647,26 @@ class PrivateComputationService:
 
         return pc_instance
 
+    def _validate_tls_data(
+        self,
+        pc_instance: PrivateComputationInstance,
+        stage: PrivateComputationBaseStageFlow,
+        server_hostnames: Optional[List[str]],
+        ca_certificate: Optional[str],
+    ) -> None:
+        """
+        Validates data required to enable TLS
+        """
+        if (
+            stage.is_joint_stage
+            and pc_instance.infra_config.role is PrivateComputationRole.PARTNER
+        ):
+            if not server_hostnames:
+                raise ValueError("Missing server_hostnames, required for TLS")
+
+            if not ca_certificate:
+                raise ValueError("Missing ca_certificate, required for TLS")
+
     def _get_server_certificate_provider(
         self, pc_instance: PrivateComputationInstance
     ) -> CertificateProvider:
@@ -670,6 +703,9 @@ class PrivateComputationService:
         stage_svc: Optional[PrivateComputationStageService] = None,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
+        # TODO: T136677371 require dynamic parameters by defaulting to None
+        ca_certificate: Optional[str] = SAMPLE_CA_CERTIFICATE,
+        server_hostnames: Optional[List[str]] = TEST_SERVER_HOSTNAMES,
     ) -> PrivateComputationInstance:
         """
         Runs a stage for a given instance. If state of the instance is invalid (e.g. not ready to run a stage),
@@ -680,10 +716,17 @@ class PrivateComputationService:
         pc_instance = self._get_validated_instance(
             instance_id, stage, server_ips, dry_run
         )
+
+        # TODO: T136265785 refactor the tls input validation logic into a TLS config class
+        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
+        if enable_tls:
+            self._validate_tls_data(
+                pc_instance, stage, server_hostnames, ca_certificate
+            )
+
         server_certificate_provider = self._get_server_certificate_provider(pc_instance)
-        # TODO: T136677371 replace SAMPLE_CA_CERTIFICATE with dynamically generated certificate
         ca_certificate_provider = self._get_ca_certificate_provider(
-            pc_instance, SAMPLE_CA_CERTIFICATE
+            pc_instance, ca_certificate
         )
 
         # update initial status
@@ -701,8 +744,6 @@ class PrivateComputationService:
             checkpoint_name=checkpoint_name,
             status=CheckpointStatus.STARTED,
         )
-        # TODO: T136265785 refactor the tls input validation logic into a TLS config class
-        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
         try:
             stage_svc = stage_svc or stage.get_stage_service(self.stage_service_args)
             pc_instance = await stage_svc.run_async(
@@ -712,6 +753,7 @@ class PrivateComputationService:
                 SERVER_CERT_PATH if enable_tls else "",
                 CA_CERT_PATH if enable_tls else "",
                 server_ips,
+                server_hostnames if enable_tls else None,
             )
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage}\n{e}")
