@@ -79,6 +79,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
         server_certificate_path: str,
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """
         Updates the status to COMPLETED and returns the pc_instance

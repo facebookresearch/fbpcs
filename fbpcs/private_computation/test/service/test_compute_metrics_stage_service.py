@@ -32,7 +32,15 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
-from fbpcs.private_computation.service.constants import NUM_NEW_SHARDS_PER_FILE
+from fbpcs.private_computation.service.constants import (
+    CA_CERTIFICATE_ENV_VAR,
+    CA_CERTIFICATE_PATH_ENV_VAR,
+    NUM_NEW_SHARDS_PER_FILE,
+    SERVER_CERTIFICATE_ENV_VAR,
+    SERVER_CERTIFICATE_PATH_ENV_VAR,
+    SERVER_HOSTNAME_ENV_VAR,
+    SERVER_IP_ADDRESS_ENV_VAR,
+)
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 
 
@@ -116,6 +124,104 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                     private_computation_instance.infra_config.instances[-1].stage_name,
                 )
 
+    async def test_tls_env_vars(self) -> None:
+        self.mock_mpc_svc.start_containers.return_value = [
+            ContainerInstance(
+                instance_id="test_container_id", status=ContainerInstanceStatus.STARTED
+            )
+        ]
+
+        for binary_name, pcs_feature_set in (
+            (
+                "private_lift/lift",
+                {PCSFeature.PCS_DUMMY},
+            ),
+            (
+                "private_lift/pcf2_lift",
+                {PCSFeature.PRIVATE_LIFT_PCF2_RELEASE},
+            ),
+        ):
+            with self.subTest(binary_name=binary_name, pcs_feature_set=pcs_feature_set):
+                private_computation_instance = self._create_pc_instance(pcs_feature_set)
+                test_server_ips = [
+                    f"192.0.2.{i}"
+                    for i in range(
+                        private_computation_instance.infra_config.num_mpc_containers
+                    )
+                ]
+                test_server_hostnames = [
+                    f"node{i}.test.com"
+                    for i in range(
+                        private_computation_instance.infra_config.num_mpc_containers
+                    )
+                ]
+                self.mock_mpc_svc.convert_cmd_args_list.return_value = (
+                    binary_name,
+                    ["cmd_1", "cmd_2"],
+                )
+                self.mock_mpc_svc.start_containers.reset_mock(return_value=False)
+
+                expected_server_certificate = "test_server_cert"
+                expected_ca_certificate = "test_ca_cert"
+                expected_server_certificate_path = "/test/server_certificate_path"
+                expected_ca_certificate_path = "/test/server_certificate_path"
+
+                # act
+                await self.stage_svc.run_async(
+                    private_computation_instance,
+                    self._get_mock_certificate_provider(expected_server_certificate),
+                    self._get_mock_certificate_provider(expected_ca_certificate),
+                    expected_server_certificate_path,
+                    expected_ca_certificate_path,
+                    test_server_ips,
+                    test_server_hostnames,
+                )
+
+                # asserts
+                self.mock_mpc_svc.start_containers.assert_called_once()
+                call_kwargs = self.mock_mpc_svc.start_containers.call_args[1]
+                call_env_args = call_kwargs["env_vars"]
+
+                self.assertTrue(call_env_args)
+
+                self.assertTrue("ONEDOCKER_REPOSITORY_PATH" in call_env_args)
+                self.assertEqual(
+                    "test_path/", call_env_args["ONEDOCKER_REPOSITORY_PATH"]
+                )
+
+                self.assertTrue(SERVER_CERTIFICATE_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_server_certificate,
+                    call_env_args[SERVER_CERTIFICATE_ENV_VAR],
+                )
+
+                self.assertTrue(CA_CERTIFICATE_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_ca_certificate, call_env_args[CA_CERTIFICATE_ENV_VAR]
+                )
+
+                self.assertTrue(SERVER_CERTIFICATE_PATH_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_server_certificate_path,
+                    call_env_args[SERVER_CERTIFICATE_PATH_ENV_VAR],
+                )
+
+                self.assertTrue(CA_CERTIFICATE_PATH_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_ca_certificate_path,
+                    call_env_args[CA_CERTIFICATE_PATH_ENV_VAR],
+                )
+
+                self.assertTrue(SERVER_IP_ADDRESS_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    test_server_ips[0], call_env_args[SERVER_IP_ADDRESS_ENV_VAR]
+                )
+
+                self.assertTrue(SERVER_HOSTNAME_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    test_server_hostnames[0], call_env_args[SERVER_HOSTNAME_ENV_VAR]
+                )
+
     def test_get_game_args(self) -> None:
         # TODO: add game args test for attribution args
         pcs_feature = {PCSFeature.PCS_DUMMY}
@@ -174,3 +280,9 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
             infra_config=infra_config,
             product_config=product_config,
         )
+
+    def _get_mock_certificate_provider(self, certificate: str) -> MagicMock:
+        certificate_provider = MagicMock()
+        certificate_provider.get_certificate.return_value = certificate
+
+        return certificate_provider

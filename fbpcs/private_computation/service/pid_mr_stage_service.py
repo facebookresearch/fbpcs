@@ -50,6 +50,7 @@ class PIDMRStageService(PrivateComputationStageService):
         server_certificate_path: str,
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """This function run mr workflow service
 
@@ -59,7 +60,8 @@ class PIDMRStageService(PrivateComputationStageService):
             ca_certificate_provider: ignored
             server_certificate_path: ignored
             ca_certificate_path: ignored
-            server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
+            server_ips: ignored
+            server_hostnames: ignored
 
         Returns:
             An updated version of pc_instance
