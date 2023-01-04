@@ -143,6 +143,11 @@ class InputDataValidator(Validator):
                             "Cohort Id Format is invalid. Cohort ID should start with 0 and increment by 1."
                         )
 
+                if len(cohort_id_set) > 7:
+                    raise InputDataValidationException(
+                        "Number of cohorts is higher than currently supported."
+                    )
+
         except InputDataValidationException as e:
             return self._format_validation_report(
                 f"File: {self._input_file_path} failed validation. Error: {e}",
