@@ -53,6 +53,7 @@ from fbpcs.private_computation.service.mpc.mpc import (
 )
 from fbpcs.private_computation.service.utils import (
     distribute_files_among_containers,
+    generate_env_vars_dict,
     get_server_uris,
 )
 
@@ -315,6 +316,58 @@ class TestUtils(IsolatedAsyncioTestCase):
             infra_config=infra_config,
             product_config=product_config,
         )
+
+    def test_generate_env_vars_missing_parameters(self) -> None:
+        # Act
+        result = generate_env_vars_dict()
+
+        # Assert
+        self.assertFalse("SERVER_HOSTNAME" in result)
+        self.assertFalse("IP_ADDRESS" in result)
+
+    def test_generate_env_vars_server_hostname_no_ip(self) -> None:
+        # Arrange
+        key_name = "SERVER_HOSTNAME"
+
+        # Act
+        result = generate_env_vars_dict(
+            server_hostname="test_hostname",
+        )
+
+        # Assert
+        self.assertFalse(key_name in result)
+
+    def test_generate_env_vars_server_ip_no_hostname(self) -> None:
+        # Arrange
+        key_name = "IP_ADDRESS"
+
+        # Act
+        result = generate_env_vars_dict(
+            server_ip_address="127.0.0.1",
+        )
+
+        # Assert
+        self.assertFalse(key_name in result)
+
+    def test_generate_env_vars_both_server_addresses(self) -> None:
+        # Arrange
+        expected_ip = "127.0.0.1"
+        expected_ip_key_name = "IP_ADDRESS"
+        expected_hostname = "test_hostname"
+        expected_hostname_key_name = "SERVER_HOSTNAME"
+
+        # Act
+        result = generate_env_vars_dict(
+            server_ip_address=expected_ip,
+            server_hostname=expected_hostname,
+        )
+
+        # Assert
+        self.assertTrue(expected_ip_key_name in result)
+        self.assertEqual(expected_ip, result[expected_ip_key_name])
+
+        self.assertTrue(expected_hostname_key_name in result)
+        self.assertEqual(expected_hostname, result[expected_hostname_key_name])
 
     def _create_mpc_svc(self) -> MPCService:
         cspatcher = patch("fbpcp.service.container.ContainerService")

@@ -28,6 +28,8 @@ from fbpcs.private_computation.service.constants import (
     CA_CERTIFICATE_PATH_ENV_VAR,
     SERVER_CERTIFICATE_ENV_VAR,
     SERVER_CERTIFICATE_PATH_ENV_VAR,
+    SERVER_HOSTNAME_ENV_VAR,
+    SERVER_IP_ADDRESS_ENV_VAR,
 )
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 
@@ -237,6 +239,8 @@ def generate_env_vars_dict(
     server_certificate_path: Optional[str] = None,
     ca_certificate_provider: Optional[CertificateProvider] = None,
     ca_certificate_path: Optional[str] = None,
+    server_ip_address: Optional[str] = None,
+    server_hostname: Optional[str] = None,
     **kwargs: Optional[str],
 ) -> Dict[str, str]:
     """Generate Env Vars for onedocker svc container spin up.
@@ -249,6 +253,8 @@ def generate_env_vars_dict(
         server_certificate_path: Server Certificate Path to support TLS, need to also specify server_certificate_provider
         ca_certificate_provider: CA Certificate Provider to support TLS, need to also specify ca_certificate_path
         ca_certificate_path: CA Certificate Path to support TLS, need to also specify ca_certificate_provider
+        server_ip_address: The network IP address of the server to be used for connections during joint stages
+        server_hostname: The network hostname of the server to be used for connections during during joint stages
         **kwargs: Arbitrary keyword arguments, will be upated in return dictionary as key-value pair.
 
     Returns:
@@ -269,6 +275,11 @@ def generate_env_vars_dict(
         if ca_cert and ca_certificate_path:
             env_vars[CA_CERTIFICATE_ENV_VAR] = ca_cert
             env_vars[CA_CERTIFICATE_PATH_ENV_VAR] = ca_certificate_path
+
+    if server_hostname is not None and server_ip_address is not None:
+        # only set if both present, since variables are used for mapping between these values
+        env_vars[SERVER_HOSTNAME_ENV_VAR] = server_hostname
+        env_vars[SERVER_IP_ADDRESS_ENV_VAR] = server_ip_address
 
     return env_vars
 
