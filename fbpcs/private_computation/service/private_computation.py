@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, DefaultDict, Dict, List, Optional, Set, Type, TypeVar, Union
+from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar, Union
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.error.pcp import ThrottlingError
@@ -39,10 +39,7 @@ from fbpcs.infra.certificate.pc_instance_ca_certificate_provider import (
 from fbpcs.infra.certificate.pc_instance_server_certificate import (
     PCInstanceServerCertificateProvider,
 )
-from fbpcs.infra.certificate.sample_tls_certificates import (
-    SAMPLE_CA_CERTIFICATE,
-    SAMPLE_SERVER_CERTIFICATE,
-)
+from fbpcs.infra.certificate.sample_tls_certificates import SAMPLE_CA_CERTIFICATE
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -200,6 +197,9 @@ class PrivateComputationService:
         log_cost_bucket: Optional[str] = None,
         input_path_start_ts: Optional[str] = None,
         input_path_end_ts: Optional[str] = None,
+        server_certificate: Optional[str] = None,
+        ca_certificate: Optional[str] = None,
+        server_domain: Optional[str] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "create_instance")
@@ -226,19 +226,6 @@ class PrivateComputationService:
             self.metric_svc.bump_entity_key(
                 PCSERVICE_ENTITY_NAME, f"pcs_feature_{feature.lower()}_enabled"
             )
-        # TODO: T136500624 Replace SAMPLE_SERVER_CERTIFICATE with dynamically generated certificates.
-        # The certificates returned below do not provide any security and
-        # are being used for intermediate testing purposes only.
-        server_certificate = (
-            SAMPLE_SERVER_CERTIFICATE
-            if PCSFeature.PCF_TLS in pcs_feature_enums
-            and role is PrivateComputationRole.PUBLISHER
-            else None
-        )
-        ca_certificate = (
-            SAMPLE_CA_CERTIFICATE if PCSFeature.PCF_TLS in pcs_feature_enums else None
-        )
-        server_domain = self._get_server_domain(instance_id, role, pcs_feature_enums)
 
         infra_config: InfraConfig = InfraConfig(
             instance_id=instance_id,
@@ -362,23 +349,6 @@ class PrivateComputationService:
             entity=PCSERVICE_ENTITY_NAME, prefix="instance_repo_update"
         ):
             self.instance_repository.update(instance=instance)
-
-    def _get_server_domain(
-        self,
-        instance_id: str,
-        role: PrivateComputationRole,
-        pcs_feature_enums: Set[PCSFeature],
-    ) -> Optional[str]:
-        if (
-            role is not PrivateComputationRole.PUBLISHER
-            or PCSFeature.PCF_TLS not in pcs_feature_enums
-        ):
-            return None
-        # TODO: T136704156 Replace the static server domain value with a
-        # dynamically composed server domain for publisher side
-        # when tls feature is enabled.
-        # return f"publisher.study{instance_id}.pci.facebook.com"
-        return DEFAULT_SERVER_DOMAIN
 
     def _get_number_of_mpc_containers(
         self,

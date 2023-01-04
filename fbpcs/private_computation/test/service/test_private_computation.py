@@ -24,10 +24,6 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstanceStatus,
 )
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
-from fbpcs.infra.certificate.sample_tls_certificates import (
-    SAMPLE_CA_CERTIFICATE,
-    SAMPLE_SERVER_CERTIFICATE,
-)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
@@ -202,18 +198,35 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
     @mock.patch("time.time", new=mock.MagicMock(return_value=1))
     def test_create_instance(self) -> None:
-        for test_game_type, expected_k_anon, pcs_features, test_role in (
+        expected_server_certificate = "test server certificate"
+        expected_ca_certificate = "test ca certificate"
+        expected_server_domain = "example.com"
+        for (
+            test_game_type,
+            expected_k_anon,
+            pcs_features,
+            test_role,
+            server_certificate,
+            ca_certificate,
+            server_domain,
+        ) in (
             (
                 PrivateComputationGameType.LIFT,
                 DEFAULT_K_ANONYMITY_THRESHOLD_PL,
                 [PCSFeature.PCS_DUMMY.value, PCSFeature.UNKNOWN.value],
                 PrivateComputationRole.PUBLISHER,
+                None,
+                None,
+                None,
             ),
             (
                 PrivateComputationGameType.ATTRIBUTION,
                 DEFAULT_K_ANONYMITY_THRESHOLD_PA,
                 None,
                 PrivateComputationRole.PUBLISHER,
+                None,
+                None,
+                None,
             ),
             # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for attribution with publisher
             (
@@ -224,6 +237,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
                 ],
                 PrivateComputationRole.PUBLISHER,
+                None,
+                None,
+                None,
             ),
             # test PCSFeature.PRIVATE_ATTRIBUTION_MR_PID for lift with publisher
             (
@@ -234,6 +250,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value,
                 ],
                 PrivateComputationRole.PUBLISHER,
+                None,
+                None,
+                None,
             ),
             # test PCSFeature.PCF_TLS for lift with publisher
             (
@@ -244,6 +263,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PCF_TLS.value,
                 ],
                 PrivateComputationRole.PUBLISHER,
+                expected_server_certificate,
+                expected_ca_certificate,
+                expected_server_domain,
             ),
             # test PCSFeature.PCF_TLS for lift with partner
             (
@@ -254,6 +276,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     PCSFeature.PCF_TLS.value,
                 ],
                 PrivateComputationRole.PARTNER,
+                None,
+                expected_ca_certificate,
+                None,
             ),
         ):
             with self.subTest(
@@ -275,6 +300,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     attribution_rule=AttributionRule.LAST_CLICK_1D,
                     aggregation_type=AggregationType.MEASUREMENT,
                     pcs_features=pcs_features,
+                    server_certificate=server_certificate,
+                    ca_certificate=ca_certificate,
+                    server_domain=server_domain,
                 )
                 # check instance_repository.create is called with the correct arguments
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
@@ -349,15 +377,15 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 ):
                     self.assertEqual(
                         args.infra_config.server_certificate,
-                        SAMPLE_SERVER_CERTIFICATE,
+                        expected_server_certificate,
                     )
                     self.assertEqual(
                         args.infra_config.ca_certificate,
-                        SAMPLE_CA_CERTIFICATE,
+                        expected_ca_certificate,
                     )
                     self.assertEqual(
                         args.infra_config.server_domain,
-                        "study123.pci.facebook.com",
+                        expected_server_domain,
                     )
 
                 if (
@@ -371,7 +399,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(
                         args.infra_config.ca_certificate,
-                        SAMPLE_CA_CERTIFICATE,
+                        expected_ca_certificate,
                     )
                     self.assertEqual(
                         args.infra_config.server_domain,
@@ -1418,8 +1446,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             mpc_compute_concurrency=self.test_concurrency,
             status_updates=status_updates or [],
             log_cost_bucket=self.log_cost_bucket,
-            server_certificate=SAMPLE_SERVER_CERTIFICATE,
-            ca_certificate=SAMPLE_CA_CERTIFICATE,
             pcs_features=pcs_features,
         )
         common: CommonProductConfig = CommonProductConfig(
