@@ -89,7 +89,7 @@ void InputProcessor<schedulerId>::privatelyShareTimestampsStep() {
     for (uint32_t purchaseTs : purchaseTimestampArray) {
       // compute whether each row contains at least one valid (positive)
       // purchase timestamp
-      anyValidPurchaseTs = anyValidPurchaseTs | (purchaseTs > 0);
+      anyValidPurchaseTs = anyValidPurchaseTs || (purchaseTs > 0);
     }
     anyValidPurchaseTimestamp.push_back(anyValidPurchaseTs);
   }
