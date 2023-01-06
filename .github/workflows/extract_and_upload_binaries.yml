@@ -29,18 +29,19 @@ on:
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
-        type: str
+        type: string
 
 env:
   REGISTRY: ghcr.io
   IMAGE_TAG: ${{ github.event.inputs.image_tag }}
   IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}
   IMAGE_PATH: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }}
+  FBPCP_VERSION: 0.3.4
 
 jobs:
 
   build:
-
+    name: Extract Binaries and Upload to S3
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -51,6 +52,9 @@ jobs:
 
     - name: Print Tracker Hash
       run: echo ${{ github.event.inputs.tracker_hash}}
+
+    - name: Install OneDocker CLI
+      run: python3 -m pip install fbpcp==$FBPCP_VERSION
 
     - uses: docker/login-action@v1
       with:
@@ -75,4 +79,4 @@ jobs:
         aws-region: ${{ github.event.inputs.aws_region }}
 
     - name: Deploy to S3
-      run: ./upload-binaries-to-s3.sh ${{ github.event.inputs.package_name }} ${{ github.event.inputs.s3_tag }}
+      run: ./upload_scripts/upload-binaries-using-onedocker.sh ${{ github.event.inputs.package_name }} ${{ github.event.inputs.s3_tag }} -c upload_scripts/configs/upload_binaries_config.yml
