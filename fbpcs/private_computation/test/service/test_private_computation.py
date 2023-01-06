@@ -13,7 +13,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Set, Tuple
 from unittest import mock
-from unittest.mock import AsyncMock, call, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 
@@ -23,9 +23,7 @@ from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
 )
-from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
-from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.onedocker_service_config import OneDockerServiceConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -47,10 +45,8 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.repository.private_computation_game import GameNames
 from fbpcs.private_computation.service.constants import (
     CA_CERT_PATH,
-    DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     DEFAULT_K_ANONYMITY_THRESHOLD_PA,
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
     DEFAULT_LOG_COST_TO_S3,
@@ -63,7 +59,6 @@ from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceValidationError,
 )
 from fbpcs.private_computation.service.mpc.mpc import (
-    create_and_start_mpc_instance,
     map_private_computation_role_to_mpc_party,
     MPCParty,
     MPCService,
@@ -1063,77 +1058,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             stage = data_test[0]
             with self.subTest(stage=stage):
                 _run_sub_test(stage)
-
-    @patch("fbpcs.private_computation.service.mpc.mpc.MPCService")
-    async def test_create_and_start_mpc_instance(self, mock_mpc_svc) -> None:
-        mock_mpc_svc.get_instance = MagicMock(side_effect=Exception())
-        mock_mpc_svc.create_instance = MagicMock()
-        mock_mpc_svc.start_instance_async = AsyncMock()
-
-        instance_id = "test_instance_id"
-        game_name = GameNames.LIFT.value
-        mpc_party = MPCParty.CLIENT
-        num_containers = 4
-        input_file = "input_file"
-        output_file = "output_file"
-        input_directory = "input_directory"
-        output_directory = "output_directory"
-        server_ips = ["192.0.2.0", "192.0.2.1"]
-        game_args = [
-            {
-                "input_filenames": input_file,
-                "input_directory": input_directory,
-                "output_filenames": output_file,
-                "output_directory": output_directory,
-                "concurrency": 1,
-            }
-        ]
-        binary_version = self.onedocker_binary_config_map[
-            OneDockerBinaryNames.LIFT_COMPUTE.value
-        ].binary_version
-
-        await create_and_start_mpc_instance(
-            mpc_svc=mock_mpc_svc,
-            instance_id=instance_id,
-            game_name=game_name,
-            mpc_party=mpc_party,
-            num_containers=num_containers,
-            binary_version=binary_version,
-            server_certificate_provider=NullCertificateProvider(),
-            ca_certificate_provider=NullCertificateProvider(),
-            server_certificate_path="",
-            ca_certificate_path="",
-            container_timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
-            server_ips=server_ips,
-            game_args=game_args,
-        )
-
-        # check create_instance and start_instance were called with the right parameters
-        self.assertEqual(
-            call(
-                instance_id=instance_id,
-                game_name=game_name,
-                mpc_party=mpc_party,
-                num_workers=num_containers,
-                game_args=game_args,
-                server_uris=None,
-            ),
-            mock_mpc_svc.create_instance.call_args,
-        )
-
-        env_vars = {}
-        self.assertEqual(
-            call(
-                instance_id=instance_id,
-                server_ips=server_ips,
-                timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
-                version=binary_version,
-                env_vars=env_vars,
-                certificate_request=None,
-                wait_for_containers_to_start_up=True,
-            ),
-            mock_mpc_svc.start_instance_async.call_args,
-        )
 
     def test_map_private_computation_role_to_mpc_party(self) -> None:
         self.assertEqual(
