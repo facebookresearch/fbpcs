@@ -158,11 +158,11 @@ CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
       int inputIndex = reverseUnionMap[i];
 
       bool isValidOpportunityTimestamp =
-          (opportunityTimestampsPadded.at(inputIndex) > 0) &
-          (controlPopulationPadded.at(inputIndex) |
+          (opportunityTimestampsPadded.at(inputIndex) > 0) &&
+          (controlPopulationPadded.at(inputIndex) ||
            testPopulationPadded.at(inputIndex));
 
-      bool testReach = testPopulationPadded.at(inputIndex) &
+      bool testReach = testPopulationPadded.at(inputIndex) &&
           (numImpressionsPadded.at(inputIndex) > 0);
 
       PublisherRow publisherRow{
