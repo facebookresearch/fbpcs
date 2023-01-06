@@ -11,7 +11,6 @@ from typing import Any, Dict, Type, TypeVar
 from fbpcp.util.reflect import (  # @manual=//measurement/private_measurement/pcp:pcp"
     get_class as fbpcp_get_class,
 )
-from fbpcs.private_computation.service.utils import deprecated_msg
 from fbpcs.utils.config_yaml.exceptions import (  # @manual=//measurement/private_measurement/pcp:pcp"
     ConfigYamlClassNotFoundError,
     ConfigYamlModuleImportError,
@@ -19,6 +18,7 @@ from fbpcs.utils.config_yaml.exceptions import (  # @manual=//measurement/privat
     ConfigYamlWrongClassConfiguredError,
     ConfigYamlWrongConstructorError,
 )
+from fbpcs.utils.deprecated import deprecated_msg
 
 
 # Backward compatible for partners still using the old config settins

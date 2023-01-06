@@ -17,7 +17,7 @@ from fbpcp.service.container_aws import AWSContainerService
 from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
 from fbpcs.experimental.cloud_logs.aws_log_retriever import AWSLogRetriever
 from fbpcs.experimental.cloud_logs.log_retriever import LogRetriever
-from fbpcs.private_computation.service.utils import deprecated
+from fbpcs.utils.deprecated import deprecated
 
 
 class PCSContainerService(ContainerService):
