@@ -41,12 +41,12 @@ class LastClickRule
     ConditionalVector<uint32_t, usingBatch> thresholdNDaysClick;
     if constexpr (usingBatch) {
       for (size_t i = 0; i < tp.ts.size(); ++i) {
-        bool isValidClick = tp.isClick.at(i) & (tp.ts.at(i) > 0);
+        bool isValidClick = tp.isClick.at(i) && (tp.ts.at(i) > 0);
         uint32_t thresholdNDays = tp.ts.at(i) + threshold_.count();
         thresholdNDaysClick.push_back(isValidClick ? thresholdNDays : 0);
       }
     } else {
-      bool isValidClick = tp.isClick & (tp.ts > 0);
+      bool isValidClick = tp.isClick && (tp.ts > 0);
       uint32_t thresholdNDays = tp.ts + threshold_.count();
       thresholdNDaysClick = isValidClick ? thresholdNDays : 0;
     }
@@ -106,9 +106,9 @@ class LastTouch_ClickNDays_ImpressionMDays
       const PrivateConversion<schedulerId, usingBatch, inputEncryption>& conv,
       const std::vector<SecTimestamp<schedulerId, usingBatch>>& thresholds)
       const override {
-    auto validConv = tp.ts < conv.ts;
-    auto touchWithinMDays = conv.ts <= thresholds.at(0);
-    auto clickWithinNDays = conv.ts <= thresholds.at(1);
+    const auto validConv = tp.ts < conv.ts;
+    const auto touchWithinMDays = conv.ts <= thresholds.at(0);
+    const auto clickWithinNDays = conv.ts <= thresholds.at(1);
 
     return validConv & (touchWithinMDays | clickWithinNDays);
   }
@@ -120,7 +120,7 @@ class LastTouch_ClickNDays_ImpressionMDays
     if constexpr (usingBatch) {
       for (size_t i = 0; i < tp.ts.size(); ++i) {
         bool isValid = tp.ts.at(i) > 0;
-        bool isValidClick = tp.isClick.at(i) & isValid;
+        bool isValidClick = tp.isClick.at(i) && isValid;
 
         auto thresholdMDays = tp.ts.at(i) + impressionThreshold_.count();
         thresholdMDaysTouch.push_back(isValid ? thresholdMDays : 0);
@@ -130,7 +130,7 @@ class LastTouch_ClickNDays_ImpressionMDays
       }
     } else {
       bool isValid = tp.ts > 0;
-      bool isValidClick = tp.isClick & isValid;
+      bool isValidClick = tp.isClick && isValid;
 
       auto thresholdMDays = tp.ts + impressionThreshold_.count();
       thresholdMDaysTouch = isValid ? thresholdMDays : 0;
@@ -221,7 +221,7 @@ class LastClick_2_7Days
 
     if constexpr (usingBatch) {
       for (size_t i = 0; i < tp.ts.size(); ++i) {
-        bool isValidClick = tp.isClick.at(i) & (tp.ts.at(i) > 0);
+        bool isValidClick = tp.isClick.at(i) && (tp.ts.at(i) > 0);
         uint32_t lowerBoundOneDay = tp.ts.at(i) + kSecondsInOneDay;
         uint32_t upperBoundSevenDays = tp.ts.at(i) + kSecondsInSevenDays;
 
@@ -230,7 +230,7 @@ class LastClick_2_7Days
             isValidClick ? upperBoundSevenDays : 0);
       }
     } else {
-      bool isValidClick = tp.isClick & (tp.ts > 0);
+      bool isValidClick = tp.isClick && (tp.ts > 0);
       uint32_t lowerBoundOneDay = tp.ts + kSecondsInOneDay;
       uint32_t upperBoundSevenDays = tp.ts + kSecondsInSevenDays;
 
@@ -322,7 +322,7 @@ class LastTouch_2_7Days
     if constexpr (usingBatch) {
       for (size_t i = 0; i < tp.ts.size(); ++i) {
         bool isValid = tp.ts.at(i) > 0;
-        bool isValidClick = tp.isClick.at(i) & isValid;
+        bool isValidClick = tp.isClick.at(i) && isValid;
         uint32_t lowerBoundAndUpperBoundOneDay = tp.ts.at(i) + kSecondsInOneDay;
         uint32_t upperBoundSevenDays = tp.ts.at(i) + kSecondsInSevenDays;
 
@@ -335,14 +335,14 @@ class LastTouch_2_7Days
       }
     } else {
       bool isValid = tp.ts > 0;
-      bool isValidClick = tp.isClick & isValid;
+      bool isValidClick = tp.isClick && isValid;
       uint32_t lowerBoundAndUpperBoundOneDay = tp.ts + kSecondsInOneDay;
       uint32_t upperBoundSevenDays = tp.ts + kSecondsInSevenDays;
 
       lowerBoundOneDayClick = isValidClick ? lowerBoundAndUpperBoundOneDay : 0;
       upperBoundSevenDaysClick = isValidClick ? upperBoundSevenDays : 0;
       upperBoundOneDayTouch =
-          (isValid & !isValidClick) ? lowerBoundAndUpperBoundOneDay : 0;
+          (isValid && !isValidClick) ? lowerBoundAndUpperBoundOneDay : 0;
     }
 
     return std::vector<SecTimestamp<schedulerId, usingBatch>>{
@@ -421,12 +421,12 @@ class LastClick_1Day_TargetId
     ConditionalVector<uint32_t, usingBatch> thresholdOneDayClick;
     if constexpr (usingBatch) {
       for (size_t i = 0; i < tp.ts.size(); ++i) {
-        bool isValidClick = tp.isClick.at(i) & (tp.ts.at(i) > 0);
+        bool isValidClick = tp.isClick.at(i) && (tp.ts.at(i) > 0);
         uint32_t thresholdOneDay = tp.ts.at(i) + kSecondsInOneDay;
         thresholdOneDayClick.push_back(isValidClick ? thresholdOneDay : 0);
       }
     } else {
-      bool isValidClick = tp.isClick & (tp.ts > 0);
+      bool isValidClick = tp.isClick && (tp.ts > 0);
       uint32_t thresholdOneDay = tp.ts + kSecondsInOneDay;
       thresholdOneDayClick = isValidClick ? thresholdOneDay : 0;
     }
