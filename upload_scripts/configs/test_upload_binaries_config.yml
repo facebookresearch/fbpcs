@@ -1,0 +1,8 @@
+onedocker-cli:
+  dependency:
+    StorageService:
+      class: fbpcp.service.storage_s3.S3StorageService
+      constructor:
+        region: us-west-2
+  setting:
+    repository_path: https://one-docker-repository-test-psi.s3.us-west-2.amazonaws.com/
