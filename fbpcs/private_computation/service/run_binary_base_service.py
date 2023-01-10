@@ -36,6 +36,7 @@ class RunBinaryBaseService:
         existing_containers: Optional[List[ContainerInstance]] = None,
         container_type: Optional[ContainerType] = None,
         certificate_request: Optional[CertificateRequest] = None,
+        env_vars_list: Optional[List[Dict[str, str]]] = None,
     ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class RunBinaryBaseService:
                 version=binary_version,
                 cmd_args_list=[cmd_args_list[i] for i in containers_to_start],
                 timeout=timeout,
-                env_vars=env_vars,
+                env_vars=env_vars_list if env_vars_list else env_vars,
                 container_type=container_type,
                 certificate_request=certificate_request,
             )
