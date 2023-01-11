@@ -249,6 +249,51 @@ def generate_env_vars_dict(
     return env_vars
 
 
+def _validate_env_vars_length(
+    num_containers: int, **kwargs: Optional[List[str]]
+) -> bool:
+    """
+    Validate length of all the non null arguments is the same as num_containers.
+    """
+    for k, v in kwargs.items():
+        if v and len(v) != num_containers:
+            raise ValueError(
+                f"Incorrect number of items in the env var list to match num_containers. num_contaienrs {num_containers}; {k} {len(v)};"
+            )
+    return True
+
+
+def generate_env_vars_dicts_list(
+    num_containers: int,
+    repository_path: Optional[str] = None,
+    server_certificate_provider: Optional[CertificateProvider] = None,
+    server_certificate_path: Optional[str] = None,
+    ca_certificate_provider: Optional[CertificateProvider] = None,
+    ca_certificate_path: Optional[str] = None,
+    server_ip_addresses: Optional[List[str]] = None,
+    server_hostnames: Optional[List[str]] = None,
+) -> List[Dict[str, str]]:
+
+    _validate_env_vars_length(
+        num_containers=num_containers,
+        server_ip_addresses=server_ip_addresses,
+        server_hostnames=server_hostnames,
+    )
+
+    return [
+        generate_env_vars_dict(
+            repository_path=repository_path,
+            server_certificate_provider=server_certificate_provider,
+            server_certificate_path=server_certificate_path,
+            ca_certificate_provider=ca_certificate_provider,
+            ca_certificate_path=ca_certificate_path,
+            server_ip_address=server_ip_addresses[i] if server_ip_addresses else None,
+            server_hostname=server_hostnames[i] if server_hostnames else None,
+        )
+        for i in range(num_containers)
+    ]
+
+
 # distribute number_files files into number_containers of containers evenly so that the maximum difference will be at most 1
 def distribute_files_among_containers(
     number_files: int, number_containers: int
