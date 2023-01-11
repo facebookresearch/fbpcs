@@ -1,0 +1,4 @@
+fbpcp == 0.3.4
+jmespath ~= 0.10
+s3transfer ~= 0.3
+parameterized ~= 0.7
