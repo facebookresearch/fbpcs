@@ -19,7 +19,7 @@ on:
 env:
   DISTRO: ubuntu
   REGISTRY: ghcr.io
-  LOCAL_IMAGE_NAME: fbpcs/onedocker
+  LOCAL_IMAGE_NAME: fbpcs/onedocker/test
   RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
   PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
   COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator
