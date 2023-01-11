@@ -90,7 +90,7 @@ fi
 
 # Local Docker Image Dependencies
 if [ "$PACKAGE" = "onedocker" ]; then
- PACKAGE="emp_games data_processing onedocker"
+ PACKAGE="emp_games data_processing onedocker/test"
 fi
 
 # Include optional parameters
