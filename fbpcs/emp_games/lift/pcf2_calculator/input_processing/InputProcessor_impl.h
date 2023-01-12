@@ -59,8 +59,8 @@ void InputProcessor<schedulerId>::privatelyShareTimestampsStep() {
   for (size_t i = 0; i < inputData_.getOpportunityTimestamps().size(); ++i) {
     // Nonzero opportunity timestamp and is opportunity (test or control)
     isValidOpportunityTimestamp.push_back(
-        (inputData_.getOpportunityTimestamps().at(i) > 0) &
-        (inputData_.getControlPopulation().at(i) |
+        (inputData_.getOpportunityTimestamps().at(i) > 0) &&
+        (inputData_.getControlPopulation().at(i) ||
          inputData_.getTestPopulation().at(i)));
   }
   liftGameProcessedData_.isValidOpportunityTimestamp =
@@ -163,7 +163,7 @@ void InputProcessor<schedulerId>::privatelyShareTestReachStep() {
     // A reach occurs when the number of impressions is nonzero, and we only
     // compute this for the test population.
     testReach.push_back(
-        inputData_.getTestPopulation().at(i) &
+        inputData_.getTestPopulation().at(i) &&
         (inputData_.getNumImpressions().at(i) > 0));
   }
   liftGameProcessedData_.testReach = common::privatelyShareArrayWithPaddingFrom<
