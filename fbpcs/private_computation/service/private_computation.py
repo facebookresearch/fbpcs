@@ -882,24 +882,19 @@ class PrivateComputationService:
             )
 
         # cancel the running stage
-        last_instance = private_computation_instance.infra_config.instances[-1]
         stage = private_computation_instance.current_stage
         self.logger.info(
             f"Canceling the current stage {stage} of instance {instance_id}"
         )
-        # TODO: T124324848 move MPCInstance stop instance to StageService.stop_service()
-        if isinstance(last_instance, MPCInstance):
-            self.mpc_svc.stop_instance(instance_id=last_instance.instance_id)
-        else:
-            stage_svc = stage.get_stage_service(self.stage_service_args)
-            # TODO: T124322832 make stop service as abstract method and enforce all stage service to implement
-            try:
-                stage_svc.stop_service(private_computation_instance)
-            except NotImplementedError:
-                self.logger.warning(
-                    f"Canceling the current stage {stage} of instance {instance_id} is not supported yet."
-                )
-                return private_computation_instance
+        stage_svc = stage.get_stage_service(self.stage_service_args)
+        # TODO: T124322832 make stop service as abstract method and enforce all stage service to implement
+        try:
+            stage_svc.stop_service(private_computation_instance)
+        except NotImplementedError:
+            self.logger.warning(
+                f"Canceling the current stage {stage} of instance {instance_id} is not supported yet."
+            )
+            return private_computation_instance
 
         # post-checks to make sure the pl instance has the updated status
         private_computation_instance = self._update_instance(

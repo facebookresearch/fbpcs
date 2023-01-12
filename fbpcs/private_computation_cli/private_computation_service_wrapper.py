@@ -277,26 +277,6 @@ def get_server_ips(
     return server_ips_list
 
 
-def get_mpc(config: Dict[str, Any], instance_id: str, logger: logging.Logger) -> None:
-    container_service = _build_container_service(
-        config["private_computation"]["dependency"]["ContainerService"]
-    )
-    storage_service = _build_storage_service(
-        config["private_computation"]["dependency"]["StorageService"]
-    )
-    mpc_service = _build_mpc_service(
-        config["mpc"],
-        _build_onedocker_service_cfg(
-            config["private_computation"]["dependency"]["OneDockerServiceConfig"]
-        ),
-        container_service,
-        storage_service,
-    )
-    # calling update_instance here to get the newest container information
-    instance = mpc_service.update_instance(instance_id)
-    logger.info(instance)
-
-
 def cancel_current_stage(
     config: Dict[str, Any], instance_id: str, logger: logging.Logger
 ) -> PrivateComputationInstance:
