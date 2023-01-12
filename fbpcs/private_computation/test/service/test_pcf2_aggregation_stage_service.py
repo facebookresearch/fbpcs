@@ -146,7 +146,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
                 "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
             },
         ]
-        actual_value = self.stage_svc._get_compute_metrics_game_args(
+        actual_value = self.stage_svc.get_game_args(
             private_computation_instance, "", ""
         )
         self.assertEqual(

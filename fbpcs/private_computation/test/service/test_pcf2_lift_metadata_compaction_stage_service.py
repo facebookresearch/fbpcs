@@ -145,9 +145,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
         ]
         self.assertEqual(
             test_game_args,
-            self.stage_svc._get_lift_metadata_compaction_game_args(
-                private_computation_instance, "", ""
-            ),
+            self.stage_svc.get_game_args(private_computation_instance, "", ""),
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:

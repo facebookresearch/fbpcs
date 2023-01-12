@@ -228,7 +228,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
 
         self.assertEqual(
             test_game_args,
-            self.stage_svc._get_compute_metrics_game_args(
+            self.stage_svc.get_game_args(
                 private_computation_instance,
                 "",
                 "",
