@@ -147,9 +147,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
         ]
         self.assertEqual(
             test_game_args,
-            self.stage_svc._get_compute_metrics_game_args(
-                private_computation_instance, "", ""
-            ),
+            self.stage_svc.get_game_args(private_computation_instance, "", ""),
         )
 
     def _create_pc_instance(self) -> PrivateComputationInstance:
