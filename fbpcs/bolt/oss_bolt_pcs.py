@@ -167,16 +167,34 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
         instance_id: str,
         stage: Optional[PrivateComputationBaseStageFlow] = None,
         server_ips: Optional[List[str]] = None,
+        ca_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> None:
+        """Runs a stage for the specified study instance.
+
+        Args:
+            - instance_id: The study instance identifier
+            - stage: The stage to run, defaults to next stage if not specified.
+            - server_ips: These are the IP addresses of the Publisher's containers. (only used for Partner role)
+            - ca_certificate: This is the certificate which issued Publisher certificates. (only used for Partner role, when TLS enabled)
+            - server_hostnames: These are the hostname addresses of the Publisher's containers. (only used for Partner role, when TLS enabled)
+        """
         if stage:
             self.logger.info(f"Running stage {stage.name}")
             pc_instance = await self.pcs.run_stage_async(
-                instance_id=instance_id, stage=stage, server_ips=server_ips
+                instance_id=instance_id,
+                stage=stage,
+                server_ips=server_ips,
+                ca_certificate=ca_certificate,
+                server_hostnames=server_hostnames,
             )
         else:
             self.logger.info("Running next stage")
             pc_instance = await self.pcs.run_next_async(
-                instance_id=instance_id, server_ips=server_ips
+                instance_id=instance_id,
+                server_ips=server_ips,
+                ca_certificate=ca_certificate,
+                server_hostnames=server_hostnames,
             )
 
         # the following log is used by log_analyzer

@@ -39,7 +39,6 @@ from fbpcs.infra.certificate.pc_instance_ca_certificate_provider import (
 from fbpcs.infra.certificate.pc_instance_server_certificate import (
     PCInstanceServerCertificateProvider,
 )
-from fbpcs.infra.certificate.sample_tls_certificates import SAMPLE_CA_CERTIFICATE
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -105,8 +104,6 @@ from fbpcs.utils.optional import unwrap_or_default
 T = TypeVar("T")
 
 PCSERVICE_ENTITY_NAME = "pcservice"
-DEFAULT_SERVER_DOMAIN = "study123.pci.facebook.com"
-TEST_SERVER_HOSTNAMES = [f"node0.{DEFAULT_SERVER_DOMAIN}"]
 
 
 class PrivateComputationService:
@@ -675,9 +672,8 @@ class PrivateComputationService:
         stage_svc: Optional[PrivateComputationStageService] = None,
         server_ips: Optional[List[str]] = None,
         dry_run: bool = False,
-        # TODO: T136677371 require dynamic parameters by defaulting to None
-        ca_certificate: Optional[str] = SAMPLE_CA_CERTIFICATE,
-        server_hostnames: Optional[List[str]] = TEST_SERVER_HOSTNAMES,
+        ca_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> PrivateComputationInstance:
         """
         Runs a stage for a given instance. If state of the instance is invalid (e.g. not ready to run a stage),
