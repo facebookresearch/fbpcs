@@ -81,6 +81,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             test_partner_id,
             PrivateComputationStageFlow.ID_MATCH,
             test_server_ips,
+            "ignored_cert",
+            ["ignored_domain.test"],
         )
 
         test_job = BoltJob(
@@ -97,6 +99,59 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             stage=DummyJointStageFlow.JOINT_STAGE,
             server_ips=test_server_ips,
             ca_certificate=expected_ca_certificate,
+            server_hostnames=expected_server_hostnames,
+        )
+
+    @mock.patch("fbpcs.bolt.bolt_runner._IS_DYNAMIC_TLS_ENABLED", True)
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_stage_flow")
+    async def test_joint_stage_dynamic_tls_enabled(
+        self,
+        mock_get_stage_flow,
+        mock_next_stage,
+        mock_publisher_args,
+        mock_partner_args,
+        mock_sleep,
+    ) -> None:
+        expected_issuer_certificate = "test_cert"
+        expected_server_hostnames = ["domain1.test"]
+        mock_get_stage_flow.return_value = DummyJointStageFlow
+        test_publisher_id = "test_pub_id"
+        test_partner_id = "test_part_id"
+        self.test_runner.publisher_client.get_or_create_instance = mock.AsyncMock(
+            return_value=test_publisher_id
+        )
+        self.test_runner.partner_client.get_or_create_instance = mock.AsyncMock(
+            return_value=test_partner_id
+        )
+        # testing that the correct server ips are used when a joint stage is run
+        test_server_ips = ["1.1.1.1"]
+        mock_partner_run_stage = self._prepare_mock_client_functions(
+            test_publisher_id,
+            test_partner_id,
+            PrivateComputationStageFlow.ID_MATCH,
+            test_server_ips,
+            expected_issuer_certificate,
+            expected_server_hostnames,
+        )
+
+        test_job = BoltJob(
+            job_name="test",
+            publisher_bolt_args=mock_publisher_args,
+            partner_bolt_args=mock_partner_args,
+        )
+        mock_next_stage.return_value = DummyJointStageFlow.JOINT_STAGE
+
+        await self.test_runner.run_async([test_job])
+
+        mock_partner_run_stage.assert_called_with(
+            instance_id=test_partner_id,
+            stage=DummyJointStageFlow.JOINT_STAGE,
+            server_ips=test_server_ips,
+            ca_certificate=expected_issuer_certificate,
             server_hostnames=expected_server_hostnames,
         )
 
@@ -198,12 +253,12 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                         )
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
-    async def test_joint_stage_retry_gets_ips(self, mock_sleep) -> None:
-        # test that server ips are gotten when a joint stage is retried with STARTED status
+    async def test_joint_stage_retry_gets_publisher_state(self, mock_sleep) -> None:
+        # test that publisher state is retrieved when a joint stage is retried with STARTED status
         # specifically, publisher status STARTED and partner status FAILED
         server_ips = ["1.1.1.1"]
-        ca_certificate = None
-        server_hostnames = None
+        ca_certificate = "test_cert"
+        server_hostnames = ["domain1.test"]
         self.test_runner._get_publisher_state = mock.AsyncMock(
             return_value=(server_ips, ca_certificate, server_hostnames)
         )
@@ -485,6 +540,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         test_partner_id: str,
         stage: PrivateComputationBaseStageFlow,
         server_ips: Optional[List[str]] = None,
+        issuer_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> mock.AsyncMock:
         self.test_runner.publisher_client.create_instance = mock.AsyncMock(
             return_value=test_publisher_id,
@@ -496,7 +553,10 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             pc_instance_status=PrivateComputationInstanceStatus.CREATED
         )
         test_start_state = BoltState(
-            pc_instance_status=stage.started_status, server_ips=server_ips
+            pc_instance_status=stage.started_status,
+            server_ips=server_ips,
+            issuer_certificate=issuer_certificate,
+            server_hostnames=server_hostnames,
         )
         test_completed_state = BoltState(pc_instance_status=stage.completed_status)
         if server_ips:

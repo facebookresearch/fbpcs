@@ -188,7 +188,13 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
     )
     async def test_bolt_update_instance(self, mock_get_instance) -> None:
         mock_get_instance.return_value = self._get_graph_api_output(
-            {"id": "id", "status": "COMPUTATION_STARTED", "server_ips": "1.1.1.1"}
+            {
+                "id": "id",
+                "status": "COMPUTATION_STARTED",
+                "server_ips": "1.1.1.1",
+                "issuer_certificate": "test_cert",
+                "server_hostnames": "domain.test",
+            }
         )
         state = await self.test_client.update_instance("id")
         self.assertEqual(
@@ -196,6 +202,32 @@ class TestBoltGraphAPIClient(unittest.IsolatedAsyncioTestCase):
             PrivateComputationInstanceStatus.COMPUTATION_STARTED,
         )
         self.assertEqual(state.server_ips, "1.1.1.1")
+        self.assertEqual(state.issuer_certificate, None)
+        self.assertEqual(state.server_hostnames, None)
+
+    @patch(
+        "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient.get_instance",
+        new_callable=AsyncMock,
+    )
+    async def test_bolt_update_instance_tls_enabled(self, mock_get_instance) -> None:
+        mock_get_instance.return_value = self._get_graph_api_output(
+            {
+                "id": "id",
+                "status": "COMPUTATION_STARTED",
+                "feature_list": [PCSFeature.PCF_TLS.value],
+                "server_ips": "1.1.1.1",
+                "issuer_certificate": "test_cert",
+                "server_hostnames": "domain.test",
+            }
+        )
+        state = await self.test_client.update_instance("id")
+        self.assertEqual(
+            state.pc_instance_status,
+            PrivateComputationInstanceStatus.COMPUTATION_STARTED,
+        )
+        self.assertEqual(state.server_ips, "1.1.1.1")
+        self.assertEqual(state.issuer_certificate, "test_cert")
+        self.assertEqual(state.server_hostnames, "domain.test")
 
     @patch(
         "fbpcs.pl_coordinator.bolt_graphapi_client.BoltGraphAPIClient.get_instance",

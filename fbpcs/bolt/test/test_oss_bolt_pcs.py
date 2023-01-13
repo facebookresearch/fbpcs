@@ -7,6 +7,7 @@
 
 import unittest
 from collections import defaultdict
+from typing import Optional, Set
 from unittest import mock
 from unittest.mock import patch
 
@@ -188,6 +189,27 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(["10.0.10.242"], return_state.server_ips)
+        self.assertEqual(None, return_state.issuer_certificate)
+        self.assertEqual(None, return_state.server_hostnames)
+
+    @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService.update_instance"
+    )
+    async def test_update_instance_tls(self, mock_update) -> None:
+        # mock pc update_instance to return a pc instance with specific test status and instances
+        mock_update.return_value = self._get_test_instance(
+            features={PCSFeature.PCF_TLS}
+        )
+        return_state = await self.bolt_pcs_client.update_instance(
+            instance_id=self.test_instance_id,
+        )
+        self.assertEqual(
+            return_state.pc_instance_status, PrivateComputationInstanceStatus.CREATED
+        )
+
+        self.assertEqual(["10.0.10.242"], return_state.server_ips)
+        self.assertEqual("test_cert", return_state.issuer_certificate)
+        self.assertEqual(["domain.test"], return_state.server_hostnames)
 
     @mock.patch(
         "fbpcs.private_computation.service.private_computation.PrivateComputationService.validate_metrics"
@@ -253,7 +275,9 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual(expected_result, actual_result)
 
-    def _get_test_instance(self) -> PrivateComputationInstance:
+    def _get_test_instance(
+        self, features: Optional[Set[PCSFeature]] = None
+    ) -> PrivateComputationInstance:
         stage_state_instance = StageStateInstance(
             instance_id="stage_state_instance",
             stage_name="test_stage",
@@ -265,7 +289,11 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
                     status=ContainerInstanceStatus.COMPLETED,
                 )
             ],
+            server_uris=["domain.test"],
         )
+        if not features:
+            features = {PCSFeature.PCS_DUMMY}
+
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.test_instance_id,
             role=self.test_role,
@@ -277,7 +305,8 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
-            pcs_features={PCSFeature.PCS_DUMMY},
+            pcs_features=features,
+            ca_certificate="test_cert",
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,

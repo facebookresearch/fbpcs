@@ -188,7 +188,21 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
                 f"Error getting status: Unexpected value {response_status}"
             )
         server_ips = response.get("server_ips")
-        return BoltState(status, server_ips)
+        feature_list = response.get("feature_list")
+
+        # TODO: T141691567 - Remove TLS flight and field presence checks once Graph API stabilized
+        issuer_certificate = None
+        server_hostnames = None
+        if feature_list:
+            pcs_feature_enums = {
+                PCSFeature.from_str(feature) for feature in feature_list
+            }
+
+            if PCSFeature.PCF_TLS in pcs_feature_enums:
+                issuer_certificate = response.get("issuer_certificate")
+                server_hostnames = response.get("server_hostnames")
+
+        return BoltState(status, server_ips, issuer_certificate, server_hostnames)
 
     @bolt_checkpoint(
         dump_params=True,

@@ -338,6 +338,16 @@ class PrivateComputationInstance(InstanceBase):
             server_ips_list = last_instance.server_ips or []
         return server_ips_list
 
+    @property
+    def server_uris(self) -> List[str]:
+        server_uris_list = []
+        if not self.infra_config.instances:
+            return server_uris_list
+        last_instance = self.infra_config.instances[-1]
+        if isinstance(last_instance, (PCSMPCInstance, StageStateInstance)):
+            server_uris_list = last_instance.server_uris or []
+        return server_uris_list
+
     # TODO: T130501878 BE only support StageStateInstance for now, replace this to all self.infra_config.instances[-1] code
     def get_stage_instance(
         self, stage: Optional["PrivateComputationBaseStageFlow"] = None
