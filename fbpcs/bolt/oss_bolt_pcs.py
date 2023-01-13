@@ -214,9 +214,17 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
             # the following log is used by log_analyzer
             self.logger.info(f"[{instance_id}] {pc_instance}")
 
+        issuer_certificate = None
+        server_hostnames = None
+        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+            issuer_certificate = pc_instance.infra_config.ca_certificate
+            server_hostnames = pc_instance.server_uris
+
         state = BoltState(
             pc_instance_status=pc_instance.infra_config.status,
             server_ips=pc_instance.server_ips,
+            issuer_certificate=issuer_certificate,
+            server_hostnames=server_hostnames,
         )
         return state
 

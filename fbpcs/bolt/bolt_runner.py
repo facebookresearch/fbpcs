@@ -13,7 +13,7 @@ from typing import Generic, List, Optional, Tuple, Type, TypeVar
 
 from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 
-from fbpcs.bolt.bolt_client import BoltClient
+from fbpcs.bolt.bolt_client import BoltClient, BoltState
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
 from fbpcs.bolt.bolt_job_summary import BoltJobSummary, BoltMetric, BoltMetricType
 from fbpcs.bolt.bolt_summary import BoltSummary
@@ -50,6 +50,7 @@ from fbpcs.utils.logger_adapter import LoggerAdapter
 T = TypeVar("T", bound=BoltCreateInstanceArgs)
 U = TypeVar("U", bound=BoltCreateInstanceArgs)
 TEST_SERVER_HOSTNAMES = [f"node0.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"]
+_IS_DYNAMIC_TLS_ENABLED = False
 
 
 class BoltRunner(Generic[T, U]):
@@ -404,10 +405,9 @@ class BoltRunner(Generic[T, U]):
             state = await self.publisher_client.update_instance(instance_id)
             status = state.pc_instance_status
             if status is stage.started_status:
-                # TODO: T136677371 replace TLS test values (CA, hostnames) with dynamically generated data
-                # The certificate returned below does not provide any additional security and
-                # is being used for intermediate testing purposes only.
-                return state.server_ips, SAMPLE_CA_CERTIFICATE, TEST_SERVER_HOSTNAMES
+                ca_certificate, server_hostnames = self._get_tls_config(state)
+
+                return state.server_ips, ca_certificate, server_hostnames
             if status in [stage.failed_status, stage.completed_status]:
                 # fast-fail on completed stage
                 raise StageFailedException(
@@ -420,6 +420,26 @@ class BoltRunner(Generic[T, U]):
         raise StageTimeoutException(
             f"Poll {instance_id} status timed out after {timeout}s expecting status {stage.started_status}."
         )
+
+    def _get_tls_config(
+        self,
+        state: BoltState,
+    ) -> Tuple[Optional[str], Optional[List[str]]]:
+        """Gets the TLS data from the Publisher state, if dynamic TLS enabled, otherwise data used for TLS testing.
+
+        Args:
+            - state: the Publisher state
+
+        Returns:
+            A tuple representing the Publisher's TLS configuration, in the format: (ca_certificate, server_hostnames)
+        """
+        if not _IS_DYNAMIC_TLS_ENABLED:
+            # TODO: T136500624 remove option to disable dynamic TLS, and remove static/test TLS config values from codebase, once dynamic TLS is tested e2e
+            # The certificate returned below does not provide any additional security and
+            # is being used for intermediate testing purposes only.
+            return SAMPLE_CA_CERTIFICATE, TEST_SERVER_HOSTNAMES
+
+        return state.issuer_certificate, state.server_hostnames
 
     @bolt_checkpoint(dump_params=True, include=["stage"])
     async def wait_stage_complete(

@@ -32,6 +32,8 @@ T = TypeVar("T", bound=BoltCreateInstanceArgs)
 class BoltState:
     pc_instance_status: PrivateComputationInstanceStatus
     server_ips: Optional[List[str]] = None
+    issuer_certificate: Optional[str] = None
+    server_hostnames: Optional[List[str]] = None
 
 
 class BoltClient(ABC, Generic[T]):
