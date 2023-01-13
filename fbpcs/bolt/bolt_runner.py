@@ -9,7 +9,7 @@
 import asyncio
 import logging
 from time import time
-from typing import Generic, List, Optional, Type, TypeVar
+from typing import Generic, List, Optional, Tuple, Type, TypeVar
 
 from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 
@@ -32,6 +32,10 @@ from fbpcs.bolt.exceptions import (
     WaitValidStatusTimeout,
 )
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSCreateInstanceArgs
+from fbpcs.infra.certificate.sample_tls_certificates import (
+    SAMPLE_CA_CERTIFICATE,
+    SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
+)
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -45,6 +49,7 @@ from fbpcs.utils.logger_adapter import LoggerAdapter
 
 T = TypeVar("T", bound=BoltCreateInstanceArgs)
 U = TypeVar("U", bound=BoltCreateInstanceArgs)
+TEST_SERVER_HOSTNAMES = [f"node0.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"]
 
 
 class BoltRunner(Generic[T, U]):
@@ -270,8 +275,14 @@ class BoltRunner(Generic[T, U]):
 
         if await self.partner_client.should_invoke_stage(partner_id, stage):
             server_ips = None
+            ca_certificate = None
+            server_hostnames = None
             if stage.is_joint_stage:
-                server_ips = await self.get_server_ips_after_start(
+                (
+                    server_ips,
+                    ca_certificate,
+                    server_hostnames,
+                ) = await self._get_publisher_state(
                     instance_id=publisher_id,
                     stage=stage,
                     timeout=stage.timeout,
@@ -292,7 +303,11 @@ class BoltRunner(Generic[T, U]):
             partner_time = time()
             logger.info(f"Partner {partner_id} starting stage {stage.name}.")
             await self.partner_client.run_stage(
-                instance_id=partner_id, stage=stage, server_ips=server_ips
+                instance_id=partner_id,
+                stage=stage,
+                server_ips=server_ips,
+                ca_certificate=ca_certificate,
+                server_hostnames=server_hostnames,
             )
             bolt_metrics.append(
                 BoltMetric(
@@ -325,9 +340,63 @@ class BoltRunner(Generic[T, U]):
         timeout: int,
         poll_interval: int,
     ) -> Optional[List[str]]:
+        """Gets state from the Publisher for coordination by the Partner side.
+
+        NOTE: This method should be deprecated, the public interface removed in favor of _get_publisher_state().
+
+        Throws an IncompatibleStageError exception if stages are not
+        compatible, e.g. partner is CREATED, publisher is PID_PREPARE_COMPLETED
+
+        Args:
+            - instance_id: the study instance identifier
+            - stage: the current stage
+            - timeout: the request timeout, in seconds
+            - poll_interval: the polling interval, in seconds
+
+        Returns:
+            A tuple representing the Publisher state, in the format: (server_ips, ca_certificate, server_hostnames)
+        """
+        (
+            server_ips,
+            ca_certificate,
+            server_hostnames,
+        ) = await self._get_publisher_state(
+            instance_id=instance_id,
+            stage=stage,
+            timeout=stage.timeout,
+            poll_interval=poll_interval,
+        )
+        return server_ips
+
+    @bolt_checkpoint(
+        dump_params=True,
+        include=["stage"],
+        dump_return_val=True,
+    )
+    async def _get_publisher_state(
+        self,
+        instance_id: str,
+        stage: PrivateComputationBaseStageFlow,
+        timeout: int,
+        poll_interval: int,
+    ) -> Tuple[Optional[List[str]], Optional[str], Optional[List[str]]]:
+        """Gets state from the Publisher for coordination by the Partner side.
+
+        Throws an IncompatibleStageError exception if stages are not
+        compatible, e.g. partner is CREATED, publisher is PID_PREPARE_COMPLETED
+
+        Args:
+            - instance_id: the study instance identifier
+            - stage: the current stage
+            - timeout: the request timeout, in seconds
+            - poll_interval: the polling interval, in seconds
+
+        Returns:
+            A tuple representing the Publisher state, in the format: (server_ips, ca_certificate, server_hostnames)
+        """
         # only joint stage need to get server ips
         if not stage.is_joint_stage:
-            return None
+            return None, None, None
 
         # Waits until stage has started status then updates stage and returns server ips
         start_time = time()
@@ -335,7 +404,10 @@ class BoltRunner(Generic[T, U]):
             state = await self.publisher_client.update_instance(instance_id)
             status = state.pc_instance_status
             if status is stage.started_status:
-                return state.server_ips
+                # TODO: T136677371 replace TLS test values (CA, hostnames) with dynamically generated data
+                # The certificate returned below does not provide any additional security and
+                # is being used for intermediate testing purposes only.
+                return state.server_ips, SAMPLE_CA_CERTIFICATE, TEST_SERVER_HOSTNAMES
             if status in [stage.failed_status, stage.completed_status]:
                 # fast-fail on completed stage
                 raise StageFailedException(
