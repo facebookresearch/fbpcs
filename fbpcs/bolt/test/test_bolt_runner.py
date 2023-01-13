@@ -14,6 +14,10 @@ from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
 from fbpcs.bolt.exceptions import IncompatibleStageError, StageFailedException
+from fbpcs.infra.certificate.sample_tls_certificates import (
+    SAMPLE_CA_CERTIFICATE,
+    SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
+)
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -41,6 +45,10 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         )
         self.test_runner.job_is_finished = mock.AsyncMock(return_value=False)
         self.test_runner.wait_valid_publisher_status = mock.AsyncMock()
+        self.default_ca_certificate = SAMPLE_CA_CERTIFICATE
+        self.default_server_hostnames = [
+            f"node0.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"
+        ]
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
@@ -55,6 +63,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         mock_partner_args,
         mock_sleep,
     ) -> None:
+        expected_ca_certificate = self.default_ca_certificate
+        expected_server_hostnames = self.default_server_hostnames
         mock_get_stage_flow.return_value = DummyJointStageFlow
         test_publisher_id = "test_pub_id"
         test_partner_id = "test_part_id"
@@ -86,6 +96,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             instance_id=test_partner_id,
             stage=DummyJointStageFlow.JOINT_STAGE,
             server_ips=test_server_ips,
+            ca_certificate=expected_ca_certificate,
+            server_hostnames=expected_server_hostnames,
         )
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
@@ -127,6 +139,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             instance_id="test_part_id",
             stage=DummyNonJointStageFlow.NON_JOINT_STAGE,
             server_ips=None,
+            ca_certificate=None,
+            server_hostnames=None,
         )
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
@@ -188,8 +202,10 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         # test that server ips are gotten when a joint stage is retried with STARTED status
         # specifically, publisher status STARTED and partner status FAILED
         server_ips = ["1.1.1.1"]
-        self.test_runner.get_server_ips_after_start = mock.AsyncMock(
-            return_value=server_ips
+        ca_certificate = None
+        server_hostnames = None
+        self.test_runner._get_publisher_state = mock.AsyncMock(
+            return_value=(server_ips, ca_certificate, server_hostnames)
         )
         self.test_runner.publisher_client.update_instance = mock.AsyncMock(
             return_value=BoltState(DummyJointStageFlow.JOINT_STAGE.started_status)
@@ -209,6 +225,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             instance_id="partner_id",
             stage=DummyJointStageFlow.JOINT_STAGE,
             server_ips=server_ips,
+            ca_certificate=ca_certificate,
+            server_hostnames=server_hostnames,
         )
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")

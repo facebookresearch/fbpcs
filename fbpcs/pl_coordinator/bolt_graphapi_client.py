@@ -138,7 +138,18 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         instance_id: str,
         stage: Optional[PrivateComputationBaseStageFlow] = None,
         server_ips: Optional[List[str]] = None,
+        ca_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> None:
+        """Runs a stage for the specified study instance.
+
+        Args:
+            - instance_id: The study instance identifier
+            - stage: The stage to run, defaults to next stage if not specified.
+            - server_ips: ignored, Partner-side only argument that is not supported by Graph API
+            - ca_certificate: ignored, Partner-side only argument that is not supported by Graph API
+            - server_hostnames: ignored, Partner-side only argument that is not supported by Graph API
+        """
         params = self.params.copy()
         params["operation"] = "NEXT"
         r = requests.post(f"{self.graphapi_url}/{instance_id}", params=params)

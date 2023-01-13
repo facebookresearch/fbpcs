@@ -61,6 +61,8 @@ class BoltClient(ABC, Generic[T]):
         instance_id: str,
         stage: Optional[PrivateComputationBaseStageFlow] = None,
         server_ips: Optional[List[str]] = None,
+        ca_certificate: Optional[str] = None,
+        server_hostnames: Optional[List[str]] = None,
     ) -> None:
         pass
 

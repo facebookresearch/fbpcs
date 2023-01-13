@@ -322,3 +322,68 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
                     "instance_id", stage
                 )
                 self.assertEqual(expected_result, actual_result)
+
+    @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService"
+    )
+    async def test_run_stage_with_stage(self, MockPrivateComputationService) -> None:
+        # Arrange
+        expected_instance_id = self.test_instance_id
+        expected_stage = PrivateComputationStageFlow.ID_MATCH
+        expected_server_ips = ["127.0.0.1", "127.0.0.2"]
+        expected_ca_certificate = "test_cert"
+        expected_server_hostnames = ["node0.test", "node1.test"]
+
+        pl_instance = mock.MagicMock()
+        mock_pcs = MockPrivateComputationService()
+        mock_pcs.run_stage_async = mock.AsyncMock(return_value=pl_instance)
+        client = BoltPCSClient(mock_pcs, None)
+
+        # Act
+        await client.run_stage(
+            expected_instance_id,
+            stage=expected_stage,
+            server_ips=expected_server_ips,
+            ca_certificate=expected_ca_certificate,
+            server_hostnames=expected_server_hostnames,
+        )
+
+        # Assert
+        mock_pcs.run_stage_async.assert_awaited_once_with(
+            instance_id=expected_instance_id,
+            stage=expected_stage,
+            server_ips=expected_server_ips,
+            ca_certificate=expected_ca_certificate,
+            server_hostnames=expected_server_hostnames,
+        )
+
+    @mock.patch(
+        "fbpcs.private_computation.service.private_computation.PrivateComputationService"
+    )
+    async def test_run_stage_without_stage(self, MockPrivateComputationService) -> None:
+        # Arrange
+        expected_instance_id = self.test_instance_id
+        expected_server_ips = ["127.0.0.1", "127.0.0.2"]
+        expected_ca_certificate = "test_cert"
+        expected_server_hostnames = ["node0.test", "node1.test"]
+
+        pl_instance = mock.MagicMock()
+        mock_pcs = MockPrivateComputationService()
+        mock_pcs.run_next_async = mock.AsyncMock(return_value=pl_instance)
+        client = BoltPCSClient(mock_pcs, None)
+
+        # Act
+        await client.run_stage(
+            expected_instance_id,
+            server_ips=expected_server_ips,
+            ca_certificate=expected_ca_certificate,
+            server_hostnames=expected_server_hostnames,
+        )
+
+        # Assert
+        mock_pcs.run_next_async.assert_awaited_once_with(
+            instance_id=expected_instance_id,
+            server_ips=expected_server_ips,
+            ca_certificate=expected_ca_certificate,
+            server_hostnames=expected_server_hostnames,
+        )
