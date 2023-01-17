@@ -6,25 +6,15 @@
 
 # pyre-strict
 
-import asyncio
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from fbpcp.entity.certificate_request import CertificateRequest
-
-from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcp.error.pcp import PcpError
 from fbpcp.service.container import ContainerService
 from fbpcp.service.onedocker import OneDockerService
-from fbpcp.util.typing import checked_cast
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import (
-    MPCInstance,
-    MPCInstanceStatus,
-    MPCParty,
-)
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
 from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
     MPCInstanceRepository,
@@ -109,57 +99,6 @@ class MPCService(RunBinaryBaseService):
     ]
     """
 
-    def create_instance(
-        self,
-        instance_id: str,
-        game_name: str,
-        mpc_party: MPCParty,
-        num_workers: int,
-        server_ips: Optional[List[str]] = None,
-        game_args: Optional[List[Dict[str, Any]]] = None,
-        server_uris: Optional[List[str]] = None,
-    ) -> MPCInstance:
-        self.logger.info(f"Creating MPC instance: {instance_id}")
-
-        instance = MPCInstance(
-            instance_id,
-            game_name,
-            mpc_party,
-            num_workers,
-            server_ips,
-            [],
-            MPCInstanceStatus.CREATED,
-            game_args,
-            server_uris,
-        )
-
-        self.instance_repository.create(instance)
-        return instance
-
-    def start_instance(
-        self,
-        instance_id: str,
-        output_files: Optional[List[str]] = None,
-        server_ips: Optional[List[str]] = None,
-        timeout: Optional[int] = None,
-        version: str = DEFAULT_BINARY_VERSION,
-        env_vars: Optional[Dict[str, str]] = None,
-        certificate_request: Optional[CertificateRequest] = None,
-        wait_for_containers_to_start_up: bool = True,
-    ) -> MPCInstance:
-        return asyncio.run(
-            self.start_instance_async(
-                instance_id,
-                output_files,
-                server_ips,
-                timeout,
-                version,
-                env_vars,
-                certificate_request,
-                wait_for_containers_to_start_up,
-            )
-        )
-
     def convert_cmd_args_list(
         self,
         game_name: str,
@@ -203,187 +142,6 @@ class MPCService(RunBinaryBaseService):
             raise ValueError("Can't get binary_name from game_args")
 
         return (binary_name, cmd_args_list)
-
-    async def start_instance_async(
-        self,
-        instance_id: str,
-        output_files: Optional[List[str]] = None,
-        server_ips: Optional[List[str]] = None,
-        timeout: Optional[int] = None,
-        version: str = DEFAULT_BINARY_VERSION,
-        env_vars: Optional[Dict[str, str]] = None,
-        certificate_request: Optional[CertificateRequest] = None,
-        wait_for_containers_to_start_up: bool = True,
-    ) -> MPCInstance:
-        """To run a distributed MPC game
-        Keyword arguments:
-        instance_id -- unique id to identify the MPC instance
-        """
-        instance = self.instance_repository.read(instance_id)
-        self.logger.info(f"Starting MPC instance: {instance_id}")
-
-        existing_containers = instance.containers
-        game_args = instance.game_args
-        if game_args is None or len(game_args) != instance.num_workers:
-            raise ValueError(
-                "The number of containers is not consistent with the number of game argument dictionary."
-            )
-        if server_ips is not None and len(server_ips) != instance.num_workers:
-            raise ValueError(
-                "The number of containers is not consistent with number of ip addresses."
-            )
-        binary_name, cmd_args_list = self.convert_cmd_args_list(
-            game_name=instance.game_name,
-            game_args=game_args,
-            mpc_party=instance.mpc_party,
-            server_ips=server_ips,
-        )
-        pending_containers = await self.start_containers(
-            cmd_args_list=cmd_args_list,
-            onedocker_svc=self.onedocker_svc,
-            binary_version=version,
-            binary_name=binary_name,
-            timeout=timeout,
-            env_vars=env_vars,
-            wait_for_containers_to_start_up=wait_for_containers_to_start_up,
-            existing_containers=existing_containers,
-            certificate_request=certificate_request,
-        )
-        if pending_containers:
-            instance.containers = pending_containers
-
-        if len(instance.containers) != instance.num_workers:
-            self.logger.warning(
-                f"Instance {instance_id} has {len(instance.containers)} containers spun up, but expecting {instance.num_workers} containers!"
-            )
-
-        if wait_for_containers_to_start_up:
-            if instance.mpc_party is MPCParty.SERVER:
-                ip_addresses = [
-                    checked_cast(str, instance.ip_address)
-                    for instance in instance.containers
-                ]
-                instance.server_ips = ip_addresses
-
-            instance.status = MPCInstanceStatus.STARTED
-        else:
-            instance.status = MPCInstanceStatus.CREATED
-
-        self.instance_repository.update(instance)
-
-        return instance
-
-    def stop_instance(self, instance_id: str) -> MPCInstance:
-        instance = self.instance_repository.read(instance_id)
-        container_ids = [instance.instance_id for instance in instance.containers]
-        if container_ids:
-            errors = self.onedocker_svc.stop_containers(container_ids)
-            error_msg = list(filter(lambda _: _[1], zip(container_ids, errors)))
-
-            if error_msg:
-                self.logger.error(
-                    f"We encountered errors when stopping containers: {error_msg}"
-                )
-
-        instance.status = MPCInstanceStatus.CANCELED
-        self.instance_repository.update(instance)
-        self.logger.info(f"MPC instance {instance_id} has been successfully canceled.")
-
-        return instance
-
-    def get_instance(self, instance_id: str) -> MPCInstance:
-        self.logger.info(f"Getting MPC instance: {instance_id}")
-        return self.instance_repository.read(instance_id)
-
-    def update_instance(self, instance_id: str) -> MPCInstance:
-        instance = self.instance_repository.read(instance_id)
-
-        self.logger.info(f"Updating MPC instance: {instance_id}")
-
-        if instance.status in [
-            MPCInstanceStatus.COMPLETED,
-            MPCInstanceStatus.FAILED,
-            MPCInstanceStatus.CANCELED,
-        ]:
-            return instance
-
-        # skip if no containers registered under instance yet
-        if instance.containers:
-            instance.containers = self._update_container_instances(instance.containers)
-
-            if len(instance.containers) != instance.num_workers:
-                raise PcpError(
-                    f"Instance {instance_id} has {len(instance.containers)} containers after update, but expecting {instance.num_workers} containers!"
-                )
-
-            instance.status = self._get_instance_status(instance)
-            if (
-                instance.status is MPCInstanceStatus.STARTED
-                and instance.mpc_party is MPCParty.SERVER
-            ):
-                ip_addresses = [
-                    checked_cast(str, c.ip_address) for c in instance.containers
-                ]
-                instance.server_ips = ip_addresses
-
-            self.instance_repository.update(instance)
-
-        return instance
-
-    def _update_container_instances(
-        self, containers: List[ContainerInstance]
-    ) -> List[ContainerInstance]:
-        ids = [container.instance_id for container in containers]
-        return list(
-            filter(
-                None,
-                map(
-                    self._get_updated_container,
-                    # TODO APIs of OneDocker service should be called here
-                    self.container_svc.get_instances(ids),
-                    containers,
-                ),
-            )
-        )
-
-    def _get_updated_container(
-        self,
-        queried_instance: Optional[ContainerInstance],
-        existing_instance: ContainerInstance,
-    ) -> Optional[ContainerInstance]:
-        # 1. If ECS returns an instance, return the instance to callers
-        # 2. If ECS could not find an instance and the status of existing instance is not stopped, return None to callers
-        # 3. If ECS cound not find an instance and the status of existing instance is stopped, return the existing instance to callers.
-        if queried_instance:
-            return queried_instance
-        elif existing_instance.status not in [
-            ContainerInstanceStatus.COMPLETED,
-            ContainerInstanceStatus.FAILED,
-        ]:
-            self.logger.error(
-                f"The unstopped container instance {existing_instance.instance_id} is missing from Cloud. None is returned to callers."
-            )
-            return queried_instance
-        else:
-            self.logger.info(
-                f"The stopped container instance {existing_instance.instance_id} is missing from Cloud. The existing container instance is returned."
-            )
-            return existing_instance
-
-    def _get_instance_status(self, instance: MPCInstance) -> MPCInstanceStatus:
-        if instance.status is MPCInstanceStatus.CANCELED:
-            return instance.status
-        status = MPCInstanceStatus.COMPLETED
-
-        for container in instance.containers:
-            if container.status == ContainerInstanceStatus.FAILED:
-                return MPCInstanceStatus.FAILED
-            if container.status == ContainerInstanceStatus.UNKNOWN:
-                return MPCInstanceStatus.UNKNOWN
-            if container.status == ContainerInstanceStatus.STARTED:
-                status = MPCInstanceStatus.STARTED
-
-        return status
 
 
 def map_private_computation_role_to_mpc_party(

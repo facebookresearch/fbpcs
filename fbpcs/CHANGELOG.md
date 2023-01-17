@@ -14,6 +14,9 @@ Types of changes
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased - 2.6.0] - put release date here
+### Removed
+* Removed deprecated MPCService APIs after MPCInstance usaged been moved to StageStateInstance. (create/start/stop/get/update_instance)
+* Removed `get_mpc` from private_computation_cli endpoint
 
 ## [2.5.0] - 2022-10-26
 ### Changed
