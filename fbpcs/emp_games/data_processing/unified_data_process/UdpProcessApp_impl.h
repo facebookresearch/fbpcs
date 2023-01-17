@@ -37,7 +37,10 @@ UdpProcessApp<schedulerId>::run() {
       metaData.size(),
       indexes.size());
   auto shares = udpProcessGame->playDataProcessor(
-      metaData, indexes, metaData.size(), sizeOfRow_);
+      metaData,
+      indexes,
+      numberOfRows_ - metaData.size() + numberOfIntersection_,
+      sizeOfRow_);
   costEst_->addCheckPoint("DataProcessor done");
   auto publisherShares = std::get<0>(shares);
   auto partnerShares = std::get<1>(shares);
@@ -92,8 +95,12 @@ template <int schedulerId>
 std::tuple<std::vector<int32_t>, std::vector<std::vector<unsigned char>>>
 UdpProcessApp<schedulerId>::dataGeneration() {
   std::vector<int32_t> unionMap(numberOfRows_, -1);
+  uint32_t unmatchedCount = numberOfRows_ - numberOfIntersection_;
+  uint32_t p0UmatchedCount = unmatchedCount / 2 + unmatchedCount % 2;
+  uint32_t p1UmatchedCount = unmatchedCount / 2;
+
   std::vector<std::vector<unsigned char>> metaData(
-      (numberOfRows_ - numberOfIntersection_) / 2 + numberOfIntersection_,
+      numberOfIntersection_ + (party_ == 0 ? p0UmatchedCount : p1UmatchedCount),
       std::vector<unsigned char>(sizeOfRow_));
 
   for (size_t i = 0; i < numberOfIntersection_; ++i) {
@@ -102,12 +109,17 @@ UdpProcessApp<schedulerId>::dataGeneration() {
       metaData[i][j] = i % 256;
     }
   }
-  for (size_t i = numberOfIntersection_; i < unionMap.size(); ++i) {
-    // If an entry is non-match, it means that only one party has a match.
-    // We use -party_ to represents a non-match entry so that publisher has 0
-    // (match) but partner has -1 (non-match)
-    unionMap[i] = -party_;
+
+  for (size_t i = 0; i < unmatchedCount; ++i) {
+    // assign the rest of the indexes in alternating order so there are no more
+    // matches
+    if (i % 2 == party_) {
+      unionMap[numberOfIntersection_ + i] = numberOfIntersection_ + i / 2;
+    } else {
+      unionMap[numberOfIntersection_ + i] = -1;
+    }
   }
+
   std::random_device rd;
   std::mt19937_64 e(rd());
   std::uniform_int_distribution<uint8_t> dist(0, 255);
@@ -116,6 +128,7 @@ UdpProcessApp<schedulerId>::dataGeneration() {
       metaData[i][j] = dist(e);
     }
   }
+
   return {unionMap, metaData};
 }
 
