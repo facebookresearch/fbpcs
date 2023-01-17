@@ -20,21 +20,37 @@ class TestCertificateProviders(unittest.TestCase):
 
         # Act & Assert
         with self.assertRaises(ValueError):
-            StaticPrivateKeyReferenceProvider(resource_id="", region="region")
+            StaticPrivateKeyReferenceProvider(
+                resource_id="", region="region", install_path="a/path"
+            )
 
     def test_static_key_provider_missing_region(self) -> None:
         # Arrange
 
         # Act & Assert
         with self.assertRaises(ValueError):
-            StaticPrivateKeyReferenceProvider(resource_id="reference_id", region="")
+            StaticPrivateKeyReferenceProvider(
+                resource_id="reference_id", region="", install_path="a/path"
+            )
+
+    def test_static_key_provider_missing_install_path(self) -> None:
+        # Arrange
+
+        # Act & Assert
+        with self.assertRaises(ValueError):
+            StaticPrivateKeyReferenceProvider(
+                resource_id="reference_id", region="region", install_path=""
+            )
 
     def test_static_key_provider(self) -> None:
         # Arrange
         expected_resource_id = "123456"
         expected_region = "region"
+        expected_install_path = "a/path"
         provider = StaticPrivateKeyReferenceProvider(
-            resource_id=expected_resource_id, region=expected_region
+            resource_id=expected_resource_id,
+            region=expected_region,
+            install_path=expected_install_path,
         )
 
         # Act
@@ -44,6 +60,7 @@ class TestCertificateProviders(unittest.TestCase):
         self.assertIsNotNone(key_ref)
         self.assertEqual(expected_resource_id, key_ref.resource_id)
         self.assertEqual(expected_region, key_ref.region)
+        self.assertEqual(expected_install_path, key_ref.install_path)
 
     def test_null_provider(self) -> None:
         # Arrange

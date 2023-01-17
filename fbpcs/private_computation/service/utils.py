@@ -29,6 +29,7 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_PATH_ENV_VAR,
     SERVER_HOSTNAME_ENV_VAR,
     SERVER_IP_ADDRESS_ENV_VAR,
+    SERVER_PRIVATE_KEY_PATH_ENV_VAR,
     SERVER_PRIVATE_KEY_REF_ENV_VAR,
     SERVER_PRIVATE_KEY_REGION_ENV_VAR,
 )
@@ -245,6 +246,7 @@ def generate_env_vars_dict(
         if server_private_key is not None:
             env_vars[SERVER_PRIVATE_KEY_REF_ENV_VAR] = server_private_key.resource_id
             env_vars[SERVER_PRIVATE_KEY_REGION_ENV_VAR] = server_private_key.region
+            env_vars[SERVER_PRIVATE_KEY_PATH_ENV_VAR] = server_private_key.install_path
 
     if ca_certificate_provider is not None:
         ca_cert = ca_certificate_provider.get_certificate()
@@ -283,6 +285,7 @@ def generate_env_vars_dicts_list(
     ca_certificate_path: Optional[str] = None,
     server_ip_addresses: Optional[List[str]] = None,
     server_hostnames: Optional[List[str]] = None,
+    server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
 ) -> List[Dict[str, str]]:
 
     _validate_env_vars_length(
@@ -300,6 +303,7 @@ def generate_env_vars_dicts_list(
             ca_certificate_path=ca_certificate_path,
             server_ip_address=server_ip_addresses[i] if server_ip_addresses else None,
             server_hostname=server_hostnames[i] if server_hostnames else None,
+            server_private_key_ref_provider=server_private_key_ref_provider,
         )
         for i in range(num_containers)
     ]

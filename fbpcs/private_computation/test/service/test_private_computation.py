@@ -53,6 +53,7 @@ from fbpcs.private_computation.service.constants import (
     DEFAULT_LOG_COST_TO_S3,
     FBPCS_BUNDLE_ID,
     NUM_NEW_SHARDS_PER_FILE,
+    PRIVATE_KEY_PATH,
     SERVER_CERT_PATH,
 )
 from fbpcs.private_computation.service.errors import (
@@ -1033,6 +1034,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             expected_server_key_resource_id, server_private_key_ref.resource_id
         )
         self.assertEqual(expected_server_key_region, server_private_key_ref.region)
+        self.assertEqual(PRIVATE_KEY_PATH, server_private_key_ref.install_path)
 
         self.assertIsNotNone(ca_cert_provider)
         ca_cert = ca_cert_provider.get_certificate()

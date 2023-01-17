@@ -26,6 +26,7 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_PATH_ENV_VAR,
     SERVER_HOSTNAME_ENV_VAR,
     SERVER_IP_ADDRESS_ENV_VAR,
+    SERVER_PRIVATE_KEY_PATH_ENV_VAR,
     SERVER_PRIVATE_KEY_REF_ENV_VAR,
     SERVER_PRIVATE_KEY_REGION_ENV_VAR,
 )
@@ -44,6 +45,7 @@ class TestUtils(IsolatedAsyncioTestCase):
         self.server_domain = "study123.pci.facebook.com"
         self.server_key_ref_env_var_name = SERVER_PRIVATE_KEY_REF_ENV_VAR
         self.server_key_region_env_var_name = SERVER_PRIVATE_KEY_REGION_ENV_VAR
+        self.server_key_install_path_env_var_name = SERVER_PRIVATE_KEY_PATH_ENV_VAR
 
     def test_distribute_files_among_containers(self) -> None:
         test_size = random.randint(10, 20)
@@ -93,8 +95,9 @@ class TestUtils(IsolatedAsyncioTestCase):
         # Assert
         self.assertFalse("SERVER_HOSTNAME" in result)
         self.assertFalse("IP_ADDRESS" in result)
-        self.assertFalse(SERVER_PRIVATE_KEY_REF_ENV_VAR in result)
-        self.assertFalse(SERVER_PRIVATE_KEY_REGION_ENV_VAR in result)
+        self.assertFalse(self.server_key_ref_env_var_name in result)
+        self.assertFalse(self.server_key_region_env_var_name in result)
+        self.assertFalse(self.server_key_install_path_env_var_name in result)
 
     def test_generate_env_vars_server_hostname_no_ip(self) -> None:
         # Arrange
@@ -150,6 +153,10 @@ class TestUtils(IsolatedAsyncioTestCase):
         server_cert = "test_server_cert"
         ca_cert = "test_ca_certificate"
         cert_path = "test_path"
+        server_private_key_resource_id = "test_key1"
+        server_private_key_region = "test-region"
+        server_private_key_install_path = "test/path"
+
         expected_result = [
             {
                 ONEDOCKER_REPOSITORY_PATH: repository_path,
@@ -159,6 +166,9 @@ class TestUtils(IsolatedAsyncioTestCase):
                 CA_CERTIFICATE_PATH_ENV_VAR: cert_path,
                 SERVER_IP_ADDRESS_ENV_VAR: "test_ip_1",
                 SERVER_HOSTNAME_ENV_VAR: "test_hostname_1",
+                SERVER_PRIVATE_KEY_REF_ENV_VAR: server_private_key_resource_id,
+                SERVER_PRIVATE_KEY_REGION_ENV_VAR: server_private_key_region,
+                SERVER_PRIVATE_KEY_PATH_ENV_VAR: server_private_key_install_path,
             },
             {
                 ONEDOCKER_REPOSITORY_PATH: repository_path,
@@ -168,12 +178,20 @@ class TestUtils(IsolatedAsyncioTestCase):
                 CA_CERTIFICATE_PATH_ENV_VAR: cert_path,
                 SERVER_IP_ADDRESS_ENV_VAR: "test_ip_2",
                 SERVER_HOSTNAME_ENV_VAR: "test_hostname_2",
+                SERVER_PRIVATE_KEY_REF_ENV_VAR: server_private_key_resource_id,
+                SERVER_PRIVATE_KEY_REGION_ENV_VAR: server_private_key_region,
+                SERVER_PRIVATE_KEY_PATH_ENV_VAR: server_private_key_install_path,
             },
         ]
         server_certificate_provider = MagicMock()
         server_certificate_provider.get_certificate.return_value = server_cert
         ca_certificate_provider = MagicMock()
         ca_certificate_provider.get_certificate.return_value = ca_cert
+        server_key_ref_provider = StaticPrivateKeyReferenceProvider(
+            server_private_key_resource_id,
+            server_private_key_region,
+            server_private_key_install_path,
+        )
 
         # Act
         result = generate_env_vars_dicts_list(
@@ -185,6 +203,7 @@ class TestUtils(IsolatedAsyncioTestCase):
             ca_certificate_path="test_path",
             server_ip_addresses=server_ip_addresses,
             server_hostnames=server_hostnames,
+            server_private_key_ref_provider=server_key_ref_provider,
         )
 
         # Assert
@@ -199,6 +218,7 @@ class TestUtils(IsolatedAsyncioTestCase):
                 ca_certificate_path="test_path",
                 server_ip_addresses=server_ip_addresses_invalid,
                 server_hostnames=server_hostnames,
+                server_private_key_ref_provider=server_key_ref_provider,
             )
             self.assertIn(
                 "num_contaienrs 2; {SERVER_IP_ADDRESS_ENV_VAR} 1",
@@ -216,13 +236,17 @@ class TestUtils(IsolatedAsyncioTestCase):
         # Assert
         self.assertFalse(self.server_key_ref_env_var_name in result)
         self.assertFalse(self.server_key_region_env_var_name in result)
+        self.assertFalse(self.server_key_install_path_env_var_name in result)
 
     def test_generate_env_vars_server_key_ref(self) -> None:
         # Arrange
         expected_resource_id = "12345"
         expected_region = "test-region"
+        expected_install_path = "test/path"
         key_ref_provider = StaticPrivateKeyReferenceProvider(
-            resource_id=expected_resource_id, region=expected_region
+            resource_id=expected_resource_id,
+            region=expected_region,
+            install_path=expected_install_path,
         )
 
         # Act
@@ -233,3 +257,6 @@ class TestUtils(IsolatedAsyncioTestCase):
         # Assert
         self.assertEqual(expected_resource_id, result[self.server_key_ref_env_var_name])
         self.assertEqual(expected_region, result[self.server_key_region_env_var_name])
+        self.assertEqual(
+            expected_install_path, result[self.server_key_install_path_env_var_name]
+        )
