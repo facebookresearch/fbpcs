@@ -13,6 +13,7 @@ from fbpcp.service.storage import StorageService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -110,12 +111,14 @@ class SecureRandomShardStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the secure random shard stage service
         Args:
             pc_instance: the private computation instance to run secure random sharding with
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
             server_hostnames: ignored, TODO: T141115702 - configure hostname for TLS when supported by env vars
+            server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
             An updated version of pc_instance that stores an MPCInstance
@@ -166,6 +169,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
             server_certificate_path=server_certificate_path,
             ca_certificate_provider=ca_certificate_provider,
             ca_certificate_path=ca_certificate_path,
+            server_private_key_ref_provider=server_private_key_ref_provider,
         )
 
         container_instances = await self._mpc_service.start_containers(

@@ -9,6 +9,7 @@
 from typing import List, Optional
 
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -38,6 +39,7 @@ class DummyStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """
         Does nothing except return pc_instance back to caller

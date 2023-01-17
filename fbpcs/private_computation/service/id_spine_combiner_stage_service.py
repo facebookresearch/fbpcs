@@ -22,6 +22,7 @@ from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
@@ -85,6 +86,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation prepare data stage - spine combiner stage
 
@@ -96,6 +98,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             ca_certificate_path: ignored
             server_ips: ignored
             server_hostnames: ignored
+            server_private_key_ref_provider: ignored
 
         Returns:
             An updated version of pc_instance

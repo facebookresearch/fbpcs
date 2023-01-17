@@ -17,6 +17,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -60,6 +61,7 @@ class ShardStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation prepare data stage - shard stage
 
@@ -71,6 +73,7 @@ class ShardStageService(PrivateComputationStageService):
             ca_certificate_path: ignored
             server_ips: ignored
             server_hostnames: ignored
+            server_private_key_ref_provider: ignored
 
         Returns:
             An updated version of pc_instance

@@ -16,6 +16,7 @@ from fbpcs.common.service.trace_logging_service import (
     TraceLoggingService,
 )
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
@@ -80,6 +81,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """
         Updates the status to COMPLETED and returns the pc_instance

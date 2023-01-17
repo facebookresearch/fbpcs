@@ -15,6 +15,7 @@ from fbpcp.util.s3path import S3Path
 
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -51,6 +52,7 @@ class PIDMRStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """This function run mr workflow service
 
@@ -62,6 +64,7 @@ class PIDMRStageService(PrivateComputationStageService):
             ca_certificate_path: ignored
             server_ips: ignored
             server_hostnames: ignored
+            server_private_key_ref_provider: ignored
 
         Returns:
             An updated version of pc_instance

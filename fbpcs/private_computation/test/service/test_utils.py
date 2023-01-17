@@ -9,6 +9,11 @@ import random
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
+from fbpcs.infra.certificate.private_key import (
+    NullPrivateKeyReferenceProvider,
+    StaticPrivateKeyReferenceProvider,
+)
+
 from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -21,6 +26,8 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_PATH_ENV_VAR,
     SERVER_HOSTNAME_ENV_VAR,
     SERVER_IP_ADDRESS_ENV_VAR,
+    SERVER_PRIVATE_KEY_REF_ENV_VAR,
+    SERVER_PRIVATE_KEY_REGION_ENV_VAR,
 )
 
 from fbpcs.private_computation.service.utils import (
@@ -35,6 +42,8 @@ class TestUtils(IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.instance_id = "test_instance_123"
         self.server_domain = "study123.pci.facebook.com"
+        self.server_key_ref_env_var_name = SERVER_PRIVATE_KEY_REF_ENV_VAR
+        self.server_key_region_env_var_name = SERVER_PRIVATE_KEY_REGION_ENV_VAR
 
     def test_distribute_files_among_containers(self) -> None:
         test_size = random.randint(10, 20)
@@ -84,6 +93,8 @@ class TestUtils(IsolatedAsyncioTestCase):
         # Assert
         self.assertFalse("SERVER_HOSTNAME" in result)
         self.assertFalse("IP_ADDRESS" in result)
+        self.assertFalse(SERVER_PRIVATE_KEY_REF_ENV_VAR in result)
+        self.assertFalse(SERVER_PRIVATE_KEY_REGION_ENV_VAR in result)
 
     def test_generate_env_vars_server_hostname_no_ip(self) -> None:
         # Arrange
@@ -193,3 +204,32 @@ class TestUtils(IsolatedAsyncioTestCase):
                 "num_contaienrs 2; {SERVER_IP_ADDRESS_ENV_VAR} 1",
                 str(e.exception),
             )
+
+    def test_generate_env_vars_null_server_key_ref(self) -> None:
+        # Arrange
+
+        # Act
+        result = generate_env_vars_dict(
+            server_private_key_ref_provider=NullPrivateKeyReferenceProvider()
+        )
+
+        # Assert
+        self.assertFalse(self.server_key_ref_env_var_name in result)
+        self.assertFalse(self.server_key_region_env_var_name in result)
+
+    def test_generate_env_vars_server_key_ref(self) -> None:
+        # Arrange
+        expected_resource_id = "12345"
+        expected_region = "test-region"
+        key_ref_provider = StaticPrivateKeyReferenceProvider(
+            resource_id=expected_resource_id, region=expected_region
+        )
+
+        # Act
+        result = generate_env_vars_dict(
+            server_private_key_ref_provider=key_ref_provider
+        )
+
+        # Assert
+        self.assertEqual(expected_resource_id, result[self.server_key_ref_env_var_name])
+        self.assertEqual(expected_region, result[self.server_key_region_env_var_name])
