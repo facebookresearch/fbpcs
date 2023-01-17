@@ -16,9 +16,6 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
-from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
-    MPCInstanceRepository,
-)
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
@@ -34,25 +31,21 @@ class MPCService(RunBinaryBaseService):
     def __init__(
         self,
         container_svc: ContainerService,
-        instance_repository: MPCInstanceRepository,
         task_definition: str,
         mpc_game_svc: MPCGameService,
     ) -> None:
         """Constructor of MPCService
         Keyword arguments:
         container_svc -- service to spawn container instances
-        instance_repository -- repository to CRUD MPCInstance
         task_definition -- containers task definition
         mpc_game_svc -- service to generate package name and game arguments.
         """
-        if container_svc is None or instance_repository is None or mpc_game_svc is None:
+        if container_svc is None or mpc_game_svc is None:
             raise ValueError(
-                f"Dependency is missing. container_svc={container_svc}, mpc_game_svc={mpc_game_svc}, "
-                f"instance_repository={instance_repository}"
+                f"Dependency is missing. container_svc={container_svc}, mpc_game_svc={mpc_game_svc}"
             )
 
         self.container_svc = container_svc
-        self.instance_repository = instance_repository
         self.task_definition = task_definition
         self.mpc_game_svc: MPCGameService = mpc_game_svc
         self.logger: logging.Logger = logging.getLogger(__name__)

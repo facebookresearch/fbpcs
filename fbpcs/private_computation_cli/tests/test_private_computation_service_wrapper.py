@@ -25,9 +25,6 @@ from fbpcs.private_computation.service.mpc.repository.mpc_game_repository import
     MPCGameRepository,
 )
 
-from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
-    MPCInstanceRepository,
-)
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
@@ -88,7 +85,6 @@ class TestPrivateComputationServiceWrapper(TestCase):
                         },
                     },
                 },
-                "MPCInstanceRepository": None,
             }
         },
         "pid": {"dependency": {}},
@@ -112,12 +108,11 @@ class TestPrivateComputationServiceWrapper(TestCase):
             pid_pph_config=self.config.get("pid_post_processing_handlers", {}),
         )
 
-        self.assertEqual(mock_reflect_get_instance.call_count, 5)
+        self.assertEqual(mock_reflect_get_instance.call_count, 4)
         calls = [
             call(None, PrivateComputationInstanceRepository),
             call(None, ContainerService),
             call({"constructor": {"region": "__region__"}}, StorageService),
-            call(None, MPCInstanceRepository),
             call(
                 {"class": "__PrivateComputationGameRepositoryClass__"},
                 MPCGameRepository,

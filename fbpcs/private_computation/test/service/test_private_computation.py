@@ -121,9 +121,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         container_svc_patcher = patch("fbpcp.service.container_aws.AWSContainerService")
         storage_svc_patcher = patch("fbpcp.service.storage_s3.S3StorageService")
-        mpc_instance_repo_patcher = patch(
-            "fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository"
-        )
         private_computation_instance_repo_patcher = patch(
             "fbpcs.private_computation.repository.private_computation_instance_local.LocalPrivateComputationInstanceRepository"
         )
@@ -132,7 +129,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         )
         container_svc = container_svc_patcher.start()
         storage_svc = storage_svc_patcher.start()
-        mpc_instance_repository = mpc_instance_repo_patcher.start()
         private_computation_instance_repository = (
             private_computation_instance_repo_patcher.start()
         )
@@ -141,7 +137,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         for patcher in (
             container_svc_patcher,
             storage_svc_patcher,
-            mpc_instance_repo_patcher,
             private_computation_instance_repo_patcher,
             mpc_game_svc_patcher,
         ):
@@ -165,7 +160,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         self.mpc_service = MPCService(
             container_svc=container_svc,
-            instance_repository=mpc_instance_repository,
             task_definition="test_task_definition",
             mpc_game_svc=mpc_game_svc,
         )

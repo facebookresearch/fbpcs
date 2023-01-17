@@ -45,8 +45,3 @@ class PrivateComputationInfraConfigInfo(Enum):
         "fbpcs.private_computation.repository.private_computation_game.PrivateComputationGameRepository",
         set(),
     )
-
-    MPC_INSTANCE_REPO = PrivateComputationInfraConfigData(
-        "fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository",
-        {"base_dir"},
-    )

@@ -44,9 +44,5 @@ mpc:
       dependency:
         PrivateComputationGameRepository:
           class: fbpcs.private_computation.repository.private_computation_game.PrivateComputationGameRepository
-    MPCInstanceRepository:
-      class: fbpcs.common.repository.mpc_instance_local.LocalMPCInstanceRepository
-      constructor:
-        base_dir: TODO
 graphapi:
   access_token: TODO

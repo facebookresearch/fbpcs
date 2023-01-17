@@ -146,12 +146,6 @@ class PrivateComputationInfraConfig:
             },
         }
 
-        self._generate_dependency(
-            mpc,
-            "MPCInstanceRepository",
-            PrivateComputationInfraConfigInfo.MPC_INSTANCE_REPO,
-        )
-
         return mpc
 
     def _generate_dependency(
