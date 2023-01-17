@@ -15,6 +15,7 @@ from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstanceStatus
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import ONEDOCKER_REPOSITORY_PATH
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -28,6 +29,8 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_PATH_ENV_VAR,
     SERVER_HOSTNAME_ENV_VAR,
     SERVER_IP_ADDRESS_ENV_VAR,
+    SERVER_PRIVATE_KEY_REF_ENV_VAR,
+    SERVER_PRIVATE_KEY_REGION_ENV_VAR,
 )
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 
@@ -206,6 +209,7 @@ def generate_env_vars_dict(
     ca_certificate_path: Optional[str] = None,
     server_ip_address: Optional[str] = None,
     server_hostname: Optional[str] = None,
+    server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     **kwargs: Optional[str],
 ) -> Dict[str, str]:
     """Generate Env Vars for onedocker svc container spin up.
@@ -213,6 +217,7 @@ def generate_env_vars_dict(
     Generate env_vars dictionary to pass to container svc like ECS as environment {"var_name": var_value,} variable.
 
     Args:
+        server_private_key_ref_provider: Server Private Key reference provider to support TLS
         repository_path: package repository in OneDocker
         server_certificate_provider: Server Certificate Provider to support TLS, need to also specify server_certificate_path
         server_certificate_path: Server Certificate Path to support TLS, need to also specify server_certificate_provider
@@ -234,6 +239,12 @@ def generate_env_vars_dict(
         if server_cert and server_certificate_path:
             env_vars[SERVER_CERTIFICATE_ENV_VAR] = server_cert
             env_vars[SERVER_CERTIFICATE_PATH_ENV_VAR] = server_certificate_path
+
+    if server_private_key_ref_provider is not None:
+        server_private_key = server_private_key_ref_provider.get_key_ref()
+        if server_private_key is not None:
+            env_vars[SERVER_PRIVATE_KEY_REF_ENV_VAR] = server_private_key.resource_id
+            env_vars[SERVER_PRIVATE_KEY_REGION_ENV_VAR] = server_private_key.region
 
     if ca_certificate_provider is not None:
         ca_cert = ca_certificate_provider.get_certificate()

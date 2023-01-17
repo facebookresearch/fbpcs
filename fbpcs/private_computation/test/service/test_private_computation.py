@@ -32,6 +32,7 @@ from fbpcs.private_computation.entity.infra_config import (
     UnionedPCInstance,
 )
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
+from fbpcs.private_computation.entity.pce_config import PCEConfig
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
@@ -953,7 +954,12 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ca_cert_path,
             server_ips,
             server_hostnames,
+            server_private_key_ref_provider,
         ) = call_args
+
+        self.assertIsNotNone(server_private_key_ref_provider)
+        server_private_key_ref = server_private_key_ref_provider.get_key_ref()
+        self.assertIsNone(server_private_key_ref)
 
         self.assertIsNotNone(server_cert_provider)
         server_cert = server_cert_provider.get_certificate()
@@ -972,10 +978,17 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(server_hostnames)
         self.assertEqual(expected_hostnames, server_hostnames)
 
+    @mock.patch("fbpcs.private_computation.entity.pce_config.PCEConfig")
     def test_run_stage_publisher_tls(
         self,
+        MockPCEConfig,
     ) -> None:
         # Arrange
+        expected_server_key_resource_id = "ServerKeyId-1"
+        expected_server_key_region = "region"
+        pce_config = MockPCEConfig()
+        pce_config.region = expected_server_key_region
+
         stage = PrivateComputationStageFlow.COMPUTE
         mock_stage_svc = AsyncMock(spec=self._get_dummy_stage_svc())
         pl_instance = self.create_sample_instance(
@@ -983,6 +996,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             status=stage.previous_stage.completed_status,
             role=PrivateComputationRole.PUBLISHER,
             pcs_features={PCSFeature.PCF_TLS},
+            server_key_ref=expected_server_key_resource_id,
+            pce_config=pce_config,
         )
         self.private_computation_service.instance_repository.read = MagicMock(
             return_value=pl_instance
@@ -1004,11 +1019,20 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ca_cert_path,
             server_ips,
             server_hostnames,
+            server_private_key_ref_provider,
         ) = call_args
 
         self.assertIsNotNone(server_cert_provider)
         server_cert = server_cert_provider.get_certificate()
         self.assertEqual(pl_instance.infra_config.server_certificate, server_cert)
+
+        self.assertIsNotNone(server_private_key_ref_provider)
+        server_private_key_ref = server_private_key_ref_provider.get_key_ref()
+        self.assertIsNotNone(server_private_key_ref)
+        self.assertEqual(
+            expected_server_key_resource_id, server_private_key_ref.resource_id
+        )
+        self.assertEqual(expected_server_key_region, server_private_key_ref.region)
 
         self.assertIsNotNone(ca_cert_provider)
         ca_cert = ca_cert_provider.get_certificate()
@@ -1370,6 +1394,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         game_type: PrivateComputationGameType = PrivateComputationGameType.LIFT,
         status_updates: Optional[List[StatusUpdate]] = None,
         pcs_features: Optional[Set[PCSFeature]] = None,
+        server_key_ref: Optional[str] = None,
+        pce_config: Optional[PCEConfig] = None,
     ) -> PrivateComputationInstance:
         if not pcs_features:
             pcs_features = set()
@@ -1387,6 +1413,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             status_updates=status_updates or [],
             log_cost_bucket=self.log_cost_bucket,
             pcs_features=pcs_features,
+            server_key_ref=server_key_ref,
+            pce_config=pce_config,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.test_input_path,

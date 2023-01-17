@@ -11,6 +11,7 @@ from typing import Any, DefaultDict, Dict, List, Optional
 
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
@@ -74,6 +75,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation aggregate metrics stage
 
@@ -85,6 +87,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
             server_hostnames: only used by the partner role. These are hostname addresses of the publisher's containers.
+            server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
             An updated version of pc_instance that stores an MPCInstance
@@ -118,6 +121,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             ca_certificate_path=ca_certificate_path,
             server_ip_address=server_ips[0] if server_ips else None,
             server_hostname=server_hostnames[0] if server_hostnames else None,
+            server_private_key_ref_provider=server_private_key_ref_provider,
         )
 
         container_instances = await self._mpc_service.start_containers(

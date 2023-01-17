@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
+from fbpcs.infra.certificate.private_key import StaticPrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -37,6 +38,8 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_PATH_ENV_VAR,
     SERVER_HOSTNAME_ENV_VAR,
     SERVER_IP_ADDRESS_ENV_VAR,
+    SERVER_PRIVATE_KEY_REF_ENV_VAR,
+    SERVER_PRIVATE_KEY_REGION_ENV_VAR,
 )
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 
@@ -130,6 +133,8 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
 
         expected_server_certificate = "test_server_cert"
         expected_ca_certificate = "test_ca_cert"
+        expected_server_key_resource_id = "test_key"
+        expected_server_key_region = "test_region"
         expected_server_certificate_path = "/test/server_certificate_path"
         expected_ca_certificate_path = "/test/server_certificate_path"
 
@@ -142,6 +147,9 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             expected_ca_certificate_path,
             test_server_ips,
             test_server_hostnames,
+            StaticPrivateKeyReferenceProvider(
+                expected_server_key_resource_id, expected_server_key_region
+            ),
         )
 
         # asserts
@@ -157,6 +165,17 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
         self.assertTrue(SERVER_CERTIFICATE_ENV_VAR in call_env_args)
         self.assertEqual(
             expected_server_certificate, call_env_args[SERVER_CERTIFICATE_ENV_VAR]
+        )
+
+        self.assertTrue(SERVER_PRIVATE_KEY_REF_ENV_VAR in call_env_args)
+        self.assertEqual(
+            expected_server_key_resource_id,
+            call_env_args[SERVER_PRIVATE_KEY_REF_ENV_VAR],
+        )
+
+        self.assertTrue(SERVER_PRIVATE_KEY_REGION_ENV_VAR in call_env_args)
+        self.assertEqual(
+            expected_server_key_region, call_env_args[SERVER_PRIVATE_KEY_REGION_ENV_VAR]
         )
 
         self.assertTrue(CA_CERTIFICATE_ENV_VAR in call_env_args)

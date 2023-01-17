@@ -39,6 +39,11 @@ from fbpcs.infra.certificate.pc_instance_ca_certificate_provider import (
 from fbpcs.infra.certificate.pc_instance_server_certificate import (
     PCInstanceServerCertificateProvider,
 )
+from fbpcs.infra.certificate.private_key import (
+    NullPrivateKeyReferenceProvider,
+    PrivateKeyReferenceProvider,
+    StaticPrivateKeyReferenceProvider,
+)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.breakdown_key import BreakdownKey
@@ -647,6 +652,22 @@ class PrivateComputationService:
         else:
             return NullCertificateProvider()
 
+    def _get_server_private_key_ref_provider(
+        self, pc_instance: PrivateComputationInstance
+    ) -> PrivateKeyReferenceProvider:
+        if (
+            pc_instance.infra_config.role == PrivateComputationRole.PUBLISHER
+            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+            and pc_instance.infra_config.server_key_ref
+            and pc_instance.infra_config.pce_config
+        ):
+            return StaticPrivateKeyReferenceProvider(
+                resource_id=pc_instance.infra_config.server_key_ref,
+                region=pc_instance.infra_config.pce_config.region,
+            )
+        else:
+            return NullPrivateKeyReferenceProvider()
+
     def _get_ca_certificate_provider(
         self, pc_instance: PrivateComputationInstance, ca_certificate: Optional[str]
     ) -> CertificateProvider:
@@ -693,6 +714,9 @@ class PrivateComputationService:
             )
 
         server_certificate_provider = self._get_server_certificate_provider(pc_instance)
+        server_private_key_ref_provider = self._get_server_private_key_ref_provider(
+            pc_instance
+        )
         ca_certificate_provider = self._get_ca_certificate_provider(
             pc_instance, ca_certificate
         )
@@ -722,6 +746,7 @@ class PrivateComputationService:
                 CA_CERT_PATH if enable_tls else "",
                 server_ips,
                 server_hostnames if enable_tls else None,
+                server_private_key_ref_provider,
             )
         except Exception as e:
             self.logger.error(f"Caught exception when running {stage}\n{e}")

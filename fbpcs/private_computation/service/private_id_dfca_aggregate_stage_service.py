@@ -11,6 +11,7 @@ from typing import DefaultDict, List, Optional
 
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
@@ -67,6 +68,7 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation aggregate metrics stage
 
@@ -78,6 +80,7 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
             ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
             server_hostnames: ignored
+            server_private_key_ref_provider: ignored
 
         Returns:
             An updated version of pc_instance that stores an MPCInstance

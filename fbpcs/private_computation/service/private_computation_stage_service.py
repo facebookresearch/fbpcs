@@ -15,6 +15,7 @@ from fbpcp.service.storage import StorageService
 from fbpcs.common.service.metric_service import MetricService
 from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
@@ -63,6 +64,8 @@ class PrivateComputationStageService(abc.ABC):
         # TODO(T102471612): remove server_ips from run_async, move to subclass constructor instead
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        # TODO: T142417412 - refactor run_async interface to be more flexible
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         ...
 

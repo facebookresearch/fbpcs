@@ -15,6 +15,7 @@ from typing import Any, DefaultDict, Dict, List, Optional
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -89,6 +90,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the private computation PCF2.0 stage
 
@@ -100,6 +102,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
             server_hostnames: ignored
+            server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
             An updated version of pc_instance that stores an MPCInstance
@@ -150,6 +153,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             server_certificate_path=server_certificate_path,
             ca_certificate_provider=ca_certificate_provider,
             ca_certificate_path=ca_certificate_path,
+            server_private_key_ref_provider=server_private_key_ref_provider,
         )
         self.append_servers_to_env(env_vars, server_ips, server_hostnames)
 

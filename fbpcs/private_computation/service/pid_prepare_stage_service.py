@@ -18,6 +18,7 @@ from fbpcs.data_processing.service.pid_prepare_binary_service import (
     PIDPrepareBinaryService,
 )
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 
@@ -70,6 +71,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the PID prepare stage
         Args:
@@ -80,6 +82,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
             ca_certificate_path: ignored
             server_ips: No need in this stage.
             server_hostnames: ignored
+            server_private_key_ref_provider: ignored
         Returns:
             An updated version of pc_instance
         """

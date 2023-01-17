@@ -17,6 +17,7 @@ from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 
@@ -71,6 +72,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         ca_certificate_path: str,
         server_ips: Optional[List[str]] = None,
         server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
     ) -> PrivateComputationInstance:
         """Runs the PID run protocol stage
 
@@ -82,6 +84,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             ca_certificate_path: ignored
             server_ips: only used by partner to get server hostnames
             server_hostnames: ignored
+            server_private_key_ref_provider: ignored
         Returns:
             An updated version of pc_instance
         """
