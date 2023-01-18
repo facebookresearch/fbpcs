@@ -32,20 +32,15 @@ GAME_ARGS = [
 class TestMPCService(IsolatedAsyncioTestCase):
     def setUp(self):
         cspatcher = patch("fbpcp.service.container.ContainerService")
-        irpatcher = patch(
-            "fbpcs.private_computation.service.mpc.repository.mpc_instance.MPCInstanceRepository"
-        )
         gspatcher = patch(
             "fbpcs.private_computation.service.mpc.mpc_game.MPCGameService"
         )
         container_svc = cspatcher.start()
-        instance_repository = irpatcher.start()
         mpc_game_svc = gspatcher.start()
-        for patcher in (cspatcher, irpatcher, gspatcher):
+        for patcher in (cspatcher, gspatcher):
             self.addCleanup(patcher.stop)
         self.mpc_service = MPCService(
             container_svc,
-            instance_repository,
             "test_task_definition",
             mpc_game_svc,
         )

@@ -39,14 +39,10 @@ from fbpcs.private_computation.repository.private_computation_instance import (
     PrivateComputationInstanceRepository,
 )
 
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCInstance
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
 from fbpcs.private_computation.service.mpc.repository.mpc_game_repository import (
     MPCGameRepository,
-)
-from fbpcs.private_computation.service.mpc.repository.mpc_instance import (
-    MPCInstanceRepository,
 )
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
@@ -393,12 +389,6 @@ def _build_mpc_service(
     container_service: ContainerService,
     storage_service: StorageService,
 ) -> MPCService:
-
-    mpcinstance_repository_config = config["dependency"]["MPCInstanceRepository"]
-    repository_service = reflect.get_instance(
-        mpcinstance_repository_config, MPCInstanceRepository
-    )
-
     mpc_game_config = config["dependency"]["MPCGameService"]
     pc_game_repo_config = mpc_game_config["dependency"][
         "PrivateComputationGameRepository"
@@ -411,7 +401,6 @@ def _build_mpc_service(
 
     return MPCService(
         container_service,
-        repository_service,
         task_definition,
         mpc_game_svc,
     )
