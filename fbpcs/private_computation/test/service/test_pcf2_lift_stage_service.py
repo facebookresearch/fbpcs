@@ -37,6 +37,7 @@ from fbpcs.private_computation.service.constants import (
     SERVER_CERTIFICATE_PATH_ENV_VAR,
     SERVER_HOSTNAME_ENV_VAR,
     SERVER_IP_ADDRESS_ENV_VAR,
+    SERVER_PRIVATE_KEY_PATH_ENV_VAR,
     SERVER_PRIVATE_KEY_REF_ENV_VAR,
     SERVER_PRIVATE_KEY_REGION_ENV_VAR,
 )
@@ -140,6 +141,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
         expected_ca_certificate = "test_ca_cert"
         expected_server_key_resource_id = "test_key"
         expected_server_key_region = "test_region"
+        expected_server_key_install_path = "test/path"
         expected_server_certificate_path = "/test/server_certificate_path"
         expected_ca_certificate_path = "/test/server_certificate_path"
 
@@ -153,7 +155,9 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             test_server_ips,
             test_server_hostnames,
             StaticPrivateKeyReferenceProvider(
-                expected_server_key_resource_id, expected_server_key_region
+                expected_server_key_resource_id,
+                expected_server_key_region,
+                expected_server_key_install_path,
             ),
         )
 
@@ -181,6 +185,12 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
         self.assertTrue(SERVER_PRIVATE_KEY_REGION_ENV_VAR in call_env_args)
         self.assertEqual(
             expected_server_key_region, call_env_args[SERVER_PRIVATE_KEY_REGION_ENV_VAR]
+        )
+
+        self.assertTrue(SERVER_PRIVATE_KEY_PATH_ENV_VAR in call_env_args)
+        self.assertEqual(
+            expected_server_key_install_path,
+            call_env_args[SERVER_PRIVATE_KEY_PATH_ENV_VAR],
         )
 
         self.assertTrue(CA_CERTIFICATE_ENV_VAR in call_env_args)

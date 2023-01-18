@@ -81,6 +81,7 @@ from fbpcs.private_computation.service.constants import (
     DEFAULT_K_ANONYMITY_THRESHOLD_PL,
     DEFAULT_PADDING_SIZE,
     NUM_NEW_SHARDS_PER_FILE,
+    PRIVATE_KEY_PATH,
     SERVER_CERT_PATH,
 )
 from fbpcs.private_computation.service.errors import (
@@ -664,6 +665,7 @@ class PrivateComputationService:
             return StaticPrivateKeyReferenceProvider(
                 resource_id=pc_instance.infra_config.server_key_ref,
                 region=pc_instance.infra_config.pce_config.region,
+                install_path=PRIVATE_KEY_PATH,
             )
         else:
             return NullPrivateKeyReferenceProvider()

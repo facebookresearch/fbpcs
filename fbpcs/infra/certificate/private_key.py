@@ -21,6 +21,9 @@ class PrivateKeyReference:
     region: str
     """The region where the private key can be accessed"""
 
+    install_path: str
+    """The path where the key should be installed"""
+
 
 class PrivateKeyReferenceProvider(ABC):
     @abstractmethod
@@ -40,14 +43,17 @@ class NullPrivateKeyReferenceProvider(PrivateKeyReferenceProvider):
 class StaticPrivateKeyReferenceProvider(PrivateKeyReferenceProvider):
     """A private key reference provider that returns a static reference"""
 
-    def __init__(self, resource_id: str, region: str) -> None:
+    def __init__(self, resource_id: str, region: str, install_path: str) -> None:
         if not resource_id:
             raise ValueError("Must provide a `resource_id`")
 
         if not region:
             raise ValueError("Must provide a `region`")
 
-        self.reference = PrivateKeyReference(resource_id, region)
+        if not install_path:
+            raise ValueError("Must provide an `install_path`")
+
+        self.reference = PrivateKeyReference(resource_id, region, install_path)
 
     def get_key_ref(self) -> Optional[PrivateKeyReference]:
         """Returns a private key reference"""
