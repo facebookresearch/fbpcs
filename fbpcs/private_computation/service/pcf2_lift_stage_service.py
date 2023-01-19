@@ -162,17 +162,3 @@ class PCF2LiftStageService(PCF2BaseStageService):
             cmd_args_list.append(game_args)
 
         return cmd_args_list
-
-    def append_servers_to_env(
-        self,
-        env_vars: Dict[str, str],
-        server_ips: Optional[List[str]],
-        server_hostnames: Optional[List[str]],
-    ) -> None:
-        server_ip_address = server_ips[0] if server_ips else None
-        server_hostname = server_hostnames[0] if server_hostnames else None
-
-        if server_hostname is not None and server_ip_address is not None:
-            # only set if both present, since variables are used for mapping between these values
-            env_vars[SERVER_HOSTNAME_ENV_VAR] = server_hostname
-            env_vars[SERVER_IP_ADDRESS_ENV_VAR] = server_ip_address

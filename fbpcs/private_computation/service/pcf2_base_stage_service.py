@@ -18,6 +18,7 @@ from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -133,13 +134,19 @@ class PCF2BaseStageService(PrivateComputationStageService):
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
 
+        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
+        if enable_tls and pc_instance.current_stage.is_joint_stage:
+            if server_hostnames and len(server_hostnames) != len(game_args):
+                raise ValueError(
+                    f"TLS is enabled but there is a mismatch between the number of server_hostnames ({len(server_hostnames)}) and the number of containers ({len(game_args)}) to be spawned."
+                )
         _, cmd_args_list = self._mpc_service.convert_cmd_args_list(
             game_name=game_name,
             game_args=game_args,
             mpc_party=map_private_computation_role_to_mpc_party(
                 pc_instance.infra_config.role
             ),
-            server_ips=server_ips,
+            server_ips=server_hostnames if enable_tls else server_ips,
         )
         server_uris = get_server_uris(
             server_domain=pc_instance.infra_config.server_domain,
@@ -154,8 +161,9 @@ class PCF2BaseStageService(PrivateComputationStageService):
             ca_certificate_provider=ca_certificate_provider,
             ca_certificate_path=ca_certificate_path,
             server_private_key_ref_provider=server_private_key_ref_provider,
+            server_ip_address=server_ips[0] if server_ips else None,
+            server_hostname=server_hostnames[0] if server_hostnames else None,
         )
-        self.append_servers_to_env(env_vars, server_ips, server_hostnames)
 
         container_instances = await self._mpc_service.start_containers(
             cmd_args_list=cmd_args_list,
@@ -201,11 +209,3 @@ class PCF2BaseStageService(PrivateComputationStageService):
         ca_certificate_path: str,
     ) -> List[Dict[str, Any]]:
         ...
-
-    def append_servers_to_env(
-        self,
-        env_vars: Dict[str, str],
-        server_ips: Optional[List[str]],
-        server_hostnames: Optional[List[str]],
-    ) -> None:
-        pass
