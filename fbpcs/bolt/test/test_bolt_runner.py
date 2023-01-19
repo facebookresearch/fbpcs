@@ -63,8 +63,12 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         mock_partner_args,
         mock_sleep,
     ) -> None:
+        num_containers = 2
         expected_ca_certificate = self.default_ca_certificate
-        expected_server_hostnames = self.default_server_hostnames
+        expected_server_hostnames = [
+            f"node{i}.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"
+            for i in range(num_containers)
+        ]
         mock_get_stage_flow.return_value = DummyJointStageFlow
         test_publisher_id = "test_pub_id"
         test_partner_id = "test_part_id"
@@ -75,7 +79,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             return_value=test_partner_id
         )
         # testing that the correct server ips are used when a joint stage is run
-        test_server_ips = ["1.1.1.1"]
+        test_server_ips = [f"1.1.1.{i}" for i in range(num_containers)]
         mock_partner_run_stage = self._prepare_mock_client_functions(
             test_publisher_id,
             test_partner_id,

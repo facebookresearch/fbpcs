@@ -49,7 +49,6 @@ from fbpcs.utils.logger_adapter import LoggerAdapter
 
 T = TypeVar("T", bound=BoltCreateInstanceArgs)
 U = TypeVar("U", bound=BoltCreateInstanceArgs)
-TEST_SERVER_HOSTNAMES = [f"node0.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"]
 _IS_DYNAMIC_TLS_ENABLED = False
 
 
@@ -437,7 +436,12 @@ class BoltRunner(Generic[T, U]):
             # TODO: T136500624 remove option to disable dynamic TLS, and remove static/test TLS config values from codebase, once dynamic TLS is tested e2e
             # The certificate returned below does not provide any additional security and
             # is being used for intermediate testing purposes only.
-            return SAMPLE_CA_CERTIFICATE, TEST_SERVER_HOSTNAMES
+            num_containers = len(state.server_ips) if state.server_ips else 1
+            server_hostnames = [
+                f"node{i}.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"
+                for i in range(num_containers)
+            ]
+            return SAMPLE_CA_CERTIFICATE, server_hostnames
 
         return state.issuer_certificate, state.server_hostnames
 
