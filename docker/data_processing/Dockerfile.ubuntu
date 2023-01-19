@@ -25,7 +25,7 @@ COPY fbpcs/data_processing/load_testing_utils/ ./fbpcs/data_processing/load_test
 COPY fbpcs/data_processing/private_id_dfca_id_combiner/ ./fbpcs/data_processing/private_id_dfca_id_combiner
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
-RUN make && make install
+RUN make -j 16 && make install
 
 CMD ["/bin/sh"]
 

@@ -25,7 +25,7 @@ COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
-RUN make && make install
+RUN make -j 16 && make install
 
 CMD ["/bin/sh"]
 
