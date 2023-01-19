@@ -83,7 +83,7 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
             server_private_key_ref_provider: ignored
 
         Returns:
-            An updated version of pc_instance that stores an MPCInstance
+            An updated version of pc_instance that stores an StageStateInstance
         """
 
         binary_name = OneDockerBinaryNames.PRIVATE_ID_DFCA_AGGREGATOR.value
@@ -165,7 +165,7 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
         self,
         pc_instance: PrivateComputationInstance,
     ) -> PrivateComputationInstanceStatus:
-        """Updates the MPCInstances and gets latest PrivateComputationInstance status
+        """Gets latest PrivateComputationInstance status
 
         Arguments:
             private_computation_instance: The PC instance that is being updated

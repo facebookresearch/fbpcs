@@ -10,7 +10,7 @@ import random
 import string
 import unittest
 
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
+from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
@@ -29,18 +29,13 @@ from fbpcs.private_computation.repository.private_computation_instance_local imp
     LocalPrivateComputationInstanceRepository,
 )
 
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
-
 
 class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
     def setUp(self) -> None:
         instance_id = self._get_random_id()
         self.repo = LocalPrivateComputationInstanceRepository("./")
-        self.test_mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=instance_id,
-            game_name="conversion_lift",
-            mpc_party=MPCParty.SERVER,
-            num_workers=2,
+        self.test_instance = StageStateInstance(
+            instance_id=instance_id, stage_name="compute"
         )
 
     def test_read(self) -> None:
@@ -50,7 +45,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
-            instances=[self.test_mpc_instance],
+            instances=[self.test_instance],
             game_type=PrivateComputationGameType.LIFT,
             num_pid_containers=4,
             num_mpc_containers=4,
@@ -83,7 +78,7 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
             role=PrivateComputationRole.PUBLISHER,
             status=PrivateComputationInstanceStatus.CREATED,
             status_update_ts=1600000000,
-            instances=[self.test_mpc_instance],
+            instances=[self.test_instance],
             game_type=PrivateComputationGameType.LIFT,
             num_pid_containers=4,
             num_mpc_containers=4,
@@ -104,14 +99,13 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
         )
         # Create a new MPC instance to be added to instances
         self.repo.create(test_update_private_computation_instance)
-        test_mpc_instance_new = PCSMPCInstance.create_instance(
+        test_instance_new = StageStateInstance(
             instance_id=instance_id,
-            game_name="aggregation",
-            mpc_party=MPCParty.SERVER,
-            num_workers=1,
+            stage_name="aggregation",
         )
-        instances_new = [self.test_mpc_instance, test_mpc_instance_new]
+        instances_new = [self.test_instance, test_instance_new]
         # Update instances
+        # pyre-ignore
         test_update_private_computation_instance.infra_config.instances = instances_new
         self.repo.update(test_update_private_computation_instance)
         # Assert instances is updated
