@@ -7,8 +7,9 @@
 # pyre-strict
 
 from collections import defaultdict
+from typing import Optional, Set
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
@@ -18,6 +19,8 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
+
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -41,10 +44,13 @@ from fbpcs.private_computation.service.constants import (
     SERVER_PRIVATE_KEY_REF_ENV_VAR,
     SERVER_PRIVATE_KEY_REGION_ENV_VAR,
 )
+from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc import MPCService
-
 from fbpcs.private_computation.service.pcf2_lift_stage_service import (
     PCF2LiftStageService,
+)
+from fbpcs.private_computation.service.private_computation_service_data import (
+    PrivateComputationServiceData,
 )
 
 
@@ -116,22 +122,55 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             private_computation_instance.infra_config.instances[-1].stage_name,
         )
 
+    @patch.object(PCF2LiftStageService, "get_game_args")
+    async def test_convert_cmd_args_list_when_tls_enabled(
+        self, mock_get_game_args: MagicMock
+    ) -> None:
+        self.mock_mpc_svc.start_containers.return_value = [
+            ContainerInstance(
+                instance_id="test_container_id", status=ContainerInstanceStatus.STARTED
+            )
+        ]
+        private_computation_instance = self._create_pc_instance({PCSFeature.PCF_TLS})
+        num_containers = private_computation_instance.infra_config.num_mpc_containers
+        expected_game_args = mock_get_game_args.return_value = [
+            f"game_args_{i}" for i in range(num_containers)
+        ]
+        test_server_ips = [f"192.0.2.{i}" for i in range(num_containers)]
+        test_server_hostnames = [f"node{i}.test.com" for i in range(num_containers)]
+        self.mock_mpc_svc.convert_cmd_args_list.return_value = (
+            "private_lift/pcf2_lift",
+            ["cmd_1", "cmd_2"],
+        )
+
+        # act
+        await self.stage_svc.run_async(
+            private_computation_instance,
+            self._get_mock_certificate_provider("test_server_cert"),
+            self._get_mock_certificate_provider("test_ca_cert"),
+            "/test/server_certificate_path",
+            "/test/server_certificate_path",
+            test_server_ips,
+            test_server_hostnames,
+        )
+        # asserts
+        self.mock_mpc_svc.convert_cmd_args_list.assert_called_once_with(
+            game_name=PrivateComputationServiceData.PCF2_LIFT_STAGE_DATA.game_name,
+            game_args=expected_game_args,
+            mpc_party=MPCParty.CLIENT,
+            server_ips=test_server_hostnames,
+        )
+
     async def test_tls_env_vars(self) -> None:
         self.mock_mpc_svc.start_containers.return_value = [
             ContainerInstance(
                 instance_id="test_container_id", status=ContainerInstanceStatus.STARTED
             )
         ]
-
-        private_computation_instance = self._create_pc_instance()
-        test_server_ips = [
-            f"192.0.2.{i}"
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
-        ]
-        test_server_hostnames = [
-            f"node{i}.test.com"
-            for i in range(private_computation_instance.infra_config.num_mpc_containers)
-        ]
+        private_computation_instance = self._create_pc_instance({PCSFeature.PCF_TLS})
+        num_containers = private_computation_instance.infra_config.num_mpc_containers
+        test_server_ips = [f"192.0.2.{i}" for i in range(num_containers)]
+        test_server_hostnames = [f"node{i}.test.com" for i in range(num_containers)]
         self.mock_mpc_svc.convert_cmd_args_list.return_value = (
             "private_lift/pcf2_lift",
             ["cmd_1", "cmd_2"],
@@ -264,7 +303,9 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             ),
         )
 
-    def _create_pc_instance(self) -> PrivateComputationInstance:
+    def _create_pc_instance(
+        self, pcs_features: Optional[Set[PCSFeature]] = None
+    ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
@@ -278,6 +319,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             run_id=self.run_id,
             log_cost_bucket="test_log_cost_bucket",
+            pcs_features=pcs_features if pcs_features else set(),
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
