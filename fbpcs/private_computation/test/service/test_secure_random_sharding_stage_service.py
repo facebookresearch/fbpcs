@@ -8,6 +8,7 @@
 
 import json
 from collections import defaultdict
+from typing import Optional, Set
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
@@ -22,6 +23,7 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -38,6 +40,8 @@ from fbpcs.private_computation.service.constants import (
     NUM_NEW_SHARDS_PER_FILE,
     SERVER_CERTIFICATE_ENV_VAR,
     SERVER_CERTIFICATE_PATH_ENV_VAR,
+    SERVER_HOSTNAME_ENV_VAR,
+    SERVER_IP_ADDRESS_ENV_VAR,
     SERVER_PRIVATE_KEY_PATH_ENV_VAR,
     SERVER_PRIVATE_KEY_REF_ENV_VAR,
     SERVER_PRIVATE_KEY_REGION_ENV_VAR,
@@ -126,14 +130,13 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
         ]
         self.mock_mpc_svc.start_containers.return_value = containers
         private_computation_instance = self._create_pc_instance()
+        num_containers = private_computation_instance.infra_config.num_pid_containers
         binary_name = "data_processing/secure_random_sharder"
-        test_server_ips = [
-            f"192.0.2.{i}"
-            for i in range(private_computation_instance.infra_config.num_pid_containers)
-        ]
+        test_server_ips = [f"192.0.2.{i}" for i in range(num_containers)]
+        cmd_args_list = ["cmd_{i}" for i in range(num_containers)]
         self.mock_mpc_svc.convert_cmd_args_list.return_value = (
             binary_name,
-            ["cmd_1", "cmd_2"],
+            cmd_args_list,
         )
 
         # act
@@ -151,7 +154,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
 
             # asserts
             self.mock_mpc_svc.start_containers.assert_called_once_with(
-                cmd_args_list=["cmd_1", "cmd_2"],
+                cmd_args_list=cmd_args_list,
                 onedocker_svc=self.mock_mpc_svc.onedocker_svc,
                 binary_version="latest",
                 binary_name=binary_name,
@@ -159,6 +162,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
                 env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
                 wait_for_containers_to_start_up=True,
                 existing_containers=None,
+                env_vars_list=None,
             )
             self.assertEqual(
                 containers,
@@ -277,7 +281,9 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
                 instance_id="test_container_id", status=ContainerInstanceStatus.STARTED
             )
         ]
-        private_computation_instance = self._create_pc_instance()
+        private_computation_instance = self._create_pc_instance(
+            pcs_features={PCSFeature.PCF_TLS}
+        )
         binary_name = "data_processing/secure_random_sharder"
         test_server_ips = [
             f"192.0.2.{i}"
@@ -323,53 +329,68 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
             # asserts
             self.mock_mpc_svc.start_containers.assert_called_once()
             call_kwargs = self.mock_mpc_svc.start_containers.call_args[1]
-            call_env_args = call_kwargs["env_vars"]
+            call_env_args_list = call_kwargs["env_vars_list"]
 
-            self.assertTrue(call_env_args)
+            self.assertTrue(call_env_args_list)
+            for i, call_env_args in enumerate(call_env_args_list):
+                self.assertTrue("ONEDOCKER_REPOSITORY_PATH" in call_env_args)
+                self.assertEqual(
+                    "test_path/", call_env_args["ONEDOCKER_REPOSITORY_PATH"]
+                )
 
-            self.assertTrue("ONEDOCKER_REPOSITORY_PATH" in call_env_args)
-            self.assertEqual("test_path/", call_env_args["ONEDOCKER_REPOSITORY_PATH"])
+                self.assertTrue(SERVER_CERTIFICATE_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_server_certificate,
+                    call_env_args[SERVER_CERTIFICATE_ENV_VAR],
+                )
 
-            self.assertTrue(SERVER_CERTIFICATE_ENV_VAR in call_env_args)
-            self.assertEqual(
-                expected_server_certificate, call_env_args[SERVER_CERTIFICATE_ENV_VAR]
-            )
+                self.assertTrue(SERVER_PRIVATE_KEY_REF_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_server_key_resource_id,
+                    call_env_args[SERVER_PRIVATE_KEY_REF_ENV_VAR],
+                )
 
-            self.assertTrue(SERVER_PRIVATE_KEY_REF_ENV_VAR in call_env_args)
-            self.assertEqual(
-                expected_server_key_resource_id,
-                call_env_args[SERVER_PRIVATE_KEY_REF_ENV_VAR],
-            )
+                self.assertTrue(SERVER_PRIVATE_KEY_REGION_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_server_key_region,
+                    call_env_args[SERVER_PRIVATE_KEY_REGION_ENV_VAR],
+                )
 
-            self.assertTrue(SERVER_PRIVATE_KEY_REGION_ENV_VAR in call_env_args)
-            self.assertEqual(
-                expected_server_key_region,
-                call_env_args[SERVER_PRIVATE_KEY_REGION_ENV_VAR],
-            )
+                self.assertTrue(SERVER_PRIVATE_KEY_PATH_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_server_key_install_path,
+                    call_env_args[SERVER_PRIVATE_KEY_PATH_ENV_VAR],
+                )
 
-            self.assertTrue(SERVER_PRIVATE_KEY_PATH_ENV_VAR in call_env_args)
-            self.assertEqual(
-                expected_server_key_install_path,
-                call_env_args[SERVER_PRIVATE_KEY_PATH_ENV_VAR],
-            )
+                self.assertTrue(CA_CERTIFICATE_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_ca_certificate, call_env_args[CA_CERTIFICATE_ENV_VAR]
+                )
 
-            self.assertTrue(CA_CERTIFICATE_ENV_VAR in call_env_args)
-            self.assertEqual(
-                expected_ca_certificate, call_env_args[CA_CERTIFICATE_ENV_VAR]
-            )
+                self.assertTrue(SERVER_CERTIFICATE_PATH_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_server_certificate_path,
+                    call_env_args[SERVER_CERTIFICATE_PATH_ENV_VAR],
+                )
 
-            self.assertTrue(SERVER_CERTIFICATE_PATH_ENV_VAR in call_env_args)
-            self.assertEqual(
-                expected_server_certificate_path,
-                call_env_args[SERVER_CERTIFICATE_PATH_ENV_VAR],
-            )
+                self.assertTrue(CA_CERTIFICATE_PATH_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    expected_ca_certificate_path,
+                    call_env_args[CA_CERTIFICATE_PATH_ENV_VAR],
+                )
+                self.assertTrue(SERVER_IP_ADDRESS_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    test_server_ips[i], call_env_args[SERVER_IP_ADDRESS_ENV_VAR]
+                )
 
-            self.assertTrue(CA_CERTIFICATE_PATH_ENV_VAR in call_env_args)
-            self.assertEqual(
-                expected_ca_certificate_path, call_env_args[CA_CERTIFICATE_PATH_ENV_VAR]
-            )
+                self.assertTrue(SERVER_HOSTNAME_ENV_VAR in call_env_args)
+                self.assertEqual(
+                    test_server_hostnames[i], call_env_args[SERVER_HOSTNAME_ENV_VAR]
+                )
 
-    def _create_pc_instance(self) -> PrivateComputationInstance:
+    def _create_pc_instance(
+        self, pcs_features: Optional[Set[PCSFeature]] = None
+    ) -> PrivateComputationInstance:
 
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
@@ -384,6 +405,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
             log_cost_bucket="test_log_cost_bucket",
+            pcs_features=pcs_features if pcs_features else set(),
         )
 
         common: CommonProductConfig = CommonProductConfig(

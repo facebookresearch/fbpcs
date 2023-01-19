@@ -95,6 +95,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
             wait_for_containers_to_start_up=True,
             existing_containers=None,
+            env_vars_list=None,
         )
         self.assertEqual(
             containers,
