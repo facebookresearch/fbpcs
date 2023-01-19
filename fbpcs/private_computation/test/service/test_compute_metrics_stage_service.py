@@ -85,12 +85,10 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
         ):
             with self.subTest(binary_name=binary_name, pcs_feature_set=pcs_feature_set):
                 private_computation_instance = self._create_pc_instance(pcs_feature_set)
-                test_server_ips = [
-                    f"192.0.2.{i}"
-                    for i in range(
-                        private_computation_instance.infra_config.num_mpc_containers
-                    )
-                ]
+                num_containers = (
+                    private_computation_instance.infra_config.num_mpc_containers
+                )
+                test_server_ips = [f"192.0.2.{i}" for i in range(num_containers)]
                 self.mock_mpc_svc.convert_cmd_args_list.return_value = (
                     binary_name,
                     ["cmd_1", "cmd_2"],
@@ -113,9 +111,10 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                     binary_version="latest",
                     binary_name=binary_name,
                     timeout=None,
-                    env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
                     wait_for_containers_to_start_up=True,
                     existing_containers=None,
+                    env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
+                    env_vars_list=None,
                 )
                 self.assertEqual(
                     containers,
@@ -138,11 +137,11 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
         for binary_name, pcs_feature_set in (
             (
                 "private_lift/lift",
-                {PCSFeature.PCS_DUMMY},
+                {PCSFeature.PCS_DUMMY, PCSFeature.PCF_TLS},
             ),
             (
                 "private_lift/pcf2_lift",
-                {PCSFeature.PRIVATE_LIFT_PCF2_RELEASE},
+                {PCSFeature.PRIVATE_LIFT_PCF2_RELEASE, PCSFeature.PCF_TLS},
             ),
         ):
             with self.subTest(binary_name=binary_name, pcs_feature_set=pcs_feature_set):
@@ -192,65 +191,64 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                 # asserts
                 self.mock_mpc_svc.start_containers.assert_called_once()
                 call_kwargs = self.mock_mpc_svc.start_containers.call_args[1]
-                call_env_args = call_kwargs["env_vars"]
+                print(call_kwargs)
+                call_env_args_list = call_kwargs["env_vars_list"]
 
-                self.assertTrue(call_env_args)
+                self.assertTrue(call_env_args_list)
+                for i, call_env_args in enumerate(call_env_args_list):
+                    self.assertTrue("ONEDOCKER_REPOSITORY_PATH" in call_env_args)
+                    self.assertEqual(
+                        "test_path/", call_env_args["ONEDOCKER_REPOSITORY_PATH"]
+                    )
 
-                self.assertTrue("ONEDOCKER_REPOSITORY_PATH" in call_env_args)
-                self.assertEqual(
-                    "test_path/", call_env_args["ONEDOCKER_REPOSITORY_PATH"]
-                )
+                    self.assertTrue(SERVER_CERTIFICATE_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        expected_server_certificate,
+                        call_env_args[SERVER_CERTIFICATE_ENV_VAR],
+                    )
 
-                self.assertTrue(SERVER_CERTIFICATE_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    expected_server_certificate,
-                    call_env_args[SERVER_CERTIFICATE_ENV_VAR],
-                )
+                    self.assertTrue(SERVER_PRIVATE_KEY_REF_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        expected_server_key_resource_id,
+                        call_env_args[SERVER_PRIVATE_KEY_REF_ENV_VAR],
+                    )
 
-                self.assertTrue(SERVER_PRIVATE_KEY_REF_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    expected_server_key_resource_id,
-                    call_env_args[SERVER_PRIVATE_KEY_REF_ENV_VAR],
-                )
+                    self.assertTrue(SERVER_PRIVATE_KEY_REGION_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        expected_server_key_region,
+                        call_env_args[SERVER_PRIVATE_KEY_REGION_ENV_VAR],
+                    )
+                    self.assertTrue(SERVER_PRIVATE_KEY_PATH_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        expected_server_key_install_path,
+                        call_env_args[SERVER_PRIVATE_KEY_PATH_ENV_VAR],
+                    )
+                    self.assertTrue(CA_CERTIFICATE_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        expected_ca_certificate, call_env_args[CA_CERTIFICATE_ENV_VAR]
+                    )
 
-                self.assertTrue(SERVER_PRIVATE_KEY_REGION_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    expected_server_key_region,
-                    call_env_args[SERVER_PRIVATE_KEY_REGION_ENV_VAR],
-                )
+                    self.assertTrue(SERVER_CERTIFICATE_PATH_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        expected_server_certificate_path,
+                        call_env_args[SERVER_CERTIFICATE_PATH_ENV_VAR],
+                    )
 
-                self.assertTrue(SERVER_PRIVATE_KEY_PATH_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    expected_server_key_install_path,
-                    call_env_args[SERVER_PRIVATE_KEY_PATH_ENV_VAR],
-                )
+                    self.assertTrue(CA_CERTIFICATE_PATH_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        expected_ca_certificate_path,
+                        call_env_args[CA_CERTIFICATE_PATH_ENV_VAR],
+                    )
 
-                self.assertTrue(CA_CERTIFICATE_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    expected_ca_certificate, call_env_args[CA_CERTIFICATE_ENV_VAR]
-                )
+                    self.assertTrue(SERVER_IP_ADDRESS_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        test_server_ips[i], call_env_args[SERVER_IP_ADDRESS_ENV_VAR]
+                    )
 
-                self.assertTrue(SERVER_CERTIFICATE_PATH_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    expected_server_certificate_path,
-                    call_env_args[SERVER_CERTIFICATE_PATH_ENV_VAR],
-                )
-
-                self.assertTrue(CA_CERTIFICATE_PATH_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    expected_ca_certificate_path,
-                    call_env_args[CA_CERTIFICATE_PATH_ENV_VAR],
-                )
-
-                self.assertTrue(SERVER_IP_ADDRESS_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    test_server_ips[0], call_env_args[SERVER_IP_ADDRESS_ENV_VAR]
-                )
-
-                self.assertTrue(SERVER_HOSTNAME_ENV_VAR in call_env_args)
-                self.assertEqual(
-                    test_server_hostnames[0], call_env_args[SERVER_HOSTNAME_ENV_VAR]
-                )
+                    self.assertTrue(SERVER_HOSTNAME_ENV_VAR in call_env_args)
+                    self.assertEqual(
+                        test_server_hostnames[i], call_env_args[SERVER_HOSTNAME_ENV_VAR]
+                    )
 
     def test_get_game_args(self) -> None:
         # TODO: add game args test for attribution args

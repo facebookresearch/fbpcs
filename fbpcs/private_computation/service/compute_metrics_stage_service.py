@@ -45,6 +45,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 from fbpcs.private_computation.service.utils import (
     generate_env_vars_dict,
+    generate_env_vars_dicts_list,
     get_pc_status_from_stage_state,
     get_server_uris,
     stop_stage_service,
@@ -158,17 +159,24 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             server_ips=server_ips,
         )
 
-        # TODO: T141115702 - Update to use env var collection per container with distinct server addresses, once supported
-        env_vars = generate_env_vars_dict(
-            repository_path=binary_config.repository_path,
-            server_certificate_provider=server_certificate_provider,
-            server_certificate_path=server_certificate_path,
-            ca_certificate_provider=ca_certificate_provider,
-            ca_certificate_path=ca_certificate_path,
-            server_ip_address=server_ips[0] if server_ips else None,
-            server_hostname=server_hostnames[0] if server_hostnames else None,
-            server_private_key_ref_provider=server_private_key_ref_provider,
-        )
+        env_vars = None
+        env_vars_list = None
+        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+            env_vars_list = generate_env_vars_dicts_list(
+                num_containers=len(cmd_args_list),
+                repository_path=binary_config.repository_path,
+                server_certificate_provider=server_certificate_provider,
+                server_certificate_path=server_certificate_path,
+                ca_certificate_provider=ca_certificate_provider,
+                ca_certificate_path=ca_certificate_path,
+                server_ip_addresses=server_ips,
+                server_hostnames=server_hostnames,
+                server_private_key_ref_provider=server_private_key_ref_provider,
+            )
+        else:
+            env_vars = generate_env_vars_dict(
+                repository_path=binary_config.repository_path,
+            )
 
         container_instances = await self._mpc_service.start_containers(
             cmd_args_list=cmd_args_list,
@@ -177,6 +185,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             binary_name=binary_name,
             timeout=self._container_timeout,
             env_vars=env_vars,
+            env_vars_list=env_vars_list,
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
         )
