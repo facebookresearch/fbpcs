@@ -6,7 +6,7 @@
 
 # pyre-strict
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from fbpcp.entity.cluster_instance import Cluster
 from fbpcp.entity.container_instance import ContainerInstance
@@ -61,23 +61,42 @@ class PCSContainerService(ContainerService):
 
         return PCSContainerInstance.from_container_instance(instance, log_url)
 
-    # pyre-ignore[14]: Inconsistent override
     def create_instances(
         self,
         container_definition: str,
         cmds: List[str],
-        env_vars: Optional[Dict[str, str]] = None,
+        env_vars: Optional[Union[Dict[str, str], List[Dict[str, str]]]] = None,
         container_type: Optional[ContainerType] = None,
     ) -> List[ContainerInstance]:
-        return [
+        """
+        Args:
+            container_definition: a string representing the container definition.
+            cmds: A list of cmds per instance to run inside each instance.
+            env_vars: A dictionary or a list of dictionaries of env_vars to be set in instances.
+            When it is a single dictionary, all env vars in the dict will be set in all
+            instances. When it is a list of dicts, it is expected that the length of the list
+            is the same as the length of the cmds list, such that each item corresponds
+            to one instance.
+            container_type: The type of container to create.
+        Returns:
+            A list of ContainerInstances.
+        """
+        if type(env_vars) is list and len(env_vars) != len(cmds):
+            raise ValueError(
+                f"Length of env_vars list {len(env_vars)} is different from length of cmds {len(cmds)}."
+            )
+
+        instances = [
             self.create_instance(
                 container_definition=container_definition,
-                cmd=cmd,
-                env_vars=env_vars,
+                cmd=cmds[i],
+                env_vars=env_vars[i] if type(env_vars) is list else env_vars,
                 container_type=container_type,
             )
-            for cmd in cmds
+            for i in range(len(cmds))
         ]
+
+        return instances
 
     def get_instance(self, instance_id: str) -> Optional[ContainerInstance]:
         instance = self.inner_container_service.get_instance(instance_id)
