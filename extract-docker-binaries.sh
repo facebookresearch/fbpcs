@@ -50,8 +50,8 @@ if [ -z "$DOCKER_IMAGE_NAME" ]; then
   case $PACKAGE in
     emp_games) DOCKER_IMAGE_NAME="fbpcs/emp-games";;
     data_processing) DOCKER_IMAGE_NAME="fbpcs/data-processing";;
-    pid) DOCKER_IMAGE_NAME="fbpcs/onedocker";;
-    validation) DOCKER_IMAGE_NAME="fbpcs/onedocker";;
+    pid) DOCKER_IMAGE_NAME="fbpcs/onedocker/test";;
+    validation) DOCKER_IMAGE_NAME="fbpcs/onedocker/test";;
   esac
 fi
 DOCKER_IMAGE_PATH="${DOCKER_IMAGE_NAME}:${TAG}"
