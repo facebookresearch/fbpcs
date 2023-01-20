@@ -33,9 +33,9 @@ from fbpcs.private_computation.service.constants import (
 
 from fbpcs.private_computation.service.utils import (
     distribute_files_among_containers,
+    gen_tls_server_hostnames_for_publisher,
     generate_env_vars_dict,
     generate_env_vars_dicts_list,
-    get_server_uris,
 )
 
 
@@ -75,13 +75,15 @@ class TestUtils(IsolatedAsyncioTestCase):
         expected_result_2 = None
 
         # Act
-        actual_result_1 = get_server_uris(
+        actual_result_1 = gen_tls_server_hostnames_for_publisher(
             self.server_domain, PrivateComputationRole.PUBLISHER, 2
         )
-        actual_result_2 = get_server_uris(
+        actual_result_2 = gen_tls_server_hostnames_for_publisher(
             self.server_domain, PrivateComputationRole.PARTNER, 2
         )
-        actual_result_3 = get_server_uris(None, PrivateComputationRole.PUBLISHER, 2)
+        actual_result_3 = gen_tls_server_hostnames_for_publisher(
+            None, PrivateComputationRole.PUBLISHER, 2
+        )
 
         # Assert
         self.assertEqual(expected_result_1, actual_result_1)

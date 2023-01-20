@@ -319,7 +319,7 @@ def distribute_files_among_containers(
     return files_per_container
 
 
-def get_server_uris(
+def gen_tls_server_hostnames_for_publisher(
     server_domain: Optional[str], role: PrivateComputationRole, num_containers: int
 ) -> Optional[List[str]]:
     """For each container, create a unique server_uri based
