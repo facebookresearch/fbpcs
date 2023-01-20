@@ -17,6 +17,9 @@ from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
+from fbpcs.infra.certificate.sample_tls_certificates import (
+    SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
+)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -43,7 +46,10 @@ from fbpcs.private_computation.service.pid_utils import (
     pid_should_use_row_numbers,
     PIDProtocol,
 )
-from fbpcs.private_computation.service.utils import generate_env_vars_dict
+from fbpcs.private_computation.service.utils import (
+    gen_tls_server_hostnames_for_publisher,
+    generate_env_vars_dict,
+)
 
 
 class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
@@ -171,6 +177,58 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                     run_id=test_run_id,
                 )
 
+    async def test_pid_run_protocol_stage_tls_enabled_publisher(self) -> None:
+        # Arrange
+        pc_role = PrivateComputationRole.PUBLISHER
+        pc_instance = self.create_sample_pc_instance(
+            pc_role, server_domain=SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN
+        )
+        stage_svc = PIDRunProtocolStageService(
+            storage_svc=self.mock_storage_svc,
+            onedocker_svc=self.mock_onedocker_svc,
+            onedocker_binary_config_map=self.onedocker_binary_config_map,
+        )
+        containers = [
+            self.create_container_instance(i) for i in range(self.test_num_containers)
+        ]
+        self.mock_onedocker_svc.start_containers = MagicMock(return_value=containers)
+        self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
+            return_value=containers
+        )
+        server_hostnames = gen_tls_server_hostnames_for_publisher(
+            pc_instance.infra_config.server_domain,
+            pc_role,
+            self.test_num_containers,
+        )
+        stage_state_expect = StageStateInstance(
+            pc_instance.infra_config.instance_id,
+            pc_instance.current_stage.name,
+            containers=containers,
+            server_uris=server_hostnames,
+        )
+
+        # Act
+        updated_pc_instance = await stage_svc.run_async(
+            pc_instance=pc_instance,
+            server_certificate_provider=NullCertificateProvider(),
+            ca_certificate_provider=NullCertificateProvider(),
+            server_certificate_path="",
+            ca_certificate_path="",
+        )
+
+        # Assert
+        self.assertEqual(
+            len(updated_pc_instance.infra_config.instances),
+            self.test_num_containers,
+            "Failed to add the StageStageInstance into pc_instance",
+        )
+        stage_state_actual = updated_pc_instance.infra_config.instances[0]
+        self.assertEqual(
+            stage_state_actual,
+            stage_state_expect,
+            "Appended StageStageInstance is not as expected",
+        )
+
     def create_sample_pc_instance(
         self,
         pc_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
@@ -179,6 +237,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         pid_use_row_numbers: bool = True,
         pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         run_id: Optional[str] = None,
+        server_domain: Optional[str] = None,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.pc_instance_id,
@@ -192,6 +251,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=self.test_num_containers,
             status_updates=[],
             run_id=run_id,
+            server_domain=server_domain,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,

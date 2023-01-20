@@ -37,6 +37,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    gen_tls_server_hostnames_for_publisher,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
     stop_stage_service,
@@ -93,11 +94,17 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             pc_instance=pc_instance,
             server_ips=server_ips,
         )
+        server_uris = gen_tls_server_hostnames_for_publisher(
+            server_domain=pc_instance.infra_config.server_domain,
+            role=pc_instance.infra_config.role,
+            num_containers=len(container_instances),
+        )
         self._logger.info("PIDRunProtocolStageService finished")
         stage_state = StageStateInstance(
             pc_instance.infra_config.instance_id,
             pc_instance.current_stage.name,
             containers=container_instances,
+            server_uris=server_uris,
         )
         pc_instance.infra_config.instances.append(stage_state)
         return pc_instance
