@@ -47,9 +47,7 @@ jobs:
         with:
           context: docker/onedocker/prod
           file: docker/onedocker/prod/Dockerfile.ubuntu
-          tags: |
-            ${{ env.GH_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.GH_REGISTRY_IMAGE_NAME }}:latest
+          tags: ${{ steps.set_up_tags.outputs.docker_tags}}
           push: true
           cache-from: type=gha,scope=$GITHUB_REF_NAME-onedocker-prod
           cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-onedocker-prod
