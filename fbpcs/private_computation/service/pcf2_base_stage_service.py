@@ -40,10 +40,10 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 
 from fbpcs.private_computation.service.utils import (
+    gen_tls_server_hostnames_for_publisher,
     generate_env_vars_dict,
     generate_env_vars_dicts_list,
     get_pc_status_from_stage_state,
-    get_server_uris,
 )
 
 
@@ -149,7 +149,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             ),
             server_ips=server_hostnames if enable_tls else server_ips,
         )
-        server_uris = get_server_uris(
+        server_uris = gen_tls_server_hostnames_for_publisher(
             server_domain=pc_instance.infra_config.server_domain,
             role=pc_instance.infra_config.role,
             num_containers=len(cmd_args_list),
