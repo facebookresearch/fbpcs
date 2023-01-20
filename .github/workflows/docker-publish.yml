@@ -33,7 +33,7 @@ jobs:
   ### Build and publish rc/onedocker image
   build_image:
     name: Build Onedocker, MPC Games and Data Processing Images
-    runs-on: ubuntu-20.04-16core
+    runs-on: large
     permissions:
       contents: read
       packages: write
