@@ -25,7 +25,7 @@ COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
-RUN make -j$(nproc) && make install
+RUN make -j "$(nproc)" && make install -j "$(nproc)"
 
 CMD ["/bin/sh"]
 
