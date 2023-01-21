@@ -1,0 +1,99 @@
+name: RC UDP One command runner test
+run-name: PL UDP RC E2E Tests on ${{ inputs.tag }} for build ${{ inputs.build_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      study_id:
+        description: Lift study id
+        required: true
+        default: "44902210680731"
+      objective_id:
+        description: Lift objective id
+        required: true
+        default: "50202210855634"
+      input_path:
+        description: S3 path to synthetic data
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      expected_result_path:
+        description: S3 path to expected results from synthetic run
+        required: true
+        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
+      tag:
+        description: Version tag to use
+        required: true
+        default: rc
+      tracker_hash:
+        description: '[Internal usage] Used for tracking workflow job status within Meta infra'
+        required: false
+        type: str
+      build_id:
+        description: The build id
+        required: false
+        default: "test build"
+
+env:
+  FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
+  FBPCS_IMAGE_NAME: coordinator
+  FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_RC_UDP_GRAPH_API_TOKEN }}
+
+jobs:
+  ### Private Lift E2E tests
+  pl_test:
+    name: Private Lift RC E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash}}
+
+      - name: Get AWS Session name
+        id: aws_session_name
+        run: |
+          echo session_name=$(echo PL-RC-E2E-Tests-${{ inputs.build_id }} | tr " " "-") >> $GITHUB_OUTPUT
+
+      - name: Set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_TEST_ROLE_TO_ASSUME }}
+          aws-region: us-west-2
+          role-duration-seconds: 5400
+          role-session-name: ${{ steps.aws_session_name.outputs.session_name }}
+
+      - name: One command runner
+        run: |
+          ./fbpcs/scripts/run_fbpcs.sh run_study \
+          ${{ github.event.inputs.study_id }} \
+          --objective_ids=${{ github.event.inputs.objective_id }} \
+          --input_paths=${{ github.event.inputs.input_path }} \
+          --config=./fbpcs/tests/github/rc_udp_config_one_command_runner_test.yml \
+          -- \
+          --version=${{ github.event.inputs.tag }} \
+          --docker_env=AWS_ACCESS_KEY_ID \
+          --docker_env=AWS_SECRET_ACCESS_KEY \
+          --docker_env=AWS_SESSION_TOKEN \
+          --docker_env=AWS_DEFAULT_REGION
+
+      - name: Validate Results
+        # instances are named after ent ids, so we are going to look for filenames that consist of only numbers and then run validation on them
+        # the fbpcs_instances directory is where instances are written to (feature of run_fbpcs.sh)
+        # the config.yml specifies that /fbpcs_instances is the instance repo, which is the source of the "/{}"
+        run: |
+          find fbpcs_instances -regex 'fbpcs_instances/[0-9]+' | xargs -I {} ./fbpcs/scripts/run_fbpcs.sh \
+          validate \
+          "/{}" \
+          --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
+          --expected_result_path=${{ github.event.inputs.expected_result_path }} \
+          -- \
+          --version=${{ github.event.inputs.tag }} \
+          --docker_env=AWS_ACCESS_KEY_ID \
+          --docker_env=AWS_SECRET_ACCESS_KEY \
+          --docker_env=AWS_SESSION_TOKEN \
+          --docker_env=AWS_DEFAULT_REGION
