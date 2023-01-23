@@ -13,7 +13,9 @@ Types of changes
 - `Security` in case This project adheres to
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 2.6.0] - put release date here
+## [Unreleased - 2.7.0] - put release date here
+
+## [2.6.0] - 2023-01-23
 ### Removed
 * Removed deprecated MPCInstanceRepository from fbpcs
 * Removed deprecated MPCService APIs after MPCInstance usaged been moved to StageStateInstance. (create/start/stop/get/update_instance)
