@@ -28,7 +28,7 @@ COPY fbpcs/data_processing/private_id_dfca_id_combiner/ ./fbpcs/data_processing/
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
 RUN ./get_make_options.sh
-RUN make $MAKE_JOBS -l $MAKE_MAX_LOAD && make $MAKE_JOBS -l $MAKE_MAX_LOAD install
+RUN make -j $MAKE_JOBS -l $MAKE_MAX_LOAD && make -j $MAKE_JOBS -l $MAKE_MAX_LOAD install
 
 CMD ["/bin/sh"]
 
