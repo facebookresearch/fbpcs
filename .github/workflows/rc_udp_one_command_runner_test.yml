@@ -15,11 +15,11 @@ on:
       input_path:
         description: S3 path to synthetic data
         required: true
-        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+        default: https://fbpcs-github-e2e-runner.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
       expected_result_path:
         description: S3 path to expected results from synthetic run
         required: true
-        default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
+        default: https://fbpcs-github-e2e-runner.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
       tag:
         description: Version tag to use
         required: true
@@ -57,13 +57,13 @@ jobs:
       - name: Get AWS Session name
         id: aws_session_name
         run: |
-          echo session_name=$(echo PL-RC-E2E-Tests-${{ inputs.build_id }} | tr " " "-") >> $GITHUB_OUTPUT
+          echo session_name=$(echo PL-RC-UDP-E2E-Tests-${{ inputs.build_id }} | tr " " "-") >> $GITHUB_OUTPUT
 
       - name: Set AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.AWS_E2E_TEST_ROLE_TO_ASSUME }}
-          aws-region: us-west-2
+          role-to-assume: ${{ secrets.AWS_E2E_UDP_TEST_ROLE_TO_ASSUME }}
+          aws-region: us-west-1
           role-duration-seconds: 5400
           role-session-name: ${{ steps.aws_session_name.outputs.session_name }}
 
