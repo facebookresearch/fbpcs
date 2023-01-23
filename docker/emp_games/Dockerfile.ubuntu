@@ -14,8 +14,7 @@ WORKDIR /root/build/emp_game
 COPY docker/emp_games/CMakeLists.txt .
 COPY docker/emp_games/common.cmake .
 COPY docker/emp_games/perf_tools.cmake .
-# make options
-COPY docker/get_make_options.sh .
+
 # attribution, lift and shard aggregator build and install
 COPY fbpcs/performance_tools/ ./fbpcs/performance_tools
 COPY fbpcs/emp_games/attribution/ ./fbpcs/emp_games/attribution
@@ -27,8 +26,9 @@ COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
-RUN ./get_make_options.sh
-RUN make -j $MAKE_JOBS -l $MAKE_MAX_LOAD && make -j $MAKE_JOBS -l $MAKE_MAX_LOAD install
+
+COPY docker/make_and_install_binary.sh .
+RUN ./make_and_install_binary.sh
 
 CMD ["/bin/sh"]
 

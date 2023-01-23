@@ -17,10 +17,16 @@ MAX_THREADS=$(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / MAX_THREAD_MEMORY
 # Get the number of possible threads by pulling the online processors
 EFFECTIVE_THREADS=$(getconf _NPROCESSORS_ONLN)
 
+echo "Max thread memory: $MAX_THREAD_MEMORY_IN_BYTES"
+echo "Max threads: $MAX_THREADS"
+echo "Effective Thread: $EFFECTIVE_THREAD"
+
 # Use the lesser of the maximum allowed threads by memory or available processors
-export MAKE_JOBS=$((MAX_THREADS < EFFECTIVE_THREADS ? MAX_THREADS : EFFECTIVE_THREADS))
+MAKE_JOBS=$((MAX_THREADS < EFFECTIVE_THREADS ? MAX_THREADS : EFFECTIVE_THREADS))
 
 # Set the maximum load average on the CPU as 9/10ths of the available cores
 # This ensures that we don't saturate the CPU with processes that are greater
 # than the cores available
-export MAKE_MAX_LOAD=$((EFFECTIVE_THREADS * 9 / 10))
+MAKE_MAX_LOAD=$((EFFECTIVE_THREADS * 9 / 10))
+
+make -j $MAKE_JOBS -l $MAKE_MAX_LOAD && make -j $MAKE_JOBS -l $MAKE_MAX_LOAD install
