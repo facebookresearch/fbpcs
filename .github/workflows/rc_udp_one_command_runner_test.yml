@@ -15,11 +15,11 @@ on:
       input_path:
         description: S3 path to synthetic data
         required: true
-        default: https://fbpcs-github-e2e-runner.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+        default: https://fbpcs-github-e2e-runner.s3.us-west-1.amazonaws.com/lift/inputs/partner_e2e_input.csv
       expected_result_path:
         description: S3 path to expected results from synthetic run
         required: true
-        default: https://fbpcs-github-e2e-runner.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
+        default: https://fbpcs-github-e2e-runner.s3.us-west-1.amazonaws.com/lift/results/partner_expected_result_pcf2.json
       tag:
         description: Version tag to use
         required: true
