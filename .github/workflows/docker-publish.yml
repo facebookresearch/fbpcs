@@ -33,7 +33,7 @@ jobs:
   ### Build and publish rc/onedocker image
   build_image:
     name: Build Onedocker, MPC Games and Data Processing Images
-    runs-on: large
+    runs-on: [self-hosted, fbpcs-build]
     permissions:
       contents: read
       packages: write
