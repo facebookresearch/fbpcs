@@ -86,7 +86,9 @@ export AWS_SECRET_ACCESS_KEY=<YOUR_OWN_AWS_SECRET_ACCESS_KEY> \
 export AWS_SESSION_TOKEN=<YOUR_OWN_AWS_SESSION_TOKEN> \
 export TF_LOG=DEBUG \
 export TF_LOG_PATH=/tmp/deploy.log \
-export TF_LOG_STREAMING=/tmp/deploymentStream.log
+export TF_LOG_STREAMING=/tmp/deploymentStream.log \
+export TF_RESOURCE_OUTPUT=/tmp/resourcePath.log \
+export SHOULD_SKIP_VPC_PEERING_VALIDATION=0
 ```
 9. run `deploy.sh`
  * For standard `deploy` and without any semi-automated data ingestion, run the following command
