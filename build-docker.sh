@@ -30,8 +30,8 @@ package:
 EOF
   exit 1
 }
-FBPCF_DEPENDENCY="emp_games data_processing onedocker"
-AVAILABLE_PACKAGES="emp_games data_processing pce_deployment onedocker"
+FBPCF_DEPENDENCY="emp_games data_processing onedocker onedocker-bt"
+AVAILABLE_PACKAGES="emp_games data_processing pce_deployment onedocker onedocker-bt"
 PACKAGE=$1
 if [[ ! " $AVAILABLE_PACKAGES " =~ $PACKAGE || -z "$PACKAGE" ]]; then
   usage
@@ -90,7 +90,7 @@ fi
 
 # Local Docker Image Dependencies
 if [ "$PACKAGE" = "onedocker" ]; then
- PACKAGE="emp_games data_processing onedocker/test"
+ PACKAGE="onedocker/test"
 fi
 
 # Include optional parameters
@@ -107,7 +107,7 @@ for P in $PACKAGE; do
   fi
 
   printf "\nBuilding %s %s docker image...\n" "${P}" "${OS_VARIANT}"
-  docker build  \
+  docker buildx build  \
     --build-arg tag="${TAG}" \
     --build-arg os_release="${OS_RELEASE}" \
     --build-arg fbpcf_image="${FBPCF_IMAGE}" \
