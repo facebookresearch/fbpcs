@@ -6,8 +6,8 @@
 
 BYTES_PER_MEGABYTE=1000000
 
-# We need up to 4000 MB (less than 4GB) per thread.
-MAX_THREAD_MEMORY_IN_BYTES=$((4000 * BYTES_PER_MEGABYTE))
+# We need up to 7000 MB (less than 7GB) per thread.
+MAX_THREAD_MEMORY_IN_BYTES=$((7000 * BYTES_PER_MEGABYTE))
 
 # The functionality below calculates the number of bytes of memory available by getting the number
 # Of physical pages available, multiplying it by the page size (in bytes) and dividing that by the
