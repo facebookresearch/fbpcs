@@ -39,10 +39,14 @@ class RetryHandler:
 
     Usage:
     with RetryHandler(MyException, max_attempts=3) as retry_handler:
-        await retry_handler.execute(func_we_want_to_retry, arg1, arg2, arg3=999)
+        await retry_handler.execute(async_func_we_want_to_retry, arg1, arg2, arg3=999)
     # Or with a tuple of exception types
     with RetryHandler((MyException, ValueError), max_attempts=3) as retry_handler:
-        await retry_handler.execute(func_we_want_to_retry, arg1, arg2, arg3=999)
+        await retry_handler.execute(async_func_we_want_to_retry, arg1, arg2, arg3=999)
+
+    Synchronous function usage:
+    with RetryHandler(MyException, max_attempts=3) as retry_handler:
+        await retry_handler.execute_sync(blocking_func_we_want_to_retry, arg1, arg2, arg3=999)
     """
 
     def __init__(
@@ -96,6 +100,31 @@ class RetryHandler:
         for attempt in range(1, self.max_attempts + 1):
             try:
                 return await f(*args, **kwargs)
+            except self.exc_type as e:
+                self.logger.warning(
+                    f"Caught exception during attempt [{attempt} / {self.max_attempts}]"
+                )
+                await asyncio.sleep(self._get_backoff_time(attempt))
+                saved_err = e
+            except BaseException as e:
+                self.logger.warning(
+                    f"Unhandled exception type being thrown from RetryHandler: {e}"
+                )
+                raise
+        self.logger.error("Out of retry attempts. Raising last error.")
+        raise saved_err
+
+    async def execute_sync(
+        self, f: Callable[..., T], *args: Any, **kwargs: Dict[str, Any]
+    ) -> T:
+        """
+        Execute a blocking function with retries
+        """
+        saved_err: BaseException
+        # Use 1-indexing for better human-readable logs
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                return f(*args, **kwargs)
             except self.exc_type as e:
                 self.logger.warning(
                     f"Caught exception during attempt [{attempt} / {self.max_attempts}]"

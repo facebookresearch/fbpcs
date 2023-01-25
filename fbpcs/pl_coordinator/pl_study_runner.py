@@ -23,6 +23,7 @@ from fbpcs.common.service.graphapi_trace_logging_service import (
     GraphApiTraceLoggingService,
 )
 from fbpcs.common.service.input_data_service import InputDataService, TimestampValues
+from fbpcs.common.service.retry_handler import BackoffType, RetryHandler
 from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
@@ -382,11 +383,26 @@ async def _run_study_async_helper(
     )
 
     ## Step 4: Print out the initial and end states
+
+    # Wait exponentially to resolve throttling issue
+    # - Waits 68 minutes before the last attempt
+    # - https://developers.facebook.com/docs/graph-api/overview/rate-limiting/
+    with RetryHandler(
+        logger=logger,
+        backoff_seconds=16,
+        backoff_type=BackoffType.EXPONENTIAL,
+        max_attempts=3,
+    ) as retry_handler:
+        end_state_study_data = await retry_handler.execute_sync(
+            _get_study_data, study_id, client
+        )
+
     new_cell_obj_instances = _get_cell_obj_instance(
-        _get_study_data(study_id, client),
+        end_state_study_data,
         objective_ids,
         input_paths,
     )
+
     _print_json(
         "Pre-run statuses for instance of each cell-objective pair",
         cell_obj_instance,
