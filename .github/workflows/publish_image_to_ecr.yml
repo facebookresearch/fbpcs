@@ -17,6 +17,14 @@ on:
         required: false
         type: string
         default: pl-coordinator-env
+      ecr_repo_type:
+        description: 'The type of ECR repository it is (private or public)'
+        required: true
+        type: choice
+        default: private
+        options:
+          - private
+          - public
       new_tag:
         description: 'The new tag of the docker image'
         required: true
@@ -29,7 +37,7 @@ on:
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
-        type: str
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -47,7 +55,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-    - uses: actions/checkout@v2
     - name: Print Tracker Hash
       run: echo ${{ github.event.inputs.tracker_hash}}
 
@@ -69,6 +76,8 @@ jobs:
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+      with:
+          registry-type: ${{ inputs.ecr_repo_type }}
 
     - name: Tag docker image
       env:
@@ -83,3 +92,4 @@ jobs:
       run: |
         docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.NEW_IMAGE_TAG }}
         docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
