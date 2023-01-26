@@ -2,8 +2,10 @@ name: End to End Tests on RC
 run-name: End to End test on RC
 
 on:
-  schedule:
-    - cron: '0 16-22/2 * * 1-5' # Every 2 hours from 16:00 - 22:00 UTC (8-2 PST and 9-3 PDT) M-F
+  # TODO: T143464183 Re-enable the cron workflow when new objective IDs have been created specifically for this workflow.
+  # schedule:
+  #   - cron: '0 16-22/2 * * 1-5' # Every 2 hours from 16:00 - 22:00 UTC (8-2 PST and 9-3 PDT) M-F
+  workflow_dispatch:
 
 
 env:
