@@ -12,6 +12,8 @@ WORKDIR /root/build/data_processing
 
 # cmake files
 COPY docker/data_processing/CMakeLists.txt .
+# make options
+COPY docker/make_and_install_binary.sh .
 # data processing build and install
 COPY fbpcs/performance_tools/ ./fbpcs/performance_tools
 COPY fbpcs/data_processing/attribution_id_combiner/ ./fbpcs/data_processing/attribution_id_combiner
@@ -25,7 +27,7 @@ COPY fbpcs/data_processing/load_testing_utils/ ./fbpcs/data_processing/load_test
 COPY fbpcs/data_processing/private_id_dfca_id_combiner/ ./fbpcs/data_processing/private_id_dfca_id_combiner
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
-RUN make && make install
+RUN ./make_and_install_binary.sh
 
 CMD ["/bin/sh"]
 

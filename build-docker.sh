@@ -13,7 +13,7 @@ GITHUB_PACKAGES="ghcr.io/facebookresearch"
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-g] [-t TAG] [-p PLATFORM] [-v FBPCF_VERSION]
+Usage: $PROG_NAME <package: emp_games|data_processing|pce_deployment|onedocker> [-u] [-f] [-g] [-t TAG] [-p PLATFORM] [-v FBPCF_VERSION]
 
 package:
   emp_games - builds the emp-games docker image
