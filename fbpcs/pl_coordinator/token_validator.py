@@ -9,6 +9,11 @@
 import json
 from typing import Optional, Tuple
 
+from fbpcs.common.service.trace_logging_service import (
+    CheckpointStatus,
+    TraceLoggingService,
+)
+
 from fbpcs.pl_coordinator.bolt_graphapi_client import (
     BoltGraphAPIClient,
     BoltGraphAPICreateInstanceArgs,
@@ -33,10 +38,13 @@ COMMON_RULES: Tuple[TokenValidationRule, ...] = (
 
 class TokenValidator:
     def __init__(
-        self, client: BoltGraphAPIClient[BoltGraphAPICreateInstanceArgs]
+        self,
+        client: BoltGraphAPIClient[BoltGraphAPICreateInstanceArgs],
+        trace_logging_svc: Optional[TraceLoggingService] = None,
     ) -> None:
         self.client = client
         self.debug_token_data: Optional[DebugTokenData] = None
+        self.trace_logging_svc = trace_logging_svc
 
     def _load_data(self, rule: TokenValidationRule) -> None:
         if (
@@ -63,6 +71,17 @@ class TokenValidator:
             try:
                 rule.rule_checker(self.debug_token_data)
             except TokenRuleException as e:
+                if self.trace_logging_svc is not None:
+                    self.trace_logging_svc.write_checkpoint(
+                        run_id=None,
+                        instance_id="NO_INSTANCE",
+                        checkpoint_name="FAIL_FAST_VALIDATION",
+                        status=CheckpointStatus.FAILED,
+                        checkpoint_data={
+                            "rule_name": rule.name,
+                            "rule_type": rule.rule_type,
+                        },
+                    )
                 raise GraphAPITokenValidationError.make_error(rule=rule, cause=str(e))
 
         return None

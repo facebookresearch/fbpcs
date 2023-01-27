@@ -44,12 +44,16 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path, PurePath
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import schema
 from docopt import docopt
 from fbpcs.bolt.read_config import parse_bolt_config
+from fbpcs.common.service.graphapi_trace_logging_service import (
+    GraphApiTraceLoggingService,
+)
 from fbpcs.common.service.secret_scrubber import LoggingSecretScrubber, SecretScrubber
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
 from fbpcs.pl_coordinator.bolt_graphapi_client import BoltGraphAPIClient
@@ -86,6 +90,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     create_instance,
     get_instance,
     get_server_ips,
+    get_trace_logging_service,
     print_current_status,
     print_instance,
     print_log_urls,
@@ -321,7 +326,16 @@ def main(argv: Optional[List[str]] = None) -> None:
             graphapi_version=arguments["--graphapi_version"],
             graphapi_domain=arguments["--graphapi_domain"],
         )
-        token_validator = TokenValidator(client=graph_client)
+
+        study_id_or_dataset_id = arguments["<study_id>"] or arguments["--dataset_id"]
+        trace_logging_svc = _get_trace_logging_service(
+            config=config,
+            client=graph_client,
+            study_id_or_dataset_id=study_id_or_dataset_id,
+        )
+        token_validator = TokenValidator(
+            client=graph_client, trace_logging_svc=trace_logging_svc
+        )
         token_validator.validate_common_rules()
 
     if arguments["create_instance"]:
@@ -485,6 +499,30 @@ def main(argv: Optional[List[str]] = None) -> None:
         with open(scrubbed_output_path, "w") as f:
             f.write(scrub_summary.scrubbed_output)
         print(scrub_summary.get_report())
+
+
+def _get_trace_logging_service(
+    config: Dict[str, Any],
+    client: BoltGraphAPIClient,
+    study_id_or_dataset_id: Optional[str],
+) -> Optional[TraceLoggingService]:
+
+    if study_id_or_dataset_id is None:
+        return None
+
+    try:
+        endpoint_url = f"{client.graphapi_url}/{study_id_or_dataset_id}/checkpoint"
+        default_trace_logger = GraphApiTraceLoggingService(
+            access_token=client.access_token,
+            endpoint_url=endpoint_url,
+        )
+
+        return get_trace_logging_service(
+            config, default_trace_logger=default_trace_logger
+        )
+    except Exception:
+        logging.getLogger(__name__).exception(f"Creating trace logger failed")
+        return None
 
 
 if __name__ == "__main__":

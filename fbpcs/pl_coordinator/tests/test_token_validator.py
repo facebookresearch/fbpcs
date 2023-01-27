@@ -12,6 +12,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, PropertyMock
 
 import requests
+from fbpcs.common.service.trace_logging_service import TraceLoggingService
 from fbpcs.pl_coordinator.bolt_graphapi_client import BoltGraphAPIClient
 from fbpcs.pl_coordinator.constants import INSTANCE_SLA
 from fbpcs.pl_coordinator.exceptions import GraphAPITokenValidationError
@@ -22,7 +23,10 @@ from fbpcs.pl_coordinator.token_validator import TokenValidator
 class TestTokenValidator(TestCase):
     def setUp(self) -> None:
         self.client = MagicMock(spec=BoltGraphAPIClient)
-        self.validator = TokenValidator(self.client)
+        self.trace_logger = MagicMock(spec=TraceLoggingService)
+        self.validator = TokenValidator(
+            self.client, trace_logging_svc=self.trace_logger
+        )
 
     def test_token_common_rules(self) -> None:
         mock_response = {
@@ -70,16 +74,18 @@ class TestTokenValidator(TestCase):
                 cause_msg_regex=cause_msg_regex,
             ):
                 self.validator.debug_token_data = None
+                self.trace_logger.reset_mock()
                 self.client.reset_mock()
                 self.client.get_debug_token_data.return_value = (
                     self._get_graph_api_output(debug_data)
                 )
                 if is_valid:
                     self.validator.validate_rule(test_rule)
+                    self.trace_logger.write_checkpoint.assert_not_called()
                 else:
                     with self.assertRaises(GraphAPITokenValidationError) as cm:
                         self.validator.validate_rule(test_rule)
-
+                    self.trace_logger.write_checkpoint.assert_called_once()
                     self.assertRegex(str(cm.exception), cause_msg_regex)
 
     def get_token_common_test_data(self):

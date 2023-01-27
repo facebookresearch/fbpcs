@@ -24,7 +24,13 @@ class TestPrivateComputationCli(TestCase):
         # We actually use the config, so we need to write a file so that
         # the yaml load won't blow up in `main`
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
-            json.dump({"graphapi": {"access_token": "this_is_an_access_token"}}, f)
+            json.dump(
+                {
+                    "graphapi": {"access_token": "this_is_an_access_token"},
+                    "dependency": {},
+                },
+                f,
+            )
             self.temp_filename = f.name
         # Create many temporary files for testing
         self.temp_files_paths = []
