@@ -7,6 +7,10 @@ on:
         description: A list of tags to add to the docker image in CSV form (eg. latest,1234,rc)
         required: true
         type: string
+      tracker_hash:
+        description: "[Internal usage] Used for tracking workflow job status within Meta infra"
+        required: false
+        type: str
 
 
 env:
@@ -26,6 +30,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Print Tracker Hash
+        run: echo ${{ github.event.inputs.tracker_hash }}
 
       - name: Set Up Docker Tags
         id: set_up_tags
