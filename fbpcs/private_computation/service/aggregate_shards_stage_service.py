@@ -91,7 +91,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
-            An updated version of pc_instance that stores an MPCInstance
+            An updated version of pc_instance that stores an StageStateInstance
         """
         binary_name = self.get_onedocker_binary_name(pc_instance)
         binary_config = self._onedocker_binary_config_map[binary_name]
@@ -279,7 +279,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
         self,
         pc_instance: PrivateComputationInstance,
     ) -> PrivateComputationInstanceStatus:
-        """Updates the MPCInstances and gets latest PrivateComputationInstance status
+        """Gets latest PrivateComputationInstance status
 
         Arguments:
             private_computation_instance: The PC instance that is being updated

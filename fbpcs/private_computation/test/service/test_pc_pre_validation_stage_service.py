@@ -272,9 +272,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             containers=[container_instance],
         )
         unioned_pc_instances = [stage_state_instance]
-        # pyre-fixme[8]: Attribute has type `List[Union[StageStateInstance,
-        #  PCSMPCInstance, PostProcessingInstance]]`; used as
-        #  `List[StageStateInstance]`.
+        # pyre-ignore
         pc_instance.infra_config.instances = unioned_pc_instances
         expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED
         onedocker_svc_mock = MagicMock()

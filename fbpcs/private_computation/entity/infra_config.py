@@ -26,7 +26,6 @@ from fbpcs.common.entity.dataclasses_mutability import (
     MutabilityMetadata,
 )
 from fbpcs.common.entity.frozen_field_hook import FrozenFieldHook
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.common.entity.update_generic_hook import UpdateGenericHook
 from fbpcs.post_processing_handler.post_processing_instance import (
@@ -52,7 +51,7 @@ class PrivateComputationGameType(Enum):
     PRIVATE_ID_DFCA = "PRIVATE_ID_DFCA"
 
 
-UnionedPCInstance = Union[PCSMPCInstance, PostProcessingInstance, StageStateInstance]
+UnionedPCInstance = Union[PostProcessingInstance, StageStateInstance]
 
 
 @dataclass_json

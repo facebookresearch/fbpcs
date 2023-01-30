@@ -27,7 +27,6 @@ from pathlib import Path
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcs.common.entity.instance_base import InstanceBase
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
@@ -50,10 +49,8 @@ from fbpcs.private_computation.entity.product_config import (
     PrivateIdDfcaConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCInstanceStatus
 
 UnionedPCInstanceStatus = Union[
-    MPCInstanceStatus,
     PostProcessingInstanceStatus,
     StageStateInstanceStatus,
 ]
@@ -334,7 +331,7 @@ class PrivateComputationInstance(InstanceBase):
         if not self.infra_config.instances:
             return server_ips_list
         last_instance = self.infra_config.instances[-1]
-        if isinstance(last_instance, (PCSMPCInstance, StageStateInstance)):
+        if isinstance(last_instance, StageStateInstance):
             server_ips_list = last_instance.server_ips or []
         return server_ips_list
 
@@ -344,7 +341,7 @@ class PrivateComputationInstance(InstanceBase):
         if not self.infra_config.instances:
             return server_uris_list
         last_instance = self.infra_config.instances[-1]
-        if isinstance(last_instance, (PCSMPCInstance, StageStateInstance)):
+        if isinstance(last_instance, StageStateInstance):
             server_uris_list = last_instance.server_uris or []
         return server_uris_list
 
@@ -378,7 +375,7 @@ class PrivateComputationInstance(InstanceBase):
             return None
 
         last_instance = instances[-1]
-        if isinstance(last_instance, (PCSMPCInstance, StageStateInstance)):
+        if isinstance(last_instance, StageStateInstance):
             return last_instance.containers
         else:
             return None

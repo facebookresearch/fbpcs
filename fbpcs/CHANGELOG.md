@@ -17,6 +17,7 @@ Types of changes
 
 ## [2.6.0] - 2023-01-23
 ### Removed
+* Removed deprecated PCSMPCInstance/MPCInstance from fbpcs
 * Removed deprecated MPCInstanceRepository from fbpcs
 * Removed deprecated MPCService APIs after MPCInstance usaged been moved to StageStateInstance. (create/start/stop/get/update_instance)
 * Removed `get_mpc` from private_computation_cli endpoint

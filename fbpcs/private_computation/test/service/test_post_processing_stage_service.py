@@ -87,9 +87,7 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             for handler_name in handlers.keys()
         }
         self.assertEqual(
-            # pyre-fixme[16]: Item `PCSMPCInstance` of `Union[PCSMPCInstance,
-            #  PostProcessingInstance]` has no attribute
-            #  `handler_statuses`.
+            # pyre-ignore
             post_processing_instance.handler_statuses,
             expected_handler_statuses,
         )
@@ -137,9 +135,7 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             for handler_name in handlers.keys()
         }
         self.assertEqual(
-            # pyre-fixme[16]: Item `PCSMPCInstance` of `Union[PCSMPCInstance,
-            #  PostProcessingInstance]` has no attribute
-            #  `handler_statuses`.
+            # pyre-ignore
             post_processing_instance.handler_statuses,
             expected_handler_statuses,
         )
@@ -192,9 +188,7 @@ class TestPostProcessingStageService(IsolatedAsyncioTestCase):
             )
         )
         self.assertEqual(
-            # pyre-fixme[16]: Item `PCSMPCInstance` of `Union[PCSMPCInstance,
-            #  PostProcessingInstance]` has no attribute
-            #  `handler_statuses`.
+            # pyre-ignore
             post_processing_instance.handler_statuses,
             expected_handler_statuses,
         )

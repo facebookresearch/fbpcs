@@ -16,7 +16,6 @@ from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.common.feature.pcs_feature_gate_utils import get_stage_flow
 from fbpcs.common.service.metric_service import MetricService
@@ -88,7 +87,6 @@ from fbpcs.private_computation.service.errors import (
     PrivateComputationServiceInvalidStageError,
     PrivateComputationServiceValidationError,
 )
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCInstance
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 from fbpcs.private_computation.service.pid_utils import (
     get_max_id_column_cnt,
@@ -804,13 +802,10 @@ class PrivateComputationService:
         if not private_computation_instance.infra_config.instances:
             return {}
 
-        # Get the last pid or mpc instance
+        # Get the stage state instance
         last_instance = private_computation_instance.infra_config.instances[-1]
-
         res = {}
-        if isinstance(last_instance, PCSMPCInstance) or isinstance(
-            last_instance, StageStateInstance
-        ):
+        if isinstance(last_instance, StageStateInstance):
             containers = last_instance.containers
             for i, container in enumerate(containers):
                 res[str(i)] = self.log_retriever.get_log_url(container.instance_id)

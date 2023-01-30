@@ -122,7 +122,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
             server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
-            An updated version of pc_instance that stores an MPCInstance
+            An updated version of pc_instance that stores an StageStateInstance
         """
         logging.info(f"[{self}] Starting Secure Random Sharding.")
         game_args = await (

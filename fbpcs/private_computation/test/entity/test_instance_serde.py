@@ -8,17 +8,14 @@
 
 import unittest
 
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
 from fbpcs.private_computation.test.entity.generate_instance_json import (
-    gen_dummy_mpc_instance,
     gen_dummy_pc_instance,
     gen_dummy_stage_state_instance,
-    LIFT_MPC_PATH,
     LIFT_PC_PATH,
     STAGE_STATE_PATH,
 )
@@ -62,15 +59,6 @@ class TestInstanceSerde(unittest.TestCase):
         except Exception as e:
             raise RuntimeError(ERR_MSG) from e
 
-    def test_mpc_deserialiation(self) -> None:
-        # this tests that old fields (and instances) can be deserialized
-        with open(LIFT_MPC_PATH) as f:
-            instance_json = f.read().strip()
-        try:
-            PCSMPCInstance.loads_schema(instance_json)
-        except Exception as e:
-            raise RuntimeError(ERR_MSG) from e
-
     def test_pc_deserialization(self) -> None:
         # this tests that old fields (and instances) can be deserialized
         with open(LIFT_PC_PATH) as f:
@@ -84,11 +72,6 @@ class TestInstanceSerde(unittest.TestCase):
         # this tests that new fields can be serialized
         stage_state_instance = gen_dummy_stage_state_instance()
         stage_state_instance.dumps_schema()
-
-    def test_mpc_serialization(self) -> None:
-        # this tests that new fields can be serialized
-        mpc_instance = gen_dummy_mpc_instance()
-        mpc_instance.dumps_schema()
 
     def test_pc_serialization(self) -> None:
         # this tests that new fields can be serialized

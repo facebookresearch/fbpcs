@@ -12,7 +12,6 @@ import os
 import time
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
-from fbpcs.common.entity.pcs_mpc_instance import PCSMPCInstance
 from fbpcs.common.entity.stage_state_instance import (
     StageStateInstance,
     StageStateInstanceStatus,
@@ -42,22 +41,12 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
-from fbpcs.private_computation.service.mpc.entity.mpc_instance import (
-    MPCInstanceStatus,
-    MPCParty,
-)
 
 LIFT_PC_PATH: str = os.path.join(
     os.path.dirname(__file__),
     "test_resources",
     "serialized_instances",
     "lift_pc_instance.json",
-)
-LIFT_MPC_PATH: str = os.path.join(
-    os.path.dirname(__file__),
-    "test_resources",
-    "serialized_instances",
-    "lift_mpc_instance.json",
 )
 STAGE_STATE_PATH: str = os.path.join(
     os.path.dirname(__file__),
@@ -94,29 +83,6 @@ def gen_dummy_stage_state_instance() -> StageStateInstance:
     )
 
 
-def gen_dummy_mpc_instance() -> PCSMPCInstance:
-    """Creates a dummy mpc instance to be used in unit tests"""
-
-    return PCSMPCInstance.create_instance(
-        instance_id="mpc_instance_id",
-        game_name="lift",
-        mpc_party=MPCParty.SERVER,
-        num_workers=1,
-        server_ips=["10.0.10.242"],
-        containers=[gen_dummy_container_instance()],
-        status=MPCInstanceStatus.COMPLETED,
-        game_args=[
-            {
-                "input_base_path": "https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_instance_1638998680_0_out_dir/data_processing_stage/out.csv",
-                "output_base_path": "https://bucket.s3.us-west-2.amazonaws.com/lift/partner/partner_instance_1638998680_0_out_dir/compute_stage/out.json",
-                "num_files": 40,
-                "concurrency": 4,
-                "file_start_index": 0,
-            }
-        ],
-    )
-
-
 def gen_dummy_post_processing_instance() -> PostProcessingInstance:
     """Creates a dummy post processing instance to be used in unit tests"""
     return PostProcessingInstance(
@@ -135,7 +101,6 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
         status_update_ts=int(time.time()),
         instances=[
             gen_dummy_stage_state_instance(),
-            gen_dummy_mpc_instance(),
             gen_dummy_post_processing_instance(),
         ],
         game_type=PrivateComputationGameType.LIFT,
@@ -173,21 +138,14 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
 
 if __name__ == "__main__":
     for path, instance in zip(
-        (STAGE_STATE_PATH, LIFT_MPC_PATH, LIFT_PC_PATH),
+        (STAGE_STATE_PATH, LIFT_PC_PATH),
         (
             gen_dummy_stage_state_instance(),
-            gen_dummy_mpc_instance(),
             gen_dummy_pc_instance(),
         ),
     ):
         json_output = instance.dumps_schema()
         if path == STAGE_STATE_PATH:
-            instance_dict = json.loads(json_output)
-            instance_dict[
-                "invalid_parameter_to_exclude"
-            ] = "This instance value should be excluded."
-            json_output = json.dumps(instance_dict)
-        elif path == LIFT_MPC_PATH:
             instance_dict = json.loads(json_output)
             instance_dict[
                 "invalid_parameter_to_exclude"

@@ -107,7 +107,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
-            An updated version of pc_instance that stores an MPCInstance
+            An updated version of pc_instance that stores an StageStateInstance
         """
 
         # Prepare arguments for game
@@ -198,7 +198,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
         self,
         pc_instance: PrivateComputationInstance,
     ) -> PrivateComputationInstanceStatus:
-        """Updates the MPCInstances and gets latest PrivateComputationInstance status
+        """Gets latest PrivateComputationInstance status
 
         Arguments:
             private_computation_instance: The PC instance that is being updated
