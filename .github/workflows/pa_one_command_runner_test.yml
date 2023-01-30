@@ -109,7 +109,7 @@ jobs:
 
       - name: One Command runner
         run: |
-          ./fbpcs/scripts/run_fbpcs.sh run_attribution \
+          FBPCS_CONTAINER_REPO_URL=public.ecr.aws/t7b1w5a4 FBPCS_IMAGE_NAME=pc-coordinator-prod ./fbpcs/scripts/run_fbpcs.sh run_attribution \
           --dataset_id=${{ inputs.dataset_id }} \
           --attribution_rule="last_click_1d" \
           --input_path=${{ inputs.input_path }} \

@@ -69,7 +69,7 @@ jobs:
 
       - name: One command runner
         run: |
-          ./fbpcs/scripts/run_fbpcs.sh run_study \
+          FBPCS_CONTAINER_REPO_URL=public.ecr.aws/t7b1w5a4 FBPCS_IMAGE_NAME=pc-coordinator-prod ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ github.event.inputs.study_id }} \
           --objective_ids=${{ github.event.inputs.objective_id }} \
           --input_paths=${{ github.event.inputs.input_path }} \

@@ -118,7 +118,7 @@ jobs:
         id: runner
         continue-on-error: true
         run: |
-          ./fbpcs/scripts/run_fbpcs.sh run_study \
+          FBPCS_CONTAINER_REPO_URL=public.ecr.aws/t7b1w5a4 FBPCS_IMAGE_NAME=pc-coordinator-prod ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ inputs.study_id }} \
           --objective_ids=${{ inputs.objective_id }} \
           --input_paths=${{ inputs.input_path }} \
