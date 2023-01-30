@@ -51,7 +51,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-${{ inputs.image_to_build }}-${{ github.sha }}
+          key: ${{ runner.os }}-${{ inputs.image_to_build }}-${{ github.ref_name }}
           restore-keys: |
             ${{ runner.os }}-${{ inputs.image_to_build }}
 
