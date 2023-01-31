@@ -151,6 +151,9 @@ class PCPreValidationStageService(PrivateComputationStageService):
         """
         Returns the pc_instance's current status
         """
+
+        ret_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
+
         # When this stage is enabled, it should return the status based on the container status
         if self._should_run_pre_validation(pc_instance):
             instance_status = get_pc_status_from_stage_state(
@@ -181,17 +184,19 @@ class PCPreValidationStageService(PrivateComputationStageService):
                 )
 
             # adding to partner TL if needed
-            return instance_status
+            ret_status = instance_status
 
-        else:
-            if self._trace_logging_svc is not None:
-                self._trace_logging_svc.write_checkpoint(
-                    run_id=pc_instance.infra_config.run_id,
-                    instance_id=pc_instance.infra_config.instance_id,
-                    checkpoint_name=pc_instance.current_stage.name,
-                    status=CheckpointStatus.COMPLETED,
-                )
-            return PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
+        # emit logs regardless of whether this stage is enabled or not
+        if self._trace_logging_svc is not None:
+            self._trace_logging_svc.write_checkpoint(
+                run_id=pc_instance.infra_config.run_id,
+                instance_id=pc_instance.infra_config.instance_id,
+                checkpoint_name=pc_instance.current_stage.name,
+                checkpoint_data={"PRE_VALIDATION_STATUS": str(ret_status)},
+                status=CheckpointStatus.COMPLETED,
+            )
+
+        return ret_status
 
     def _should_run_pre_validation(
         self, pc_instance: PrivateComputationInstance
