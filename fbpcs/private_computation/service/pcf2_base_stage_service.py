@@ -103,7 +103,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             server_certificate_path: The path to write server certificate on a container.
             ca_certificate_path: The path to write CA certificate on a container.
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
-            server_hostnames: ignored
+            server_hostnames: only used by the partner role. These are hostname addresses of the publisher's containers.
             server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
