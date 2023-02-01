@@ -105,9 +105,10 @@ inline void shareBitsForValuesStep(
       numBitsForValuesWidth,
       common::PARTNER,
       common::PUBLISHER>(myRole, valueSquaredBits);
-  XLOG(INFO) << "Num bits for values: " << liftGameProcessedData.valueBits;
+  XLOG(INFO) << "Num bits for values: "
+             << (int32_t)liftGameProcessedData.valueBits;
   XLOG(INFO) << "Num bits for values squared: "
-             << liftGameProcessedData.valueSquaredBits;
+             << (int32_t)liftGameProcessedData.valueSquaredBits;
 }
 
 template <int schedulerId>
