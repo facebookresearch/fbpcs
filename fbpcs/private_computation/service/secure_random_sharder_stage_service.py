@@ -118,7 +118,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
         Args:
             pc_instance: the private computation instance to run secure random sharding with
             server_ips: only used by the partner role. These are the ip addresses of the publisher's containers.
-            server_hostnames: ignored, TODO: T141115702 - configure hostname for TLS when supported by env vars
+            server_hostnames: only used by the partner role. These are hostname addresses of the publisher's containers.
             server_private_key_ref_provider: Provides a reference to the server private key, if applicable.
 
         Returns:
