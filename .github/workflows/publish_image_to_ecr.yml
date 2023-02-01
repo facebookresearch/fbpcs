@@ -41,10 +41,10 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}
-  IMAGE_TAG: ${{ github.event.inputs.existing_tag }}
-  ECR_REPOSITORY: ${{ github.event.inputs.ecr_repo }}
-  NEW_IMAGE_TAG: ${{ github.event.inputs.new_tag }}
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}
+  IMAGE_TAG: ${{ inputs.existing_tag }}
+  ECR_REPOSITORY: ${{ if ecr_repo_type == private && inputs.ecr_repo || t7b1w5a4/inputs.ecr_repo }}
+  NEW_IMAGE_TAG: ${{ inputs.new_tag }}
 
 jobs:
 
@@ -56,7 +56,7 @@ jobs:
       contents: read
     steps:
     - name: Print Tracker Hash
-      run: echo ${{ github.event.inputs.tracker_hash}}
+      run: echo ${{ inputs.tracker_hash}}
 
     - uses: docker/login-action@v1
       with:
@@ -71,7 +71,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-        aws-region: ${{ github.event.inputs.aws_region }}
+        aws-region: ${{ inputs.aws_region }}
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -92,4 +92,3 @@ jobs:
       run: |
         docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.NEW_IMAGE_TAG }}
         docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-
