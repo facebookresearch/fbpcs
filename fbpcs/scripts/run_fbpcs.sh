@@ -10,6 +10,9 @@ set -e
 : "${FBPCS_CONTAINER_REPO_URL:=539290649537.dkr.ecr.us-west-2.amazonaws.com}"
 : "${FBPCS_IMAGE_NAME:=pl-coordinator-env}"
 
+echo "Container Repo URL: $FBPCS_CONTAINER_REPO_URL"
+echo "FBPCS Image Name: $FBPCS_IMAGE_NAME"
+
 REAL_INSTANCE_REPO=$(realpath 'fbpcs_instances')
 mkdir -p "$REAL_INSTANCE_REPO"
 
