@@ -43,7 +43,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}
   IMAGE_TAG: ${{ inputs.existing_tag }}
-  ECR_REPOSITORY: ${{ ecr_repo_type == 'private' && inputs.ecr_repo || t7b1w5a4/inputs.ecr_repo }}
+  ECR_REPOSITORY: ${{ inputs.ecr_repo_type == 'private' && inputs.ecr_repo || t7b1w5a4/inputs.ecr_repo }}
   NEW_IMAGE_TAG: ${{ inputs.new_tag }}
 
 jobs:
