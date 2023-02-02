@@ -101,6 +101,9 @@ class TestPlStudyRunner(TestCase):
                     "input_path": "https://input/path/to/input.csv",
                     "num_shards": self.num_shards,
                     "instance_id": self.instance_id,
+                    "instance_ids": [
+                        self.instance_id,
+                    ],
                     "status": "CREATED",
                 }
             }
@@ -202,14 +205,16 @@ class TestPlStudyRunner(TestCase):
                             "latest_data_ts": latest_data_ts,
                             "input_path": "https://test-bucket.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv",
                             "num_shards": 2,
+                            "instance_ids": [],
                         }
                     }
                 }
 
                 if is_instance_valid:
-                    expected_results["22222222222222"]["11111111111111"].update(
-                        {"instance_id": "33333333333333", "status": status}
-                    )
+                    # pyre-ignore
+                    expected_results["22222222222222"]["11111111111111"][
+                        "instance_ids"
+                    ].append("33333333333333")
 
                 actual_results = pl_study_runner._get_cell_obj_instance(
                     study_data=study_data,
