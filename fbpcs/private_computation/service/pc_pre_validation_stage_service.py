@@ -20,6 +20,7 @@ from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationRole,
@@ -112,12 +113,16 @@ class PCPreValidationStageService(PrivateComputationStageService):
         region = self._pc_validator_config.region
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = self._onedocker_binary_config_map[binary_name]
+        pre_validation_file_stream_flag = pc_instance.has_feature(
+            PCSFeature.PRE_VALIDATION_FILE_STREAM
+        )
         cmd_args = get_cmd_args(
-            pc_instance.product_config.common.input_path,
-            region,
-            binary_config,
-            pc_instance.product_config.common.input_path_start_ts,
-            pc_instance.product_config.common.input_path_end_ts,
+            input_path=pc_instance.product_config.common.input_path,
+            region=region,
+            binary_config=binary_config,
+            pre_validation_file_stream_flag=pre_validation_file_stream_flag,
+            input_path_start_ts=pc_instance.product_config.common.input_path_start_ts,
+            input_path_end_ts=pc_instance.product_config.common.input_path_end_ts,
         )
         env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
         should_wait_spin_up: bool = (

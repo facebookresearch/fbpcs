@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from collections import defaultdict
+from typing import Optional, Set
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
@@ -18,6 +19,7 @@ from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationGameType,
 )
 from fbpcs.private_computation.entity.pc_validator_config import PCValidatorConfig
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationRole,
@@ -31,6 +33,7 @@ from fbpcs.private_computation.entity.product_config import (
     LiftConfig,
     ProductConfig,
 )
+
 from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
     PCPreValidationStageService,
 )
@@ -41,9 +44,10 @@ from fbpcs.private_computation.service.utils import generate_env_vars_dict
 
 
 class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
-    def setUp(self) -> None:
-        # create partner PrivateComputationInstance
-        infra_config: InfraConfig = InfraConfig(
+    def _get_infra_config(
+        self, pcs_features: Optional[Set[PCSFeature]] = None
+    ) -> InfraConfig:
+        return InfraConfig(
             instance_id="123",
             role=PrivateComputationRole.PARTNER,
             status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
@@ -53,16 +57,22 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             num_pid_containers=1,
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
+            pcs_features=pcs_features if pcs_features else {PCSFeature.UNKNOWN},
             status_updates=[],
         )
-        common: CommonProductConfig = CommonProductConfig(
+
+    def setUp(self) -> None:
+        # create partner PrivateComputationInstance
+        self._infra_config: InfraConfig = self._get_infra_config()
+        self._common: CommonProductConfig = CommonProductConfig(
             input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
             output_dir="789",
         )
-        product_config: ProductConfig = LiftConfig(common=common)
+        self._product_config: ProductConfig = LiftConfig(common=self._common)
+
         self._pc_instance = PrivateComputationInstance(
-            infra_config=infra_config,
-            product_config=product_config,
+            infra_config=self._infra_config,
+            product_config=self._product_config,
         )
 
         self.onedocker_binary_config_map = defaultdict(
@@ -295,4 +305,65 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         logger_mock.error.assert_called_with(
             f"[PCPreValidation] - stage failed because of some failed validations. Please check the logs in ECS for task id '{task_id}' to see the validation issues:\n"
             + f"Failed task link: {failed_task_link}"
+        )
+
+    @patch.object(RunBinaryBaseService, "start_containers")
+    @patch(
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.StageStateInstance"
+    )
+    async def test_run_async_when_file_stream_feature_is_enabled_passes_it_to_the_cli(
+        self, mock_stage_state_instance, mock_run_binary_base_service_start_containers
+    ) -> None:
+        pc_instance = PrivateComputationInstance(
+            infra_config=self._get_infra_config(
+                {PCSFeature.PRE_VALIDATION_FILE_STREAM}
+            ),
+            product_config=self._product_config,
+        )
+        mock_container_instance = MagicMock()
+        mock_onedocker_svc = MagicMock()
+        mock_run_binary_base_service_start_containers.return_value = [
+            mock_container_instance
+        ]
+        region = "us-west-1"
+        expected_cmd_args = " ".join(
+            [
+                f"--input-file-path={pc_instance.product_config.common.input_path}",
+                "--cloud-provider=AWS",
+                f"--region={region}",
+                "--binary-version=latest",
+                "--pre-validation-file-stream=enabled",
+            ]
+        )
+        pc_validator_config = PCValidatorConfig(
+            region=region,
+            pc_pre_validator_enabled=True,
+        )
+        stage_service = PCPreValidationStageService(
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
+        )
+
+        await stage_service.run_async(
+            pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
+        )
+
+        env_vars = generate_env_vars_dict(repository_path="test_path/")
+        mock_run_binary_base_service_start_containers.assert_called_with(
+            cmd_args_list=[expected_cmd_args],
+            onedocker_svc=mock_onedocker_svc,
+            binary_version="latest",
+            binary_name=OneDockerBinaryNames.PC_PRE_VALIDATION.value,
+            timeout=1200,
+            env_vars=env_vars,
+            wait_for_containers_to_start_up=True,
+            existing_containers=None,
+        )
+
+        mock_stage_state_instance.assert_called_with(
+            pc_instance.infra_config.instance_id,
+            pc_instance.current_stage.name,
+            containers=[mock_container_instance],
+        )
+        self.assertEqual(
+            pc_instance.infra_config.instances, [mock_stage_state_instance()]
         )

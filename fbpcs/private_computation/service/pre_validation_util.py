@@ -15,6 +15,7 @@ def get_cmd_args(
     input_path: str,
     region: str,
     binary_config: OneDockerBinaryConfig,
+    pre_validation_file_stream_flag: bool,
     input_path_start_ts: Optional[str],
     input_path_end_ts: Optional[str],
 ) -> str:
@@ -25,6 +26,7 @@ def get_cmd_args(
         # pc_pre_validation assumes all other binaries runs on the same version tag as its own
         f"--binary-version={binary_config.binary_version}",
     ]
+
     if input_path_start_ts and input_path_end_ts:
         args.extend(
             [
@@ -32,4 +34,8 @@ def get_cmd_args(
                 f"--end-timestamp={input_path_end_ts}",
             ]
         )
+
+    if pre_validation_file_stream_flag:
+        args.append("--pre-validation-file-stream=enabled")
+
     return " ".join(args)

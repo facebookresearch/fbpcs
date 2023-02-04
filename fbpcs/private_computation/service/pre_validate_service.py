@@ -43,11 +43,12 @@ class PreValidateService:
 
         cmd_args = [
             get_cmd_args(
-                input_path,
-                region,
-                binary_config,
-                None,
-                None,
+                input_path=input_path,
+                region=region,
+                binary_config=binary_config,
+                pre_validation_file_stream_flag=True,
+                input_path_start_ts=None,
+                input_path_end_ts=None,
             )
             for input_path in input_paths
         ]
