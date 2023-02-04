@@ -21,6 +21,7 @@ Usage:
         [--start-timestamp=<start-timestamp>]
         [--end-timestamp=<end-timestamp>]
         [--binary-version=<binary-version>]
+        [--pre-validation-file-stream=<pre-validation-file-stream>]
 """
 
 
@@ -43,6 +44,8 @@ ACCESS_KEY_DATA = "--access-key-data"
 START_TIMESTAMP = "--start-timestamp"
 END_TIMESTAMP = "--end-timestamp"
 BINARY_VERSION = "--binary-version"
+PRE_VALIDATION_FILE_STREAM_FLAG = "--pre-validation-file-stream"
+PRE_VALIDATION_FILE_STREAM_ENABLED = "enabled"
 
 
 def main(argv: OptionalType[List[str]] = None) -> None:
@@ -59,11 +62,15 @@ def main(argv: OptionalType[List[str]] = None) -> None:
             Optional(START_TIMESTAMP): optional_string,
             Optional(END_TIMESTAMP): optional_string,
             Optional(BINARY_VERSION): optional_string,
+            Optional(PRE_VALIDATION_FILE_STREAM_FLAG): optional_string,
         }
     )
     arguments = s.validate(docopt(__doc__, argv))
     assert arguments
     print("Parsed pc_pre_validation_cli arguments")
+    stream_file = (
+        arguments[PRE_VALIDATION_FILE_STREAM_FLAG] == PRE_VALIDATION_FILE_STREAM_ENABLED
+    )
 
     validators = [
         cast(
@@ -72,6 +79,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
                 input_file_path=arguments[INPUT_FILE_PATH],
                 cloud_provider=arguments[CLOUD_PROVIDER],
                 region=arguments[REGION],
+                stream_file=stream_file,
                 start_timestamp=arguments[START_TIMESTAMP],
                 end_timestamp=arguments[END_TIMESTAMP],
                 access_key_id=arguments[ACCESS_KEY_ID],

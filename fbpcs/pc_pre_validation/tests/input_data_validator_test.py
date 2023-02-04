@@ -31,6 +31,7 @@ TEST_FILE_SIZE = 1234
 TEST_CLOUD_PROVIDER: CloudProvider = CloudProvider.AWS
 TEST_INPUT_FILE_PATH = f"s3://test-bucket/{TEST_FILENAME}"
 TEST_REGION = "us-west-2"
+TEST_STREAM_FILE = False
 TEST_TIMESTAMP: float = time.time()
 TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAMP}"
 
@@ -65,6 +66,7 @@ class TestInputDataValidator(TestCase):
             TEST_INPUT_FILE_PATH,
             TEST_CLOUD_PROVIDER,
             TEST_REGION,
+            TEST_STREAM_FILE,
             access_key_id,
             access_key_data,
         )
@@ -89,7 +91,7 @@ class TestInputDataValidator(TestCase):
         self.storage_service_mock.copy.side_effect = Exception(exception_message)
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -115,7 +117,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -143,7 +145,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -171,7 +173,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -199,7 +201,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -232,7 +234,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -265,7 +267,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -298,7 +300,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -336,7 +338,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -364,7 +366,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -392,7 +394,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -412,7 +414,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -440,7 +442,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -485,7 +487,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -529,7 +531,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -574,7 +576,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -604,7 +606,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -650,7 +652,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -674,7 +676,7 @@ class TestInputDataValidator(TestCase):
         count_empty_field_mock.side_effect = Exception(expected_exception_message)
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -707,7 +709,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -733,7 +735,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -760,7 +762,7 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION
+            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_STREAM_FILE
         )
         report = validator.validate()
 
@@ -774,6 +776,7 @@ class TestInputDataValidator(TestCase):
             input_file_path=TEST_INPUT_FILE_PATH,
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
             start_timestamp="1650000000",
             end_timestamp="1640000000",
         )
@@ -787,6 +790,7 @@ class TestInputDataValidator(TestCase):
             input_file_path=TEST_INPUT_FILE_PATH,
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
             start_timestamp="bad-timestamp",
             end_timestamp="",
         )
@@ -828,6 +832,7 @@ class TestInputDataValidator(TestCase):
             input_file_path=TEST_INPUT_FILE_PATH,
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
         )
@@ -870,6 +875,7 @@ class TestInputDataValidator(TestCase):
             input_file_path=TEST_INPUT_FILE_PATH,
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
         )

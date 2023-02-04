@@ -44,6 +44,7 @@ class TestPCPreValidationCLI(TestCase):
             input_file_path=expected_input_file_path,
             cloud_provider=expected_cloud_provider,
             region=expected_region,
+            stream_file=False,
             start_timestamp=None,
             end_timestamp=None,
             access_key_id=None,
@@ -91,6 +92,7 @@ class TestPCPreValidationCLI(TestCase):
             f"--access-key-id={expected_access_key_id}",
             f"--access-key-data={expected_access_key_data}",
             f"--binary-version={expected_binary_version}",
+            "--pre-validation-file-stream=enabled",
         ]
 
         validation_cli.main(argv)
@@ -99,6 +101,7 @@ class TestPCPreValidationCLI(TestCase):
             input_file_path=expected_input_file_path,
             cloud_provider=expected_cloud_provider,
             region=expected_region,
+            stream_file=True,
             start_timestamp=expected_start_timestamp,
             end_timestamp=expected_end_timestamp,
             access_key_id=expected_access_key_id,

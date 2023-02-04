@@ -53,6 +53,7 @@ class InputDataValidator(Validator):
         input_file_path: str,
         cloud_provider: CloudProvider,
         region: str,
+        stream_file: bool,
         access_key_id: Optional[str] = None,
         access_key_data: Optional[str] = None,
         start_timestamp: Optional[str] = None,
