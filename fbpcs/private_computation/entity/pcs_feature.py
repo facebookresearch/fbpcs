@@ -23,6 +23,7 @@ class PCSFeature(Enum):
     PCF_TLS = "pcf_tls"
     PA_TIMESTAMP_VALIDATION = "pa_timestamp_validation"
     PL_TIMESTAMP_VALIDATION = "pl_timestamp_validation"
+    PRE_VALIDATION_FILE_STREAM = "pre_validation_file_stream"
     UNKNOWN = "unknown"
 
     @classmethod
