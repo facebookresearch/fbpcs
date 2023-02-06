@@ -6,11 +6,20 @@
 
 # pyre-strict
 
+# postpone evaluation of type hint annotations until runtime (support forward reference)
+# This will become the default in python 4.0: https://peps.python.org/pep-0563/
+from __future__ import annotations
+
 from abc import ABC
-from dataclasses import dataclass
-from typing import Generic, Optional, Type, TypeVar
+from dataclasses import dataclass, field
+from typing import Dict, Generic, List, Optional, Type, TYPE_CHECKING, TypeVar
 
 from dataclasses_json import DataClassJsonMixin
+
+# only do these imports when type checking (support forward reference)
+if TYPE_CHECKING:
+    from fbpcs.bolt.bolt_hook import BoltHook, BoltHookKey
+
 from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
 from fbpcs.bolt.exceptions import IncompatibleStageError
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -47,6 +56,9 @@ class BoltJob(DataClassJsonMixin, Generic[T, U]):
     # allows the final stage to be configured for each job to stop a run early
     # if one isn't given, final_stage defaults to the final stage of the job's stage_flow
     final_stage: Optional[PrivateComputationBaseStageFlow] = None
+    # pyre doesn't accept Any or object as an option, so we will just ignore it
+    # pyre-ignore: generic type BoltHook requires 1 generic parameter
+    hooks: Dict["BoltHookKey", List["BoltHook"]] = field(default_factory=dict)
 
     def is_finished(
         self,
