@@ -7,13 +7,21 @@
 # pyre-strict
 
 import asyncio
+import itertools
 import logging
 from time import time
-from typing import Generic, List, Optional, Tuple, Type, TypeVar
+from typing import Awaitable, Generic, List, Optional, Tuple, Type, TypeVar
 
 from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 
 from fbpcs.bolt.bolt_client import BoltClient, BoltState
+
+from fbpcs.bolt.bolt_hook import (
+    BoltHookCommonInjectionArgs,
+    BoltHookEvent,
+    BoltHookKey,
+    BoltHookTiming,
+)
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
 from fbpcs.bolt.bolt_job_summary import BoltJobSummary, BoltMetric, BoltMetricType
 from fbpcs.bolt.bolt_summary import BoltSummary
@@ -46,6 +54,9 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 )
 
 from fbpcs.utils.logger_adapter import LoggerAdapter
+
+# Used to represent an "Awaitable"
+A = TypeVar("A")
 
 T = TypeVar("T", bound=BoltCreateInstanceArgs)
 U = TypeVar("U", bound=BoltCreateInstanceArgs)
@@ -173,14 +184,20 @@ class BoltRunner(Generic[T, U]):
                             bolt_metrics.extend(next_stage_metrics)
 
                             stage_wait_time = time()
-                            await self.wait_stage_complete(
-                                publisher_id=publisher_id,
-                                partner_id=partner_id,
-                                stage=stage,
-                                poll_interval=job.poll_interval,
-                                logger=logger,
-                            )
 
+                            await self._execute_event(
+                                self.wait_stage_complete(
+                                    publisher_id=publisher_id,
+                                    partner_id=partner_id,
+                                    stage=stage,
+                                    poll_interval=job.poll_interval,
+                                    logger=logger,
+                                ),
+                                job=job,
+                                event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
+                                stage=stage,
+                                role=None,
+                            )
                             bolt_metrics.append(
                                 BoltMetric(
                                     BoltMetricType.STAGE_WAIT_FOR_COMPLETED,
@@ -256,6 +273,82 @@ class BoltRunner(Generic[T, U]):
                     is_success=False,
                     bolt_metrics=bolt_metrics,
                 )
+
+    async def _execute_event(
+        self,
+        awaitable: Awaitable[A],
+        *,
+        job: BoltJob[T, U],
+        event: BoltHookEvent,
+        stage: Optional[PrivateComputationBaseStageFlow] = None,
+        role: Optional[PrivateComputationRole] = None,
+    ) -> A:
+        """Execute event, including an arbitrary awaitable and various hooks
+
+        awaitable: Any awaitable to be executed (e.g. run_stage, wait_stage_complete)
+        job: BoltJob containing publisher + partner arguments for the study/experiment
+        event: A description of what the event is (e.g. wait for completed event)
+        stage: Only run hooks for the given stage. If stage is None, run on all stages
+        role: Only run hooks for the given role. If role is None, run for all roles
+
+        Returns:
+            The result from executing await awaitable
+        """
+
+        # run pre-event hook
+        await self._run_hooks(
+            job=job, event=event, when=BoltHookTiming.BEFORE, stage=stage, role=role
+        )
+
+        # run event hook + the awaitable
+        res, _ = await asyncio.gather(
+            awaitable,
+            self._run_hooks(
+                job=job, event=event, when=BoltHookTiming.DURING, stage=stage, role=role
+            ),
+        )
+
+        # run post-event hook
+        await self._run_hooks(
+            job=job, event=event, when=BoltHookTiming.AFTER, stage=stage, role=role
+        )
+
+        return res
+
+    @bolt_checkpoint(dump_params=True)
+    async def _run_hooks(
+        self,
+        *,
+        job: BoltJob[T, U],
+        event: BoltHookEvent,
+        when: BoltHookTiming,
+        stage: Optional[PrivateComputationBaseStageFlow] = None,
+        role: Optional[PrivateComputationRole] = None,
+    ) -> None:
+        all_hooks = (
+            hook
+            # get every combination of stage, role, when, and event.
+            # "None" represents that the field isn't used to fetch the hooks
+            for s, r, w, e in itertools.product(
+                {stage, None}, {role, None}, {when, None}, {event, None}
+            )
+            for hook in job.hooks.get(
+                BoltHookKey(event=e, when=w, stage=s.name if s else s, role=r), []
+            )
+        )
+
+        await asyncio.gather(
+            *[
+                hook.inject(
+                    BoltHookCommonInjectionArgs(
+                        job=job,
+                        publisher_client=self.publisher_client,
+                        partner_client=self.partner_client,
+                    )
+                )
+                for hook in all_hooks
+            ]
+        )
 
     @bolt_checkpoint(dump_params=True, include=["stage"])
     async def run_next_stage(

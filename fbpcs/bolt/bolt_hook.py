@@ -16,14 +16,51 @@ import logging
 import random
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Generic, Optional, TYPE_CHECKING, TypeVar
 
 from dataclasses_json import DataClassJsonMixin
+
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+)
 
 # only do these imports when type checking (support forward reference)
 if TYPE_CHECKING:
     from fbpcs.bolt.bolt_client import BoltClient
     from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob
+
+
+class BoltHookEvent(Enum):
+    """Checkpoints in the BoltRunner that can be hooked with BoltHooks"""
+
+    STAGE_WAIT_FOR_COMPLETED = "STAGE_WAIT_FOR_COMPLETED"
+
+
+class BoltHookTiming(Enum):
+    """Defines where hook behavior should be injected with reference to a BoltHookEvent"""
+
+    # Hook should run "Before" the corresponding BoltHookEvent starts
+    BEFORE = "BEFORE"
+    # Hook should run "during" the corresponding BoltHookEvent's execution
+    DURING = "DURING"
+    # Hook should run "after" the corresponding BoltHookEvent completes
+    AFTER = "AFTER"
+
+
+# frozen + eq => hashable
+@dataclass(frozen=True, eq=True)
+class BoltHookKey:
+    """This class is used as a dictionary key in BoltJob to get Hooks matching
+    the conditions specified
+    """
+
+    event: Optional[BoltHookEvent] = None
+    when: Optional[BoltHookTiming] = None
+    # Based on feature gates, stage flows might be mutated outside of the BoltJob, so
+    # it's safer to use the stage name instead, which persists across many stage flows
+    stage: Optional[str] = None
+    role: Optional[PrivateComputationRole] = None
 
 
 @dataclass
