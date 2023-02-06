@@ -34,8 +34,8 @@ on:
         default: "test build"
 
 env:
-  FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
-  FBPCS_IMAGE_NAME: coordinator
+  FBPCS_CONTAINER_REPO_URL: public.ecr.aws/t7b1w5a4
+  FBPCS_IMAGE_NAME: pc-coordinator-prod
   FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_RC_UDP_GRAPH_API_TOKEN }}
 
 jobs:
@@ -68,9 +68,6 @@ jobs:
           role-session-name: ${{ steps.aws_session_name.outputs.session_name }}
 
       - name: One command runner
-        env:
-          FBPCS_CONTAINER_REPO_URL: public.ecr.aws/t7b1w5a4
-          FBPCS_IMAGE_NAME: pc-coordinator-prod
         run: |
           ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ github.event.inputs.study_id }} \
@@ -97,6 +94,7 @@ jobs:
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }} \
+          --image_version=${{ inputs.tag }} \
           --docker_env=AWS_ACCESS_KEY_ID \
           --docker_env=AWS_SECRET_ACCESS_KEY \
           --docker_env=AWS_SESSION_TOKEN \
