@@ -16,6 +16,7 @@ from typing import Any, Dict, Iterable, List, Optional, Type
 import dateutil.parser
 import pytz
 from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
+from fbpcs.bolt.bolt_hook import BoltHook, BoltHookArgs, BoltHookKey
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.bolt_summary import BoltSummary
@@ -153,6 +154,7 @@ async def run_attribution_async(
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
+    bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]] = None,
 ) -> BoltSummary:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
@@ -200,6 +202,7 @@ async def run_attribution_async(
         run_id=run_id,
         graphapi_version=graphapi_version,
         graphapi_domain=graphapi_domain,
+        bolt_hooks=bolt_hooks,
     )
 
 
@@ -239,6 +242,7 @@ async def _run_attribution_async_helper(
     run_id: Optional[str],
     graphapi_version: Optional[str],
     graphapi_domain: Optional[str],
+    bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]],
 ) -> BoltSummary:
 
     try:
@@ -383,6 +387,7 @@ async def _run_attribution_async_helper(
         num_tries=num_tries,
         final_stage=stage_flow_override.get_last_stage().previous_stage,
         poll_interval=60,
+        hooks=bolt_hooks or {},
     )
     # Step 4. Run instances async
 
