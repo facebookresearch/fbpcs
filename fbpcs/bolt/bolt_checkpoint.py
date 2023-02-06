@@ -7,6 +7,8 @@
 
 from typing import Any, Dict, Optional
 
+from fbpcs.bolt.bolt_hook import BoltHookCommonInjectionArgs
+
 from fbpcs.bolt.bolt_job import BoltCreateInstanceArgs, BoltJob, BoltPlayerArgs
 from fbpcs.common.service.trace_logging_registry import (
     InstanceIdtoRunIdRegistry,
@@ -24,6 +26,7 @@ class bolt_checkpoint(write_checkpoint):
         "partner_id",
         "job",
         "instance_args",
+        "injection_args",
     ]
     _DEFAULT_COMPONENT_NAME = "Bolt"
 
@@ -42,6 +45,8 @@ class bolt_checkpoint(write_checkpoint):
             return instance_id_obj.create_instance_args.instance_id
         elif isinstance(instance_id_obj, BoltJob):
             return instance_id_obj.publisher_bolt_args.create_instance_args.instance_id
+        elif isinstance(instance_id_obj, BoltHookCommonInjectionArgs):
+            return instance_id_obj.publisher_id
         else:
             return super()._param_to_instance_id(
                 instance_id_param=instance_id_param, kwargs=kwargs
