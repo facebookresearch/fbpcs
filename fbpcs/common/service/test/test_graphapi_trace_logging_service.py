@@ -6,15 +6,15 @@
 
 # pyre-strict
 
-import json
 import logging
+from queue import SimpleQueue
 from unittest import mock, TestCase
+from unittest.mock import call
 
 import requests
 
 from fbpcs.common.service.graphapi_trace_logging_service import (
     GraphApiTraceLoggingService,
-    RESPONSE_TIMEOUT,
 )
 from fbpcs.common.service.trace_logging_service import CheckpointStatus
 
@@ -27,6 +27,7 @@ class TestGraphApiTraceLoggingService(TestCase):
     def setUp(self) -> None:
         self.logger = mock.create_autospec(logging.Logger)
         self.mock_requests = mock.create_autospec(requests)
+        self.mock_msg_queue = mock.create_autospec(SimpleQueue)
         # "wtf is this line?"
         # Well, we've mocked out the entire requests lib in the line above.
         # If we don't *reset* the exceptions module to point to the *real*
@@ -41,34 +42,22 @@ class TestGraphApiTraceLoggingService(TestCase):
             endpoint_url=TEST_ENDPOINT_URL,
         )
         self.svc.logger = self.logger
+        self.svc.msg_queue = self.mock_msg_queue
 
     def test_write_checkpoint_simple(self) -> None:
-        # Arrange
-        form_data = {
-            "operation": "write_checkpoint",
-            "run_id": "run123",
-            "instance_id": "instance456",
-            "checkpoint_name": "foo",
-            "status": str(CheckpointStatus.STARTED),
-        }
-
         # Act
-        with mock.patch(
-            "fbpcs.common.service.graphapi_trace_logging_service.requests",
-            self.mock_requests,
-        ):
-            self.svc.write_checkpoint(
-                run_id="run123",
-                instance_id="instance456",
-                checkpoint_name="foo",
-                status=CheckpointStatus.STARTED,
-            )
+        self.svc.write_checkpoint(
+            run_id="run123",
+            instance_id="instance456",
+            checkpoint_name="foo",
+            status=CheckpointStatus.STARTED,
+        )
 
         # Assert
-        self.logger.info.assert_called_once()
-        self.mock_requests.post.assert_called_once()
+        self.mock_msg_queue.put.assert_called_once()
+        self.logger.debug.assert_called_once()
 
-    def test_write_checkpoint_request_timeout(self) -> None:
+    def test_post_request_timeout(self) -> None:
         # Arrange
         self.mock_requests.post.side_effect = requests.exceptions.Timeout()
 
@@ -77,12 +66,7 @@ class TestGraphApiTraceLoggingService(TestCase):
             "fbpcs.common.service.graphapi_trace_logging_service.requests",
             self.mock_requests,
         ):
-            self.svc.write_checkpoint(
-                run_id="run123",
-                instance_id="instance456",
-                checkpoint_name="foo",
-                status=CheckpointStatus.STARTED,
-            )
+            self.svc._post_request(params={})
 
         # Assert
         self.logger.info.assert_called_once()
@@ -92,7 +76,7 @@ class TestGraphApiTraceLoggingService(TestCase):
         # it's *really* annoying to figure out what exactly it should look like here.
         self.assertIn("Timeout", self.logger.info.call_args_list[0][0][0])
 
-    def test_write_checkpoint_other_exception(self) -> None:
+    def test_post_request_other_exception(self) -> None:
         # Arrange
         self.mock_requests.post.side_effect = Exception("Foobar")
 
@@ -101,12 +85,7 @@ class TestGraphApiTraceLoggingService(TestCase):
             "fbpcs.common.service.graphapi_trace_logging_service.requests",
             self.mock_requests,
         ):
-            self.svc.write_checkpoint(
-                run_id="run123",
-                instance_id="instance456",
-                checkpoint_name="foo",
-                status=CheckpointStatus.STARTED,
-            )
+            self.svc._post_request(params={})
 
         # Assert
         self.logger.info.assert_called_once()
@@ -119,28 +98,80 @@ class TestGraphApiTraceLoggingService(TestCase):
     def test_write_checkpoint_custom_data(self) -> None:
         # Arrange
         data = {"bar": "baz", "quux": "quuz"}
-        form_data = {
-            "operation": "write_checkpoint",
-            "run_id": "run123",
-            "instance_id": "instance456",
-            "checkpoint_name": "foo",
-            "status": str(CheckpointStatus.STARTED),
-            "checkpoint_data": json.dumps(data),
-        }
+
+        # Act
+        self.svc.write_checkpoint(
+            run_id="run123",
+            instance_id="instance456",
+            checkpoint_name="foo",
+            status=CheckpointStatus.STARTED,
+            checkpoint_data=data,
+        )
+
+        # Assert
+        self.mock_msg_queue.put.assert_called_once()
+        self.logger.debug.assert_called_once()
+
+    def test_flush_msg_queue(self) -> None:
+        # Arrange
+        msg_lists = [
+            {
+                "instance_id": "instance456",
+                "component": "component1",
+                "checkpoint_name": "foo1",
+                "checkpoint_data": "data1",
+            },
+            {
+                "instance_id": "instance456",
+                "component": "component2",
+                "checkpoint_name": "foo2",
+                "checkpoint_data": "data2",
+            },
+            {
+                "instance_id": "instance789",
+                "component": "component3",
+                "checkpoint_name": "foo3",
+                "checkpoint_data": "data3",
+            },
+        ]
+        self.mock_msg_queue.get.side_effect = msg_lists
 
         # Act
         with mock.patch(
             "fbpcs.common.service.graphapi_trace_logging_service.requests",
             self.mock_requests,
         ):
-            self.svc.write_checkpoint(
-                run_id="run123",
-                instance_id="instance456",
-                checkpoint_name="foo",
-                status=CheckpointStatus.STARTED,
-                checkpoint_data=data,
+            self.svc._flush_msg_queue(
+                msg_queue=self.mock_msg_queue, flush_size=len(msg_lists)
             )
 
         # Assert
-        self.logger.info.assert_called_once()
-        self.mock_requests.post.assert_called_once()
+        # group by instance id - having two distince instances
+        self.assertEqual(2, self.mock_requests.post.call_count)
+        self.assertEqual(2, self.logger.info.call_count)
+        # assert post group by instance id
+        self.mock_requests.post.assert_has_calls(
+            [
+                call(
+                    "localhost",
+                    params={
+                        "instance_id": "instance456",
+                        "component": "component1\\001component2",
+                        "checkpoint_name": "foo1\\001foo2",
+                        "checkpoint_data": "data1\\001data2",
+                    },
+                    timeout=3.05,
+                ),
+                call(
+                    "localhost",
+                    params={
+                        "instance_id": "instance789",
+                        "component": "component3",
+                        "checkpoint_name": "foo3",
+                        "checkpoint_data": "data3",
+                    },
+                    timeout=3.05,
+                ),
+            ],
+            any_order=True,
+        )
