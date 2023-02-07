@@ -20,9 +20,13 @@ Error handling:
 
 import csv
 import time
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Set
+
+import boto3
+from botocore.client import BaseClient
 
 from fbpcp.service.storage_s3 import S3StorageService
+from fbpcp.util.s3path import S3Path
 from fbpcs.pc_pre_validation.constants import (
     COHORT_ID_FIELD,
     ID_FIELD_PREFIX,
@@ -65,6 +69,21 @@ class InputDataValidator(Validator):
         self._storage_service = S3StorageService(region, access_key_id, access_key_data)
         self._name: str = INPUT_DATA_VALIDATOR_NAME
         self._num_id_columns = 0
+        self._stream_file = stream_file
+
+        s3_path = S3Path(input_file_path)
+        self._bucket: str = s3_path.bucket
+        self._key: str = s3_path.key
+
+        if access_key_id and access_key_data:
+            self._s3_client: BaseClient = boto3.client(
+                "s3",
+                region_name=region,
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=access_key_data,
+            )
+        else:
+            self._s3_client = boto3.client("s3")
 
         start = None
         end = None
@@ -92,62 +111,108 @@ class InputDataValidator(Validator):
         filename = self._input_file_path.split("/")[-1]
         return f"{INPUT_DATA_TMP_FILE_PATH}/{filename}-{now}"
 
+    def _validate_line(
+        self,
+        header_row: str,
+        line: str,
+        validation_issues: InputDataValidationIssues,
+        cohort_id_set: Set[int],
+    ) -> None:
+        csv_row_reader = csv.DictReader([header_row, line])
+        for row in csv_row_reader:
+            for field, value in row.items():
+                self._validate_row(validation_issues, field, value)
+                if field.startswith(COHORT_ID_FIELD):
+                    cohort_id_set.add(int(value))
+
+    def _download_locally(
+        self, validation_issues: InputDataValidationIssues, rows_processed_count: int
+    ) -> Optional[ValidationReport]:
+        file_size = self._get_file_size()
+        if file_size > INPUT_DATA_MAX_FILE_SIZE_IN_BYTES:
+            max_size_mb = int(INPUT_DATA_MAX_FILE_SIZE_IN_BYTES / (1024 * 1024))
+            warning_message = " ".join(
+                [
+                    f"WARNING: File: {self._input_file_path} is too large to download.",
+                    f"The maximum file size is {max_size_mb} MB.",
+                    "Skipped input_data validation.",
+                ]
+            )
+            return self._format_validation_report(
+                warning_message,
+                rows_processed_count,
+                validation_issues,
+            )
+
+        self._download_input_file()
+
+        return None
+
     def __validate__(self) -> ValidationReport:
         rows_processed_count = 0
         validation_issues = InputDataValidationIssues()
 
         try:
-            file_size = self._get_file_size()
-            if file_size > INPUT_DATA_MAX_FILE_SIZE_IN_BYTES:
-                max_size_mb = int(INPUT_DATA_MAX_FILE_SIZE_IN_BYTES / (1024 * 1024))
-                warning_message = " ".join(
-                    [
-                        f"WARNING: File: {self._input_file_path} is too large to download.",
-                        f"The maximum file size is {max_size_mb} MB.",
-                        "Skipped input_data validation.",
-                    ]
+            if not self._stream_file:
+                validation_report = self._download_locally(
+                    validation_issues, rows_processed_count
                 )
-                return self._format_validation_report(
-                    warning_message,
-                    rows_processed_count,
-                    validation_issues,
-                )
+                if validation_report:
+                    return validation_report
 
-            self._download_input_file()
-            header_row = ""
-            with open(self._local_file_path) as local_file:
-                csv_reader = csv.DictReader(local_file)
-                field_names = csv_reader.fieldnames or []
-                header_row = ",".join(field_names)
-                self._set_num_id_columns(field_names)
-                self._validate_header(field_names)
+            field_names = []
+            if self._stream_file:
+                response = self._s3_client.get_object(
+                    Bucket=self._bucket, Key=self._key
+                )
+                stream = response["Body"]
+                for line in stream.iter_lines(keepends=True):
+                    field_names = (
+                        csv.DictReader([line.decode("utf-8")]).fieldnames or []
+                    )
+                    # Read just the first header row then stop streaming
+                    break
+            else:
+                with open(self._local_file_path) as local_file:
+                    csv_reader = csv.DictReader(local_file)
+                    field_names = csv_reader.fieldnames or []
+
+            header_row = ",".join(field_names)
+            self._set_num_id_columns(field_names)
+            self._validate_header(field_names)
+
             cohort_id_set = set()
 
-            with open(self._local_file_path, "rb") as local_file:
-                header_line = local_file.readline().decode("utf-8")
-                self._validate_line_ending(header_line)
-
-                while raw_line := local_file.readline():
-                    line = raw_line.decode("utf-8")
-                    self._validate_line_ending(line)
-                    csv_row_reader = csv.DictReader([header_row, line])
-                    for row in csv_row_reader:
-                        for field, value in row.items():
-                            self._validate_row(validation_issues, field, value)
-                            if field.startswith(COHORT_ID_FIELD):
-                                cohort_id_set.add(int(value))
-                    rows_processed_count += 1
-
-                for i, cohort_id in enumerate(sorted(cohort_id_set)):
-                    if i != cohort_id:
-                        raise InputDataValidationException(
-                            "Cohort Id Format is invalid. Cohort ID should start with 0 and increment by 1."
-                        )
-
-                if len(cohort_id_set) > 7:
-                    raise InputDataValidationException(
-                        "Number of cohorts is higher than currently supported."
+            if self._stream_file:
+                past_first_row = False
+                response = self._s3_client.get_object(
+                    Bucket=self._bucket, Key=self._key
+                )
+                stream = response["Body"]
+                for line in stream.iter_lines(keepends=True):
+                    if not past_first_row:
+                        past_first_row = True
+                        continue
+                    decoded_line = line.decode("utf-8")
+                    self._validate_line_ending(decoded_line)
+                    self._validate_line(
+                        header_row, decoded_line, validation_issues, cohort_id_set
                     )
+                    rows_processed_count += 1
+            else:
+                with open(self._local_file_path, "rb") as local_file:
+                    header_line = local_file.readline().decode("utf-8")
+                    self._validate_line_ending(header_line)
+
+                    while raw_line := local_file.readline():
+                        line = raw_line.decode("utf-8")
+                        self._validate_line_ending(line)
+                        self._validate_line(
+                            header_row, line, validation_issues, cohort_id_set
+                        )
+                        rows_processed_count += 1
+
+            self._validate_cohort_ids(cohort_id_set)
 
         except InputDataValidationException as e:
             return self._format_validation_report(
@@ -170,6 +235,18 @@ class InputDataValidator(Validator):
             rows_processed_count,
             validation_issues,
         )
+
+    def _validate_cohort_ids(self, cohort_id_set: Set[int]) -> None:
+        for i, cohort_id in enumerate(sorted(cohort_id_set)):
+            if i != cohort_id:
+                raise InputDataValidationException(
+                    "Cohort Id Format is invalid. Cohort ID should start with 0 and increment by 1."
+                )
+
+        if len(cohort_id_set) > 7:
+            raise InputDataValidationException(
+                "Number of cohorts is higher than currently supported."
+            )
 
     def _set_num_id_columns(self, header_row: Sequence[str]) -> None:
         if not header_row:
