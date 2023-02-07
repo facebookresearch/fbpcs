@@ -27,9 +27,12 @@ from fbpcs.private_computation.entity.cloud_provider import CloudProvider
 
 # Name the file randomly in order to avoid failures when the tests run concurrently
 TEST_FILENAME = f"test-input-data-validation-{random.randint(0, 1000000)}.csv"
+TEST_BUCKET = "test-bucket"
 TEST_FILE_SIZE = 1234
 TEST_CLOUD_PROVIDER: CloudProvider = CloudProvider.AWS
-TEST_INPUT_FILE_PATH = f"s3://test-bucket/{TEST_FILENAME}"
+TEST_INPUT_FILE_PATH = (
+    f"https://{TEST_BUCKET}.s3.us-west-2.amazonaws.com/{TEST_FILENAME}"
+)
 TEST_REGION = "us-west-2"
 TEST_STREAM_FILE = False
 TEST_TIMESTAMP: float = time.time()
