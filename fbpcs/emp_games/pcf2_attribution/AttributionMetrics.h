@@ -34,16 +34,6 @@ class AttributionInputMetrics {
       std::string attributionRulesStr,
       std::filesystem::path filepath);
 
-  explicit AttributionInputMetrics(
-      const std::vector<int64_t>& ids,
-      const std::vector<std::string>& attributionRules,
-      const std::vector<TouchpointT<usingBatch>>& tpArrays,
-      const std::vector<ConversionT<usingBatch>>& convArrays)
-      : ids_{ids},
-        attributionRules_{attributionRules},
-        tpArrays_{tpArrays},
-        convArrays_{convArrays} {}
-
   const std::vector<int64_t>& getIds() const {
     return ids_;
   }
