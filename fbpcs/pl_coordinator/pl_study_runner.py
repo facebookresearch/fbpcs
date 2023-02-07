@@ -13,6 +13,7 @@ import time
 from typing import Any, Dict, List, Optional, Type
 
 from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
+from fbpcs.bolt.bolt_hook import BoltHook, BoltHookArgs, BoltHookKey
 
 from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
@@ -150,6 +151,7 @@ async def run_study_async(
     graphapi_version: Optional[str] = None,
     output_dir: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
+    bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]] = None,
 ) -> BoltSummary:
 
     # Create a GraphApiTraceLoggingService specific for this study_id
@@ -192,6 +194,7 @@ async def run_study_async(
         graphapi_version=graphapi_version,
         output_dir=output_dir,
         graphapi_domain=graphapi_domain,
+        bolt_hooks=bolt_hooks,
     )
 
 
@@ -220,6 +223,7 @@ async def _run_study_async_helper(
     graphapi_version: Optional[str],
     output_dir: Optional[str],
     graphapi_domain: Optional[str],
+    bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]],
 ) -> BoltSummary:
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
     _validate_input(objective_ids, input_paths)
@@ -369,6 +373,7 @@ async def _run_study_async_helper(
             num_tries=num_tries,
             final_stage=stage_flow_override.get_last_stage().previous_stage,
             poll_interval=60,
+            hooks=bolt_hooks or {},
         )
         job_list.append(job)
 
