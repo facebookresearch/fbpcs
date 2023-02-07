@@ -8,8 +8,11 @@
 import unittest
 from typing import List, Optional, Tuple
 from unittest import mock
+from unittest.mock import AsyncMock
 
 from fbpcs.bolt.bolt_client import BoltState
+
+from fbpcs.bolt.bolt_hook import BoltHookEvent, BoltHookKey, BoltHookTiming
 from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
@@ -18,6 +21,7 @@ from fbpcs.infra.certificate.sample_tls_certificates import (
     SAMPLE_CA_CERTIFICATE,
     SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
 )
+from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
@@ -537,6 +541,96 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                         job=test_job,
                         stage_flow=PrivateComputationStageFlow,
                     )
+
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    async def test_execute_event(self, mock_publisher_args, mock_partner_args) -> None:
+        run_always_hook1 = AsyncMock()
+        run_always_hook2 = AsyncMock()
+        run_only_before = AsyncMock()
+        run_only_during = AsyncMock()
+        run_only_after = AsyncMock()
+        run_publisher_only = AsyncMock()
+        run_publisher_and_during = AsyncMock()
+        run_non_retryable_stage_only = AsyncMock()
+
+        hooks = {
+            # runs at every possible point
+            BoltHookKey(): [run_always_hook1, run_always_hook2],
+            BoltHookKey(
+                event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
+                when=BoltHookTiming.BEFORE,
+            ): [run_only_before],
+            BoltHookKey(
+                event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
+                when=BoltHookTiming.DURING,
+            ): [run_only_during],
+            BoltHookKey(
+                event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
+                when=BoltHookTiming.AFTER,
+            ): [run_only_after],
+            BoltHookKey(
+                stage=DummyNonRetryableStageFlow.NON_RETRYABLE_STAGE.name,
+            ): [run_non_retryable_stage_only],
+            BoltHookKey(
+                role=PrivateComputationRole.PUBLISHER,
+            ): [run_publisher_only],
+            BoltHookKey(
+                role=PrivateComputationRole.PUBLISHER,
+                when=BoltHookTiming.DURING,
+            ): [run_publisher_and_during],
+        }
+
+        test_job = BoltJob(
+            job_name="test",
+            publisher_bolt_args=mock_publisher_args,
+            partner_bolt_args=mock_partner_args,
+            hooks=hooks,
+        )
+
+        async def _dummy_func() -> int:
+            return 4
+
+        res = await self.test_runner._execute_event(
+            _dummy_func(), job=test_job, event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED
+        )
+
+        self.assertEqual(4, res)
+
+        self.assertEqual(run_always_hook1.inject.call_count, 3)
+        self.assertEqual(run_always_hook2.inject.call_count, 3)
+        run_only_before.inject.assert_called_once()
+        run_only_during.inject.assert_called_once()
+        run_only_after.inject.assert_called_once()
+        run_publisher_only.inject.assert_not_called()
+        run_publisher_and_during.inject.assert_not_called()
+        run_non_retryable_stage_only.inject.assert_not_called()
+
+        res = await self.test_runner._execute_event(
+            _dummy_func(),
+            job=test_job,
+            event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
+            stage=DummyNonRetryableStageFlow.NON_RETRYABLE_STAGE,
+        )
+
+        self.assertEqual(4, res)
+
+        run_publisher_only.inject.assert_not_called()
+        run_publisher_and_during.inject.assert_not_called()
+        self.assertEqual(run_non_retryable_stage_only.inject.call_count, 3)
+
+        res = await self.test_runner._execute_event(
+            _dummy_func(),
+            job=test_job,
+            event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
+            stage=DummyNonRetryableStageFlow.NON_RETRYABLE_STAGE,
+            role=PrivateComputationRole.PUBLISHER,
+        )
+
+        self.assertEqual(4, res)
+
+        self.assertEqual(run_publisher_only.inject.call_count, 3)
+        run_publisher_and_during.inject.assert_called_once()
 
     def _prepare_mock_client_functions(
         self,
