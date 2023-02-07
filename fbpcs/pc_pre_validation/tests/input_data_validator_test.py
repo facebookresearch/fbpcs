@@ -41,16 +41,23 @@ TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAM
 
 class TestInputDataValidator(TestCase):
     def setUp(self) -> None:
+        patched_boto3_client = patch(
+            "fbpcs.pc_pre_validation.input_data_validator.boto3.client"
+        )
         patched_storage_service = patch(
             "fbpcs.pc_pre_validation.input_data_validator.S3StorageService"
         )
         self.addCleanup(patched_storage_service.stop)
+        self.addCleanup(patched_boto3_client.stop)
         storage_service_mock = patched_storage_service.start()
         storage_service_mock.__init__(return_value=storage_service_mock)
         self.storage_service_mock = storage_service_mock
         storage_service_mock.get_file_size.return_value = TEST_FILE_SIZE
         with open(TEST_TEMP_FILEPATH, "a") as file:
             file.write("")
+        boto3_client_mock = patched_boto3_client.start()
+        boto3_client_mock.__init__(return_value=boto3_client_mock)
+        self._boto3_client_mock = boto3_client_mock
 
     def tearDown(self) -> None:
         os.remove(TEST_TEMP_FILEPATH)
@@ -885,4 +892,35 @@ class TestInputDataValidator(TestCase):
 
         report = validator.validate()
 
+        self.assertEqual(report, expected_report)
+
+    def test_it_streams_the_file_when_streaming_is_enabled(self) -> None:
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,25,1645157987\n",
+            b"abcd/1234+WXYZ=,25,1645157987\n",
+        ]
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
+            details={"rows_processed_count": 2},
+        )
+        stream_mock = MagicMock(name="stream_mock_obj")
+        self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
+        stream_mock.iter_lines.return_value = lines
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=True,
+        )
+
+        report = validator.validate()
+
+        self._boto3_client_mock.get_object.assert_called_with(
+            Bucket=TEST_BUCKET,
+            Key=TEST_FILENAME,
+        )
         self.assertEqual(report, expected_report)
