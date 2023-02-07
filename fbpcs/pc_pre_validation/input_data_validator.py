@@ -36,6 +36,7 @@ from fbpcs.pc_pre_validation.constants import (
     PA_FIELDS,
     PL_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
+    STREAMING_DURATION_LIMIT_IN_SECONDS,
     TIMESTAMP,
     TIMESTAMP_REGEX,
     VALID_LINE_ENDING_REGEX,
@@ -151,6 +152,7 @@ class InputDataValidator(Validator):
     def __validate__(self) -> ValidationReport:
         rows_processed_count = 0
         validation_issues = InputDataValidationIssues()
+        keep_streaming_check = True
 
         try:
             if not self._stream_file:
@@ -189,6 +191,7 @@ class InputDataValidator(Validator):
                     Bucket=self._bucket, Key=self._key
                 )
                 stream = response["Body"]
+                start_time = time.time()
                 for line in stream.iter_lines(keepends=True):
                     if not past_first_row:
                         past_first_row = True
@@ -198,6 +201,11 @@ class InputDataValidator(Validator):
                     self._validate_line(
                         header_row, decoded_line, validation_issues, cohort_id_set
                     )
+                    keep_streaming_check = self._keep_streaming_check(
+                        start_time, rows_processed_count
+                    )
+                    if not keep_streaming_check:
+                        break
                     rows_processed_count += 1
             else:
                 with open(self._local_file_path, "rb") as local_file:
@@ -234,6 +242,7 @@ class InputDataValidator(Validator):
             f"File: {self._input_file_path}",
             rows_processed_count,
             validation_issues,
+            streaming_timed_out=(not keep_streaming_check),
         )
 
     def _validate_cohort_ids(self, cohort_id_set: Set[int]) -> None:
@@ -247,6 +256,15 @@ class InputDataValidator(Validator):
             raise InputDataValidationException(
                 "Number of cohorts is higher than currently supported."
             )
+
+    def _keep_streaming_check(
+        self, start_time: float, rows_processed_count: int
+    ) -> bool:
+        if rows_processed_count % 100000 == 0:
+            current_time = time.time()
+            return (current_time - start_time) < STREAMING_DURATION_LIMIT_IN_SECONDS
+
+        return True
 
     def _set_num_id_columns(self, header_row: Sequence[str]) -> None:
         if not header_row:
@@ -343,6 +361,7 @@ class InputDataValidator(Validator):
         rows_processed_count: int,
         validation_issues: InputDataValidationIssues,
         had_exception: bool = False,
+        streaming_timed_out: bool = False,
     ) -> ValidationReport:
         validation_errors = validation_issues.get_errors()
         validation_warnings = validation_issues.get_warnings()
@@ -357,6 +376,17 @@ class InputDataValidator(Validator):
                 },
             )
 
+        timed_out_message = ""
+        timed_out_warning_message = ""
+        if streaming_timed_out:
+            timed_out_message = " ".join(
+                [
+                    f" Warning: ran the validations on {rows_processed_count} total rows,",
+                    "the rest of the rows were skipped to avoid container timeout. ",
+                ]
+            )
+            timed_out_warning_message = ", with some warnings."
+
         if validation_errors:
             error_fields = ", ".join(sorted(validation_errors.keys()))
             details = {
@@ -368,14 +398,14 @@ class InputDataValidator(Validator):
             return ValidationReport(
                 validation_result=ValidationResult.FAILED,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} failed validation, with errors on '{error_fields}'.",
+                message=f"{message} failed validation, with errors on '{error_fields}'.{timed_out_message}",
                 details=details,
             )
         elif validation_warnings:
             return ValidationReport(
                 validation_result=ValidationResult.SUCCESS,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} completed validation successfully, with some warnings.",
+                message=f"{message} completed validation successfully, with some warnings.{timed_out_message}",
                 details={
                     "rows_processed_count": rows_processed_count,
                     "validation_warnings": validation_warnings,
@@ -385,7 +415,7 @@ class InputDataValidator(Validator):
             return ValidationReport(
                 validation_result=ValidationResult.SUCCESS,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} completed validation successfully",
+                message=f"{message} completed validation successfully{timed_out_warning_message}{timed_out_message}",
                 details={
                     "rows_processed_count": rows_processed_count,
                 },

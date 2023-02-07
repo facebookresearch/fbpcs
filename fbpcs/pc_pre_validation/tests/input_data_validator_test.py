@@ -924,3 +924,46 @@ class TestInputDataValidator(TestCase):
             Key=TEST_FILENAME,
         )
         self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_streaming_preemptively_times_out_after_15_minutes(
+        self, time_mock: Mock
+    ) -> None:
+        lines = [b"id_,value,event_timestamp\n"]
+        lines.extend([b"abcd/1234+WXYZ=,25,1645157987\n"] * 100001)
+
+        expected_warning = " ".join(
+            [
+                f"File: {TEST_INPUT_FILE_PATH} completed validation successfully,",
+                "with some warnings.",
+                "Warning: ran the validations on 100000 total rows,",
+                "the rest of the rows were skipped to avoid container timeout. ",
+            ]
+        )
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=expected_warning,
+            details={"rows_processed_count": 100000},
+        )
+        stream_mock = MagicMock(name="stream_mock_obj")
+        self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
+        stream_mock.iter_lines.return_value = lines
+        start_time = time.time()
+        time_mock.time.side_effect = [
+            start_time,
+            start_time,
+            start_time,
+            start_time + 1200,
+        ]
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=True,
+        )
+
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
