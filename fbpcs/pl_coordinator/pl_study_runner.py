@@ -10,7 +10,7 @@ import calendar
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
 from fbpcs.bolt.bolt_hook import BoltHook, BoltHookArgs, BoltHookKey
@@ -202,29 +202,19 @@ async def run_study_async(
     dump_params=True,
     include=["study_id", "objective_ids", "input_paths", "result_visibility"],
     dump_return_val=True,
-    checkpoint_name="RUN_STUDY",
+    checkpoint_name="STUDY_RUNNER_SETUP",
     component=LOG_COMPONENT,
 )
-async def _run_study_async_helper(
+async def _run_prep(
     client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
-    trace_logging_svc: TraceLoggingService,
-    *,
     config: Dict[str, Any],
     study_id: str,
     objective_ids: List[str],
     input_paths: List[str],
     logger: logging.Logger,
     stage_flow: Type[PrivateComputationBaseStageFlow],
-    num_tries: Optional[int],
-    dry_run: Optional[bool],
-    result_visibility: Optional[ResultVisibility],
-    final_stage: Optional[PrivateComputationBaseStageFlow],
     run_id: Optional[str],
-    graphapi_version: Optional[str],
-    output_dir: Optional[str],
-    graphapi_domain: Optional[str],
-    bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]],
-) -> BoltSummary:
+) -> Tuple:
     ## Step 1: Validation. Function arguments and study metadata must be valid for private lift run.
     _validate_input(objective_ids, input_paths)
 
@@ -321,6 +311,52 @@ async def _run_study_async_helper(
             pcs_feature_enums=pcs_feature_enums,
             stage_flow_cls=stage_flow,
         )
+
+    return (
+        instances_input_path,
+        instance_ids_to_timestamps,
+        stage_flow_override,
+        pcs_features,
+        cell_obj_instance,
+    )
+
+
+@bolt_checkpoint(
+    dump_params=True,
+    include=["study_id", "objective_ids", "input_paths", "result_visibility"],
+    dump_return_val=True,
+    checkpoint_name="RUN_STUDY",
+    component=LOG_COMPONENT,
+)
+async def _run_study_async_helper(
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
+    trace_logging_svc: TraceLoggingService,
+    *,
+    config: Dict[str, Any],
+    study_id: str,
+    objective_ids: List[str],
+    input_paths: List[str],
+    logger: logging.Logger,
+    stage_flow: Type[PrivateComputationBaseStageFlow],
+    num_tries: Optional[int],
+    dry_run: Optional[bool],
+    result_visibility: Optional[ResultVisibility],
+    final_stage: Optional[PrivateComputationBaseStageFlow],
+    run_id: Optional[str],
+    graphapi_version: Optional[str],
+    output_dir: Optional[str],
+    graphapi_domain: Optional[str],
+    bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]] = None,
+) -> BoltSummary:
+    (
+        instances_input_path,
+        instance_ids_to_timestamps,
+        stage_flow_override,
+        pcs_features,
+        cell_obj_instance,
+    ) = await _run_prep(
+        client, config, study_id, objective_ids, input_paths, logger, stage_flow, run_id
+    )
 
     ## Step 3. Run Instances. Run maximum number of instances in parallel
 
