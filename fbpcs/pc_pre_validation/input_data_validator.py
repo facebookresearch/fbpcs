@@ -20,7 +20,7 @@ Error handling:
 
 import csv
 import time
-from typing import Optional, Sequence, Set
+from typing import List, Optional, Sequence, Set
 
 import boto3
 from botocore.client import BaseClient
@@ -29,6 +29,7 @@ from fbpcp.service.storage_s3 import S3StorageService
 from fbpcp.util.s3path import S3Path
 from fbpcs.pc_pre_validation.constants import (
     COHORT_ID_FIELD,
+    ERROR_MESSAGES,
     ID_FIELD_PREFIX,
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_TMP_FILE_PATH,
@@ -338,7 +339,7 @@ class InputDataValidator(Validator):
             self._validate_timestamp(validation_issues, field, value)
         elif field == VALUE_FIELD:
             # Validate that the purchase value is in valid range.
-            self._validate_purchase_value(field, value)
+            self._validate_purchase_value(validation_issues, field, value)
 
     # This is the timestamp range that gets validated:
     # * timestamp >= start_timestamp
@@ -361,14 +362,14 @@ class InputDataValidator(Validator):
 
     # This is the purchase value range that gets validated:
     # * purchase_value < INTEGER_MAX_VALUE
-    def _validate_purchase_value(self, field: str, value: str) -> None:
+    def _validate_purchase_value(
+        self, validation_issues: InputDataValidationIssues, field: str, value: str
+    ) -> None:
         # int in python is unbound, so we would not get any exception at this point for larger value.
         value_int = int(value)
 
         if value_int >= INTEGER_MAX_VALUE:
-            raise InputDataValidationException(
-                "Purchase value is invalid. Purchase value should be less than 2147483647."
-            )
+            validation_issues.count_format_out_of_range_field("value")
 
     def _format_validation_report(
         self,
@@ -403,7 +404,9 @@ class InputDataValidator(Validator):
             timed_out_warning_message = ", with some warnings."
 
         if validation_errors:
-            error_fields = ", ".join(sorted(validation_errors.keys()))
+            error_fields = ", ".join(
+                sorted(self._get_error_keys(list(validation_errors.keys())))
+            )
             details = {
                 "rows_processed_count": rows_processed_count,
                 "validation_errors": validation_errors,
@@ -435,3 +438,6 @@ class InputDataValidator(Validator):
                     "rows_processed_count": rows_processed_count,
                 },
             )
+
+    def _get_error_keys(self, error_keys: List[str]) -> List[str]:
+        return [key for key in error_keys if key != ERROR_MESSAGES]
