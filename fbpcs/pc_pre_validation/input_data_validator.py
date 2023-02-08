@@ -33,6 +33,7 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
+    INTEGER_MAX_VALUE,
     PA_FIELDS,
     PL_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
@@ -41,6 +42,7 @@ from fbpcs.pc_pre_validation.constants import (
     TIMESTAMP_REGEX,
     VALID_LINE_ENDING_REGEX,
     VALIDATION_REGEXES,
+    VALUE_FIELD,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.exceptions import InputDataValidationException
@@ -334,6 +336,9 @@ class InputDataValidator(Validator):
         elif field.endswith(TIMESTAMP):
             # The timestamp is 10 digits, now we validate if it's in the expected time range when present
             self._validate_timestamp(validation_issues, field, value)
+        elif field == VALUE_FIELD:
+            # Validate that the purchase value is in valid range.
+            self._validate_purchase_value(field, value)
 
     # This is the timestamp range that gets validated:
     # * timestamp >= start_timestamp
@@ -353,6 +358,17 @@ class InputDataValidator(Validator):
 
         if end and timestamp_int > end:
             validation_issues.count_format_out_of_range_field(field)
+
+    # This is the purchase value range that gets validated:
+    # * purchase_value < INTEGER_MAX_VALUE
+    def _validate_purchase_value(self, field: str, value: str) -> None:
+        # int in python is unbound, so we would not get any exception at this point for larger value.
+        value_int = int(value)
+
+        if value_int >= INTEGER_MAX_VALUE:
+            raise InputDataValidationException(
+                "Purchase value is invalid. Purchase value should be less than 2147483647."
+            )
 
     def _format_validation_report(
         self,
