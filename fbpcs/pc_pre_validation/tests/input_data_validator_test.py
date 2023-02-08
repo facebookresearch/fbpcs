@@ -204,9 +204,15 @@ class TestInputDataValidator(TestCase):
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: Purchase value is invalid. Purchase value should be less than 2147483647.",
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'value'.",
             details={
-                "rows_processed_count": 2,
+                "rows_processed_count": 3,
+                "validation_errors": {
+                    "value": {
+                        "out_of_range_count": 1,
+                    },
+                    "error_messages": ["Purchase value should be less than 2147483647"],
+                },
             },
         )
 

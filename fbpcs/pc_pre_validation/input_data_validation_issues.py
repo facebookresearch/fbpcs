@@ -10,9 +10,14 @@ from typing import Any, Dict, Optional
 
 from fbpcs.pc_pre_validation.constants import (
     ALL_FIELDS,
+    CONVERSION_VALUE_FIELD,
+    ERROR_MESSAGES,
     FORMATTED_FIELDS,
+    OUT_OF_RANGE_COUNT,
     RANGE_FIELDS,
     REQUIRED_FIELDS,
+    VALUE_ERROR_MESSAGE,
+    VALUE_FIELD,
 )
 
 
@@ -25,6 +30,7 @@ class InputDataValidationIssues:
 
     def get_errors(self) -> Dict[str, Any]:
         errors = {}
+        error_messages = []
         for field in ALL_FIELDS:
             if field in REQUIRED_FIELDS + list(self.max_issue_count_til_error.keys()):
                 self.set_empty_count_for_field(
@@ -38,6 +44,16 @@ class InputDataValidationIssues:
                 self.set_range_error_count_for_field(
                     errors, field, False, self.max_issue_count_til_error.get(field)
                 )
+
+        value_field = errors.get(VALUE_FIELD, {}) or errors.get(
+            CONVERSION_VALUE_FIELD, {}
+        )
+        # If any of the values was out of the range, show the specific error_message
+        if value_field.get(OUT_OF_RANGE_COUNT, None):
+            error_messages.append(VALUE_ERROR_MESSAGE)
+
+        if error_messages:
+            errors[ERROR_MESSAGES] = error_messages
 
         return errors
 
@@ -134,16 +150,16 @@ class InputDataValidationIssues:
     ) -> None:
         counts = {}
         format_error_count = self.range_error_counter[field]
-        if max_issue_count and ("out_of_range_count" in max_issue_count):
+        if max_issue_count and (OUT_OF_RANGE_COUNT in max_issue_count):
             if (
                 not warning
-                and format_error_count <= max_issue_count["out_of_range_count"]
+                and format_error_count <= max_issue_count[OUT_OF_RANGE_COUNT]
             ):
                 return
-            if warning and format_error_count > max_issue_count["out_of_range_count"]:
+            if warning and format_error_count > max_issue_count[OUT_OF_RANGE_COUNT]:
                 return
         if format_error_count > 0:
-            counts["out_of_range_count"] = format_error_count
+            counts[OUT_OF_RANGE_COUNT] = format_error_count
         else:
             return
 
