@@ -190,6 +190,34 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_fail_for_purchase_value_greater_than_int_max(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp,cohort_id\n",
+            b"abcd/1234+WXYZ=,100,1645157987,0\n",
+            b"abcd/1234+WXYZ=,100,1645157987,1\n",
+            b"abcd/1234+WXYZ=,2147483648,1645157987,2\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: Purchase value is invalid. Purchase value should be less than 2147483647.",
+            details={
+                "rows_processed_count": 2,
+            },
+        )
+
+        validator = InputDataValidator(
+            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_fail_for_cohort_id_not_incremental_by_one(
         self, time_mock: Mock
     ) -> None:
