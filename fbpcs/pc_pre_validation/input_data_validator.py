@@ -43,7 +43,7 @@ from fbpcs.pc_pre_validation.constants import (
     TIMESTAMP_REGEX,
     VALID_LINE_ENDING_REGEX,
     VALIDATION_REGEXES,
-    VALUE_FIELD,
+    VALUE_FIELDS,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.exceptions import InputDataValidationException
@@ -337,7 +337,7 @@ class InputDataValidator(Validator):
         elif field.endswith(TIMESTAMP):
             # The timestamp is 10 digits, now we validate if it's in the expected time range when present
             self._validate_timestamp(validation_issues, field, value)
-        elif field == VALUE_FIELD:
+        elif field in VALUE_FIELDS:
             # Validate that the purchase value is in valid range.
             self._validate_purchase_value(validation_issues, field, value)
 
@@ -369,7 +369,7 @@ class InputDataValidator(Validator):
         value_int = int(value)
 
         if value_int >= INTEGER_MAX_VALUE:
-            validation_issues.count_format_out_of_range_field("value")
+            validation_issues.count_format_out_of_range_field(field)
 
     def _format_validation_report(
         self,
