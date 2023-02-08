@@ -14,6 +14,8 @@ Types of changes
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased - 2.7.0] - put release date here
+### Added
+* Added a new configuration paramter that allows the default stage timeout to be increased.
 
 ## [2.6.0] - 2023-01-23
 ### Removed

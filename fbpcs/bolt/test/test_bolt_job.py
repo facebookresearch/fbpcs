@@ -9,6 +9,7 @@ from unittest import mock
 
 from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.exceptions import IncompatibleStageError
+from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 from fbpcs.private_computation.stage_flows.private_computation_pcf2_stage_flow import (
     PrivateComputationPCF2StageFlow,
 )
@@ -99,3 +100,32 @@ class TestBoltJob(unittest.TestCase):
                 True,
             ),
         )
+
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    def test_stage_override_timeout_validation(
+        self,
+        mock_publisher_args,
+        mock_partner_args,
+    ) -> None:
+        with self.subTest("override_timeout_too_low"):
+            job = BoltJob(
+                job_name="test",
+                publisher_bolt_args=mock_publisher_args,
+                partner_bolt_args=mock_partner_args,
+                final_stage=PrivateComputationStageFlow.AGGREGATE,
+                stage_timeout_override=-10,
+            )
+            self.assertEquals(0, job.stage_timeout_override)
+
+        with self.subTest("override_timeout_too_high"):
+            job = BoltJob(
+                job_name="test",
+                publisher_bolt_args=mock_publisher_args,
+                partner_bolt_args=mock_partner_args,
+                final_stage=PrivateComputationStageFlow.AGGREGATE,
+                stage_timeout_override=DEFAULT_CONTAINER_TIMEOUT_IN_SEC + 100,
+            )
+            self.assertEquals(
+                DEFAULT_CONTAINER_TIMEOUT_IN_SEC, job.stage_timeout_override
+            )

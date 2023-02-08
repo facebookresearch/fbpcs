@@ -192,6 +192,7 @@ class BoltRunner(Generic[T, U]):
                                     stage=stage,
                                     poll_interval=job.poll_interval,
                                     logger=logger,
+                                    stage_timeout_override=job.stage_timeout_override,
                                 ),
                                 job=job,
                                 event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
@@ -546,13 +547,19 @@ class BoltRunner(Generic[T, U]):
         stage: PrivateComputationBaseStageFlow,
         poll_interval: int,
         logger: Optional[logging.Logger] = None,
+        stage_timeout_override: Optional[int] = None,
     ) -> None:
         logger = logger or self.logger
         fail_status = stage.failed_status
         complete_status = stage.completed_status
-        timeout = stage.timeout
+        timeout = (
+            stage.timeout
+            if not stage_timeout_override
+            else max(stage.timeout, stage_timeout_override)
+        )
 
         start_time = time()
+        publisher_state, partner_state = None, None
         while time() < start_time + timeout:
             publisher_state, partner_state = await asyncio.gather(
                 self.publisher_client.update_instance(instance_id=publisher_id),
@@ -608,7 +615,7 @@ class BoltRunner(Generic[T, U]):
             # keep polling
             await asyncio.sleep(poll_interval)
         raise StageTimeoutException(
-            f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status}. Partner status: {partner_state.pc_instance_status}."
+            f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status if publisher_state else 'Not Found'}. Partner status: {partner_state.pc_instance_status if partner_state else 'Not Found'}."
         )
 
     @bolt_checkpoint(

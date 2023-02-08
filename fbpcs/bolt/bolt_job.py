@@ -10,6 +10,7 @@
 # This will become the default in python 4.0: https://peps.python.org/pep-0563/
 from __future__ import annotations
 
+import logging
 from abc import ABC
 from dataclasses import dataclass, field
 from typing import Dict, Generic, List, Optional, Type, TYPE_CHECKING, TypeVar
@@ -25,9 +26,13 @@ from fbpcs.bolt.exceptions import IncompatibleStageError
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
+
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -53,12 +58,32 @@ class BoltJob(DataClassJsonMixin, Generic[T, U]):
     poll_interval: int = DEFAULT_POLL_INTERVAL_SEC
     num_tries: Optional[int] = None
 
+    # This parameter allows the advertiser to override the stage timeout in their config yaml
+    # It can only override the timeout value if it is larger than the configured timeout in the stage flow.
+    # The timeout should be in seconds
+    stage_timeout_override: Optional[int] = None
+
     # allows the final stage to be configured for each job to stop a run early
     # if one isn't given, final_stage defaults to the final stage of the job's stage_flow
     final_stage: Optional[PrivateComputationBaseStageFlow] = None
     # pyre doesn't accept Any or object as an option, so we will just ignore it
     # pyre-ignore: generic type BoltHook requires 1 generic parameter
     hooks: Dict["BoltHookKey", List["BoltHook"]] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.stage_timeout_override and self.stage_timeout_override < 0:
+            logger.warning(
+                f"A negative stage timeout override ({self.stage_timeout_override}) is not allowed. Setting it to 0."
+            )
+            self.stage_timeout_override = 0
+        elif (
+            self.stage_timeout_override
+            and self.stage_timeout_override > DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+        ):
+            logger.warning(
+                f"The configured timeout override of {self.stage_timeout_override} is greater than the maximum allowed value of  {DEFAULT_CONTAINER_TIMEOUT_IN_SEC}. Setting it to the max."
+            )
+            self.stage_timeout_override = DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 
     def is_finished(
         self,
