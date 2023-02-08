@@ -29,7 +29,12 @@ on:
         default: 'PA E2E Tests'
         type: string
       tag:
-        description: Version tag to use
+        description: Version tag to use for the PL/PA Binaries
+        required: false
+        default: rc
+        type: string
+      coordinator_tag:
+        description: The image tag for the coordinator image that we should use.
         required: false
         default: rc
         type: string
@@ -67,6 +72,11 @@ on:
         description: Version tag to use
         required: true
         default: rc
+      coordinator_tag:
+        description: The image tag for the coordinator image that we should use.
+        required: false
+        default: rc
+        type: string
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
@@ -121,6 +131,7 @@ jobs:
           --k_anonymity_threshold=0 \
           -- \
           --version=${{ inputs.tag }} \
+          --image_version=${{ inputs.coordinator_tag }} \
           --docker_env=AWS_ACCESS_KEY_ID \
           --docker_env=AWS_SECRET_ACCESS_KEY \
           --docker_env=AWS_SESSION_TOKEN \
@@ -138,6 +149,7 @@ jobs:
           --expected_result_path=${{ inputs.expected_result_path }} \
           -- \
           --version=${{ inputs.tag }} \
+          --image_version=${{ inputs.coordinator_tag }} \
           --docker_env=AWS_ACCESS_KEY_ID \
           --docker_env=AWS_SECRET_ACCESS_KEY \
           --docker_env=AWS_SESSION_TOKEN \

@@ -21,9 +21,14 @@ on:
         required: true
         default: https://fbpcs-github-e2e-runner.s3.us-west-1.amazonaws.com/lift/results/partner_expected_result_pcf2.json
       tag:
-        description: Version tag to use
+        description: Version tag to use the PL/PA Binaries
         required: true
         default: rc
+      coordinator_tag:
+        description: The image tag for the coordinator image that we should use.
+        required: false
+        default: rc
+        type: string
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
@@ -76,6 +81,7 @@ jobs:
           --config=./fbpcs/tests/github/rc_udp_config_one_command_runner_test.yml \
           -- \
           --version=${{ github.event.inputs.tag }} \
+          --image_version=${{ inputs.coordinator_tag }} \
           --docker_env=AWS_ACCESS_KEY_ID \
           --docker_env=AWS_SECRET_ACCESS_KEY \
           --docker_env=AWS_SESSION_TOKEN \
@@ -93,6 +99,7 @@ jobs:
           --expected_result_path=${{ github.event.inputs.expected_result_path }} \
           -- \
           --version=${{ github.event.inputs.tag }} \
+          --image_version=${{ inputs.coordinator_tag }} \
           --docker_env=AWS_ACCESS_KEY_ID \
           --docker_env=AWS_SECRET_ACCESS_KEY \
           --docker_env=AWS_SESSION_TOKEN \
