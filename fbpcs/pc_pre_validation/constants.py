@@ -61,6 +61,8 @@ ALL_FIELDS: List[str] = [
 RANGE_FIELDS: Set[str] = {
     EVENT_TIMESTAMP_FIELD,
     CONVERSION_TIMESTAMP_FIELD,
+    VALUE_FIELD,
+    CONVERSION_VALUE_FIELD,
 }
 
 INTEGER_REGEX: Pattern[str] = re.compile(r"^[0-9]+$")
@@ -98,3 +100,6 @@ BINARY_INFOS: List[BinaryInfo] = [
     # TODO: Add UDP-ralted binaries when rolling out
 ]
 ONEDOCKER_EXE_PATH = "ONEDOCKER_EXE_PATH"
+OUT_OF_RANGE_COUNT = "out_of_range_count"
+VALUE_ERROR_MESSAGE = "Purchase value should be less than 2147483647"
+ERROR_MESSAGES = "error_messages"
