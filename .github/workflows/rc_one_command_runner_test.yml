@@ -79,6 +79,7 @@ jobs:
           --objective_ids=${{ github.event.inputs.objective_id }} \
           --input_paths=${{ github.event.inputs.input_path }} \
           --config=./fbpcs/tests/github/rc_config_one_command_runner_test.yml \
+          --stage_timeout_override=-1 \
           -- \
           --version=${{ github.event.inputs.tag }} \
           --image_version=${{ inputs.coordinator_tag }} \
