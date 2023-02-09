@@ -16,6 +16,7 @@ from fbpcs.pc_pre_validation.constants import (
     OUT_OF_RANGE_COUNT,
     RANGE_FIELDS,
     REQUIRED_FIELDS,
+    TIMESTAMP_RANGE_FIELDS,
     VALUE_ERROR_MESSAGE,
     VALUE_FIELD,
 )
@@ -66,6 +67,10 @@ class InputDataValidationIssues:
                 )
             if field not in FORMATTED_FIELDS:
                 self.set_format_error_count_for_field(
+                    warnings, field, True, self.max_issue_count_til_error.get(field)
+                )
+            if field in TIMESTAMP_RANGE_FIELDS:
+                self.set_range_error_count_for_field(
                     warnings, field, True, self.max_issue_count_til_error.get(field)
                 )
 
