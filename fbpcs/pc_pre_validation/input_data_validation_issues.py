@@ -13,11 +13,11 @@ from fbpcs.pc_pre_validation.constants import (
     CONVERSION_VALUE_FIELD,
     ERROR_MESSAGES,
     FORMATTED_FIELDS,
+    INTEGER_MAX_VALUE,
     OUT_OF_RANGE_COUNT,
     RANGE_FIELDS,
     REQUIRED_FIELDS,
     TIMESTAMP_RANGE_FIELDS,
-    VALUE_ERROR_MESSAGE,
     VALUE_FIELD,
 )
 
@@ -28,6 +28,8 @@ class InputDataValidationIssues:
         self.format_error_counter: Counter[str] = Counter()
         self.range_error_counter: Counter[str] = Counter()
         self.max_issue_count_til_error: Dict[str, Dict[str, int]] = {}
+        self.cohort_id_aggregates: Counter[int] = Counter()
+        self.value_field_name: str = ""
 
     def get_errors(self) -> Dict[str, Any]:
         errors = {}
@@ -49,14 +51,32 @@ class InputDataValidationIssues:
         value_field = errors.get(VALUE_FIELD, {}) or errors.get(
             CONVERSION_VALUE_FIELD, {}
         )
-        # If any of the values was out of the range, show the specific error_message
+
+        # If any of the values were out of range, show a specific error_message
         if value_field.get(OUT_OF_RANGE_COUNT, None):
-            error_messages.append(VALUE_ERROR_MESSAGE)
+            error_messages.append(
+                f"The data in '{self._get_value_field_name()}' should be less than {INTEGER_MAX_VALUE}"
+            )
+
+        # If any cohort_id's aggregated (sum of) values was out of range, show a specific error_message
+        cohort_ids_overflowed_value = []
+        for cohort_id in self.cohort_id_aggregates:
+            if self.cohort_id_aggregates[cohort_id] >= INTEGER_MAX_VALUE:
+                cohort_ids_overflowed_value.append(cohort_id)
+        if cohort_ids_overflowed_value:
+            value_field_name = self._get_value_field_name()
+            for cohort_id in sorted(cohort_ids_overflowed_value):
+                error_messages.append(
+                    f"The total aggregate sum of '{value_field_name}' should be less than {INTEGER_MAX_VALUE} for cohort_id {cohort_id}"
+                )
 
         if error_messages:
             errors[ERROR_MESSAGES] = error_messages
 
         return errors
+
+    def _get_value_field_name(self) -> str:
+        return self.value_field_name or VALUE_FIELD
 
     def get_warnings(self) -> Dict[str, Any]:
         warnings = {}
@@ -89,6 +109,12 @@ class InputDataValidationIssues:
         self, max_issue_count_til_error: Dict[str, Dict[str, int]]
     ) -> None:
         self.max_issue_count_til_error = max_issue_count_til_error
+
+    def update_cohort_aggregate(self, cohort_id: int, value: int) -> None:
+        self.cohort_id_aggregates.update({cohort_id: value})
+
+    def set_value_field_name(self, value_field_name: str) -> None:
+        self.value_field_name = value_field_name
 
     def set_empty_count_for_field(
         self,
