@@ -128,10 +128,21 @@ class InputDataValidator(Validator):
         self._validate_line_ending(line)
         csv_row_reader = csv.DictReader([header_row, line])
         for row in csv_row_reader:
+            value_int = 0
+            cohort_id = None
             for field, value in row.items():
                 self._validate_row(validation_issues, field, value)
                 if field.startswith(COHORT_ID_FIELD):
-                    cohort_id_set.add(int(value))
+                    cohort_id = int(value)
+                    cohort_id_set.add(cohort_id)
+                if field in VALUE_FIELDS:
+                    try:
+                        value_int = int(value)
+                    except ValueError:
+                        # Values with a bad format are counted already by _validate_row()
+                        pass
+            if cohort_id is not None:
+                validation_issues.update_cohort_aggregate(cohort_id, value_int)
 
     def _download_locally(
         self, validation_issues: InputDataValidationIssues, rows_processed_count: int
@@ -189,6 +200,7 @@ class InputDataValidator(Validator):
             header_row = ",".join(field_names)
             self._set_num_id_columns(field_names)
             self._validate_header(field_names)
+            self._parse_value_field_name(field_names, validation_issues)
 
             cohort_id_set = set()
 
@@ -426,10 +438,11 @@ class InputDataValidator(Validator):
             }
             if validation_warnings:
                 details["validation_warnings"] = validation_warnings
+            fields_string = f", with errors on '{error_fields}'" if error_fields else ""
             return ValidationReport(
                 validation_result=ValidationResult.FAILED,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} failed validation, with errors on '{error_fields}'.{timed_out_message}",
+                message=f"{message} failed validation{fields_string}.{timed_out_message}",
                 details=details,
             )
         elif validation_warnings:
@@ -455,3 +468,12 @@ class InputDataValidator(Validator):
 
     def _get_error_keys(self, error_keys: List[str]) -> List[str]:
         return [key for key in error_keys if key != ERROR_MESSAGES]
+
+    def _parse_value_field_name(
+        self, field_names: Sequence[str], validation_issues: InputDataValidationIssues
+    ) -> None:
+        for field_name in field_names:
+            if field_name in VALUE_FIELDS:
+                validation_issues.set_value_field_name(field_name)
+                # The header row should have either 'value' or 'conversion_value'
+                break

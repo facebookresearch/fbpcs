@@ -111,5 +111,4 @@ BINARY_INFOS: List[BinaryInfo] = [
 ]
 ONEDOCKER_EXE_PATH = "ONEDOCKER_EXE_PATH"
 OUT_OF_RANGE_COUNT = "out_of_range_count"
-VALUE_ERROR_MESSAGE = "Purchase value should be less than 2147483647"
 ERROR_MESSAGES = "error_messages"
