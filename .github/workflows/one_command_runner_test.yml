@@ -23,7 +23,12 @@ on:
         default: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
         type: string
       tag:
-        description: Version tag to use
+        description: Version tag to use the PL/PA Binaries
+        required: false
+        default: rc
+        type: string
+      coordinator_tag:
+        description: The image tag for the coordinator image that we should use.
         required: false
         default: rc
         type: string
@@ -67,6 +72,11 @@ on:
         description: The build id
         required: false
         default: "test build"
+      coordinator_tag:
+        description: The image tag for the coordinator image that we should use.
+        required: false
+        default: rc
+        type: string
       test_name:
         description: The name of the type of tests that are being run
         default: 'PL E2E Tests'
@@ -125,6 +135,7 @@ jobs:
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \
           --version=${{ inputs.tag }} \
+          --image_version=${{ inputs.coordinator_tag }} \
           --docker_env=AWS_ACCESS_KEY_ID \
           --docker_env=AWS_SECRET_ACCESS_KEY \
           --docker_env=AWS_SESSION_TOKEN \
@@ -154,6 +165,7 @@ jobs:
           --expected_result_path=${{ inputs.expected_result_path }} \
           -- \
           --version=${{ inputs.tag }} \
+          --image_version=${{ inputs.coordinator_tag }} \
           --docker_env=AWS_ACCESS_KEY_ID \
           --docker_env=AWS_SECRET_ACCESS_KEY \
           --docker_env=AWS_SESSION_TOKEN \
