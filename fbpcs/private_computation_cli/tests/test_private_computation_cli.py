@@ -216,6 +216,30 @@ class TestPrivateComputationCli(TestCase):
         pc_cli.main(argv)
         create_mock.assert_called_once()
 
+    @patch("fbpcs.private_computation_cli.private_computation_cli.TokenValidator")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.BoltGraphAPIClient")
+    @patch("fbpcs.private_computation_cli.private_computation_cli.run_attribution")
+    def test_run_attribution_with_stage_timeout_override(
+        self, create_mock, graph_client_mock, token_validator_mock
+    ) -> None:
+        argv = [
+            "run_attribution",
+            "--dataset_id=43423422232",
+            "--attribution_rule=last_click_1d",
+            f"--input_path={self.temp_files_paths[0]}",
+            "--aggregation_type=measurement",
+            "--concurrency=4",
+            "--num_files_per_mpc_container=4",
+            f"--config={self.temp_filename}",
+            "--timestamp=1646870400",
+            "--k_anonymity_threshold=0",
+            "--run_id=123",
+            "--stage_timeout_override=4567",
+        ]
+        pc_cli.main(argv)
+        create_mock.assert_called_once()
+        self.assertEquals(create_mock.call_args.kwargs["stage_timeout_override"], 4567)
+
     @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
     def test_validate(self, validate_mock) -> None:
         argv = [
@@ -315,10 +339,14 @@ class TestPrivateComputationCli(TestCase):
                 "--tries_per_stage=789",
                 "--dry_run",
                 f"--output_dir={self.temp_dir_path}",
+                "--stage_timeout_override=4567",
             ]
         )
         pc_cli.main(argv)
         run_study_mock.assert_called_once()
+        self.assertEquals(
+            run_study_mock.call_args.kwargs["stage_timeout_override"], 4567
+        )
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.PreValidateService")
     @patch("fbpcs.private_computation_cli.private_computation_cli.logging.getLogger")
