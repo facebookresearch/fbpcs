@@ -330,10 +330,11 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,,,100,1645157987\n",
         ]
         self.write_lines_to_file(lines)
+        warning_fields = "id_"
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some warnings.",
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with warnings on '{warning_fields}'.",
             details={
                 "rows_processed_count": 3,
                 "validation_warnings": {
@@ -362,10 +363,11 @@ class TestInputDataValidator(TestCase):
             b"abcd/1234+WXYZ=,$20,1645157987,0\n",
         ]
         self.write_lines_to_file(lines)
+        warning_fields = "conversion_value"
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some warnings.",
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with warnings on '{warning_fields}'.",
             details={
                 "rows_processed_count": 3,
                 "validation_warnings": {
@@ -397,10 +399,11 @@ class TestInputDataValidator(TestCase):
             b",abcd/1234+WXYZ=,abcd/1234+WXYZ=,$20,1645157987,0\n",
         ]
         self.write_lines_to_file(lines)
+        warning_fields = "conversion_value, id_"
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with some warnings.",
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with warnings on '{warning_fields}'.",
             details={
                 "rows_processed_count": 3,
                 "validation_warnings": {
@@ -945,6 +948,82 @@ class TestInputDataValidator(TestCase):
                 "validation_errors": {
                     "event_timestamp": {
                         "out_of_range_count": 2,
+                    },
+                },
+            },
+        )
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            start_timestamp="1640000000",
+            end_timestamp="1650000000",
+        )
+
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_reports_for_pa_when_most_timestamps_are_valid(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,conversion_value,conversion_timestamp,conversion_metadata\n",
+            b"abcd/1234+WXYZ=,25,9999999999,0\n",
+        ]
+        lines.extend([b"abcd/1234+WXYZ=,25,1645157987,0\n"] * 19)
+        self.write_lines_to_file(lines)
+        warning_fields = "conversion_timestamp"
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with warnings on '{warning_fields}'.",
+            details={
+                "rows_processed_count": 20,
+                "validation_warnings": {
+                    "conversion_timestamp": {
+                        "out_of_range_count": 1,
+                    },
+                },
+            },
+        )
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            start_timestamp="1640000000",
+            end_timestamp="1650000000",
+        )
+
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_reports_for_pl_when_most_timestamps_are_valid(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,25,1639999999\n",
+        ]
+        lines.extend([b"abcd/1234+WXYZ=,25,1645157987\n"] * 10)
+        self.write_lines_to_file(lines)
+        warning_fields = "event_timestamp"
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully, with warnings on '{warning_fields}'.",
+            details={
+                "rows_processed_count": 11,
+                "validation_warnings": {
+                    "event_timestamp": {
+                        "out_of_range_count": 1,
                     },
                 },
             },

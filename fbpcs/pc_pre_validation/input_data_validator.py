@@ -29,7 +29,9 @@ from fbpcp.service.storage_s3 import S3StorageService
 from fbpcp.util.s3path import S3Path
 from fbpcs.pc_pre_validation.constants import (
     COHORT_ID_FIELD,
+    CONVERSION_TIMESTAMP_FIELD,
     ERROR_MESSAGES,
+    EVENT_TIMESTAMP_FIELD,
     ID_FIELD_PREFIX,
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
     INPUT_DATA_TMP_FILE_PATH,
@@ -40,6 +42,7 @@ from fbpcs.pc_pre_validation.constants import (
     PRIVATE_ID_DFCA_FIELDS,
     STREAMING_DURATION_LIMIT_IN_SECONDS,
     TIMESTAMP,
+    TIMESTAMP_OUT_OF_RANGE_MAX_THRESHOLD,
     TIMESTAMP_REGEX,
     VALID_LINE_ENDING_REGEX,
     VALIDATION_REGEXES,
@@ -237,6 +240,16 @@ class InputDataValidator(Validator):
                 ID_FIELD_PREFIX: {
                     "empty_count": self._num_id_columns * rows_processed_count - 1,
                 },
+                EVENT_TIMESTAMP_FIELD: {
+                    "out_of_range_count": int(
+                        rows_processed_count * TIMESTAMP_OUT_OF_RANGE_MAX_THRESHOLD
+                    ),
+                },
+                CONVERSION_TIMESTAMP_FIELD: {
+                    "out_of_range_count": int(
+                        rows_processed_count * TIMESTAMP_OUT_OF_RANGE_MAX_THRESHOLD
+                    ),
+                },
             }
         )
 
@@ -420,10 +433,11 @@ class InputDataValidator(Validator):
                 details=details,
             )
         elif validation_warnings:
+            warning_fields = ", ".join(sorted(validation_warnings.keys()))
             return ValidationReport(
                 validation_result=ValidationResult.SUCCESS,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} completed validation successfully, with some warnings.{timed_out_message}",
+                message=f"{message} completed validation successfully, with warnings on '{warning_fields}'.",
                 details={
                     "rows_processed_count": rows_processed_count,
                     "validation_warnings": validation_warnings,
