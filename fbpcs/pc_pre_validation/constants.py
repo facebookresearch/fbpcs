@@ -64,6 +64,10 @@ RANGE_FIELDS: Set[str] = {
     VALUE_FIELD,
     CONVERSION_VALUE_FIELD,
 }
+VALUE_FIELDS: Set[str] = {
+    CONVERSION_VALUE_FIELD,
+    VALUE_FIELD,
+}
 
 INTEGER_REGEX: Pattern[str] = re.compile(r"^[0-9]+$")
 TIMESTAMP_REGEX: Pattern[str] = re.compile(r"^[0-9]{10}$")
