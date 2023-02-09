@@ -351,6 +351,7 @@ async def _run_study_async_helper(
     output_dir: Optional[str],
     graphapi_domain: Optional[str],
     bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]] = None,
+    stage_timeout_override=stage_timeout_override,
 ) -> BoltSummary:
     (
         instances_input_path,
