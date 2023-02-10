@@ -99,7 +99,7 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     // Publisher uses even schedulerId and partner uses odd schedulerId
     auto app = std::make_unique<
         pcf2_attribution::
-            AttributionApp<PARTY, 2 * index + PARTY, true, inputEncryption>>(
+            AttributionApp<PARTY, 2 * index + PARTY, inputEncryption>>(
         std::move(communicationAgentFactory),
         attributionRules,
         inputFilenames,
