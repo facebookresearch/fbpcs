@@ -25,7 +25,7 @@ namespace pcf2_attribution {
  * This class represents input data for a Private Attribution computation.
  * It processes an input csv and generates the std::vectors for each column
  */
-template <bool usingBatch, common::InputEncryption inputEncryption>
+template <common::InputEncryption inputEncryption>
 class AttributionInputMetrics {
  public:
   // Constructor -- input is a path to a CSV
@@ -42,19 +42,19 @@ class AttributionInputMetrics {
     return attributionRules_;
   }
 
-  const std::vector<ConversionT<usingBatch>>& getConversionArrays() const {
+  const std::vector<ConversionT<true>>& getConversionArrays() const {
     return convArrays_;
   }
 
-  const std::vector<TouchpointT<usingBatch>>& getTouchpointArrays() const {
+  const std::vector<TouchpointT<true>>& getTouchpointArrays() const {
     return tpArrays_;
   }
 
  private:
   std::vector<int64_t> ids_;
   std::vector<std::string> attributionRules_;
-  std::vector<TouchpointT<usingBatch>> tpArrays_;
-  std::vector<ConversionT<usingBatch>> convArrays_;
+  std::vector<TouchpointT<true>> tpArrays_;
+  std::vector<ConversionT<true>> convArrays_;
 
   /**
    * Parse touchpoints and add padding if necessary.
@@ -76,15 +76,13 @@ class AttributionInputMetrics {
   /**
    * Convert parsed touchpoints into touchpoints.
    */
-  const std::vector<TouchpointT<usingBatch>>
-  convertParsedTouchpointsToTouchpoints(
+  const std::vector<TouchpointT<true>> convertParsedTouchpointsToTouchpoints(
       const std::vector<std::vector<ParsedTouchpoint>>& parsedTouchpoints);
 
   /**
    * Convert parsed conversions into conversions.
    */
-  const std::vector<ConversionT<usingBatch>>
-  convertParsedConversionsToConversions(
+  const std::vector<ConversionT<true>> convertParsedConversionsToConversions(
       const std::vector<std::vector<ParsedConversion>>& parsedConversions);
 };
 

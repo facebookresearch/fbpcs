@@ -32,31 +32,6 @@ namespace pcf2_attribution {
 
 const bool unsafe = true;
 
-TEST(AttributionGameTest, TestPrivateTouchpointPlaintext) {
-  std::vector<std::vector<Touchpoint<false>>> touchpoints{
-      std::vector<Touchpoint<false>>{
-          Touchpoint<false>{0, true, 100},
-          Touchpoint<false>{1, false, 50},
-          Touchpoint<false>{2, true, 0}}};
-
-  AttributionGame<common::PUBLISHER, false, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
-          fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
-
-  auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints).at(0);
-
-  ASSERT_EQ(privateTouchpoints.size(), 3);
-
-  EXPECT_EQ(
-      privateTouchpoints.at(0).ts.openToParty(common::PUBLISHER).getValue(),
-      100);
-  EXPECT_EQ(
-      privateTouchpoints.at(1).ts.openToParty(common::PUBLISHER).getValue(),
-      50);
-  EXPECT_EQ(
-      privateTouchpoints.at(2).ts.openToParty(common::PUBLISHER).getValue(), 0);
-}
-
 TEST(AttributionGameTest, TestPrivateTouchpointPlaintextBatch) {
   std::vector<uint64_t> timestamp0{100, 50, 0};
   std::vector<uint64_t> timestamp1{99, 49, 3};
@@ -73,8 +48,8 @@ TEST(AttributionGameTest, TestPrivateTouchpointPlaintextBatch) {
           .ts = timestamp1,
       }};
 
-  AttributionGame<common::PUBLISHER, true, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
+  AttributionGame<common::PUBLISHER, common::InputEncryption::Plaintext> game(
+      std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
           fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
 
   auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints);
@@ -93,31 +68,6 @@ TEST(AttributionGameTest, TestPrivateTouchpointPlaintextBatch) {
   fbpcf::testVectorEq<uint64_t>(timestamp1, sharedTimestamp1);
 }
 
-TEST(AttributionGameTest, TestPrivateConversionPlaintext) {
-  std::vector<std::vector<Conversion<false>>> conversions{
-      std::vector<Conversion<false>>{
-          Conversion<false>{50},
-          Conversion<false>{1000},
-          Conversion<false>{0}}};
-
-  AttributionGame<common::PUBLISHER, false, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
-          fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
-
-  auto privateConversions = game.privatelyShareConversions(conversions).at(0);
-
-  ASSERT_EQ(privateConversions.size(), 3);
-
-  EXPECT_EQ(
-      privateConversions.at(0).ts.openToParty(common::PUBLISHER).getValue(),
-      50);
-  EXPECT_EQ(
-      privateConversions.at(1).ts.openToParty(common::PUBLISHER).getValue(),
-      1000);
-  EXPECT_EQ(
-      privateConversions.at(2).ts.openToParty(common::PUBLISHER).getValue(), 0);
-}
-
 TEST(AttributionGameTest, TestPrivateConversionPlaintextBatch) {
   std::vector<uint64_t> timestamp0{100, 50, 0};
   std::vector<uint64_t> timestamp1{99, 49, 3};
@@ -125,8 +75,8 @@ TEST(AttributionGameTest, TestPrivateConversionPlaintextBatch) {
   std::vector<Conversion<true>> conversions{
       Conversion<true>{.ts = timestamp0}, Conversion<true>{.ts = timestamp1}};
 
-  AttributionGame<common::PUBLISHER, true, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
+  AttributionGame<common::PUBLISHER, common::InputEncryption::Plaintext> game(
+      std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
           fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
 
   auto privateConversions = game.privatelyShareConversions(conversions);
@@ -139,225 +89,6 @@ TEST(AttributionGameTest, TestPrivateConversionPlaintextBatch) {
       privateConversions.at(1).ts.openToParty(common::PUBLISHER).getValue();
   fbpcf::testVectorEq<uint64_t>(sharedTimestamp0, timestamp0);
   fbpcf::testVectorEq<uint64_t>(sharedTimestamp1, timestamp1);
-}
-
-TEST(AttributionGameTest, TestShareAttributionRules) {
-  std::vector<std::string> attributionRuleNames = {
-      common::LAST_CLICK_1D,
-      common::LAST_TOUCH_1D,
-      common::LAST_CLICK_28D,
-      common::LAST_TOUCH_28D,
-      common::LAST_CLICK_2_7D,
-      common::LAST_TOUCH_2_7D,
-      common::LAST_CLICK_1D_TARGETID};
-
-  AttributionGame<common::PUBLISHER, false, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
-          fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
-
-  auto attributionRules =
-      game.shareAttributionRules(common::PUBLISHER, attributionRuleNames);
-
-  ASSERT_EQ(attributionRules.size(), 7);
-  EXPECT_EQ(attributionRules[0]->name, common::LAST_CLICK_1D);
-  EXPECT_EQ(attributionRules[1]->name, common::LAST_TOUCH_1D);
-  EXPECT_EQ(attributionRules[2]->name, common::LAST_CLICK_28D);
-  EXPECT_EQ(attributionRules[3]->name, common::LAST_TOUCH_28D);
-  EXPECT_EQ(attributionRules[4]->name, common::LAST_CLICK_2_7D);
-  EXPECT_EQ(attributionRules[5]->name, common::LAST_TOUCH_2_7D);
-  EXPECT_EQ(attributionRules[6]->name, common::LAST_CLICK_1D_TARGETID);
-}
-
-TEST(AttributionGameTest, TestAttributionLogicPlaintext) {
-  std::vector<std::vector<Touchpoint<false>>> touchpoints{
-      std::vector<Touchpoint<false>>{
-          Touchpoint<false>{0, false, 125},
-          Touchpoint<false>{1, true, 100},
-          Touchpoint<false>{2, true, 200}}};
-
-  std::vector<std::vector<Conversion<false>>> conversions{
-      std::vector<Conversion<false>>{
-          Conversion<false>{50},
-          Conversion<false>{150},
-          Conversion<false>{87000}}};
-
-  AttributionGame<common::PUBLISHER, false, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
-          fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
-
-  auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints);
-  auto privateConversions = game.privatelyShareConversions(conversions);
-
-  std::vector<bool> attributionResultsLastClick1D{
-      /* conv 50 */ false,
-      false,
-      false,
-      /* conv 150 */ false,
-      true,
-      false,
-      /* conv 87000 */ false,
-      false,
-      false};
-
-  std::vector<bool> attributionResultsLastTouch1D{
-      /* conv 50 */ false,
-      false,
-      false,
-      /* conv 150 */ false,
-      true,
-      false,
-      /* conv 87000 */ false,
-      false,
-      false};
-
-  auto lastClick1D = AttributionRule<
-      common::PUBLISHER,
-      false,
-      common::InputEncryption::Plaintext>::
-      fromNameOrThrow(common::LAST_CLICK_1D);
-  auto thresholdsLastClick1D =
-      game.privatelyShareThresholds(
-              touchpoints, privateTouchpoints, *lastClick1D, 0)
-          .at(0);
-  auto lastTouch1D = AttributionRule<
-      common::PUBLISHER,
-      false,
-      common::InputEncryption::Plaintext>::
-      fromNameOrThrow(common::LAST_TOUCH_1D);
-  auto thresholdsLastTouch1D =
-      game.privatelyShareThresholds(
-              touchpoints, privateTouchpoints, *lastTouch1D, 0)
-          .at(0);
-
-  auto computeAttributionLastClick1D = game.computeAttributionsHelper(
-      privateTouchpoints.at(0),
-      privateConversions.at(0),
-      *lastClick1D,
-      thresholdsLastClick1D,
-      1);
-
-  auto computeAttributionLastTouch1D = game.computeAttributionsHelper(
-      privateTouchpoints.at(0),
-      privateConversions.at(0),
-      *lastTouch1D,
-      thresholdsLastTouch1D,
-      1);
-
-  for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
-    EXPECT_EQ(
-        computeAttributionLastClick1D.at(i)
-            .openToParty(common::PUBLISHER)
-            .getValue(),
-        attributionResultsLastClick1D.at(i));
-  }
-
-  for (size_t i = 0; i < attributionResultsLastTouch1D.size(); ++i) {
-    EXPECT_EQ(
-        computeAttributionLastTouch1D.at(i)
-            .openToParty(common::PUBLISHER)
-            .getValue(),
-        attributionResultsLastTouch1D.at(i));
-  }
-}
-
-TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintext) {
-  std::vector<std::vector<Touchpoint<false>>> touchpoints{
-      std::vector<Touchpoint<false>>{
-          Touchpoint<false>{.id = 0, .isClick = false, .ts = 125, .adId = 1},
-          Touchpoint<false>{.id = 1, .isClick = true, .ts = 100, .adId = 2},
-          Touchpoint<false>{.id = 2, .isClick = true, .ts = 200, .adId = 3}}};
-
-  std::vector<std::vector<Conversion<false>>> conversions{
-      std::vector<Conversion<false>>{
-          Conversion<false>{.ts = 50, .convValue = 20},
-          Conversion<false>{.ts = 150, .convValue = 40},
-          Conversion<false>{.ts = 87000, .convValue = 60}}};
-
-  AttributionGame<common::PUBLISHER, false, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
-          fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
-
-  auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints);
-  auto privateConversions = game.privatelyShareConversions(conversions);
-
-  std::vector<bool> attributionResultsLastClick1D{false, true, false};
-  std::vector<int> adIdsLastClick1D{0, 2, 0};
-  std::vector<int> convValuesLastClick1D{20, 40, 60};
-
-  std::vector<bool> attributionResultsLastTouch1D{false, true, false};
-  std::vector<int> adIdsLastTouch1D{0, 2, 0};
-  std::vector<int> convValuesLastTouch1D{20, 40, 60};
-
-  auto lastClick1D = AttributionRule<
-      common::PUBLISHER,
-      false,
-      common::InputEncryption::Plaintext>::
-      fromNameOrThrow(common::LAST_CLICK_1D);
-  auto thresholdsLastClick1D =
-      game.privatelyShareThresholds(
-              touchpoints, privateTouchpoints, *lastClick1D, 0)
-          .at(0);
-  auto lastTouch1D = AttributionRule<
-      common::PUBLISHER,
-      false,
-      common::InputEncryption::Plaintext>::
-      fromNameOrThrow(common::LAST_TOUCH_1D);
-  auto thresholdsLastTouch1D =
-      game.privatelyShareThresholds(
-              touchpoints, privateTouchpoints, *lastTouch1D, 0)
-          .at(0);
-
-  auto computeAttributionLastClick1DReformattedOutputFormat =
-      game.computeAttributionsHelperV2(
-          privateTouchpoints.at(0),
-          privateConversions.at(0),
-          *lastClick1D,
-          thresholdsLastClick1D,
-          1);
-
-  auto computeAttributionLastTouch1DReformattedOutputFormat =
-      game.computeAttributionsHelperV2(
-          privateTouchpoints.at(0),
-          privateConversions.at(0),
-          *lastTouch1D,
-          thresholdsLastTouch1D,
-          1);
-
-  for (size_t i = 0; i < attributionResultsLastClick1D.size(); ++i) {
-    EXPECT_EQ(
-        computeAttributionLastClick1DReformattedOutputFormat.at(i)
-            .is_attributed.openToParty(common::PUBLISHER)
-            .getValue(),
-        attributionResultsLastClick1D.at(i));
-    EXPECT_EQ(
-        computeAttributionLastClick1DReformattedOutputFormat.at(i)
-            .ad_id.openToParty(common::PUBLISHER)
-            .getValue(),
-        adIdsLastClick1D.at(i));
-    EXPECT_EQ(
-        computeAttributionLastClick1DReformattedOutputFormat.at(i)
-            .conv_value.openToParty(common::PUBLISHER)
-            .getValue(),
-        convValuesLastClick1D.at(i));
-  }
-
-  for (size_t i = 0; i < attributionResultsLastTouch1D.size(); ++i) {
-    EXPECT_EQ(
-        computeAttributionLastTouch1DReformattedOutputFormat.at(i)
-            .is_attributed.openToParty(common::PUBLISHER)
-            .getValue(),
-        attributionResultsLastTouch1D.at(i));
-    EXPECT_EQ(
-        computeAttributionLastTouch1DReformattedOutputFormat.at(i)
-            .ad_id.openToParty(common::PUBLISHER)
-            .getValue(),
-        adIdsLastTouch1D.at(i));
-    EXPECT_EQ(
-        computeAttributionLastTouch1DReformattedOutputFormat.at(i)
-            .conv_value.openToParty(common::PUBLISHER)
-            .getValue(),
-        convValuesLastTouch1D.at(i));
-  }
 }
 
 TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
@@ -373,8 +104,8 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
       Conversion<true>{{150, 150}},
       Conversion<true>{{87000, 87000}}};
 
-  AttributionGame<common::PUBLISHER, true, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
+  AttributionGame<common::PUBLISHER, common::InputEncryption::Plaintext> game(
+      std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
           fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
 
   auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints);
@@ -479,8 +210,8 @@ TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintextBatch) {
       Conversion<true>{.ts = {150, 150}, .convValue = {40, 40}},
       Conversion<true>{.ts = {87000, 87000}, .convValue = {60, 60}}};
 
-  AttributionGame<common::PUBLISHER, true, common::InputEncryption::Plaintext>
-      game(std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
+  AttributionGame<common::PUBLISHER, common::InputEncryption::Plaintext> game(
+      std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
           fbpcf::scheduler::WireKeeper::createWithVectorArena<unsafe>()));
 
   auto privateTouchpoints = game.privatelyShareTouchpoints(touchpoints);
@@ -578,17 +309,16 @@ TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintextBatch) {
 
 template <
     int schedulerId,
-    bool usingBatch,
+
     common::InputEncryption inputEncryption>
 AttributionOutputMetrics computeAttributionsWithScheduler(
     int myId,
-    AttributionInputMetrics<usingBatch, inputEncryption> inputData,
+    AttributionInputMetrics<inputEncryption> inputData,
     std::reference_wrapper<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
     fbpcf::SchedulerCreator schedulerCreator) {
   auto scheduler = schedulerCreator(myId, factory);
-  auto game = std::make_unique<
-      AttributionGame<schedulerId, usingBatch, inputEncryption>>(
+  auto game = std::make_unique<AttributionGame<schedulerId, inputEncryption>>(
       std::move(scheduler));
   return game->computeAttributions(myId, inputData);
 }
@@ -615,9 +345,9 @@ void testCorrectnessWithScheduler(
   std::string partnerInputFileName = filePrefix + ".partner.csv";
 
   // read input files
-  AttributionInputMetrics<usingBatch, inputEncryption> publisherInputData{
+  AttributionInputMetrics<inputEncryption> publisherInputData{
       common::PUBLISHER, attributionRule, publisherInputFileName};
-  AttributionInputMetrics<usingBatch, inputEncryption> partnerInputData{
+  AttributionInputMetrics<inputEncryption> partnerInputData{
       common::PARTNER, attributionRule, partnerInputFileName};
 
   // compute attributions
@@ -626,7 +356,7 @@ void testCorrectnessWithScheduler(
   FLAGS_use_new_output_format = useNewOutputFormat;
 
   auto future0 = std::async(
-      computeAttributionsWithScheduler<0, usingBatch, inputEncryption>,
+      computeAttributionsWithScheduler<0, inputEncryption>,
       0,
       publisherInputData,
       std::reference_wrapper<
@@ -634,7 +364,7 @@ void testCorrectnessWithScheduler(
           *factories[0]),
       schedulerCreator);
   auto future1 = std::async(
-      computeAttributionsWithScheduler<1, usingBatch, inputEncryption>,
+      computeAttributionsWithScheduler<1, inputEncryption>,
       1,
       partnerInputData,
       std::reference_wrapper<
@@ -683,9 +413,9 @@ void testInputColumnsWithScheduler(
   std::string partnerInputFileName = filePrefix + ".partner.csv";
 
   // read input files
-  AttributionInputMetrics<usingBatch, inputEncryption> publisherInputData{
+  AttributionInputMetrics<inputEncryption> publisherInputData{
       common::PUBLISHER, attributionRule, publisherInputFileName};
-  AttributionInputMetrics<usingBatch, inputEncryption> partnerInputData{
+  AttributionInputMetrics<inputEncryption> partnerInputData{
       common::PARTNER, attributionRule, partnerInputFileName};
 
   // compute attributions
@@ -694,7 +424,7 @@ void testInputColumnsWithScheduler(
   FLAGS_use_new_output_format = useNewOutputFormat;
 
   auto future0 = std::async(
-      computeAttributionsWithScheduler<0, usingBatch, inputEncryption>,
+      computeAttributionsWithScheduler<0, inputEncryption>,
       0,
       publisherInputData,
       std::reference_wrapper<
@@ -703,7 +433,7 @@ void testInputColumnsWithScheduler(
       schedulerCreator);
 
   auto future1 = std::async(
-      computeAttributionsWithScheduler<1, usingBatch, inputEncryption>,
+      computeAttributionsWithScheduler<1, inputEncryption>,
       1,
       partnerInputData,
       std::reference_wrapper<
@@ -744,42 +474,21 @@ TEST_P(AttributionGameTestFixture, TestCorrectness) {
   fbpcf::SchedulerCreator schedulerCreator =
       fbpcf::getSchedulerCreator<unsafe>(schedulerType);
 
-  if (usingBatch) {
-    switch (inputEncryption) {
-      case common::InputEncryption::Plaintext:
-        testCorrectnessWithScheduler<true, common::InputEncryption::Plaintext>(
-            attributionRule, schedulerCreator, useNewOutputFormat);
-        break;
+  switch (inputEncryption) {
+    case common::InputEncryption::Plaintext:
+      testCorrectnessWithScheduler<true, common::InputEncryption::Plaintext>(
+          attributionRule, schedulerCreator, useNewOutputFormat);
+      break;
 
-      case common::InputEncryption::PartnerXor:
-        testCorrectnessWithScheduler<true, common::InputEncryption::PartnerXor>(
-            attributionRule, schedulerCreator, useNewOutputFormat);
-        break;
+    case common::InputEncryption::PartnerXor:
+      testCorrectnessWithScheduler<true, common::InputEncryption::PartnerXor>(
+          attributionRule, schedulerCreator, useNewOutputFormat);
+      break;
 
-      case common::InputEncryption::Xor:
-        testCorrectnessWithScheduler<true, common::InputEncryption::Xor>(
-            attributionRule, schedulerCreator, useNewOutputFormat);
-        break;
-    }
-  } else {
-    switch (inputEncryption) {
-      case common::InputEncryption::Plaintext:
-        testCorrectnessWithScheduler<false, common::InputEncryption::Plaintext>(
-            attributionRule, schedulerCreator, useNewOutputFormat);
-        break;
-
-      case common::InputEncryption::PartnerXor:
-        testCorrectnessWithScheduler<
-            false,
-            common::InputEncryption::PartnerXor>(
-            attributionRule, schedulerCreator, useNewOutputFormat);
-        break;
-
-      case common::InputEncryption::Xor:
-        testCorrectnessWithScheduler<false, common::InputEncryption::Xor>(
-            attributionRule, schedulerCreator, useNewOutputFormat);
-        break;
-    }
+    case common::InputEncryption::Xor:
+      testCorrectnessWithScheduler<true, common::InputEncryption::Xor>(
+          attributionRule, schedulerCreator, useNewOutputFormat);
+      break;
   }
 }
 
