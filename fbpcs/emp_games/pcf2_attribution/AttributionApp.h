@@ -17,11 +17,7 @@
 
 namespace pcf2_attribution {
 
-template <
-    int MY_ROLE,
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
+template <int MY_ROLE, int schedulerId, common::InputEncryption inputEncryption>
 class AttributionApp {
  public:
   AttributionApp(
@@ -54,7 +50,7 @@ class AttributionApp {
               MY_ROLE, *communicationAgentFactory_, metricCollector_)
               .create();
 
-    AttributionGame<schedulerId, usingBatch, inputEncryption> game(
+    AttributionGame<schedulerId, true, inputEncryption> game(
         std::move(scheduler));
 
     // Compute attributions sequentially on numFiles files, starting from
@@ -96,12 +92,12 @@ class AttributionApp {
   }
 
  protected:
-  AttributionInputMetrics<usingBatch, inputEncryption> getInputData(
+  AttributionInputMetrics<true, inputEncryption> getInputData(
       std::string inputPath) {
     XLOG(INFO) << "MY_ROLE: " << MY_ROLE << ", schedulerId: " << schedulerId
                << ", attributionRules_: " << attributionRules_
                << ", input_path: " << inputPath;
-    return AttributionInputMetrics<usingBatch, inputEncryption>{
+    return AttributionInputMetrics<true, inputEncryption>{
         MY_ROLE, attributionRules_, inputPath};
   }
 
