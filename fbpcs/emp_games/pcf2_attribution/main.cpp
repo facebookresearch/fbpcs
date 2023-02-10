@@ -51,7 +51,6 @@ int main(int argc, char* argv[]) {
   common::SchedulerStatistics schedulerStatistics;
 
   // use batched attribution by default
-  const bool usingBatch = true;
   bool useXorEncryption = FLAGS_use_xor_encryption;
   try {
     auto [inputFilenames, outputFilenames] = pcf2_attribution::getIOFilenames(
@@ -81,7 +80,7 @@ int main(int argc, char* argv[]) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PUBLISHER,
-                usingBatch,
+
                 common::InputEncryption::PartnerXor>(
                 useXorEncryption,
                 inputFilenames,
@@ -95,7 +94,7 @@ int main(int argc, char* argv[]) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PUBLISHER,
-                usingBatch,
+
                 common::InputEncryption::Xor>(
                 useXorEncryption,
                 inputFilenames,
@@ -109,7 +108,7 @@ int main(int argc, char* argv[]) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PUBLISHER,
-                usingBatch,
+
                 common::InputEncryption::Plaintext>(
                 useXorEncryption,
                 inputFilenames,
@@ -129,7 +128,7 @@ int main(int argc, char* argv[]) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PARTNER,
-                usingBatch,
+
                 common::InputEncryption::PartnerXor>(
                 useXorEncryption,
                 inputFilenames,
@@ -143,7 +142,7 @@ int main(int argc, char* argv[]) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PARTNER,
-                usingBatch,
+
                 common::InputEncryption::Xor>(
                 useXorEncryption,
                 inputFilenames,
@@ -158,7 +157,7 @@ int main(int argc, char* argv[]) {
         schedulerStatistics =
             pcf2_attribution::startAttributionAppsForShardedFiles<
                 common::PARTNER,
-                usingBatch,
+
                 common::InputEncryption::Plaintext>(
                 useXorEncryption,
                 inputFilenames,
