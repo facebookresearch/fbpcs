@@ -254,7 +254,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
-const std::vector<AttributionReformattedOutputFmt<schedulerId, true>>
+const std::vector<AttributionReformattedOutputFmt<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
     const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
         touchpoints,
@@ -267,8 +267,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
     throw std::invalid_argument(
         "Must provide positive batch size for batch execution!");
   }
-  std::vector<AttributionReformattedOutputFmt<schedulerId, true>>
-      attributionsOutput;
+  std::vector<AttributionReformattedOutputFmt<schedulerId>> attributionsOutput;
   // We will be attributing on a sorted vector of touchpoints and conversions
   // (based on timestamps).
   // The preferred touchpoint for a conversion will be a valid attributable
@@ -327,11 +326,10 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
 
       attributedAdId = attributedAdId.mux(isAttributed, tp.adId);
     }
-    attributionsOutput.push_back(
-        AttributionReformattedOutputFmt<schedulerId, true>{
-            .ad_id = attributedAdId,
-            .conv_value = conv.convValue,
-            .is_attributed = hasAttributedTouchpoint});
+    attributionsOutput.push_back(AttributionReformattedOutputFmt<schedulerId>{
+        .ad_id = attributedAdId,
+        .conv_value = conv.convValue,
+        .is_attributed = hasAttributedTouchpoint});
   }
   std::reverse(attributionsOutput.begin(), attributionsOutput.end());
   return attributionsOutput;
@@ -395,14 +393,14 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributions(
         << "threshold arrays and touchpoint arrays are not the same length.";
 
     if (FLAGS_use_new_output_format) {
-      std::vector<AttributionReformattedOutputFmtT<schedulerId, true>>
+      std::vector<AttributionReformattedOutputFmtT<schedulerId>>
           attributionsReformatted;
 
       attributionsReformatted = computeAttributionsHelperV2(
           tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
 
-      AttributionReformattedOutput<schedulerId, true>
-          attributionReformattedOutput{ids, attributionsReformatted};
+      AttributionReformattedOutput<schedulerId> attributionReformattedOutput{
+          ids, attributionsReformatted};
       XLOGF(
           INFO,
           "Retrieving attribution results for rule {}.",

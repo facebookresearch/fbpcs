@@ -60,25 +60,23 @@ struct AttributionReformattedFmt {
 
 using AttributionResult = folly::dynamic;
 
-template <int schedulerId, bool usingBatch>
+template <int schedulerId>
 struct AttributionReformattedOutputFmt {
-  SecAdId<schedulerId, usingBatch> ad_id;
-  SecConvValue<schedulerId, usingBatch> conv_value;
-  SecBit<schedulerId, usingBatch> is_attributed;
+  SecAdId<schedulerId, true> ad_id;
+  SecConvValue<schedulerId, true> conv_value;
+  SecBit<schedulerId, true> is_attributed;
 };
 
-template <int schedulerId, bool usingBatch>
-using AttributionReformattedOutputFmtT = ConditionalVector<
-    AttributionReformattedOutputFmt<schedulerId, usingBatch>,
-    !usingBatch>;
+template <int schedulerId>
+using AttributionReformattedOutputFmtT =
+    AttributionReformattedOutputFmt<schedulerId>;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId = true>
 class AttributionReformattedOutput {
  public:
   AttributionReformattedOutput(
       const std::vector<int64_t>& uids,
-      const std::vector<
-          AttributionReformattedOutputFmtT<schedulerId, usingBatch>>&
+      const std::vector<AttributionReformattedOutputFmtT<schedulerId>>&
           attributionStruct)
       : uids_{uids}, attributionStruct_{attributionStruct} {}
 
@@ -92,61 +90,27 @@ class AttributionReformattedOutput {
     std::vector<std::vector<uint64_t>> revealedConvValue;
     std::vector<std::vector<bool>> revealedAttribution;
     for (const auto& attributionStructArray : attributionStruct_) {
-      if constexpr (usingBatch) {
-        IF_OMNISCIENT_MODE {
-          /* reveal ad_ids */
-          revealedAdId.push_back(
-              attributionStructArray.ad_id.openToParty(common::PUBLISHER)
-                  .getValue());
-          /* reveal conv_value */
-          revealedConvValue.push_back(
-              attributionStructArray.conv_value.openToParty(common::PUBLISHER)
-                  .getValue());
-          /* reveal is_attributed */
-          revealedAttribution.push_back(attributionStructArray.is_attributed
-                                            .openToParty(common::PUBLISHER)
-                                            .getValue());
-        }
-        else {
-          revealedAdId.push_back(
-              attributionStructArray.ad_id.extractIntShare().getValue());
-          revealedConvValue.push_back(
-              attributionStructArray.conv_value.extractIntShare().getValue());
-          revealedAttribution.push_back(
-              attributionStructArray.is_attributed.extractBit().getValue());
-        }
-      } else {
-        std::vector<uint64_t> revealedAdIdArray;
-        std::vector<uint64_t> revealedConvValueArray;
-        std::vector<bool> revealedAttributionArray;
-
-        for (const auto& attribution : attributionStructArray) {
-          IF_OMNISCIENT_MODE {
-            revealedAdIdArray.push_back(
-                attribution.ad_id.openToParty(common::PUBLISHER).getValue());
-
-            revealedConvValueArray.push_back(
-                attribution.conv_value.openToParty(common::PUBLISHER)
-                    .getValue());
-
-            revealedAttributionArray.push_back(
-                attribution.is_attributed.openToParty(common::PUBLISHER)
-                    .getValue());
-          }
-          else {
-            revealedAdIdArray.push_back(
-                attribution.ad_id.extractIntShare().getValue());
-
-            revealedConvValueArray.push_back(
-                attribution.conv_value.extractIntShare().getValue());
-
-            revealedAttributionArray.push_back(
-                attribution.is_attributed.extractBit().getValue());
-          }
-        }
-        revealedAdId.push_back(std::move(revealedAdIdArray));
-        revealedConvValue.push_back(std::move(revealedConvValueArray));
-        revealedAttribution.push_back(std::move(revealedAttributionArray));
+      IF_OMNISCIENT_MODE {
+        /* reveal ad_ids */
+        revealedAdId.push_back(
+            attributionStructArray.ad_id.openToParty(common::PUBLISHER)
+                .getValue());
+        /* reveal conv_value */
+        revealedConvValue.push_back(
+            attributionStructArray.conv_value.openToParty(common::PUBLISHER)
+                .getValue());
+        /* reveal is_attributed */
+        revealedAttribution.push_back(
+            attributionStructArray.is_attributed.openToParty(common::PUBLISHER)
+                .getValue());
+      }
+      else {
+        revealedAdId.push_back(
+            attributionStructArray.ad_id.extractIntShare().getValue());
+        revealedConvValue.push_back(
+            attributionStructArray.conv_value.extractIntShare().getValue());
+        revealedAttribution.push_back(
+            attributionStructArray.is_attributed.extractBit().getValue());
       }
     }
 
@@ -157,43 +121,24 @@ class AttributionReformattedOutput {
 
     for (size_t i = 0; i < uids_.size(); ++i) {
       std::vector<OutputMetricReformatted> revealedMetric;
-      if constexpr (usingBatch) {
-        for (size_t j = 0; j < revealedAdId.size(); ++j) {
-          OutputMetricReformatted outputMetric{
-              static_cast<uint16_t>(revealedAdId.at(j).at(i)),
-              revealedConvValue.at(j).at(i),
-              revealedAttribution.at(j).at(i)};
-          revealedMetric.emplace_back(outputMetric);
-          IF_OMNISCIENT_MODE {
-            if (revealedAdId.at(j).at(i)) {
-              adIdCountOmniscient++;
-            }
-            convValueSumOmniscient += revealedConvValue.at(j).at(i);
-            if (revealedAttribution.at(j).at(i)) {
-              attributionCountOmniscient++;
-            }
-          }
-        }
-      } else {
-        // revealedAttribution for non-batch is related to batch by transposing
-        for (size_t j = 0; j < revealedAdId.at(i).size(); ++j) {
-          OutputMetricReformatted outputMetric{
-              static_cast<uint16_t>(revealedAdId.at(i).at(j)),
-              revealedConvValue.at(i).at(j),
-              revealedAttribution.at(i).at(j)};
-          revealedMetric.emplace_back(outputMetric);
 
-          IF_OMNISCIENT_MODE {
-            if (revealedAdId.at(i).at(j)) {
-              adIdCountOmniscient++;
-            }
-            convValueSumOmniscient += revealedConvValue.at(i).at(j);
-            if (revealedAttribution.at(i).at(j)) {
-              attributionCountOmniscient++;
-            }
+      for (size_t j = 0; j < revealedAdId.size(); ++j) {
+        OutputMetricReformatted outputMetric{
+            static_cast<uint16_t>(revealedAdId.at(j).at(i)),
+            revealedConvValue.at(j).at(i),
+            revealedAttribution.at(j).at(i)};
+        revealedMetric.emplace_back(outputMetric);
+        IF_OMNISCIENT_MODE {
+          if (revealedAdId.at(j).at(i)) {
+            adIdCountOmniscient++;
+          }
+          convValueSumOmniscient += revealedConvValue.at(j).at(i);
+          if (revealedAttribution.at(j).at(i)) {
+            attributionCountOmniscient++;
           }
         }
       }
+
       out.idToMetrics.emplace(uids_.at(i), revealedMetric);
     }
 
@@ -208,7 +153,6 @@ class AttributionReformattedOutput {
 
  private:
   std::vector<int64_t> uids_;
-  std::vector<AttributionReformattedOutputFmtT<schedulerId, usingBatch>>
-      attributionStruct_;
+  std::vector<AttributionReformattedOutputFmtT<schedulerId>> attributionStruct_;
 };
 } // namespace pcf2_attribution
