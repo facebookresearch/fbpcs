@@ -39,20 +39,20 @@ struct AttributionRule {
   // Should return true if the given touchpoint is eligible to be attributed
   // to the given conversion
   virtual SecBit<schedulerId, true> isAttributable(
-      const PrivateTouchpoint<schedulerId, true, inputEncryption>&,
+      const PrivateTouchpoint<schedulerId, inputEncryption>&,
       const PrivateConversion<schedulerId, inputEncryption>&,
       const std::vector<SecTimestamp<schedulerId, true>>&) const = 0;
 
   // Compute touchpoint thresholds from plaintext touchpoints based on
   // attribution rule
   virtual std::vector<SecTimestamp<schedulerId, true>>
-  computeThresholdsPlaintext(const Touchpoint<true>&) const = 0;
+  computeThresholdsPlaintext(const Touchpoint&) const = 0;
 
   // Compute touchpoint thresholds from private touchpoints based on attribution
   // rule
   virtual std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPrivate(
-      const PrivateTouchpoint<schedulerId, true, inputEncryption>&,
-      const PrivateIsClick<schedulerId, true, inputEncryption>&,
+      const PrivateTouchpoint<schedulerId, inputEncryption>&,
+      const PrivateIsClick<schedulerId, inputEncryption>&,
       size_t batchSize) const = 0;
 
   // Constructors for attribution rules, which can be found in

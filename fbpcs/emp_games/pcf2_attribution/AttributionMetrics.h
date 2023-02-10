@@ -46,14 +46,14 @@ class AttributionInputMetrics {
     return convArrays_;
   }
 
-  const std::vector<TouchpointT<true>>& getTouchpointArrays() const {
+  const std::vector<Touchpoint>& getTouchpointArrays() const {
     return tpArrays_;
   }
 
  private:
   std::vector<int64_t> ids_;
   std::vector<std::string> attributionRules_;
-  std::vector<TouchpointT<true>> tpArrays_;
+  std::vector<Touchpoint> tpArrays_;
   std::vector<Conversion> convArrays_;
 
   /**
@@ -76,7 +76,7 @@ class AttributionInputMetrics {
   /**
    * Convert parsed touchpoints into touchpoints.
    */
-  const std::vector<TouchpointT<true>> convertParsedTouchpointsToTouchpoints(
+  const std::vector<Touchpoint> convertParsedTouchpointsToTouchpoints(
       const std::vector<std::vector<ParsedTouchpoint>>& parsedTouchpoints);
 
   /**

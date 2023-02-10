@@ -36,13 +36,13 @@ TEST(AttributionGameTest, TestPrivateTouchpointPlaintextBatch) {
   std::vector<uint64_t> timestamp0{100, 50, 0};
   std::vector<uint64_t> timestamp1{99, 49, 3};
 
-  std::vector<Touchpoint<true>> touchpoints{
-      Touchpoint<true>{
+  std::vector<Touchpoint> touchpoints{
+      Touchpoint{
           .id = {0, 1, 2},
           .isClick = {true, false, true},
           .ts = timestamp0,
       },
-      Touchpoint<true>{
+      Touchpoint{
           .id = {3, 4, 5},
           .isClick = {false, true, false},
           .ts = timestamp1,
@@ -94,10 +94,10 @@ TEST(AttributionGameTest, TestPrivateConversionPlaintextBatch) {
 TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
   int batchSize = 2;
 
-  std::vector<Touchpoint<true>> touchpoints{
-      Touchpoint<true>{{0, 0}, {false, false}, {125, 125}},
-      Touchpoint<true>{{1, 1}, {true, true}, {100, 100}},
-      Touchpoint<true>{{2, 2}, {true, true}, {200, 200}}};
+  std::vector<Touchpoint> touchpoints{
+      Touchpoint{{0, 0}, {false, false}, {125, 125}},
+      Touchpoint{{1, 1}, {true, true}, {100, 100}},
+      Touchpoint{{2, 2}, {true, true}, {200, 200}}};
 
   std::vector<Conversion> conversions{
       Conversion{{50, 50}}, Conversion{{150, 150}}, Conversion{{87000, 87000}}};
@@ -182,18 +182,18 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
 TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintextBatch) {
   int batchSize = 2;
 
-  std::vector<Touchpoint<true>> touchpoints{
-      Touchpoint<true>{
+  std::vector<Touchpoint> touchpoints{
+      Touchpoint{
           .id = {0, 0},
           .isClick = {false, false},
           .ts = {125, 125},
           .adId = {1, 1}},
-      Touchpoint<true>{
+      Touchpoint{
           .id = {1, 1},
           .isClick = {true, true},
           .ts = {100, 100},
           .adId = {2, 2}},
-      Touchpoint<true>{
+      Touchpoint{
           .id = {2, 2},
           .isClick = {true, true},
           .ts = {200, 200},

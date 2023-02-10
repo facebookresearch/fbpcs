@@ -20,10 +20,10 @@ template <int schedulerId, common::InputEncryption inputEncryption>
 std::vector<
     typename AttributionGame<schedulerId, inputEncryption>::PrivateTouchpointT>
 AttributionGame<schedulerId, inputEncryption>::privatelyShareTouchpoints(
-    const std::vector<TouchpointT<true>>& touchpoints) {
+    const std::vector<Touchpoint>& touchpoints) {
   return common::privatelyShareArray<
-      Touchpoint<true>,
-      PrivateTouchpoint<schedulerId, true, inputEncryption>>(touchpoints);
+      Touchpoint,
+      PrivateTouchpoint<schedulerId, inputEncryption>>(touchpoints);
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
@@ -39,7 +39,7 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareConversions(
 template <int schedulerId, common::InputEncryption inputEncryption>
 std::vector<std::vector<SecTimestampT<schedulerId, true>>>
 AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
-    const std::vector<TouchpointT<true>>& touchpoints,
+    const std::vector<Touchpoint>& touchpoints,
     const std::vector<PrivateTouchpointT>& privateTouchpoints,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
     size_t batchSize) {
@@ -57,8 +57,8 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
           "Must provide positive batch size for batch execution!");
     }
     auto privateIsClick = common::privatelyShareArray<
-        Touchpoint<true>,
-        PrivateIsClick<schedulerId, true, inputEncryption>>(touchpoints);
+        Touchpoint,
+        PrivateIsClick<schedulerId, inputEncryption>>(touchpoints);
     for (size_t i = 0; i < touchpoints.size(); ++i) {
       auto thresholds = attributionRule.computeThresholdsPrivate(
           privateTouchpoints.at(i), privateIsClick.at(i), batchSize);
@@ -115,7 +115,7 @@ template <int schedulerId, common::InputEncryption inputEncryption>
 const std::vector<uint64_t>
 AttributionGame<schedulerId, inputEncryption>::retrieveValidOriginalAdIds(
     const int /*myRole*/,
-    std::vector<TouchpointT<true>>& touchpoints) {
+    std::vector<Touchpoint>& touchpoints) {
   std::unordered_set<uint64_t> adIdSet;
   for (auto& touchpoint : touchpoints) {
     SecOriginalAdId<schedulerId, true> secAdId;
@@ -149,7 +149,7 @@ AttributionGame<schedulerId, inputEncryption>::retrieveValidOriginalAdIds(
 template <int schedulerId, common::InputEncryption inputEncryption>
 void AttributionGame<schedulerId, inputEncryption>::
     replaceAdIdWithCompressedAdId(
-        std::vector<TouchpointT<true>>& touchpoints,
+        std::vector<Touchpoint>& touchpoints,
         std::vector<uint64_t>& validOriginalAdIds) {
   uint16_t compressedAdId = 1;
   std::unordered_map<uint64_t, uint16_t> adIdToCompressedAdIdMap;
@@ -184,7 +184,7 @@ void AttributionGame<schedulerId, inputEncryption>::putAdIdMappingJson(
 template <int schedulerId, common::InputEncryption inputEncryption>
 const std::vector<SecBit<schedulerId, true>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
-    const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
+    const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
         touchpoints,
     const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,
@@ -256,7 +256,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
 template <int schedulerId, common::InputEncryption inputEncryption>
 const std::vector<AttributionReformattedOutputFmt<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
-    const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
+    const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
         touchpoints,
     const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,

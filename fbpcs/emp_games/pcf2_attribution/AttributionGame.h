@@ -31,8 +31,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const int myRole,
       const AttributionInputMetrics<inputEncryption>& inputData);
 
-  using PrivateTouchpointT =
-      PrivateTouchpoint<schedulerId, true, inputEncryption>;
+  using PrivateTouchpointT = PrivateTouchpoint<schedulerId, inputEncryption>;
 
   using PrivateConversionT = PrivateConversion<schedulerId, inputEncryption>;
 
@@ -49,7 +48,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    * Publisher shares touchpoints with partner.
    */
   std::vector<PrivateTouchpointT> privatelyShareTouchpoints(
-      const std::vector<TouchpointT<true>>& touchpoints);
+      const std::vector<Touchpoint>& touchpoints);
 
   /**
    * Partner shares conversions with publisher.
@@ -63,7 +62,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    */
   std::vector<std::vector<SecTimestampT<schedulerId, true>>>
   privatelyShareThresholds(
-      const std::vector<TouchpointT<true>>& touchpoints,
+      const std::vector<Touchpoint>& touchpoints,
       const std::vector<PrivateTouchpointT>& privateTouchpoints,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
       size_t batchSize);
@@ -73,13 +72,13 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    */
   const std::vector<uint64_t> retrieveValidOriginalAdIds(
       const int myRole,
-      std::vector<TouchpointT<true>>& touchpoints);
+      std::vector<Touchpoint>& touchpoints);
   /**
    * Create a compression map of the original Ad Id with the compressed Ad ID
    */
 
   void replaceAdIdWithCompressedAdId(
-      std::vector<TouchpointT<true>>& touchpoints,
+      std::vector<Touchpoint>& touchpoints,
       std::vector<uint64_t>& validOriginalAdIds);
 
   void putAdIdMappingJson(
@@ -90,7 +89,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    * Helper method for computing attributions.
    */
   const std::vector<SecBit<schedulerId, true>> computeAttributionsHelper(
-      const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
+      const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
           touchpoints,
       const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
           conversions,
@@ -101,7 +100,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   const std::vector<AttributionReformattedOutputFmt<schedulerId>>
   computeAttributionsHelperV2(
-      const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
+      const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
           touchpoints,
       const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
           conversions,
