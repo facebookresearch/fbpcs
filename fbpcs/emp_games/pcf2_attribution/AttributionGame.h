@@ -60,8 +60,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    * Publisher shares touchpoints thresholds, to optimize attribution
    * computation.
    */
-  std::vector<std::vector<SecTimestampT<schedulerId, true>>>
-  privatelyShareThresholds(
+  std::vector<std::vector<SecTimestamp<schedulerId>>> privatelyShareThresholds(
       const std::vector<Touchpoint>& touchpoints,
       const std::vector<PrivateTouchpointT>& privateTouchpoints,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
@@ -88,14 +87,13 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   /**
    * Helper method for computing attributions.
    */
-  const std::vector<SecBit<schedulerId, true>> computeAttributionsHelper(
+  const std::vector<SecBit<schedulerId>> computeAttributionsHelper(
       const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
           touchpoints,
       const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
           conversions,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
-      const std::vector<std::vector<SecTimestamp<schedulerId, true>>>&
-          thresholds,
+      const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
       size_t batchSize);
 
   const std::vector<AttributionReformattedOutputFmt<schedulerId>>
@@ -105,8 +103,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
           conversions,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
-      const std::vector<std::vector<SecTimestamp<schedulerId, true>>>&
-          thresholds,
+      const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
       size_t batchSize);
 };
 

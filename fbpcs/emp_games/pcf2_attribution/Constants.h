@@ -19,78 +19,53 @@ const size_t originalAdIdWidth = 64;
 const size_t adIdWidth = 16;
 const size_t convValueWidth = 32;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 using PubBit =
-    typename fbpcf::frontend::MpcGame<schedulerId>::template PubBit<usingBatch>;
-template <int schedulerId, bool usingBatch = true>
+    typename fbpcf::frontend::MpcGame<schedulerId>::template PubBit<true>;
+template <int schedulerId>
 using SecBit =
-    typename fbpcf::frontend::MpcGame<schedulerId>::template SecBit<usingBatch>;
+    typename fbpcf::frontend::MpcGame<schedulerId>::template SecBit<true>;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 using PubTimestamp = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template PubUnsignedInt<timeStampWidth, usingBatch>;
-template <int schedulerId, bool usingBatch = true>
+    schedulerId>::template PubUnsignedInt<timeStampWidth, true>;
+template <int schedulerId>
 using SecTimestamp = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template SecUnsignedInt<timeStampWidth, usingBatch>;
+    schedulerId>::template SecUnsignedInt<timeStampWidth, true>;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 using PubTargetId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template PubUnsignedInt<targetIdWidth, usingBatch>;
-template <int schedulerId, bool usingBatch = true>
+    schedulerId>::template PubUnsignedInt<targetIdWidth, true>;
+template <int schedulerId>
 using SecTargetId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template SecUnsignedInt<targetIdWidth, usingBatch>;
+    schedulerId>::template SecUnsignedInt<targetIdWidth, true>;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 using PubActionType = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template PubUnsignedInt<actionTypeWidth, usingBatch>;
-template <int schedulerId, bool usingBatch = true>
+    schedulerId>::template PubUnsignedInt<actionTypeWidth, true>;
+template <int schedulerId>
 using SecActionType = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template SecUnsignedInt<actionTypeWidth, usingBatch>;
+    schedulerId>::template SecUnsignedInt<actionTypeWidth, true>;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 using PubOriginalAdId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template PubUnsignedInt<originalAdIdWidth, usingBatch>;
-template <int schedulerId, bool usingBatch = true>
+    schedulerId>::template PubUnsignedInt<originalAdIdWidth, true>;
+template <int schedulerId>
 using SecOriginalAdId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template SecUnsignedInt<originalAdIdWidth, usingBatch>;
+    schedulerId>::template SecUnsignedInt<originalAdIdWidth, true>;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 using PubAdId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template PubUnsignedInt<adIdWidth, usingBatch>;
-template <int schedulerId, bool usingBatch = true>
+    schedulerId>::template PubUnsignedInt<adIdWidth, true>;
+template <int schedulerId>
 using SecAdId = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template SecUnsignedInt<adIdWidth, usingBatch>;
+    schedulerId>::template SecUnsignedInt<adIdWidth, true>;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 using PubConvValue = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template PubUnsignedInt<convValueWidth, usingBatch>;
-template <int schedulerId, bool usingBatch = true>
+    schedulerId>::template PubUnsignedInt<convValueWidth, true>;
+template <int schedulerId>
 using SecConvValue = typename fbpcf::frontend::MpcGame<
-    schedulerId>::template SecUnsignedInt<convValueWidth, usingBatch>;
-
-template <typename T, bool useVector>
-using ConditionalVector =
-    typename std::conditional<useVector, std::vector<T>, T>::type;
-
-template <int schedulerId, bool usingBatch = true>
-using SecBitT = ConditionalVector<SecBit<schedulerId, usingBatch>, !usingBatch>;
-template <int schedulerId, bool usingBatch = true>
-using SecTimestampT =
-    ConditionalVector<SecTimestamp<schedulerId, usingBatch>, !usingBatch>;
-template <int schedulerId, bool usingBatch = true>
-using SecTargetIdT =
-    ConditionalVector<SecTargetId<schedulerId, usingBatch>, !usingBatch>;
-template <int schedulerId, bool usingBatch = true>
-using SecActionTypeT =
-    ConditionalVector<SecActionType<schedulerId, usingBatch>, !usingBatch>;
-template <int schedulerId, bool usingBatch = true>
-using SecOriginalAdIdT =
-    ConditionalVector<SecOriginalAdId<schedulerId, usingBatch>, !usingBatch>;
-template <int schedulerId, bool usingBatch = true>
-using SecAdIdT =
-    ConditionalVector<SecAdId<schedulerId, usingBatch>, !usingBatch>;
-template <int schedulerId, bool usingBatch = true>
-using SecConvValueT =
-    ConditionalVector<SecConvValue<schedulerId, usingBatch>, !usingBatch>;
+    schedulerId>::template SecUnsignedInt<convValueWidth, true>;
 
 } // namespace pcf2_attribution

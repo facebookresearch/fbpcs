@@ -24,15 +24,14 @@ class LastClickRule : public AttributionRule<schedulerId, inputEncryption> {
       : AttributionRule<schedulerId, inputEncryption>(id, name),
         threshold_(thresholdInSeconds) {}
 
-  SecBit<schedulerId, true> isAttributable(
+  SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId, inputEncryption>& tp,
       const PrivateConversion<schedulerId, inputEncryption>& conv,
-      const std::vector<SecTimestamp<schedulerId, true>>& thresholds)
-      const override {
+      const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     return (tp.ts < conv.ts) & (conv.ts <= thresholds.at(0));
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPlaintext(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPlaintext(
       const Touchpoint& tp) const override {
     std::vector<uint32_t> thresholdNDaysClick;
     for (size_t i = 0; i < tp.ts.size(); ++i) {
@@ -41,26 +40,25 @@ class LastClickRule : public AttributionRule<schedulerId, inputEncryption> {
       thresholdNDaysClick.push_back(isValidClick ? thresholdNDays : 0);
     }
 
-    return std::vector<SecTimestamp<schedulerId, true>>{
-        SecTimestamp<schedulerId, true>(
-            thresholdNDaysClick, common::PUBLISHER)};
+    return std::vector<SecTimestamp<schedulerId>>{
+        SecTimestamp<schedulerId>(thresholdNDaysClick, common::PUBLISHER)};
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPrivate(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPrivate(
       const PrivateTouchpoint<schedulerId, inputEncryption>& privateTp,
       const PrivateIsClick<schedulerId, inputEncryption>& privateIsClick,
       size_t batchSize) const override {
-    PubTimestamp<schedulerId, true> zero;
-    PubTimestamp<schedulerId, true> secondsInThreshold;
+    PubTimestamp<schedulerId> zero;
+    PubTimestamp<schedulerId> secondsInThreshold;
 
-    zero = PubTimestamp<schedulerId, true>(std::vector<uint32_t>(batchSize, 0));
-    secondsInThreshold = PubTimestamp<schedulerId, true>(
+    zero = PubTimestamp<schedulerId>(std::vector<uint32_t>(batchSize, 0));
+    secondsInThreshold = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, threshold_.count()));
 
     auto isValidClick = privateIsClick.isClick & (zero < privateTp.ts);
     auto thresholdNDays = privateTp.ts + secondsInThreshold;
     auto thresholdNDaysClick = zero.mux(isValidClick, thresholdNDays);
-    return std::vector<SecTimestamp<schedulerId, true>>{thresholdNDaysClick};
+    return std::vector<SecTimestamp<schedulerId>>{thresholdNDaysClick};
   }
 
  private:
@@ -81,11 +79,10 @@ class LastTouch_ClickNDays_ImpressionMDays
         impressionThreshold_(impressionThreshold) {}
 
   /* if click within 28d, if touch within 1d */
-  SecBit<schedulerId, true> isAttributable(
+  SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId, inputEncryption>& tp,
       const PrivateConversion<schedulerId, inputEncryption>& conv,
-      const std::vector<SecTimestamp<schedulerId, true>>& thresholds)
-      const override {
+      const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     auto validConv = tp.ts < conv.ts;
     auto touchWithinMDays = conv.ts <= thresholds.at(0);
     auto clickWithinNDays = conv.ts <= thresholds.at(1);
@@ -93,7 +90,7 @@ class LastTouch_ClickNDays_ImpressionMDays
     return validConv & (touchWithinMDays | clickWithinNDays);
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPlaintext(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPlaintext(
       const Touchpoint& tp) const override {
     std::vector<uint32_t> thresholdMDaysTouch;
     std::vector<uint32_t> thresholdNDaysClick;
@@ -109,24 +106,23 @@ class LastTouch_ClickNDays_ImpressionMDays
       thresholdNDaysClick.push_back(isValidClick ? thresholdNDays : 0);
     }
 
-    return std::vector<SecTimestamp<schedulerId, true>>{
-        SecTimestamp<schedulerId, true>(thresholdMDaysTouch, common::PUBLISHER),
-        SecTimestamp<schedulerId, true>(
-            thresholdNDaysClick, common::PUBLISHER)};
+    return std::vector<SecTimestamp<schedulerId>>{
+        SecTimestamp<schedulerId>(thresholdMDaysTouch, common::PUBLISHER),
+        SecTimestamp<schedulerId>(thresholdNDaysClick, common::PUBLISHER)};
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPrivate(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPrivate(
       const PrivateTouchpoint<schedulerId, inputEncryption>& privateTp,
       const PrivateIsClick<schedulerId, inputEncryption>& privateIsClick,
       size_t batchSize) const override {
-    PubTimestamp<schedulerId, true> zero;
-    PubTimestamp<schedulerId, true> secondsInMDays;
-    PubTimestamp<schedulerId, true> secondsInNDays;
+    PubTimestamp<schedulerId> zero;
+    PubTimestamp<schedulerId> secondsInMDays;
+    PubTimestamp<schedulerId> secondsInNDays;
 
-    zero = PubTimestamp<schedulerId, true>(std::vector<uint32_t>(batchSize, 0));
-    secondsInMDays = PubTimestamp<schedulerId, true>(
+    zero = PubTimestamp<schedulerId>(std::vector<uint32_t>(batchSize, 0));
+    secondsInMDays = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, impressionThreshold_.count()));
-    secondsInNDays = PubTimestamp<schedulerId, true>(
+    secondsInNDays = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, clickThreshold_.count()));
 
     auto isValid = zero < privateTp.ts;
@@ -136,7 +132,7 @@ class LastTouch_ClickNDays_ImpressionMDays
 
     auto thresholdNDays = privateTp.ts + secondsInNDays;
     auto thresholdNDaysClick = zero.mux(isValidClick, thresholdNDays);
-    return std::vector<SecTimestamp<schedulerId, true>>{
+    return std::vector<SecTimestamp<schedulerId>>{
         thresholdMDaysTouch, thresholdNDaysClick};
   }
 
@@ -158,11 +154,10 @@ class LastClick_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
             /* name */ common::LAST_CLICK_2_7D) {}
 
   /* if click is within 7d but after 1d */
-  SecBit<schedulerId, true> isAttributable(
+  SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId, inputEncryption>& tp,
       const PrivateConversion<schedulerId, inputEncryption>& conv,
-      const std::vector<SecTimestamp<schedulerId, true>>& thresholds)
-      const override {
+      const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     auto validConv = tp.ts < conv.ts;
     auto clickAfterOneDay = thresholds.at(0) < conv.ts;
     auto clickWithinSevenDays = conv.ts <= thresholds.at(1);
@@ -170,7 +165,7 @@ class LastClick_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
     return validConv & clickAfterOneDay & clickWithinSevenDays;
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPlaintext(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPlaintext(
       const Touchpoint& tp) const override {
     std::vector<uint32_t> lowerBoundOneDayClick;
     std::vector<uint32_t> upperBoundSevenDaysClick;
@@ -185,25 +180,23 @@ class LastClick_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
           isValidClick ? upperBoundSevenDays : 0);
     }
 
-    return std::vector<SecTimestamp<schedulerId, true>>{
-        SecTimestamp<schedulerId, true>(
-            lowerBoundOneDayClick, common::PUBLISHER),
-        SecTimestamp<schedulerId, true>(
-            upperBoundSevenDaysClick, common::PUBLISHER)};
+    return std::vector<SecTimestamp<schedulerId>>{
+        SecTimestamp<schedulerId>(lowerBoundOneDayClick, common::PUBLISHER),
+        SecTimestamp<schedulerId>(upperBoundSevenDaysClick, common::PUBLISHER)};
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPrivate(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPrivate(
       const PrivateTouchpoint<schedulerId, inputEncryption>& privateTp,
       const PrivateIsClick<schedulerId, inputEncryption>& privateIsClick,
       size_t batchSize) const override {
-    PubTimestamp<schedulerId, true> zero;
-    PubTimestamp<schedulerId, true> secondsInOneDay;
-    PubTimestamp<schedulerId, true> secondsInSevenDays;
+    PubTimestamp<schedulerId> zero;
+    PubTimestamp<schedulerId> secondsInOneDay;
+    PubTimestamp<schedulerId> secondsInSevenDays;
 
-    zero = PubTimestamp<schedulerId, true>(std::vector<uint32_t>(batchSize, 0));
-    secondsInOneDay = PubTimestamp<schedulerId, true>(
+    zero = PubTimestamp<schedulerId>(std::vector<uint32_t>(batchSize, 0));
+    secondsInOneDay = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, kSecondsInOneDay));
-    secondsInSevenDays = PubTimestamp<schedulerId, true>(
+    secondsInSevenDays = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, kSecondsInSevenDays));
 
     auto isValidClick = privateIsClick.isClick & (zero < privateTp.ts);
@@ -214,7 +207,7 @@ class LastClick_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
     auto upperBoundSevenDay = privateTp.ts + secondsInSevenDays;
     auto upperBoundSevenDayClick = zero.mux(isValidClick, upperBoundSevenDay);
 
-    return std::vector<SecTimestamp<schedulerId, true>>{
+    return std::vector<SecTimestamp<schedulerId>>{
         lowerBoundOneDayClick, upperBoundSevenDayClick};
   }
 };
@@ -232,11 +225,10 @@ class LastTouch_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
             /* id */ 6,
             /* name */ common::LAST_TOUCH_2_7D) {}
 
-  SecBit<schedulerId, true> isAttributable(
+  SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId, inputEncryption>& tp,
       const PrivateConversion<schedulerId, inputEncryption>& conv,
-      const std::vector<SecTimestamp<schedulerId, true>>& thresholds)
-      const override {
+      const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     auto validConv = tp.ts < conv.ts;
     auto clickAfterOneDay = thresholds.at(0) < conv.ts;
     auto clickWithinSevenDays = conv.ts <= thresholds.at(1);
@@ -247,7 +239,7 @@ class LastTouch_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
         ((clickAfterOneDay & clickWithinSevenDays) | touchWithinOneDay);
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPlaintext(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPlaintext(
       const Touchpoint& tp) const override {
     std::vector<uint32_t> lowerBoundOneDayClick;
     std::vector<uint32_t> upperBoundSevenDaysClick;
@@ -267,27 +259,24 @@ class LastTouch_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
           (isValid && !isValidClick) ? lowerBoundAndUpperBoundOneDay : 0);
     }
 
-    return std::vector<SecTimestamp<schedulerId, true>>{
-        SecTimestamp<schedulerId, true>(
-            lowerBoundOneDayClick, common::PUBLISHER),
-        SecTimestamp<schedulerId, true>(
-            upperBoundSevenDaysClick, common::PUBLISHER),
-        SecTimestamp<schedulerId, true>(
-            upperBoundOneDayTouch, common::PUBLISHER)};
+    return std::vector<SecTimestamp<schedulerId>>{
+        SecTimestamp<schedulerId>(lowerBoundOneDayClick, common::PUBLISHER),
+        SecTimestamp<schedulerId>(upperBoundSevenDaysClick, common::PUBLISHER),
+        SecTimestamp<schedulerId>(upperBoundOneDayTouch, common::PUBLISHER)};
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPrivate(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPrivate(
       const PrivateTouchpoint<schedulerId, inputEncryption>& privateTp,
       const PrivateIsClick<schedulerId, inputEncryption>& privateIsClick,
       size_t batchSize) const override {
-    PubTimestamp<schedulerId, true> zero;
-    PubTimestamp<schedulerId, true> secondsInOneDay;
-    PubTimestamp<schedulerId, true> secondsInSevenDays;
+    PubTimestamp<schedulerId> zero;
+    PubTimestamp<schedulerId> secondsInOneDay;
+    PubTimestamp<schedulerId> secondsInSevenDays;
 
-    zero = PubTimestamp<schedulerId, true>(std::vector<uint32_t>(batchSize, 0));
-    secondsInOneDay = PubTimestamp<schedulerId, true>(
+    zero = PubTimestamp<schedulerId>(std::vector<uint32_t>(batchSize, 0));
+    secondsInOneDay = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, kSecondsInOneDay));
-    secondsInSevenDays = PubTimestamp<schedulerId, true>(
+    secondsInSevenDays = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, kSecondsInSevenDays));
 
     auto isValid = zero < privateTp.ts;
@@ -303,7 +292,7 @@ class LastTouch_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
     auto upperBoundOneDayTouch =
         zero.mux((isValid & !isValidClick), lowerBoundAndUpperBoundOneDay);
 
-    return std::vector<SecTimestamp<schedulerId, true>>{
+    return std::vector<SecTimestamp<schedulerId>>{
         lowerBoundOneDayClick, upperBoundSevenDayClick, upperBoundOneDayTouch};
   }
 };
@@ -317,16 +306,15 @@ class LastClick_1Day_TargetId
             /* id */ 7,
             /* name */ common::LAST_CLICK_1D_TARGETID) {}
 
-  SecBit<schedulerId, true> isAttributable(
+  SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId, inputEncryption>& tp,
       const PrivateConversion<schedulerId, inputEncryption>& conv,
-      const std::vector<SecTimestamp<schedulerId, true>>& thresholds)
-      const override {
+      const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     return (tp.targetId == conv.targetId) & (tp.actionType == conv.actionType) &
         (tp.ts < conv.ts) & (conv.ts <= thresholds.at(0));
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPlaintext(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPlaintext(
       const Touchpoint& tp) const override {
     std::vector<uint32_t> thresholdOneDayClick;
 
@@ -336,26 +324,25 @@ class LastClick_1Day_TargetId
       thresholdOneDayClick.push_back(isValidClick ? thresholdOneDay : 0);
     }
 
-    return std::vector<SecTimestamp<schedulerId, true>>{
-        SecTimestamp<schedulerId, true>(
-            thresholdOneDayClick, common::PUBLISHER)};
+    return std::vector<SecTimestamp<schedulerId>>{
+        SecTimestamp<schedulerId>(thresholdOneDayClick, common::PUBLISHER)};
   }
 
-  std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPrivate(
+  std::vector<SecTimestamp<schedulerId>> computeThresholdsPrivate(
       const PrivateTouchpoint<schedulerId, inputEncryption>& privateTp,
       const PrivateIsClick<schedulerId, inputEncryption>& privateIsClick,
       size_t batchSize) const override {
-    PubTimestamp<schedulerId, true> zero;
-    PubTimestamp<schedulerId, true> secondsInOneDay;
+    PubTimestamp<schedulerId> zero;
+    PubTimestamp<schedulerId> secondsInOneDay;
 
-    zero = PubTimestamp<schedulerId, true>(std::vector<uint32_t>(batchSize, 0));
-    secondsInOneDay = PubTimestamp<schedulerId, true>(
+    zero = PubTimestamp<schedulerId>(std::vector<uint32_t>(batchSize, 0));
+    secondsInOneDay = PubTimestamp<schedulerId>(
         std::vector<uint32_t>(batchSize, kSecondsInOneDay));
 
     auto isValidClick = privateIsClick.isClick & (zero < privateTp.ts);
     auto thresholdOneDay = privateTp.ts + secondsInOneDay;
     auto thresholdOneDayClick = zero.mux(isValidClick, thresholdOneDay);
-    return std::vector<SecTimestamp<schedulerId, true>>{thresholdOneDayClick};
+    return std::vector<SecTimestamp<schedulerId>>{thresholdOneDayClick};
   }
 };
 

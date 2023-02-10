@@ -21,33 +21,32 @@ struct Conversion {
 
 template <int schedulerId, common::InputEncryption inputEncryption>
 struct PrivateConversion {
-  SecTimestamp<schedulerId, true> ts;
-  SecTargetId<schedulerId, true> targetId;
-  SecActionType<schedulerId, true> actionType;
-  SecConvValue<schedulerId, true> convValue;
+  SecTimestamp<schedulerId> ts;
+  SecTargetId<schedulerId> targetId;
+  SecActionType<schedulerId> actionType;
+  SecConvValue<schedulerId> convValue;
 
   explicit PrivateConversion(const Conversion& conversion) {
     if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
-      ts = SecTimestamp<schedulerId, true>(conversion.ts, common::PARTNER);
-      targetId =
-          SecTargetId<schedulerId, true>(conversion.targetId, common::PARTNER);
-      actionType = SecActionType<schedulerId, true>(
-          conversion.actionType, common::PARTNER);
-      convValue = SecConvValue<schedulerId, true>(
-          conversion.convValue, common::PARTNER);
+      ts = SecTimestamp<schedulerId>(conversion.ts, common::PARTNER);
+      targetId = SecTargetId<schedulerId>(conversion.targetId, common::PARTNER);
+      actionType =
+          SecActionType<schedulerId>(conversion.actionType, common::PARTNER);
+      convValue =
+          SecConvValue<schedulerId>(conversion.convValue, common::PARTNER);
     } else {
-      typename SecTimestamp<schedulerId, true>::ExtractedInt extractedTs(
+      typename SecTimestamp<schedulerId>::ExtractedInt extractedTs(
           conversion.ts);
-      ts = SecTimestamp<schedulerId, true>(std::move(extractedTs));
-      typename SecTargetId<schedulerId, true>::ExtractedInt extractedTids(
+      ts = SecTimestamp<schedulerId>(std::move(extractedTs));
+      typename SecTargetId<schedulerId>::ExtractedInt extractedTids(
           conversion.targetId);
-      targetId = SecTargetId<schedulerId, true>(std::move(extractedTids));
-      typename SecActionType<schedulerId, true>::ExtractedInt extractedAids(
+      targetId = SecTargetId<schedulerId>(std::move(extractedTids));
+      typename SecActionType<schedulerId>::ExtractedInt extractedAids(
           conversion.actionType);
-      actionType = SecActionType<schedulerId, true>(std::move(extractedAids));
-      typename SecConvValue<schedulerId, true>::ExtractedInt extractedVs(
+      actionType = SecActionType<schedulerId>(std::move(extractedAids));
+      typename SecConvValue<schedulerId>::ExtractedInt extractedVs(
           conversion.convValue);
-      convValue = SecConvValue<schedulerId, true>(std::move(extractedVs));
+      convValue = SecConvValue<schedulerId>(std::move(extractedVs));
     }
   }
 };

@@ -37,13 +37,13 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareConversions(
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
-std::vector<std::vector<SecTimestampT<schedulerId, true>>>
+std::vector<std::vector<SecTimestamp<schedulerId>>>
 AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
     const std::vector<Touchpoint>& touchpoints,
     const std::vector<PrivateTouchpointT>& privateTouchpoints,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
     size_t batchSize) {
-  std::vector<std::vector<SecTimestampT<schedulerId, true>>> output;
+  std::vector<std::vector<SecTimestamp<schedulerId>>> output;
 
   if constexpr (inputEncryption != common::InputEncryption::Xor) {
     for (size_t i = 0; i < touchpoints.size(); ++i) {
@@ -118,11 +118,11 @@ AttributionGame<schedulerId, inputEncryption>::retrieveValidOriginalAdIds(
     std::vector<Touchpoint>& touchpoints) {
   std::unordered_set<uint64_t> adIdSet;
   for (auto& touchpoint : touchpoints) {
-    SecOriginalAdId<schedulerId, true> secAdId;
+    SecOriginalAdId<schedulerId> secAdId;
     if (inputEncryption == common::InputEncryption::Xor) {
-      typename SecOriginalAdId<schedulerId, true>::ExtractedInt extractedAdIds(
+      typename SecOriginalAdId<schedulerId>::ExtractedInt extractedAdIds(
           touchpoint.originalAdId);
-      secAdId = SecOriginalAdId<schedulerId, true>(std::move(extractedAdIds));
+      secAdId = SecOriginalAdId<schedulerId>(std::move(extractedAdIds));
       // Reveal ad id to publisher
       auto publisherAdId = secAdId.openToParty(common::PUBLISHER).getValue();
       touchpoint.originalAdId = publisherAdId;
@@ -182,20 +182,20 @@ void AttributionGame<schedulerId, inputEncryption>::putAdIdMappingJson(
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
-const std::vector<SecBit<schedulerId, true>>
+const std::vector<SecBit<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
     const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
         touchpoints,
     const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
-    const std::vector<std::vector<SecTimestamp<schedulerId, true>>>& thresholds,
+    const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
     size_t batchSize) {
   if (batchSize == 0) {
     throw std::invalid_argument(
         "Must provide positive batch size for batch execution!");
   }
-  std::vector<SecBit<schedulerId, true>> attributions;
+  std::vector<SecBit<schedulerId>> attributions;
   // We will be attributing on a sorted vector of touchpoints and conversions
   // (based on timestamps).
   // The preferred touchpoint for a conversion will be a valid attributable
@@ -215,9 +215,9 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
         common::vecToString(conv.ts.openToParty(common::PUBLISHER).getValue()));
 
     // store if conversion has already been attributed
-    SecBit<schedulerId, true> hasAttributedTouchpoint;
+    SecBit<schedulerId> hasAttributedTouchpoint;
 
-    hasAttributedTouchpoint = SecBit<schedulerId, true>{
+    hasAttributedTouchpoint = SecBit<schedulerId>{
         std::vector<bool>(batchSize, false), common::PUBLISHER};
 
     CHECK_EQ(touchpoints.size(), thresholds.size())
@@ -261,7 +261,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
     const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
-    const std::vector<std::vector<SecTimestamp<schedulerId, true>>>& thresholds,
+    const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
     size_t batchSize) {
   if (batchSize == 0) {
     throw std::invalid_argument(
@@ -287,18 +287,18 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
         common::vecToString(conv.ts.openToParty(common::PUBLISHER).getValue()));
 
     // store if conversion has already been attributed
-    SecBit<schedulerId, true> hasAttributedTouchpoint;
-    hasAttributedTouchpoint = SecBit<schedulerId, true>{
+    SecBit<schedulerId> hasAttributedTouchpoint;
+    hasAttributedTouchpoint = SecBit<schedulerId>{
         std::vector<bool>(batchSize, false), common::PUBLISHER};
 
     CHECK_EQ(touchpoints.size(), thresholds.size())
         << "touchpoints and thresholds are not the same length.";
 
-    SecAdId<schedulerId, true> attributedAdId;
+    SecAdId<schedulerId> attributedAdId;
     uint64_t defaultAdId = 0;
 
     // initialize the ad_id to be 0, is_attributed to be false:
-    attributedAdId = SecAdId<schedulerId, true>{
+    attributedAdId = SecAdId<schedulerId>{
         std::vector<uint64_t>(batchSize, defaultAdId), common::PUBLISHER};
 
     for (size_t i = touchpoints.size(); i >= 1; --i) {
@@ -409,7 +409,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributions(
           attributionReformattedOutput.reveal();
 
     } else {
-      std::vector<SecBitT<schedulerId, true>> attributions;
+      std::vector<SecBit<schedulerId>> attributions;
 
       attributions = computeAttributionsHelper(
           tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);

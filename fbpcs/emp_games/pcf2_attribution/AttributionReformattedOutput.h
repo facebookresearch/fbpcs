@@ -62,9 +62,9 @@ using AttributionResult = folly::dynamic;
 
 template <int schedulerId>
 struct AttributionReformattedOutputFmt {
-  SecAdId<schedulerId, true> ad_id;
-  SecConvValue<schedulerId, true> conv_value;
-  SecBit<schedulerId, true> is_attributed;
+  SecAdId<schedulerId> ad_id;
+  SecConvValue<schedulerId> conv_value;
+  SecBit<schedulerId> is_attributed;
 };
 
 template <int schedulerId>

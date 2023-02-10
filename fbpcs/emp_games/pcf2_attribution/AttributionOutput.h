@@ -60,7 +60,7 @@ class AttributionOutput {
  public:
   AttributionOutput(
       const std::vector<int64_t>& uids,
-      const std::vector<SecBitT<schedulerId, true>>& attributions)
+      const std::vector<SecBit<schedulerId>>& attributions)
       : uids_{uids}, attributions_{attributions} {}
 
   /**
@@ -106,7 +106,7 @@ class AttributionOutput {
 
  private:
   std::vector<int64_t> uids_;
-  std::vector<SecBitT<schedulerId, true>> attributions_;
+  std::vector<SecBit<schedulerId>> attributions_;
 };
 
 } // namespace pcf2_attribution
