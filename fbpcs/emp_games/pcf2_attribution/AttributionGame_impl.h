@@ -16,138 +16,74 @@
 
 namespace pcf2_attribution {
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-std::vector<typename AttributionGame<schedulerId, usingBatch, inputEncryption>::
-                PrivateTouchpointT>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    privatelyShareTouchpoints(
-        const std::vector<TouchpointT<usingBatch>>& touchpoints) {
-  if constexpr (usingBatch) {
-    return common::privatelyShareArray<
-        Touchpoint<usingBatch>,
-        PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>>(
-        touchpoints);
-  } else {
-    return common::privatelyShareArrays<
-        Touchpoint<usingBatch>,
-        PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>>(
-        touchpoints);
-  }
+template <int schedulerId, common::InputEncryption inputEncryption>
+std::vector<
+    typename AttributionGame<schedulerId, inputEncryption>::PrivateTouchpointT>
+AttributionGame<schedulerId, inputEncryption>::privatelyShareTouchpoints(
+    const std::vector<TouchpointT<true>>& touchpoints) {
+  return common::privatelyShareArray<
+      Touchpoint<true>,
+      PrivateTouchpoint<schedulerId, true, inputEncryption>>(touchpoints);
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-std::vector<typename AttributionGame<schedulerId, usingBatch, inputEncryption>::
-                PrivateConversionT>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    privatelyShareConversions(
-        const std::vector<ConversionT<usingBatch>>& conversions) {
-  if constexpr (usingBatch) {
-    return common::privatelyShareArray<
-        Conversion<usingBatch>,
-        PrivateConversion<schedulerId, usingBatch, inputEncryption>>(
-        conversions);
-  } else {
-    return common::privatelyShareArrays<
-        Conversion<usingBatch>,
-        PrivateConversion<schedulerId, usingBatch, inputEncryption>>(
-        conversions);
-  }
+template <int schedulerId, common::InputEncryption inputEncryption>
+std::vector<
+    typename AttributionGame<schedulerId, inputEncryption>::PrivateConversionT>
+AttributionGame<schedulerId, inputEncryption>::privatelyShareConversions(
+    const std::vector<ConversionT<true>>& conversions) {
+  return common::privatelyShareArray<
+      Conversion<true>,
+      PrivateConversion<schedulerId, true, inputEncryption>>(conversions);
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-std::vector<std::vector<SecTimestampT<schedulerId, usingBatch>>>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    privatelyShareThresholds(
-        const std::vector<TouchpointT<usingBatch>>& touchpoints,
-        const std::vector<PrivateTouchpointT>& privateTouchpoints,
-        const AttributionRule<schedulerId, usingBatch, inputEncryption>&
-            attributionRule,
-        size_t batchSize) {
-  std::vector<std::vector<SecTimestampT<schedulerId, usingBatch>>> output;
+template <int schedulerId, common::InputEncryption inputEncryption>
+std::vector<std::vector<SecTimestampT<schedulerId, true>>>
+AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
+    const std::vector<TouchpointT<true>>& touchpoints,
+    const std::vector<PrivateTouchpointT>& privateTouchpoints,
+    const AttributionRule<schedulerId, true, inputEncryption>& attributionRule,
+    size_t batchSize) {
+  std::vector<std::vector<SecTimestampT<schedulerId, true>>> output;
 
   if constexpr (inputEncryption != common::InputEncryption::Xor) {
     for (size_t i = 0; i < touchpoints.size(); ++i) {
-      if constexpr (usingBatch) {
-        auto thresholds =
-            attributionRule.computeThresholdsPlaintext(touchpoints.at(i));
-        output.push_back(std::move(thresholds));
-      } else {
-        auto touchpointRow = touchpoints.at(i);
-        std::vector<std::vector<SecTimestamp<schedulerId, false>>> thresholdRow;
-        for (size_t j = 0; j < touchpointRow.size(); ++j) {
-          auto thresholds =
-              attributionRule.computeThresholdsPlaintext(touchpointRow.at(j));
-          thresholdRow.push_back(std::move(thresholds));
-        }
-        output.push_back(std::move(thresholdRow));
-      }
+      auto thresholds =
+          attributionRule.computeThresholdsPlaintext(touchpoints.at(i));
+      output.push_back(std::move(thresholds));
     }
   } else {
-    if constexpr (usingBatch) {
-      if (batchSize == 0) {
-        throw std::invalid_argument(
-            "Must provide positive batch size for batch execution!");
-      }
-      auto privateIsClick = common::privatelyShareArray<
-          Touchpoint<usingBatch>,
-          PrivateIsClick<schedulerId, usingBatch, inputEncryption>>(
-          touchpoints);
-      for (size_t i = 0; i < touchpoints.size(); ++i) {
-        auto thresholds = attributionRule.computeThresholdsPrivate(
-            privateTouchpoints.at(i), privateIsClick.at(i), batchSize);
-        output.push_back(std::move(thresholds));
-      }
-    } else {
-      auto privateIsClick = common::privatelyShareArrays<
-          Touchpoint<usingBatch>,
-          PrivateIsClick<schedulerId, usingBatch, inputEncryption>>(
-          touchpoints);
-      for (size_t i = 0; i < privateTouchpoints.size(); ++i) {
-        std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>
-            thresholdRow;
-        for (size_t j = 0; j < privateTouchpoints.at(i).size(); ++j) {
-          auto thresholds = attributionRule.computeThresholdsPrivate(
-              privateTouchpoints.at(i).at(j),
-              privateIsClick.at(i).at(j),
-              batchSize);
-          thresholdRow.push_back(std::move(thresholds));
-        }
-        output.push_back(std::move(thresholdRow));
-      }
+    if (batchSize == 0) {
+      throw std::invalid_argument(
+          "Must provide positive batch size for batch execution!");
+    }
+    auto privateIsClick = common::privatelyShareArray<
+        Touchpoint<true>,
+        PrivateIsClick<schedulerId, true, inputEncryption>>(touchpoints);
+    for (size_t i = 0; i < touchpoints.size(); ++i) {
+      auto thresholds = attributionRule.computeThresholdsPrivate(
+          privateTouchpoints.at(i), privateIsClick.at(i), batchSize);
+      output.push_back(std::move(thresholds));
     }
   }
   return output;
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-std::vector<std::shared_ptr<
-    const AttributionRule<schedulerId, usingBatch, inputEncryption>>>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    shareAttributionRules(
-        const int myRole,
-        const std::vector<std::string>& attributionRuleNames) {
+template <int schedulerId, common::InputEncryption inputEncryption>
+std::vector<
+    std::shared_ptr<const AttributionRule<schedulerId, true, inputEncryption>>>
+AttributionGame<schedulerId, inputEncryption>::shareAttributionRules(
+    const int myRole,
+    const std::vector<std::string>& attributionRuleNames) {
   // Publisher converts attribution rule names to attribution rules and ids
   std::vector<std::shared_ptr<
-      const AttributionRule<schedulerId, usingBatch, inputEncryption>>>
+      const AttributionRule<schedulerId, true, inputEncryption>>>
       attributionRules;
   std::vector<uint64_t> attributionRuleIds;
   if (myRole == common::PUBLISHER) {
     for (auto attributionRuleName : attributionRuleNames) {
       auto attributionRule =
-          AttributionRule<schedulerId, usingBatch, inputEncryption>::
-              fromNameOrThrow(attributionRuleName);
+          AttributionRule<schedulerId, true, inputEncryption>::fromNameOrThrow(
+              attributionRuleName);
       attributionRules.push_back(attributionRule);
       attributionRuleIds.push_back(attributionRule->id);
     }
@@ -155,8 +91,7 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
 
   const size_t attributionRuleIdWidth = 3; // currently we only support 4 rules
   CHECK_LT(
-      (SUPPORTED_ATTRIBUTION_RULES<schedulerId, usingBatch, inputEncryption>)
-          .size(),
+      (SUPPORTED_ATTRIBUTION_RULES<schedulerId, true, inputEncryption>).size(),
       (1 << attributionRuleIdWidth));
 
   // Publisher shares attribution rule ids
@@ -169,59 +104,32 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
   if (myRole == common::PARTNER) {
     for (auto sharedId : sharedAttributionRuleIds) {
       attributionRules.push_back(
-          AttributionRule<schedulerId, usingBatch, inputEncryption>::
-              fromIdOrThrow(sharedId));
+          AttributionRule<schedulerId, true, inputEncryption>::fromIdOrThrow(
+              sharedId));
     }
   }
   return attributionRules;
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
+template <int schedulerId, common::InputEncryption inputEncryption>
 const std::vector<uint64_t>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    retrieveValidOriginalAdIds(
-        const int myRole,
-        std::vector<TouchpointT<usingBatch>>& touchpoints) {
+AttributionGame<schedulerId, inputEncryption>::retrieveValidOriginalAdIds(
+    const int /*myRole*/,
+    std::vector<TouchpointT<true>>& touchpoints) {
   std::unordered_set<uint64_t> adIdSet;
   for (auto& touchpoint : touchpoints) {
-    if constexpr (usingBatch) {
-      SecOriginalAdId<schedulerId, usingBatch> secAdId;
-      if (inputEncryption == common::InputEncryption::Xor) {
-        typename SecOriginalAdId<schedulerId, usingBatch>::ExtractedInt
-            extractedAdIds(touchpoint.originalAdId);
-        secAdId =
-            SecOriginalAdId<schedulerId, usingBatch>(std::move(extractedAdIds));
-        // Reveal ad id to publisher
-        auto publisherAdId = secAdId.openToParty(common::PUBLISHER).getValue();
-        touchpoint.originalAdId = publisherAdId;
-      }
-      for (auto& adId : touchpoint.originalAdId) {
-        if (adId > 0) {
-          adIdSet.insert(adId);
-        }
-      }
-    } else {
-      for (auto& tp : touchpoint) {
-        SecOriginalAdId<schedulerId, usingBatch> secAdId;
-        if (inputEncryption == common::InputEncryption::Xor) {
-          // the compression logic should be moved to UDP layer,
-          // before we enable XOR input in attribution game.
-          typename SecOriginalAdId<schedulerId, usingBatch>::ExtractedInt
-              extractedAdIds(tp.originalAdId);
-          secAdId = SecOriginalAdId<schedulerId, usingBatch>(
-              std::move(extractedAdIds));
-          // Reveal ad id to publisher
-          auto publisherAdId =
-              secAdId.openToParty(common::PUBLISHER).getValue();
-          tp.originalAdId = publisherAdId;
-        }
-
-        if (tp.originalAdId > 0) {
-          adIdSet.insert(tp.originalAdId);
-        }
+    SecOriginalAdId<schedulerId, true> secAdId;
+    if (inputEncryption == common::InputEncryption::Xor) {
+      typename SecOriginalAdId<schedulerId, true>::ExtractedInt extractedAdIds(
+          touchpoint.originalAdId);
+      secAdId = SecOriginalAdId<schedulerId, true>(std::move(extractedAdIds));
+      // Reveal ad id to publisher
+      auto publisherAdId = secAdId.openToParty(common::PUBLISHER).getValue();
+      touchpoint.originalAdId = publisherAdId;
+    }
+    for (auto& adId : touchpoint.originalAdId) {
+      if (adId > 0) {
+        adIdSet.insert(adId);
       }
     }
   }
@@ -238,13 +146,10 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
   return validOriginalAdIds;
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-void AttributionGame<schedulerId, usingBatch, inputEncryption>::
+template <int schedulerId, common::InputEncryption inputEncryption>
+void AttributionGame<schedulerId, inputEncryption>::
     replaceAdIdWithCompressedAdId(
-        std::vector<TouchpointT<usingBatch>>& touchpoints,
+        std::vector<TouchpointT<true>>& touchpoints,
         std::vector<uint64_t>& validOriginalAdIds) {
   uint16_t compressedAdId = 1;
   std::unordered_map<uint64_t, uint16_t> adIdToCompressedAdIdMap;
@@ -255,64 +160,42 @@ void AttributionGame<schedulerId, usingBatch, inputEncryption>::
   }
 
   for (auto& touchpoint : touchpoints) {
-    if constexpr (usingBatch) {
-      std::vector<uint64_t> adIds;
-      uint16_t defaultAdId = 0;
-      for (auto& originalAdId : touchpoint.originalAdId) {
-        if (originalAdId > 0) {
-          adIds.push_back(adIdToCompressedAdIdMap.at(originalAdId));
-        } else {
-          adIds.push_back(defaultAdId);
-        }
-      }
-      touchpoint.adId = adIds;
-    } else {
-      for (auto& tp : touchpoint) {
-        if (tp.originalAdId > 0) {
-          tp.adId = adIdToCompressedAdIdMap.at(tp.originalAdId);
-        }
+    std::vector<uint64_t> adIds;
+    uint16_t defaultAdId = 0;
+    for (auto& originalAdId : touchpoint.originalAdId) {
+      if (originalAdId > 0) {
+        adIds.push_back(adIdToCompressedAdIdMap.at(originalAdId));
+      } else {
+        adIds.push_back(defaultAdId);
       }
     }
+    touchpoint.adId = adIds;
   }
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-void AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    putAdIdMappingJson(
-        const CompressedAdIdToOriginalAdId& maps,
-        std::string outputPath) {
+template <int schedulerId, common::InputEncryption inputEncryption>
+void AttributionGame<schedulerId, inputEncryption>::putAdIdMappingJson(
+    const CompressedAdIdToOriginalAdId& maps,
+    std::string outputPath) {
   std::string content = maps.toJson();
   fbpcf::io::FileIOWrappers::writeFile(outputPath, content);
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-const std::vector<SecBit<schedulerId, usingBatch>>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    computeAttributionsHelper(
-        const std::vector<
-            PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>>&
-            touchpoints,
-        const std::vector<
-            PrivateConversion<schedulerId, usingBatch, inputEncryption>>&
-            conversions,
-        const AttributionRule<schedulerId, usingBatch, inputEncryption>&
-            attributionRule,
-        const std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>&
-            thresholds,
-        size_t batchSize) {
-  if constexpr (usingBatch) {
-    if (batchSize == 0) {
-      throw std::invalid_argument(
-          "Must provide positive batch size for batch execution!");
-    }
+template <int schedulerId, common::InputEncryption inputEncryption>
+const std::vector<SecBit<schedulerId, true>>
+AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
+    const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
+        touchpoints,
+    const std::vector<PrivateConversion<schedulerId, true, inputEncryption>>&
+        conversions,
+    const AttributionRule<schedulerId, true, inputEncryption>& attributionRule,
+    const std::vector<std::vector<SecTimestamp<schedulerId, true>>>& thresholds,
+    size_t batchSize) {
+  if (batchSize == 0) {
+    throw std::invalid_argument(
+        "Must provide positive batch size for batch execution!");
   }
-  std::vector<SecBit<schedulerId, usingBatch>> attributions;
+  std::vector<SecBit<schedulerId, true>> attributions;
   // We will be attributing on a sorted vector of touchpoints and conversions
   // (based on timestamps).
   // The preferred touchpoint for a conversion will be a valid attributable
@@ -326,28 +209,16 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
        ++conversion) {
     auto conv = *conversion;
 
-    if constexpr (usingBatch) {
-      OMNISCIENT_ONLY_XLOGF(
-          DBG,
-          "Computing attributions for conversions: {}",
-          common::vecToString(
-              conv.ts.openToParty(common::PUBLISHER).getValue()));
-    } else {
-      OMNISCIENT_ONLY_XLOGF(
-          DBG,
-          "Computing attributions for conversion: {}",
-          conv.ts.openToParty(common::PUBLISHER).getValue());
-    }
+    OMNISCIENT_ONLY_XLOGF(
+        DBG,
+        "Computing attributions for conversions: {}",
+        common::vecToString(conv.ts.openToParty(common::PUBLISHER).getValue()));
 
     // store if conversion has already been attributed
-    SecBit<schedulerId, usingBatch> hasAttributedTouchpoint;
-    if constexpr (usingBatch) {
-      hasAttributedTouchpoint = SecBit<schedulerId, usingBatch>{
-          std::vector<bool>(batchSize, false), common::PUBLISHER};
-    } else {
-      hasAttributedTouchpoint =
-          SecBit<schedulerId, usingBatch>{false, common::PUBLISHER};
-    }
+    SecBit<schedulerId, true> hasAttributedTouchpoint;
+
+    hasAttributedTouchpoint = SecBit<schedulerId, true>{
+        std::vector<bool>(batchSize, false), common::PUBLISHER};
 
     CHECK_EQ(touchpoints.size(), thresholds.size())
         << "touchpoints and thresholds are not the same length.";
@@ -356,18 +227,10 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
       auto tp = touchpoints.at(i - 1);
       auto threshold = thresholds.at(i - 1);
 
-      if constexpr (usingBatch) {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "Checking touchpoints: {}",
-            common::vecToString(
-                tp.ts.openToParty(common::PUBLISHER).getValue()));
-      } else {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "Checking touchpoint: {}",
-            tp.ts.openToParty(common::PUBLISHER).getValue());
-      }
+      OMNISCIENT_ONLY_XLOGF(
+          DBG,
+          "Checking touchpoints: {}",
+          common::vecToString(tp.ts.openToParty(common::PUBLISHER).getValue()));
 
       auto isTouchpointAttributable =
           attributionRule.isAttributable(tp, conv, threshold);
@@ -376,23 +239,12 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
 
       hasAttributedTouchpoint = isAttributed | hasAttributedTouchpoint;
 
-      if constexpr (usingBatch) {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
-            common::vecToString(
-                isTouchpointAttributable.extractBit().getValue()),
-            common::vecToString(isAttributed.extractBit().getValue()),
-            common::vecToString(
-                hasAttributedTouchpoint.extractBit().getValue()));
-      } else {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
-            isTouchpointAttributable.extractBit().getValue(),
-            isAttributed.extractBit().getValue(),
-            hasAttributedTouchpoint.extractBit().getValue());
-      }
+      OMNISCIENT_ONLY_XLOGF(
+          DBG,
+          "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
+          common::vecToString(isTouchpointAttributable.extractBit().getValue()),
+          common::vecToString(isAttributed.extractBit().getValue()),
+          common::vecToString(hasAttributedTouchpoint.extractBit().getValue()));
 
       attributions.push_back(isAttributed);
     }
@@ -401,31 +253,21 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
   return attributions;
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
-const std::vector<AttributionReformattedOutputFmt<schedulerId, usingBatch>>
-AttributionGame<schedulerId, usingBatch, inputEncryption>::
-    computeAttributionsHelperV2(
-        const std::vector<
-            PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>>&
-            touchpoints,
-        const std::vector<
-            PrivateConversion<schedulerId, usingBatch, inputEncryption>>&
-            conversions,
-        const AttributionRule<schedulerId, usingBatch, inputEncryption>&
-            attributionRule,
-        const std::vector<std::vector<SecTimestamp<schedulerId, usingBatch>>>&
-            thresholds,
-        size_t batchSize) {
-  if constexpr (usingBatch) {
-    if (batchSize == 0) {
-      throw std::invalid_argument(
-          "Must provide positive batch size for batch execution!");
-    }
+template <int schedulerId, common::InputEncryption inputEncryption>
+const std::vector<AttributionReformattedOutputFmt<schedulerId, true>>
+AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
+    const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
+        touchpoints,
+    const std::vector<PrivateConversion<schedulerId, true, inputEncryption>>&
+        conversions,
+    const AttributionRule<schedulerId, true, inputEncryption>& attributionRule,
+    const std::vector<std::vector<SecTimestamp<schedulerId, true>>>& thresholds,
+    size_t batchSize) {
+  if (batchSize == 0) {
+    throw std::invalid_argument(
+        "Must provide positive batch size for batch execution!");
   }
-  std::vector<AttributionReformattedOutputFmt<schedulerId, usingBatch>>
+  std::vector<AttributionReformattedOutputFmt<schedulerId, true>>
       attributionsOutput;
   // We will be attributing on a sorted vector of touchpoints and conversions
   // (based on timestamps).
@@ -440,58 +282,34 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
        ++conversion) {
     auto conv = *conversion;
 
-    if constexpr (usingBatch) {
-      OMNISCIENT_ONLY_XLOGF(
-          DBG,
-          "Computing attributions for conversions: {}",
-          common::vecToString(
-              conv.ts.openToParty(common::PUBLISHER).getValue()));
-    } else {
-      OMNISCIENT_ONLY_XLOGF(
-          DBG,
-          "Computing attribution for conversion: {}",
-          conv.ts.openToParty(common::PUBLISHER).getValue());
-    }
+    OMNISCIENT_ONLY_XLOGF(
+        DBG,
+        "Computing attributions for conversions: {}",
+        common::vecToString(conv.ts.openToParty(common::PUBLISHER).getValue()));
 
     // store if conversion has already been attributed
-    SecBit<schedulerId, usingBatch> hasAttributedTouchpoint;
-    if constexpr (usingBatch) {
-      hasAttributedTouchpoint = SecBit<schedulerId, usingBatch>{
-          std::vector<bool>(batchSize, false), common::PUBLISHER};
-    } else {
-      hasAttributedTouchpoint =
-          SecBit<schedulerId, usingBatch>{false, common::PUBLISHER};
-    }
+    SecBit<schedulerId, true> hasAttributedTouchpoint;
+    hasAttributedTouchpoint = SecBit<schedulerId, true>{
+        std::vector<bool>(batchSize, false), common::PUBLISHER};
 
     CHECK_EQ(touchpoints.size(), thresholds.size())
         << "touchpoints and thresholds are not the same length.";
 
-    SecAdId<schedulerId, usingBatch> attributedAdId;
+    SecAdId<schedulerId, true> attributedAdId;
     uint64_t defaultAdId = 0;
-    if constexpr (usingBatch) {
-      // initialize the ad_id to be 0, is_attributed to be false:
-      attributedAdId = SecAdId<schedulerId, usingBatch>{
-          std::vector<uint64_t>(batchSize, defaultAdId), common::PUBLISHER};
-    } else {
-      attributedAdId =
-          SecAdId<schedulerId, usingBatch>(defaultAdId, common::PUBLISHER);
-    }
+
+    // initialize the ad_id to be 0, is_attributed to be false:
+    attributedAdId = SecAdId<schedulerId, true>{
+        std::vector<uint64_t>(batchSize, defaultAdId), common::PUBLISHER};
+
     for (size_t i = touchpoints.size(); i >= 1; --i) {
       auto tp = touchpoints.at(i - 1);
       auto threshold = thresholds.at(i - 1);
 
-      if constexpr (usingBatch) {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "Checking touchpoints: {}",
-            common::vecToString(
-                tp.ts.openToParty(common::PUBLISHER).getValue()));
-      } else {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "Checking touchpoint: {}",
-            tp.ts.openToParty(common::PUBLISHER).getValue());
-      }
+      OMNISCIENT_ONLY_XLOGF(
+          DBG,
+          "Checking touchpoints: {}",
+          common::vecToString(tp.ts.openToParty(common::PUBLISHER).getValue()));
 
       auto isTouchpointAttributable =
           attributionRule.isAttributable(tp, conv, threshold);
@@ -500,28 +318,17 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
 
       hasAttributedTouchpoint = isAttributed | hasAttributedTouchpoint;
 
-      if constexpr (usingBatch) {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
-            common::vecToString(
-                isTouchpointAttributable.extractBit().getValue()),
-            common::vecToString(isAttributed.extractBit().getValue()),
-            common::vecToString(
-                hasAttributedTouchpoint.extractBit().getValue()));
-      } else {
-        OMNISCIENT_ONLY_XLOGF(
-            DBG,
-            "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
-            isTouchpointAttributable.extractBit().getValue(),
-            isAttributed.extractBit().getValue(),
-            hasAttributedTouchpoint.extractBit().getValue());
-      }
+      OMNISCIENT_ONLY_XLOGF(
+          DBG,
+          "isTouchpointAttributable={}, isAttributed={}, hasAttributedTouchpoint={}",
+          common::vecToString(isTouchpointAttributable.extractBit().getValue()),
+          common::vecToString(isAttributed.extractBit().getValue()),
+          common::vecToString(hasAttributedTouchpoint.extractBit().getValue()));
 
       attributedAdId = attributedAdId.mux(isAttributed, tp.adId);
     }
     attributionsOutput.push_back(
-        AttributionReformattedOutputFmt<schedulerId, usingBatch>{
+        AttributionReformattedOutputFmt<schedulerId, true>{
             .ad_id = attributedAdId,
             .conv_value = conv.convValue,
             .is_attributed = hasAttributedTouchpoint});
@@ -530,14 +337,11 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::
   return attributionsOutput;
 }
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
+template <int schedulerId, common::InputEncryption inputEncryption>
 AttributionOutputMetrics
-AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
+AttributionGame<schedulerId, inputEncryption>::computeAttributions(
     const int myRole,
-    const AttributionInputMetrics<usingBatch, inputEncryption>& inputData) {
+    const AttributionInputMetrics<inputEncryption>& inputData) {
   XLOG(INFO, "Running attribution");
   auto ids = inputData.getIds();
   uint32_t numIds = ids.size();
@@ -591,27 +395,13 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
         << "threshold arrays and touchpoint arrays are not the same length.";
 
     if (FLAGS_use_new_output_format) {
-      std::vector<AttributionReformattedOutputFmtT<schedulerId, usingBatch>>
+      std::vector<AttributionReformattedOutputFmtT<schedulerId, true>>
           attributionsReformatted;
 
-      if constexpr (usingBatch) {
-        attributionsReformatted = computeAttributionsHelperV2(
-            tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
+      attributionsReformatted = computeAttributionsHelperV2(
+          tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
 
-      } else {
-        // Compute row by row if not using batch
-        for (size_t i = 0; i < numIds; ++i) {
-          auto attributionReformattedRow = computeAttributionsHelperV2(
-              tpArrays.at(i),
-              convArrays.at(i),
-              *attributionRule,
-              thresholdArrays.at(i),
-              numIds);
-          attributionsReformatted.push_back(
-              std::move(attributionReformattedRow));
-        }
-      }
-      AttributionReformattedOutput<schedulerId, usingBatch>
+      AttributionReformattedOutput<schedulerId, true>
           attributionReformattedOutput{ids, attributionsReformatted};
       XLOGF(
           INFO,
@@ -621,26 +411,12 @@ AttributionGame<schedulerId, usingBatch, inputEncryption>::computeAttributions(
           attributionReformattedOutput.reveal();
 
     } else {
-      std::vector<SecBitT<schedulerId, usingBatch>> attributions;
+      std::vector<SecBitT<schedulerId, true>> attributions;
 
-      if constexpr (usingBatch) {
-        attributions = computeAttributionsHelper(
-            tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
-      } else {
-        // Compute row by row if not using batch
-        for (size_t i = 0; i < numIds; ++i) {
-          auto attributionRow = computeAttributionsHelper(
-              tpArrays.at(i),
-              convArrays.at(i),
-              *attributionRule,
-              thresholdArrays.at(i),
-              numIds);
-          attributions.push_back(std::move(attributionRow));
-        }
-      }
+      attributions = computeAttributionsHelper(
+          tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
 
-      AttributionOutput<schedulerId, usingBatch> attributionOutput{
-          ids, attributions};
+      AttributionOutput<schedulerId, true> attributionOutput{ids, attributions};
 
       XLOGF(
           INFO,
