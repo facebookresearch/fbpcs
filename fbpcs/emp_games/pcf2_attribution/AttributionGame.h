@@ -102,7 +102,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
           thresholds,
       size_t batchSize);
 
-  const std::vector<AttributionReformattedOutputFmt<schedulerId, true>>
+  const std::vector<AttributionReformattedOutputFmt<schedulerId>>
   computeAttributionsHelperV2(
       const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
           touchpoints,
