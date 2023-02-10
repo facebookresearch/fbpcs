@@ -14,12 +14,13 @@
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionOptions.h"
+#include "fbpcs/emp_games/pcf2_attribution/Touchpoint.h"
 
 namespace pcf2_attribution {
 
-template <bool usingBatch, common::InputEncryption inputEncryption>
+template <common::InputEncryption inputEncryption>
 const std::vector<ParsedTouchpoint>
-AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
+AttributionInputMetrics<inputEncryption>::parseTouchpoints(
     const int myRole,
     const int lineNo,
     const std::vector<std::string>& header,
@@ -109,9 +110,9 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseTouchpoints(
   return tps;
 }
 
-template <bool usingBatch, common::InputEncryption inputEncryption>
+template <common::InputEncryption inputEncryption>
 const std::vector<ParsedConversion>
-AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
+AttributionInputMetrics<inputEncryption>::parseConversions(
     const int myRole,
     const std::vector<std::string>& header,
     const std::vector<std::string>& parts) {
@@ -178,122 +179,90 @@ AttributionInputMetrics<usingBatch, inputEncryption>::parseConversions(
   return convs;
 }
 
-template <bool usingBatch, common::InputEncryption inputEncryption>
-const std::vector<TouchpointT<usingBatch>>
-AttributionInputMetrics<usingBatch, inputEncryption>::
-    convertParsedTouchpointsToTouchpoints(
-        const std::vector<std::vector<ParsedTouchpoint>>& parsedTouchpoints) {
-  std::vector<TouchpointT<usingBatch>> touchpoints;
+template <common::InputEncryption inputEncryption>
+const std::vector<TouchpointT<true>>
+AttributionInputMetrics<inputEncryption>::convertParsedTouchpointsToTouchpoints(
+    const std::vector<std::vector<ParsedTouchpoint>>& parsedTouchpoints) {
+  std::vector<TouchpointT<true>> touchpoints;
 
-  if constexpr (usingBatch) {
-    std::vector<std::vector<int64_t>> ids(
-        FLAGS_max_num_touchpoints, std::vector<int64_t>{});
-    std::vector<std::vector<bool>> isClicks(
-        FLAGS_max_num_touchpoints, std::vector<bool>{});
-    std::vector<std::vector<uint64_t>> timestamps(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint64_t>> targetIds(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint64_t>> actionTypes(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint64_t>> originalAdIds(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint64_t>> adIds(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<int64_t>> ids(
+      FLAGS_max_num_touchpoints, std::vector<int64_t>{});
+  std::vector<std::vector<bool>> isClicks(
+      FLAGS_max_num_touchpoints, std::vector<bool>{});
+  std::vector<std::vector<uint64_t>> timestamps(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> targetIds(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> actionTypes(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> originalAdIds(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> adIds(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
 
-    // The touchpoints are parsed row by row, whereas the batches are across
-    // rows.
-    for (size_t i = 0; i < parsedTouchpoints.size(); ++i) {
-      for (size_t j = 0; j < FLAGS_max_num_touchpoints; ++j) {
-        auto parsedTouchpoint = parsedTouchpoints.at(i).at(j);
-        ids.at(j).push_back(parsedTouchpoint.id);
-        isClicks.at(j).push_back(parsedTouchpoint.isClick);
-        timestamps.at(j).push_back(parsedTouchpoint.ts);
-        targetIds.at(j).push_back(parsedTouchpoint.targetId);
-        actionTypes.at(j).push_back(parsedTouchpoint.actionType);
-        originalAdIds.at(j).push_back(parsedTouchpoint.originalAdId);
-        adIds.at(j).push_back(parsedTouchpoint.adId);
-      }
-    }
-    for (size_t i = 0; i < FLAGS_max_num_touchpoints; ++i) {
-      touchpoints.push_back(Touchpoint<true>{
-          ids.at(i),
-          isClicks.at(i),
-          timestamps.at(i),
-          targetIds.at(i),
-          actionTypes.at(i),
-          originalAdIds.at(i),
-          adIds.at(i)});
-    }
-  } else {
-    for (size_t i = 0; i < parsedTouchpoints.size(); ++i) {
-      std::vector<Touchpoint<false>> touchpointRow;
-      for (auto& parsedTouchpoint : parsedTouchpoints.at(i)) {
-        touchpointRow.push_back(Touchpoint<false>{
-            parsedTouchpoint.id,
-            parsedTouchpoint.isClick,
-            parsedTouchpoint.ts,
-            parsedTouchpoint.targetId,
-            parsedTouchpoint.actionType,
-            parsedTouchpoint.originalAdId,
-            parsedTouchpoint.adId});
-      }
-      touchpoints.push_back(std::move(touchpointRow));
+  // The touchpoints are parsed row by row, whereas the batches are across
+  // rows.
+  for (size_t i = 0; i < parsedTouchpoints.size(); ++i) {
+    for (size_t j = 0; j < FLAGS_max_num_touchpoints; ++j) {
+      auto parsedTouchpoint = parsedTouchpoints.at(i).at(j);
+      ids.at(j).push_back(parsedTouchpoint.id);
+      isClicks.at(j).push_back(parsedTouchpoint.isClick);
+      timestamps.at(j).push_back(parsedTouchpoint.ts);
+      targetIds.at(j).push_back(parsedTouchpoint.targetId);
+      actionTypes.at(j).push_back(parsedTouchpoint.actionType);
+      originalAdIds.at(j).push_back(parsedTouchpoint.originalAdId);
+      adIds.at(j).push_back(parsedTouchpoint.adId);
     }
   }
+  for (size_t i = 0; i < FLAGS_max_num_touchpoints; ++i) {
+    touchpoints.push_back(Touchpoint<true>{
+        ids.at(i),
+        isClicks.at(i),
+        timestamps.at(i),
+        targetIds.at(i),
+        actionTypes.at(i),
+        originalAdIds.at(i),
+        adIds.at(i)});
+  }
+
   return touchpoints;
 }
 
-template <bool usingBatch, common::InputEncryption inputEncryption>
-const std::vector<ConversionT<usingBatch>>
-AttributionInputMetrics<usingBatch, inputEncryption>::
-    convertParsedConversionsToConversions(
-        const std::vector<std::vector<ParsedConversion>>& parsedConversions) {
-  std::vector<ConversionT<usingBatch>> conversions;
+template <common::InputEncryption inputEncryption>
+const std::vector<ConversionT<true>>
+AttributionInputMetrics<inputEncryption>::convertParsedConversionsToConversions(
+    const std::vector<std::vector<ParsedConversion>>& parsedConversions) {
+  std::vector<ConversionT<true>> conversions;
 
-  if constexpr (usingBatch) {
-    std::vector<std::vector<uint64_t>> timestamps(
-        FLAGS_max_num_conversions, std::vector<uint64_t>{});
-    std::vector<std::vector<uint64_t>> targetIds(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint64_t>> actionTypes(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
-    std::vector<std::vector<uint64_t>> values(
-        FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> timestamps(
+      FLAGS_max_num_conversions, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> targetIds(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> actionTypes(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
+  std::vector<std::vector<uint64_t>> values(
+      FLAGS_max_num_touchpoints, std::vector<uint64_t>{});
 
-    // The conversions are parsed row by row, whereas the batches are across
-    // rows.
-    for (const auto& oneBatchedParsedConversions : parsedConversions) {
-      for (size_t j = 0; j < oneBatchedParsedConversions.size(); ++j) {
-        timestamps.at(j).push_back(oneBatchedParsedConversions.at(j).ts);
-        targetIds.at(j).push_back(oneBatchedParsedConversions.at(j).targetId);
-        actionTypes.at(j).push_back(
-            oneBatchedParsedConversions.at(j).actionType);
-        values.at(j).push_back(oneBatchedParsedConversions.at(j).convValue);
-      }
-    }
-    for (size_t i = 0; i < timestamps.size(); ++i) {
-      conversions.push_back(Conversion<true>{
-          timestamps.at(i), targetIds.at(i), actionTypes.at(i), values.at(i)});
-    }
-  } else {
-    for (const auto& parsedRow : parsedConversions) {
-      std::vector<Conversion<false>> conversionRow;
-      for (const auto& parsedConversion : parsedRow) {
-        conversionRow.push_back(Conversion<false>{
-            parsedConversion.ts,
-            parsedConversion.targetId,
-            parsedConversion.actionType,
-            parsedConversion.convValue});
-      }
-      conversions.push_back(std::move(conversionRow));
+  // The conversions are parsed row by row, whereas the batches are across
+  // rows.
+  for (const auto& oneBatchedParsedConversions : parsedConversions) {
+    for (size_t j = 0; j < oneBatchedParsedConversions.size(); ++j) {
+      timestamps.at(j).push_back(oneBatchedParsedConversions.at(j).ts);
+      targetIds.at(j).push_back(oneBatchedParsedConversions.at(j).targetId);
+      actionTypes.at(j).push_back(oneBatchedParsedConversions.at(j).actionType);
+      values.at(j).push_back(oneBatchedParsedConversions.at(j).convValue);
     }
   }
+  for (size_t i = 0; i < timestamps.size(); ++i) {
+    conversions.push_back(Conversion<true>{
+        timestamps.at(i), targetIds.at(i), actionTypes.at(i), values.at(i)});
+  }
+
   return conversions;
 }
 
-template <bool usingBatch, common::InputEncryption inputEncryption>
-AttributionInputMetrics<usingBatch, inputEncryption>::AttributionInputMetrics(
+template <common::InputEncryption inputEncryption>
+AttributionInputMetrics<inputEncryption>::AttributionInputMetrics(
     int myRole,
     std::string attributionRulesStr,
     std::filesystem::path filepath) {
