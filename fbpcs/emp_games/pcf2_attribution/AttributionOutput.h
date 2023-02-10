@@ -55,12 +55,12 @@ struct AttributionDefaultFmt {
 
 using AttributionResult = folly::dynamic;
 
-template <int schedulerId, bool usingBatch = true>
+template <int schedulerId>
 class AttributionOutput {
  public:
   AttributionOutput(
       const std::vector<int64_t>& uids,
-      const std::vector<SecBitT<schedulerId, usingBatch>>& attributions)
+      const std::vector<SecBitT<schedulerId, true>>& attributions)
       : uids_{uids}, attributions_{attributions} {}
 
   /**
@@ -71,28 +71,12 @@ class AttributionOutput {
 
     std::vector<std::vector<bool>> revealedAttribution;
     for (auto& attributionArray : attributions_) {
-      if constexpr (usingBatch) {
-        IF_OMNISCIENT_MODE {
-          revealedAttribution.push_back(
-              attributionArray.openToParty(common::PUBLISHER).getValue());
-        }
-        else {
-          revealedAttribution.push_back(
-              attributionArray.extractBit().getValue());
-        }
-      } else {
-        std::vector<bool> revealedAttributionArray;
-        for (auto& attribution : attributionArray) {
-          IF_OMNISCIENT_MODE {
-            revealedAttributionArray.push_back(
-                attribution.openToParty(common::PUBLISHER).getValue());
-          }
-          else {
-            revealedAttributionArray.push_back(
-                attribution.extractBit().getValue());
-          }
-        }
-        revealedAttribution.push_back(std::move(revealedAttributionArray));
+      IF_OMNISCIENT_MODE {
+        revealedAttribution.push_back(
+            attributionArray.openToParty(common::PUBLISHER).getValue());
+      }
+      else {
+        revealedAttribution.push_back(attributionArray.extractBit().getValue());
       }
     }
 
@@ -101,28 +85,16 @@ class AttributionOutput {
 
     for (size_t i = 0; i < uids_.size(); ++i) {
       std::vector<OutputMetricDefault> revealedMetric;
-      if constexpr (usingBatch) {
-        for (size_t j = 0; j < revealedAttribution.size(); ++j) {
-          OutputMetricDefault outputMetric{revealedAttribution.at(j).at(i)};
-          revealedMetric.emplace_back(outputMetric);
-          IF_OMNISCIENT_MODE {
-            if (revealedAttribution.at(j).at(i)) {
-              attributionCountOmniscient++;
-            }
-          }
-        }
-      } else {
-        // revealedAttribution for non-batch is related to batch by transposing
-        for (size_t j = 0; j < revealedAttribution.at(i).size(); ++j) {
-          OutputMetricDefault outputMetric{revealedAttribution.at(i).at(j)};
-          revealedMetric.emplace_back(outputMetric);
-          IF_OMNISCIENT_MODE {
-            if (revealedAttribution.at(i).at(j)) {
-              attributionCountOmniscient++;
-            }
+      for (size_t j = 0; j < revealedAttribution.size(); ++j) {
+        OutputMetricDefault outputMetric{revealedAttribution.at(j).at(i)};
+        revealedMetric.emplace_back(outputMetric);
+        IF_OMNISCIENT_MODE {
+          if (revealedAttribution.at(j).at(i)) {
+            attributionCountOmniscient++;
           }
         }
       }
+
       out.idToMetrics.emplace(uids_.at(i), revealedMetric);
     }
 
@@ -134,7 +106,7 @@ class AttributionOutput {
 
  private:
   std::vector<int64_t> uids_;
-  std::vector<SecBitT<schedulerId, usingBatch>> attributions_;
+  std::vector<SecBitT<schedulerId, true>> attributions_;
 };
 
 } // namespace pcf2_attribution

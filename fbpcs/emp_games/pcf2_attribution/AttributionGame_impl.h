@@ -414,7 +414,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributions(
       attributions = computeAttributionsHelper(
           tpArrays, convArrays, *attributionRule, thresholdArrays, numIds);
 
-      AttributionOutput<schedulerId, true> attributionOutput{ids, attributions};
+      AttributionOutput<schedulerId> attributionOutput{ids, attributions};
 
       XLOGF(
           INFO,
