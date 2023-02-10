@@ -16,14 +16,14 @@ Usage:
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run] [options]
+    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run --stage_timeout_override_seconds=<stage_timeout_override_seconds>] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
     pc-cli print_current_status <instance_id> --config=<config_file> [options]
     pc-cli print_log_urls <instance_id> --config=<config_file> [options]
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
-    pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [--run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain>] [options]
+    pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [--run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --stage_timeout_override_seconds=<stage_timeout_override_seconds>] [options]
     pc-cli pre_validate --config=<config_file> [--dataset_id=<dataset_id>] --input_path=<input_path> [--timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>] [options]
     pc-cli bolt_e2e --bolt_config=<bolt_config_file> [options]
     pc-cli secret_scrubber <secret_input_path> <scrubbed_output_path> [options]
@@ -258,6 +258,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                     lambda arg: PrivateComputationBaseStageFlow.cls_name_to_cls(arg)
                 ),
             ),
+            "--stage_timeout_override_seconds": schema.Or(None, schema.Use(int)),
             "--result_visibility": schema.Or(
                 None,
                 schema.Use(lambda arg: ResultVisibility[arg.upper()]),
@@ -282,6 +283,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     log_path = arguments["--log_path"]
     instance_id = arguments["<instance_id>"]
+    stage_timeout_override = arguments["--stage_timeout_override_seconds"]
 
     # if log_path specified, logging using FileHandler, or console StreamHandler
     log_handler = logging.FileHandler(log_path) if log_path else logging.StreamHandler()
@@ -417,6 +419,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             graphapi_domain=arguments["--graphapi_domain"],
             final_stage=PrivateComputationStageFlow.AGGREGATE,
             output_dir=arguments["--output_dir"],
+            stage_timeout_override=stage_timeout_override,
         )
     elif arguments["run_attribution"]:
         stage_flow = PrivateComputationPCF2StageFlow
@@ -436,6 +439,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             run_id=arguments["--run_id"],
             graphapi_version=arguments["--graphapi_version"],
             graphapi_domain=arguments["--graphapi_domain"],
+            stage_timeout_override=stage_timeout_override,
         )
 
     elif arguments["cancel_current_stage"]:

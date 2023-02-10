@@ -28,12 +28,13 @@ from fbpcs.private_computation.stage_flows.stage_selector import StageSelector
 from fbpcs.stage_flow.stage_flow import StageFlow, StageFlowData
 
 C = TypeVar("C", bound="PrivateComputationBaseStageFlow")
+DEFAULT_STAGE_TIMEOUT_IN_SEC: int = 60 * 60  # 1 hour
 
 
 @dataclass(frozen=True)
 class PrivateComputationStageFlowData(StageFlowData[PrivateComputationInstanceStatus]):
     is_joint_stage: bool
-    timeout: int = 3600
+    timeout: int = DEFAULT_STAGE_TIMEOUT_IN_SEC
     is_retryable: bool = True
 
 
