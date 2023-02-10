@@ -426,13 +426,13 @@ async def _run_study_async_helper(
     ## Step 4: Print out the initial and end states
 
     # Wait to resolve throttling issue
-    # - Re-attempts every 5 minutes for 75 minutes total before failing
+    # - Re-attempts every 3 minutes for 30 minutes total before failing
     # - https://developers.facebook.com/docs/graph-api/overview/rate-limiting/
     with RetryHandler(
         logger=logger,
-        backoff_seconds=300,
+        backoff_seconds=180,
         backoff_type=BackoffType.CONSTANT,
-        max_attempts=15,
+        max_attempts=10,
     ) as retry_handler:
         end_state_study_data = await retry_handler.execute_sync(
             _get_study_data, study_id, client
