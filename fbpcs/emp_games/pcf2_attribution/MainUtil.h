@@ -56,7 +56,6 @@ getIOFilenames(
 template <
     std::uint32_t PARTY,
     std::uint32_t index,
-    bool usingBatch,
     common::InputEncryption inputEncryption>
 inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     bool useXorEncryption,
@@ -98,11 +97,9 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
 
     // Each AttributionApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
-    auto app = std::make_unique<pcf2_attribution::AttributionApp<
-        PARTY,
-        2 * index + PARTY,
-        usingBatch,
-        inputEncryption>>(
+    auto app = std::make_unique<
+        pcf2_attribution::
+            AttributionApp<PARTY, 2 * index + PARTY, true, inputEncryption>>(
         std::move(communicationAgentFactory),
         attributionRules,
         inputFilenames,
@@ -122,7 +119,6 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
         auto remainingStats = startAttributionAppsForShardedFilesHelper<
             PARTY,
             index + 1,
-            usingBatch,
             inputEncryption>(
             useXorEncryption,
             startFileIndex + numFiles,
@@ -142,26 +138,22 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
   return schedulerStatistics;
 }
 
-template <int PARTY, bool usingBatch, common::InputEncryption inputEncryption>
+template <int PARTY, common::InputEncryption inputEncryption>
 inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     bool useXorEncryption,
     std::vector<std::string>& inputFilenames,
     std::vector<std::string>& outputFilenames,
     int16_t concurrency,
-    std::string serverIp,
+    const std::string& serverIp,
     int port,
-    std::string attributionRules,
+    const std::string& attributionRules,
     fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo&
         tlsInfo) {
   // use only as many threads as the number of files
   auto numThreads =
       std::min(static_cast<std::int16_t>(inputFilenames.size()), concurrency);
 
-  return startAttributionAppsForShardedFilesHelper<
-      PARTY,
-      0U,
-      usingBatch,
-      inputEncryption>(
+  return startAttributionAppsForShardedFilesHelper<PARTY, 0U, inputEncryption>(
       useXorEncryption,
       0U,
       numThreads,
