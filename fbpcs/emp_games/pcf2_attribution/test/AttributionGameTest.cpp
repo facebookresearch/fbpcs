@@ -133,16 +133,12 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
       false,
       false};
 
-  auto lastClick1D = AttributionRule<
-      common::PUBLISHER,
-      true,
-      common::InputEncryption::Plaintext>::
-      fromNameOrThrow(common::LAST_CLICK_1D);
-  auto lastTouch1D = AttributionRule<
-      common::PUBLISHER,
-      true,
-      common::InputEncryption::Plaintext>::
-      fromNameOrThrow(common::LAST_TOUCH_1D);
+  auto lastClick1D =
+      AttributionRule<common::PUBLISHER, common::InputEncryption::Plaintext>::
+          fromNameOrThrow(common::LAST_CLICK_1D);
+  auto lastTouch1D =
+      AttributionRule<common::PUBLISHER, common::InputEncryption::Plaintext>::
+          fromNameOrThrow(common::LAST_TOUCH_1D);
   auto thresholdsLastClick1D = game.privatelyShareThresholds(
       touchpoints, privateTouchpoints, *lastClick1D, 2);
   auto thresholdsLastTouch1D = game.privatelyShareThresholds(
@@ -231,12 +227,12 @@ TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintextBatch) {
 
   auto lastClick1D = AttributionRule<
       common::PUBLISHER,
-      true,
+
       common::InputEncryption::Plaintext>::
       fromNameOrThrow(common::LAST_CLICK_1D);
   auto lastTouch1D = AttributionRule<
       common::PUBLISHER,
-      true,
+
       common::InputEncryption::Plaintext>::
       fromNameOrThrow(common::LAST_TOUCH_1D);
   auto thresholdsLastClick1D = game.privatelyShareThresholds(
