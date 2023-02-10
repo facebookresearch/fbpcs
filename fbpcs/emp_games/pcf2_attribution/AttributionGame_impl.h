@@ -30,10 +30,10 @@ template <int schedulerId, common::InputEncryption inputEncryption>
 std::vector<
     typename AttributionGame<schedulerId, inputEncryption>::PrivateConversionT>
 AttributionGame<schedulerId, inputEncryption>::privatelyShareConversions(
-    const std::vector<ConversionT<true>>& conversions) {
+    const std::vector<Conversion>& conversions) {
   return common::privatelyShareArray<
-      Conversion<true>,
-      PrivateConversion<schedulerId, true, inputEncryption>>(conversions);
+      Conversion,
+      PrivateConversion<schedulerId, inputEncryption>>(conversions);
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
@@ -186,7 +186,7 @@ const std::vector<SecBit<schedulerId, true>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
     const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
         touchpoints,
-    const std::vector<PrivateConversion<schedulerId, true, inputEncryption>>&
+    const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
     const std::vector<std::vector<SecTimestamp<schedulerId, true>>>& thresholds,
@@ -258,7 +258,7 @@ const std::vector<AttributionReformattedOutputFmt<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
     const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
         touchpoints,
-    const std::vector<PrivateConversion<schedulerId, true, inputEncryption>>&
+    const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
     const std::vector<std::vector<SecTimestamp<schedulerId, true>>>& thresholds,
