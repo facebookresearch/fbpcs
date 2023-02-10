@@ -180,10 +180,10 @@ AttributionInputMetrics<inputEncryption>::parseConversions(
 }
 
 template <common::InputEncryption inputEncryption>
-const std::vector<TouchpointT<true>>
+const std::vector<Touchpoint>
 AttributionInputMetrics<inputEncryption>::convertParsedTouchpointsToTouchpoints(
     const std::vector<std::vector<ParsedTouchpoint>>& parsedTouchpoints) {
-  std::vector<TouchpointT<true>> touchpoints;
+  std::vector<Touchpoint> touchpoints;
 
   std::vector<std::vector<int64_t>> ids(
       FLAGS_max_num_touchpoints, std::vector<int64_t>{});
@@ -215,7 +215,7 @@ AttributionInputMetrics<inputEncryption>::convertParsedTouchpointsToTouchpoints(
     }
   }
   for (size_t i = 0; i < FLAGS_max_num_touchpoints; ++i) {
-    touchpoints.push_back(Touchpoint<true>{
+    touchpoints.push_back(Touchpoint{
         ids.at(i),
         isClicks.at(i),
         timestamps.at(i),

@@ -12,79 +12,66 @@
 
 namespace pcf2_attribution {
 
-template <bool usingBatch>
 struct Touchpoint {
-  ConditionalVector<int64_t, usingBatch> id;
-  ConditionalVector<bool, usingBatch> isClick;
-  ConditionalVector<uint64_t, usingBatch> ts;
-  ConditionalVector<uint64_t, usingBatch> targetId;
-  ConditionalVector<uint64_t, usingBatch> actionType;
-  ConditionalVector<uint64_t, usingBatch> originalAdId;
-  ConditionalVector<uint64_t, usingBatch> adId;
+  std::vector<int64_t> id;
+  std::vector<bool> isClick;
+  std::vector<uint64_t> ts;
+  std::vector<uint64_t> targetId;
+  std::vector<uint64_t> actionType;
+  std::vector<uint64_t> originalAdId;
+  std::vector<uint64_t> adId;
 };
 
-template <bool usingBatch>
-using TouchpointT = ConditionalVector<Touchpoint<usingBatch>, !usingBatch>;
-
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
+template <int schedulerId, common::InputEncryption inputEncryption>
 struct PrivateTouchpoint {
-  ConditionalVector<int64_t, usingBatch> id;
-  SecTimestamp<schedulerId, usingBatch> ts;
-  SecTargetId<schedulerId, usingBatch> targetId;
-  SecActionType<schedulerId, usingBatch> actionType;
-  SecOriginalAdId<schedulerId, usingBatch> originalAdId;
-  SecAdId<schedulerId, usingBatch> adId;
+  std::vector<int64_t> id;
+  SecTimestamp<schedulerId, true> ts;
+  SecTargetId<schedulerId, true> targetId;
+  SecActionType<schedulerId, true> actionType;
+  SecOriginalAdId<schedulerId, true> originalAdId;
+  SecAdId<schedulerId, true> adId;
 
-  explicit PrivateTouchpoint(const Touchpoint<usingBatch>& touchpoint)
-      : id{touchpoint.id} {
+  explicit PrivateTouchpoint(const Touchpoint& touchpoint) : id{touchpoint.id} {
     if constexpr (inputEncryption == common::InputEncryption::Xor) {
-      typename SecTimestamp<schedulerId, usingBatch>::ExtractedInt extractedTs(
+      typename SecTimestamp<schedulerId, true>::ExtractedInt extractedTs(
           touchpoint.ts);
-      ts = SecTimestamp<schedulerId, usingBatch>(std::move(extractedTs));
-      typename SecTargetId<schedulerId, usingBatch>::ExtractedInt extractedTids(
+      ts = SecTimestamp<schedulerId, true>(std::move(extractedTs));
+      typename SecTargetId<schedulerId, true>::ExtractedInt extractedTids(
           touchpoint.targetId);
-      targetId = SecTargetId<schedulerId, usingBatch>(std::move(extractedTids));
-      typename SecActionType<schedulerId, usingBatch>::ExtractedInt
-          extractedAids(touchpoint.actionType);
-      actionType =
-          SecActionType<schedulerId, usingBatch>(std::move(extractedAids));
-      typename SecOriginalAdId<schedulerId, usingBatch>::ExtractedInt
+      targetId = SecTargetId<schedulerId, true>(std::move(extractedTids));
+      typename SecActionType<schedulerId, true>::ExtractedInt extractedAids(
+          touchpoint.actionType);
+      actionType = SecActionType<schedulerId, true>(std::move(extractedAids));
+      typename SecOriginalAdId<schedulerId, true>::ExtractedInt
           extractedOriginalAdIds(touchpoint.originalAdId);
-      originalAdId = SecOriginalAdId<schedulerId, usingBatch>(
-          std::move(extractedOriginalAdIds));
+      originalAdId =
+          SecOriginalAdId<schedulerId, true>(std::move(extractedOriginalAdIds));
     } else {
-      ts = SecTimestamp<schedulerId, usingBatch>(
-          touchpoint.ts, common::PUBLISHER);
-      targetId = SecTargetId<schedulerId, usingBatch>(
+      ts = SecTimestamp<schedulerId, true>(touchpoint.ts, common::PUBLISHER);
+      targetId = SecTargetId<schedulerId, true>(
           touchpoint.targetId, common::PUBLISHER);
-      actionType = SecActionType<schedulerId, usingBatch>(
+      actionType = SecActionType<schedulerId, true>(
           touchpoint.actionType, common::PUBLISHER);
-      originalAdId = SecOriginalAdId<schedulerId, usingBatch>(
+      originalAdId = SecOriginalAdId<schedulerId, true>(
           touchpoint.originalAdId, common::PUBLISHER);
     }
-    adId = SecAdId<schedulerId, usingBatch>(touchpoint.adId, common::PUBLISHER);
+    adId = SecAdId<schedulerId, true>(touchpoint.adId, common::PUBLISHER);
   }
 };
 
 // Used for privately sharing isClick for xor encrypted inputs
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
+template <int schedulerId, common::InputEncryption inputEncryption>
 struct PrivateIsClick {
-  SecBit<schedulerId, usingBatch> isClick;
+  SecBit<schedulerId, true> isClick;
 
-  explicit PrivateIsClick(const Touchpoint<usingBatch>& touchpoint) {
+  explicit PrivateIsClick(const Touchpoint& touchpoint) {
     if constexpr (inputEncryption == common::InputEncryption::Xor) {
-      typename SecBit<schedulerId, usingBatch>::ExtractedBit extractedIsClick(
+      typename SecBit<schedulerId, true>::ExtractedBit extractedIsClick(
           touchpoint.isClick);
-      isClick = SecBit<schedulerId, usingBatch>(std::move(extractedIsClick));
+      isClick = SecBit<schedulerId, true>(std::move(extractedIsClick));
     } else {
-      isClick = SecBit<schedulerId, usingBatch>(
-          touchpoint.isClick, common::PUBLISHER);
+      isClick =
+          SecBit<schedulerId, true>(touchpoint.isClick, common::PUBLISHER);
     }
   }
 };
