@@ -34,8 +34,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   using PrivateTouchpointT =
       PrivateTouchpoint<schedulerId, true, inputEncryption>;
 
-  using PrivateConversionT =
-      PrivateConversion<schedulerId, true, inputEncryption>;
+  using PrivateConversionT = PrivateConversion<schedulerId, inputEncryption>;
 
   /**
    * Publisher shares attribution rules with partner.
@@ -56,7 +55,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    * Partner shares conversions with publisher.
    */
   std::vector<PrivateConversionT> privatelyShareConversions(
-      const std::vector<ConversionT<true>>& conversions);
+      const std::vector<Conversion>& conversions);
 
   /**
    * Publisher shares touchpoints thresholds, to optimize attribution
@@ -93,7 +92,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   const std::vector<SecBit<schedulerId, true>> computeAttributionsHelper(
       const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
           touchpoints,
-      const std::vector<PrivateConversion<schedulerId, true, inputEncryption>>&
+      const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
           conversions,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
       const std::vector<std::vector<SecTimestamp<schedulerId, true>>>&
@@ -104,7 +103,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   computeAttributionsHelperV2(
       const std::vector<PrivateTouchpoint<schedulerId, true, inputEncryption>>&
           touchpoints,
-      const std::vector<PrivateConversion<schedulerId, true, inputEncryption>>&
+      const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
           conversions,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
       const std::vector<std::vector<SecTimestamp<schedulerId, true>>>&

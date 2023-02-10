@@ -229,10 +229,10 @@ AttributionInputMetrics<inputEncryption>::convertParsedTouchpointsToTouchpoints(
 }
 
 template <common::InputEncryption inputEncryption>
-const std::vector<ConversionT<true>>
+const std::vector<Conversion>
 AttributionInputMetrics<inputEncryption>::convertParsedConversionsToConversions(
     const std::vector<std::vector<ParsedConversion>>& parsedConversions) {
-  std::vector<ConversionT<true>> conversions;
+  std::vector<Conversion> conversions;
 
   std::vector<std::vector<uint64_t>> timestamps(
       FLAGS_max_num_conversions, std::vector<uint64_t>{});
@@ -254,7 +254,7 @@ AttributionInputMetrics<inputEncryption>::convertParsedConversionsToConversions(
     }
   }
   for (size_t i = 0; i < timestamps.size(); ++i) {
-    conversions.push_back(Conversion<true>{
+    conversions.push_back(Conversion{
         timestamps.at(i), targetIds.at(i), actionTypes.at(i), values.at(i)});
   }
 
