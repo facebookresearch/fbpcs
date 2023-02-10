@@ -50,8 +50,7 @@ class AttributionApp {
               MY_ROLE, *communicationAgentFactory_, metricCollector_)
               .create();
 
-    AttributionGame<schedulerId, true, inputEncryption> game(
-        std::move(scheduler));
+    AttributionGame<schedulerId, inputEncryption> game(std::move(scheduler));
 
     // Compute attributions sequentially on numFiles files, starting from
     // startFileIndex
@@ -92,12 +91,11 @@ class AttributionApp {
   }
 
  protected:
-  AttributionInputMetrics<true, inputEncryption> getInputData(
-      std::string inputPath) {
+  AttributionInputMetrics<inputEncryption> getInputData(std::string inputPath) {
     XLOG(INFO) << "MY_ROLE: " << MY_ROLE << ", schedulerId: " << schedulerId
                << ", attributionRules_: " << attributionRules_
                << ", input_path: " << inputPath;
-    return AttributionInputMetrics<true, inputEncryption>{
+    return AttributionInputMetrics<inputEncryption>{
         MY_ROLE, attributionRules_, inputPath};
   }
 
