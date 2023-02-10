@@ -42,7 +42,7 @@ class AttributionInputMetrics {
     return attributionRules_;
   }
 
-  const std::vector<ConversionT<true>>& getConversionArrays() const {
+  const std::vector<Conversion>& getConversionArrays() const {
     return convArrays_;
   }
 
@@ -54,7 +54,7 @@ class AttributionInputMetrics {
   std::vector<int64_t> ids_;
   std::vector<std::string> attributionRules_;
   std::vector<TouchpointT<true>> tpArrays_;
-  std::vector<ConversionT<true>> convArrays_;
+  std::vector<Conversion> convArrays_;
 
   /**
    * Parse touchpoints and add padding if necessary.
@@ -82,7 +82,7 @@ class AttributionInputMetrics {
   /**
    * Convert parsed conversions into conversions.
    */
-  const std::vector<ConversionT<true>> convertParsedConversionsToConversions(
+  const std::vector<Conversion> convertParsedConversionsToConversions(
       const std::vector<std::vector<ParsedConversion>>& parsedConversions);
 };
 

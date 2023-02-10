@@ -72,8 +72,8 @@ TEST(AttributionGameTest, TestPrivateConversionPlaintextBatch) {
   std::vector<uint64_t> timestamp0{100, 50, 0};
   std::vector<uint64_t> timestamp1{99, 49, 3};
 
-  std::vector<Conversion<true>> conversions{
-      Conversion<true>{.ts = timestamp0}, Conversion<true>{.ts = timestamp1}};
+  std::vector<Conversion> conversions{
+      Conversion{.ts = timestamp0}, Conversion{.ts = timestamp1}};
 
   AttributionGame<common::PUBLISHER, common::InputEncryption::Plaintext> game(
       std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
@@ -99,10 +99,8 @@ TEST(AttributionGameTest, TestAttributionLogicPlaintextBatch) {
       Touchpoint<true>{{1, 1}, {true, true}, {100, 100}},
       Touchpoint<true>{{2, 2}, {true, true}, {200, 200}}};
 
-  std::vector<Conversion<true>> conversions{
-      Conversion<true>{{50, 50}},
-      Conversion<true>{{150, 150}},
-      Conversion<true>{{87000, 87000}}};
+  std::vector<Conversion> conversions{
+      Conversion{{50, 50}}, Conversion{{150, 150}}, Conversion{{87000, 87000}}};
 
   AttributionGame<common::PUBLISHER, common::InputEncryption::Plaintext> game(
       std::make_unique<fbpcf::scheduler::PlaintextScheduler>(
@@ -201,10 +199,10 @@ TEST(AttributionGameTest, TestAttributionReformattedOutputLogicPlaintextBatch) {
           .ts = {200, 200},
           .adId = {3, 3}}};
 
-  std::vector<Conversion<true>> conversions{
-      Conversion<true>{.ts = {50, 50}, .convValue = {20, 20}},
-      Conversion<true>{.ts = {150, 150}, .convValue = {40, 40}},
-      Conversion<true>{.ts = {87000, 87000}, .convValue = {60, 60}}};
+  std::vector<Conversion> conversions{
+      Conversion{.ts = {50, 50}, .convValue = {20, 20}},
+      Conversion{.ts = {150, 150}, .convValue = {40, 40}},
+      Conversion{.ts = {87000, 87000}, .convValue = {60, 60}}};
 
   AttributionGame<common::PUBLISHER, common::InputEncryption::Plaintext> game(
       std::make_unique<fbpcf::scheduler::PlaintextScheduler>(

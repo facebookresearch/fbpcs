@@ -12,51 +12,42 @@
 
 namespace pcf2_attribution {
 
-template <bool usingBatch>
 struct Conversion {
-  ConditionalVector<uint64_t, usingBatch> ts;
-  ConditionalVector<uint64_t, usingBatch> targetId;
-  ConditionalVector<uint64_t, usingBatch> actionType;
-  ConditionalVector<uint64_t, usingBatch> convValue;
+  std::vector<uint64_t> ts;
+  std::vector<uint64_t> targetId;
+  std::vector<uint64_t> actionType;
+  std::vector<uint64_t> convValue;
 };
 
-template <bool usingBatch>
-using ConversionT = ConditionalVector<Conversion<usingBatch>, !usingBatch>;
-
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
+template <int schedulerId, common::InputEncryption inputEncryption>
 struct PrivateConversion {
-  SecTimestamp<schedulerId, usingBatch> ts;
-  SecTargetId<schedulerId, usingBatch> targetId;
-  SecActionType<schedulerId, usingBatch> actionType;
-  SecConvValue<schedulerId, usingBatch> convValue;
+  SecTimestamp<schedulerId, true> ts;
+  SecTargetId<schedulerId, true> targetId;
+  SecActionType<schedulerId, true> actionType;
+  SecConvValue<schedulerId, true> convValue;
 
-  explicit PrivateConversion(const Conversion<usingBatch>& conversion) {
+  explicit PrivateConversion(const Conversion& conversion) {
     if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
-      ts =
-          SecTimestamp<schedulerId, usingBatch>(conversion.ts, common::PARTNER);
-      targetId = SecTargetId<schedulerId, usingBatch>(
-          conversion.targetId, common::PARTNER);
-      actionType = SecActionType<schedulerId, usingBatch>(
+      ts = SecTimestamp<schedulerId, true>(conversion.ts, common::PARTNER);
+      targetId =
+          SecTargetId<schedulerId, true>(conversion.targetId, common::PARTNER);
+      actionType = SecActionType<schedulerId, true>(
           conversion.actionType, common::PARTNER);
-      convValue = SecConvValue<schedulerId, usingBatch>(
+      convValue = SecConvValue<schedulerId, true>(
           conversion.convValue, common::PARTNER);
     } else {
-      typename SecTimestamp<schedulerId, usingBatch>::ExtractedInt extractedTs(
+      typename SecTimestamp<schedulerId, true>::ExtractedInt extractedTs(
           conversion.ts);
-      ts = SecTimestamp<schedulerId, usingBatch>(std::move(extractedTs));
-      typename SecTargetId<schedulerId, usingBatch>::ExtractedInt extractedTids(
+      ts = SecTimestamp<schedulerId, true>(std::move(extractedTs));
+      typename SecTargetId<schedulerId, true>::ExtractedInt extractedTids(
           conversion.targetId);
-      targetId = SecTargetId<schedulerId, usingBatch>(std::move(extractedTids));
-      typename SecActionType<schedulerId, usingBatch>::ExtractedInt
-          extractedAids(conversion.actionType);
-      actionType =
-          SecActionType<schedulerId, usingBatch>(std::move(extractedAids));
-      typename SecConvValue<schedulerId, usingBatch>::ExtractedInt extractedVs(
+      targetId = SecTargetId<schedulerId, true>(std::move(extractedTids));
+      typename SecActionType<schedulerId, true>::ExtractedInt extractedAids(
+          conversion.actionType);
+      actionType = SecActionType<schedulerId, true>(std::move(extractedAids));
+      typename SecConvValue<schedulerId, true>::ExtractedInt extractedVs(
           conversion.convValue);
-      convValue = SecConvValue<schedulerId, usingBatch>(std::move(extractedVs));
+      convValue = SecConvValue<schedulerId, true>(std::move(extractedVs));
     }
   }
 };
