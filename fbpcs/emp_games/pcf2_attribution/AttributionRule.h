@@ -21,10 +21,7 @@ const uint32_t kSecondsInOneDay = 86400; // 60 * 60 * 24
 const uint32_t kSecondsInTwentyEightDays = 2419200; // 60 * 60 * 24 * 28
 const uint32_t kSecondsInSevenDays = 604800; // 60 * 60 * 24 * 7
 
-template <
-    int schedulerId,
-    bool usingBatch,
-    common::InputEncryption inputEncryption>
+template <int schedulerId, common::InputEncryption inputEncryption>
 struct AttributionRule {
   AttributionRule(std::uint64_t _id, std::string _name)
       : id(_id), name(std::move(_name)) {}
@@ -41,22 +38,21 @@ struct AttributionRule {
 
   // Should return true if the given touchpoint is eligible to be attributed
   // to the given conversion
-  virtual SecBit<schedulerId, usingBatch> isAttributable(
-      const PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>&,
-      const PrivateConversion<schedulerId, usingBatch, inputEncryption>&,
-      const std::vector<SecTimestamp<schedulerId, usingBatch>>&) const = 0;
+  virtual SecBit<schedulerId, true> isAttributable(
+      const PrivateTouchpoint<schedulerId, true, inputEncryption>&,
+      const PrivateConversion<schedulerId, true, inputEncryption>&,
+      const std::vector<SecTimestamp<schedulerId, true>>&) const = 0;
 
   // Compute touchpoint thresholds from plaintext touchpoints based on
   // attribution rule
-  virtual std::vector<SecTimestamp<schedulerId, usingBatch>>
-  computeThresholdsPlaintext(const Touchpoint<usingBatch>&) const = 0;
+  virtual std::vector<SecTimestamp<schedulerId, true>>
+  computeThresholdsPlaintext(const Touchpoint<true>&) const = 0;
 
   // Compute touchpoint thresholds from private touchpoints based on attribution
   // rule
-  virtual std::vector<SecTimestamp<schedulerId, usingBatch>>
-  computeThresholdsPrivate(
-      const PrivateTouchpoint<schedulerId, usingBatch, inputEncryption>&,
-      const PrivateIsClick<schedulerId, usingBatch, inputEncryption>&,
+  virtual std::vector<SecTimestamp<schedulerId, true>> computeThresholdsPrivate(
+      const PrivateTouchpoint<schedulerId, true, inputEncryption>&,
+      const PrivateIsClick<schedulerId, true, inputEncryption>&,
       size_t batchSize) const = 0;
 
   // Constructors for attribution rules, which can be found in
