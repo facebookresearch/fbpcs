@@ -21,8 +21,8 @@ to run partner containers and humans can be slow;
 2) during development, we add logic or complexity to the binaries running inside the containers
 so that they take more than a few hours to run.
 """
-# TODO: T142284889 Reduce this timeout back to 12 hours after we finishe the POC run in January and have a better idea for a solution.
-DEFAULT_CONTAINER_TIMEOUT_IN_SEC = 86400
+
+DEFAULT_CONTAINER_TIMEOUT_IN_SEC: int = 12 * 60 * 60  # 12 hours
 DEFAULT_SERVER_PORT_NUMBER = 15200
 MAX_ROWS_PER_PID_CONTAINER = 10_000_000
 TARGET_ROWS_PER_MPC_CONTAINER = 250_000

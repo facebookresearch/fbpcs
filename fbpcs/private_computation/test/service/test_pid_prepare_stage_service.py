@@ -56,7 +56,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         self.input_path = "in"
         self.output_path = "out"
         self.pc_instance_id = "test_instance_123"
-        self.container_timeout = 86400
+        self.container_timeout = 12 * 60 * 60  # 12 hours
 
     async def test_pid_prepare_stage_service(self) -> None:
         async def _run_sub_test(
