@@ -41,7 +41,7 @@ on:
 env:
   FBPCS_CONTAINER_REPO_URL: ghcr.io/facebookresearch/fbpcs
   FBPCS_IMAGE_NAME: coordinator
-  FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_RC_GRAPH_API_TOKEN }}
+  FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_GRAPH_API_TOKEN }}
 
 jobs:
   ### Private Lift E2E tests
