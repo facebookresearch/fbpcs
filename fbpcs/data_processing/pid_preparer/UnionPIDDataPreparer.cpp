@@ -39,9 +39,9 @@ static const std::string kIdColumnPrefix = "id_";
 
 UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
   UnionPIDDataPreparerResults res;
-  auto reader = std::make_unique<fbpcf::io::FileReader>(inputPath_);
-  auto bufferedReader =
-      std::make_unique<fbpcf::io::BufferedReader>(std::move(reader));
+  auto readerForFilter = std::make_unique<fbpcf::io::FileReader>(inputPath_);
+  auto bufferedReaderForFilter =
+      std::make_unique<fbpcf::io::BufferedReader>(std::move(readerForFilter));
 
   // Get a random ID to avoid potential name collisions if multiple
   // runs at the same time point to the same input file
@@ -54,7 +54,7 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
 
   std::vector<std::string> header;
 
-  std::string line = bufferedReader->readLine();
+  std::string line = bufferedReaderForFilter->readLine();
   line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
   folly::split(",", line, header);
 
@@ -79,6 +79,68 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
                 << "Header: [" << folly::join(",", header) << "]";
   }
 
+  // Count number of appearance of each identifier.
+  // Then keep ones that have appearance more than idFilterThresh_.
+  std::unordered_map<std::string, std::int32_t> countIds;
+  std::unordered_set<std::string> filterIds;
+  if (idFilterThresh_ > 1) {
+    XLOG(INFO) << "idFilterThresh_ set to " << idFilterThresh_
+               << ". Filtering ids with its appearance above "
+               << idFilterThresh_ << ".";
+    while (!bufferedReaderForFilter->eof()) {
+      line = bufferedReaderForFilter->readLine();
+      std::vector<std::string> cols;
+      line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
+      folly::split(",", line, cols);
+      auto rowSize = cols.size();
+      auto headerSize = header.size();
+
+      if (rowSize != headerSize) {
+        // note: it's not *essential* to clean up tmpfile here, but it will
+        // pollute our test directory otherwise, which is just somewhat
+        // annoying.
+        std::remove(tmpFilename.c_str());
+        XLOG(FATAL) << "Mismatch between header and row at index "
+                    << res.linesProcessed << '\n'
+                    << "Header has size " << headerSize
+                    << " while row has size " << rowSize << '\n'
+                    << "Header: [" << folly::join(",", header) << "]\n"
+                    << "Row   : [" << folly::join(",", header) << "]";
+      }
+
+      int cntNonEmptyIdColumn = 0;
+      for (std::int64_t idColumnIdx : idColumnIndices) {
+        auto id = cols.at(idColumnIdx);
+        if (id == "") {
+          continue;
+        }
+        if (countIds.find(id) != countIds.end()) {
+          // If id is already present in countIds, increase the count by 1.
+          // If the count reaches idFilterThresh_, add id into filterIds.
+          if (++countIds[id] == idFilterThresh_) {
+            XLOG(INFO) << "Filtering " << id << " after appearing "
+                       << idFilterThresh_ << " times.";
+            filterIds.insert(id);
+          }
+        } else {
+          // If id is not present in countIds, add a new entry.
+          countIds[id] = 1;
+        }
+        if (++cntNonEmptyIdColumn == maxColumnCnt_) {
+          // If the number of ids for this row reaches maxColumnCnt_,
+          // we won't consider the rest of ids.
+          break;
+        }
+      }
+    }
+  }
+  bufferedReaderForFilter->close();
+
+  // Read entire file again to create PREPARE file.
+  auto reader = std::make_unique<fbpcf::io::FileReader>(inputPath_);
+  auto bufferedReader =
+      std::make_unique<fbpcf::io::BufferedReader>(std::move(reader));
+  bufferedReader->readLine(); // Skip header
   std::unordered_set<std::string> seenIds;
   while (!bufferedReader->eof()) {
     line = bufferedReader->readLine();
@@ -104,18 +166,25 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
     // Duplicate ids are not allowed. If we find duplicates, we skip this row.
     bool isDuplicateRow = false;
     std::vector<std::string> ids;
+    int cntNonEmptyIdColumn = 0;
     for (std::int64_t idColumnIdx : idColumnIndices) {
       auto id = cols.at(idColumnIdx);
       if (id == "") {
         continue;
       }
+      ++cntNonEmptyIdColumn;
+      if (filterIds.find(id) != filterIds.end()) {
+        // If id is in filterIds, we drop this id.
+        continue;
+      }
       if (seenIds.find(id) != seenIds.end()) {
+        // If id is seen before, we will drop this row.
         isDuplicateRow = true;
         ++res.duplicateIdCount;
         break;
       }
       ids.push_back(id);
-      if (ids.size() == maxColumnCnt_) {
+      if (cntNonEmptyIdColumn == maxColumnCnt_) {
         break;
       }
     }
