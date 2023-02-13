@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-
+import time
 import unittest
 from typing import List, Optional, Tuple
 from unittest import mock
@@ -16,7 +16,11 @@ from fbpcs.bolt.bolt_hook import BoltHookEvent, BoltHookKey, BoltHookTiming
 from fbpcs.bolt.bolt_job import BoltJob
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_NUM_TRIES
-from fbpcs.bolt.exceptions import IncompatibleStageError, StageFailedException
+from fbpcs.bolt.exceptions import (
+    IncompatibleStageError,
+    StageFailedException,
+    StageTimeoutException,
+)
 from fbpcs.infra.certificate.sample_tls_certificates import (
     SAMPLE_CA_CERTIFICATE,
     SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
@@ -335,6 +339,70 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(mock_run_next_stage.call_count, DEFAULT_NUM_TRIES)
                 else:
                     self.assertEqual(mock_run_next_stage.call_count, 1)
+
+    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
+    @mock.patch(
+        "fbpcs.bolt.bolt_runner.BoltRunner.run_next_stage", new_callable=mock.AsyncMock
+    )
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
+    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_stage_flow")
+    @mock.patch(
+        "fbpcs.bolt.bolt_runner.StageTimeoutException", wraps=StageTimeoutException
+    )
+    async def test_stage_timeout_retry(
+        self,
+        mock_stage_timeout_exception,
+        mock_get_stage_flow,
+        mock_next_stage,
+        mock_run_next_stage,
+        mock_publisher_args,
+        mock_partner_args,
+        mock_sleep,
+    ) -> None:
+        mock_sleep.side_effect = lambda x: time.sleep(1)
+        for job_stage_timeout, num_tries in [(0, DEFAULT_NUM_TRIES), (2, 2)]:
+            with self.subTest(job_stage_timeout=job_stage_timeout, num_tries=num_tries):
+                mock_get_stage_flow.reset_mock()
+                mock_run_next_stage.reset_mock()
+                mock_stage_timeout_exception.reset_mock()
+                test_job = BoltJob(
+                    job_name="test",
+                    publisher_bolt_args=mock_publisher_args,
+                    partner_bolt_args=mock_partner_args,
+                    stage_timeout_override=job_stage_timeout,
+                )
+                test_stage = DummyRetryableStageFlow.RETRYABLE_STAGE
+                test_stage.timeout = 1
+                mock_next_stage.side_effect = [test_stage, None]
+                mock_get_stage_flow.return_value = DummyRetryableStageFlow
+                state_status_responses = [
+                    BoltState(
+                        pc_instance_status=test_stage.started_status,
+                    ),
+                    BoltState(
+                        pc_instance_status=test_stage.started_status,
+                    ),
+                    BoltState(
+                        pc_instance_status=test_stage.started_status,
+                    ),
+                    BoltState(
+                        pc_instance_status=test_stage.started_status,
+                    ),
+                    BoltState(
+                        pc_instance_status=test_stage.completed_status,
+                    ),
+                ]
+                self.test_runner.publisher_client.update_instance.side_effect = (
+                    state_status_responses
+                )
+                self.test_runner.partner_client.update_instance.side_effect = (
+                    state_status_responses
+                )
+                await self.test_runner.run_async([test_job])
+
+                self.assertEqual(mock_stage_timeout_exception.call_count, num_tries)
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")

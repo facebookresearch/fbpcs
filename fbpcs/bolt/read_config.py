@@ -118,6 +118,7 @@ def create_job_list(
             ),
             num_tries=job_specific_args.get("num_tries"),
             final_stage=final_stage,
+            stage_timeout_override=job_specific_args.get("stage_timeout_override"),
         )
         bolt_job_list.append(bolt_job)
 
