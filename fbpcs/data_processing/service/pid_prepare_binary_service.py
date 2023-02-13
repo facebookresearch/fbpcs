@@ -20,6 +20,7 @@ class PIDPrepareBinaryService(RunBinaryBaseService):
         output_path: str,
         tmp_directory: str = "/tmp/",
         max_column_count: int = 1,
+        id_filter_thresh: int = -1,
         run_id: Optional[str] = None,
     ) -> str:
         cmd_args = " ".join(
@@ -28,6 +29,7 @@ class PIDPrepareBinaryService(RunBinaryBaseService):
                 f"--output_path={output_path}",
                 f"--tmp_directory={tmp_directory}",
                 f"--max_column_cnt={max_column_count}",
+                f"--id_filter_thresh={id_filter_thresh}",
             ]
         )
         if run_id is not None:

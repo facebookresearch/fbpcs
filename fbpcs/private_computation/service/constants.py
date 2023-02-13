@@ -44,6 +44,10 @@ DEFAULT_PADDING_SIZE: typing.Dict[PrivateComputationGameType, typing.Optional[in
 DEFAULT_LOG_COST_TO_S3 = True
 DEFAULT_SORT_STRATEGY = "sort"
 DEFAULT_MULTIKEY_PROTOCOL_MAX_COLUMN_COUNT = 6
+
+# based on the the test we run, we decided to use 50 as a threshold.
+# since DEFAULT_PADDING_SIZE is lower than 50, we may adjust it in the future.
+DEFAULT_IDENTIFIER_FILTER_THRESH = 50
 FBPCS_BUNDLE_ID = "FBPCS_BUNDLE_ID"
 
 # RUN PID has separate timeout to accommodate for 20M rows capacity on SNMK

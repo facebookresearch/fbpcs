@@ -20,6 +20,7 @@ from fbpcs.data_processing.service.pid_prepare_binary_service import (
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
+from fbpcs.pid.entity.pid_instance import PIDProtocol
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -27,7 +28,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+    DEFAULT_IDENTIFIER_FILTER_THRESH,
+)
 from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
@@ -130,12 +134,25 @@ class PIDPrepareStageService(PrivateComputationStageService):
         args_list = []
         binary_name = PIDPrepareBinaryService.get_binary_name()
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
+        id_filter_thresh = -1
+
+        if pc_instance.has_feature(
+            PCSFeature.PID_FILTER_LOW_QUALITY_IDENTIFIER_THRESH166
+        ) and (
+            pc_instance.product_config.common.pid_protocol
+            == PIDProtocol.UNION_PID_MULTIKEY
+        ):
+            # if it is multi-key and if feature is enabled,
+            # we will be filtering identifiers with its appearance above threshold.
+            id_filter_thresh = DEFAULT_IDENTIFIER_FILTER_THRESH
+
         for shard in range(num_shards):
             args_per_shard = PIDPrepareBinaryService.build_args(
                 input_path=get_sharded_filepath(input_path, shard),
                 output_path=get_sharded_filepath(output_path, shard),
                 tmp_directory=onedocker_binary_config.tmp_directory,
                 max_column_count=pc_instance.product_config.common.pid_max_column_count,
+                id_filter_thresh=id_filter_thresh,
                 run_id=pc_instance.infra_config.run_id,
             )
             args_list.append(args_per_shard)
