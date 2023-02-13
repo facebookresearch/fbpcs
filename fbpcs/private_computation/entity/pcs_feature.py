@@ -24,6 +24,9 @@ class PCSFeature(Enum):
     PA_TIMESTAMP_VALIDATION = "pa_timestamp_validation"
     PL_TIMESTAMP_VALIDATION = "pl_timestamp_validation"
     PRE_VALIDATION_FILE_STREAM = "pre_validation_file_stream"
+    PID_FILTER_LOW_QUALITY_IDENTIFIER_THRESH166 = (
+        "pid_filter_low_quality_identifier_thresh166"
+    )
     UNKNOWN = "unknown"
 
     @classmethod

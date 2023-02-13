@@ -75,6 +75,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 if pid_protocol is PIDProtocol.UNION_PID_MULTIKEY
                 else 1
             )
+            id_filter_thresh_expect = -1
             pc_instance = self.create_sample_pc_instance(
                 pc_role=pc_role,
                 test_num_containers=test_num_containers,
@@ -110,6 +111,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 pc_role,
                 test_num_containers,
                 max_col_cnt_expect,
+                id_filter_thresh_expect,
                 test_run_id,
             )
             # test the start_containers is called with expected parameters
@@ -213,17 +215,18 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
         pc_role: PrivateComputationRole,
         test_num_containers: int,
         max_col_cnt_expected: int,
+        id_filter_thresh_expect: int,
         test_run_id: Optional[str] = None,
     ) -> List[str]:
         arg_ls = []
         if pc_role is PrivateComputationRole.PUBLISHER:
             arg_ls = [
-                f"--input_path=out/test_instance_123_out_dir/pid_stage/out.csv_publisher_sharded_{i} --output_path=out/test_instance_123_out_dir/pid_stage/out.csv_publisher_prepared_{i} --tmp_directory=/tmp --max_column_cnt={max_col_cnt_expected}"
+                f"--input_path=out/test_instance_123_out_dir/pid_stage/out.csv_publisher_sharded_{i} --output_path=out/test_instance_123_out_dir/pid_stage/out.csv_publisher_prepared_{i} --tmp_directory=/tmp --max_column_cnt={max_col_cnt_expected} --id_filter_thresh={id_filter_thresh_expect}"
                 for i in range(test_num_containers)
             ]
         elif pc_role is PrivateComputationRole.PARTNER:
             arg_ls = [
-                f"--input_path=out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_sharded_{i} --output_path=out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_{i} --tmp_directory=/tmp --max_column_cnt={max_col_cnt_expected}"
+                f"--input_path=out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_sharded_{i} --output_path=out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_{i} --tmp_directory=/tmp --max_column_cnt={max_col_cnt_expected} --id_filter_thresh={id_filter_thresh_expect}"
                 for i in range(test_num_containers)
             ]
 
