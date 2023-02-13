@@ -30,6 +30,10 @@ DEFINE_string(
     "",
     "A run_id used to identify all the logs in a PL/PA run.");
 DEFINE_int32(log_every_n, 1'000'000, "How frequently to log updates");
+DEFINE_int32(
+    id_filter_thresh,
+    -1,
+    "A threshold for number of times identifier can appear");
 
 int main(int argc, char** argv) {
   folly::init(&argc, &argv);
@@ -44,6 +48,7 @@ int main(int argc, char** argv) {
       FLAGS_output_path,
       tmpDirectory,
       FLAGS_max_column_cnt,
+      FLAGS_id_filter_thresh,
       FLAGS_log_every_n};
 
   preparer.prepare();

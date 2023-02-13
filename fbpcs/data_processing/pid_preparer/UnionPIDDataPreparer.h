@@ -25,12 +25,14 @@ class UnionPIDDataPreparer {
       const std::string& outputPath,
       const std::filesystem::path& tmpDirectory,
       int64_t maxColumnCnt = 1,
+      int64_t idFilterThresh = -1,
       int64_t logEveryN = 1'000)
       : inputPath_{inputPath},
         outputPath_{outputPath},
         tmpDirectory_{tmpDirectory},
         logEveryN_{logEveryN},
-        maxColumnCnt_{maxColumnCnt} {}
+        maxColumnCnt_{maxColumnCnt},
+        idFilterThresh_{idFilterThresh} {}
 
   UnionPIDDataPreparerResults prepare() const;
 
@@ -44,6 +46,7 @@ class UnionPIDDataPreparer {
   std::filesystem::path tmpDirectory_;
   int64_t logEveryN_;
   int64_t maxColumnCnt_;
+  int64_t idFilterThresh_;
 };
 
 } // namespace measurement::pid
