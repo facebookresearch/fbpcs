@@ -340,10 +340,32 @@ AttributionOutputMetrics
 AttributionGame<schedulerId, inputEncryption>::computeAttributions(
     const int myRole,
     const AttributionInputMetrics<inputEncryption>& inputData) {
+  auto
+      [thresholdArraysForEachRule,
+       tpArrays,
+       convArrays,
+       attributionRules,
+       ids] = prepareMpcInputs(myRole, inputData);
+
+  return computeAttributions_impl(
+      thresholdArraysForEachRule, tpArrays, convArrays, attributionRules, ids);
+}
+
+template <int schedulerId, common::InputEncryption inputEncryption>
+std::tuple<
+    std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>,
+    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
+                    PrivateTouchpointT>,
+    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
+                    PrivateConversionT>,
+    std::vector<
+        std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>,
+    std::vector<int64_t>>
+AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
+    const int myRole,
+    const AttributionInputMetrics<inputEncryption>& inputData) {
   XLOG(INFO, "Running attribution");
   auto ids = inputData.getIds();
-  uint32_t numIds = ids.size();
-  XLOGF(INFO, "Have {} ids", numIds);
 
   // Compress the original ad id when new format is used:
   auto touchpoints = inputData.getTouchpointArrays();
@@ -372,25 +394,52 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributions(
   XLOG(INFO, "Privately sharing conversions...");
   auto convArrays = privatelyShareConversions(inputData.getConversionArrays());
 
+  // Publisher shares attribution rules with partner
+  auto attributionRules =
+      shareAttributionRules(myRole, inputData.getAttributionRules());
+
+  std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>
+      thresholdArraysForEachRule;
+  thresholdArraysForEachRule.reserve(attributionRules.size());
+
+  for (const auto& attributionRule : attributionRules) {
+    XLOGF(INFO, "Computing thresholds for rule {}", attributionRule->name);
+    thresholdArraysForEachRule.push_back(privatelyShareThresholds(
+        touchpoints, tpArrays, *attributionRule, ids.size()));
+    CHECK_EQ(thresholdArraysForEachRule.back().size(), tpArrays.size())
+        << "threshold arrays and touchpoint arrays are not the same length.";
+  }
+  return {
+      thresholdArraysForEachRule, tpArrays, convArrays, attributionRules, ids};
+}
+
+template <int schedulerId, common::InputEncryption inputEncryption>
+AttributionOutputMetrics
+AttributionGame<schedulerId, inputEncryption>::computeAttributions_impl(
+    std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>&
+        thresholdArraysForEachRule,
+    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
+                    PrivateTouchpointT>& tpArrays,
+    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
+                    PrivateConversionT>& convArrays,
+    std::vector<
+        std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>&
+        attributionRules,
+    std::vector<int64_t>& ids) {
+  auto numIds = ids.size();
+  XLOGF(INFO, "Have {} ids", numIds);
   // Currently we only have one attribution output format
   std::string attributionFormat = "default";
 
   // Compute for all of the given attribution rules
   AttributionMetrics attributionMetrics;
   AttributionOutputMetrics out;
-
-  // Publisher shares attribution rules with partner
-  auto attributionRules =
-      shareAttributionRules(myRole, inputData.getAttributionRules());
-
-  for (const auto& attributionRule : attributionRules) {
+  for (size_t i = 0; i < attributionRules.size(); i++) {
+    auto& attributionRule = attributionRules.at(i);
     XLOGF(INFO, "Computing attributions for rule {}", attributionRule->name);
 
     // Share touchpoint threshold information for computing attributions
-    auto thresholdArrays = privatelyShareThresholds(
-        touchpoints, tpArrays, *attributionRule, numIds);
-    CHECK_EQ(thresholdArrays.size(), tpArrays.size())
-        << "threshold arrays and touchpoint arrays are not the same length.";
+    auto& thresholdArrays = thresholdArraysForEachRule.at(i);
 
     if (FLAGS_use_new_output_format) {
       std::vector<AttributionReformattedOutputFmtT<schedulerId>>
