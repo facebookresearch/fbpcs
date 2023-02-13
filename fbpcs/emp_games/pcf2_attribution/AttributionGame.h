@@ -35,6 +35,27 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   using PrivateConversionT = PrivateConversion<schedulerId, inputEncryption>;
 
+  std::tuple<
+      std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>,
+      std::vector<PrivateTouchpointT>,
+      std::vector<PrivateConversionT>,
+      std::vector<
+          std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>,
+      std::vector<int64_t>>
+  prepareMpcInputs(
+      const int myRole,
+      const AttributionInputMetrics<inputEncryption>& inputData);
+
+  AttributionOutputMetrics computeAttributions_impl(
+      std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>&
+          thresholdArraysForEachRule,
+      std::vector<PrivateTouchpointT>& tpArrays,
+      std::vector<PrivateConversionT>& convArrays,
+      std::vector<
+          std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>&
+          attributionRules,
+      std::vector<int64_t>& ids);
+
   /**
    * Publisher shares attribution rules with partner.
    */
