@@ -111,6 +111,7 @@ def run_attribution(
     run_id: Optional[str] = None,
     graphapi_version: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
+    stage_timeout_override: Optional[int] = None,
 ) -> None:
     bolt_summary = asyncio.run(
         run_attribution_async(
@@ -130,6 +131,7 @@ def run_attribution(
             run_id=run_id,
             graphapi_version=graphapi_version,
             graphapi_domain=graphapi_domain,
+            stage_timeout_override=stage_timeout_override,
         )
     )
 
@@ -155,6 +157,7 @@ async def run_attribution_async(
     graphapi_version: Optional[str] = None,
     graphapi_domain: Optional[str] = None,
     bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]] = None,
+    stage_timeout_override: Optional[int] = None,
 ) -> BoltSummary:
 
     ## Step 1: Validation. Function arguments and  for private attribution run.
@@ -203,6 +206,7 @@ async def run_attribution_async(
         graphapi_version=graphapi_version,
         graphapi_domain=graphapi_domain,
         bolt_hooks=bolt_hooks,
+        stage_timeout_override=stage_timeout_override,
     )
 
 
@@ -243,6 +247,7 @@ async def _run_attribution_async_helper(
     graphapi_version: Optional[str],
     graphapi_domain: Optional[str],
     bolt_hooks: Optional[Dict[BoltHookKey, List[BoltHook[BoltHookArgs]]]],
+    stage_timeout_override: Optional[int],
 ) -> BoltSummary:
 
     try:
@@ -388,6 +393,7 @@ async def _run_attribution_async_helper(
         final_stage=stage_flow_override.get_last_stage().previous_stage,
         poll_interval=60,
         hooks=bolt_hooks or {},
+        stage_timeout_override=stage_timeout_override,
     )
     # Step 4. Run instances async
 
