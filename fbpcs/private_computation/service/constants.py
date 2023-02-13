@@ -51,6 +51,9 @@ FBPCS_BUNDLE_ID = "FBPCS_BUNDLE_ID"
 # We set default time out to 5 hrs as the buffer.
 DEFAULT_RUN_PID_TIMEOUT_IN_SEC = 18000
 
+# Since this stage is not sharded, larger inputs can cause it to exceed the default timeout
+DEFAULT_AGGREGATE_TIMEOUT_IN_SEC = 7200
+
 CA_CERT_PATH = "tls/ca_cert.pem"
 SERVER_CERT_PATH = "tls/server_cert.pem"
 PRIVATE_KEY_PATH = "tls/private_key.pem"

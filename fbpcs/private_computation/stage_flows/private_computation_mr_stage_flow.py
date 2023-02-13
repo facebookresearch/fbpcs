@@ -11,6 +11,7 @@ from fbpcs.private_computation.entity.pid_mr_config import Protocol
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.service.constants import DEFAULT_AGGREGATE_TIMEOUT_IN_SEC
 from fbpcs.private_computation.service.id_spine_combiner_stage_service import (
     IdSpineCombinerStageService,
 )
@@ -103,6 +104,7 @@ class PrivateComputationMRStageFlow(PrivateComputationBaseStageFlow):
         completed_status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         is_joint_stage=True,
+        timeout=DEFAULT_AGGREGATE_TIMEOUT_IN_SEC,
     )
     POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
         initialized_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_INITIALIZED,
