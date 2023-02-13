@@ -11,6 +11,7 @@ from fbpcs.private_computation.service.compute_metrics_stage_service import (
     ComputeMetricsStageService,
 )
 from fbpcs.private_computation.service.constants import (
+    DEFAULT_AGGREGATE_TIMEOUT_IN_SEC,
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     DEFAULT_RUN_PID_TIMEOUT_IN_SEC,
 )
@@ -113,6 +114,7 @@ class PrivateComputationStageFlow(PrivateComputationBaseStageFlow):
         completed_status=PrivateComputationInstanceStatus.AGGREGATION_COMPLETED,
         failed_status=PrivateComputationInstanceStatus.AGGREGATION_FAILED,
         is_joint_stage=True,
+        timeout=DEFAULT_AGGREGATE_TIMEOUT_IN_SEC,
     )
     POST_PROCESSING_HANDLERS = PrivateComputationStageFlowData(
         initialized_status=PrivateComputationInstanceStatus.POST_PROCESSING_HANDLERS_INITIALIZED,
