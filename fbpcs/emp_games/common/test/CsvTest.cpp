@@ -10,7 +10,7 @@
 #include "folly/Format.h"
 #include "folly/Random.h"
 
-#include "../Csv.h"
+#include "fbpcs/emp_games/common/Csv.h"
 #include "fbpcs/emp_games/common/TestUtil.h"
 
 namespace private_measurement {

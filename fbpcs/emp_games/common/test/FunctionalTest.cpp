@@ -10,7 +10,7 @@
 #include <tuple>
 #include <vector>
 
-#include "../Functional.h"
+#include "fbpcs/emp_games/common/Functional.h"
 
 namespace private_measurement::functional {
 
