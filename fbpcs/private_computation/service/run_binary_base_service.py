@@ -138,7 +138,7 @@ class RunBinaryBaseService:
 
         if num_containers != len(existing_containers):
             raise ValueError(
-                "Cannot retry stage - list of existing containers is not consistent with number of requested containers"
+                f"Cannot retry stage - list of existing containers ({len(existing_containers)}) is not consistent with number of requested containers ({num_containers})"
             )
 
         # only start containers that previously failed
