@@ -26,7 +26,7 @@ class LastClickRule : public AttributionRule<schedulerId, inputEncryption> {
 
   SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId>& tp,
-      const PrivateConversion<schedulerId, inputEncryption>& conv,
+      const PrivateConversion<schedulerId>& conv,
       const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     return (tp.ts < conv.ts) & (conv.ts <= thresholds.at(0));
   }
@@ -81,7 +81,7 @@ class LastTouch_ClickNDays_ImpressionMDays
   /* if click within 28d, if touch within 1d */
   SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId>& tp,
-      const PrivateConversion<schedulerId, inputEncryption>& conv,
+      const PrivateConversion<schedulerId>& conv,
       const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     auto validConv = tp.ts < conv.ts;
     auto touchWithinMDays = conv.ts <= thresholds.at(0);
@@ -156,7 +156,7 @@ class LastClick_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
   /* if click is within 7d but after 1d */
   SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId>& tp,
-      const PrivateConversion<schedulerId, inputEncryption>& conv,
+      const PrivateConversion<schedulerId>& conv,
       const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     auto validConv = tp.ts < conv.ts;
     auto clickAfterOneDay = thresholds.at(0) < conv.ts;
@@ -227,7 +227,7 @@ class LastTouch_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
 
   SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId>& tp,
-      const PrivateConversion<schedulerId, inputEncryption>& conv,
+      const PrivateConversion<schedulerId>& conv,
       const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     auto validConv = tp.ts < conv.ts;
     auto clickAfterOneDay = thresholds.at(0) < conv.ts;
@@ -308,7 +308,7 @@ class LastClick_1Day_TargetId
 
   SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId>& tp,
-      const PrivateConversion<schedulerId, inputEncryption>& conv,
+      const PrivateConversion<schedulerId>& conv,
       const std::vector<SecTimestamp<schedulerId>>& thresholds) const override {
     return (tp.targetId == conv.targetId) & (tp.actionType == conv.actionType) &
         (tp.ts < conv.ts) & (conv.ts <= thresholds.at(0));

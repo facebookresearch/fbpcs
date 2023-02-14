@@ -19,7 +19,7 @@ struct Conversion {
   std::vector<uint64_t> convValue;
 };
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 struct PrivateConversion {
   SecTimestamp<schedulerId> ts;
   SecTargetId<schedulerId> targetId;
@@ -27,11 +27,12 @@ struct PrivateConversion {
   SecConvValue<schedulerId> convValue;
 };
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-PrivateConversion<schedulerId, inputEncryption> createPrivateConversion(
+template <int schedulerId>
+PrivateConversion<schedulerId> createPrivateConversion(
+    common::InputEncryption inputEncryption,
     const Conversion& conversion) {
-  PrivateConversion<schedulerId, inputEncryption> rst;
-  if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+  PrivateConversion<schedulerId> rst;
+  if (inputEncryption == common::InputEncryption::Plaintext) {
     rst.ts = SecTimestamp<schedulerId>(conversion.ts, common::PARTNER);
     rst.targetId =
         SecTargetId<schedulerId>(conversion.targetId, common::PARTNER);

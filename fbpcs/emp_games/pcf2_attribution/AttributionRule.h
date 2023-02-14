@@ -40,7 +40,7 @@ struct AttributionRule {
   // to the given conversion
   virtual SecBit<schedulerId> isAttributable(
       const PrivateTouchpoint<schedulerId>&,
-      const PrivateConversion<schedulerId, inputEncryption>&,
+      const PrivateConversion<schedulerId>&,
       const std::vector<SecTimestamp<schedulerId>>&) const = 0;
 
   // Compute touchpoint thresholds from plaintext touchpoints based on
