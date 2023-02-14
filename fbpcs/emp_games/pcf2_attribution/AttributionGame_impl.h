@@ -343,7 +343,7 @@ template <int schedulerId, common::InputEncryption inputEncryption>
 AttributionOutputMetrics
 AttributionGame<schedulerId, inputEncryption>::computeAttributions(
     const int myRole,
-    const AttributionInputMetrics<inputEncryption>& inputData) {
+    const AttributionInputMetrics& inputData) {
   auto
       [thresholdArraysForEachRule,
        tpArrays,
@@ -366,7 +366,7 @@ std::tuple<
     std::vector<int64_t>>
 AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
     const int myRole,
-    const AttributionInputMetrics<inputEncryption>& inputData) {
+    const AttributionInputMetrics& inputData) {
   XLOG(INFO, "Running attribution");
   auto ids = inputData.getIds();
 
