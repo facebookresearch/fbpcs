@@ -30,50 +30,57 @@ struct PrivateTouchpoint {
   SecActionType<schedulerId> actionType;
   SecOriginalAdId<schedulerId> originalAdId;
   SecAdId<schedulerId> adId;
-
-  explicit PrivateTouchpoint(const Touchpoint& touchpoint) : id{touchpoint.id} {
-    if constexpr (inputEncryption == common::InputEncryption::Xor) {
-      typename SecTimestamp<schedulerId>::ExtractedInt extractedTs(
-          touchpoint.ts);
-      ts = SecTimestamp<schedulerId>(std::move(extractedTs));
-      typename SecTargetId<schedulerId>::ExtractedInt extractedTids(
-          touchpoint.targetId);
-      targetId = SecTargetId<schedulerId>(std::move(extractedTids));
-      typename SecActionType<schedulerId>::ExtractedInt extractedAids(
-          touchpoint.actionType);
-      actionType = SecActionType<schedulerId>(std::move(extractedAids));
-      typename SecOriginalAdId<schedulerId>::ExtractedInt
-          extractedOriginalAdIds(touchpoint.originalAdId);
-      originalAdId =
-          SecOriginalAdId<schedulerId>(std::move(extractedOriginalAdIds));
-    } else {
-      ts = SecTimestamp<schedulerId>(touchpoint.ts, common::PUBLISHER);
-      targetId =
-          SecTargetId<schedulerId>(touchpoint.targetId, common::PUBLISHER);
-      actionType =
-          SecActionType<schedulerId>(touchpoint.actionType, common::PUBLISHER);
-      originalAdId = SecOriginalAdId<schedulerId>(
-          touchpoint.originalAdId, common::PUBLISHER);
-    }
-    adId = SecAdId<schedulerId>(touchpoint.adId, common::PUBLISHER);
-  }
 };
+
+template <int schedulerId, common::InputEncryption inputEncryption>
+PrivateTouchpoint<schedulerId, inputEncryption> createPrivateTouchpoint(
+    const Touchpoint& touchpoint) {
+  PrivateTouchpoint<schedulerId, inputEncryption> rst{.id{touchpoint.id}};
+  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    typename SecTimestamp<schedulerId>::ExtractedInt extractedTs(touchpoint.ts);
+    rst.ts = SecTimestamp<schedulerId>(std::move(extractedTs));
+    typename SecTargetId<schedulerId>::ExtractedInt extractedTids(
+        touchpoint.targetId);
+    rst.targetId = SecTargetId<schedulerId>(std::move(extractedTids));
+    typename SecActionType<schedulerId>::ExtractedInt extractedAids(
+        touchpoint.actionType);
+    rst.actionType = SecActionType<schedulerId>(std::move(extractedAids));
+    typename SecOriginalAdId<schedulerId>::ExtractedInt extractedOriginalAdIds(
+        touchpoint.originalAdId);
+    rst.originalAdId =
+        SecOriginalAdId<schedulerId>(std::move(extractedOriginalAdIds));
+  } else {
+    rst.ts = SecTimestamp<schedulerId>(touchpoint.ts, common::PUBLISHER);
+    rst.targetId =
+        SecTargetId<schedulerId>(touchpoint.targetId, common::PUBLISHER);
+    rst.actionType =
+        SecActionType<schedulerId>(touchpoint.actionType, common::PUBLISHER);
+    rst.originalAdId = SecOriginalAdId<schedulerId>(
+        touchpoint.originalAdId, common::PUBLISHER);
+  }
+  rst.adId = SecAdId<schedulerId>(touchpoint.adId, common::PUBLISHER);
+  return rst;
+}
 
 // Used for privately sharing isClick for xor encrypted inputs
 template <int schedulerId, common::InputEncryption inputEncryption>
 struct PrivateIsClick {
   SecBit<schedulerId> isClick;
-
-  explicit PrivateIsClick(const Touchpoint& touchpoint) {
-    if constexpr (inputEncryption == common::InputEncryption::Xor) {
-      typename SecBit<schedulerId>::ExtractedBit extractedIsClick(
-          touchpoint.isClick);
-      isClick = SecBit<schedulerId>(std::move(extractedIsClick));
-    } else {
-      isClick = SecBit<schedulerId>(touchpoint.isClick, common::PUBLISHER);
-    }
-  }
 };
+
+template <int schedulerId, common::InputEncryption inputEncryption>
+PrivateIsClick<schedulerId, inputEncryption> createPrivateIsClick(
+    const Touchpoint& touchpoint) {
+  PrivateIsClick<schedulerId, inputEncryption> rst;
+  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+    typename SecBit<schedulerId>::ExtractedBit extractedIsClick(
+        touchpoint.isClick);
+    rst.isClick = SecBit<schedulerId>(std::move(extractedIsClick));
+  } else {
+    rst.isClick = SecBit<schedulerId>(touchpoint.isClick, common::PUBLISHER);
+  }
+  return rst;
+}
 
 // Used for parsing touchpoints from input CSV files
 struct ParsedTouchpoint {
