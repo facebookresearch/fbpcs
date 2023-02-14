@@ -22,7 +22,7 @@ struct Touchpoint {
   std::vector<uint64_t> adId;
 };
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 struct PrivateTouchpoint {
   std::vector<int64_t> id;
   SecTimestamp<schedulerId> ts;
@@ -32,11 +32,12 @@ struct PrivateTouchpoint {
   SecAdId<schedulerId> adId;
 };
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-PrivateTouchpoint<schedulerId, inputEncryption> createPrivateTouchpoint(
+template <int schedulerId>
+PrivateTouchpoint<schedulerId> createPrivateTouchpoint(
+    common::InputEncryption inputEncryption,
     const Touchpoint& touchpoint) {
-  PrivateTouchpoint<schedulerId, inputEncryption> rst{.id{touchpoint.id}};
-  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+  PrivateTouchpoint<schedulerId> rst{.id = touchpoint.id};
+  if (inputEncryption == common::InputEncryption::Xor) {
     typename SecTimestamp<schedulerId>::ExtractedInt extractedTs(touchpoint.ts);
     rst.ts = SecTimestamp<schedulerId>(std::move(extractedTs));
     typename SecTargetId<schedulerId>::ExtractedInt extractedTids(
@@ -63,16 +64,17 @@ PrivateTouchpoint<schedulerId, inputEncryption> createPrivateTouchpoint(
 }
 
 // Used for privately sharing isClick for xor encrypted inputs
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 struct PrivateIsClick {
   SecBit<schedulerId> isClick;
 };
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-PrivateIsClick<schedulerId, inputEncryption> createPrivateIsClick(
+template <int schedulerId>
+PrivateIsClick<schedulerId> createPrivateIsClick(
+    common::InputEncryption inputEncryption,
     const Touchpoint& touchpoint) {
-  PrivateIsClick<schedulerId, inputEncryption> rst;
-  if constexpr (inputEncryption == common::InputEncryption::Xor) {
+  PrivateIsClick<schedulerId> rst;
+  if (inputEncryption == common::InputEncryption::Xor) {
     typename SecBit<schedulerId>::ExtractedBit extractedIsClick(
         touchpoint.isClick);
     rst.isClick = SecBit<schedulerId>(std::move(extractedIsClick));
