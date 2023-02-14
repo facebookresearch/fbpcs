@@ -33,7 +33,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   using PrivateTouchpointT = PrivateTouchpoint<schedulerId>;
 
-  using PrivateConversionT = PrivateConversion<schedulerId, inputEncryption>;
+  using PrivateConversionT = PrivateConversion<schedulerId>;
 
   std::tuple<
       std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>,
@@ -110,8 +110,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    */
   const std::vector<SecBit<schedulerId>> computeAttributionsHelper(
       const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
-      const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
-          conversions,
+      const std::vector<PrivateConversion<schedulerId>>& conversions,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
       const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
       size_t batchSize);
@@ -119,8 +118,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
   const std::vector<AttributionReformattedOutputFmt<schedulerId>>
   computeAttributionsHelperV2(
       const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
-      const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
-          conversions,
+      const std::vector<PrivateConversion<schedulerId>>& conversions,
       const AttributionRule<schedulerId, inputEncryption>& attributionRule,
       const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
       size_t batchSize);
