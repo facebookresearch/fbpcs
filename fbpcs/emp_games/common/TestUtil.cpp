@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "./TestUtil.h"
+#include "fbpcs/emp_games/common/TestUtil.h"
 
 namespace private_measurement::test_util {
 

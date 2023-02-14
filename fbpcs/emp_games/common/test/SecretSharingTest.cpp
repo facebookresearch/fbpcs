@@ -9,7 +9,7 @@
 
 #include <fbpcf/mpc/EmpTestUtil.h>
 
-#include "../SecretSharing.h"
+#include "fbpcs/emp_games/common/SecretSharing.h"
 
 namespace private_measurement {
 
