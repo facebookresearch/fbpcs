@@ -50,7 +50,7 @@ class AttributionApp {
               MY_ROLE, *communicationAgentFactory_, metricCollector_)
               .create();
 
-    AttributionGame<schedulerId, inputEncryption> game(std::move(scheduler));
+    AttributionGame<schedulerId> game(std::move(scheduler));
 
     // Compute attributions sequentially on numFiles files, starting from
     // startFileIndex
@@ -58,7 +58,8 @@ class AttributionApp {
       CHECK_LT(i, inputFilenames_.size())
           << "File index exceeds number of files.";
       auto inputData = getInputData(inputFilenames_.at(i));
-      auto output = game.computeAttributions(MY_ROLE, inputData);
+      auto output =
+          game.computeAttributions(MY_ROLE, inputData, inputEncryption);
       putOutputData(output, outputFilenames_.at(i));
     }
 
