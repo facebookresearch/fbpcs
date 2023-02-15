@@ -49,7 +49,7 @@ std::vector<std::vector<SecTimestamp<schedulerId>>>
 AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
     const std::vector<Touchpoint>& touchpoints,
     const std::vector<PrivateTouchpointT>& privateTouchpoints,
-    const AttributionRule<schedulerId, inputEncryption>& attributionRule,
+    const AttributionRule<schedulerId>& attributionRule,
     size_t batchSize) {
   std::vector<std::vector<SecTimestamp<schedulerId>>> output;
 
@@ -81,21 +81,18 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
-std::vector<
-    std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>
+std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>
 AttributionGame<schedulerId, inputEncryption>::shareAttributionRules(
     const int myRole,
     const std::vector<std::string>& attributionRuleNames) {
   // Publisher converts attribution rule names to attribution rules and ids
-  std::vector<
-      std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>
+  std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>
       attributionRules;
   std::vector<uint64_t> attributionRuleIds;
   if (myRole == common::PUBLISHER) {
     for (auto attributionRuleName : attributionRuleNames) {
       auto attributionRule =
-          AttributionRule<schedulerId, inputEncryption>::fromNameOrThrow(
-              attributionRuleName);
+          AttributionRule<schedulerId>::fromNameOrThrow(attributionRuleName);
       attributionRules.push_back(attributionRule);
       attributionRuleIds.push_back(attributionRule->id);
     }
@@ -103,7 +100,7 @@ AttributionGame<schedulerId, inputEncryption>::shareAttributionRules(
 
   const size_t attributionRuleIdWidth = 3; // currently we only support 4 rules
   CHECK_LT(
-      (SUPPORTED_ATTRIBUTION_RULES<schedulerId, inputEncryption>).size(),
+      (SUPPORTED_ATTRIBUTION_RULES<schedulerId>).size(),
       (1 << attributionRuleIdWidth));
 
   // Publisher shares attribution rule ids
@@ -116,8 +113,7 @@ AttributionGame<schedulerId, inputEncryption>::shareAttributionRules(
   if (myRole == common::PARTNER) {
     for (auto sharedId : sharedAttributionRuleIds) {
       attributionRules.push_back(
-          AttributionRule<schedulerId, inputEncryption>::fromIdOrThrow(
-              sharedId));
+          AttributionRule<schedulerId>::fromIdOrThrow(sharedId));
     }
   }
   return attributionRules;
@@ -198,7 +194,7 @@ const std::vector<SecBit<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
     const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
     const std::vector<PrivateConversion<schedulerId>>& conversions,
-    const AttributionRule<schedulerId, inputEncryption>& attributionRule,
+    const AttributionRule<schedulerId>& attributionRule,
     const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
     size_t batchSize) {
   if (batchSize == 0) {
@@ -268,7 +264,7 @@ const std::vector<AttributionReformattedOutputFmt<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
     const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
     const std::vector<PrivateConversion<schedulerId>>& conversions,
-    const AttributionRule<schedulerId, inputEncryption>& attributionRule,
+    const AttributionRule<schedulerId>& attributionRule,
     const std::vector<std::vector<SecTimestamp<schedulerId>>>& thresholds,
     size_t batchSize) {
   if (batchSize == 0) {
@@ -366,8 +362,7 @@ std::tuple<
                     PrivateTouchpointT>,
     std::vector<typename AttributionGame<schedulerId, inputEncryption>::
                     PrivateConversionT>,
-    std::vector<
-        std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>,
+    std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>,
     std::vector<int64_t>>
 AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
     const int myRole,
@@ -430,8 +425,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributions_impl(
                     PrivateTouchpointT>& tpArrays,
     std::vector<typename AttributionGame<schedulerId, inputEncryption>::
                     PrivateConversionT>& convArrays,
-    std::vector<
-        std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>>&
+    std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>&
         attributionRules,
     std::vector<int64_t>& ids) {
   auto numIds = ids.size();

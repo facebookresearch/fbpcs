@@ -14,14 +14,14 @@
 
 namespace pcf2_attribution {
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-class LastClickRule : public AttributionRule<schedulerId, inputEncryption> {
+template <int schedulerId>
+class LastClickRule : public AttributionRule<schedulerId> {
  public:
   LastClickRule(
       std::int64_t id,
       const std::string& name,
       const std::chrono::seconds& thresholdInSeconds)
-      : AttributionRule<schedulerId, inputEncryption>(id, name),
+      : AttributionRule<schedulerId>(id, name),
         threshold_(thresholdInSeconds) {}
 
   SecBit<schedulerId> isAttributable(
@@ -65,16 +65,16 @@ class LastClickRule : public AttributionRule<schedulerId, inputEncryption> {
   std::chrono::seconds threshold_;
 };
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 class LastTouch_ClickNDays_ImpressionMDays
-    : public AttributionRule<schedulerId, inputEncryption> {
+    : public AttributionRule<schedulerId> {
  public:
   LastTouch_ClickNDays_ImpressionMDays(
       std::int64_t id,
       const std::string& name,
       std::chrono::seconds clickThreshold,
       std::chrono::seconds impressionThreshold)
-      : AttributionRule<schedulerId, inputEncryption>(id, name),
+      : AttributionRule<schedulerId>(id, name),
         clickThreshold_(clickThreshold),
         impressionThreshold_(impressionThreshold) {}
 
@@ -145,11 +145,11 @@ class LastTouch_ClickNDays_ImpressionMDays
   Attribute if the conversion took place within 7 days but
   more than 1 day after the touchpoint
 */
-template <int schedulerId, common::InputEncryption inputEncryption>
-class LastClick_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
+template <int schedulerId>
+class LastClick_2_7Days : public AttributionRule<schedulerId> {
  public:
   LastClick_2_7Days()
-      : AttributionRule<schedulerId, inputEncryption>(
+      : AttributionRule<schedulerId>(
             /* id */ 5,
             /* name */ common::LAST_CLICK_2_7D) {}
 
@@ -217,11 +217,11 @@ class LastClick_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
   most recent. If no such clicks exist, attribute to any
   impression in 1d, favoring the most recent.
 */
-template <int schedulerId, common::InputEncryption inputEncryption>
-class LastTouch_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
+template <int schedulerId>
+class LastTouch_2_7Days : public AttributionRule<schedulerId> {
  public:
   LastTouch_2_7Days()
-      : AttributionRule<schedulerId, inputEncryption>(
+      : AttributionRule<schedulerId>(
             /* id */ 6,
             /* name */ common::LAST_TOUCH_2_7D) {}
 
@@ -297,12 +297,11 @@ class LastTouch_2_7Days : public AttributionRule<schedulerId, inputEncryption> {
   }
 };
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-class LastClick_1Day_TargetId
-    : public AttributionRule<schedulerId, inputEncryption> {
+template <int schedulerId>
+class LastClick_1Day_TargetId : public AttributionRule<schedulerId> {
  public:
   LastClick_1Day_TargetId()
-      : AttributionRule<schedulerId, inputEncryption>(
+      : AttributionRule<schedulerId>(
             /* id */ 7,
             /* name */ common::LAST_CLICK_1D_TARGETID) {}
 
@@ -356,40 +355,35 @@ auto days = [](std::uint64_t numDays) {
 
 } // namespace detail
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-inline const auto SUPPORTED_ATTRIBUTION_RULES = std::vector<
-    std::shared_ptr<AttributionRule<schedulerId, inputEncryption>>>{
-    std::make_shared<LastClickRule<schedulerId, inputEncryption>>(
-        /* id */ 1,
-        /* name */ common::LAST_CLICK_1D,
-        detail::days(1)),
-    std::make_shared<LastClickRule<schedulerId, inputEncryption>>(
-        /* id */ 2,
-        /* name */ common::LAST_CLICK_28D,
-        detail::days(28)),
-    std::make_shared<LastTouch_ClickNDays_ImpressionMDays<
-        schedulerId,
+template <int schedulerId>
+inline const auto SUPPORTED_ATTRIBUTION_RULES =
+    std::vector<std::shared_ptr<AttributionRule<schedulerId>>>{
+        std::make_shared<LastClickRule<schedulerId>>(
+            /* id */ 1,
+            /* name */ common::LAST_CLICK_1D,
+            detail::days(1)),
+        std::make_shared<LastClickRule<schedulerId>>(
+            /* id */ 2,
+            /* name */ common::LAST_CLICK_28D,
+            detail::days(28)),
+        std::make_shared<LastTouch_ClickNDays_ImpressionMDays<schedulerId>>(
+            /* id */ 3,
+            /* name */ common::LAST_TOUCH_1D,
+            detail::days(1),
+            detail::days(1)),
+        std::make_shared<LastTouch_ClickNDays_ImpressionMDays<schedulerId>>(
+            /* id */ 4,
+            /* name */ common::LAST_TOUCH_28D,
+            detail::days(28),
+            detail::days(1)),
+        std::make_shared<LastClick_2_7Days<schedulerId>>(),
+        std::make_shared<LastTouch_2_7Days<schedulerId>>(),
+        std::make_shared<LastClick_1Day_TargetId<schedulerId>>()};
 
-        inputEncryption>>(
-        /* id */ 3,
-        /* name */ common::LAST_TOUCH_1D,
-        detail::days(1),
-        detail::days(1)),
-    std::make_shared<
-        LastTouch_ClickNDays_ImpressionMDays<schedulerId, inputEncryption>>(
-        /* id */ 4,
-        /* name */ common::LAST_TOUCH_28D,
-        detail::days(28),
-        detail::days(1)),
-    std::make_shared<LastClick_2_7Days<schedulerId, inputEncryption>>(),
-    std::make_shared<LastTouch_2_7Days<schedulerId, inputEncryption>>(),
-    std::make_shared<LastClick_1Day_TargetId<schedulerId, inputEncryption>>()};
-
-template <int schedulerId, common::InputEncryption inputEncryption>
-std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>
-AttributionRule<schedulerId, inputEncryption>::fromNameOrThrow(
-    const std::string& name) {
-  for (auto& rule : SUPPORTED_ATTRIBUTION_RULES<schedulerId, inputEncryption>) {
+template <int schedulerId>
+std::shared_ptr<const AttributionRule<schedulerId>>
+AttributionRule<schedulerId>::fromNameOrThrow(const std::string& name) {
+  for (auto& rule : SUPPORTED_ATTRIBUTION_RULES<schedulerId>) {
     if (rule->name == name) {
       return rule;
     }
@@ -398,10 +392,10 @@ AttributionRule<schedulerId, inputEncryption>::fromNameOrThrow(
   throw std::runtime_error("Unknown attribution rule name: " + name);
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-std::shared_ptr<const AttributionRule<schedulerId, inputEncryption>>
-AttributionRule<schedulerId, inputEncryption>::fromIdOrThrow(std::int64_t id) {
-  for (auto& rule : SUPPORTED_ATTRIBUTION_RULES<schedulerId, inputEncryption>) {
+template <int schedulerId>
+std::shared_ptr<const AttributionRule<schedulerId>>
+AttributionRule<schedulerId>::fromIdOrThrow(std::int64_t id) {
+  for (auto& rule : SUPPORTED_ATTRIBUTION_RULES<schedulerId>) {
     if (rule->id == id) {
       return rule;
     }
