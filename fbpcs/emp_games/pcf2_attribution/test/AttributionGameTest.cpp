@@ -299,7 +299,7 @@ template <
     common::InputEncryption inputEncryption>
 AttributionOutputMetrics computeAttributionsWithScheduler(
     int myId,
-    AttributionInputMetrics<inputEncryption> inputData,
+    AttributionInputMetrics inputData,
     std::reference_wrapper<
         fbpcf::engine::communication::IPartyCommunicationAgentFactory> factory,
     fbpcf::SchedulerCreator schedulerCreator) {
@@ -331,10 +331,13 @@ void testCorrectnessWithScheduler(
   std::string partnerInputFileName = filePrefix + ".partner.csv";
 
   // read input files
-  AttributionInputMetrics<inputEncryption> publisherInputData{
-      common::PUBLISHER, attributionRule, publisherInputFileName};
-  AttributionInputMetrics<inputEncryption> partnerInputData{
-      common::PARTNER, attributionRule, partnerInputFileName};
+  AttributionInputMetrics publisherInputData{
+      common::PUBLISHER,
+      attributionRule,
+      publisherInputFileName,
+      inputEncryption};
+  AttributionInputMetrics partnerInputData{
+      common::PARTNER, attributionRule, partnerInputFileName, inputEncryption};
 
   // compute attributions
   auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);
@@ -399,10 +402,13 @@ void testInputColumnsWithScheduler(
   std::string partnerInputFileName = filePrefix + ".partner.csv";
 
   // read input files
-  AttributionInputMetrics<inputEncryption> publisherInputData{
-      common::PUBLISHER, attributionRule, publisherInputFileName};
-  AttributionInputMetrics<inputEncryption> partnerInputData{
-      common::PARTNER, attributionRule, partnerInputFileName};
+  AttributionInputMetrics publisherInputData{
+      common::PUBLISHER,
+      attributionRule,
+      publisherInputFileName,
+      inputEncryption};
+  AttributionInputMetrics partnerInputData{
+      common::PARTNER, attributionRule, partnerInputFileName, inputEncryption};
 
   // compute attributions
   auto factories = fbpcf::engine::communication::getInMemoryAgentFactory(2);

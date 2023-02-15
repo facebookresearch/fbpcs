@@ -13,18 +13,18 @@
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
+#include "fbpcs/emp_games/pcf2_attribution/AttributionMetrics.h"
 #include "fbpcs/emp_games/pcf2_attribution/AttributionOptions.h"
 #include "fbpcs/emp_games/pcf2_attribution/Touchpoint.h"
 
 namespace pcf2_attribution {
 
-template <common::InputEncryption inputEncryption>
-const std::vector<ParsedTouchpoint>
-AttributionInputMetrics<inputEncryption>::parseTouchpoints(
-    const int myRole,
-    const int lineNo,
+const std::vector<ParsedTouchpoint> AttributionInputMetrics::parseTouchpoints(
+    const int /* myRole*/,
+    const int /* lineNo */,
     const std::vector<std::string>& header,
-    const std::vector<std::string>& parts) {
+    const std::vector<std::string>& parts,
+    common::InputEncryption inputEncryption) {
   std::vector<uint64_t> timestamps;
   std::vector<bool> isClicks;
   std::vector<uint64_t> targetId;
@@ -39,7 +39,7 @@ AttributionInputMetrics<inputEncryption>::parseTouchpoints(
     if (column == "timestamps") {
       timestamps = common::getInnerArray<uint64_t>(value);
     } else if (column == "is_click") {
-      if constexpr (inputEncryption == common::InputEncryption::Xor) {
+      if (inputEncryption == common::InputEncryption::Xor) {
         // input is 64-bit secret shares
         std::vector<uint64_t> isClickShares =
             common::getInnerArray<uint64_t>(value);
@@ -98,7 +98,7 @@ AttributionInputMetrics<inputEncryption>::parseTouchpoints(
   // touchpoints based on timestamp, where views come before clicks.
   // If the input is encrypted, the sorting has to be done in the data
   // processing step.
-  if constexpr (inputEncryption != common::InputEncryption::Xor) {
+  if (inputEncryption != common::InputEncryption::Xor) {
     std::sort(tps.begin(), tps.end());
   }
 
@@ -110,12 +110,11 @@ AttributionInputMetrics<inputEncryption>::parseTouchpoints(
   return tps;
 }
 
-template <common::InputEncryption inputEncryption>
-const std::vector<ParsedConversion>
-AttributionInputMetrics<inputEncryption>::parseConversions(
-    const int myRole,
+const std::vector<ParsedConversion> AttributionInputMetrics::parseConversions(
+    const int /*myRole*/,
     const std::vector<std::string>& header,
-    const std::vector<std::string>& parts) {
+    const std::vector<std::string>& parts,
+    common::InputEncryption inputEncryption) {
   std::vector<uint64_t> convTimestamps;
   std::vector<uint64_t> targetId;
   std::vector<uint64_t> actionType;
@@ -167,7 +166,7 @@ AttributionInputMetrics<inputEncryption>::parseConversions(
 
   // Sorting conversions based on timestamp. If the input is encrypted, this has
   // to be done in the data processing step.
-  if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+  if (inputEncryption == common::InputEncryption::Plaintext) {
     std::sort(convs.begin(), convs.end());
   }
 
@@ -179,9 +178,8 @@ AttributionInputMetrics<inputEncryption>::parseConversions(
   return convs;
 }
 
-template <common::InputEncryption inputEncryption>
 const std::vector<Touchpoint>
-AttributionInputMetrics<inputEncryption>::convertParsedTouchpointsToTouchpoints(
+AttributionInputMetrics::convertParsedTouchpointsToTouchpoints(
     const std::vector<std::vector<ParsedTouchpoint>>& parsedTouchpoints) {
   std::vector<Touchpoint> touchpoints;
 
@@ -228,9 +226,8 @@ AttributionInputMetrics<inputEncryption>::convertParsedTouchpointsToTouchpoints(
   return touchpoints;
 }
 
-template <common::InputEncryption inputEncryption>
 const std::vector<Conversion>
-AttributionInputMetrics<inputEncryption>::convertParsedConversionsToConversions(
+AttributionInputMetrics::convertParsedConversionsToConversions(
     const std::vector<std::vector<ParsedConversion>>& parsedConversions) {
   std::vector<Conversion> conversions;
 
@@ -261,11 +258,11 @@ AttributionInputMetrics<inputEncryption>::convertParsedConversionsToConversions(
   return conversions;
 }
 
-template <common::InputEncryption inputEncryption>
-AttributionInputMetrics<inputEncryption>::AttributionInputMetrics(
+AttributionInputMetrics::AttributionInputMetrics(
     int myRole,
     std::string attributionRulesStr,
-    std::filesystem::path filepath) {
+    std::filesystem::path filepath,
+    common::InputEncryption inputEncryption) {
   XLOGF(INFO, "Reading CSV {}", filepath.string());
 
   // Parse the passed attribution rules
@@ -289,8 +286,9 @@ AttributionInputMetrics<inputEncryption>::AttributionInputMetrics(
         ids_.push_back(lineNo);
 
         parsedTouchpoints.push_back(
-            parseTouchpoints(myRole, lineNo, header, parts));
-        parsedConversions.push_back(parseConversions(myRole, header, parts));
+            parseTouchpoints(myRole, lineNo, header, parts, inputEncryption));
+        parsedConversions.push_back(
+            parseConversions(myRole, header, parts, inputEncryption));
 
         lineNo++;
       });
