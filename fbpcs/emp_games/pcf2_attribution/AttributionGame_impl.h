@@ -21,10 +21,13 @@ std::vector<
     typename AttributionGame<schedulerId, inputEncryption>::PrivateTouchpointT>
 AttributionGame<schedulerId, inputEncryption>::privatelyShareTouchpoints(
     const std::vector<Touchpoint>& touchpoints) {
-  return common::privatelyShareArray<
-      Touchpoint,
-      PrivateTouchpoint<schedulerId, inputEncryption>>(
-      touchpoints, createPrivateTouchpoint<schedulerId, inputEncryption>);
+  return common::
+      privatelyShareArray<Touchpoint, PrivateTouchpoint<schedulerId>>(
+          touchpoints,
+          std::bind(
+              createPrivateTouchpoint<schedulerId>,
+              inputEncryption,
+              std::placeholders::_1));
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
@@ -58,10 +61,13 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
       throw std::invalid_argument(
           "Must provide positive batch size for batch execution!");
     }
-    auto privateIsClick = common::privatelyShareArray<
-        Touchpoint,
-        PrivateIsClick<schedulerId, inputEncryption>>(
-        touchpoints, createPrivateIsClick<schedulerId, inputEncryption>);
+    auto privateIsClick =
+        common::privatelyShareArray<Touchpoint, PrivateIsClick<schedulerId>>(
+            touchpoints,
+            std::bind(
+                createPrivateIsClick<schedulerId>,
+                inputEncryption,
+                std::placeholders::_1));
     for (size_t i = 0; i < touchpoints.size(); ++i) {
       auto thresholds = attributionRule.computeThresholdsPrivate(
           privateTouchpoints.at(i), privateIsClick.at(i), batchSize);
@@ -187,8 +193,7 @@ void AttributionGame<schedulerId, inputEncryption>::putAdIdMappingJson(
 template <int schedulerId, common::InputEncryption inputEncryption>
 const std::vector<SecBit<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
-    const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
-        touchpoints,
+    const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
     const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
@@ -259,8 +264,7 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
 template <int schedulerId, common::InputEncryption inputEncryption>
 const std::vector<AttributionReformattedOutputFmt<schedulerId>>
 AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
-    const std::vector<PrivateTouchpoint<schedulerId, inputEncryption>>&
-        touchpoints,
+    const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
     const std::vector<PrivateConversion<schedulerId, inputEncryption>>&
         conversions,
     const AttributionRule<schedulerId, inputEncryption>& attributionRule,
