@@ -25,9 +25,10 @@
 
 namespace pcf2_attribution {
 
-template <int PARTY, int schedulerId, common::InputEncryption inputEncryption>
+template <int PARTY, int schedulerId>
 static void runGame(
     bool useXorEncryption,
+    common::InputEncryption inputEncryption,
     const std::string& attributionRules,
     const std::filesystem::path& inputPath,
     const std::string& outputPath,
@@ -36,18 +37,19 @@ static void runGame(
         communicationAgentFactory) {
   auto metricCollector =
       std::make_shared<fbpcf::util::MetricCollector>("attribution_test");
-  AttributionApp<PARTY, schedulerId, inputEncryption>(
+  AttributionApp<PARTY, schedulerId>(
       std::move(communicationAgentFactory),
       attributionRules,
       std::vector<string>{inputPath},
       std::vector<string>{outputPath},
       metricCollector,
-      useXorEncryption)
+      useXorEncryption,
+      inputEncryption)
       .run();
 }
 
 // helper function for executing MPC game and verifying corresponding output
-template <int id, common::InputEncryption inputEncryption>
+template <int id>
 inline void testCorrectnessAttributionAppHelper(
     std::vector<std::string> attributionRule,
     std::vector<std::string> inputPathAlice,
@@ -57,6 +59,7 @@ inline void testCorrectnessAttributionAppHelper(
     std::vector<std::string> expectedOutputFilenames,
     bool useTls,
     bool useXorEncryption,
+    common::InputEncryption inputEncryption,
     std::string& tlsDir) {
   fbpcf::engine::communication::SocketPartyCommunicationAgent::TlsInfo tlsInfo;
   tlsInfo.certPath = useTls ? (tlsDir + "/cert.pem") : "";
@@ -69,15 +72,17 @@ inline void testCorrectnessAttributionAppHelper(
       fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
 
   auto futureAlice = std::async(
-      runGame<common::PUBLISHER, 2 * id, inputEncryption>,
+      runGame<common::PUBLISHER, 2 * id>,
       useXorEncryption,
+      inputEncryption,
       attributionRule.at(id),
       inputPathAlice.at(id),
       outputPathAlice.at(id),
       std::move(communicationAgentFactoryAlice));
   auto futureBob = std::async(
-      runGame<common::PARTNER, 2 * id + 1, inputEncryption>,
+      runGame<common::PARTNER, 2 * id + 1>,
       useXorEncryption,
+      inputEncryption,
       "",
       inputPathBob.at(id),
       outputPathBob.at(id),
@@ -138,10 +143,7 @@ class AttributionAppTest
   void testCorrectnessAttributionAppWrapper(
       bool useTls,
       bool useXorEncryption) {
-    testCorrectnessAttributionAppHelper<
-        id,
-
-        common::InputEncryption::Plaintext>(
+    testCorrectnessAttributionAppHelper<id>(
         attributionRules_,
         inputFilenamesAlice_,
         outputFilenamesAlice_,
@@ -150,6 +152,7 @@ class AttributionAppTest
         expectedOutputFilenames_,
         useTls,
         useXorEncryption,
+        common::InputEncryption::Plaintext,
         tlsDir_);
   }
 

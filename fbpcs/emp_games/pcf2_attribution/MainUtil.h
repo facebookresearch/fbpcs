@@ -53,12 +53,10 @@ getIOFilenames(
   return std::make_pair(inputFilenames, outputFilenames);
 }
 
-template <
-    std::uint32_t PARTY,
-    std::uint32_t index,
-    common::InputEncryption inputEncryption>
+template <std::uint32_t PARTY, std::uint32_t index>
 inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     bool useXorEncryption,
+    common::InputEncryption inputEncryption,
     std::uint32_t startFileIndex,
     std::uint32_t remainingThreads,
     std::string serverIp,
@@ -98,14 +96,14 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
     // Each AttributionApp runs numFiles sequentially on a single thread
     // Publisher uses even schedulerId and partner uses odd schedulerId
     auto app = std::make_unique<
-        pcf2_attribution::
-            AttributionApp<PARTY, 2 * index + PARTY, inputEncryption>>(
+        pcf2_attribution::AttributionApp<PARTY, 2 * index + PARTY>>(
         std::move(communicationAgentFactory),
         attributionRules,
         inputFilenames,
         outputFilenames,
         metricCollector,
         useXorEncryption,
+        inputEncryption,
         startFileIndex,
         numFiles);
 
@@ -116,19 +114,18 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
 
     if constexpr (index < kMaxConcurrency) {
       if (remainingThreads > 1) {
-        auto remainingStats = startAttributionAppsForShardedFilesHelper<
-            PARTY,
-            index + 1,
-            inputEncryption>(
-            useXorEncryption,
-            startFileIndex + numFiles,
-            remainingThreads - 1,
-            serverIp,
-            port,
-            attributionRules,
-            inputFilenames,
-            outputFilenames,
-            tlsInfo);
+        auto remainingStats =
+            startAttributionAppsForShardedFilesHelper<PARTY, index + 1>(
+                useXorEncryption,
+                inputEncryption,
+                startFileIndex + numFiles,
+                remainingThreads - 1,
+                serverIp,
+                port,
+                attributionRules,
+                inputFilenames,
+                outputFilenames,
+                tlsInfo);
         schedulerStatistics.add(remainingStats);
       }
     }
@@ -138,9 +135,10 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFilesHelper(
   return schedulerStatistics;
 }
 
-template <int PARTY, common::InputEncryption inputEncryption>
+template <int PARTY>
 inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
     bool useXorEncryption,
+    common::InputEncryption inputEncryption,
     std::vector<std::string>& inputFilenames,
     std::vector<std::string>& outputFilenames,
     int16_t concurrency,
@@ -153,8 +151,9 @@ inline common::SchedulerStatistics startAttributionAppsForShardedFiles(
   auto numThreads =
       std::min(static_cast<std::int16_t>(inputFilenames.size()), concurrency);
 
-  return startAttributionAppsForShardedFilesHelper<PARTY, 0U, inputEncryption>(
+  return startAttributionAppsForShardedFilesHelper<PARTY, 0U>(
       useXorEncryption,
+      inputEncryption,
       0U,
       numThreads,
       serverIp,

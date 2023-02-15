@@ -69,110 +69,51 @@ int main(int argc, char* argv[]) {
         FLAGS_server_cert_path,
         FLAGS_private_key_path,
         "");
-
+    common::InputEncryption inputEncryption =
+        common::InputEncryption::Plaintext;
+    if (FLAGS_input_encryption == 1) {
+      inputEncryption = common::InputEncryption::PartnerXor;
+    } else if (FLAGS_input_encryption == 2) {
+      inputEncryption = common::InputEncryption::Xor;
+    }
     if (FLAGS_party == common::PUBLISHER) {
       XLOGF(INFO, "Attribution Rules: {}", FLAGS_attribution_rules);
 
       XLOG(INFO)
           << "Starting attribution as Publisher, will wait for Partner...";
-
-      if (FLAGS_input_encryption == 1) {
-        schedulerStatistics =
-            pcf2_attribution::startAttributionAppsForShardedFiles<
-                common::PUBLISHER,
-
-                common::InputEncryption::PartnerXor>(
-                useXorEncryption,
-                inputFilenames,
-                outputFilenames,
-                concurrency,
-                FLAGS_server_ip,
-                FLAGS_port,
-                FLAGS_attribution_rules,
-                tlsInfo);
-      } else if (FLAGS_input_encryption == 2) {
-        schedulerStatistics =
-            pcf2_attribution::startAttributionAppsForShardedFiles<
-                common::PUBLISHER,
-
-                common::InputEncryption::Xor>(
-                useXorEncryption,
-                inputFilenames,
-                outputFilenames,
-                concurrency,
-                FLAGS_server_ip,
-                FLAGS_port,
-                FLAGS_attribution_rules,
-                tlsInfo);
-      } else {
-        schedulerStatistics =
-            pcf2_attribution::startAttributionAppsForShardedFiles<
-                common::PUBLISHER,
-
-                common::InputEncryption::Plaintext>(
-                useXorEncryption,
-                inputFilenames,
-                outputFilenames,
-                concurrency,
-                FLAGS_server_ip,
-                FLAGS_port,
-                FLAGS_attribution_rules,
-                tlsInfo);
-      }
+      schedulerStatistics =
+          pcf2_attribution::startAttributionAppsForShardedFiles<
+              common::PUBLISHER>(
+              useXorEncryption,
+              inputEncryption,
+              inputFilenames,
+              outputFilenames,
+              concurrency,
+              FLAGS_server_ip,
+              FLAGS_port,
+              FLAGS_attribution_rules,
+              tlsInfo);
 
     } else if (FLAGS_party == common::PARTNER) {
       XLOG(INFO)
           << "Starting attribution as Partner, will wait for Publisher...";
 
-      if (FLAGS_input_encryption == 1) {
-        schedulerStatistics =
-            pcf2_attribution::startAttributionAppsForShardedFiles<
-                common::PARTNER,
-
-                common::InputEncryption::PartnerXor>(
-                useXorEncryption,
-                inputFilenames,
-                outputFilenames,
-                concurrency,
-                FLAGS_server_ip,
-                FLAGS_port,
-                FLAGS_attribution_rules,
-                tlsInfo);
-      } else if (FLAGS_input_encryption == 2) {
-        schedulerStatistics =
-            pcf2_attribution::startAttributionAppsForShardedFiles<
-                common::PARTNER,
-
-                common::InputEncryption::Xor>(
-                useXorEncryption,
-                inputFilenames,
-                outputFilenames,
-                concurrency,
-                FLAGS_server_ip,
-                FLAGS_port,
-                FLAGS_attribution_rules,
-                tlsInfo);
-
-      } else {
-        schedulerStatistics =
-            pcf2_attribution::startAttributionAppsForShardedFiles<
-                common::PARTNER,
-
-                common::InputEncryption::Plaintext>(
-                useXorEncryption,
-                inputFilenames,
-                outputFilenames,
-                concurrency,
-                FLAGS_server_ip,
-                FLAGS_port,
-                FLAGS_attribution_rules,
-                tlsInfo);
-      }
+      schedulerStatistics =
+          pcf2_attribution::startAttributionAppsForShardedFiles<
+              common::PARTNER>(
+              useXorEncryption,
+              inputEncryption,
+              inputFilenames,
+              outputFilenames,
+              concurrency,
+              FLAGS_server_ip,
+              FLAGS_port,
+              FLAGS_attribution_rules,
+              tlsInfo);
 
     } else {
       XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
     }
-
   } catch (const std::exception& e) {
     XLOG(ERR) << "Error: Exception caught in Attribution run.\n \t error msg: "
               << e.what() << "\n \t input directory: " << FLAGS_input_base_path;

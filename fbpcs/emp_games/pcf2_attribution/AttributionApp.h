@@ -17,7 +17,7 @@
 
 namespace pcf2_attribution {
 
-template <int MY_ROLE, int schedulerId, common::InputEncryption inputEncryption>
+template <int MY_ROLE, int schedulerId>
 class AttributionApp {
  public:
   AttributionApp(
@@ -29,6 +29,7 @@ class AttributionApp {
       const std::vector<std::string>& outputFilenames,
       std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       bool useXorEncryption,
+      common::InputEncryption inputEncryption,
       std::uint32_t startFileIndex = 0U,
       int numFiles = 1)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
@@ -37,6 +38,7 @@ class AttributionApp {
         outputFilenames_(outputFilenames),
         metricCollector_(metricCollector),
         useXorEncryption_(useXorEncryption),
+        inputEncryption_(inputEncryption),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
         schedulerStatistics_{0, 0, 0, 0} {}
@@ -59,7 +61,7 @@ class AttributionApp {
           << "File index exceeds number of files.";
       auto inputData = getInputData(inputFilenames_.at(i));
       auto output =
-          game.computeAttributions(MY_ROLE, inputData, inputEncryption);
+          game.computeAttributions(MY_ROLE, inputData, inputEncryption_);
       putOutputData(output, outputFilenames_.at(i));
     }
 
@@ -97,12 +99,12 @@ class AttributionApp {
                << ", attributionRules_: " << attributionRules_
                << ", input_path: " << inputPath;
     return AttributionInputMetrics{
-        MY_ROLE, attributionRules_, inputPath, inputEncryption};
+        MY_ROLE, attributionRules_, inputPath, inputEncryption_};
   }
 
   void putOutputData(
       const AttributionOutputMetrics& attributions,
-      std::string outputPath) {
+      const std::string& outputPath) {
     std::string content = attributions.toJson();
     fbpcf::io::FileIOWrappers::writeFile(outputPath, content);
   }
@@ -115,6 +117,7 @@ class AttributionApp {
   std::vector<std::string> outputFilenames_;
   std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
   bool useXorEncryption_;
+  common::InputEncryption inputEncryption_;
   const std::uint32_t startFileIndex_;
   const int numFiles_;
   common::SchedulerStatistics schedulerStatistics_;
