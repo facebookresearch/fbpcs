@@ -29,7 +29,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   AttributionOutputMetrics computeAttributions(
       const int myRole,
-      const AttributionInputMetrics<inputEncryption>& inputData);
+      const AttributionInputMetrics& inputData);
 
   using PrivateTouchpointT = PrivateTouchpoint<schedulerId>;
 
@@ -41,9 +41,7 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       std::vector<PrivateConversionT>,
       std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>,
       std::vector<int64_t>>
-  prepareMpcInputs(
-      const int myRole,
-      const AttributionInputMetrics<inputEncryption>& inputData);
+  prepareMpcInputs(const int myRole, const AttributionInputMetrics& inputData);
 
   AttributionOutputMetrics computeAttributions_impl(
       std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>&
