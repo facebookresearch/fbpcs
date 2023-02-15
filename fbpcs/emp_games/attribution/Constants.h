@@ -18,4 +18,6 @@ const int64_t PUBLISHER = emp::ALICE;
 const int64_t PARTNER = emp::BOB;
 
 const int64_t INVALID_TP_ID = -1;
+const unsigned long MAX_IO_THREADS = 20;
+
 } // namespace measurement::private_attribution
