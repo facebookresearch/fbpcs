@@ -61,10 +61,12 @@ static const std::vector<T> getInnerArray(const std::string& str) {
  * can be constructed from T.
  */
 template <typename T, typename O>
-std::vector<O> privatelyShareArray(const std::vector<T>& inputArray) {
+std::vector<O> privatelyShareArray(
+    const std::vector<T>& inputArray,
+    std::function<O(const T&)> constructor) {
   std::vector<O> outputArray;
   for (size_t i = 0; i < inputArray.size(); ++i) {
-    outputArray.push_back(O{inputArray.at(i)});
+    outputArray.push_back(constructor(inputArray.at(i)));
   }
   return outputArray;
 }

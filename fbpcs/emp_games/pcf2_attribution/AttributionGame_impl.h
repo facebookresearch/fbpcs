@@ -23,7 +23,8 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareTouchpoints(
     const std::vector<Touchpoint>& touchpoints) {
   return common::privatelyShareArray<
       Touchpoint,
-      PrivateTouchpoint<schedulerId, inputEncryption>>(touchpoints);
+      PrivateTouchpoint<schedulerId, inputEncryption>>(
+      touchpoints, createPrivateTouchpoint<schedulerId, inputEncryption>);
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
@@ -33,7 +34,8 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareConversions(
     const std::vector<Conversion>& conversions) {
   return common::privatelyShareArray<
       Conversion,
-      PrivateConversion<schedulerId, inputEncryption>>(conversions);
+      PrivateConversion<schedulerId, inputEncryption>>(
+      conversions, createPrivateConversion<schedulerId, inputEncryption>);
 }
 
 template <int schedulerId, common::InputEncryption inputEncryption>
@@ -58,7 +60,8 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
     }
     auto privateIsClick = common::privatelyShareArray<
         Touchpoint,
-        PrivateIsClick<schedulerId, inputEncryption>>(touchpoints);
+        PrivateIsClick<schedulerId, inputEncryption>>(
+        touchpoints, createPrivateIsClick<schedulerId, inputEncryption>);
     for (size_t i = 0; i < touchpoints.size(); ++i) {
       auto thresholds = attributionRule.computeThresholdsPrivate(
           privateTouchpoints.at(i), privateIsClick.at(i), batchSize);
