@@ -16,11 +16,11 @@
 
 namespace pcf2_attribution {
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-std::vector<
-    typename AttributionGame<schedulerId, inputEncryption>::PrivateTouchpointT>
-AttributionGame<schedulerId, inputEncryption>::privatelyShareTouchpoints(
-    const std::vector<Touchpoint>& touchpoints) {
+template <int schedulerId>
+std::vector<typename AttributionGame<schedulerId>::PrivateTouchpointT>
+AttributionGame<schedulerId>::privatelyShareTouchpoints(
+    const std::vector<Touchpoint>& touchpoints,
+    common::InputEncryption inputEncryption) {
   return common::
       privatelyShareArray<Touchpoint, PrivateTouchpoint<schedulerId>>(
           touchpoints,
@@ -30,11 +30,11 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareTouchpoints(
               std::placeholders::_1));
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-std::vector<
-    typename AttributionGame<schedulerId, inputEncryption>::PrivateConversionT>
-AttributionGame<schedulerId, inputEncryption>::privatelyShareConversions(
-    const std::vector<Conversion>& conversions) {
+template <int schedulerId>
+std::vector<typename AttributionGame<schedulerId>::PrivateConversionT>
+AttributionGame<schedulerId>::privatelyShareConversions(
+    const std::vector<Conversion>& conversions,
+    common::InputEncryption inputEncryption) {
   return common::
       privatelyShareArray<Conversion, PrivateConversion<schedulerId>>(
           conversions,
@@ -44,16 +44,17 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareConversions(
               std::placeholders::_1));
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 std::vector<std::vector<SecTimestamp<schedulerId>>>
-AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
+AttributionGame<schedulerId>::privatelyShareThresholds(
     const std::vector<Touchpoint>& touchpoints,
     const std::vector<PrivateTouchpointT>& privateTouchpoints,
     const AttributionRule<schedulerId>& attributionRule,
-    size_t batchSize) {
+    size_t batchSize,
+    common::InputEncryption inputEncryption) {
   std::vector<std::vector<SecTimestamp<schedulerId>>> output;
 
-  if constexpr (inputEncryption != common::InputEncryption::Xor) {
+  if (inputEncryption != common::InputEncryption::Xor) {
     for (size_t i = 0; i < touchpoints.size(); ++i) {
       auto thresholds =
           attributionRule.computeThresholdsPlaintext(touchpoints.at(i));
@@ -80,9 +81,9 @@ AttributionGame<schedulerId, inputEncryption>::privatelyShareThresholds(
   return output;
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>
-AttributionGame<schedulerId, inputEncryption>::shareAttributionRules(
+AttributionGame<schedulerId>::shareAttributionRules(
     const int myRole,
     const std::vector<std::string>& attributionRuleNames) {
   // Publisher converts attribution rule names to attribution rules and ids
@@ -119,11 +120,12 @@ AttributionGame<schedulerId, inputEncryption>::shareAttributionRules(
   return attributionRules;
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 const std::vector<uint64_t>
-AttributionGame<schedulerId, inputEncryption>::retrieveValidOriginalAdIds(
+AttributionGame<schedulerId>::retrieveValidOriginalAdIds(
     const int /*myRole*/,
-    std::vector<Touchpoint>& touchpoints) {
+    std::vector<Touchpoint>& touchpoints,
+    common::InputEncryption inputEncryption) {
   std::unordered_set<uint64_t> adIdSet;
   for (auto& touchpoint : touchpoints) {
     SecOriginalAdId<schedulerId> secAdId;
@@ -154,11 +156,10 @@ AttributionGame<schedulerId, inputEncryption>::retrieveValidOriginalAdIds(
   return validOriginalAdIds;
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-void AttributionGame<schedulerId, inputEncryption>::
-    replaceAdIdWithCompressedAdId(
-        std::vector<Touchpoint>& touchpoints,
-        std::vector<uint64_t>& validOriginalAdIds) {
+template <int schedulerId>
+void AttributionGame<schedulerId>::replaceAdIdWithCompressedAdId(
+    std::vector<Touchpoint>& touchpoints,
+    std::vector<uint64_t>& validOriginalAdIds) {
   uint16_t compressedAdId = 1;
   std::unordered_map<uint64_t, uint16_t> adIdToCompressedAdIdMap;
 
@@ -181,17 +182,17 @@ void AttributionGame<schedulerId, inputEncryption>::
   }
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-void AttributionGame<schedulerId, inputEncryption>::putAdIdMappingJson(
+template <int schedulerId>
+void AttributionGame<schedulerId>::putAdIdMappingJson(
     const CompressedAdIdToOriginalAdId& maps,
     std::string outputPath) {
   std::string content = maps.toJson();
   fbpcf::io::FileIOWrappers::writeFile(outputPath, content);
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 const std::vector<SecBit<schedulerId>>
-AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
+AttributionGame<schedulerId>::computeAttributionsHelper(
     const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
     const std::vector<PrivateConversion<schedulerId>>& conversions,
     const AttributionRule<schedulerId>& attributionRule,
@@ -259,9 +260,9 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelper(
   return attributions;
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 const std::vector<AttributionReformattedOutputFmt<schedulerId>>
-AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
+AttributionGame<schedulerId>::computeAttributionsHelperV2(
     const std::vector<PrivateTouchpoint<schedulerId>>& touchpoints,
     const std::vector<PrivateConversion<schedulerId>>& conversions,
     const AttributionRule<schedulerId>& attributionRule,
@@ -339,34 +340,33 @@ AttributionGame<schedulerId, inputEncryption>::computeAttributionsHelperV2(
   return attributionsOutput;
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-AttributionOutputMetrics
-AttributionGame<schedulerId, inputEncryption>::computeAttributions(
+template <int schedulerId>
+AttributionOutputMetrics AttributionGame<schedulerId>::computeAttributions(
     const int myRole,
-    const AttributionInputMetrics& inputData) {
+    const AttributionInputMetrics& inputData,
+    common::InputEncryption inputEncryption) {
   auto
       [thresholdArraysForEachRule,
        tpArrays,
        convArrays,
        attributionRules,
-       ids] = prepareMpcInputs(myRole, inputData);
+       ids] = prepareMpcInputs(myRole, inputData, inputEncryption);
 
   return computeAttributions_impl(
       thresholdArraysForEachRule, tpArrays, convArrays, attributionRules, ids);
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 std::tuple<
     std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>,
-    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
-                    PrivateTouchpointT>,
-    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
-                    PrivateConversionT>,
+    std::vector<typename AttributionGame<schedulerId>::PrivateTouchpointT>,
+    std::vector<typename AttributionGame<schedulerId>::PrivateConversionT>,
     std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>,
     std::vector<int64_t>>
-AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
+AttributionGame<schedulerId>::prepareMpcInputs(
     const int myRole,
-    const AttributionInputMetrics& inputData) {
+    const AttributionInputMetrics& inputData,
+    common::InputEncryption inputEncryption) {
   XLOG(INFO, "Running attribution");
   auto ids = inputData.getIds();
 
@@ -374,7 +374,8 @@ AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
   auto touchpoints = inputData.getTouchpointArrays();
   if (FLAGS_use_new_output_format) {
     XLOG(INFO, "Retrieving original Ad Ids...");
-    auto validOriginalAdIds = retrieveValidOriginalAdIds(myRole, touchpoints);
+    auto validOriginalAdIds =
+        retrieveValidOriginalAdIds(myRole, touchpoints, inputEncryption);
     XLOG(INFO, "Replacing original ad Ids with compressed ad Ids");
 
     CompressedAdIdToOriginalAdId map;
@@ -393,9 +394,10 @@ AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
   }
   // Send over all of the data needed for this computation
   XLOG(INFO, "Privately sharing touchpoints...");
-  auto tpArrays = privatelyShareTouchpoints(touchpoints);
+  auto tpArrays = privatelyShareTouchpoints(touchpoints, inputEncryption);
   XLOG(INFO, "Privately sharing conversions...");
-  auto convArrays = privatelyShareConversions(inputData.getConversionArrays());
+  auto convArrays = privatelyShareConversions(
+      inputData.getConversionArrays(), inputEncryption);
 
   // Publisher shares attribution rules with partner
   auto attributionRules =
@@ -408,7 +410,7 @@ AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
   for (const auto& attributionRule : attributionRules) {
     XLOGF(INFO, "Computing thresholds for rule {}", attributionRule->name);
     thresholdArraysForEachRule.push_back(privatelyShareThresholds(
-        touchpoints, tpArrays, *attributionRule, ids.size()));
+        touchpoints, tpArrays, *attributionRule, ids.size(), inputEncryption));
     CHECK_EQ(thresholdArraysForEachRule.back().size(), tpArrays.size())
         << "threshold arrays and touchpoint arrays are not the same length.";
   }
@@ -416,15 +418,14 @@ AttributionGame<schedulerId, inputEncryption>::prepareMpcInputs(
       thresholdArraysForEachRule, tpArrays, convArrays, attributionRules, ids};
 }
 
-template <int schedulerId, common::InputEncryption inputEncryption>
-AttributionOutputMetrics
-AttributionGame<schedulerId, inputEncryption>::computeAttributions_impl(
+template <int schedulerId>
+AttributionOutputMetrics AttributionGame<schedulerId>::computeAttributions_impl(
     std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>&
         thresholdArraysForEachRule,
-    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
-                    PrivateTouchpointT>& tpArrays,
-    std::vector<typename AttributionGame<schedulerId, inputEncryption>::
-                    PrivateConversionT>& convArrays,
+    std::vector<typename AttributionGame<schedulerId>::PrivateTouchpointT>&
+        tpArrays,
+    std::vector<typename AttributionGame<schedulerId>::PrivateConversionT>&
+        convArrays,
     std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>&
         attributionRules,
     std::vector<int64_t>& ids) {
