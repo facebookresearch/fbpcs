@@ -25,31 +25,35 @@ struct PrivateConversion {
   SecTargetId<schedulerId> targetId;
   SecActionType<schedulerId> actionType;
   SecConvValue<schedulerId> convValue;
-
-  explicit PrivateConversion(const Conversion& conversion) {
-    if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
-      ts = SecTimestamp<schedulerId>(conversion.ts, common::PARTNER);
-      targetId = SecTargetId<schedulerId>(conversion.targetId, common::PARTNER);
-      actionType =
-          SecActionType<schedulerId>(conversion.actionType, common::PARTNER);
-      convValue =
-          SecConvValue<schedulerId>(conversion.convValue, common::PARTNER);
-    } else {
-      typename SecTimestamp<schedulerId>::ExtractedInt extractedTs(
-          conversion.ts);
-      ts = SecTimestamp<schedulerId>(std::move(extractedTs));
-      typename SecTargetId<schedulerId>::ExtractedInt extractedTids(
-          conversion.targetId);
-      targetId = SecTargetId<schedulerId>(std::move(extractedTids));
-      typename SecActionType<schedulerId>::ExtractedInt extractedAids(
-          conversion.actionType);
-      actionType = SecActionType<schedulerId>(std::move(extractedAids));
-      typename SecConvValue<schedulerId>::ExtractedInt extractedVs(
-          conversion.convValue);
-      convValue = SecConvValue<schedulerId>(std::move(extractedVs));
-    }
-  }
 };
+
+template <int schedulerId, common::InputEncryption inputEncryption>
+PrivateConversion<schedulerId, inputEncryption> createPrivateConversion(
+    const Conversion& conversion) {
+  PrivateConversion<schedulerId, inputEncryption> rst;
+  if constexpr (inputEncryption == common::InputEncryption::Plaintext) {
+    rst.ts = SecTimestamp<schedulerId>(conversion.ts, common::PARTNER);
+    rst.targetId =
+        SecTargetId<schedulerId>(conversion.targetId, common::PARTNER);
+    rst.actionType =
+        SecActionType<schedulerId>(conversion.actionType, common::PARTNER);
+    rst.convValue =
+        SecConvValue<schedulerId>(conversion.convValue, common::PARTNER);
+  } else {
+    typename SecTimestamp<schedulerId>::ExtractedInt extractedTs(conversion.ts);
+    rst.ts = SecTimestamp<schedulerId>(std::move(extractedTs));
+    typename SecTargetId<schedulerId>::ExtractedInt extractedTids(
+        conversion.targetId);
+    rst.targetId = SecTargetId<schedulerId>(std::move(extractedTids));
+    typename SecActionType<schedulerId>::ExtractedInt extractedAids(
+        conversion.actionType);
+    rst.actionType = SecActionType<schedulerId>(std::move(extractedAids));
+    typename SecConvValue<schedulerId>::ExtractedInt extractedVs(
+        conversion.convValue);
+    rst.convValue = SecConvValue<schedulerId>(std::move(extractedVs));
+  }
+  return rst;
+}
 
 // Used for parsing conversions from input CSV files
 struct ParsedConversion {
