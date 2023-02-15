@@ -21,6 +21,16 @@
 namespace pcf2_attribution {
 
 template <int schedulerId>
+struct MpcInputs {
+  std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>
+      secTimeStamps_;
+  std::vector<PrivateTouchpoint<schedulerId>> touchPoints_;
+  std::vector<PrivateConversion<schedulerId>> conversions_;
+  std::vector<std::shared_ptr<const AttributionRule<schedulerId>>> attrRules_;
+  std::vector<int64_t> ids_;
+};
+
+template <int schedulerId>
 class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
  public:
   explicit AttributionGame(
@@ -33,16 +43,9 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       common::InputEncryption inputEncryption);
 
   using PrivateTouchpointT = PrivateTouchpoint<schedulerId>;
-
   using PrivateConversionT = PrivateConversion<schedulerId>;
 
-  std::tuple<
-      std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>,
-      std::vector<PrivateTouchpointT>,
-      std::vector<PrivateConversionT>,
-      std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>,
-      std::vector<int64_t>>
-  prepareMpcInputs(
+  MpcInputs<schedulerId> prepareMpcInputs(
       const int myRole,
       const AttributionInputMetrics& inputData,
       common::InputEncryption inputEncryption);

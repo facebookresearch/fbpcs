@@ -357,13 +357,7 @@ AttributionOutputMetrics AttributionGame<schedulerId>::computeAttributions(
 }
 
 template <int schedulerId>
-std::tuple<
-    std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>,
-    std::vector<typename AttributionGame<schedulerId>::PrivateTouchpointT>,
-    std::vector<typename AttributionGame<schedulerId>::PrivateConversionT>,
-    std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>,
-    std::vector<int64_t>>
-AttributionGame<schedulerId>::prepareMpcInputs(
+MpcInputs<schedulerId> AttributionGame<schedulerId>::prepareMpcInputs(
     const int myRole,
     const AttributionInputMetrics& inputData,
     common::InputEncryption inputEncryption) {
