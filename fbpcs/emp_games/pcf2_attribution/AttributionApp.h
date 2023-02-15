@@ -91,12 +91,12 @@ class AttributionApp {
   }
 
  protected:
-  AttributionInputMetrics<inputEncryption> getInputData(std::string inputPath) {
+  AttributionInputMetrics getInputData(std::string inputPath) {
     XLOG(INFO) << "MY_ROLE: " << MY_ROLE << ", schedulerId: " << schedulerId
                << ", attributionRules_: " << attributionRules_
                << ", input_path: " << inputPath;
-    return AttributionInputMetrics<inputEncryption>{
-        MY_ROLE, attributionRules_, inputPath};
+    return AttributionInputMetrics{
+        MY_ROLE, attributionRules_, inputPath, inputEncryption};
   }
 
   void putOutputData(

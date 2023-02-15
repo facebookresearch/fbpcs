@@ -25,14 +25,14 @@ namespace pcf2_attribution {
  * This class represents input data for a Private Attribution computation.
  * It processes an input csv and generates the std::vectors for each column
  */
-template <common::InputEncryption inputEncryption>
 class AttributionInputMetrics {
  public:
   // Constructor -- input is a path to a CSV
   explicit AttributionInputMetrics(
       int myRole,
       std::string attributionRulesStr,
-      std::filesystem::path filepath);
+      std::filesystem::path filepath,
+      common::InputEncryption inputEncryption);
 
   const std::vector<int64_t>& getIds() const {
     return ids_;
@@ -63,7 +63,8 @@ class AttributionInputMetrics {
       const int myRole,
       const int lineNo,
       const std::vector<std::string>& header,
-      const std::vector<std::string>& parts);
+      const std::vector<std::string>& parts,
+      common::InputEncryption inputEncryption);
 
   /**
    * Parse conversions and add padding if necessary.
@@ -71,7 +72,8 @@ class AttributionInputMetrics {
   const std::vector<ParsedConversion> parseConversions(
       const int myRole,
       const std::vector<std::string>& header,
-      const std::vector<std::string>& parts);
+      const std::vector<std::string>& parts,
+      common::InputEncryption inputEncryption);
 
   /**
    * Convert parsed touchpoints into touchpoints.
@@ -200,5 +202,3 @@ struct CompressedAdIdToOriginalAdId {
 };
 
 } // namespace pcf2_attribution
-
-#include "fbpcs/emp_games/pcf2_attribution/AttributionMetrics_impl.h"
