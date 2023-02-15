@@ -364,7 +364,8 @@ class PrivateComputationInstance(InstanceBase):
     def get_existing_containers_for_retry(
         self,
     ) -> Optional[List[ContainerInstance]]:
-        if self.infra_config.retry_counter == 0:
+        stage_instance = self.get_stage_instance()
+        if self.infra_config.retry_counter == 0 or stage_instance is None:
             return None
         return self.containers
 
