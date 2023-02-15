@@ -21,7 +21,7 @@ const uint32_t kSecondsInOneDay = 86400; // 60 * 60 * 24
 const uint32_t kSecondsInTwentyEightDays = 2419200; // 60 * 60 * 24 * 28
 const uint32_t kSecondsInSevenDays = 604800; // 60 * 60 * 24 * 7
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 struct AttributionRule {
   AttributionRule(std::uint64_t _id, std::string _name)
       : id(_id), name(std::move(_name)) {}
