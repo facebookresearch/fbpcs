@@ -20,7 +20,7 @@
 
 namespace pcf2_attribution {
 
-template <int schedulerId, common::InputEncryption inputEncryption>
+template <int schedulerId>
 class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
  public:
   explicit AttributionGame(
@@ -29,7 +29,8 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   AttributionOutputMetrics computeAttributions(
       const int myRole,
-      const AttributionInputMetrics& inputData);
+      const AttributionInputMetrics& inputData,
+      common::InputEncryption inputEncryption);
 
   using PrivateTouchpointT = PrivateTouchpoint<schedulerId>;
 
@@ -41,7 +42,10 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       std::vector<PrivateConversionT>,
       std::vector<std::shared_ptr<const AttributionRule<schedulerId>>>,
       std::vector<int64_t>>
-  prepareMpcInputs(const int myRole, const AttributionInputMetrics& inputData);
+  prepareMpcInputs(
+      const int myRole,
+      const AttributionInputMetrics& inputData,
+      common::InputEncryption inputEncryption);
 
   AttributionOutputMetrics computeAttributions_impl(
       std::vector<std::vector<std::vector<SecTimestamp<schedulerId>>>>&
@@ -64,13 +68,15 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
    * Publisher shares touchpoints with partner.
    */
   std::vector<PrivateTouchpointT> privatelyShareTouchpoints(
-      const std::vector<Touchpoint>& touchpoints);
+      const std::vector<Touchpoint>& touchpoints,
+      common::InputEncryption inputEncryption);
 
   /**
    * Partner shares conversions with publisher.
    */
   std::vector<PrivateConversionT> privatelyShareConversions(
-      const std::vector<Conversion>& conversions);
+      const std::vector<Conversion>& conversions,
+      common::InputEncryption inputEncryption);
 
   /**
    * Publisher shares touchpoints thresholds, to optimize attribution
@@ -80,14 +86,16 @@ class AttributionGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const std::vector<Touchpoint>& touchpoints,
       const std::vector<PrivateTouchpointT>& privateTouchpoints,
       const AttributionRule<schedulerId>& attributionRule,
-      size_t batchSize);
+      size_t batchSize,
+      common::InputEncryption inputEncryption);
 
   /**
    * Retrieve the original Ad Ids from touchpoint data
    */
   const std::vector<uint64_t> retrieveValidOriginalAdIds(
       const int myRole,
-      std::vector<Touchpoint>& touchpoints);
+      std::vector<Touchpoint>& touchpoints,
+      common::InputEncryption inputEncryption);
   /**
    * Create a compression map of the original Ad Id with the compressed Ad ID
    */
