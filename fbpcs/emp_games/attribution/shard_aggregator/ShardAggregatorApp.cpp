@@ -7,7 +7,6 @@
 
 #include "ShardAggregatorApp.h"
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,10 +24,6 @@
 #include "ShardAggregatorGame.h"
 #include "ShardAggregatorValidation.h"
 #include "fbpcs/emp_games/attribution/shard_aggregator/AggMetricsThresholdCheckers.h"
-
-#include <folly/executors/CPUThreadPoolExecutor.h>
-#include <folly/executors/ThreadedExecutor.h>
-#include <folly/futures/Future.h>
 
 namespace measurement::private_attribution {
 using AggMetrics = private_measurement::AggMetrics;
@@ -95,34 +90,21 @@ std::vector<std::shared_ptr<AggMetrics>> ShardAggregatorApp::getInputData() {
   XLOG(INFO) << "getting input data ...";
   auto inputPaths = ShardAggregatorApp::getInputPaths(
       inputPath_, firstShardIndex_, numShards_);
-  auto executor =
-      folly::CPUThreadPoolExecutor(std::min(MAX_IO_THREADS, inputPaths.size()));
-  auto threadPool = folly::getKeepAliveToken(executor);
 
-  std::vector<folly::Future<std::shared_ptr<AggMetrics>>> futureList;
-  // Iterate through list & create futures & add to list
-  for (auto inputPath : inputPaths) {
-    futureList.push_back(
-        folly::via(threadPool, [inputPath]() -> std::shared_ptr<AggMetrics> {
-          XLOG(INFO) << "Opening file at <" << inputPath << ">";
-          auto contents = fbpcf::io::FileIOWrappers::readFile(inputPath);
-          if (contents.empty()) {
-            XLOG(WARN) << "Empty file: <" << inputPath << ">";
-            return nullptr;
-          }
-          return std::make_shared<AggMetrics>(
-              AggMetrics::fromDynamic(folly::parseJson(std::move(contents))));
-        }));
-  }
-
-  auto maybeInputData = folly::collectAll(futureList).get();
-  std::vector<std::shared_ptr<AggMetrics>> inputData;
-
-  for (auto&& maybeResult : maybeInputData) {
-    if (maybeResult.value() != nullptr) {
-      inputData.push_back(maybeResult.value());
-    }
-  }
+  auto inputData =
+      fbpcf::functional::map<std::string, std::shared_ptr<AggMetrics>>(
+          inputPaths, [](const auto& inputPath) -> std::shared_ptr<AggMetrics> {
+            XLOG(INFO) << "Opening file at <" << inputPath << ">";
+            auto contents = fbpcf::io::FileIOWrappers::readFile(inputPath);
+            if (contents.empty()) {
+              XLOG(WARN) << "Empty file: <" << inputPath << ">";
+              return nullptr;
+            }
+            return std::make_shared<AggMetrics>(
+                AggMetrics::fromDynamic(folly::parseJson(std::move(contents))));
+          });
+  std::remove_if(
+      inputData.begin(), inputData.end(), [](auto& x) { return x == nullptr; });
 
   validateInputDataAggMetrics(inputData, metricsFormatType_);
   return inputData;
