@@ -27,6 +27,7 @@ class PCSFeature(Enum):
     PID_FILTER_LOW_QUALITY_IDENTIFIER_THRESH166 = (
         "pid_filter_low_quality_identifier_thresh166"
     )
+    CREATE_DUPLICATE_INSTANCES = "create_duplicate_instances"
     UNKNOWN = "unknown"
 
     @classmethod
