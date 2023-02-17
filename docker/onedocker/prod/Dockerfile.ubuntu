@@ -25,7 +25,9 @@ RUN apt-get update && apt-get install -y \
   python3.8 \
   python3-pip \
   ca-certificates \
+  libboost-context1.71.0 \
   libboost-regex1.71.0 \
+  libevent-2.1-7 \
   libcurl4 \
   libdouble-conversion3 \
   libgflags2.2 \
