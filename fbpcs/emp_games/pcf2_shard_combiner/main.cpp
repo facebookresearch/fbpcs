@@ -83,6 +83,15 @@ DEFINE_string(
     "",
     "Relative file path where private key is stored. It will be prefixed with $HOME.");
 
+DEFINE_string(
+    run_id,
+    "",
+    "A run_id used to identify all the logs in a PL/PA run.");
+DEFINE_string(
+    pc_feature_flags,
+    "",
+    "A String of PC Feature Flags passing from PCS, separated by comma");
+
 using namespace shard_combiner;
 
 int main(int argc, char* argv[]) {
@@ -106,6 +115,8 @@ int main(int argc, char* argv[]) {
   XLOGF(INFO, "Number of shards: {}", FLAGS_num_shards);
   XLOGF(INFO, "Output path: {}", FLAGS_output_path);
   XLOGF(INFO, "K-anonymity threshold: {}", FLAGS_threshold);
+  XLOGF(INFO, "Run Id: {}", FLAGS_run_id);
+  XLOGF(INFO, "PC Feature Flags: {}", FLAGS_pc_feature_flags);
 
   // we use scheduler thats either 0 or 1,
   FLAGS_party--;
