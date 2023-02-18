@@ -132,14 +132,14 @@ class GenericSharder {
     std::stringstream ss;
     ss << shard;
     std::string key = ss.str();
-    rowsInShard[key]++;
+    pid_shard_info[key]++;
   }
 
   int getRowsForShard(std::size_t shard) {
     std::stringstream ss;
     ss << shard;
     std::string key = ss.str();
-    return rowsInShard[key];
+    return pid_shard_info[key];
   }
 
   /**
@@ -175,17 +175,17 @@ class GenericSharder {
   /**
    * Log number of rows in each shard to a json file
    */
-  void logShardDistribution();
+  void logShardInfo();
 
   /**
    * Return the json string that contains the number of rows in each shard
    */
-  std::string getShardDistributionJson();
+  std::string getShardInfoJson();
 
  private:
   std::string inputPath_;
   std::vector<std::string> outputPaths_;
   int32_t logEveryN_;
-  std::unordered_map<std::string, int> rowsInShard;
+  std::unordered_map<std::string, int> pid_shard_info;
 };
 } // namespace data_processing::sharder

@@ -37,7 +37,7 @@ class GenericSharderTest final : public GenericSharder {
       const std::vector<int32_t>& /* unused */) final {
     linesCalledWith_.push_back(line);
     // shardLine is overwritten here so we should mannually call the
-    // logRowsToShard to make changes to rowsInShard.
+    // logRowsToShard to make changes to pid_shard_info.
     std::size_t s = {0};
     logRowsToShard(s);
   }
@@ -147,7 +147,7 @@ TEST(GenericSharderTest, TestShardLine) {
   EXPECT_EQ(actual.linesCalledWith_, expected);
 }
 
-TEST(GenericSharderTest, TestGetShardDistributionJson) {
+TEST(GenericSharderTest, TestGetShardInfoJson) {
   // This test is just ensuring that the json file is correctly written
   auto randStart = folly::Random::secureRand64();
   std::string inputPath =
@@ -170,12 +170,12 @@ TEST(GenericSharderTest, TestGetShardDistributionJson) {
   // There are 2 output paths, so there will be two shards.
   // Since there are 4 rows in the input file, the shardLine() is called for 4
   // times. logRowsToShard(0) is also called for 4 times. Thus, the first pair
-  // in json should be "0":4. As rowsInShard[1] is never specified, it should be
-  // a default 0, thus the second pair should be "1":0.
+  // in json should be "0":4. As pid_shard_info[1] is never specified, it should
+  // be a default 0, thus the second pair should be "1":0.
   std::string expected{
-      "{\n  \"0\": 4,\n  \"1\": 0\n}",
+      "{\n  \"0\": 4,\n  \"1\": 0,\n  \"num_ids\": 1\n}",
   };
-  EXPECT_EQ(actual.getShardDistributionJson(), expected);
+  EXPECT_EQ(actual.getShardInfoJson(), expected);
 }
 
 } // namespace data_processing::sharder
