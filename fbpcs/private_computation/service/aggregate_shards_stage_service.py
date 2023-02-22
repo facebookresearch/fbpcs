@@ -224,11 +224,6 @@ class AggregateShardsStageService(PrivateComputationStageService):
             for arg in game_args:
                 arg["visibility"] = result_visibility
 
-        # remove shard_combiner_pcf2 unsupported arguments
-        if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
-            arg.pop("run_id", None)
-            arg.pop("pc_feature_flags", None)
-
         return game_args
 
     @classmethod
