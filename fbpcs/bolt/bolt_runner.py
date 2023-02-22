@@ -40,10 +40,6 @@ from fbpcs.bolt.exceptions import (
     WaitValidStatusTimeout,
 )
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSCreateInstanceArgs
-from fbpcs.infra.certificate.sample_tls_certificates import (
-    SAMPLE_CA_CERTIFICATE,
-    SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
-)
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -60,7 +56,6 @@ A = TypeVar("A")
 
 T = TypeVar("T", bound=BoltCreateInstanceArgs)
 U = TypeVar("U", bound=BoltCreateInstanceArgs)
-_IS_DYNAMIC_TLS_ENABLED = False
 
 
 class BoltRunner(Generic[T, U]):
@@ -526,16 +521,6 @@ class BoltRunner(Generic[T, U]):
         Returns:
             A tuple representing the Publisher's TLS configuration, in the format: (ca_certificate, server_hostnames)
         """
-        if not _IS_DYNAMIC_TLS_ENABLED:
-            # TODO: T136500624 remove option to disable dynamic TLS, and remove static/test TLS config values from codebase, once dynamic TLS is tested e2e
-            # The certificate returned below does not provide any additional security and
-            # is being used for intermediate testing purposes only.
-            num_containers = len(state.server_ips) if state.server_ips else 1
-            server_hostnames = [
-                f"node{i}.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"
-                for i in range(num_containers)
-            ]
-            return SAMPLE_CA_CERTIFICATE, server_hostnames
 
         return state.issuer_certificate, state.server_hostnames
 

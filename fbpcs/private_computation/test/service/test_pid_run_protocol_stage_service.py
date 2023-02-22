@@ -17,9 +17,6 @@ from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
 )
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
-from fbpcs.infra.certificate.sample_tls_certificates import (
-    SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
-)
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
@@ -181,7 +178,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         # Arrange
         pc_role = PrivateComputationRole.PUBLISHER
         pc_instance = self.create_sample_pc_instance(
-            pc_role, server_domain=SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN
+            pc_role, server_domain="test_domain"
         )
         stage_svc = PIDRunProtocolStageService(
             storage_svc=self.mock_storage_svc,
