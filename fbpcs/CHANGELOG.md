@@ -13,7 +13,10 @@ Types of changes
 - `Security` in case This project adheres to
   [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased - 2.7.0] - put release date here
+## [Unreleased - 2.8.0] - put release date here
+### Added
+
+## [2.7.0] - 2023-02-21
 ### Added
 * Added a new configuration parameter that allows the default stage timeout to be increased.
 
