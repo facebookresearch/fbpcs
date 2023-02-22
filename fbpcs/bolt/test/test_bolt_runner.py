@@ -21,10 +21,6 @@ from fbpcs.bolt.exceptions import (
     StageFailedException,
     StageTimeoutException,
 )
-from fbpcs.infra.certificate.sample_tls_certificates import (
-    SAMPLE_CA_CERTIFICATE,
-    SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN,
-)
 from fbpcs.private_computation.entity.infra_config import PrivateComputationRole
 
 from fbpcs.private_computation.entity.private_computation_status import (
@@ -53,10 +49,9 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         )
         self.test_runner.job_is_finished = mock.AsyncMock(return_value=False)
         self.test_runner.wait_valid_publisher_status = mock.AsyncMock()
-        self.default_ca_certificate = SAMPLE_CA_CERTIFICATE
-        self.default_server_hostnames = [
-            f"node0.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"
-        ]
+        self.default_ca_certificate = "test_ca_certificate"
+        self.server_cert_base_domain = "test_domain"
+        self.default_server_hostnames = [f"node0.{self.server_cert_base_domain}"]
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
@@ -74,8 +69,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         num_containers = 2
         expected_ca_certificate = self.default_ca_certificate
         expected_server_hostnames = [
-            f"node{i}.{SAMPLE_SERVER_CERTIFICATE_BASE_DOMAIN}"
-            for i in range(num_containers)
+            f"node{i}.{self.server_cert_base_domain}" for i in range(num_containers)
         ]
         mock_get_stage_flow.return_value = DummyJointStageFlow
         test_publisher_id = "test_pub_id"
@@ -93,60 +87,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             test_partner_id,
             PrivateComputationStageFlow.ID_MATCH,
             test_server_ips,
-            "ignored_cert",
-            ["ignored_domain.test"],
-        )
-
-        test_job = BoltJob(
-            job_name="test",
-            publisher_bolt_args=mock_publisher_args,
-            partner_bolt_args=mock_partner_args,
-        )
-        mock_next_stage.return_value = DummyJointStageFlow.JOINT_STAGE
-
-        await self.test_runner.run_async([test_job])
-
-        mock_partner_run_stage.assert_called_with(
-            instance_id=test_partner_id,
-            stage=DummyJointStageFlow.JOINT_STAGE,
-            server_ips=test_server_ips,
-            ca_certificate=expected_ca_certificate,
-            server_hostnames=expected_server_hostnames,
-        )
-
-    @mock.patch("fbpcs.bolt.bolt_runner._IS_DYNAMIC_TLS_ENABLED", True)
-    @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
-    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
-    @mock.patch("fbpcs.bolt.bolt_job.BoltPlayerArgs")
-    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
-    @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_stage_flow")
-    async def test_joint_stage_dynamic_tls_enabled(
-        self,
-        mock_get_stage_flow,
-        mock_next_stage,
-        mock_publisher_args,
-        mock_partner_args,
-        mock_sleep,
-    ) -> None:
-        expected_issuer_certificate = "test_cert"
-        expected_server_hostnames = ["domain1.test"]
-        mock_get_stage_flow.return_value = DummyJointStageFlow
-        test_publisher_id = "test_pub_id"
-        test_partner_id = "test_part_id"
-        self.test_runner.publisher_client.get_or_create_instance = mock.AsyncMock(
-            return_value=test_publisher_id
-        )
-        self.test_runner.partner_client.get_or_create_instance = mock.AsyncMock(
-            return_value=test_partner_id
-        )
-        # testing that the correct server ips are used when a joint stage is run
-        test_server_ips = ["1.1.1.1"]
-        mock_partner_run_stage = self._prepare_mock_client_functions(
-            test_publisher_id,
-            test_partner_id,
-            PrivateComputationStageFlow.ID_MATCH,
-            test_server_ips,
-            expected_issuer_certificate,
+            expected_ca_certificate,
             expected_server_hostnames,
         )
 
@@ -163,7 +104,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             instance_id=test_partner_id,
             stage=DummyJointStageFlow.JOINT_STAGE,
             server_ips=test_server_ips,
-            ca_certificate=expected_issuer_certificate,
+            ca_certificate=expected_ca_certificate,
             server_hostnames=expected_server_hostnames,
         )
 

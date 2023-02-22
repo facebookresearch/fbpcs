@@ -9,7 +9,6 @@
 from typing import Optional
 
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
-from fbpcs.infra.certificate.sample_tls_certificates import SAMPLE_SERVER_CERTIFICATE
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
