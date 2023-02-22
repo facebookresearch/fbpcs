@@ -148,7 +148,7 @@ jobs:
         run: |
           ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ inputs.study_id }} \
-          --objective_ids=${{ inputs.objective_id }} \
+          --automatic_objective_selection \
           --input_paths=${{ inputs.input_path }} \
           --config="$CONFIG_YAML" \
           -- \
