@@ -47,11 +47,11 @@ inline void shareNumGroupsStep(
   // a normal network socket as part of the protocol setup
   XLOG(INFO) << "Set up number of partner groups";
   if (inputData.getNumGroups() >
-      (1
+      (1LL
        << (groupWidth - 1))) { // subtract one because we multiply the number of
     // groups by 2 for the test/control populations
     XLOG(ERR) << "The input has " << inputData.getNumGroups()
-              << " groups but we only support " << (1 << groupWidth)
+              << " groups but we only support " << (1L << groupWidth)
               << " groups.";
     exit(1);
   }

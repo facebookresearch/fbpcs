@@ -13,6 +13,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "fbpcf/mpc_std_lib/util/secureRandomPermutation.h"
@@ -51,7 +52,6 @@ template <int schedulerId>
 std::vector<std::vector<unsigned char>>
 CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
     const std::vector<int32_t>& unionMap) {
-  std::vector<std::vector<unsigned char>> rst;
   XLOG(INFO) << "Begin plaintext data serialization as bytes";
   size_t unionSize = inputData_.getNumRows();
   int32_t inputSize = 0;
@@ -67,7 +67,9 @@ CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
   inputSize++;
   reverseUnionMap.resize(inputSize);
 
-  rst.reserve(inputSize);
+  using InputColumnDataType =
+      typename fbpcf::mpc_std_lib::unified_data_process::serialization::
+          IColumnDefinition<schedulerId>::InputColumnDataType;
 
   if (myRole_ == common::PARTNER) {
     auto cohortIdsPadded =
@@ -88,61 +90,54 @@ CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
         numConversionsPerUser_,
         0);
 
+    std::vector<bool> anyValidPurchaseTimestamps(inputSize);
+    std::vector<uint32_t> cohortIdsSorted(inputSize);
+    std::vector<std::vector<uint32_t>> purchaseTimestampsSorted(
+        inputSize, std::vector<uint32_t>(numConversionsPerUser_));
+    std::vector<std::vector<uint32_t>> thresholdTimestampsSorted(
+        inputSize, std::vector<uint32_t>(numConversionsPerUser_));
+    std::vector<std::vector<int32_t>> purchaseValuesSorted(
+        inputSize, std::vector<int32_t>(numConversionsPerUser_));
+    std::vector<std::vector<int64_t>> purchaseValuesSquaredSorted(
+        inputSize, std::vector<int64_t>(numConversionsPerUser_));
+
     for (size_t i = 0; i < inputSize; i++) {
       int inputIndex = reverseUnionMap[i];
 
+      cohortIdsSorted[i] = cohortIdsPadded[inputIndex];
+
       bool anyValidPurchaseTimestamp = false;
-      for (uint32_t purchaseTs : purchaseTimestampsPadded[inputIndex]) {
+      for (int j = 0; j < numConversionsPerUser_; j++) {
         // compute whether each row contains at least one valid (positive)
         // purchase timestamp
-        anyValidPurchaseTimestamp |= (purchaseTs > 0);
+        anyValidPurchaseTimestamp |=
+            (purchaseTimestampsPadded[inputIndex][j] > 0);
+
+        purchaseTimestampsSorted[i][j] =
+            purchaseTimestampsPadded[inputIndex][j];
+
+        thresholdTimestampsSorted[i][j] =
+            purchaseTimestampsPadded[inputIndex][j] > 0
+            ? purchaseTimestampsPadded[inputIndex][j] +
+                kPurchaseTimestampThresholdWindow
+            : 0;
+        purchaseValuesSorted[i][j] = purchaseValuesPadded[inputIndex][j];
+        purchaseValuesSquaredSorted[i][j] =
+            purchaseValuesSquaredPadded[inputIndex][j];
       }
-
-      PartnerRow partnerRow{
-          .anyValidPurchaseTimestamp = anyValidPurchaseTimestamp,
-          .cohortGroupId = cohortIdsPadded[inputIndex]};
-
-      std::vector<PartnerConversionRow> rowConversions(numConversionsPerUser_);
-
-      for (size_t j = 0; j < numConversionsPerUser_; j++) {
-        rowConversions[j] = {
-            .purchaseTimestamp = purchaseTimestampsPadded[inputIndex][j],
-            .thresholdTimestamp = purchaseTimestampsPadded[inputIndex][j] > 0
-                ? purchaseTimestampsPadded[inputIndex][j] +
-                    kPurchaseTimestampThresholdWindow
-                : 0,
-            .purchaseValue = (int32_t)purchaseValuesPadded[inputIndex][j],
-            .purchaseValueSquared = purchaseValuesSquaredPadded[inputIndex][j]};
-      }
-
-      std::vector<unsigned char> serialized(
-          PARTNER_ROW_SIZE_BYTES +
-          PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_);
-
-      serialized[0] = partnerRow.anyValidPurchaseTimestamp;
-      serialized[1] = extractByte(partnerRow.cohortGroupId, 0);
-      serialized[2] = extractByte(partnerRow.cohortGroupId, 1);
-      serialized[3] = extractByte(partnerRow.cohortGroupId, 2);
-      serialized[4] = extractByte(partnerRow.cohortGroupId, 3);
-
-      for (size_t j = 0; j < numConversionsPerUser_; j++) {
-        for (int byte = 0; byte < 4; byte++) {
-          serialized[5 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].purchaseTimestamp, byte);
-          serialized[9 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].thresholdTimestamp, byte);
-          serialized[13 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].purchaseValue, byte);
-        }
-
-        for (size_t byte = 0; byte < 8; byte++) {
-          serialized[17 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].purchaseValueSquared, byte);
-        }
-      }
-
-      rst.push_back(serialized);
+      anyValidPurchaseTimestamps[i] = anyValidPurchaseTimestamp;
     }
+
+    std::unordered_map<std::string, InputColumnDataType> inputMap{
+        {"anyValidPurchaseTimestamp", anyValidPurchaseTimestamps},
+        {"cohortGroupId", cohortIdsSorted},
+        {"purchaseTimestamp", purchaseTimestampsPadded},
+        {"thresholdTimestamp", thresholdTimestampsSorted},
+        {"purchaseValue", purchaseValuesSorted},
+        {"purchaseValueSquared", purchaseValuesSquaredSorted},
+    };
+
+    return partnerSerializer_->serializeDataAsBytesForUDP(inputMap, inputSize);
   } else {
     auto opportunityTimestampsPadded = common::padArray<uint32_t>(
         inputData_.getOpportunityTimestamps(), unionSize, 0);
@@ -154,41 +149,38 @@ CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
         common::padArray<int64_t>(inputData_.getNumImpressions(), unionSize, 0);
     auto breakdownIdPadded =
         common::padArray<uint32_t>(inputData_.getBreakdownIds(), unionSize, 0);
+
+    std::vector<bool> breakdownIdSorted(inputSize);
+    std::vector<bool> controlPopulationSorted(inputSize);
+    std::vector<bool> isValidOpportunityTimestamp(inputSize);
+    std::vector<bool> testReach(inputSize);
+    std::vector<uint32_t> opportunityTimestampsSorted(inputSize);
     for (size_t i = 0; i < inputSize; i++) {
       int inputIndex = reverseUnionMap[i];
 
-      bool isValidOpportunityTimestamp =
+      breakdownIdSorted[i] = breakdownIdPadded[inputIndex];
+      controlPopulationSorted[i] = controlPopulationPadded[inputIndex];
+      isValidOpportunityTimestamp[i] =
           (opportunityTimestampsPadded.at(inputIndex) > 0) &&
           (controlPopulationPadded.at(inputIndex) ||
            testPopulationPadded.at(inputIndex));
 
-      bool testReach = testPopulationPadded.at(inputIndex) &&
+      testReach[i] = testPopulationPadded.at(inputIndex) &&
           (numImpressionsPadded.at(inputIndex) > 0);
-
-      PublisherRow publisherRow{
-          .breakdownId = (bool)breakdownIdPadded[inputIndex],
-          .controlPopulation = controlPopulationPadded[inputIndex],
-          .isValidOpportunityTimestamp = isValidOpportunityTimestamp,
-          .testReach = testReach,
-          .opportunityTimestamp = opportunityTimestampsPadded[inputIndex],
-      };
-
-      std::vector<unsigned char> serialized(PUBLISHER_ROW_BYTES);
-      serialized[0] = publisherRow.breakdownId |
-          (publisherRow.controlPopulation << 1) |
-          (publisherRow.isValidOpportunityTimestamp << 2) |
-          (publisherRow.testReach << 3);
-
-      for (size_t byte = 0; byte < 4; byte++) {
-        serialized[1 + byte] =
-            extractByte(publisherRow.opportunityTimestamp, byte);
-      }
-
-      rst.push_back(serialized);
+      opportunityTimestampsSorted[i] = opportunityTimestampsPadded[inputIndex];
     }
-  }
 
-  return rst;
+    std::unordered_map<std::string, InputColumnDataType> inputMap{
+        {"breakdownId", breakdownIdSorted},
+        {"controlPopulation", controlPopulationSorted},
+        {"isValidOpportunityTimestamp", isValidOpportunityTimestamp},
+        {"testReach", testReach},
+        {"opportunityTimestamp", opportunityTimestampsSorted},
+    };
+
+    return publisherSerializer_->serializeDataAsBytesForUDP(
+        inputMap, inputSize);
+  }
 }
 
 template <int schedulerId>
@@ -215,12 +207,12 @@ CompactionBasedInputProcessor<schedulerId>::compactData(
       common::PUBLISHER>(myRole_, myRows);
 
   XLOG(INFO) << "Publisher Row count: " << publisherRows;
-  XLOG(INFO) << "Publisher Row size in bytes: " << PUBLISHER_ROW_BYTES;
+  XLOG(INFO) << "Publisher Row size in bytes: "
+             << publisherSerializer_->getRowSizeBytes();
 
   XLOG(INFO) << "Partner Row count: " << partnerRows;
   XLOG(INFO) << "Partner Row size in bytes: "
-             << PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_ +
-          PARTNER_ROW_SIZE_BYTES;
+             << partnerSerializer_->getRowSizeBytes();
 
   SecString publisherDataShares;
   SecString partnerDataShares;
@@ -231,14 +223,13 @@ CompactionBasedInputProcessor<schedulerId>::compactData(
         dataProcessor_->processMyData(plaintextData, intersectionMap.size());
     XLOG(INFO) << "Begin processing peers data (partner)";
     partnerDataShares = dataProcessor_->processPeersData(
-        partnerRows,
-        intersectionMap,
-        PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_ +
-            PARTNER_ROW_SIZE_BYTES);
+        partnerRows, intersectionMap, partnerSerializer_->getRowSizeBytes());
   } else if (myRole_ == common::PARTNER) {
     XLOG(INFO) << "Begin processing peers data (publisher)";
     publisherDataShares = dataProcessor_->processPeersData(
-        publisherRows, intersectionMap, PUBLISHER_ROW_BYTES);
+        publisherRows,
+        intersectionMap,
+        publisherSerializer_->getRowSizeBytes());
     XLOG(INFO) << "Begin processing my data (partner)";
     partnerDataShares =
         dataProcessor_->processMyData(plaintextData, intersectionMap.size());
@@ -285,199 +276,46 @@ void CompactionBasedInputProcessor<schedulerId>::extractCompactedData(
 
   liftGameProcessedData_.numRows = publisherDataShares.getBatchSize();
 
-  std::tuple<
-      std::vector<PartnerRow>,
-      std::vector<std::vector<PartnerConversionRow>>,
-      std::vector<PublisherRow>>
-      deserializedSecretStructs =
-          deserializeSecretSharedData(publisherDataShares, partnerDataShares);
+  auto publisherDeserialized =
+      publisherSerializer_->deserializeUDPOutputIntoMPCTypes(
+          publisherDataShares);
+  auto partnerDeserialized =
+      partnerSerializer_->deserializeUDPOutputIntoMPCTypes(partnerDataShares);
 
-  extractPartnerValues(std::get<0>(deserializedSecretStructs));
-  extractPartnerConversionValues(std::get<1>(deserializedSecretStructs));
-  extractPublisherValues(std::get<2>(deserializedSecretStructs));
+  using MPCTypes = fbpcf::frontend::MPCTypes<schedulerId, true>;
 
-  XLOG(INFO, "Finish extraction to MPC types");
-}
+  breakdownGroupIds_ = std::get<typename MPCTypes::SecBool>(
+      publisherDeserialized.at("breakdownId"));
+  controlPopulation_ = std::get<typename MPCTypes::SecBool>(
+      publisherDeserialized.at("controlPopulation"));
+  cohortGroupIds_ = std::get<typename MPCTypes::SecUnsigned32Int>(
+      partnerDeserialized.at("cohortGroupId"));
 
-template <int schedulerId>
-std::tuple<
-    std::vector<
-        typename CompactionBasedInputProcessor<schedulerId>::PartnerRow>,
-    std::vector<std::vector<typename CompactionBasedInputProcessor<
-        schedulerId>::PartnerConversionRow>>,
-    std::vector<
-        typename CompactionBasedInputProcessor<schedulerId>::PublisherRow>>
-CompactionBasedInputProcessor<schedulerId>::deserializeSecretSharedData(
-    const SecString& publisherDataShares,
-    const SecString& partnerDataShares) {
-  std::vector<std::vector<bool>> publisherSecretSharedBits =
-      publisherDataShares.extractStringShare().getValue();
-  publisherSecretSharedBits = common::transpose(publisherSecretSharedBits);
-
-  std::vector<std::vector<bool>> partnerSecretSharedBits =
-      partnerDataShares.extractStringShare().getValue();
-  partnerSecretSharedBits = common::transpose(partnerSecretSharedBits);
-
-  std::vector<std::vector<PartnerConversionRow>> partnerConversionRows(
-      liftGameProcessedData_.numRows);
-  std::vector<PartnerRow> partnerRows(liftGameProcessedData_.numRows);
-  std::vector<PublisherRow> publisherRows(liftGameProcessedData_.numRows);
-
-  for (size_t i = 0; i < liftGameProcessedData_.numRows; i++) {
-    auto publisherByteShares = convertFromBits(publisherSecretSharedBits.at(i));
-    auto partnerByteShares = convertFromBits(partnerSecretSharedBits.at(i));
-
-    publisherRows[i].breakdownId = publisherByteShares[0] & 1;
-    publisherRows[i].controlPopulation = (publisherByteShares[0] >> 1) & 1;
-    publisherRows[i].isValidOpportunityTimestamp =
-        (publisherByteShares[0] >> 2) & 1;
-    publisherRows[i].testReach = (publisherByteShares[0] >> 3) & 1;
-    publisherRows[i].opportunityTimestamp =
-        reconstructFromBytes<uint32_t>(publisherByteShares.data() + 1);
-
-    partnerRows[i].anyValidPurchaseTimestamp = partnerByteShares[0] & 1;
-    partnerRows[i].cohortGroupId =
-        reconstructFromBytes<uint32_t>(partnerByteShares.data() + 1);
-
-    partnerConversionRows[i] =
-        std::vector<PartnerConversionRow>(numConversionsPerUser_);
-
-    for (size_t j = 0; j < numConversionsPerUser_; j++) {
-      partnerConversionRows[i][j].purchaseTimestamp =
-          reconstructFromBytes<uint32_t>(
-              partnerByteShares.data() + 5 +
-              j * PARTNER_CONVERSION_ROW_SIZE_BYTES);
-      partnerConversionRows[i][j].thresholdTimestamp =
-          reconstructFromBytes<uint32_t>(
-              partnerByteShares.data() + 9 +
-              j * PARTNER_CONVERSION_ROW_SIZE_BYTES);
-
-      partnerConversionRows[i][j].purchaseValue = reconstructFromBytes<int32_t>(
-          partnerByteShares.data() + 13 +
-          j * PARTNER_CONVERSION_ROW_SIZE_BYTES);
-
-      partnerConversionRows[i][j].purchaseValueSquared =
-          reconstructFromBytes<int64_t>(
-              partnerByteShares.data() + 17 +
-              j * PARTNER_CONVERSION_ROW_SIZE_BYTES);
-    }
-  }
-
-  return std::make_tuple<
-      std::vector<
-          typename CompactionBasedInputProcessor<schedulerId>::PartnerRow>,
-      std::vector<std::vector<typename CompactionBasedInputProcessor<
-          schedulerId>::PartnerConversionRow>>,
-      std::vector<
-          typename CompactionBasedInputProcessor<schedulerId>::PublisherRow>>(
-      std::move(partnerRows),
-      std::move(partnerConversionRows),
-      std::move(publisherRows));
-}
-
-template <int schedulerId>
-void CompactionBasedInputProcessor<schedulerId>::extractPartnerValues(
-    const std::vector<PartnerRow>& partnerRows) {
-  std::vector<bool> anyValidPurchaseTimestampShares(
-      liftGameProcessedData_.numRows);
-  std::vector<uint64_t> groupIdShares(liftGameProcessedData_.numRows);
-
-  for (int row = 0; row < liftGameProcessedData_.numRows; row++) {
-    anyValidPurchaseTimestampShares[row] =
-        partnerRows[row].anyValidPurchaseTimestamp;
-    groupIdShares[row] = partnerRows[row].cohortGroupId;
-  }
+  liftGameProcessedData_.isValidOpportunityTimestamp =
+      std::get<typename MPCTypes::SecBool>(
+          publisherDeserialized.at("isValidOpportunityTimestamp"));
+  liftGameProcessedData_.testReach = std::get<typename MPCTypes::SecBool>(
+      publisherDeserialized.at("testReach"));
+  liftGameProcessedData_.opportunityTimestamps =
+      std::get<typename MPCTypes::SecUnsigned32Int>(
+          publisherDeserialized.at("opportunityTimestamp"));
 
   liftGameProcessedData_.anyValidPurchaseTimestamp =
-      SecBit<schedulerId>(typename SecBit<schedulerId>::ExtractedBit(
-          anyValidPurchaseTimestampShares));
-
-  cohortGroupIds_ = SecGroup<schedulerId>(
-      typename SecGroup<schedulerId>::ExtractedInt(groupIdShares));
-}
-
-template <int schedulerId>
-void CompactionBasedInputProcessor<schedulerId>::extractPartnerConversionValues(
-    const std::vector<std::vector<PartnerConversionRow>>&
-        partnerConversionRows) {
+      std::get<typename MPCTypes::SecBool>(
+          partnerDeserialized.at("anyValidPurchaseTimestamp"));
   liftGameProcessedData_.purchaseTimestamps =
-      std::vector<SecTimestamp<schedulerId>>(numConversionsPerUser_);
+      std::get<std::vector<typename MPCTypes::SecUnsigned32Int>>(
+          partnerDeserialized.at("purchaseTimestamp"));
   liftGameProcessedData_.thresholdTimestamps =
-      std::vector<SecTimestamp<schedulerId>>(numConversionsPerUser_);
+      std::get<std::vector<typename MPCTypes::SecUnsigned32Int>>(
+          partnerDeserialized.at("thresholdTimestamp"));
   liftGameProcessedData_.purchaseValues =
-      std::vector<SecValue<schedulerId>>(numConversionsPerUser_);
+      std::get<std::vector<typename MPCTypes::Sec32Int>>(
+          partnerDeserialized.at("purchaseValue"));
   liftGameProcessedData_.purchaseValueSquared =
-      std::vector<SecValueSquared<schedulerId>>(numConversionsPerUser_);
+      std::get<std::vector<typename MPCTypes::Sec64Int>>(
+          partnerDeserialized.at("purchaseValueSquared"));
 
-  for (int conversion = 0; conversion < numConversionsPerUser_; conversion++) {
-    std::vector<uint64_t> purchaseTimestampShares(
-        liftGameProcessedData_.numRows);
-    std::vector<uint64_t> thresholdTimestampShares(
-        liftGameProcessedData_.numRows);
-    std::vector<int64_t> purchaseValueShares(liftGameProcessedData_.numRows);
-    std::vector<int64_t> purchaseValueSquaredShares(
-        liftGameProcessedData_.numRows);
-
-    for (int row = 0; row < liftGameProcessedData_.numRows; row++) {
-      purchaseTimestampShares[row] =
-          partnerConversionRows[row][conversion].purchaseTimestamp;
-      thresholdTimestampShares[row] =
-          partnerConversionRows[row][conversion].thresholdTimestamp;
-      purchaseValueShares[row] =
-          partnerConversionRows[row][conversion].purchaseValue;
-      purchaseValueSquaredShares[row] =
-          partnerConversionRows[row][conversion].purchaseValueSquared;
-    }
-
-    liftGameProcessedData_.purchaseTimestamps[conversion] =
-        SecTimestamp<schedulerId>(
-            typename SecTimestamp<schedulerId>::ExtractedInt(
-                purchaseTimestampShares));
-    liftGameProcessedData_.thresholdTimestamps[conversion] =
-        SecTimestamp<schedulerId>(
-            typename SecTimestamp<schedulerId>::ExtractedInt(
-                thresholdTimestampShares));
-    liftGameProcessedData_.purchaseValues[conversion] = SecValue<schedulerId>(
-        typename SecValue<schedulerId>::ExtractedInt(purchaseValueShares));
-
-    liftGameProcessedData_.purchaseValueSquared[conversion] =
-        SecValueSquared<schedulerId>(
-            typename SecValueSquared<schedulerId>::ExtractedInt(
-                purchaseValueSquaredShares));
-  }
-}
-
-template <int schedulerId>
-void CompactionBasedInputProcessor<schedulerId>::extractPublisherValues(
-    const std::vector<PublisherRow>& publisherRows) {
-  std::vector<bool> breakdownGroupIdShares(liftGameProcessedData_.numRows);
-  std::vector<bool> controlPopulationShares(liftGameProcessedData_.numRows);
-  std::vector<bool> isValidOpportunityTimestampShares(
-      liftGameProcessedData_.numRows);
-  std::vector<bool> testReachShares(liftGameProcessedData_.numRows);
-  std::vector<uint64_t> opportunityTimestampShares(
-      liftGameProcessedData_.numRows);
-
-  for (int row = 0; row < liftGameProcessedData_.numRows; row++) {
-    breakdownGroupIdShares[row] = publisherRows[row].breakdownId;
-    controlPopulationShares[row] = publisherRows[row].controlPopulation;
-    isValidOpportunityTimestampShares[row] =
-        publisherRows[row].isValidOpportunityTimestamp;
-    testReachShares[row] = publisherRows[row].testReach;
-    opportunityTimestampShares[row] = publisherRows[row].opportunityTimestamp;
-  }
-
-  breakdownGroupIds_ = SecBit<schedulerId>(
-      typename SecBit<schedulerId>::ExtractedBit(breakdownGroupIdShares));
-  controlPopulation_ = SecBit<schedulerId>(
-      typename SecBit<schedulerId>::ExtractedBit(controlPopulationShares));
-  liftGameProcessedData_.isValidOpportunityTimestamp =
-      SecBit<schedulerId>(typename SecBit<schedulerId>::ExtractedBit(
-          isValidOpportunityTimestampShares));
-  liftGameProcessedData_.testReach = SecBit<schedulerId>(
-      typename SecBit<schedulerId>::ExtractedBit(testReachShares));
-  liftGameProcessedData_.opportunityTimestamps = SecTimestamp<schedulerId>(
-      typename SecTimestamp<schedulerId>::ExtractedInt(
-          opportunityTimestampShares));
+  XLOG(INFO, "Finish extraction to MPC types");
 }
 } // namespace private_lift

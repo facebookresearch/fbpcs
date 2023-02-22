@@ -13,6 +13,9 @@
 
 #include "fbpcf/mpc_std_lib/unified_data_process/adapter/IAdapter.h"
 #include "fbpcf/mpc_std_lib/unified_data_process/data_processor/IDataProcessor.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/serialization/IRowStructureDefinition.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/serialization/RowStructureDefinition.h"
+
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
@@ -51,6 +54,15 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
       return;
     }
 
+    publisherSerializer_ = std::make_unique<
+        fbpcf::mpc_std_lib::unified_data_process::serialization::
+            RowStructureDefinition<schedulerId>>(
+        publisherRowDefinition, numConversionsPerUser);
+    partnerSerializer_ = std::make_unique<
+        fbpcf::mpc_std_lib::unified_data_process::serialization::
+            RowStructureDefinition<schedulerId>>(
+        partnerRowDefinition, numConversionsPerUser);
+
     liftGameProcessedData_.numRows = inputData.getNumRows();
 
     input_processing::validateNumRowsStep(myRole_, liftGameProcessedData_);
@@ -69,6 +81,8 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
     }
 
     auto plaintextData = preparePlaintextData(unionMap);
+
+    XLOG(INFO) << "Plaintext data successfully serialized";
 
     auto publisherPartnerJointMetadataShares =
         compactData(intersectionMap, plaintextData);
@@ -95,32 +109,26 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
   }
 
  private:
-  struct PartnerRow {
-    bool anyValidPurchaseTimestamp;
-    uint32_t cohortGroupId;
+  using SupportedColumnTypes =
+      typename fbpcf::mpc_std_lib::unified_data_process::serialization::
+          IColumnDefinition<schedulerId>::SupportedColumnTypes;
+
+  const std::map<std::string, SupportedColumnTypes> partnerRowDefinition{
+      {"anyValidPurchaseTimestamp", SupportedColumnTypes::Bit},
+      {"cohortGroupId", SupportedColumnTypes::UInt32},
+      {"purchaseTimestamp", SupportedColumnTypes::UInt32Vec},
+      {"thresholdTimestamp", SupportedColumnTypes::UInt32Vec},
+      {"purchaseValue", SupportedColumnTypes::Int32Vec},
+      {"purchaseValueSquared", SupportedColumnTypes::Int64Vec},
   };
 
-  struct PartnerConversionRow {
-    uint32_t purchaseTimestamp;
-    uint32_t thresholdTimestamp;
-    int32_t purchaseValue;
-    int64_t purchaseValueSquared;
+  const std::map<std::string, SupportedColumnTypes> publisherRowDefinition{
+      {"breakdownId", SupportedColumnTypes::Bit},
+      {"controlPopulation", SupportedColumnTypes::Bit},
+      {"isValidOpportunityTimestamp", SupportedColumnTypes::Bit},
+      {"testReach", SupportedColumnTypes::Bit},
+      {"opportunityTimestamp", SupportedColumnTypes::UInt32},
   };
-
-  struct PublisherRow {
-    bool breakdownId;
-    bool controlPopulation;
-    bool isValidOpportunityTimestamp;
-    bool testReach;
-    uint32_t opportunityTimestamp;
-  };
-
-  // Update the values if changing the structs above. This class handles it's
-  // own serialization / deserialization. using sizeof() will not work because a
-  // bool will take 1 byte in memory
-  const int PARTNER_ROW_SIZE_BYTES = 5;
-  const int PARTNER_CONVERSION_ROW_SIZE_BYTES = 20;
-  const int PUBLISHER_ROW_BYTES = 5;
 
   // unionMap[i] = j indicates PID i will point to index j in plaintext data
   // note that j in [0,intersectionSize) rather than [0, unionSize)
@@ -148,58 +156,9 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
       const SecString& publisherDataShares,
       const SecString& partnerDataShares);
 
-  std::tuple<
-      std::vector<PartnerRow>,
-      std::vector<std::vector<PartnerConversionRow>>,
-      std::vector<PublisherRow>>
-  deserializeSecretSharedData(
-      const SecString& publisherDataShares,
-      const SecString& partnerDataShares);
+  void extractPartnerValues(const SecString& partnerRows);
 
-  void extractPartnerValues(const std::vector<PartnerRow>& partnerRows);
-
-  void extractPartnerConversionValues(
-      const std::vector<std::vector<PartnerConversionRow>>&
-          partnerConversionRows);
-
-  void extractPublisherValues(const std::vector<PublisherRow>& publisherRows);
-
-  template <typename T>
-  unsigned char extractByte(T val, size_t byte) {
-    if (byte < 0 || byte >= sizeof(T)) {
-      throw std::invalid_argument("Not enough bytes in type");
-    }
-
-    return (uint8_t)(val >> 8 * byte);
-  }
-
-  template <typename T>
-  T reconstructFromBytes(unsigned char* data) {
-    T val = 0;
-    for (size_t i = 0; i < sizeof(T); i++) {
-      val |= ((T) * (data + i)) << (i * 8);
-    }
-    return val;
-  }
-
-  std::vector<unsigned char> convertFromBits(std::vector<bool> data) {
-    std::vector<unsigned char> rst;
-    rst.reserve(data.size() / 8);
-
-    size_t i = 0;
-
-    while (i < data.size()) {
-      unsigned char val = 0;
-      size_t bitsLeft = data.size() - i > 8 ? 8 : data.size() - i;
-      for (auto j = 0; j < bitsLeft; j++) {
-        val |= (data[i] << j);
-        ++i;
-      }
-      rst.push_back(val);
-    }
-
-    return rst;
-  }
+  void extractPublisherValues(const SecString& publisherRows);
 
   int32_t myRole_;
 
@@ -208,6 +167,13 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
   std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::data_processor::
                       IDataProcessor<schedulerId>>
       dataProcessor_;
+  std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::serialization::
+                      IRowStructureDefinition<schedulerId>>
+      publisherSerializer_;
+  std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::serialization::
+                      IRowStructureDefinition<schedulerId>>
+      partnerSerializer_;
+
   std::unique_ptr<fbpcf::engine::util::IPrg> prg_;
   InputData inputData_;
   int32_t numConversionsPerUser_;
