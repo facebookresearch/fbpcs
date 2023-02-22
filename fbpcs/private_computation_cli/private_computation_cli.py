@@ -16,7 +16,7 @@ Usage:
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run --stage_timeout_override_seconds=<stage_timeout_override_seconds> --automatic_objective_selection] [options]
+    pc-cli run_study <study_id> --config=<config_file> --input_paths=<input_paths> [--objective_ids=<objective_ids> --output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run --stage_timeout_override_seconds=<stage_timeout_override_seconds> --automatic_objective_selection] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
@@ -544,4 +544,3 @@ def _get_trace_logging_service(
 
 if __name__ == "__main__":
     main()
-
