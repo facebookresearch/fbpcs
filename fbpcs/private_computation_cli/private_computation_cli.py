@@ -39,6 +39,7 @@ Options:
 import asyncio
 import logging
 import os
+import random
 import re
 import sys
 import time
@@ -411,15 +412,18 @@ def main(argv: Optional[List[str]] = None) -> None:
         graphapi_version = arguments["--graphapi_version"]
         graphapi_domain = arguments["--graphapi_domain"]
         objective_ids = arguments["--objective_ids"]
+        input_paths = arguments["--input_paths"]
         if not objective_ids and arguments["--automatic_objective_selection"]:
-            objective_ids = get_runnable_objectives(
+            runnable_objective_ids = get_runnable_objectives(
                 study_id, config, logger, graphapi_version, graphapi_domain
             )
+            objective_ids = random.sample(runnable_objective_ids, len(input_paths))
+
         run_study(
             config=config,
             study_id=study_id,
             objective_ids=objective_ids,
-            input_paths=arguments["--input_paths"],
+            input_paths=input_paths,
             logger=logger,
             stage_flow=stage_flow,
             num_tries=arguments["--tries_per_stage"],
