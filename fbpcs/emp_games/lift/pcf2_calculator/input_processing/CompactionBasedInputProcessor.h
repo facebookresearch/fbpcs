@@ -19,6 +19,7 @@
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/GlobalSharingUtils.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/LiftCompactionUtils.h"
 
 namespace private_lift {
 /**
@@ -30,6 +31,10 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
  public:
   using SecString = typename fbpcf::mpc_std_lib::unified_data_process::
       data_processor::IDataProcessor<schedulerId>::SecString;
+
+  using PartnerRow = input_processing::PartnerRow;
+  using PublisherRow = input_processing::PublisherRow;
+  using PartnerConversionRow = input_processing::PartnerConversionRow;
 
   CompactionBasedInputProcessor(
       int myRole,
@@ -73,9 +78,11 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
     auto publisherPartnerJointMetadataShares =
         compactData(intersectionMap, plaintextData);
 
+    XLOG(INFO, "Begin extraction to MPC types");
     extractCompactedData(
         std::get<0>(publisherPartnerJointMetadataShares),
         std::get<1>(publisherPartnerJointMetadataShares));
+    XLOG(INFO, "Finish extraction to MPC types");
 
     input_processing::computeIndexSharesAndSetTestGroupIds(
         liftGameProcessedData_,
@@ -95,33 +102,6 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
   }
 
  private:
-  struct PartnerRow {
-    bool anyValidPurchaseTimestamp;
-    uint32_t cohortGroupId;
-  };
-
-  struct PartnerConversionRow {
-    uint32_t purchaseTimestamp;
-    uint32_t thresholdTimestamp;
-    int32_t purchaseValue;
-    int64_t purchaseValueSquared;
-  };
-
-  struct PublisherRow {
-    bool breakdownId;
-    bool controlPopulation;
-    bool isValidOpportunityTimestamp;
-    bool testReach;
-    uint32_t opportunityTimestamp;
-  };
-
-  // Update the values if changing the structs above. This class handles it's
-  // own serialization / deserialization. using sizeof() will not work because a
-  // bool will take 1 byte in memory
-  const int PARTNER_ROW_SIZE_BYTES = 5;
-  const int PARTNER_CONVERSION_ROW_SIZE_BYTES = 20;
-  const int PUBLISHER_ROW_BYTES = 5;
-
   // unionMap[i] = j indicates PID i will point to index j in plaintext data
   // note that j in [0,intersectionSize) rather than [0, unionSize)
   // unionMap[i] = -1 indicates PID i is a dummy row
@@ -147,59 +127,6 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
   void extractCompactedData(
       const SecString& publisherDataShares,
       const SecString& partnerDataShares);
-
-  std::tuple<
-      std::vector<PartnerRow>,
-      std::vector<std::vector<PartnerConversionRow>>,
-      std::vector<PublisherRow>>
-  deserializeSecretSharedData(
-      const SecString& publisherDataShares,
-      const SecString& partnerDataShares);
-
-  void extractPartnerValues(const std::vector<PartnerRow>& partnerRows);
-
-  void extractPartnerConversionValues(
-      const std::vector<std::vector<PartnerConversionRow>>&
-          partnerConversionRows);
-
-  void extractPublisherValues(const std::vector<PublisherRow>& publisherRows);
-
-  template <typename T>
-  unsigned char extractByte(T val, size_t byte) {
-    if (byte < 0 || byte >= sizeof(T)) {
-      throw std::invalid_argument("Not enough bytes in type");
-    }
-
-    return (uint8_t)(val >> 8 * byte);
-  }
-
-  template <typename T>
-  T reconstructFromBytes(unsigned char* data) {
-    T val = 0;
-    for (size_t i = 0; i < sizeof(T); i++) {
-      val |= ((T) * (data + i)) << (i * 8);
-    }
-    return val;
-  }
-
-  std::vector<unsigned char> convertFromBits(std::vector<bool> data) {
-    std::vector<unsigned char> rst;
-    rst.reserve(data.size() / 8);
-
-    size_t i = 0;
-
-    while (i < data.size()) {
-      unsigned char val = 0;
-      size_t bitsLeft = data.size() - i > 8 ? 8 : data.size() - i;
-      for (auto j = 0; j < bitsLeft; j++) {
-        val |= (data[i] << j);
-        ++i;
-      }
-      rst.push_back(val);
-    }
-
-    return rst;
-  }
 
   int32_t myRole_;
 
