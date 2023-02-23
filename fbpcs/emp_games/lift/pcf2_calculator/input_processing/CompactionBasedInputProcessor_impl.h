@@ -16,9 +16,9 @@
 #include <vector>
 
 #include "fbpcf/mpc_std_lib/util/secureRandomPermutation.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
-
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/CompactionBasedInputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/serialization/LiftMetaDataSerializer.h"
 
 namespace private_lift {
 
@@ -66,7 +66,7 @@ CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
   XLOG(INFO) << "Begin plaintext data serialization as bytes";
   size_t unionSize = inputData_.getNumRows();
   int32_t inputSize = 0;
-  std::vector<int32_t> reverseUnionMap(inputData_.getNumRows());
+  std::vector<int32_t> reverseUnionMap(unionSize);
 
   for (int i = 0; i < unionMap.size(); i++) {
     if (unionMap[i] >= 0) {
@@ -78,127 +78,16 @@ CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
   inputSize++;
   reverseUnionMap.resize(inputSize);
 
-  rst.reserve(inputSize);
-
   if (myRole_ == common::PARTNER) {
-    auto cohortIdsPadded =
-        common::padArray<uint32_t>(inputData_.getGroupIds(), unionSize, 0);
-    auto purchaseTimestampsPadded = common::padNestedArrays<uint32_t>(
-        inputData_.getPurchaseTimestampArrays(),
-        unionSize,
-        numConversionsPerUser_,
-        0);
-    auto purchaseValuesPadded = common::padNestedArrays<int64_t>(
-        inputData_.getPurchaseValueArrays(),
-        unionSize,
-        numConversionsPerUser_,
-        0);
-    auto purchaseValuesSquaredPadded = common::padNestedArrays<int64_t>(
-        inputData_.getPurchaseValueSquaredArrays(),
-        unionSize,
-        numConversionsPerUser_,
-        0);
-
-    for (size_t i = 0; i < inputSize; i++) {
-      int inputIndex = reverseUnionMap[i];
-
-      bool anyValidPurchaseTimestamp = false;
-      for (uint32_t purchaseTs : purchaseTimestampsPadded[inputIndex]) {
-        // compute whether each row contains at least one valid (positive)
-        // purchase timestamp
-        anyValidPurchaseTimestamp |= (purchaseTs > 0);
-      }
-
-      PartnerRow partnerRow{
-          .anyValidPurchaseTimestamp = anyValidPurchaseTimestamp,
-          .cohortGroupId = cohortIdsPadded[inputIndex]};
-
-      std::vector<PartnerConversionRow> rowConversions(numConversionsPerUser_);
-
-      for (size_t j = 0; j < numConversionsPerUser_; j++) {
-        rowConversions[j] = {
-            .purchaseTimestamp = purchaseTimestampsPadded[inputIndex][j],
-            .thresholdTimestamp = purchaseTimestampsPadded[inputIndex][j] > 0
-                ? purchaseTimestampsPadded[inputIndex][j] +
-                    kPurchaseTimestampThresholdWindow
-                : 0,
-            .purchaseValue = (int32_t)purchaseValuesPadded[inputIndex][j],
-            .purchaseValueSquared = purchaseValuesSquaredPadded[inputIndex][j]};
-      }
-
-      std::vector<unsigned char> serialized(
-          PARTNER_ROW_SIZE_BYTES +
-          PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_);
-
-      serialized[0] = partnerRow.anyValidPurchaseTimestamp;
-      serialized[1] = extractByte(partnerRow.cohortGroupId, 0);
-      serialized[2] = extractByte(partnerRow.cohortGroupId, 1);
-      serialized[3] = extractByte(partnerRow.cohortGroupId, 2);
-      serialized[4] = extractByte(partnerRow.cohortGroupId, 3);
-
-      for (size_t j = 0; j < numConversionsPerUser_; j++) {
-        for (int byte = 0; byte < 4; byte++) {
-          serialized[5 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].purchaseTimestamp, byte);
-          serialized[9 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].thresholdTimestamp, byte);
-          serialized[13 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].purchaseValue, byte);
-        }
-
-        for (size_t byte = 0; byte < 8; byte++) {
-          serialized[17 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-              extractByte(rowConversions[j].purchaseValueSquared, byte);
-        }
-      }
-
-      rst.push_back(serialized);
-    }
+    // Construct a serializer
+    LiftMetaDataSerializer partnerSerializer(
+        inputData_, numConversionsPerUser_, reverseUnionMap, unionSize);
+    rst = partnerSerializer.serializePartnerMetadata();
   } else {
-    auto opportunityTimestampsPadded = common::padArray<uint32_t>(
-        inputData_.getOpportunityTimestamps(), unionSize, 0);
-    auto controlPopulationPadded = common::padArray<bool>(
-        inputData_.getControlPopulation(), unionSize, false);
-    auto testPopulationPadded = common::padArray<bool>(
-        inputData_.getTestPopulation(), unionSize, false);
-    auto numImpressionsPadded =
-        common::padArray<int64_t>(inputData_.getNumImpressions(), unionSize, 0);
-    auto breakdownIdPadded =
-        common::padArray<uint32_t>(inputData_.getBreakdownIds(), unionSize, 0);
-    for (size_t i = 0; i < inputSize; i++) {
-      int inputIndex = reverseUnionMap[i];
-
-      bool isValidOpportunityTimestamp =
-          (opportunityTimestampsPadded.at(inputIndex) > 0) &&
-          (controlPopulationPadded.at(inputIndex) ||
-           testPopulationPadded.at(inputIndex));
-
-      bool testReach = testPopulationPadded.at(inputIndex) &&
-          (numImpressionsPadded.at(inputIndex) > 0);
-
-      PublisherRow publisherRow{
-          .breakdownId = (bool)breakdownIdPadded[inputIndex],
-          .controlPopulation = controlPopulationPadded[inputIndex],
-          .isValidOpportunityTimestamp = isValidOpportunityTimestamp,
-          .testReach = testReach,
-          .opportunityTimestamp = opportunityTimestampsPadded[inputIndex],
-      };
-
-      std::vector<unsigned char> serialized(PUBLISHER_ROW_BYTES);
-      serialized[0] = publisherRow.breakdownId |
-          (publisherRow.controlPopulation << 1) |
-          (publisherRow.isValidOpportunityTimestamp << 2) |
-          (publisherRow.testReach << 3);
-
-      for (size_t byte = 0; byte < 4; byte++) {
-        serialized[1 + byte] =
-            extractByte(publisherRow.opportunityTimestamp, byte);
-      }
-
-      rst.push_back(serialized);
-    }
+    LiftMetaDataSerializer publisherSerializer(
+        inputData_, numConversionsPerUser_, reverseUnionMap, unionSize);
+    rst = publisherSerializer.serializePublisherMetadata();
   }
-
   return rst;
 }
 

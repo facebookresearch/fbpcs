@@ -9,6 +9,7 @@
 
 #include "folly/logging/xlog.h"
 
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/IDataProcessor.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
