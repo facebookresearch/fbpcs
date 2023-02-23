@@ -17,6 +17,14 @@ on:
         required: false
         type: string
         default: pl-coordinator-env
+      ecr_repo_type:
+        description: 'The type of ECR repository it is (private or public)'
+        required: true
+        type: choice
+        default: private
+        options:
+          - private
+          - public
       new_tag:
         description: 'The new tag of the docker image'
         required: true
@@ -29,14 +37,18 @@ on:
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
-        type: str
+        type: string
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}
-  IMAGE_TAG: ${{ github.event.inputs.existing_tag }}
-  ECR_REPOSITORY: ${{ github.event.inputs.ecr_repo }}
-  NEW_IMAGE_TAG: ${{ github.event.inputs.new_tag }}
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}
+  IMAGE_TAG: ${{ inputs.existing_tag }}
+  # The line below is intended to make it easier for developers to understand the inputs that they are putting in for the ECR repo.
+  # Our public ECR registry has the prefix of t7b1w5a4 and this code prepends that to the actual name of the image repository
+  # if the developer puts in the repostiory type of "public". This allows the developer to just specify the image repository like
+  # onedocker-prod or pc-coordinator-prod
+  ECR_REPOSITORY: ${{ inputs.ecr_repo_type == 'private' && inputs.ecr_repo || format('t7b1w5a4/{0}', inputs.ecr_repo) }}
+  NEW_IMAGE_TAG: ${{ inputs.new_tag }}
 
 jobs:
 
@@ -47,9 +59,8 @@ jobs:
       id-token: write
       contents: read
     steps:
-    - uses: actions/checkout@v2
     - name: Print Tracker Hash
-      run: echo ${{ github.event.inputs.tracker_hash}}
+      run: echo ${{ inputs.tracker_hash}}
 
     - uses: docker/login-action@v1
       with:
@@ -64,11 +75,13 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-        aws-region: ${{ github.event.inputs.aws_region }}
+        aws-region: ${{ inputs.aws_region }}
 
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+      with:
+          registry-type: ${{ inputs.ecr_repo_type }}
 
     - name: Tag docker image
       env:
