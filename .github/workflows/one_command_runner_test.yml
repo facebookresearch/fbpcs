@@ -10,7 +10,7 @@ on:
         type: string
       objective_id:
         description: Lift objective id
-        required: true
+        required: false
         type: string
       input_path:
         description: S3 path to synthetic data
@@ -54,8 +54,7 @@ on:
         default: '32102205110410'
       objective_id:
         description: Lift objective id
-        required: true
-        default: '23502204952992'
+        required: false
       input_path:
         description: S3 path to synthetic data
         required: true
@@ -130,7 +129,7 @@ jobs:
         run: |
           ./fbpcs/scripts/run_fbpcs.sh run_study \
           ${{ inputs.study_id }} \
-          --objective_ids=${{ inputs.objective_id }} \
+          --${{ inputs.objective_id != 0 && format('objective_ids={0}', inputs.objective_id) || 'automatic_objective_selection' }} \
           --input_paths=${{ inputs.input_path }} \
           --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
           -- \

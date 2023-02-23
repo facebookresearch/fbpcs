@@ -16,7 +16,7 @@ Usage:
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
-    pc-cli run_study <study_id> --config=<config_file> --objective_ids=<objective_ids> --input_paths=<input_paths> [--output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run --stage_timeout_override_seconds=<stage_timeout_override_seconds>] [options]
+    pc-cli run_study <study_id> --config=<config_file> --input_paths=<input_paths> [--objective_ids=<objective_ids> --output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run --stage_timeout_override_seconds=<stage_timeout_override_seconds> --automatic_objective_selection] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
@@ -39,6 +39,7 @@ Options:
 import asyncio
 import logging
 import os
+import random
 import re
 import sys
 import time
@@ -58,7 +59,7 @@ from fbpcs.infra.logging_service.client.meta.client_manager import ClientManager
 from fbpcs.infra.logging_service.client.meta.data_model.lift_run_info import LiftRunInfo
 from fbpcs.pl_coordinator.bolt_graphapi_client import BoltGraphAPIClient
 from fbpcs.pl_coordinator.exceptions import sys_exit_after
-from fbpcs.pl_coordinator.pl_study_runner import run_study
+from fbpcs.pl_coordinator.pl_study_runner import get_runnable_objectives, run_study
 from fbpcs.pl_coordinator.token_validator import TokenValidator
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 from fbpcs.private_computation.entity.private_computation_instance import (
@@ -244,6 +245,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--hmac_key": schema.Or(None, str),
             "--tries_per_stage": schema.Or(None, schema.Use(int)),
             "--dry_run": bool,
+            "--automatic_objective_selection": bool,
             "--logging_service": schema.Or(
                 None,
                 schema.And(
@@ -404,19 +406,34 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
     elif arguments["run_study"]:
         stage_flow = PrivateComputationStageFlow
+        study_id = arguments["<study_id>"]
+        graphapi_version = arguments["--graphapi_version"]
+        graphapi_domain = arguments["--graphapi_domain"]
+        objective_ids = arguments["--objective_ids"]
+        input_paths = arguments["--input_paths"]
+        if not objective_ids and arguments["--automatic_objective_selection"]:
+            runnable_objective_ids = get_runnable_objectives(
+                study_id, config, logger, graphapi_version, graphapi_domain
+            )
+            objective_ids = random.sample(runnable_objective_ids, len(input_paths))
+        elif not objective_ids:
+            raise ValueError(
+                "Either objective_ids or --automatic_objective_selection must be specified when using the run_study command."
+            )
+
         run_study(
             config=config,
-            study_id=arguments["<study_id>"],
-            objective_ids=arguments["--objective_ids"],
-            input_paths=arguments["--input_paths"],
+            study_id=study_id,
+            objective_ids=objective_ids,
+            input_paths=input_paths,
             logger=logger,
             stage_flow=stage_flow,
             num_tries=arguments["--tries_per_stage"],
             dry_run=arguments["--dry_run"],
             result_visibility=arguments["--result_visibility"],
             run_id=arguments["--run_id"],
-            graphapi_version=arguments["--graphapi_version"],
-            graphapi_domain=arguments["--graphapi_domain"],
+            graphapi_version=graphapi_version,
+            graphapi_domain=graphapi_domain,
             final_stage=PrivateComputationStageFlow.AGGREGATE,
             output_dir=arguments["--output_dir"],
             stage_timeout_override=stage_timeout_override,
