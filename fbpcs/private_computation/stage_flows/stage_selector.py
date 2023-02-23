@@ -62,6 +62,7 @@ class StageSelector:
                 args.storage_svc,
                 args.onedocker_svc,
                 args.onedocker_binary_config_map,
+                args.trace_logging_svc,
             )
         elif stage_flow.name == "PID_PREPARE":
             return PIDPrepareStageService(
