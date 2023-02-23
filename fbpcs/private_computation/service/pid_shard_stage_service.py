@@ -4,14 +4,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import asyncio
+import json
 import logging
 from typing import DefaultDict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
-
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
+from fbpcs.common.service.trace_logging_service import (
+    CheckpointStatus,
+    TraceLoggingService,
+)
 from fbpcs.data_processing.service.sharding_service import ShardingService, ShardType
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
@@ -22,6 +27,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
+from fbpcs.private_computation.service.pid_utils import get_sharded_filepath
 from fbpcs.private_computation.service.private_computation_stage_service import (
     PrivateComputationStageService,
 )
@@ -30,6 +36,8 @@ from fbpcs.private_computation.service.utils import (
     get_pc_status_from_stage_state,
     stop_stage_service,
 )
+
+PID_LOG_SUFIX = "_shardDistribution"
 
 
 class PIDShardStageService(PrivateComputationStageService):
@@ -47,6 +55,7 @@ class PIDShardStageService(PrivateComputationStageService):
         storage_svc: StorageService,
         onedocker_svc: OneDockerService,
         onedocker_binary_config_map: DefaultDict[str, OneDockerBinaryConfig],
+        trace_logging_svc: TraceLoggingService,
         container_timeout: Optional[int] = DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     ) -> None:
         self._storage_svc = storage_svc
@@ -54,6 +63,7 @@ class PIDShardStageService(PrivateComputationStageService):
         self._onedocker_binary_config_map = onedocker_binary_config_map
         self._container_timeout = container_timeout
         self._logger: logging.Logger = logging.getLogger(__name__)
+        self._trace_logging_svc = trace_logging_svc
 
     async def run_async(
         self,
@@ -80,6 +90,8 @@ class PIDShardStageService(PrivateComputationStageService):
             An updated version of pc_instance
         """
         self._logger.info(f"[{self}] Starting PIDShardStageService")
+        self._add_trace_logging(pc_instance, CheckpointStatus.STARTED, None)
+
         container_instances = await self.start_pid_shard_service(pc_instance)
 
         self._logger.info("PIDShardStageService finished")
@@ -89,6 +101,12 @@ class PIDShardStageService(PrivateComputationStageService):
             containers=container_instances,
         )
         pc_instance.infra_config.instances.append(stage_state)
+
+        pid_shard_checkpoint_data = await self._prepare_checkpoint_data(pc_instance)
+        self._add_trace_logging(
+            pc_instance, CheckpointStatus.COMPLETED, pid_shard_checkpoint_data
+        )
+
         return pc_instance
 
     def get_status(
@@ -151,3 +169,47 @@ class PIDShardStageService(PrivateComputationStageService):
         pc_instance: PrivateComputationInstance,
     ) -> None:
         stop_stage_service(pc_instance, self._onedocker_svc)
+
+    def _add_trace_logging(self, pc_instance, status, checkpoint_data):
+        try:
+            self._trace_logging_svc.write_checkpoint(
+                run_id=pc_instance.infra_config.run_id,
+                instance_id=pc_instance.infra_config.instance_id,
+                checkpoint_name=pc_instance.current_stage.name,
+                status=status,
+                checkpoint_data=checkpoint_data,
+            )
+        except Exception:
+            self._logger.info("Failed to trace logging in PID Shard stage service.")
+
+    async def _prepare_checkpoint_data(self, pc_instance):
+        pid_shard_checkpoint_data = {}
+        data_path = pc_instance.pid_stage_output_data_path
+        pid_shard_info_path = f"{get_sharded_filepath(data_path, 0)}" + PID_LOG_SUFIX
+        try:
+            if not self._storage_svc.file_exists(pid_shard_info_path):
+                error_msg = f"PID shard metrics for {pc_instance.infra_config.instance_id=} is empty"
+                self._add_trace_logging(
+                    pc_instance, CheckpointStatus.FAILED, {"error": error_msg}
+                )
+
+            loop = asyncio.get_running_loop()
+            pid_shard_info_json_str = await loop.run_in_executor(
+                None, self._storage_svc.read, pid_shard_info_path
+            )
+            pid_shard_metrics = json.loads(pid_shard_info_json_str)
+
+            num_id_cols, rows_sharded = 0, 0
+            for k, v in pid_shard_metrics.items():
+                if k == "num_ids":
+                    num_id_cols = v
+                else:
+                    rows_sharded += v
+            pid_shard_checkpoint_data["num_id_cols"] = str(num_id_cols)
+            pid_shard_checkpoint_data["rows_sharded"] = str(rows_sharded)
+
+        except Exception:
+            self._logger.info(
+                f"Failed to add trace logging from file {pid_shard_info_path}."
+            )
+        return pid_shard_checkpoint_data

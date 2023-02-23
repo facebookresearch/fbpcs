@@ -36,11 +36,15 @@ from fbpcs.private_computation.service.utils import generate_env_vars_dict
 
 
 class TestPIDShardStageService(IsolatedAsyncioTestCase):
+    @patch("fbpcs.common.service.trace_logging_service")
     @patch("fbpcp.service.storage.StorageService")
     @patch("fbpcp.service.onedocker.OneDockerService")
-    def setUp(self, mock_onedocker_svc, mock_storage_svc) -> None:
+    def setUp(
+        self, mock_onedocker_svc, mock_storage_svc, mock_trace_logging_service
+    ) -> None:
         self.mock_onedocker_svc = mock_onedocker_svc
         self.mock_storage_svc = mock_storage_svc
+        self.mock_trace_loggging_svc = mock_trace_logging_service
         self.onedocker_binary_config = OneDockerBinaryConfig(
             tmp_directory="/tmp",
             binary_version="latest",
@@ -71,6 +75,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
                 storage_svc=self.mock_storage_svc,
                 onedocker_svc=self.mock_onedocker_svc,
                 onedocker_binary_config_map=self.onedocker_binary_config_map,
+                trace_logging_svc=self.mock_trace_loggging_svc,
                 container_timeout=self.container_timeout,
             )
             containers = [self.create_container_instance()]
