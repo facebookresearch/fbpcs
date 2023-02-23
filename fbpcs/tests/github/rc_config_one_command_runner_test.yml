@@ -28,7 +28,7 @@ private_computation:
           binary_version: latest
     OneDockerServiceConfig:
       constructor:
-        task_definition: onedocker-task-qae2e:1#onedocker-container-qae2e
+        task_definition: onedocker-task-qae2e:2#onedocker-container-qae2e
 pid:
   dependency:
 mpc:
