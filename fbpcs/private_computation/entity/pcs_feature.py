@@ -28,6 +28,7 @@ class PCSFeature(Enum):
         "pid_filter_low_quality_identifier_thresh166"
     )
     CREATE_DUPLICATE_INSTANCES = "create_duplicate_instances"
+    PUBLISHER_PC_PRE_VALIDATION = "publisher_pc_pre_validation"
     UNKNOWN = "unknown"
 
     @classmethod
