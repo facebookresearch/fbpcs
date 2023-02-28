@@ -163,6 +163,8 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
             OneDockerArgument(name="ca_cert_path", required=False),
             OneDockerArgument(name="server_cert_path", required=False),
             OneDockerArgument(name="private_key_path", required=False),
+            OneDockerArgument(name="run_id", required=False),
+            OneDockerArgument(name="pc_feature_flags", required=False),
         ],
     },
     GameNames.DECOUPLED_ATTRIBUTION.value: {
