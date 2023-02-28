@@ -5,19 +5,22 @@
 # LICENSE file in the root directory of this source tree.
 
 import unittest
-from typing import List
-from unittest.mock import call, patch
+from typing import List, Optional
+from unittest.mock import call, MagicMock, patch
 
 from fbpcp.entity.cloud_provider import CloudProvider
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
 from fbpcp.entity.container_type import ContainerType, ContainerTypeConfig
+from fbpcp.gateway.ecs import ECSGateway
 from fbpcp.service.container_aws import AWSContainerService
+from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
 from fbpcs.common.service.pcs_container_service import PCSContainerService
 
 
 TEST_INSTANCE_ID_1 = "test-instance-id-1"
 TEST_INSTANCE_ID_2 = "test-instance-id-2"
 TEST_INSTANCE_ID_DNE = "test-instance-id-dne"
+TEST_ACCOUNT_ID = "123456789"
 TEST_REGION = "us-west-2"
 TEST_KEY_ID = "test-key-id"
 TEST_KEY_DATA = "test-key-data"
@@ -37,12 +40,38 @@ TEST_CONTAINER_TYPE = ContainerType.MEDIUM
 
 
 class TestPcsContainerService(unittest.TestCase):
-    @patch("fbpcp.gateway.ecs.ECSGateway")
-    def setUp(self, MockECSGateway):
+    CONTAINER_CPU = 4
+    CONTAINER_MEMORY = 32
+
+    def setUp(self):
+        self.mock_ecs_boto_client = MagicMock()
+        example_tasks_responses = [
+            {
+                "tasks": [
+                    {
+                        "taskArn": f"arn:aws:ecs:{TEST_REGION}:{TEST_ACCOUNT_ID}:task/{TEST_CLUSTER}/{x}",
+                        "containers": [
+                            {
+                                "lastStatus": "RUNNING",
+                                "networkInterfaces": [
+                                    {"privateIpv4Address": f"10.0.0.{x}"}
+                                ],
+                            }
+                        ],
+                    }
+                    for x in range(y, z)
+                ],
+                "failures": [],
+            }
+            for y, z in [(0, 100), (100, 150)]
+        ]
+        self.mock_ecs_boto_client.describe_tasks.side_effect = example_tasks_responses
+        self.ecs_gateway = ECSGateway(TEST_REGION)
+        self.ecs_gateway.client = self.mock_ecs_boto_client
         inner_container_svc = AWSContainerService(
             TEST_REGION, TEST_CLUSTER, TEST_SUBNETS, TEST_KEY_ID, TEST_KEY_DATA
         )
-        inner_container_svc.ecs_gateway = MockECSGateway()
+        inner_container_svc.ecs_gateway = self.ecs_gateway
         self.container_svc = PCSContainerService(
             inner_container_service=inner_container_svc
         )
@@ -123,3 +152,53 @@ class TestPcsContainerService(unittest.TestCase):
                 env_vars=[],
                 container_type=TEST_CONTAINER_TYPE,
             )
+
+    def test_get_instances(self) -> None:
+        instance_ids = [
+            f"arn:aws:ecs:{TEST_REGION}:{TEST_ACCOUNT_ID}:task/{TEST_CLUSTER}/{x}"
+            for x in range(150)
+        ]
+        expected_log_urls = []
+        expected_container_name = TEST_CLUSTER.replace("-cluster", "-container")
+        expected_log_group = f"/ecs/{expected_container_name}".replace("/", "$252F")
+        for x in range(150):
+            expected_log_stream = f"ecs/{expected_container_name}/{x}".replace(
+                "/", "$252F"
+            )
+            expected_log_url = (
+                f"https://{TEST_REGION}.console.aws.amazon.com/cloudwatch/home?"
+                f"region={TEST_REGION}#logsV2:log-groups/"
+                f"log-group/{expected_log_group}/"
+                f"log-events/{expected_log_stream}"
+            )
+            expected_log_urls.append(expected_log_url)
+        expected_instances_by_id = {}
+        for x in range(150):
+            instance_id = (
+                f"arn:aws:ecs:{TEST_REGION}:{TEST_ACCOUNT_ID}:task/{TEST_CLUSTER}/{x}"
+            )
+            expected_instances_by_id[instance_id] = PCSContainerInstance(
+                instance_id=instance_id,
+                ip_address=f"10.0.0.{x}",
+                status=ContainerInstanceStatus.STARTED,
+                log_url=expected_log_urls[x],
+                cpu=None,
+                memory=None,
+            )
+
+        instances: list[Optional[ContainerInstance]] = self.container_svc.get_instances(
+            instance_ids
+        )
+
+        for instance in instances:
+            self.assertIsNotNone(instance)
+            self.assertEqual(
+                instance, expected_instances_by_id.get(instance.instance_id)
+            )
+        self.assertEqual(self.mock_ecs_boto_client.describe_tasks.call_count, 2)
+        self.mock_ecs_boto_client.describe_tasks.assert_has_calls(
+            [
+                call(cluster="test-cluster", tasks=instance_ids[:100]),
+                call(cluster="test-cluster", tasks=instance_ids[100:]),
+            ]
+        )
