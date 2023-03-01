@@ -251,9 +251,6 @@ class AggregateShardsStageService(PrivateComputationStageService):
 
     @classmethod
     def get_output_path(cls, pc_instance: PrivateComputationInstance) -> str:
-        if pc_instance.has_feature(PCSFeature.SHARD_COMBINER_PCF2_RELEASE):
-            return pc_instance.pcf2_shard_combine_stage_output_path
-
         return pc_instance.shard_aggregate_stage_output_path
 
     @classmethod
