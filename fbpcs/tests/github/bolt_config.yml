@@ -1,4 +1,4 @@
-  runner:
+runner:
   publisher_client_config: fbpcs_e2e_aws.yml
   partner_client_config: fbpcs_e2e_aws.yml
 jobs:
