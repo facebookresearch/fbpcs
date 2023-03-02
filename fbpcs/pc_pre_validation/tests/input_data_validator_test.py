@@ -11,6 +11,8 @@ from typing import Iterable
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock, patch
 
+from botocore.exceptions import ClientError
+
 from fbpcs.pc_pre_validation.constants import (
     ID_FIELD_PREFIX,
     INPUT_DATA_MAX_FILE_SIZE_IN_BYTES,
@@ -102,6 +104,53 @@ class TestInputDataValidator(TestCase):
 
         validator = InputDataValidator(
             TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    def test_run_validations_stream_failure_when_boto_client_error(self) -> None:
+        error_message = "Error: Failed to stream the input file. Please check the file path and its permission."
+        exception_message = (
+            "An error occurred (Unknown) when calling the get_object operation: Unknown"
+        )
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. {error_message}\n\t{exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+        self._boto3_client_mock.get_object.side_effect = ClientError(
+            error_response={"Error": {}},
+            operation_name="get_object",
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=True,
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    def test_run_validations_stream_failure_when_unexpected(self) -> None:
+        exception_message = "failed to stream"
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message="WARNING: Input Data Validator threw an unexpected error: failed to stream",
+        )
+        self._boto3_client_mock.get_object.side_effect = Exception(exception_message)
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=True,
         )
         report = validator.validate()
 
