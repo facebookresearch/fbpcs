@@ -24,6 +24,7 @@ from typing import List, Optional, Sequence, Set
 
 import boto3
 from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 
 from fbpcp.service.storage_s3 import S3StorageService
 from fbpcp.util.s3path import S3Path
@@ -182,16 +183,7 @@ class InputDataValidator(Validator):
 
             field_names = []
             if self._stream_file:
-                response = self._s3_client.get_object(
-                    Bucket=self._bucket, Key=self._key
-                )
-                stream = response["Body"]
-                for line in stream.iter_lines(keepends=True):
-                    field_names = (
-                        csv.DictReader([line.decode("utf-8")]).fieldnames or []
-                    )
-                    # Read just the first header row then stop streaming
-                    break
+                field_names = self._stream_field_names() or []
             else:
                 with open(self._local_file_path) as local_file:
                     csv_reader = csv.DictReader(local_file)
@@ -271,6 +263,19 @@ class InputDataValidator(Validator):
             validation_issues,
             streaming_timed_out=(not keep_streaming_check),
         )
+
+    def _stream_field_names(self) -> Sequence[str]:
+        try:
+            response = self._s3_client.get_object(Bucket=self._bucket, Key=self._key)
+            stream = response["Body"]
+            for line in stream.iter_lines(keepends=True):
+                # Read just the header row then stop streaming
+                return csv.DictReader([line.decode("utf-8")]).fieldnames or []
+        except ClientError as e:
+            raise InputDataValidationException(
+                f"Failed to stream the input file. Please check the file path and its permission.\n\t{e}"
+            )
+        return []
 
     def _validate_cohort_ids(self, cohort_id_set: Set[int]) -> None:
         for i, cohort_id in enumerate(sorted(cohort_id_set)):
