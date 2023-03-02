@@ -16,7 +16,7 @@ Usage:
     pc-cli run_stage <instance_id> --stage=<stage> --config=<config_file> [--server_ips=<server_ips> --dry_run] [options]
     pc-cli get_instance <instance_id> --config=<config_file> [options]
     pc-cli get_server_ips <instance_id> --config=<config_file> [options]
-    pc-cli run_study <study_id> --config=<config_file> --input_paths=<input_paths> [--objective_ids=<objective_ids> --output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run --stage_timeout_override_seconds=<stage_timeout_override_seconds> --automatic_objective_selection] [options]
+    pc-cli run_study <study_id> --config=<config_file> --input_paths=<input_paths> [--objective_ids=<objective_ids> --output_dir=<output_dir> --tries_per_stage=<tries_per_stage> --result_visibility=<result_visibility> --run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --dry_run --stage_timeout_override_seconds=<stage_timeout_override_seconds>] [options]
     pc-cli pre_validate [<study_id>] --config=<config_file> [--objective_ids=<objective_ids>] --input_paths=<input_paths> [--tries_per_stage=<tries_per_stage> --dry_run] [options]
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
@@ -247,7 +247,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             "--hmac_key": schema.Or(None, str),
             "--tries_per_stage": schema.Or(None, schema.Use(int)),
             "--dry_run": bool,
-            "--automatic_objective_selection": bool,
             "--logging_service": schema.Or(
                 None,
                 schema.And(
@@ -413,11 +412,22 @@ def main(argv: Optional[List[str]] = None) -> None:
         graphapi_domain = arguments["--graphapi_domain"]
         objective_ids = arguments["--objective_ids"]
         input_paths = arguments["--input_paths"]
-        if not objective_ids and arguments["--automatic_objective_selection"]:
+        if not objective_ids and config.get("automatic_objective_selection_for_testing"):
             runnable_objective_ids = get_runnable_objectives(
                 study_id, config, logger, graphapi_version, graphapi_domain
             )
-            objective_ids = random.sample(runnable_objective_ids, len(input_paths))
+            try:
+                objective_ids = random.sample(runnable_objective_ids, len(input_paths))
+            except ValueError:
+                logger.error(
+                    f"Not enough objectives available ({len(runnable_objective_ids)}) for the number of input paths {len(input_paths)}"
+                )
+                raise
+
+        elif not objective_ids:
+            raise ValueError(
+                "Either objective_ids or automatic_objective_selection_for_testing: true in your config.yml must be specified when using the run_study command."
+            )
 
         run_study(
             config=config,
