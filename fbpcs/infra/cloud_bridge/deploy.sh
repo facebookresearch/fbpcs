@@ -15,6 +15,7 @@ usage() {
         [ -a, --account_id | Your AWS account ID]
         [ -p, --publisher_account_id | Publisher's AWS account ID]
         [ -v, --publisher_vpc_id | Publisher's VPC Id]
+        [ -e, --publisher_pce_instance_id | Publisher's PCE instance Id (i.e. a UUID without dash signs)]
         [ -s, --config_storage_bucket | optional. S3 bucket name for storing configs: tfstate/lambda function]
         [ -d, --data_storage_bucket | optional. S3 bucket name for storing lambda processed results]
         [ -b, --build_semi_automated_data_pipeline | optional. whether to build semi automated (manual upload) data pipeline ]"
@@ -43,6 +44,7 @@ while [ $# -gt 0 ]; do
         -a|--account_id) aws_account_id="$2" ;;
         -p|--publisher_account_id) publisher_aws_account_id="$2" ;;
         -v|--publisher_vpc_id) publisher_vpc_id="$2" ;;
+        -e|--publisher_pce_instance_id) publisher_pce_instance_id="$2" ;;
         -s|--config_storage_bucket) s3_bucket_for_storage="$2" ;;
         -d|--data_storage_bucket) s3_bucket_data_pipeline="$2" ;;
         -b|--build_semi_automated_data_pipeline) build_semi_automated_data_pipeline=true second_shift_flag=false ;;
