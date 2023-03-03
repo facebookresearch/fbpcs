@@ -112,6 +112,10 @@ public class DeploymentRunner extends Thread {
       deployCommand.add("-d");
       deployCommand.add(deployment.dataStorage);
     }
+    if (!StringUtils.isBlank(deployment.publisherPCEInstanceId)) {
+      deployCommand.add("-e");
+      deployCommand.add(deployment.publisherPCEInstanceId);
+    }
     if (deployment.enableSemiAutomatedDataIngestion) {
       deployCommand.add("-b");
     }
