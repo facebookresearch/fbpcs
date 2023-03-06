@@ -108,3 +108,4 @@ jobs:
     uses: ./.github/workflows/local_e2e_test.yml
     with:
       new_tag: ${{ github.sha }}
+    secrets: inherit # pass all secrets

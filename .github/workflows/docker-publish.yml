@@ -76,6 +76,7 @@ jobs:
       onedocker_image_tag: ${{ inputs.new_tag }}
       coordinator_image_tag: ${{ inputs.new_tag }}
       tracker_hash: ${{ inputs.tracker_hash }}
+    secrets: inherit # pass all secrets
 
   publish_onedocker_image:
     name: Publish the OneDocker Image After Successful Tests
