@@ -24,10 +24,21 @@ class UdpEncryptor {
       : udpEncryption_(std::move(udpEncryption)),
         udpThreadForMySelf_(nullptr),
         udpThreadForPeer_(nullptr),
-        chunkSize_(chunkSize) {}
+        chunkSize_(chunkSize),
+        bufferIndex_(0),
+        bufferForMyDataInLoading_{
+            std::make_unique<std::vector<std::vector<unsigned char>>>(
+                chunkSize_)},
+        bufferForMyDataInProcessing_(
+            std::make_unique<std::vector<std::vector<unsigned char>>>(
+                chunkSize_)) {}
 
   // load a line that is to be processed later.
   void pushOneLineFromMe(std::vector<unsigned char>&& serializedLine);
+
+  // load a number of lines that is to be processed later.
+  void pushLinesFromMe(
+      std::vector<std::vector<unsigned char>>&& serializedLines);
 
   // set the config for peer's data.
   void setPeerConfig(
@@ -37,13 +48,21 @@ class UdpEncryptor {
 
   EncryptionResuts getEncryptionResults() const;
 
-  std::vector<__m128i> getExpandedKey() const;
+  std::vector<__m128i> getExpandedKey();
 
  private:
+  void processDataInBuffer();
+
   std::unique_ptr<UdpEncryption> udpEncryption_;
   std::unique_ptr<std::thread> udpThreadForMySelf_;
   std::unique_ptr<std::thread> udpThreadForPeer_;
   size_t chunkSize_;
+
+  size_t bufferIndex_;
+  std::unique_ptr<std::vector<std::vector<unsigned char>>>
+      bufferForMyDataInLoading_;
+  std::unique_ptr<std::vector<std::vector<unsigned char>>>
+      bufferForMyDataInProcessing_;
 };
 
 } // namespace unified_data_process
