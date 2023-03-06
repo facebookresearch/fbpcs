@@ -73,7 +73,8 @@ jobs:
     needs: build_image
     uses: ./.github/workflows/local_e2e_test.yml
     with:
-      new_tag: ${{ inputs.new_tag }}
+      onedocker_image_tag: ${{ inputs.new_tag }}
+      coordinator_image_tag: ${{ inputs.new_tag }}
       tracker_hash: ${{ inputs.tracker_hash }}
 
   publish_onedocker_image:
