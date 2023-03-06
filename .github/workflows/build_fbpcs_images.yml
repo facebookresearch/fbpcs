@@ -3,10 +3,15 @@ name: Build and Publish Data Processing and EMP Games Docker Images
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 env:
   FBPCF_VERSION: 2.1.117  # Please also update line 29 in .github/workflows/docker-publish.yml
   REGISTRY: ghcr.io
+  LOCAL_IMAGE_NAME: fbpcs/onedocker/test
+  RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
+  REGISTRY_URL: ghcr.io/facebookresearch/fbpcs
 
 jobs:
   output_version:
@@ -37,3 +42,69 @@ jobs:
       tag: latest
       fbpcf_version: ${{needs.output_version.outputs.fbpcf_version}}
       push_to_registry: true
+
+  build_test_onedocker_image:
+    name: Build the bundled test version of the onedocker image
+    needs: [build_and_publish_data_processing_image, build_and_publish_emp_games_image]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-onedocker-test-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-onedocker-test
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull EMP Games Image
+        run: |
+          docker pull ${{ env.REGISTRY_URL }}/emp-games:${{ github.sha }}
+          docker tag ${{ env.REGISTRY_URL }}/emp-games:${{ github.sha }} fbpcs/emp-games:${{ github.sha }}
+
+      - name: Pull Data Processing Image
+        run: |
+          docker pull ${{ env.REGISTRY_URL }}/data-processing:${{ github.sha }}
+          docker tag ${{ env.REGISTRY_URL }}/data-processing:${{ github.sha }} fbpcs/data-processing:${{ github.sha }}
+
+      - name: Build Image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: docker/onedocker/test/Dockerfile.ubuntu
+          tags: |
+            ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            tag=latest
+            os_release=20.04
+          push: true
+          load: false
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      # This ugly bit is necessary or else our cache will grow forever
+      # until it hits GitHub's limit of 5GB.
+      # Temp fix: T135482742
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  test_onedocker_image:
+    name: Run local tests on OneDocker Image
+    uses: ./.github/workflows/local_e2e_test.yml
+    with:
+      new_tag: ${{ github.sha }}
