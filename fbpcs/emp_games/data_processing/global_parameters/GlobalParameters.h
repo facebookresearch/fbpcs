@@ -21,6 +21,14 @@
 
 namespace global_parameters {
 
+inline const std::string KAdvRowCount = "Advertiser_Row_Count";
+inline const std::string KPubRowCount = "Publisher_Row_Count";
+
+inline const std::string KAdvDataWidth = "Advertiser_Data_Width";
+inline const std::string KPubDataWidth = "Publisher_Data_Width";
+
+inline const std::string KMatchedUserCount = "Matched_User_Count";
+
 using GlobalParameterType =
     boost::variant<int32_t, std::unordered_map<int32_t, int32_t>>;
 
