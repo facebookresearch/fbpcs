@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <folly/experimental/coro/Task.h>
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/UdpEncryptor.h"
 
 namespace unified_data_process {
@@ -18,7 +19,7 @@ class UdpEncryptorApp {
   UdpEncryptorApp(std::unique_ptr<UdpEncryptor> encryptor, bool amIPublisher)
       : encryptor_(std::move(encryptor)), amIPublisher_(amIPublisher) {}
 
-  void invokeUdpEncryption(
+  folly::coro::Task<void> invokeUdpEncryption(
       const std::vector<std::string>& indexFiles,
       const std::vector<std::string>& serializedDataFiles,
       const std::string& globalParameters,
@@ -26,11 +27,12 @@ class UdpEncryptorApp {
       const std::string& expandedKeyFile);
 
  private:
-  static std::vector<int32_t> readIndexFile(const std::string& fileName);
-  static std::vector<std::vector<unsigned char>> readDataFile(
+  static folly::coro::Task<std::vector<int32_t>> readIndexFile(
       const std::string& fileName);
+  static folly::coro::Task<std::vector<std::vector<unsigned char>>>
+  readDataFile(const std::string& fileName);
 
-  void processPeerData(
+  folly::coro::Task<void> processPeerData(
       const std::vector<std::string>& indexFiles,
       const std::string& globalParameterFile) const;
 

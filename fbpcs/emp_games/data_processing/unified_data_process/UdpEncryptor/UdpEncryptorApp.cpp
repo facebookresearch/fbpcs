@@ -19,29 +19,29 @@
 #include "fbpcf/mpc_std_lib/unified_data_process/data_processor/UdpUtil.h"
 #include "fbpcs/emp_games/data_processing/global_parameters/GlobalParameters.h"
 #include "folly/String.h"
+#include "folly/executors/CPUThreadPoolExecutor.h"
+#include "folly/experimental/coro/Collect.h"
 
 namespace unified_data_process {
 
-void UdpEncryptorApp::invokeUdpEncryption(
+folly::coro::Task<void> UdpEncryptorApp::invokeUdpEncryption(
     const std::vector<std::string>& indexFiles,
     const std::vector<std::string>& serializedDataFiles,
     const std::string& globalParameters,
     const std::string& dataFile,
     const std::string& expandedKeyFile) {
-  auto t = std::thread(
-      [this](
-          const std::vector<std::string>& indexFiles,
-          const std::string& globalParameters) {
-        processPeerData(indexFiles, globalParameters);
-      },
-      indexFiles,
-      globalParameters);
-  std::vector<std::future<std::vector<std::vector<unsigned char>>>> futures;
+  auto executor =
+      std::make_shared<folly::CPUThreadPoolExecutor>(serializedDataFiles.size() + 1);
+
+  auto task1 =
+      processPeerData(indexFiles, globalParameters).scheduleOn(executor.get());
+
+  std::vector<folly::coro::TaskWithExecutor<std::vector<std::vector<unsigned char>>>> tasks;
 
   for (size_t i = 1; i < serializedDataFiles.size(); i++) {
-    futures.push_back(
-        std::async(UdpEncryptorApp::readDataFile, serializedDataFiles.at(i)));
+    tasks.push_back(readDataFile(serializedDataFiles[i]).scheduleOn(executor.get()));
   }
+
   {
     // process the first file in main thread.
     auto reader = std::make_unique<fbpcf::io::BufferedReader>(
@@ -55,10 +55,12 @@ void UdpEncryptorApp::invokeUdpEncryption(
     }
     reader->close();
   }
-  for (auto& future : futures) {
-    encryptor_->pushLinesFromMe(future.get());
+
+  auto data = co_await folly::coro::collectAllRange(std::move(tasks));
+  for (auto& datum : data) {
+    encryptor_->pushLinesFromMe(std::move(datum));
   }
-  t.join();
+
   fbpcf::mpc_std_lib::unified_data_process::data_processor::
       writeEncryptionResultsToFile(
           encryptor_->getEncryptionResults(), dataFile);
@@ -66,7 +68,7 @@ void UdpEncryptorApp::invokeUdpEncryption(
       writeExpandedKeyToFile(encryptor_->getExpandedKey(), expandedKeyFile);
 }
 
-std::vector<int32_t> UdpEncryptorApp::readIndexFile(
+folly::coro::Task<std::vector<int32_t>> UdpEncryptorApp::readIndexFile(
     const std::string& fileName) {
   auto reader = std::make_unique<fbpcf::io::BufferedReader>(
       std::make_unique<fbpcf::io::FileReader>(fileName));
@@ -80,11 +82,11 @@ std::vector<int32_t> UdpEncryptorApp::readIndexFile(
     rst.push_back(stoi(data.at(1)));
   }
   reader->close();
-  return rst;
+  co_return rst;
 }
 
-std::vector<std::vector<unsigned char>> UdpEncryptorApp::readDataFile(
-    const std::string& fileName) {
+folly::coro::Task<std::vector<std::vector<unsigned char>>>
+UdpEncryptorApp::readDataFile(const std::string& fileName) {
   auto reader = std::make_unique<fbpcf::io::BufferedReader>(
       std::make_unique<fbpcf::io::FileReader>(fileName));
   reader->readLine(); // header, useless
@@ -95,22 +97,25 @@ std::vector<std::vector<unsigned char>> UdpEncryptorApp::readDataFile(
     rst.push_back(std::vector<unsigned char>(line.begin(), line.end()));
   }
   reader->close();
-  return rst;
+  co_return rst;
 }
 
-void UdpEncryptorApp::processPeerData(
+folly::coro::Task<void> UdpEncryptorApp::processPeerData(
     const std::vector<std::string>& indexFiles,
     const std::string& globalParameterFile) const {
-  std::vector<std::future<std::vector<int32_t>>> futures;
+  auto executor = std::make_shared<folly::CPUThreadPoolExecutor>(indexFiles.size());
+
+  std::vector<folly::coro::TaskWithExecutor<std::vector<int32_t>>> tasks;
   for (auto& file : indexFiles) {
-    futures.push_back(std::async(UdpEncryptorApp::readIndexFile, file));
+    tasks.push_back(readIndexFile(file).scheduleOn(executor.get()));
   }
+
+  auto results = co_await folly::coro::collectAllRange(std::move(tasks));
 
   auto globalParameters = global_parameters::readFromFile(globalParameterFile);
 
   std::vector<int32_t> indexes;
-  for (auto& future : futures) {
-    auto indexInFile = future.get();
+  for (auto& indexInFile : results) {
     indexes.insert(indexes.end(), indexInFile.begin(), indexInFile.end());
   }
   auto totalNumberOfPeerRows = boost::get<int32_t>(
