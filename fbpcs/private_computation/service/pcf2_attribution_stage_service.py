@@ -120,6 +120,9 @@ class PCF2AttributionStageService(PCF2BaseStageService):
                 "use_postfix": True,
                 "run_id": private_computation_instance.infra_config.run_id,
                 "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
+                "use_new_output_format": private_computation_instance.has_feature(
+                    PCSFeature.PRIVATE_ATTRIBUTION_REFORMATTED_OUTPUT
+                ),
                 **tls_args,
             }
 
