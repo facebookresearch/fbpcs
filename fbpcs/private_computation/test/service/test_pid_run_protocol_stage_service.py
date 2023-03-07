@@ -22,6 +22,7 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationInstanceStatus,
@@ -226,6 +227,122 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             "Appended StageStageInstance is not as expected",
         )
 
+    async def test_pid_run_protocol_stage_with_tls(self) -> None:
+        async def _run_sub_test(
+            pc_role: PrivateComputationRole,
+            multikey_enabled: bool,
+            run_id: Optional[str] = None,
+        ) -> None:
+            pid_protocol = (
+                PIDProtocol.UNION_PID_MULTIKEY
+                if self.test_num_containers == 1 and multikey_enabled
+                else PIDProtocol.UNION_PID
+            )
+            use_row_number = pid_should_use_row_numbers(
+                self.use_row_numbers, pid_protocol
+            )
+            pc_instance = self.create_sample_pc_instance(
+                pc_role,
+                pid_use_row_numbers=use_row_number,
+                pid_protocol=pid_protocol,
+                multikey_enabled=multikey_enabled,
+                run_id=run_id,
+                use_tls=True,
+            )
+            stage_svc = PIDRunProtocolStageService(
+                storage_svc=self.mock_storage_svc,
+                onedocker_svc=self.mock_onedocker_svc,
+                onedocker_binary_config_map=self.onedocker_binary_config_map,
+            )
+            containers = [
+                self.create_container_instance(i)
+                for i in range(self.test_num_containers)
+            ]
+            self.mock_onedocker_svc.start_containers = MagicMock(
+                return_value=containers
+            )
+            self.mock_onedocker_svc.wait_for_pending_containers = AsyncMock(
+                return_value=containers
+            )
+            updated_pc_instance = await stage_svc.run_async(
+                pc_instance=pc_instance,
+                server_certificate_provider=NullCertificateProvider(),
+                ca_certificate_provider=NullCertificateProvider(),
+                server_certificate_path="tls/server_certificate.pem",
+                ca_certificate_path="tls/ca_certificate.pem",
+                server_ips=self.server_ips,
+                server_hostnames=["node0.meta.com"]
+                if pc_role is PrivateComputationRole.PARTNER
+                else None,
+            )
+            binary_name = PIDRunProtocolBinaryService.get_binary_name(
+                pid_protocol, pc_role
+            )
+            binary_config = self.onedocker_binary_config_map[binary_name]
+            if pc_role is PrivateComputationRole.PUBLISHER:
+                expected_env_vars = generate_env_vars_dict(
+                    repository_path=binary_config.repository_path,
+                    RUST_LOG="info",
+                )
+            else:
+                expected_env_vars = generate_env_vars_dict(
+                    repository_path=binary_config.repository_path,
+                    RUST_LOG="info",
+                    SERVER_HOSTNAME="node0.meta.com",
+                    IP_ADDRESS="192.0.2.0",
+                )
+            args_str_expect = self.get_args_expect(
+                pc_role,
+                pid_protocol,
+                self.use_row_numbers,
+                run_id,
+                use_tls=True,
+            )
+            # test the start_containers is called with expected parameters
+            self.mock_onedocker_svc.start_containers.assert_called_with(
+                package_name=binary_name,
+                version=binary_config.binary_version,
+                cmd_args_list=args_str_expect,
+                timeout=DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
+                env_vars=[expected_env_vars],
+                container_type=None,
+                certificate_request=None,
+            )
+            # test the return value is as expected
+            self.assertEqual(
+                len(updated_pc_instance.infra_config.instances),
+                self.test_num_containers,
+                "Failed to add the StageStageInstance into pc_instance",
+            )
+            stage_state_expect = StageStateInstance(
+                pc_instance.infra_config.instance_id,
+                pc_instance.current_stage.name,
+                containers=containers,
+            )
+            stage_state_actual = updated_pc_instance.infra_config.instances[0]
+            self.assertEqual(
+                stage_state_actual,
+                stage_state_expect,
+                "Appended StageStageInstance is not as expected",
+            )
+
+        data_tests = itertools.product(
+            [PrivateComputationRole.PUBLISHER, PrivateComputationRole.PARTNER],
+            [True, False],
+            [None, "2621fda2-0eca-11ed-861d-0242ac120002"],
+        )
+        for pc_role, multikey_enabled, test_run_id in data_tests:
+            with self.subTest(
+                pc_role=pc_role,
+                multikey_enabled=multikey_enabled,
+                test_run_id=test_run_id,
+            ):
+                await _run_sub_test(
+                    pc_role=pc_role,
+                    multikey_enabled=multikey_enabled,
+                    run_id=test_run_id,
+                )
+
     def create_sample_pc_instance(
         self,
         pc_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
@@ -235,6 +352,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         pid_protocol: PIDProtocol = DEFAULT_PID_PROTOCOL,
         run_id: Optional[str] = None,
         server_domain: Optional[str] = None,
+        use_tls: Optional[bool] = False,
     ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id=self.pc_instance_id,
@@ -249,6 +367,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             run_id=run_id,
             server_domain=server_domain,
+            pcs_features=set() if not use_tls else {PCSFeature.PCF_TLS},
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
@@ -282,35 +401,72 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         protocol: PIDProtocol,
         use_row_numbers: bool,
         test_run_id: Optional[str] = None,
+        use_tls: Optional[bool] = False,
     ) -> List[str]:
         arg_ls = []
         if (
             pc_role is PrivateComputationRole.PUBLISHER
             and protocol is PIDProtocol.UNION_PID
+            and not use_tls
         ):
             arg_ls.append(
                 "--host 0.0.0.0:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_publisher_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0 --metric-path out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0_metrics --no-tls --use-row-numbers"
             )
         elif (
             pc_role is PrivateComputationRole.PUBLISHER
+            and protocol is PIDProtocol.UNION_PID
+            and use_tls
+        ):
+            arg_ls.append(
+                "--host 0.0.0.0:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_publisher_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0 --metric-path out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0_metrics --use-row-numbers --tls-cert tls/server_certificate.pem --tls-key tls/private_key.pem"
+            )
+        elif (
+            pc_role is PrivateComputationRole.PUBLISHER
             and protocol is PIDProtocol.UNION_PID_MULTIKEY
+            and not use_tls
         ):
             arg_ls.append(
                 "--host 0.0.0.0:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_publisher_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0 --metric-path out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0_metrics --no-tls"
             )
         elif (
+            pc_role is PrivateComputationRole.PUBLISHER
+            and protocol is PIDProtocol.UNION_PID_MULTIKEY
+            and use_tls
+        ):
+            arg_ls.append(
+                "--host 0.0.0.0:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_publisher_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0 --metric-path out/test_instance_123_out_dir/pid_stage/out.csv_publisher_pid_matched_0_metrics --tls-cert tls/server_certificate.pem --tls-key tls/private_key.pem"
+            )
+        elif (
             pc_role is PrivateComputationRole.PARTNER
             and protocol is PIDProtocol.UNION_PID
+            and not use_tls
         ):
             arg_ls.append(
                 "--company http://192.0.2.0:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_pid_matched_0 --no-tls --use-row-numbers"
             )
         elif (
             pc_role is PrivateComputationRole.PARTNER
+            and protocol is PIDProtocol.UNION_PID
+            and use_tls
+        ):
+            arg_ls.append(
+                "--company https://node0.meta.com:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_pid_matched_0 --use-row-numbers --tls-ca tls/ca_certificate.pem"
+            )
+        elif (
+            pc_role is PrivateComputationRole.PARTNER
             and protocol is PIDProtocol.UNION_PID_MULTIKEY
+            and not use_tls
         ):
             arg_ls.append(
                 "--company http://192.0.2.0:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_pid_matched_0 --no-tls"
+            )
+        elif (
+            pc_role is PrivateComputationRole.PARTNER
+            and protocol is PIDProtocol.UNION_PID_MULTIKEY
+            and use_tls
+        ):
+            arg_ls.append(
+                "--company https://node0.meta.com:15200 --input out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_prepared_0 --output out/test_instance_123_out_dir/pid_stage/out.csv_advertiser_pid_matched_0 --tls-ca tls/ca_certificate.pem"
             )
 
         modified_arg_ls = []
