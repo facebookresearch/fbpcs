@@ -15,6 +15,7 @@ from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
     PIDRunProtocolBinaryService,
+    TlsArgs,
 )
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
 from fbpcs.infra.certificate.private_key import PrivateKeyReferenceProvider
@@ -28,6 +29,12 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
     PrivateComputationRole,
 )
+from fbpcs.private_computation.service.argument_helper import (
+    get_tls_arguments,
+    TLS_ARG_KEY_CA_CERT_PATH,
+    TLS_ARG_KEY_PRIVATE_CERT_PATH,
+    TLS_ARG_KEY_SERVER_CERT_PATH,
+)
 from fbpcs.private_computation.service.constants import DEFAULT_SERVER_PORT_NUMBER
 from fbpcs.private_computation.service.pid_utils import (
     get_metrics_filepath,
@@ -39,6 +46,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 from fbpcs.private_computation.service.utils import (
     gen_tls_server_hostnames_for_publisher,
     generate_env_vars_dict,
+    generate_env_vars_dicts_list,
     get_pc_status_from_stage_state,
     stop_stage_service,
 )
@@ -79,20 +87,37 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
 
         Args:
             pc_instance: the private computation instance to start pid run protocol stage service
-            server_certificate_providder: ignored
-            ca_certificate_provider: ignored
-            server_certificate_path: ignored
-            ca_certificate_path: ignored
+            server_certificate_provider: A provider class to get TLS server certificate
+            ca_certificate_provider: A provider class to get TLS CA certificate
+            server_certificate_path: The path to write server certificate on a container
+            ca_certificate_path: The path to write CA certificate on a container
             server_ips: only used by partner to get server hostnames
-            server_hostnames: ignored
-            server_private_key_ref_provider: ignored
+            server_hostnames: only used by the partner role
+            server_private_key_ref_provider: Provides a reference to the server private key, if applicable
         Returns:
             An updated version of pc_instance
         """
         self._logger.info(f"[{self}] Starting PIDRunProtocolStageService")
+        tls_args = get_tls_arguments(
+            pc_instance.has_feature(PCSFeature.PCF_TLS),
+            server_certificate_path,
+            ca_certificate_path,
+        )
         container_instances = await self.start_pid_run_protocol_service(
             pc_instance=pc_instance,
+            tls_args=TlsArgs(
+                tls_args["use_tls"],
+                tls_args[TLS_ARG_KEY_CA_CERT_PATH],
+                tls_args[TLS_ARG_KEY_SERVER_CERT_PATH],
+                tls_args[TLS_ARG_KEY_PRIVATE_CERT_PATH],
+            ),
+            server_certificate_provider=server_certificate_provider,
+            ca_certificate_provider=ca_certificate_provider,
+            server_certificate_path=server_certificate_path,
+            ca_certificate_path=ca_certificate_path,
             server_ips=server_ips,
+            server_hostnames=server_hostnames,
+            server_private_key_ref_provider=server_private_key_ref_provider,
         )
         server_uris = gen_tls_server_hostnames_for_publisher(
             server_domain=pc_instance.infra_config.server_domain,
@@ -126,7 +151,14 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
     async def start_pid_run_protocol_service(
         self,
         pc_instance: PrivateComputationInstance,
-        server_ips: Optional[List[str]],
+        tls_args: TlsArgs,
+        server_certificate_provider: CertificateProvider,
+        ca_certificate_provider: CertificateProvider,
+        server_certificate_path: str,
+        ca_certificate_path: str,
+        server_ips: Optional[List[str]] = None,
+        server_hostnames: Optional[List[str]] = None,
+        server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
         port: int = DEFAULT_SERVER_PORT_NUMBER,
     ) -> List[ContainerInstance]:
         """start pid run protocol service and spine up the container instances"""
@@ -139,7 +171,13 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         pc_role = pc_instance.infra_config.role
         pid_protocol = pc_instance.product_config.common.pid_protocol
         metric_paths = self.get_metric_paths(pc_role, output_path, num_shards)
-        server_hostnames = self.get_server_hostnames(pc_role, server_ips, num_shards)
+        server_endpoints = self.get_server_hostnames(
+            pc_role,
+            server_ips,
+            server_hostnames,
+            num_shards,
+            pc_instance.has_feature(PCSFeature.PCF_TLS),
+        )
         use_row_numbers = pc_instance.product_config.common.pid_use_row_numbers
         if use_row_numbers:
             logging.info("use-row-numbers is enabled for Private ID")
@@ -150,9 +188,11 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
                 input_path=get_sharded_filepath(input_path, shard),
                 output_path=get_sharded_filepath(output_path, shard),
                 port=port,
+                tls_args=tls_args,
+                pc_role=pc_role,
                 metric_path=metric_paths[shard] if metric_paths else None,
                 use_row_numbers=use_row_numbers,
-                server_hostname=server_hostnames[shard] if server_hostnames else None,
+                server_endpoint=server_endpoints[shard] if server_endpoints else None,
                 run_id=pc_instance.infra_config.run_id,
             )
             args_list.append(args_per_shard)
@@ -162,10 +202,27 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             pid_protocol, pc_role
         )
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
-        env_vars = generate_env_vars_dict(
-            repository_path=onedocker_binary_config.repository_path,
-            RUST_LOG="info",
-        )
+        env_vars = None
+        env_vars_list = None
+        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+            env_vars_list = generate_env_vars_dicts_list(
+                num_containers=num_shards,
+                repository_path=onedocker_binary_config.repository_path,
+                server_certificate_provider=server_certificate_provider,
+                server_certificate_path=server_certificate_path,
+                ca_certificate_provider=ca_certificate_provider,
+                ca_certificate_path=ca_certificate_path,
+                server_ip_addresses=server_ips,
+                server_hostnames=server_hostnames,
+                server_private_key_ref_provider=server_private_key_ref_provider,
+            )
+            for envs in env_vars_list:
+                envs.update({"RUST_LOG": "info"})
+        else:
+            env_vars = generate_env_vars_dict(
+                repository_path=onedocker_binary_config.repository_path,
+                RUST_LOG="info",
+            )
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
@@ -187,6 +244,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             container_type=container_type,
+            env_vars_list=env_vars_list,
         )
 
     @classmethod
@@ -203,18 +261,30 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         cls,
         pc_role: PrivateComputationRole,
         server_ips: Optional[List[str]],
+        server_hostnames: Optional[List[str]],
         num_shards: int,
+        enabled_tls: bool,
     ) -> Optional[List[str]]:
         # only partner needs server_hostnames
         if pc_role is PrivateComputationRole.PUBLISHER:
             return None
-        if not server_ips:
-            raise ValueError("Partner missing server_ips")
-        if len(server_ips) != num_shards:
-            raise ValueError(
-                f"Supplied {len(server_ips)} server_hostnames, but num_shards == {num_shards} (these should agree)"
-            )
-        return [f"http://{ip}" for ip in server_ips]
+
+        if enabled_tls:
+            if not server_hostnames:
+                raise ValueError("Partner missing server_hostnames")
+            if len(server_hostnames) != num_shards:
+                raise ValueError(
+                    f"Supplied {len(server_hostnames)} server_hostnames, but num_shards == {num_shards} (these should agree)"
+                )
+            return [f"https://{hostname}" for hostname in server_hostnames]
+        else:
+            if not server_ips:
+                raise ValueError("Partner missing server_ips")
+            if len(server_ips) != num_shards:
+                raise ValueError(
+                    f"Supplied {len(server_ips)} server_hostnames, but num_shards == {num_shards} (these should agree)"
+                )
+            return [f"http://{ip}" for ip in server_ips]
 
     def stop_service(
         self,

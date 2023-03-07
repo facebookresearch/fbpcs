@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from dataclasses import dataclass
 from typing import Optional
 
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
@@ -17,22 +18,32 @@ from fbpcs.private_computation.service.run_binary_base_service import (
 )
 
 
+@dataclass
+class TlsArgs:
+    use_tls: bool
+    ca_cert_path: Optional[str] = None
+    server_cert_path: Optional[str] = None
+    private_key_path: Optional[str] = None
+
+
 class PIDRunProtocolBinaryService(RunBinaryBaseService):
     @staticmethod
     def build_args(
         input_path: str,
         output_path: str,
         port: int,
+        tls_args: TlsArgs,
+        pc_role: PrivateComputationRole,
         use_row_numbers: bool = False,
-        server_hostname: Optional[str] = None,
+        server_endpoint: Optional[str] = None,
         metric_path: Optional[str] = None,
         run_id: Optional[str] = None,
     ) -> str:
 
         cmd_ls = []
 
-        if server_hostname:
-            cmd_ls.append(f"--company {server_hostname}:{port}")
+        if server_endpoint:
+            cmd_ls.append(f"--company {server_endpoint}:{port}")
         else:
             cmd_ls.append(f"--host 0.0.0.0:{port}")
 
@@ -45,11 +56,22 @@ class PIDRunProtocolBinaryService(RunBinaryBaseService):
 
         if metric_path is not None:
             cmd_ls.append(f"--metric-path {metric_path}")
-        # later will support TLS/Transport Layer Security
-        cmd_ls.append("--no-tls")
+
+        if not tls_args.use_tls:
+            cmd_ls.append("--no-tls")
+
         # later will support use-rowk-number feature
         if use_row_numbers:
             cmd_ls.append("--use-row-numbers")
+
+        if tls_args.ca_cert_path and pc_role is PrivateComputationRole.PARTNER:
+            cmd_ls.append(f"--tls-ca {tls_args.ca_cert_path}")
+
+        if tls_args.server_cert_path and pc_role is PrivateComputationRole.PUBLISHER:
+            cmd_ls.append(f"--tls-cert {tls_args.server_cert_path}")
+
+        if tls_args.private_key_path and pc_role is PrivateComputationRole.PUBLISHER:
+            cmd_ls.append(f"--tls-key {tls_args.private_key_path}")
 
         if run_id is not None:
             cmd_ls.append(f"--run_id {run_id}")
