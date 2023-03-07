@@ -97,35 +97,71 @@ class RunBinaryBaseService:
         return containers
 
     @staticmethod
+    def _remove_finished_containers_from_container_ids(
+        onedocker_svc: OneDockerService,
+        containers: List[Optional[ContainerInstance]],
+        container_ids: List[str],
+        finished_containers: List[Optional[ContainerInstance]],
+    ) -> List[str]:
+        end_states = {
+            ContainerInstanceStatus.COMPLETED,
+            ContainerInstanceStatus.FAILED,
+        }
+        container_id_set = set(container_ids)
+
+        filtered_containers = filter(
+            lambda container: container.status in end_states if container else False,
+            containers,
+        )
+        for container in filtered_containers:
+            # pyre-ignore[16] This is not actually an Optional[ContainerInstance] here since we filter out None in the filter function on line 112.
+            if container.status is not ContainerInstanceStatus.COMPLETED:
+                onedocker_svc.logger.warning(
+                    # pyre-ignore[16] This is not actually an Optional[ContainerInstance] here since we filter out None in the filter function on line 112.
+                    f"Container {container.instance_id} failed with exit code {container.exit_code}."
+                )
+            finished_containers.append(container)
+            container_id_set.remove(container.instance_id)
+        return list(container_id_set)
+
+    @staticmethod
     async def wait_for_containers_async(
         onedocker_svc: OneDockerService,
         containers: List[ContainerInstance],
         poll: int = DEFAULT_WAIT_FOR_CONTAINER_POLL,
     ) -> List[ContainerInstance]:
-        updated_containers = containers.copy()
-        end_states = {
-            ContainerInstanceStatus.COMPLETED,
-            ContainerInstanceStatus.FAILED,
-        }
-        for i, container in enumerate(updated_containers):
-            instance_id = container.instance_id
-            onedocker_svc.logger.info(
-                f"Waiting for container {instance_id} to complete"
+        """Wait for the requested containers to finish.
+
+        Args:
+            onedocker_svc: An instance of OneDockerService to query the container statuses
+            containers: A list of ContainerInstances to wait to finish.
+            poll: Number of seconds to wait between polls
+
+        Returns:
+            A list of ContainerInstances whose status is COMPLETED or FAILED
+        """
+        container_ids = [container.instance_id for container in containers]
+        finished_containers = []
+
+        updated_containers = onedocker_svc.get_containers(container_ids)
+        pending_container_ids = (
+            RunBinaryBaseService._remove_finished_containers_from_container_ids(
+                onedocker_svc, updated_containers, container_ids, finished_containers
             )
-            status = container.status
-            while status not in end_states:
-                await asyncio.sleep(poll)
-                container = onedocker_svc.get_containers([instance_id])[0]
-                if not container:
-                    break
-                status = container.status
-                updated_containers[i] = container
-            if status is not ContainerInstanceStatus.COMPLETED:
-                onedocker_svc.logger.warning(
-                    f"Container {instance_id} failed with status {status}"
+        )
+        while pending_container_ids:
+            await asyncio.sleep(poll)
+            updated_containers = onedocker_svc.get_containers(pending_container_ids)
+            pending_container_ids = (
+                RunBinaryBaseService._remove_finished_containers_from_container_ids(
+                    onedocker_svc,
+                    updated_containers,
+                    pending_container_ids,
+                    finished_containers,
                 )
-                return updated_containers
-        return updated_containers
+            )
+
+        return finished_containers
 
     @classmethod
     def get_containers_to_start(
