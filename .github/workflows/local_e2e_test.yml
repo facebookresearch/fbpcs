@@ -16,6 +16,9 @@ on:
         required: false
         type: string
 
+env:
+  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator
+
 jobs:
   e2e_test:
     name: Run End to End Tests
@@ -33,7 +36,7 @@ jobs:
       - name: Get AWS Session name
         id: aws_session_name
         run: |
-          echo session_name=$(echo publish-onedocker-tests-${{ inputs.new_tag }} | tr " " "-") >> $GITHUB_OUTPUT
+          echo session_name=$(echo publish-onedocker-tests-${{ inputs.onedocker_image_tag }} | tr " " "-") >> $GITHUB_OUTPUT
 
       - name: Set AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -45,11 +48,11 @@ jobs:
 
       - name: Pull coordinator image
         run: |
-          docker pull ${{ env.COORDINATOR_IMAGE }}:${{ inputs.new_tag }}
+          docker pull ${{ env.COORDINATOR_IMAGE }}:${{ inputs.coordinator_image_tag }}
 
       ### Private Lift and Attribution E2E tests
       - name: End to end testing
         timeout-minutes: 90
         run: |
-          docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_DEFAULT_REGION --rm -v "instances":"/instances" -v "$(realpath fbpcs_e2e_aws.yml):/home/pcs/pl_coordinator_env/fbpcs_e2e_aws.yml" -v "$(realpath bolt_config.yml):/home/pcs/pl_coordinator_env/bolt_config.yml" ${{ env.COORDINATOR_IMAGE }}:${{ inputs.new_tag }} python3.8 -m fbpcs.private_computation_cli.private_computation_cli bolt_e2e --bolt_config="bolt_config.yml"
+          docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_DEFAULT_REGION --rm -v "instances":"/instances" -v "$(realpath fbpcs_e2e_aws.yml):/home/pcs/pl_coordinator_env/fbpcs_e2e_aws.yml" -v "$(realpath bolt_config.yml):/home/pcs/pl_coordinator_env/bolt_config.yml" ${{ env.COORDINATOR_IMAGE }}:${{ inputs.coordinator_image_tag }} python3.8 -m fbpcs.private_computation_cli.private_computation_cli bolt_e2e --bolt_config="bolt_config.yml"
         working-directory: fbpcs/tests/github/
