@@ -3,9 +3,6 @@ name: Publish Coordinator Image
 on:
   workflow_dispatch:
     inputs:
-      name:
-        description: "Manually running this workflow to build a coordinator image"
-        default: "Run"
       new_tag:
         description: "The new tag of the docker image"
         required: false
@@ -14,7 +11,18 @@ on:
       tracker_hash:
         description: "[Internal usage] Used for tracking workflow job status within Meta infra"
         required: false
-        type: str
+        type: string
+  workflow_call:
+    inputs:
+      new_tag:
+        description: "The new tag of the docker image"
+        required: false
+        type: string
+        default: latest-build
+      tracker_hash:
+        description: "[Internal usage] Used for tracking workflow job status within Meta infra"
+        required: false
+        type: string
 
 env:
   DISTRO: ubuntu

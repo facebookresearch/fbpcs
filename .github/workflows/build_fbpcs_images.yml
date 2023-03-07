@@ -23,6 +23,12 @@ jobs:
       - id: set_version
         run: echo "version=${{ env.FBPCF_VERSION }}" >> $GITHUB_OUTPUT
 
+  build_coordinator_image:
+    name: Build the Coordinator image
+    uses: ./.github/workflows/coordinator-publish.yml
+    with:
+      new_tag: ${{ github.sha }}
+
   build_and_publish_data_processing_image:
     name: Build and Publish Data Processing Image
     needs: output_version
@@ -105,7 +111,9 @@ jobs:
 
   test_onedocker_image:
     name: Run local tests on OneDocker Image
+    needs: [build_coordinator_image, build_test_onedocker_image]
     uses: ./.github/workflows/local_e2e_test.yml
     with:
-      new_tag: ${{ github.sha }}
+      onedocker_image_tag: ${{ github.sha }}
+      coordinator_image_tag: ${{ github.sha }}
     secrets: inherit # pass all secrets
