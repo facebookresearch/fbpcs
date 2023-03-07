@@ -15,6 +15,7 @@ from fbpcs.private_computation.entity.infra_config import (
     InfraConfig,
     PrivateComputationGameType,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
     PrivateComputationRole,
@@ -123,13 +124,13 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             "use_xor_encryption": True,
             "use_postfix": True,
             "log_cost": True,
-            "use_new_output_format": False,
             "run_id": self.run_id,
             "use_tls": False,
             "ca_cert_path": "",
             "server_cert_path": "",
             "private_key_path": "",
             "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
+            "use_new_output_format": False,
         }
         test_game_args = [
             {
@@ -155,7 +156,60 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             actual_value,
         )
 
-    def _create_pc_instance(self) -> PrivateComputationInstance:
+    def test_get_game_args_with_feature_flags(self) -> None:
+        private_computation_instance = self._create_pc_instance(
+            [PCSFeature.PRIVATE_ATTRIBUTION_REFORMATTED_OUTPUT]
+        )
+
+        common_game_args = {
+            "input_base_path": private_computation_instance.data_processing_output_path,
+            "input_base_path_secret_share": private_computation_instance.pcf2_attribution_stage_output_base_path,
+            "output_base_path": private_computation_instance.pcf2_aggregation_stage_output_base_path,
+            "num_files": private_computation_instance.infra_config.num_files_per_mpc_container,
+            "concurrency": private_computation_instance.infra_config.mpc_compute_concurrency,
+            "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
+            "max_num_conversions": private_computation_instance.product_config.common.padding_size,
+            # pyre-fixme[16]: Optional type has no attribute `value`.
+            "attribution_rules": private_computation_instance.product_config.attribution_rule.value,
+            # pyre-fixme[16]: Optional type has no attribute `value`.
+            "aggregators": private_computation_instance.product_config.aggregation_type.value,
+            "use_xor_encryption": True,
+            "use_postfix": True,
+            "log_cost": True,
+            "run_id": self.run_id,
+            "use_tls": False,
+            "ca_cert_path": "",
+            "server_cert_path": "",
+            "private_key_path": "",
+            "log_cost_s3_bucket": private_computation_instance.infra_config.log_cost_bucket,
+            "use_new_output_format": True,
+            "pc_feature_flags": "private_attribution_reformatted_output",
+        }
+        test_game_args = [
+            {
+                **common_game_args,
+                "run_name": f"{private_computation_instance.infra_config.instance_id}_{GameNames.PCF2_AGGREGATION.value}_0"
+                if self.stage_svc._log_cost_to_s3
+                else "",
+                "file_start_index": 0,
+            },
+            {
+                **common_game_args,
+                "run_name": f"{private_computation_instance.infra_config.instance_id}_{GameNames.PCF2_AGGREGATION.value}_1"
+                if self.stage_svc._log_cost_to_s3
+                else "",
+                "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
+            },
+        ]
+        actual_value = self.stage_svc.get_game_args(
+            private_computation_instance, "", ""
+        )
+        self.assertEqual(
+            test_game_args,
+            actual_value,
+        )
+
+    def _create_pc_instance(self, pcs_features=[]) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
@@ -170,6 +224,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             run_id=self.run_id,
             log_cost_bucket="test_log_cost_bucket",
+            pcs_features=pcs_features,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
