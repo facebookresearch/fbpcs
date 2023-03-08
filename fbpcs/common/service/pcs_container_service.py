@@ -98,35 +98,18 @@ class PCSContainerService(ContainerService):
 
         return instances
 
-    def _map_container_instance_to_pcs_container_instance(
-        self, instance_id: str, instance: ContainerInstance
-    ) -> PCSContainerInstance:
-        log_url = None
-        if self.log_retriever:
-            log_url = self.log_retriever.get_log_url(instance.instance_id)
-        return PCSContainerInstance.from_container_instance(instance, log_url)
-
     def get_instance(self, instance_id: str) -> Optional[ContainerInstance]:
         instance = self.inner_container_service.get_instance(instance_id)
         if instance is not None:
-            return self._map_container_instance_to_pcs_container_instance(
-                instance_id, instance
-            )
+            log_url = None
+            if self.log_retriever:
+                log_url = self.log_retriever.get_log_url(instance_id)
+            return PCSContainerInstance.from_container_instance(instance, log_url)
 
     def get_instances(
         self, instance_ids: List[str]
     ) -> List[Optional[ContainerInstance]]:
-        pcs_container_instances = []
-        instances = self.inner_container_service.get_instances(instance_ids)
-        for instance in instances:
-            if instance:
-                pcs_container_instances.append(
-                    self._map_container_instance_to_pcs_container_instance(
-                        instance.instance_id, instance
-                    )
-                )
-
-        return pcs_container_instances
+        return [self.get_instance(instance_id) for instance_id in instance_ids]
 
     def cancel_instance(self, instance_id: str) -> None:
         return self.inner_container_service.cancel_instance(instance_id)
