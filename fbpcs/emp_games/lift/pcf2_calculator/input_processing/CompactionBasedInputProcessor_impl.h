@@ -185,7 +185,7 @@ void CompactionBasedInputProcessor<schedulerId>::extractCompactedData(
       liftGameProcessedData_,
       controlPopulation_,
       cohortGroupIds_,
-      breakdownGroupIds_,
+      breakdownBitGroupIds_,
       publisherDataShares,
       partnerDataShares,
       numConversionsPerUser_);
