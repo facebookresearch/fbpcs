@@ -7,14 +7,14 @@ jobs:
     # publisher player args
     publisher:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input-backup-2023-03-06.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/publisher_expected_result.json
     # partner player args
     partner:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input-original-2023-03-03.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
@@ -30,7 +30,7 @@ jobs:
     # publisher player args
     publisher:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input-backup-2023-03-06.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       # publisher has all 0s
@@ -38,7 +38,7 @@ jobs:
     # partner player args
     partner:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input-original-2023-03-03.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
@@ -56,14 +56,14 @@ jobs:
     # publisher player args
     publisher:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input-backup-2023-03-06.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/publisher_expected_result_pcf2.json
     # partner player args
     partner:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input-original-2023-03-03.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
@@ -80,14 +80,14 @@ jobs:
     # publisher player args
     publisher:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input-backup-2023-03-06.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/publisher_expected_result_pcf2.json
     # partner player args
     partner:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input-original-2023-03-03.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
@@ -104,14 +104,14 @@ jobs:
     # publisher player args
     publisher:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input-backup-2023-03-06.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/publisher_expected_result_pcf2.json
     # partner player args
     partner:
       # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input-original-2023-03-03.csv
       # optional args #
       output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json
