@@ -95,16 +95,20 @@ class InputData {
     return purchaseValueSquaredArrays_;
   }
 
-  const std::vector<uint32_t>& getGroupIds() const {
-    return groupIds_;
+  const std::vector<uint32_t>& getPartnerCohortIds() const {
+    return partnerCohortIds_;
   }
 
   const std::vector<uint32_t>& getBreakdownIds() const {
     return breakdownIds_;
   }
 
-  int64_t getNumGroups() const {
-    return numGroups_;
+  int64_t getNumPublisherBreakdowns() const {
+    return numPublisherBreakdowns;
+  }
+
+  int64_t getNumPartnerCohorts() const {
+    return numPartnerCohorts_;
   }
 
   int64_t getNumBitsForValue() const {
@@ -171,7 +175,7 @@ class InputData {
   std::vector<uint32_t> purchaseTimestamps_;
   std::vector<int64_t> purchaseValues_;
   std::vector<int64_t> purchaseValuesSquared_;
-  std::vector<uint32_t> groupIds_;
+  std::vector<uint32_t> partnerCohortIds_;
   std::vector<uint32_t> breakdownIds_;
   std::vector<std::vector<uint32_t>> opportunityTimestampArrays_;
   std::vector<std::vector<uint32_t>> purchaseTimestampArrays_;
@@ -181,7 +185,8 @@ class InputData {
 
   int64_t totalValue_ = 0;
   int64_t totalValueSquared_ = 0;
-  uint32_t numGroups_ = 0;
+  uint32_t numPartnerCohorts_ = 0;
+  uint32_t numPublisherBreakdowns = 0;
   int32_t numConversionsPerUser_;
 
   bool firstLineParsedAlready_ = false;

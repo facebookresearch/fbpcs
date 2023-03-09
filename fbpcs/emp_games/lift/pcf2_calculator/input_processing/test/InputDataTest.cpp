@@ -21,12 +21,14 @@ class InputDataTest : public ::testing::Test {
  protected:
   std::string aliceInputFilename_;
   std::string aliceInputFilename2_;
+  std::string aliceInputFilename3_;
   std::string bobInputFilename_;
   std::string bobInputFilename2_;
 
   void SetUp() override {
     aliceInputFilename_ = sample_input::getPublisherInput1().native();
     aliceInputFilename2_ = sample_input::getPublisherInput2().native();
+    aliceInputFilename3_ = sample_input::getPublisherInput3().native();
     bobInputFilename_ = sample_input::getPartnerInput4().native();
     bobInputFilename2_ = sample_input::getPartnerConverterInput().native();
   }
@@ -48,9 +50,11 @@ TEST_F(InputDataTest, TestInputDataPublisher) {
       53699630, 53699601, 0,        0,        0,        53699661, 53699252,
       53700031, 53699730, 53700172, 0,        0,        53699306, 53700140,
       53699240, 53699397, 53699415, 53700127, 53699760, 53699598};
+  auto resNumBreakdowns = inputData.getNumPublisherBreakdowns();
   auto resTestPopulation = inputData.getTestPopulation();
   auto resControlPopulation = inputData.getControlPopulation();
   auto resOpportunityTimestamps = inputData.getOpportunityTimestamps();
+  EXPECT_EQ(0, resNumBreakdowns);
   EXPECT_EQ(expectTestPopulation, resTestPopulation);
   EXPECT_EQ(expectControlPopulation, resControlPopulation);
   EXPECT_EQ(expectOpportunityTimestamps, resOpportunityTimestamps);
@@ -75,6 +79,34 @@ TEST_F(InputDataTest, TestInputDataPublisherOppColLast) {
   auto resTestPopulation = inputData.getTestPopulation();
   auto resControlPopulation = inputData.getControlPopulation();
   auto resOpportunityTimestamps = inputData.getOpportunityTimestamps();
+  EXPECT_EQ(expectTestPopulation, resTestPopulation);
+  EXPECT_EQ(expectControlPopulation, resControlPopulation);
+  EXPECT_EQ(expectOpportunityTimestamps, resOpportunityTimestamps);
+}
+
+TEST_F(InputDataTest, TestInputDataPublisherWithBreakdowns) {
+  InputData inputData{
+      aliceInputFilename3_,
+      InputData::LiftMPCType::Standard,
+      true,
+      1546300800,
+      4};
+  std::vector<bool> expectTestPopulation = {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+                                            0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+                                            1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0};
+  std::vector<bool> expectControlPopulation = {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+                                               1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+                                               0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+  // opportunity_timestamp - epoch
+  std::vector<uint32_t> expectOpportunityTimestamps = {
+      0,   0,   0,   100, 100, 100, 100, 100, 100, 100, 100,
+      100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+      100, 100, 0,   100, 100, 100, 100, 100, 100, 100, 100};
+  auto resNumBreakdowns = inputData.getNumPublisherBreakdowns();
+  auto resTestPopulation = inputData.getTestPopulation();
+  auto resControlPopulation = inputData.getControlPopulation();
+  auto resOpportunityTimestamps = inputData.getOpportunityTimestamps();
+  EXPECT_EQ(2, resNumBreakdowns);
   EXPECT_EQ(expectTestPopulation, resTestPopulation);
   EXPECT_EQ(expectControlPopulation, resControlPopulation);
   EXPECT_EQ(expectOpportunityTimestamps, resOpportunityTimestamps);
@@ -122,8 +154,8 @@ TEST_F(InputDataTest, TestInputDataPartner) {
   EXPECT_EQ(expectGetPurchaseTimestampArrays, resPurchaseTimestampArrays);
   EXPECT_EQ(expectPurchaseValueArrays, resPurchaseValueArrays);
 
-  ASSERT_EQ(3, inputData.getNumGroups());
-  EXPECT_EQ(expectCohortIds, inputData.getGroupIds());
+  ASSERT_EQ(3, inputData.getNumPartnerCohorts());
+  EXPECT_EQ(expectCohortIds, inputData.getPartnerCohortIds());
 }
 
 TEST_F(InputDataTest, TestInputDataPartnerConverterLift) {
@@ -145,6 +177,7 @@ TEST_F(InputDataTest, TestInputDataPartnerConverterLift) {
   auto resPurchaseTimestamps = inputData.getPurchaseTimestampArrays();
   auto resPurchaseValues = inputData.getPurchaseValues();
   auto resPurchaseValuesSquared = inputData.getPurchaseValuesSquared();
+  ASSERT_EQ(0, inputData.getNumPartnerCohorts());
   EXPECT_EQ(expectGetPurchaseTimestamps, resPurchaseTimestamps);
   EXPECT_EQ(expectPurchaseValues, resPurchaseValues);
   EXPECT_EQ(expectPurchaseValuesSquared, resPurchaseValuesSquared);

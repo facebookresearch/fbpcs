@@ -45,22 +45,31 @@ inline void shareNumGroupsStep(
     LiftGameProcessedData<schedulerId>& liftGameProcessedData) {
   // TODO: We shouldn't be using MPC for this, it should just be shared over
   // a normal network socket as part of the protocol setup
-  XLOG(INFO) << "Set up number of partner groups";
-  if (inputData.getNumGroups() >
+  XLOG(INFO) << "Set up number of breakdowns and cohorts";
+  if (inputData.getNumPartnerCohorts() >
       (1
        << (groupWidth - 1))) { // subtract one because we multiply the number of
     // groups by 2 for the test/control populations
-    XLOG(ERR) << "The input has " << inputData.getNumGroups()
-              << " groups but we only support " << (1 << groupWidth)
-              << " groups.";
+    XLOG(ERR) << "The input has " << inputData.getNumPartnerCohorts()
+              << " cohorts but we only support " << (1 << groupWidth)
+              << " cohorts.";
+    exit(1);
+  }
+  if (inputData.getNumPublisherBreakdowns() >
+      (1
+       << (groupWidth - 1))) { // subtract one because we multiply the number of
+    // groups by 2 for the test/control populations
+    XLOG(ERR) << "The input has " << inputData.getNumPublisherBreakdowns()
+              << " breakdowns but we only support " << (1 << groupWidth)
+              << " breakdowns.";
     exit(1);
   }
   liftGameProcessedData.numPartnerCohorts = common::
       shareIntFrom<schedulerId, groupWidth, common::PARTNER, common::PUBLISHER>(
-          myRole, inputData.getNumGroups());
+          myRole, inputData.getNumPartnerCohorts());
   liftGameProcessedData.numPublisherBreakdowns = common::
       shareIntFrom<schedulerId, groupWidth, common::PUBLISHER, common::PARTNER>(
-          myRole, inputData.getNumGroups());
+          myRole, inputData.getNumPublisherBreakdowns());
   if (liftGameProcessedData.numPublisherBreakdowns > 2) {
     XLOG(ERR)
         << "The input has " << liftGameProcessedData.numPublisherBreakdowns
