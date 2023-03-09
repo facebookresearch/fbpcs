@@ -20,9 +20,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## 2023-03-08
 ### Deprecated
-All playbook-related docs are now deprecated. Please redirect to Meta dev docs: https://developers.facebook.com/docs/private-computation. During the transition, we replace all github docs with one single dummy doc of the following message:
+All playbook-related docs are now deprecated. Please redirect to Meta dev docs: https://developers.facebook.com/docs/private-computation. During the transition, we replace all GitHub docs with one single dummy doc of the following message:
 ```
-Private Computation github documents are deprecated. Please redirect to Meta for Developer website: https://developers.facebook.com/docs/private-computation.
+Private Computation GitHub documents are deprecated. Please redirect to Meta for Developer website: https://developers.facebook.com/docs/private-computation.
 ```
   - Deprecated PCS Partner Playbook `PCS Partner Playbook - UI Version` and `PCS Partner Playbook - version approved for online publishing for non-NDA users`
   - Deprecated `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`
