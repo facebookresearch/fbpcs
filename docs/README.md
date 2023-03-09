@@ -1,5 +1,5 @@
 # NOTE: Partner Playbook Moved to Meta for Developers
-All Private Computation partner playbook documents on Github are now being deprecated. Playbook (including reference docs such as semi-auto data pipeline instruction, pre-check question lists, etc) have now migrated to Meta for Developers: https://developers.facebook.com/docs/private-computation.
+All Private Computation partner playbook documents on GitHub are now being deprecated. Playbook (including reference docs such as semi-auto data pipeline instruction, pre-check question lists, etc) have now migrated to Meta for Developers: https://developers.facebook.com/docs/private-computation.
 
 
 # Where to Find Private Computation Docs
