@@ -54,7 +54,7 @@ class PostUDPInputProcessor : public IInputProcessor<schedulerId> {
         liftGameProcessedData_,
         cohortGroupIds_,
         controlPopulation_,
-        breakdownGroupIds_,
+        breakdownBitGroupIds_,
         testGroupIds_);
     input_processing::computeTestIndexShares(
         liftGameProcessedData_, controlPopulation_, testGroupIds_);
@@ -82,7 +82,7 @@ class PostUDPInputProcessor : public IInputProcessor<schedulerId> {
 
   SecBit<schedulerId> controlPopulation_;
   SecGroup<schedulerId> cohortGroupIds_;
-  SecBit<schedulerId> breakdownGroupIds_;
+  SecBit<schedulerId> breakdownBitGroupIds_;
   SecGroup<schedulerId> testGroupIds_;
 
   LiftGameProcessedData<schedulerId> liftGameProcessedData_;

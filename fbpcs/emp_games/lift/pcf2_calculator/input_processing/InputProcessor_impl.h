@@ -23,7 +23,7 @@ void InputProcessor<schedulerId>::privatelyShareGroupIdsStep() {
   XLOG(INFO) << "Share publisher breakdown group ids";
   std::vector<bool> booleanBreakdownGroupIds(
       inputData_.getBreakdownIds().begin(), inputData_.getBreakdownIds().end());
-  breakdownGroupIds_ = common::privatelyShareArrayWithPaddingFrom<
+  breakdownBitGroupIds_ = common::privatelyShareArrayWithPaddingFrom<
       common::PUBLISHER,
       bool,
       SecBit<schedulerId>>(
