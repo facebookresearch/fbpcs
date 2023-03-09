@@ -18,6 +18,7 @@
 #include "folly/logging/xlog.h"
 
 #include "fbpcf/aws/AwsSdk.h"
+#include "fbpcs/emp_games/common/FeatureFlagUtil.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/MainUtil.h"
 #include "fbpcs/performance_tools/CostEstimation.h"
 
@@ -160,14 +161,8 @@ int main(int argc, char** argv) {
       FLAGS_private_key_path,
       "");
 
-  std::vector<std::string> enabledFeatureFlags;
-  folly::split(',', FLAGS_pc_feature_flags, enabledFeatureFlags);
-  bool readInputFromSecretShares = std::any_of(
-      enabledFeatureFlags.begin(),
-      enabledFeatureFlags.end(),
-      [](std::string flag) {
-        return flag == "private_lift_unified_data_process";
-      });
+  bool readInputFromSecretShares = private_measurement::isFeatureFlagEnabled(
+      FLAGS_pc_feature_flags, "private_lift_unified_data_process");
 
   {
     // Build a quick list of input/output files to log
