@@ -85,8 +85,8 @@ LiftMetaDataSerializer::serializePartnerMetadata() {
       unionSize_ == std::nullopt ? inputSize : unionSize_.value();
   rst.reserve(inputSize);
 
-  auto cohortIdsPadded =
-      common::padArray<uint32_t>(inputData_.getGroupIds(), unionSize, 0);
+  auto cohortIdsPadded = common::padArray<uint32_t>(
+      inputData_.getPartnerCohortIds(), unionSize, 0);
   auto purchaseTimestampsPadded = common::padNestedArrays<uint32_t>(
       inputData_.getPurchaseTimestampArrays(),
       unionSize,

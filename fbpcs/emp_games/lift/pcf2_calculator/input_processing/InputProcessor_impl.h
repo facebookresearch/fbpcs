@@ -18,7 +18,7 @@ void InputProcessor<schedulerId>::privatelyShareGroupIdsStep() {
       common::PARTNER,
       uint32_t,
       SecGroup<schedulerId>>(
-      inputData_.getGroupIds(), liftGameProcessedData_.numRows, 0);
+      inputData_.getPartnerCohortIds(), liftGameProcessedData_.numRows, 0);
 
   XLOG(INFO) << "Share publisher breakdown group ids";
   std::vector<bool> booleanBreakdownGroupIds(

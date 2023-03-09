@@ -176,15 +176,17 @@ void InputData::addFromCSV(
     } else if (column == "total_spend") {
       totalSpend_.push_back(parsed);
     } else if (column == "cohort_id") {
-      groupIds_.push_back(parsed);
+      partnerCohortIds_.push_back(parsed);
       // We use parsed + 1 because cohorts are zero-indexed
-      numGroups_ = std::max(numGroups_, static_cast<uint32_t>(parsed + 1));
+      numPartnerCohorts_ =
+          std::max(numPartnerCohorts_, static_cast<uint32_t>(parsed + 1));
     } else if (column == "breakdown_id") {
       if (computePublisherBreakdowns_) {
         breakdownIds_.push_back(parsed);
 
         // We use parsed + 1 because breakdowns are zero-indexed
-        numGroups_ = std::max(numGroups_, static_cast<uint32_t>(parsed + 1));
+        numPublisherBreakdowns =
+            std::max(numPublisherBreakdowns, static_cast<uint32_t>(parsed + 1));
       }
     } else if (column == "event_timestamp") {
       // When event_timestamp column presents (in standard Converter Lift
@@ -251,7 +253,9 @@ void InputData::addFromCSV(
 std::vector<int64_t> InputData::bitmaskFor(int64_t groupId) const {
   std::vector<int64_t> res(numRows_);
   for (std::size_t i = 0; i < res.size(); ++i) {
-    res[i] = groupIds_.size() > i && groupIds_.at(i) == groupId ? 1 : 0;
+    res[i] = partnerCohortIds_.size() > i && partnerCohortIds_.at(i) == groupId
+        ? 1
+        : 0;
   }
   return res;
 }
