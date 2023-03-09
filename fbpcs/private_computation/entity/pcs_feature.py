@@ -30,6 +30,7 @@ class PCSFeature(Enum):
     CREATE_DUPLICATE_INSTANCES = "create_duplicate_instances"
     PUBLISHER_PC_PRE_VALIDATION = "publisher_pc_pre_validation"
     PRIVATE_ATTRIBUTION_REFORMATTED_OUTPUT = "private_attribution_reformatted_output"
+    PRIVATE_COMPUTATION_TRANSLATOR = "private_computation_translator"
 
     UNKNOWN = "unknown"
 
