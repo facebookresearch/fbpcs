@@ -18,6 +18,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+## 2023-03-08
+### Deprecated
+All playbook-related docs are now deprecated. Please redirect to Meta dev docs: https://developers.facebook.com/docs/private-computation. During the transition, we replace all github docs with one single dummy doc of the following message:
+```
+Private Computation github documents are deprecated. Please redirect to Meta for Developer website: https://developers.facebook.com/docs/private-computation.
+```
+  - Deprecated PCS Partner Playbook `PCS Partner Playbook - UI Version` and `PCS Partner Playbook - version approved for online publishing for non-NDA users`
+  - Deprecated `SEMI-AUTOMATED DATA INGESTION PIPELINE INSTRUCTIONS`
+  - Deprecated `Private Computation: Business pre-check questions`
+  - Deprecated `Private Computation: AWS pre-check questions`
+  - Deprecated `Private Computationt: Guide to answering AWS pre-check questions`
+  - Deprecated ``Redeploying with Development UI - Data Migration Process Instructions`
+### Added
+  - Added a new `README.md` to redirect users to the Meta developer website for private computation docs.
+
 ## 2023-02-23
 ### Changed
   - Updated PCS Partner Playbook `PCS Partner Playbook - UI Version` and `PCS Partner Playbook - version approved for online publishing for non-NDA users` (identical, duplicated for historical reasons) to include PC Jan 23, 2023 releases. current version of Feb-23-23
