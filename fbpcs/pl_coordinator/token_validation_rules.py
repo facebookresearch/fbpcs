@@ -23,8 +23,7 @@ class TokenRuleException(RuntimeError):
 
 """
 required token scopes defined here:
-https://github.com/facebookresearch/fbpcs/blob/main/docs/PCS_Partner_Playbook_UI.pdf
-(see Step 3: generating 60 days access token)
+https://developers.facebook.com/docs/private-computation/setup-guide/step-2
 """
 REQUIRED_TOKEN_SCOPES = {
     "ads_management",
