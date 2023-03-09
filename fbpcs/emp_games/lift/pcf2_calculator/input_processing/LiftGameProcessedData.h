@@ -40,15 +40,21 @@ inline const std::vector<std::string> SECRET_SHARES_HEADER = {
 
 template <int schedulerId>
 struct LiftGameProcessedData {
-  int64_t numRows;
-  uint32_t numPartnerCohorts;
-  uint32_t numPublisherBreakdowns;
-  uint32_t numGroups;
-  uint32_t numTestGroups;
-  uint8_t valueBits;
-  uint8_t valueSquaredBits;
+  int64_t numRows = 0;
+  uint32_t numPartnerCohorts = 0;
+  uint32_t numPublisherBreakdowns = 0;
+  uint32_t numGroups = 0;
+  uint32_t numBreakdownTestGroups = 0;
+  uint32_t numCohortTestGroups = 0;
+  uint32_t numTestGroups = 0;
+  uint8_t valueBits = 0;
+  uint8_t valueSquaredBits = 0;
   std::vector<std::vector<bool>> indexShares;
   std::vector<std::vector<bool>> testIndexShares;
+  SecGroup<schedulerId> indexBreakdownShares;
+  SecGroup<schedulerId> testIndexBreakdownShares;
+  SecGroup<schedulerId> indexCohortShares;
+  SecGroup<schedulerId> testIndexCohortShares;
   SecTimestamp<schedulerId> opportunityTimestamps;
   SecBit<schedulerId> isValidOpportunityTimestamp;
   std::vector<SecTimestamp<schedulerId>> purchaseTimestamps;
