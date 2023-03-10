@@ -17,6 +17,7 @@ from dataclasses_json import dataclass_json
 class PCValidatorConfig:
     region: str
     pc_pre_validator_enabled: bool = True
+    pc_pre_validator_publisher_enabled: bool = True
 
     def __str__(self) -> str:
         # pyre-ignore
