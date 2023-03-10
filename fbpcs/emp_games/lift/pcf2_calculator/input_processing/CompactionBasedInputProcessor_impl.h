@@ -13,6 +13,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "fbpcf/mpc_std_lib/util/secureRandomPermutation.h"
@@ -21,17 +22,6 @@
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/serialization/LiftMetaDataSerializer.h"
 
 namespace private_lift {
-
-const int PARTNER_ROW_SIZE_BYTES = input_processing::PARTNER_ROW_SIZE_BYTES;
-const int PARTNER_CONVERSION_ROW_SIZE_BYTES =
-    input_processing::PARTNER_CONVERSION_ROW_SIZE_BYTES;
-const int PUBLISHER_ROW_BYTES = input_processing::PUBLISHER_ROW_BYTES;
-
-using input_processing::extractByte;
-
-using PartnerRow = input_processing::PartnerRow;
-using PublisherRow = input_processing::PublisherRow;
-using PartnerConversionRow = input_processing::PartnerConversionRow;
 
 template <int schedulerId>
 std::vector<int32_t>
@@ -62,7 +52,6 @@ template <int schedulerId>
 std::vector<std::vector<unsigned char>>
 CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
     const std::vector<int32_t>& unionMap) {
-  std::vector<std::vector<unsigned char>> rst;
   XLOG(INFO) << "Begin plaintext data serialization as bytes";
   size_t unionSize = inputData_.getNumRows();
   int32_t inputSize = 0;
@@ -82,13 +71,12 @@ CompactionBasedInputProcessor<schedulerId>::preparePlaintextData(
     // Construct a serializer
     LiftMetaDataSerializer partnerSerializer(
         inputData_, numConversionsPerUser_, reverseUnionMap, unionSize);
-    rst = partnerSerializer.serializePartnerMetadata();
+    return partnerSerializer.serializePartnerMetadata();
   } else {
     LiftMetaDataSerializer publisherSerializer(
         inputData_, numConversionsPerUser_, reverseUnionMap, unionSize);
-    rst = publisherSerializer.serializePublisherMetadata();
+    return publisherSerializer.serializePublisherMetadata();
   }
-  return rst;
 }
 
 template <int schedulerId>
@@ -114,13 +102,21 @@ CompactionBasedInputProcessor<schedulerId>::compactData(
       common::PARTNER,
       common::PUBLISHER>(myRole_, myRows);
 
+  auto publisherSerializer =
+      input_processing::createPublisherSerializer<schedulerId>(
+          numConversionsPerUser_);
+
+  auto partnerSerializer =
+      input_processing::createPartnerSerializer<schedulerId>(
+          numConversionsPerUser_);
+
   XLOG(INFO) << "Publisher Row count: " << publisherRows;
-  XLOG(INFO) << "Publisher Row size in bytes: " << PUBLISHER_ROW_BYTES;
+  XLOG(INFO) << "Publisher Row size in bytes: "
+             << publisherSerializer->getRowSizeBytes();
 
   XLOG(INFO) << "Partner Row count: " << partnerRows;
   XLOG(INFO) << "Partner Row size in bytes: "
-             << PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_ +
-          PARTNER_ROW_SIZE_BYTES;
+             << partnerSerializer->getRowSizeBytes();
 
   SecString publisherDataShares;
   SecString partnerDataShares;
@@ -131,14 +127,11 @@ CompactionBasedInputProcessor<schedulerId>::compactData(
         dataProcessor_->processMyData(plaintextData, intersectionMap.size());
     XLOG(INFO) << "Begin processing peers data (partner)";
     partnerDataShares = dataProcessor_->processPeersData(
-        partnerRows,
-        intersectionMap,
-        PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_ +
-            PARTNER_ROW_SIZE_BYTES);
+        partnerRows, intersectionMap, partnerSerializer->getRowSizeBytes());
   } else if (myRole_ == common::PARTNER) {
     XLOG(INFO) << "Begin processing peers data (publisher)";
     publisherDataShares = dataProcessor_->processPeersData(
-        publisherRows, intersectionMap, PUBLISHER_ROW_BYTES);
+        publisherRows, intersectionMap, publisherSerializer->getRowSizeBytes());
     XLOG(INFO) << "Begin processing my data (partner)";
     partnerDataShares =
         dataProcessor_->processMyData(plaintextData, intersectionMap.size());
@@ -173,21 +166,5 @@ CompactionBasedInputProcessor<schedulerId>::compactData(
       typename CompactionBasedInputProcessor<schedulerId>::SecString,
       typename CompactionBasedInputProcessor<schedulerId>::SecString>(
       std::move(publisherDataShares), std::move(partnerDataShares));
-}
-
-template <int schedulerId>
-void CompactionBasedInputProcessor<schedulerId>::extractCompactedData(
-    const typename CompactionBasedInputProcessor<schedulerId>::SecString&
-        publisherDataShares,
-    const typename CompactionBasedInputProcessor<schedulerId>::SecString&
-        partnerDataShares) {
-  input_processing::extractCompactedData(
-      liftGameProcessedData_,
-      controlPopulation_,
-      cohortGroupIds_,
-      breakdownBitGroupIds_,
-      publisherDataShares,
-      partnerDataShares,
-      numConversionsPerUser_);
 }
 } // namespace private_lift

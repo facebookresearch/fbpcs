@@ -47,20 +47,20 @@ inline void shareNumGroupsStep(
   // a normal network socket as part of the protocol setup
   XLOG(INFO) << "Set up number of breakdowns and cohorts";
   if (inputData.getNumPartnerCohorts() >
-      (1
+      (1LL
        << (groupWidth - 1))) { // subtract one because we multiply the number of
     // groups by 2 for the test/control populations
     XLOG(ERR) << "The input has " << inputData.getNumPartnerCohorts()
-              << " cohorts but we only support " << (1 << groupWidth)
+              << " cohorts but we only support " << (1L << groupWidth)
               << " cohorts.";
     exit(1);
   }
   if (inputData.getNumPublisherBreakdowns() >
-      (1
+      (1LL
        << (groupWidth - 1))) { // subtract one because we multiply the number of
     // groups by 2 for the test/control populations
     XLOG(ERR) << "The input has " << inputData.getNumPublisherBreakdowns()
-              << " breakdowns but we only support " << (1 << groupWidth)
+              << " breakdowns but we only support " << (1L << groupWidth)
               << " breakdowns.";
     exit(1);
   }
