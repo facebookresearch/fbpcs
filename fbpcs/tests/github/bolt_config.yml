@@ -2,30 +2,6 @@ runner:
   publisher_client_config: fbpcs_e2e_aws.yml
   partner_client_config: fbpcs_e2e_aws.yml
 jobs:
-  # job name
-  lift:
-    # publisher player args
-    publisher:
-      # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/publisher_e2e_input.csv
-      # optional args #
-      output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
-      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/publisher_expected_result.json
-    # partner player args
-    partner:
-      # required args #
-      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv
-      # optional args #
-      output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/outputs
-      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result.json
-    # args shared by both publisher and partner
-    shared:
-      # required args #
-      game_type: lift
-      # optional args #
-      num_mpc_containers: 2
-      num_pid_containers: 2
-      concurrency: 4
   lift_partner_result_visibility:
     # publisher player args
     publisher:
@@ -49,10 +25,11 @@ jobs:
       # optional args #
       num_mpc_containers: 1
       num_pid_containers: 1
+      pcs_features: [private_lift_pcf2_release]
       concurrency: 4
       # partner visibility
       result_visibility: 2
-  pcf2_lift:
+  lift:
     # publisher player args
     publisher:
       # required args #
@@ -76,7 +53,7 @@ jobs:
       num_pid_containers: 2
       pcs_features: [private_lift_pcf2_release]
       concurrency: 4
-  lift_pcf2_shard_combiner:
+  lift_shard_combiner:
     # publisher player args
     publisher:
       # required args #
