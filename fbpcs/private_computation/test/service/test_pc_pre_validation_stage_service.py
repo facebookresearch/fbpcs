@@ -125,6 +125,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 "--cloud-provider=AWS",
                 f"--region={region}",
                 "--binary-version=latest",
+                f"--private-computation-role={PrivateComputationRole.PARTNER}",
             ]
         )
         pc_validator_config = PCValidatorConfig(
@@ -314,7 +315,10 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     ) -> None:
         pc_instance = PrivateComputationInstance(
             infra_config=self._get_infra_config(
-                {PCSFeature.PRE_VALIDATION_FILE_STREAM}
+                {
+                    PCSFeature.PRE_VALIDATION_FILE_STREAM,
+                    PCSFeature.PUBLISHER_PC_PRE_VALIDATION,
+                }
             ),
             product_config=self._product_config,
         )
@@ -330,7 +334,9 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 "--cloud-provider=AWS",
                 f"--region={region}",
                 "--binary-version=latest",
+                f"--private-computation-role={PrivateComputationRole.PARTNER}",
                 "--pre-validation-file-stream=enabled",
+                "--publisher-pc-pre-validation=enabled",
             ]
         )
         pc_validator_config = PCValidatorConfig(
