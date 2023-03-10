@@ -31,4 +31,5 @@ class PCSContainerInstance(ContainerInstance):
             log_url=log_url,
             cpu=container_instance.cpu,
             memory=container_instance.memory,
+            exit_code=container_instance.exit_code,
         )
