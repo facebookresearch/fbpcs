@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <stdexcept>
 #include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/common/Constants.h"
@@ -31,10 +32,10 @@ inline void validateNumRowsStep(
           myRole, liftGameProcessedData.numRows);
 
   if (publisherNumRows != partnerNumRows) {
-    XLOG(ERR) << "The publisher has " << publisherNumRows
-              << " rows in their input, while the partner has "
-              << partnerNumRows << " rows.";
-    exit(1);
+    throw std::runtime_error(fmt::format(
+        "The publisher has {} rows in their input, while the partner has {} rows.",
+        publisherNumRows,
+        partnerNumRows));
   }
 }
 
@@ -50,19 +51,19 @@ inline void shareNumGroupsStep(
       (1
        << (groupWidth - 1))) { // subtract one because we multiply the number of
     // groups by 2 for the test/control populations
-    XLOG(ERR) << "The input has " << inputData.getNumPartnerCohorts()
-              << " cohorts but we only support " << (1 << groupWidth)
-              << " cohorts.";
-    exit(1);
+    throw std::runtime_error(fmt::format(
+        "The input has {} cohorts but we only support {} cohorts.",
+        inputData.getNumPartnerCohorts(),
+        (1 << groupWidth)));
   }
   if (inputData.getNumPublisherBreakdowns() >
       (1
        << (groupWidth - 1))) { // subtract one because we multiply the number of
     // groups by 2 for the test/control populations
-    XLOG(ERR) << "The input has " << inputData.getNumPublisherBreakdowns()
-              << " breakdowns but we only support " << (1 << groupWidth)
-              << " breakdowns.";
-    exit(1);
+    throw std::runtime_error(fmt::format(
+        "The input has {} breakdowns but we only support {} breakdowns.",
+        inputData.getNumPublisherBreakdowns(),
+        (1 << groupWidth)));
   }
   liftGameProcessedData.numPartnerCohorts = common::
       shareIntFrom<schedulerId, groupWidth, common::PARTNER, common::PUBLISHER>(
@@ -71,10 +72,9 @@ inline void shareNumGroupsStep(
       shareIntFrom<schedulerId, groupWidth, common::PUBLISHER, common::PARTNER>(
           myRole, inputData.getNumPublisherBreakdowns());
   if (liftGameProcessedData.numPublisherBreakdowns > 2) {
-    XLOG(ERR)
-        << "The input has " << liftGameProcessedData.numPublisherBreakdowns
-        << " publisher breakdowns but we only support 2 publisher breakdowns.";
-    exit(1);
+    throw std::runtime_error(fmt::format(
+        "The input has {} publisher breakdowns but we only support 2 publisher breakdowns.",
+        liftGameProcessedData.numPublisherBreakdowns));
   }
   // The number of groups is 2 (for test/control population) times the number of
   // partner cohorts and the number of publisher breakdowns. If there are no
