@@ -27,11 +27,19 @@ class UdpEncryptor {
       : udpEncryption_(std::move(udpEncryption)),
         udpThreadForMySelf_(nullptr),
         chunkSize_(chunkSize),
+        bufferIndex_(0),
+        bufferForMyData_{
+            std::make_unique<std::vector<std::vector<unsigned char>>>(
+                chunkSize_)},
         peerProcessExecutor_(
             std::make_shared<folly::CPUThreadPoolExecutor>(1)) {}
 
   // load a line that is to be processed later.
   void pushOneLineFromMe(std::vector<unsigned char>&& serializedLine);
+
+  // load a number of lines that is to be processed later.
+  void pushLinesFromMe(
+      std::vector<std::vector<unsigned char>>&& serializedLines);
 
   // set the config for peer's data.
   void setPeerConfig(
@@ -41,15 +49,26 @@ class UdpEncryptor {
 
   EncryptionResuts getEncryptionResults();
 
-  std::vector<__m128i> getExpandedKey() const;
+  std::vector<__m128i> getExpandedKey();
 
  private:
   folly::coro::Task<void> processPeerDataCoro(size_t numberOfPeerRowsInBatch);
+
+  folly::coro::Task<void> processMyDataCoro(
+      std::unique_ptr<std::vector<std::vector<unsigned char>>> data);
+
+  void processDataInBuffer();
 
   std::unique_ptr<UdpEncryption> udpEncryption_;
 
   std::unique_ptr<std::thread> udpThreadForMySelf_;
   size_t chunkSize_;
+
+  size_t bufferIndex_;
+  std::unique_ptr<std::vector<std::vector<unsigned char>>> bufferForMyData_;
+
+  std::shared_ptr<folly::CPUThreadPoolExecutor> myDataProcessExecutor_;
+  std::vector<folly::SemiFuture<folly::Unit>> myDataProcessingTasks_;
 
   std::shared_ptr<folly::CPUThreadPoolExecutor> peerProcessExecutor_;
   std::vector<folly::SemiFuture<folly::Unit>> peerDataProcessingTasks_;

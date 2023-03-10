@@ -13,10 +13,75 @@
 
 namespace unified_data_process {
 
+/**
+ * The idea here is to distribute the workload across more threads. This
+ * UdpEncryptor object will read in data in the main thread and buffer them.
+ * Once there are sufficient buffered data (defined by chunkSize_), the buffered
+ * data will be passed to the underlying udp encryption object to process in a
+ * background thread.
+ */
+void UdpEncryptor::processDataInBuffer() {
+  if (myDataProcessingTasks_.size() == 0) {
+    // this is the first time of executing processingMyData, need to call
+    // preparation first
+    udpEncryption_->prepareToProcessMyData(bufferForMyData_->at(0).size());
+  }
+  bufferForMyData_->resize(bufferIndex_);
+  bufferIndex_ = 0;
+
+  myDataProcessingTasks_.push_back(
+      processMyDataCoro(std::move(bufferForMyData_))
+          .scheduleOn(folly::getGlobalCPUExecutor().get())
+          .start());
+
+  bufferForMyData_ =
+      std::make_unique<std::vector<std::vector<unsigned char>>>(chunkSize_);
+}
+
+folly::coro::Task<void> UdpEncryptor::processMyDataCoro(
+    std::unique_ptr<std::vector<std::vector<unsigned char>>> data) {
+  if (data->size() == 0) {
+    co_return;
+  } else {
+    udpEncryption_->processMyData(*data);
+    co_return;
+  }
+}
+
 // load a line that is to be processed later.
 void UdpEncryptor::pushOneLineFromMe(
-    std::vector<unsigned char>&& /*serializedLine*/) {
-  throw std::runtime_error("not implemented");
+    std::vector<unsigned char>&& serializedLine) {
+  bufferForMyData_->at(bufferIndex_++) = std::move(serializedLine);
+  if (bufferIndex_ >= chunkSize_) {
+    processDataInBuffer();
+  }
+}
+
+// load multiple lines into the buffer.
+void UdpEncryptor::pushLinesFromMe(
+    std::vector<std::vector<unsigned char>>&& serializedLines) {
+  size_t inputIndex = 0;
+
+  while (inputIndex < serializedLines.size()) {
+    if (chunkSize_ - bufferIndex_ <= serializedLines.size() - inputIndex) {
+      std::copy(
+          serializedLines.begin() + inputIndex,
+          serializedLines.begin() + inputIndex + chunkSize_ - bufferIndex_,
+          bufferForMyData_->begin() + bufferIndex_);
+      inputIndex += chunkSize_ - bufferIndex_;
+      // the buffer is full, the index should be changed to chunkSize_
+      bufferIndex_ = chunkSize_;
+      processDataInBuffer();
+    } else {
+      std::copy(
+          serializedLines.begin() + inputIndex,
+          serializedLines.end(),
+          bufferForMyData_->begin() + bufferIndex_);
+
+      bufferIndex_ += serializedLines.size() - inputIndex;
+      inputIndex = serializedLines.size();
+    }
+  }
 }
 
 folly::coro::Task<void> UdpEncryptor::processPeerDataCoro(
@@ -52,8 +117,11 @@ UdpEncryptor::EncryptionResuts UdpEncryptor::getEncryptionResults() {
   return EncryptionResuts{ciphertexts, nonces, indexes};
 }
 
-std::vector<__m128i> UdpEncryptor::getExpandedKey() const {
-  throw std::runtime_error("not implemented");
+std::vector<__m128i> UdpEncryptor::getExpandedKey() {
+  processDataInBuffer();
+  folly::coro::blockingWait(
+      folly::coro::collectAllRange(std::move(myDataProcessingTasks_)));
+  return udpEncryption_->getExpandedKey();
 }
 
 } // namespace unified_data_process
