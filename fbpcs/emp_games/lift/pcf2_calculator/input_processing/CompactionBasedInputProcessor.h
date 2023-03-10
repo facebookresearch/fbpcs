@@ -13,6 +13,7 @@
 
 #include "fbpcf/mpc_std_lib/unified_data_process/adapter/IAdapter.h"
 #include "fbpcf/mpc_std_lib/unified_data_process/data_processor/IDataProcessor.h"
+
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
@@ -31,10 +32,6 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
  public:
   using SecString = typename fbpcf::mpc_std_lib::unified_data_process::
       data_processor::IDataProcessor<schedulerId>::SecString;
-
-  using PartnerRow = input_processing::PartnerRow;
-  using PublisherRow = input_processing::PublisherRow;
-  using PartnerConversionRow = input_processing::PartnerConversionRow;
 
   CompactionBasedInputProcessor(
       int myRole,
@@ -75,13 +72,23 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
 
     auto plaintextData = preparePlaintextData(unionMap);
 
+    XLOG(INFO) << "Plaintext data successfully serialized";
+
     auto publisherPartnerJointMetadataShares =
         compactData(intersectionMap, plaintextData);
 
     XLOG(INFO, "Begin extraction to MPC types");
-    extractCompactedData(
-        std::get<0>(publisherPartnerJointMetadataShares),
-        std::get<1>(publisherPartnerJointMetadataShares));
+    auto publisherShares = std::get<0>(publisherPartnerJointMetadataShares);
+    auto partnerShares = std::get<1>(publisherPartnerJointMetadataShares);
+    input_processing::extractCompactedData(
+        liftGameProcessedData_,
+        controlPopulation_,
+        cohortGroupIds_,
+        breakdownBitGroupIds_,
+        publisherShares,
+        partnerShares,
+        numConversionsPerUser_);
+
     XLOG(INFO, "Finish extraction to MPC types");
 
     input_processing::computeIndexSharesAndSetTestGroupIds(
@@ -123,11 +130,6 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
       const std::vector<int32_t>& intersectionMap,
       const std::vector<std::vector<unsigned char>>& plaintextData);
 
-  // deserializes the compacted data into MPC structured values
-  void extractCompactedData(
-      const SecString& publisherDataShares,
-      const SecString& partnerDataShares);
-
   int32_t myRole_;
 
   std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::adapter::IAdapter>
@@ -135,6 +137,7 @@ class CompactionBasedInputProcessor : public IInputProcessor<schedulerId> {
   std::unique_ptr<fbpcf::mpc_std_lib::unified_data_process::data_processor::
                       IDataProcessor<schedulerId>>
       dataProcessor_;
+
   std::unique_ptr<fbpcf::engine::util::IPrg> prg_;
   InputData inputData_;
   int32_t numConversionsPerUser_;

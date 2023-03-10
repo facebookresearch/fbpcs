@@ -11,15 +11,12 @@
 
 namespace private_lift {
 
-using input_processing::extractByte;
-using input_processing::PARTNER_CONVERSION_ROW_SIZE_BYTES;
-using input_processing::PARTNER_ROW_SIZE_BYTES;
-using input_processing::PartnerRow;
-using input_processing::PUBLISHER_ROW_BYTES;
-using input_processing::PublisherRow;
-
 std::vector<std::vector<unsigned char>>
 LiftMetaDataSerializer::serializePublisherMetadata() {
+  // hardcode the schedulerId as no MPC types are created during serialization
+  auto publisherSerializer =
+      input_processing::createPublisherSerializer<0>(numConversionsPerUser_);
+
   std::vector<std::vector<unsigned char>> rst;
   size_t inputSize = reverseUnionMap_ == std::nullopt
       ? inputData_.getNumRows()
@@ -39,44 +36,49 @@ LiftMetaDataSerializer::serializePublisherMetadata() {
       common::padArray<int64_t>(inputData_.getNumImpressions(), unionSize, 0);
   auto breakdownIdPadded =
       common::padArray<uint32_t>(inputData_.getBreakdownIds(), unionSize, 0);
+
+  std::vector<bool> breakdownIdSorted(inputSize);
+  std::vector<bool> controlPopulationSorted(inputSize);
+  std::vector<bool> isValidOpportunityTimestamp(inputSize);
+  std::vector<bool> testReach(inputSize);
+  std::vector<uint32_t> opportunityTimestampsSorted(inputSize);
   for (size_t i = 0; i < inputSize; i++) {
     int inputIndex =
         reverseUnionMap_ == std::nullopt ? i : reverseUnionMap_->at(i);
 
-    bool isValidOpportunityTimestamp =
+    breakdownIdSorted[i] = breakdownIdPadded[inputIndex];
+    controlPopulationSorted[i] = controlPopulationPadded[inputIndex];
+    isValidOpportunityTimestamp[i] =
         (opportunityTimestampsPadded.at(inputIndex) > 0) &&
         (controlPopulationPadded.at(inputIndex) ||
          testPopulationPadded.at(inputIndex));
 
-    bool testReach = testPopulationPadded.at(inputIndex) &&
+    testReach[i] = testPopulationPadded.at(inputIndex) &&
         (numImpressionsPadded.at(inputIndex) > 0);
-
-    PublisherRow publisherRow{
-        .breakdownId = (bool)breakdownIdPadded.at(inputIndex),
-        .controlPopulation = controlPopulationPadded.at(inputIndex),
-        .isValidOpportunityTimestamp = isValidOpportunityTimestamp,
-        .testReach = testReach,
-        .opportunityTimestamp = opportunityTimestampsPadded.at(inputIndex),
-    };
-
-    std::vector<unsigned char> serialized(PUBLISHER_ROW_BYTES);
-    serialized[0] = publisherRow.breakdownId |
-        (publisherRow.controlPopulation << 1) |
-        (publisherRow.isValidOpportunityTimestamp << 2) |
-        (publisherRow.testReach << 3);
-
-    for (size_t byte = 0; byte < 4; byte++) {
-      serialized[1 + byte] =
-          extractByte(publisherRow.opportunityTimestamp, byte);
-    }
-
-    rst.push_back(serialized);
+    opportunityTimestampsSorted[i] = opportunityTimestampsPadded[inputIndex];
   }
-  return rst;
+
+  using InputColumnDataType =
+      typename fbpcf::mpc_std_lib::unified_data_process::serialization::
+          IColumnDefinition<0>::InputColumnDataType;
+
+  std::unordered_map<std::string, InputColumnDataType> inputMap{
+      {"breakdownId", breakdownIdSorted},
+      {"controlPopulation", controlPopulationSorted},
+      {"isValidOpportunityTimestamp", isValidOpportunityTimestamp},
+      {"testReach", testReach},
+      {"opportunityTimestamp", opportunityTimestampsSorted},
+  };
+
+  return publisherSerializer->serializeDataAsBytesForUDP(inputMap, inputSize);
 }
 
 std::vector<std::vector<unsigned char>>
 LiftMetaDataSerializer::serializePartnerMetadata() {
+  // hardcode the schedulerId as no MPC types are created during serialization
+  auto partnerSerializer =
+      input_processing::createPartnerSerializer<0>(numConversionsPerUser_);
+
   std::vector<std::vector<unsigned char>> rst;
   size_t inputSize = reverseUnionMap_ == std::nullopt
       ? inputData_.getNumRows()
@@ -103,66 +105,58 @@ LiftMetaDataSerializer::serializePartnerMetadata() {
       numConversionsPerUser_,
       0);
 
+  std::vector<bool> anyValidPurchaseTimestamps(inputSize);
+  std::vector<uint32_t> cohortIdsSorted(inputSize);
+  std::vector<std::vector<uint32_t>> purchaseTimestampsSorted(
+      inputSize, std::vector<uint32_t>(numConversionsPerUser_));
+  std::vector<std::vector<uint32_t>> thresholdTimestampsSorted(
+      inputSize, std::vector<uint32_t>(numConversionsPerUser_));
+  std::vector<std::vector<int32_t>> purchaseValuesSorted(
+      inputSize, std::vector<int32_t>(numConversionsPerUser_));
+  std::vector<std::vector<int64_t>> purchaseValuesSquaredSorted(
+      inputSize, std::vector<int64_t>(numConversionsPerUser_));
+
   for (size_t i = 0; i < inputSize; i++) {
     int inputIndex =
         reverseUnionMap_ == std::nullopt ? i : reverseUnionMap_->at(i);
 
+    cohortIdsSorted[i] = cohortIdsPadded[inputIndex];
+
     bool anyValidPurchaseTimestamp = false;
-    for (uint32_t purchaseTs : purchaseTimestampsPadded.at(inputIndex)) {
+    for (int j = 0; j < numConversionsPerUser_; j++) {
       // compute whether each row contains at least one valid (positive)
       // purchase timestamp
-      anyValidPurchaseTimestamp |= (purchaseTs > 0);
+      anyValidPurchaseTimestamp |=
+          (purchaseTimestampsPadded[inputIndex][j] > 0);
+
+      purchaseTimestampsSorted[i][j] = purchaseTimestampsPadded[inputIndex][j];
+
+      thresholdTimestampsSorted[i][j] =
+          purchaseTimestampsPadded[inputIndex][j] > 0
+          ? purchaseTimestampsPadded[inputIndex][j] +
+              kPurchaseTimestampThresholdWindow
+          : 0;
+      purchaseValuesSorted[i][j] = purchaseValuesPadded[inputIndex][j];
+      purchaseValuesSquaredSorted[i][j] =
+          purchaseValuesSquaredPadded[inputIndex][j];
     }
-
-    PartnerRow partnerRow{
-        .anyValidPurchaseTimestamp = anyValidPurchaseTimestamp,
-        .cohortGroupId = cohortIdsPadded.at(inputIndex)};
-
-    std::vector<input_processing::PartnerConversionRow> rowConversions(
-        numConversionsPerUser_);
-
-    for (size_t j = 0; j < numConversionsPerUser_; j++) {
-      rowConversions[j] = {
-          .purchaseTimestamp = purchaseTimestampsPadded.at(inputIndex).at(j),
-          .thresholdTimestamp =
-              purchaseTimestampsPadded.at(inputIndex).at(j) > 0
-              ? purchaseTimestampsPadded.at(inputIndex).at(j) +
-                  kPurchaseTimestampThresholdWindow
-              : 0,
-          .purchaseValue = (int32_t)purchaseValuesPadded.at(inputIndex).at(j),
-          .purchaseValueSquared =
-              purchaseValuesSquaredPadded.at(inputIndex).at(j)};
-    }
-
-    std::vector<unsigned char> serialized(
-        PARTNER_ROW_SIZE_BYTES +
-        PARTNER_CONVERSION_ROW_SIZE_BYTES * numConversionsPerUser_);
-
-    serialized[0] = partnerRow.anyValidPurchaseTimestamp;
-    serialized[1] = extractByte(partnerRow.cohortGroupId, 0);
-    serialized[2] = extractByte(partnerRow.cohortGroupId, 1);
-    serialized[3] = extractByte(partnerRow.cohortGroupId, 2);
-    serialized[4] = extractByte(partnerRow.cohortGroupId, 3);
-
-    for (size_t j = 0; j < numConversionsPerUser_; j++) {
-      for (int byte = 0; byte < 4; byte++) {
-        serialized[5 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-            extractByte(rowConversions[j].purchaseTimestamp, byte);
-        serialized[9 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-            extractByte(rowConversions[j].thresholdTimestamp, byte);
-        serialized[13 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-            extractByte(rowConversions[j].purchaseValue, byte);
-      }
-
-      for (size_t byte = 0; byte < 8; byte++) {
-        serialized[17 + j * PARTNER_CONVERSION_ROW_SIZE_BYTES + byte] =
-            extractByte(rowConversions[j].purchaseValueSquared, byte);
-      }
-    }
-
-    rst.push_back(serialized);
+    anyValidPurchaseTimestamps[i] = anyValidPurchaseTimestamp;
   }
-  return rst;
+
+  using InputColumnDataType =
+      typename fbpcf::mpc_std_lib::unified_data_process::serialization::
+          IColumnDefinition<0>::InputColumnDataType;
+
+  std::unordered_map<std::string, InputColumnDataType> inputMap{
+      {"anyValidPurchaseTimestamp", anyValidPurchaseTimestamps},
+      {"cohortGroupId", cohortIdsSorted},
+      {"purchaseTimestamp", purchaseTimestampsSorted},
+      {"thresholdTimestamp", thresholdTimestampsSorted},
+      {"purchaseValue", purchaseValuesSorted},
+      {"purchaseValueSquared", purchaseValuesSquaredSorted},
+  };
+
+  return partnerSerializer->serializeDataAsBytesForUDP(inputMap, inputSize);
 }
 
 } // namespace private_lift

@@ -9,6 +9,7 @@
 
 #include <optional>
 #include <vector>
+
 #include "fbpcs/emp_games/common/IMetadataSerializer.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 
