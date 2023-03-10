@@ -30,13 +30,6 @@ private_computation:
     OneDockerServiceConfig:
       constructor:
         task_definition: fbpcs-github-cicd:4#fbpcs-github-cicd
-    PCValidatorConfig:
-      class: fbpcs.private_computation.entity.pc_validator_config.PCValidatorConfig
-      constructor:
-        ### AWS region - ex. us-west-2
-        region: us-west-2
-        ### Toggle running the PCPreValidator
-        pc_pre_validator_enabled: false
     LogRetriever:
       class: fbpcs.experimental.cloud_logs.aws_log_retriever.AWSLogRetriever
       constructor:
