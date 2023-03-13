@@ -66,13 +66,10 @@ RUN chown -R pcs:pcs /tmp/fbpcs-temp/fbpcs/
 # Switch to pcs user
 USER pcs
 
-# installing fbpcp (onedocker)
-RUN python3.8 -m pip install 'git+https://github.com/facebookresearch/fbpcp.git'
-
 # installing pip requirements
 RUN mkdir -p /home/pcs/src/
 WORKDIR /home/pcs/src
-COPY fbpcs/pip_requirements.txt /home/pcs/src/.
+COPY docker/onedocker/prod/pip_requirements.txt /home/pcs/src/.
 RUN python3.8 -m pip install --user -r pip_requirements.txt
 
 # Build and copy the pc_pre_validation_cli & smart_agent binary
