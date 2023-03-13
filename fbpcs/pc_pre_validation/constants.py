@@ -32,15 +32,24 @@ CONVERSION_METADATA_FIELD = "conversion_metadata"
 VALUE_FIELD = "value"
 EVENT_TIMESTAMP_FIELD = "event_timestamp"
 TIMESTAMP = "timestamp"
+OPPORTUNITY_TIMESTAMP = "opportunity_timestamp"
+AD_ID = "ad_id"
+IS_CLICK = "is_click"
+
 
 PA_FIELDS: List[str] = [
     CONVERSION_VALUE_FIELD,
     CONVERSION_TIMESTAMP_FIELD,
     CONVERSION_METADATA_FIELD,
 ]
+PA_PUBLISHER_FIELDS: List[str] = [AD_ID, TIMESTAMP, IS_CLICK]
 PL_FIELDS: List[str] = [
     VALUE_FIELD,
     EVENT_TIMESTAMP_FIELD,
+]
+PL_PUBLISHER_FIELDS: List[str] = [
+    ID_FIELD_PREFIX,
+    OPPORTUNITY_TIMESTAMP,
 ]
 PRIVATE_ID_DFCA_FIELDS: List[str] = ["partner_user_id"]
 REQUIRED_FIELDS: List[str] = [
