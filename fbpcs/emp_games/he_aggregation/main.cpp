@@ -49,20 +49,47 @@ int main(int argc, char* argv[]) {
       FLAGS_server_cert_path,
       FLAGS_private_key_path,
       "");
+
+  common::InputEncryption inputEncryption;
+  if (FLAGS_input_encryption == 1) {
+    inputEncryption = common::InputEncryption::PartnerXor;
+  } else if (FLAGS_input_encryption == 2) {
+    inputEncryption = common::InputEncryption::Xor;
+  } else {
+    inputEncryption = common::InputEncryption::Plaintext;
+  }
   try {
     if (FLAGS_party == common::PUBLISHER) {
       XLOG(INFO)
           << "Starting HE Aggregation as Publisher, will wait for Partner...";
 
       schedulerStatistics = pcf2_he::startHEAggApp<common::PUBLISHER>(
-          FLAGS_server_ip, FLAGS_port, tlsInfo);
+          FLAGS_server_ip,
+          FLAGS_port,
+          FLAGS_input_base_path_secret_share,
+          FLAGS_input_base_path,
+          FLAGS_output_base_path,
+          FLAGS_delta,
+          FLAGS_eps,
+          FLAGS_add_dp_noise,
+          tlsInfo,
+          inputEncryption);
 
     } else if (FLAGS_party == common::PARTNER) {
       XLOG(INFO)
           << "Starting HE Aggregation as Partner, will wait for Publisher...";
 
       schedulerStatistics = pcf2_he::startHEAggApp<common::PARTNER>(
-          FLAGS_server_ip, FLAGS_port, tlsInfo);
+          FLAGS_server_ip,
+          FLAGS_port,
+          FLAGS_input_base_path_secret_share,
+          FLAGS_input_base_path,
+          FLAGS_output_base_path,
+          FLAGS_delta,
+          FLAGS_eps,
+          FLAGS_add_dp_noise,
+          tlsInfo,
+          inputEncryption);
 
     } else {
       XLOGF(FATAL, "Invalid Party: {}", FLAGS_party);
