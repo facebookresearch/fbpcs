@@ -59,6 +59,9 @@ from fbpcs.pc_pre_validation.input_data_validation_issues import (
 from fbpcs.pc_pre_validation.validation_report import ValidationReport
 from fbpcs.pc_pre_validation.validator import Validator
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+)
 
 
 class InputDataValidator(Validator):
@@ -68,6 +71,8 @@ class InputDataValidator(Validator):
         cloud_provider: CloudProvider,
         region: str,
         stream_file: bool,
+        publisher_pc_pre_validation: bool,
+        private_computation_role: PrivateComputationRole,
         access_key_id: Optional[str] = None,
         access_key_data: Optional[str] = None,
         start_timestamp: Optional[str] = None,
@@ -80,6 +85,10 @@ class InputDataValidator(Validator):
         self._name: str = INPUT_DATA_VALIDATOR_NAME
         self._num_id_columns = 0
         self._stream_file = stream_file
+        self._publisher_pc_pre_validation = publisher_pc_pre_validation
+        self._private_computation_role: PrivateComputationRole = (
+            private_computation_role
+        )
 
         s3_path = S3Path(input_file_path)
         self._bucket: str = s3_path.bucket
@@ -350,21 +359,37 @@ class InputDataValidator(Validator):
             set(PRIVATE_ID_DFCA_FIELDS).intersection(set(header_row))
         ) == len(PRIVATE_ID_DFCA_FIELDS)
 
+        run_publisher_pre_validation_check = (
+            self._private_computation_role is PrivateComputationRole.PUBLISHER
+            and self._publisher_pc_pre_validation
+        )
+
+        run_partner_pre_validation_check = (
+            self._private_computation_role is PrivateComputationRole.PARTNER
+        )
         if not match_id_fields:
             raise InputDataValidationException(
                 f"Failed to parse the header row. The header row fields must have columns with prefix {ID_FIELD_PREFIX}"
             )
 
-        if not (
-            match_pa_fields
-            or match_pl_fields
-            or match_private_id_dfca_fields
-            or match_pl_publisher_fields
-            or match_pa_publisher_fields
+        if (
+            not (match_pa_fields or match_pl_fields or match_private_id_dfca_fields)
+            and run_partner_pre_validation_check
         ):
             raise InputDataValidationException(
-                f"Failed to parse the header row. The header row fields must have either: \
-                {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
+                f"Failed to parse {self._private_computation_role} the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
+            )
+
+        if (
+            not (
+                match_private_id_dfca_fields
+                or match_pl_publisher_fields
+                or match_pa_publisher_fields
+            )
+            and run_publisher_pre_validation_check
+        ):
+            raise InputDataValidationException(
+                f"Failed to parse {self._private_computation_role} the header row. The header row fields must have either: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
             )
 
     def _validate_line_ending(self, line: str) -> None:
