@@ -199,6 +199,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         pc_validator_config = PCValidatorConfig(
             region=region,
             pc_pre_validator_enabled=True,
+            pc_pre_validator_publisher_enabled=True,
         )
         stage_service = PCPreValidationStageService(
             pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
@@ -253,6 +254,44 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
 
         mock_onedocker_svc.start_container.assert_not_called()
         mock_get_pc_status_from_stage_state.assert_not_called()
+        self.assertEqual(status, expected_status)
+
+    @patch(
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.get_pc_status_from_stage_state"
+    )
+    async def test_run_async_completes_when_the_pc_pre_validator_publisher_enabled_is_not_enabled(
+        self, mock_get_pc_status_from_stage_state
+    ) -> None:
+        pc_instance = self._pc_instance
+        infra_config: InfraConfig = self._get_infra_config(
+            private_computation_role=PrivateComputationRole.PUBLISHER,
+            pcs_features={
+                PCSFeature.PRE_VALIDATION_FILE_STREAM,
+                PCSFeature.PUBLISHER_PC_PRE_VALIDATION,
+            },
+        )
+        pc_instance.infra_config = infra_config
+        expected_status = PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED
+        mock_onedocker_svc = MagicMock()
+        pc_validator_config = PCValidatorConfig(
+            region="us-west-1",
+            pc_pre_validator_enabled=True,
+            pc_pre_validator_publisher_enabled=False,
+        )
+        stage_service = PCPreValidationStageService(
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
+        )
+
+        await stage_service.run_async(
+            pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
+        )
+        status = stage_service.get_status(pc_instance)
+
+        mock_onedocker_svc.start_container.assert_not_called()
+        mock_get_pc_status_from_stage_state.assert_not_called()
+        self.assertFalse(
+            stage_service._should_run_pre_validation(pc_instance=pc_instance)
+        )
         self.assertEqual(status, expected_status)
 
     @patch(
