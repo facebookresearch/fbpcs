@@ -45,11 +45,13 @@ from fbpcs.private_computation.service.utils import generate_env_vars_dict
 
 class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
     def _get_infra_config(
-        self, pcs_features: Optional[Set[PCSFeature]] = None
+        self,
+        pcs_features: Optional[Set[PCSFeature]] = None,
+        private_computation_role: PrivateComputationRole = PrivateComputationRole.PARTNER,
     ) -> InfraConfig:
         return InfraConfig(
             instance_id="123",
-            role=PrivateComputationRole.PARTNER,
+            role=private_computation_role,
             status=PrivateComputationInstanceStatus.PC_PRE_VALIDATION_STARTED,
             status_update_ts=1600000000,
             instances=[],
@@ -149,6 +151,72 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             timeout=1200,
             env_vars=env_vars,
             wait_for_containers_to_start_up=True,
+            existing_containers=None,
+        )
+
+        mock_stage_state_instance.assert_called_with(
+            self._pc_instance.infra_config.instance_id,
+            self._pc_instance.current_stage.name,
+            containers=[mock_container_instance],
+        )
+        self.assertEqual(
+            pc_instance.infra_config.instances, [mock_stage_state_instance()]
+        )
+
+    @patch.object(RunBinaryBaseService, "start_containers")
+    @patch(
+        "fbpcs.private_computation.service.pc_pre_validation_stage_service.StageStateInstance"
+    )
+    async def test_run_async_when_there_are_no_issues_running_onedocker_service_publisher_role(
+        self, mock_stage_state_instance, mock_run_binary_base_service_start_containers
+    ) -> None:
+        pc_instance = self._pc_instance
+        infra_config: InfraConfig = self._get_infra_config(
+            private_computation_role=PrivateComputationRole.PUBLISHER,
+            pcs_features={
+                PCSFeature.PRE_VALIDATION_FILE_STREAM,
+                PCSFeature.PUBLISHER_PC_PRE_VALIDATION,
+            },
+        )
+        pc_instance.infra_config = infra_config
+        mock_container_instance = MagicMock()
+        mock_onedocker_svc = MagicMock()
+        mock_run_binary_base_service_start_containers.return_value = [
+            mock_container_instance
+        ]
+        region = "us-west-1"
+        expected_cmd_args = " ".join(
+            [
+                f"--input-file-path={self._pc_instance.product_config.common.input_path}",
+                "--cloud-provider=AWS",
+                f"--region={region}",
+                "--binary-version=latest",
+                f"--private-computation-role={PrivateComputationRole.PUBLISHER}",
+                "--pre-validation-file-stream=enabled",
+                "--publisher-pc-pre-validation=enabled",
+            ]
+        )
+        pc_validator_config = PCValidatorConfig(
+            region=region,
+            pc_pre_validator_enabled=True,
+        )
+        stage_service = PCPreValidationStageService(
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
+        )
+
+        await stage_service.run_async(
+            pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
+        )
+
+        env_vars = generate_env_vars_dict(repository_path="test_path/")
+        mock_run_binary_base_service_start_containers.assert_called_with(
+            cmd_args_list=[expected_cmd_args],
+            onedocker_svc=mock_onedocker_svc,
+            binary_version="latest",
+            binary_name=OneDockerBinaryNames.PC_PRE_VALIDATION.value,
+            timeout=1200,
+            env_vars=env_vars,
+            wait_for_containers_to_start_up=False,
             existing_containers=None,
         )
 
