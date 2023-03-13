@@ -206,7 +206,23 @@ class PCPreValidationStageService(PrivateComputationStageService):
     def _should_run_pre_validation(
         self, pc_instance: PrivateComputationInstance
     ) -> bool:
-        return (
-            self._pc_validator_config.pc_pre_validator_enabled
-            and pc_instance.infra_config.role == PrivateComputationRole.PARTNER
+        if (
+            pc_instance.infra_config.role == PrivateComputationRole.PARTNER
+            and self._pc_validator_config.pc_pre_validator_enabled
+        ):
+            self._logger.info(
+                f"PC pre validation is enabled for private computation role: {PrivateComputationRole.PARTNER}"
+            )
+            return True
+        elif (
+            pc_instance.infra_config.role == PrivateComputationRole.PUBLISHER
+            and self._pc_validator_config.pc_pre_validator_publisher_enabled
+        ):
+            self._logger.info(
+                f"PC pre validation is enabled for private computation role: {PrivateComputationRole.PUBLISHER}"
+            )
+            return True
+        self._logger.info(
+            f"PC pre validation is disbled for private computation role: {pc_instance.infra_config.role}. Skipping pre-validation check."
         )
+        return False
