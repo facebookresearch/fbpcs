@@ -12,6 +12,9 @@ from typing import Any, Dict, List
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+)
 from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
     PRE_VALIDATION_CHECKS_TIMEOUT,
 )
@@ -41,12 +44,18 @@ class PreValidateService:
         binary_config = pc_service.onedocker_binary_config_map[binary_name]
         env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
 
+        """
+        [BE] T147526958 pass private computation role from cli.
+        Since this service runs on partner PCE, we are hardcoding PrivateComputationRole to PARTNER in the code below.
+        """
         cmd_args = [
             get_cmd_args(
                 input_path=input_path,
                 region=region,
                 binary_config=binary_config,
                 pre_validation_file_stream_flag=True,
+                publisher_pc_pre_validation_flag=True,
+                private_computation_role=PrivateComputationRole.PARTNER,
                 input_path_start_ts=None,
                 input_path_end_ts=None,
             )
