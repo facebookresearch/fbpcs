@@ -27,3 +27,6 @@ DECLARE_string(ca_cert_path);
 DECLARE_string(server_cert_path);
 DECLARE_string(private_key_path);
 DECLARE_int32(input_encryption);
+DECLARE_int32(max_num_touchpoints);
+DECLARE_int32(max_num_conversions);
+DECLARE_bool(use_new_output_format);
