@@ -16,6 +16,8 @@
 
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 
+#include "fbpcs/emp_games/he_aggregation/AggregationInputMetrics.h"
+
 namespace pcf2_he {
 
 template <int MY_ROLE, int schedulerId>
@@ -49,7 +51,23 @@ class HEAggApp {
                          MY_ROLE, *communicationAgentFactory_, metricCollector_)
                          ->create();
 
-    XLOG(INFO) << "Start HEAgg App ";
+    XLOG(INFO) << "Start Reading input file ";
+
+    AggregationInputMetrics input = getInputData(
+        common::InputEncryption::Plaintext,
+        secretShareFilePath_,
+        inputFilePath_);
+
+    auto touchpointMetadataArrays = input.getTouchpointMetadata();
+    auto secretShareAttributionArrays = input.getAttributionSecretShares();
+
+    XLOGF(
+        INFO,
+        "Touchpoint Array size = {}, Secret share attribution array size = {}",
+        touchpointMetadataArrays.size(),
+        secretShareAttributionArrays[0].size());
+
+    XLOG(INFO) << "Finished Reading input file ";
 
     auto gateStatistics =
         fbpcf::scheduler::SchedulerKeeper<schedulerId>::getGateStatistics();
@@ -76,6 +94,20 @@ class HEAggApp {
 
   common::SchedulerStatistics getSchedulerStatistics() {
     return schedulerStatistics_;
+  }
+
+  AggregationInputMetrics getInputData(
+      common::InputEncryption inputEncryption,
+      std::string inputSecretShareFilePath,
+      std::string inputClearTextFilePath) {
+    XLOGF(
+        INFO,
+        "input_secret_share_file_path = {},  input_clear_text_file_path = {}",
+        inputSecretShareFilePath,
+        inputClearTextFilePath);
+
+    return AggregationInputMetrics{
+        inputEncryption, inputSecretShareFilePath, inputClearTextFilePath};
   }
 
  private:

@@ -60,3 +60,6 @@ DEFINE_int32(
     input_encryption,
     0,
     "0 for plaintext input, 1 for partner XOR encrypted input (used for Consortium MPC), 2 for both publisher and partner XOR encrypted input (used with PS3I)");
+DEFINE_int32(max_num_touchpoints, 4, "Maximum touchpoints per user");
+DEFINE_int32(max_num_conversions, 4, "Maximum conversions per user");
+DEFINE_bool(use_new_output_format, false, "New Format of Attribution output");
