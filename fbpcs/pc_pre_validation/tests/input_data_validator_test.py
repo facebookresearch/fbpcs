@@ -19,7 +19,9 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
+    PA_PUBLISHER_FIELDS,
     PL_FIELDS,
+    PL_PUBLISHER_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
@@ -484,7 +486,8 @@ class TestInputDataValidator(TestCase):
     def test_run_validations_errors_when_pa_pl_data_fields_not_found(
         self, time_mock: Mock
     ) -> None:
-        exception_message = f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
+        exception_message = f"Failed to parse the header row. The header row fields must have either: \
+                {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
             b"id_,header,row\n",

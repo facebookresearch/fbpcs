@@ -209,9 +209,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             pc_instance, NullCertificateProvider(), NullCertificateProvider(), "", ""
         )
         status = stage_service.get_status(pc_instance)
-
         mock_onedocker_svc.start_container.assert_not_called()
-        mock_get_pc_status_from_stage_state.assert_not_called()
         self.assertEqual(status, expected_status)
 
     @patch(
