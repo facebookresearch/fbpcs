@@ -19,15 +19,16 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
-    PA_PUBLISHER_FIELDS,
     PL_FIELDS,
-    PL_PUBLISHER_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.pc_pre_validation.input_data_validator import InputDataValidator
 from fbpcs.pc_pre_validation.validation_report import ValidationReport
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+)
 
 # Name the file randomly in order to avoid failures when the tests run concurrently
 TEST_FILENAME = f"test-input-data-validation-{random.randint(0, 1000000)}.csv"
@@ -39,6 +40,8 @@ TEST_INPUT_FILE_PATH = (
 )
 TEST_REGION = "us-west-2"
 TEST_STREAM_FILE = False
+TEST_PUBLISHER_PC_PRE_VALIDATION = False
+TEST_PRIVATE_COMPUTATION_ROLE: PrivateComputationRole = PrivateComputationRole.PARTNER
 TEST_TIMESTAMP: float = time.time()
 TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAMP}"
 
@@ -77,12 +80,14 @@ class TestInputDataValidator(TestCase):
         self.storage_service_mock.__init__(return_value=constructed_storage_service)
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH,
-            TEST_CLOUD_PROVIDER,
-            TEST_REGION,
-            TEST_STREAM_FILE,
-            access_key_id,
-            access_key_data,
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+            access_key_id=access_key_id,
+            access_key_data=access_key_data,
         )
 
         self.storage_service_mock.assert_called_with(
@@ -105,7 +110,12 @@ class TestInputDataValidator(TestCase):
         self.storage_service_mock.copy.side_effect = Exception(exception_message)
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -134,6 +144,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=True,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -153,6 +165,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=True,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -178,7 +192,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -206,7 +225,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -234,7 +258,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -271,7 +300,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -308,7 +342,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -336,7 +375,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -369,7 +413,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -403,7 +452,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -437,7 +491,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -476,7 +535,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -486,8 +550,7 @@ class TestInputDataValidator(TestCase):
     def test_run_validations_errors_when_pa_pl_data_fields_not_found(
         self, time_mock: Mock
     ) -> None:
-        exception_message = f"Failed to parse the header row. The header row fields must have either: \
-                {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
+        exception_message = f"Failed to parse {TEST_PRIVATE_COMPUTATION_ROLE} the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
             b"id_,header,row\n",
@@ -505,7 +568,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -533,7 +601,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -553,7 +626,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -581,7 +659,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -626,7 +709,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -670,7 +758,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -715,7 +808,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -745,7 +843,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -791,7 +894,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
@@ -815,7 +923,12 @@ class TestInputDataValidator(TestCase):
         count_empty_field_mock.side_effect = Exception(expected_exception_message)
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -848,7 +961,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -874,7 +992,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, TEST_CLOUD_PROVIDER, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -901,7 +1024,12 @@ class TestInputDataValidator(TestCase):
         )
 
         validator = InputDataValidator(
-            TEST_INPUT_FILE_PATH, cloud_provider, TEST_REGION, TEST_STREAM_FILE
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
 
@@ -916,6 +1044,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1650000000",
             end_timestamp="1640000000",
         )
@@ -930,6 +1060,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="bad-timestamp",
             end_timestamp="",
         )
@@ -972,6 +1104,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
         )
@@ -1015,6 +1149,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
         )
@@ -1053,6 +1189,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
         )
@@ -1091,6 +1229,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
         )
@@ -1120,6 +1260,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=True,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
 
         report = validator.validate()
@@ -1167,6 +1309,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=True,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
 
         report = validator.validate()
@@ -1211,6 +1355,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=True,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
 
         report = validator.validate()
@@ -1254,6 +1400,8 @@ class TestInputDataValidator(TestCase):
             cloud_provider=TEST_CLOUD_PROVIDER,
             region=TEST_REGION,
             stream_file=True,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
 
         report = validator.validate()
