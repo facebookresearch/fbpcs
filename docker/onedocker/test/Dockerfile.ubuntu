@@ -59,7 +59,7 @@ COPY --from=private_id /opt/private-id/bin/private-id-multi-key-server /usr/loca
 # OneDocker likes to change permissions as 'pcs' in /usr/local/bin, set these to be owned by 'pcs' to prevent an error
 RUN chown pcs:pcs /usr/local/bin/*
 
-# Copy fbpcs for building the pc_pre_validation_cli binary later
+# Copy fbpcs for building the pc_pre_validation_cli & smart_agent binary later
 COPY fbpcs/ /tmp/fbpcs-temp/fbpcs/
 RUN chown -R pcs:pcs /tmp/fbpcs-temp/fbpcs/
 
@@ -75,14 +75,18 @@ WORKDIR /home/pcs/src
 COPY fbpcs/pip_requirements.txt /home/pcs/src/.
 RUN python3.8 -m pip install --user -r pip_requirements.txt
 
-# Build and copy the pc_pre_validation_cli binary
+# Build and copy the pc_pre_validation_cli & smart_agent binary
 USER pcs
 WORKDIR /tmp/fbpcs-temp/fbpcs/pc_pre_validation/
-RUN pyinstaller pc_pre_validation_cli.py --onefile
+RUN pyinstaller pc_pre_validation_cli.py --onefile --distpath /tmp/fbpcs-temp/fbpcs/pyinstaller/dist/
+WORKDIR /tmp/fbpcs-temp/fbpcs/smart_agent/
+RUN pyinstaller server.py --onefile --name smart_agent_server --distpath /tmp/fbpcs-temp/fbpcs/pyinstaller/dist/
 
 USER root
-RUN cp ./dist/pc_pre_validation_cli /usr/local/bin/
+RUN cp /tmp/fbpcs-temp/fbpcs/pyinstaller/dist/pc_pre_validation_cli /usr/local/bin/
 RUN chown pcs:pcs /usr/local/bin/pc_pre_validation_cli
+RUN cp /tmp/fbpcs-temp/fbpcs/pyinstaller/dist/smart_agent_server /usr/local/bin/
+RUN chown pcs:pcs /usr/local/bin/smart_agent_server
 WORKDIR /
 RUN rm -rf /tmp/fbpcs-temp/fbpcs/
 USER pcs
@@ -90,7 +94,7 @@ USER pcs
 # Link all the binaries into /home/pcs/onedocker/package
 RUN mkdir -p /home/pcs/onedocker/package
 WORKDIR /usr/local/bin
-RUN for b in $(ls attribution* lift* pid* shard* private-id* decoupled* pcf2* pc_pre* secure_random*); do ln -s $(pwd)/$b /home/pcs/onedocker/package/$b; done
+RUN for b in $(ls attribution* lift* pid* shard* private-id* decoupled* pcf2* pc_pre* secure_random* smart_agent*); do ln -s $(pwd)/$b /home/pcs/onedocker/package/$b; done
 
 # Link binaries name to match with onedocker binaries name
 RUN ln -s decoupled_attribution_calculator /home/pcs/onedocker/package/decoupled_attribution
