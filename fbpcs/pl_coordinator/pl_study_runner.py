@@ -79,7 +79,6 @@ SEC_IN_DAY = 86400
 INSTANCE_LIFESPAN: int = SEC_IN_DAY
 STUDY_EXPIRE_TIME: int = 90 * SEC_IN_DAY
 CREATE_INSTANCE_TRIES = 3
-ALLOW_INSTANCES_PER_CELL_OBJ_IF_ENABLE = 3
 
 LOG_COMPONENT = "pl_study_runner"
 
@@ -675,7 +674,7 @@ def get_runnable_objectives(
         for objective_id in cell_obj_instances[cell_id]
         # if instance_id *is* in the dict, it means there is either an ongoing run
         # or a completed run within 24 hours
-        if len(cell_obj_instances[cell_id][objective_id]["instance_ids"]) == 0
+        if "instance_id" not in cell_obj_instances[cell_id][objective_id]
     ]
 
     logger.info(f"MPC objectives: {mpc_objective_ids}")
@@ -712,7 +711,6 @@ def _get_cell_obj_instance(
                 "latest_data_ts": latest_data_ts,
                 "input_path": objectives_data[objective_id],
                 "num_shards": num_shards,
-                "instance_ids": [],  # instance_ids use to collect valid instances within instance lifespan
             }
     # for these cell-obj pairs, find those with valid instances
     for instance_data in instances_data:
@@ -743,9 +741,6 @@ def _get_cell_obj_instance(
             > cell_obj_instance[cell_id][objective_id]["latest_data_ts"]
             and (created_time > current_time - INSTANCE_LIFESPAN)
         ):
-            cell_obj_instance[cell_id][objective_id]["instance_ids"].append(
-                instance_data["id"]
-            )
             cell_obj_instance[cell_id][objective_id]["instance_id"] = instance_data[
                 "id"
             ]
@@ -767,59 +762,27 @@ async def _create_new_instances(
 ) -> None:
     for cell_id in cell_obj_instances:
         for objective_id in cell_obj_instances[cell_id]:
-            allow_instances_per_cell_obj = 1
-            exisiting_instance_id = cell_obj_instances[cell_id][objective_id].get(
-                "instance_id"
-            )
-            if exisiting_instance_id and await client.has_feature(
-                exisiting_instance_id, PCSFeature.CREATE_DUPLICATE_INSTANCES
-            ):
-                allow_instances_per_cell_obj = ALLOW_INSTANCES_PER_CELL_OBJ_IF_ENABLE
-                """
-                If enable create duplicate instances, we will need to disable resume run by resetting run instance candidate
-                saying
-                    coordinator 1: run_study <study id> <objective id> <input path #1>
-                    coordinator 2: run_study <study id> <objective id> <input path #2>
-                    coordinator 3: run_study <study id> <objective id> <input path #3>
-
-                    if support resume run, coordinator 2 might pick up coordinator 1’s newly created instance
-                    thought that would need to be resumed. Then override with input path #2, and two command mess up together.
-                """
-                del cell_obj_instances[cell_id][objective_id]["instance_id"]
-                del cell_obj_instances[cell_id][objective_id][STATUS]
-
             # Create new instance for cell_obj pairs which has no valid instance.
-            if (
-                len(cell_obj_instances[cell_id][objective_id]["instance_ids"])
-                < allow_instances_per_cell_obj
-            ):
-                new_instance_id = await _create_instance_retry(
-                    client, study_id, cell_id, objective_id, run_id, logger
-                )
+            if "instance_id" not in cell_obj_instances[cell_id][objective_id]:
                 cell_obj_instances[cell_id][objective_id][
                     "instance_id"
-                ] = new_instance_id
+                ] = await _create_instance_retry(
+                    client, study_id, cell_id, objective_id, run_id, logger
+                )
                 cell_obj_instances[cell_id][objective_id][
                     STATUS
                 ] = PrivateComputationInstanceStatus.CREATED.value
 
-                # add newly created instance id to instance_ids
-                cell_obj_instances[cell_id][objective_id]["instance_ids"].append(
-                    new_instance_id
-                )
-
-            for instance_id in cell_obj_instances[cell_id][objective_id][
-                "instance_ids"
-            ]:
-                is_pl_timestamp_validation_enabled = await client.has_feature(
-                    instance_id, PCSFeature.PL_TIMESTAMP_VALIDATION
-                )
-                timestamps = InputDataService.get_lift_study_timestamps(
-                    study_start_time,
-                    observation_end_time,
-                    is_pl_timestamp_validation_enabled,
-                )
-                instance_ids_to_timestamps[instance_id] = timestamps
+            instance_id = cell_obj_instances[cell_id][objective_id]["instance_id"]
+            is_pl_timestamp_validation_enabled = await client.has_feature(
+                instance_id, PCSFeature.PL_TIMESTAMP_VALIDATION
+            )
+            timestamps = InputDataService.get_lift_study_timestamps(
+                study_start_time,
+                observation_end_time,
+                is_pl_timestamp_validation_enabled,
+            )
+            instance_ids_to_timestamps[instance_id] = timestamps
 
 
 @bolt_checkpoint(
@@ -912,8 +875,7 @@ async def _check_versions(
     for cell_id in cell_obj_instances:
         for objective_id in cell_obj_instances[cell_id]:
             instance_data = cell_obj_instances[cell_id][objective_id]
-            # use the last instance to check version.
-            instance_id = instance_data["instance_ids"][-1]
+            instance_id = instance_data["instance_id"]
             # if there is no tier for some reason (e.g. old study?), let's just assume
             # the tier is correct
             tier_str = json.loads((await client.get_instance(instance_id)).text).get(
@@ -935,8 +897,7 @@ async def _get_pcs_features(
     for cell_id in cell_obj_instances:
         for objective_id in cell_obj_instances[cell_id]:
             instance_data = cell_obj_instances[cell_id][objective_id]
-            # use the last instance to get feature list.
-            instance_id = instance_data["instance_ids"][-1]
+            instance_id = instance_data["instance_id"]
             feature_list = json.loads(
                 (await client.get_instance(instance_id)).text
             ).get("feature_list")
