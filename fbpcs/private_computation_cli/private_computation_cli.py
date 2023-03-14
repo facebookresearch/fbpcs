@@ -21,7 +21,7 @@ Usage:
     pc-cli cancel_current_stage <instance_id> --config=<config_file> [options]
     pc-cli print_instance <instance_id> --config=<config_file> [options]
     pc-cli print_current_status <instance_id> --config=<config_file> [options]
-    pc-cli print_log_urls <instance_id> --config=<config_file> [options]
+    pc-cli print_log_urls <instance_id> --config=<config_file> [--all_stages --failed_only] [options]
     pc-cli get_attribution_dataset_info --dataset_id=<dataset_id> --config=<config_file> [options]
     pc-cli run_attribution --config=<config_file> --dataset_id=<dataset_id> --input_path=<input_path> --timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold> [--run_id=<run_id> --graphapi_version=<graphapi_version> --graphapi_domain=<graphapi_domain> --stage_timeout_override_seconds=<stage_timeout_override_seconds>] [options]
     pc-cli pre_validate --config=<config_file> [--dataset_id=<dataset_id>] --input_path=<input_path> [--timestamp=<timestamp> --attribution_rule=<attribution_rule> --aggregation_type=<aggregation_type> --concurrency=<concurrency> --num_files_per_mpc_container=<num_files_per_mpc_container> --k_anonymity_threshold=<k_anonymity_threshold>] [options]
@@ -193,6 +193,8 @@ def main(argv: Optional[List[str]] = None) -> None:
             "print_instance": bool,
             "print_current_status": bool,
             "print_log_urls": bool,
+            "--all_stages": bool,
+            "--failed_only": bool,
             "get_attribution_dataset_info": bool,
             "bolt_e2e": bool,
             "secret_scrubber": bool,
@@ -467,6 +469,8 @@ def main(argv: Optional[List[str]] = None) -> None:
             config=config,
             instance_id=instance_id,
             logger=logger,
+            all_stages=arguments["--all_stages"],
+            failed_only=arguments["--failed_only"],
         )
     elif arguments["get_attribution_dataset_info"]:
         print(
