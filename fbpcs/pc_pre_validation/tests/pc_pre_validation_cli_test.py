@@ -11,6 +11,9 @@ from unittest.mock import Mock, patch
 from fbpcs.pc_pre_validation import pc_pre_validation_cli as validation_cli
 from fbpcs.pc_pre_validation.enums import ValidationResult
 from fbpcs.private_computation.entity.cloud_provider import CloudProvider
+from fbpcs.private_computation.entity.private_computation_instance import (
+    PrivateComputationRole,
+)
 
 
 class TestPCPreValidationCLI(TestCase):
@@ -45,6 +48,8 @@ class TestPCPreValidationCLI(TestCase):
             cloud_provider=expected_cloud_provider,
             region=expected_region,
             stream_file=False,
+            publisher_pc_pre_validation=False,
+            private_computation_role=None,
             start_timestamp=None,
             end_timestamp=None,
             access_key_id=None,
@@ -83,6 +88,9 @@ class TestPCPreValidationCLI(TestCase):
         expected_access_key_id = "access_key_id2"
         expected_access_key_data = "access_key_data3"
         expected_binary_version = "binary_version"
+        expected_pc_computation_role: PrivateComputationRole = (
+            PrivateComputationRole.PARTNER.name
+        )
         argv = [
             f"--input-file-path={expected_input_file_path}",
             f"--cloud-provider={cloud_provider_str}",
@@ -92,7 +100,9 @@ class TestPCPreValidationCLI(TestCase):
             f"--access-key-id={expected_access_key_id}",
             f"--access-key-data={expected_access_key_data}",
             f"--binary-version={expected_binary_version}",
+            f"--private-computation-role={expected_pc_computation_role}",
             "--pre-validation-file-stream=enabled",
+            "--publisher-pc-pre-validation=enabled",
         ]
 
         validation_cli.main(argv)
@@ -102,6 +112,8 @@ class TestPCPreValidationCLI(TestCase):
             cloud_provider=expected_cloud_provider,
             region=expected_region,
             stream_file=True,
+            publisher_pc_pre_validation=True,
+            private_computation_role=PrivateComputationRole.PARTNER.name,
             start_timestamp=expected_start_timestamp,
             end_timestamp=expected_end_timestamp,
             access_key_id=expected_access_key_id,
