@@ -19,9 +19,7 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
-    PA_PUBLISHER_FIELDS,
     PL_FIELDS,
-    PL_PUBLISHER_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
