@@ -39,7 +39,9 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_VALIDATOR_NAME,
     INTEGER_MAX_VALUE,
     PA_FIELDS,
+    PA_PUBLISHER_FIELDS,
     PL_FIELDS,
+    PL_PUBLISHER_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
     STREAMING_DURATION_LIMIT_IN_SECONDS,
     TIMESTAMP,
@@ -331,9 +333,19 @@ class InputDataValidator(Validator):
         match_pa_fields = len(set(PA_FIELDS).intersection(set(header_row))) == len(
             PA_FIELDS
         )
+
+        match_pa_publisher_fields = len(
+            set(PA_PUBLISHER_FIELDS).intersection(set(header_row))
+        ) == len(PA_PUBLISHER_FIELDS)
+
         match_pl_fields = len(set(PL_FIELDS).intersection(set(header_row))) == len(
             PL_FIELDS
         )
+
+        match_pl_publisher_fields = len(
+            set(PL_PUBLISHER_FIELDS).intersection(set(header_row))
+        ) == len(PL_PUBLISHER_FIELDS)
+
         match_private_id_dfca_fields = len(
             set(PRIVATE_ID_DFCA_FIELDS).intersection(set(header_row))
         ) == len(PRIVATE_ID_DFCA_FIELDS)
@@ -343,9 +355,16 @@ class InputDataValidator(Validator):
                 f"Failed to parse the header row. The header row fields must have columns with prefix {ID_FIELD_PREFIX}"
             )
 
-        if not (match_pa_fields or match_pl_fields or match_private_id_dfca_fields):
+        if not (
+            match_pa_fields
+            or match_pl_fields
+            or match_private_id_dfca_fields
+            or match_pl_publisher_fields
+            or match_pa_publisher_fields
+        ):
             raise InputDataValidationException(
-                f"Failed to parse the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
+                f"Failed to parse the header row. The header row fields must have either: \
+                {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
             )
 
     def _validate_line_ending(self, line: str) -> None:
