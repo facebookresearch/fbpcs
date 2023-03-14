@@ -27,7 +27,6 @@ class PCSFeature(Enum):
     PID_FILTER_LOW_QUALITY_IDENTIFIER_THRESH166 = (
         "pid_filter_low_quality_identifier_thresh166"
     )
-    CREATE_DUPLICATE_INSTANCES = "create_duplicate_instances"
     PUBLISHER_PC_PRE_VALIDATION = "publisher_pc_pre_validation"
     PRIVATE_ATTRIBUTION_REFORMATTED_OUTPUT = "private_attribution_reformatted_output"
     PRIVATE_COMPUTATION_TRANSLATOR = "private_computation_translator"
