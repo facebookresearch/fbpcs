@@ -478,3 +478,95 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         self.assertEqual(
             pc_instance.infra_config.instances, [mock_stage_state_instance()]
         )
+
+    def test_should_run_pre_validation_gk_setting_publisher_role(self):
+        pc_instance = self._pc_instance
+        region = "us-west-1"
+        mock_onedocker_svc = MagicMock()
+        pc_validator_config = PCValidatorConfig(
+            region=region,
+            pc_pre_validator_enabled=True,
+            pc_pre_validator_publisher_enabled=True,
+        )
+        stage_service = PCPreValidationStageService(
+            pc_validator_config, mock_onedocker_svc, self.onedocker_binary_config_map
+        )
+        with self.subTest("publisher_gk_enabled"):
+            infra_config: InfraConfig = self._get_infra_config(
+                private_computation_role=PrivateComputationRole.PUBLISHER,
+                pcs_features={
+                    PCSFeature.PUBLISHER_PC_PRE_VALIDATION,
+                },
+            )
+            pc_instance.infra_config = infra_config
+            self.assertTrue(
+                stage_service._should_run_pre_validation(pc_instance=pc_instance)
+            )
+        with self.subTest("publisher_gk_disabled"):
+            infra_config: InfraConfig = self._get_infra_config(
+                private_computation_role=PrivateComputationRole.PUBLISHER,
+                pcs_features={},
+            )
+            pc_instance.infra_config = infra_config
+            self.assertFalse(
+                stage_service._should_run_pre_validation(pc_instance=pc_instance)
+            )
+
+    def test_should_run_pre_validation_pc_validator_config_flag_setting_publisher_role(
+        self,
+    ):
+        pc_instance = self._pc_instance
+        region = "us-west-1"
+        mock_onedocker_svc = MagicMock()
+        infra_config: InfraConfig = self._get_infra_config(
+            private_computation_role=PrivateComputationRole.PUBLISHER,
+            pcs_features={
+                PCSFeature.PUBLISHER_PC_PRE_VALIDATION,
+            },
+        )
+        pc_instance.infra_config = infra_config
+        with self.subTest("pc_pre_validator_publisher_enabled"):
+            pc_validator_config = PCValidatorConfig(
+                region=region,
+                pc_pre_validator_enabled=True,
+                pc_pre_validator_publisher_enabled=True,
+            )
+            stage_service = PCPreValidationStageService(
+                pc_validator_config,
+                mock_onedocker_svc,
+                self.onedocker_binary_config_map,
+            )
+            self.assertTrue(
+                stage_service._should_run_pre_validation(pc_instance=pc_instance)
+            )
+        with self.subTest("pc_pre_validator_publisher_disabled"):
+            pc_validator_config = PCValidatorConfig(
+                region=region,
+                pc_pre_validator_enabled=True,
+                pc_pre_validator_publisher_enabled=False,
+            )
+            stage_service = PCPreValidationStageService(
+                pc_validator_config,
+                mock_onedocker_svc,
+                self.onedocker_binary_config_map,
+            )
+            self.assertFalse(
+                stage_service._should_run_pre_validation(pc_instance=pc_instance)
+            )
+
+        with self.subTest(
+            "pc_pre_validator_publisher_disabled_pc_pre_validator_disabled"
+        ):
+            pc_validator_config = PCValidatorConfig(
+                region=region,
+                pc_pre_validator_enabled=False,
+                pc_pre_validator_publisher_enabled=False,
+            )
+            stage_service = PCPreValidationStageService(
+                pc_validator_config,
+                mock_onedocker_svc,
+                self.onedocker_binary_config_map,
+            )
+            self.assertFalse(
+                stage_service._should_run_pre_validation(pc_instance=pc_instance)
+            )
