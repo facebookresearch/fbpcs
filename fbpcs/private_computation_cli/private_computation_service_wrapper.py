@@ -311,7 +311,11 @@ def print_current_status(
 
 
 def print_log_urls(
-    config: Dict[str, Any], instance_id: str, logger: logging.Logger
+    config: Dict[str, Any],
+    instance_id: str,
+    logger: logging.Logger,
+    all_stages: bool = False,
+    failed_only: bool = False,
 ) -> None:
     """
     To print the log urls with id instance_id.
@@ -324,11 +328,14 @@ def print_log_urls(
         config.get("post_processing_handlers", {}),
         config.get("pid_post_processing_handlers", {}),
     )
-    log_urls = pc_service.get_log_urls(instance_id)
+    log_urls = pc_service.get_log_urls(
+        instance_or_id=instance_id, all_stages=all_stages, failed_only=failed_only
+    )
     if not log_urls:
         logger.warning(f"Unable to get log container urls for instance {instance_id}")
         return
 
+    print("========= print log urls =========")
     for stage, log_url in log_urls.items():
         print(f"[{stage}]: {log_url}")
 

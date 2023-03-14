@@ -779,12 +779,18 @@ class PrivateComputationService:
         return pc_instance
 
     def get_log_urls(
-        self, instance_or_id: Union[str, PrivateComputationInstance]
+        self,
+        instance_or_id: Union[str, PrivateComputationInstance],
+        all_stages: bool = False,
+        failed_only: bool = False,
     ) -> Dict[str, str]:
-        """Get log urls for most recently run containers
+        """Get log urls for [most recently] run containers
 
         Arguments:
             instance_or_id: The PC instance to get logs from or its instance id
+            all_stages: Default False only get log urls for most recently run containers. True to retriave all_stages logs
+            failed_only: only get log urls for failed status. Default False
+
 
         Returns:
             A mapping of log index to log url
@@ -803,18 +809,26 @@ class PrivateComputationService:
             return {}
 
         # Get the stage state instance
-        last_instance = private_computation_instance.infra_config.instances[-1]
+        stage_instances = private_computation_instance.infra_config.instances
+        if not all_stages:
+            stage_instances = [private_computation_instance.infra_config.instances[-1]]
+
         res = {}
-        if isinstance(last_instance, StageStateInstance):
-            containers = last_instance.containers
-            for i, container in enumerate(containers):
-                res[str(i)] = self.log_retriever.get_log_url(container.instance_id)
-        else:
-            logging.warning(
-                "The last instance of PrivateComputationInstance "
-                f"{private_computation_instance.infra_config.instance_id} has no supported way "
-                "of retrieving log URLs"
-            )
+        for s, stage_instance in enumerate(stage_instances):
+            if isinstance(stage_instance, StageStateInstance):
+                stage_name = stage_instance.stage_name
+                containers = stage_instance.containers
+                for i, container in enumerate(containers):
+                    if (
+                        failed_only
+                        and container.status is not ContainerInstanceStatus.FAILED
+                    ):
+                        continue
+
+                    res[
+                        f"{s}_{stage_name}|container_{i}|{container.status.value}"
+                    ] = self.log_retriever.get_log_url(container.instance_id)
+
         return res
 
     # TODO T88759390: make an async version of this function
