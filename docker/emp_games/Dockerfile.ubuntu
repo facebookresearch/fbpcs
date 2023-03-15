@@ -36,8 +36,7 @@ FROM ubuntu:${os_release} as prod
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    libboost-context1.71.0 \
-    libboost-regex1.71.0 \
+    libboost-all-dev \
     libevent-2.1-7 \
     libcurl4 \
     libdouble-conversion3 \
