@@ -101,6 +101,11 @@ target_link_libraries(
   perftools)
 install(TARGETS decoupled_aggregation_calculator DESTINATION bin)
 
+
+# Find boost
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
 # pcf2_attribution
 file(GLOB pcf2_attribution_src
   "fbpcs/emp_games/pcf2_attribution/**.c"
@@ -146,6 +151,7 @@ target_link_libraries(
   empgamecommon
   perftools
   pcf2_lift_input_processing
+  ${Boost_LIBRARIES}
 )
 install(TARGETS pcf2_lift_metadata_compaction DESTINATION bin)
 

@@ -8,6 +8,11 @@ include(${fbpcf_cmake})
 
 find_library(fbpcf libfbpcf.a)
 
+# Find boost
+find_package(Boost COMPONENTS serialization REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+
 # emp game common
 file(GLOB emp_game_common_src
   "fbpcs/emp_games/common/**.c"
@@ -21,6 +26,7 @@ target_link_libraries(
   empgamecommon
   INTERFACE
   fbpcf
+  ${Boost_LIBRARIES}
   ${AWSSDK_LINK_LIBRARIES}
   ${EMP-OT_LIBRARIES}
   google-cloud-cpp::storage
