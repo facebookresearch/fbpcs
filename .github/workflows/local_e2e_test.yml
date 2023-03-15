@@ -1,0 +1,58 @@
+name: End to end tests without the Graph API
+
+on:
+  workflow_call:
+    inputs:
+      onedocker_image_tag:
+        description: "The OneDocker Image used for testing"
+        required: true
+        type: string
+      coordinator_image_tag:
+        description: "The Coordinator Image used for testing"
+        required: true
+        type: string
+      tracker_hash:
+        description: "[Internal usage] Used for tracking workflow job status within Meta infra"
+        required: false
+        type: string
+
+env:
+  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator
+
+jobs:
+  e2e_test:
+    name: Run End to End Tests
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Print Tracker Hash
+        run: echo ${{ inputs.tracker_hash }}
+
+      - name: Get AWS Session name
+        id: aws_session_name
+        run: |
+          echo session_name=$(echo publish-onedocker-tests-${{ inputs.onedocker_image_tag }} | tr " " "-") >> $GITHUB_OUTPUT
+
+      - name: Set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_E2E_TEST_ROLE_TO_ASSUME }}
+          aws-region: us-west-2
+          role-duration-seconds: 5400
+          role-session-name: ${{ steps.aws_session_name.outputs.session_name }}
+
+      - name: Pull coordinator image
+        run: |
+          docker pull ${{ env.COORDINATOR_IMAGE }}:${{ inputs.coordinator_image_tag }}
+
+      ### Private Lift and Attribution E2E tests
+      - name: End to end testing
+        timeout-minutes: 90
+        run: |
+          docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_DEFAULT_REGION --rm -v "instances":"/instances" -v "$(realpath fbpcs_e2e_aws.yml):/home/pcs/pl_coordinator_env/fbpcs_e2e_aws.yml" -v "$(realpath bolt_config.yml):/home/pcs/pl_coordinator_env/bolt_config.yml" ${{ env.COORDINATOR_IMAGE }}:${{ inputs.coordinator_image_tag }} python3.8 -m fbpcs.private_computation_cli.private_computation_cli bolt_e2e --bolt_config="bolt_config.yml"
+        working-directory: fbpcs/tests/github/

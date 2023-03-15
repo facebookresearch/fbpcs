@@ -3,9 +3,6 @@ name: Publish OneDocker image
 on:
   workflow_dispatch:
     inputs:
-      name:
-        description: 'Manually running this workflow will skip "Check New Commits" step and build image directly'
-        default: "Run"
       new_tag:
         description: "The new tag of the docker image"
         required: false
@@ -14,7 +11,7 @@ on:
       tracker_hash:
         description: "[Internal usage] Used for tracking workflow job status within Meta infra"
         required: false
-        type: str
+        type: string
 
 env:
   DISTRO: ubuntu
@@ -22,7 +19,6 @@ env:
   LOCAL_IMAGE_NAME: fbpcs/onedocker/test
   RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
   PROD_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/onedocker
-  COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator
   PL_CONTAINER_NAME: e2e_pl_container
   PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
@@ -73,47 +69,24 @@ jobs:
           docker push --all-tags ${{ env.RC_REGISTRY_IMAGE_NAME }}
 
   e2e_test:
-    name: Run End to End Tests
-    runs-on: ubuntu-latest
     needs: build_image
+    uses: ./.github/workflows/local_e2e_test.yml
+    with:
+      onedocker_image_tag: ${{ inputs.new_tag }}
+      coordinator_image_tag: ${{ inputs.new_tag }}
+      tracker_hash: ${{ inputs.tracker_hash }}
+    secrets: inherit # pass all secrets
+
+  publish_onedocker_image:
+    name: Publish the OneDocker Image After Successful Tests
+    needs: e2e_test
+    runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
       packages: write
-
     steps:
-      - uses: actions/checkout@v3
-
       - name: Print Tracker Hash
         run: echo ${{ inputs.tracker_hash }}
-
-      - name: Get AWS Session name
-        id: aws_session_name
-        run: |
-          echo session_name=$(echo publish-onedocker-tests-${{ inputs.new_tag }} | tr " " "-") >> $GITHUB_OUTPUT
-
-      - name: Set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.AWS_E2E_TEST_ROLE_TO_ASSUME }}
-          aws-region: us-west-2
-          role-duration-seconds: 5400
-          role-session-name: ${{ steps.aws_session_name.outputs.session_name }}
-
-      - name: Clean Up Docker Images
-        run: |
-          docker image prune -af
-
-      - name: Pull coordinator image
-        run: |
-          docker pull ${{ env.COORDINATOR_IMAGE }}:${{ inputs.new_tag }}
-
-      ### Private Lift and Attribution E2E tests
-      - name: End to end testing
-        timeout-minutes: 90
-        run: |
-          docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_DEFAULT_REGION --rm -v "instances":"/instances" -v "$(realpath fbpcs_e2e_aws.yml):/home/pcs/pl_coordinator_env/fbpcs_e2e_aws.yml" -v "$(realpath bolt_config.yml):/home/pcs/pl_coordinator_env/bolt_config.yml" ${{ env.COORDINATOR_IMAGE }}:${{ inputs.new_tag }} python3.8 -m fbpcs.private_computation_cli.private_computation_cli bolt_e2e --bolt_config="bolt_config.yml"
-        working-directory: fbpcs/tests/github/
 
       - name: Pull image from rc registry
         run: |
@@ -137,5 +110,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push docker image to prod registry
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           docker push --all-tags ${{ env.PROD_REGISTRY_IMAGE_NAME }}
