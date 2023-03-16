@@ -122,11 +122,13 @@ struct TestData {
   std::vector<std::string> advertiserDataFiles;
   std::string globalParameterFile;
 
-  std::string publisherEncryptionFile;
+  std::vector<std::string> publisherEncryptionFiles;
   std::string publisherExpandedKeyFile;
 
-  std::string advertiserEncryptionFile;
+  std::vector<std::string> advertiserEncryptionFiles;
   std::string advertiserExpandedKeyFile;
+
+  size_t intersectionSize;
 };
 
 TestData generateTestData(
@@ -136,7 +138,8 @@ TestData generateTestData(
     size_t advertiserWidth,
     size_t intersectionSize,
     int publisherFileCount,
-    int advertiserFileCount) {
+    int advertiserFileCount,
+    int encryptionFileCount) {
   std::string tempDir = std::filesystem::temp_directory_path();
   const std::string publisherDataPath =
       folly::sformat("{}/publisher_data_{}_", tempDir, folly::Random::rand32());
@@ -149,11 +152,11 @@ TestData generateTestData(
   const std::string globalParameter = folly::sformat(
       "{}/global_parameters_{}", tempDir, folly::Random::rand32());
   const std::string publisherEncryptionFile = folly::sformat(
-      "{}/publisher_Encryption_{}", tempDir, folly::Random::rand32());
+      "{}/publisher_Encryption_{}_", tempDir, folly::Random::rand32());
   const std::string publisherExpandedKeyFile = folly::sformat(
       "{}/publisher_ExpandedKey_{}", tempDir, folly::Random::rand32());
   const std::string advertiserEncryptionFile = folly::sformat(
-      "{}/advertiser_Encryption_{}", tempDir, folly::Random::rand32());
+      "{}/advertiser_Encryption_{}_", tempDir, folly::Random::rand32());
   const std::string advertiserExpandedKeyFile = folly::sformat(
       "{}/advertiser_ExpandedKey_{}", tempDir, folly::Random::rand32());
 
@@ -161,6 +164,8 @@ TestData generateTestData(
   std::vector<std::string> advertiserDataFiles;
   std::vector<std::string> publisherIndexFiles;
   std::vector<std::string> advertiserIndexFiles;
+  std::vector<std::string> publisherEncryptionFiles;
+  std::vector<std::string> advertiserEncryptionFiles;
 
   for (size_t i = 0; i < publisherFileCount; i++) {
     publisherDataFiles.push_back(publisherDataPath + std::to_string(i));
@@ -170,6 +175,12 @@ TestData generateTestData(
   for (size_t i = 0; i < advertiserFileCount; i++) {
     advertiserDataFiles.push_back(advertiserDataPath + std::to_string(i));
     advertiserIndexFiles.push_back(advertiserIndexPath + std::to_string(i));
+  }
+  for (size_t i = 0; i < encryptionFileCount; i++) {
+    advertiserEncryptionFiles.push_back(
+        advertiserEncryptionFile + std::to_string(i));
+    publisherEncryptionFiles.push_back(
+        publisherEncryptionFile + std::to_string(i));
   }
 
   auto publisherData =
@@ -200,7 +211,6 @@ TestData generateTestData(
   gp.emplace(global_parameters::KPubDataWidth, publisherWidth);
   gp.emplace(global_parameters::KAdvRowCount, advertiserRowCount);
   gp.emplace(global_parameters::KPubRowCount, publisherRowCount);
-  gp.emplace(global_parameters::KMatchedUserCount, intersectionSize);
   global_parameters::writeToFile(globalParameter, gp);
 
   return TestData{
@@ -211,10 +221,11 @@ TestData generateTestData(
       .publisherDataFiles = std::move(publisherDataFiles),
       .advertiserDataFiles = std::move(advertiserDataFiles),
       .globalParameterFile = globalParameter,
-      .publisherEncryptionFile = publisherEncryptionFile,
+      .publisherEncryptionFiles = publisherEncryptionFiles,
       .publisherExpandedKeyFile = publisherExpandedKeyFile,
-      .advertiserEncryptionFile = advertiserEncryptionFile,
+      .advertiserEncryptionFiles = advertiserEncryptionFiles,
       .advertiserExpandedKeyFile = advertiserExpandedKeyFile,
+      .intersectionSize = intersectionSize,
   };
 }
 
@@ -241,8 +252,9 @@ std::vector<std::vector<uint8_t>> test(
     const std::vector<std::string>& indexFiles,
     const std::vector<std::string>& dataFiles,
     const std::string& parameterFile,
-    const std::string& encryptionFile,
-    const std::string& expandedKeyFile) {
+    const std::vector<std::string>& encryptionFiles,
+    const std::string& expandedKeyFile,
+    size_t intersectionSize) {
   int chunkSize = 5;
   UdpEncryptorApp encryptionApp(
       std::make_unique<UdpEncryptor>(
@@ -253,35 +265,45 @@ std::vector<std::vector<uint8_t>> test(
       schedulerId == 0);
 
   encryptionApp.invokeUdpEncryption(
-      indexFiles, dataFiles, parameterFile, encryptionFile, expandedKeyFile);
+      indexFiles, dataFiles, parameterFile, encryptionFiles, expandedKeyFile);
 
   UdpDecryptorApp<schedulerId> decryptionApp{
       std::make_unique<fbpcf::mpc_std_lib::unified_data_process::
                            data_processor::UdpDecryption<schedulerId>>(
           schedulerId, 1 - schedulerId),
       schedulerId == 0};
-  auto [publisherData, advertiserData] = decryptionApp.invokeUdpDecryption(
-      encryptionFile, expandedKeyFile, parameterFile);
   auto gp = global_parameters::readFromFile(parameterFile);
   auto publisherWidth =
       boost::get<int32_t>(gp.at(global_parameters::KPubDataWidth));
   auto advertiserWidth =
       boost::get<int32_t>(gp.at(global_parameters::KAdvDataWidth));
-  auto intersectionSize =
-      boost::get<int32_t>(gp.at(global_parameters::KMatchedUserCount));
-  if constexpr (schedulerId == 0) {
-    auto data = publisherData.openToParty(0).getValue();
-    advertiserData.openToParty(1);
-    return convertToBytes(data, publisherWidth, intersectionSize);
-  } else {
-    publisherData.openToParty(0);
-    auto data = advertiserData.openToParty(1).getValue();
-    return convertToBytes(data, advertiserWidth, intersectionSize);
+
+  std::vector<std::vector<uint8_t>> rst;
+  for (size_t i = 0; i < encryptionFiles.size(); i++) {
+    size_t shardSize =
+        fbpcf::mpc_std_lib::unified_data_process::data_processor::getShardSize(
+            intersectionSize, i, encryptionFiles.size());
+
+    auto [publisherData, advertiserData] = decryptionApp.invokeUdpDecryption(
+        encryptionFiles.at(i), expandedKeyFile, parameterFile, shardSize);
+
+    if constexpr (schedulerId == 0) {
+      auto data = publisherData.openToParty(0).getValue();
+      advertiserData.openToParty(1);
+      auto plaintext = convertToBytes(data, publisherWidth, shardSize);
+      rst.insert(rst.end(), plaintext.begin(), plaintext.end());
+    } else {
+      publisherData.openToParty(0);
+      auto data = advertiserData.openToParty(1).getValue();
+      auto plaintext = convertToBytes(data, advertiserWidth, shardSize);
+      rst.insert(rst.end(), plaintext.begin(), plaintext.end());
+    }
   }
+  return rst;
 }
 
 TEST(UdpEncryptorAppTest, integration_test) {
-  auto testdata = generateTestData(100, 87, 42, 31, 19, 3, 7);
+  auto testdata = generateTestData(100, 87, 42, 31, 19, 3, 7, 2);
 
   std::vector<std::unique_ptr<fbpcf::engine::communication::
                                   SocketPartyCommunicationAgentFactoryForTests>>
@@ -303,15 +325,17 @@ TEST(UdpEncryptorAppTest, integration_test) {
       testdata.advertiserIndexFiles,
       testdata.advertiserDataFiles,
       testdata.globalParameterFile,
-      testdata.advertiserEncryptionFile,
-      testdata.advertiserExpandedKeyFile);
+      testdata.advertiserEncryptionFiles,
+      testdata.advertiserExpandedKeyFile,
+      testdata.intersectionSize);
   auto publisherData = test<0>(
       std::move(agentFactories.at(0)),
       testdata.publisherIndexFiles,
       testdata.publisherDataFiles,
       testdata.globalParameterFile,
-      testdata.publisherEncryptionFile,
-      testdata.publisherExpandedKeyFile);
+      testdata.publisherEncryptionFiles,
+      testdata.publisherExpandedKeyFile,
+      testdata.intersectionSize);
   auto advertiserData = future1.get();
 
   ASSERT_EQ(publisherData.size(), testdata.publisherExpectedOutput.size());
@@ -326,7 +350,6 @@ TEST(UdpEncryptorAppTest, integration_test) {
     fbpcf::testVectorEq(
         advertiserData.at(i), testdata.advertiserExpectedOutput.at(i));
   }
-
   SCOPE_EXIT {
     for (auto& file : testdata.advertiserDataFiles) {
       std::remove(file.c_str());
@@ -340,10 +363,14 @@ TEST(UdpEncryptorAppTest, integration_test) {
     for (auto& file : testdata.publisherIndexFiles) {
       std::remove(file.c_str());
     }
+    for (auto& file : testdata.publisherEncryptionFiles) {
+      std::remove(file.c_str());
+    }
+    for (auto& file : testdata.advertiserEncryptionFiles) {
+      std::remove(file.c_str());
+    }
     std::remove(testdata.globalParameterFile.c_str());
-    std::remove(testdata.publisherEncryptionFile.c_str());
     std::remove(testdata.publisherExpandedKeyFile.c_str());
-    std::remove(testdata.advertiserEncryptionFile.c_str());
     std::remove(testdata.advertiserExpandedKeyFile.c_str());
   };
 }
