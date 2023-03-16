@@ -19,8 +19,8 @@ class Attributor {
  public:
   Attributor(
       int myRole,
-      std::unique_ptr<IInputProcessor<schedulerId>> inputProcessor)
-      : myRole_{myRole}, inputProcessor_{std::move(inputProcessor)} {
+      std::shared_ptr<IInputProcessor<schedulerId>> inputProcessor)
+      : myRole_{myRole}, inputProcessor_{inputProcessor} {
     calculateEvents();
     calculateNumConvSquaredAndValueSquaredAndConverters();
     calculateMatch();
@@ -81,7 +81,7 @@ class Attributor {
   void calculateValues();
 
   int32_t myRole_;
-  std::unique_ptr<IInputProcessor<schedulerId>> inputProcessor_;
+  std::shared_ptr<IInputProcessor<schedulerId>> inputProcessor_;
 
   std::vector<SecBit<schedulerId>> events_;
   SecBit<schedulerId> converters_;
