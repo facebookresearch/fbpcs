@@ -20,9 +20,25 @@ env:
   COORDINATOR_IMAGE: ghcr.io/facebookresearch/fbpcs/coordinator
 
 jobs:
+  set_up_matrix:
+    name: List Bolt Configs
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      
+      - id: set-matrix
+        run: echo "matrix=$(find fbpcs/tests/github/bolt_configs/*.yml -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+
   e2e_test:
     name: Run End to End Tests
     runs-on: ubuntu-latest
+    needs: set_up_matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        bolt_config: ${{ fromJson(needs.set_up_matrix.outputs.matrix) }}
     permissions:
       id-token: write
       contents: read
