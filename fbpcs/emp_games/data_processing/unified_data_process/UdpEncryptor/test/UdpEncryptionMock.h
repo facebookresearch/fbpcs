@@ -35,7 +35,7 @@ class UdpEncryptionMock final
 
   MOCK_METHOD(void, processPeerData, (size_t));
 
-  MOCK_METHOD(EncryptionResuts, getProcessedData, ());
+  MOCK_METHOD(EncryptionResults, getProcessedData, ());
 };
 
 } // namespace unified_data_process

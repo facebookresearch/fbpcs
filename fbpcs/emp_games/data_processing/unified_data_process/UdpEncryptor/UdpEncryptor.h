@@ -21,7 +21,7 @@ class UdpEncryptor {
       fbpcf::mpc_std_lib::unified_data_process::data_processor::IUdpEncryption;
 
  public:
-  using EncryptionResuts = UdpEncryption::EncryptionResuts;
+  using EncryptionResuts = UdpEncryption::EncryptionResults;
 
   UdpEncryptor(std::unique_ptr<UdpEncryption> udpEncryption, size_t chunkSize)
       : udpEncryption_(std::move(udpEncryption)),
