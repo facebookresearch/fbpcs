@@ -13,6 +13,7 @@
 #include <fbpcf/io/api/FileWriter.h>
 #include <cstdint>
 #include <future>
+#include <iterator>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -28,7 +29,7 @@ void UdpEncryptorApp::invokeUdpEncryption(
     const std::vector<std::string>& indexFiles,
     const std::vector<std::string>& serializedDataFiles,
     const std::string& globalParameters,
-    const std::string& dataFile,
+    const std::vector<std::string>& dataFiles,
     const std::string& expandedKeyFile) {
   std::vector<folly::coro::Task<void>> tasks;
   tasks.push_back(processPeerData(indexFiles, globalParameters));
@@ -37,9 +38,13 @@ void UdpEncryptorApp::invokeUdpEncryption(
 
   fbpcf::mpc_std_lib::unified_data_process::data_processor::
       writeExpandedKeyToFile(encryptor_->getExpandedKey(), expandedKeyFile);
-  fbpcf::mpc_std_lib::unified_data_process::data_processor::
-      writeEncryptionResultsToFile(
-          encryptor_->getEncryptionResults(), dataFile);
+  auto results = fbpcf::mpc_std_lib::unified_data_process::data_processor::
+      splitEncryptionResults(
+          encryptor_->getEncryptionResults(), dataFiles.size());
+  for (size_t i = 0; i < dataFiles.size(); i++) {
+    fbpcf::mpc_std_lib::unified_data_process::data_processor::
+        writeEncryptionResultsToFile(results.at(i), dataFiles.at(i));
+  }
 }
 
 folly::coro::Task<std::vector<int32_t>> UdpEncryptorApp::readIndexFile(
