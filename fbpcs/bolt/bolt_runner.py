@@ -587,6 +587,12 @@ class BoltRunner(Generic[T, U]):
                                 ),
                             )
 
+                            await self.wait_valid_publisher_status(
+                                instance_id=publisher_id,
+                                poll_interval=poll_interval,
+                                timeout=WAIT_VALID_STATUS_TIMEOUT,
+                            )
+
                     except Exception as e:
                         logger.error(
                             f"Unable to cancel current stage {stage.name}. Error: type: {type(e)}, message: {e}."
