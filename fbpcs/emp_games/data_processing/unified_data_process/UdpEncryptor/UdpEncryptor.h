@@ -31,6 +31,8 @@ class UdpEncryptor {
         bufferForMyData_{
             std::make_unique<std::vector<std::vector<unsigned char>>>(
                 chunkSize_)},
+        myDataProcessExecutor_(
+            std::make_shared<folly::CPUThreadPoolExecutor>(1)),
         peerProcessExecutor_(
             std::make_shared<folly::CPUThreadPoolExecutor>(1)) {}
 
