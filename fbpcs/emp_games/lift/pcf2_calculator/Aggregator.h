@@ -39,14 +39,14 @@ class Aggregator {
  public:
   Aggregator(
       int myRole,
-      std::unique_ptr<IInputProcessor<schedulerId>> inputProcessor,
+      std::shared_ptr<IInputProcessor<schedulerId>> inputProcessor,
       std::unique_ptr<Attributor<schedulerId>> attributor,
       int32_t numConversionsPerUser,
       std::shared_ptr<
           fbpcf::engine::communication::IPartyCommunicationAgentFactory>
           communicationAgentFactory)
       : myRole_{myRole},
-        inputProcessor_{std::move(inputProcessor)},
+        inputProcessor_{inputProcessor},
         attributor_{std::move(attributor)},
         communicationAgentFactory_{communicationAgentFactory} {
     initOram();
@@ -135,7 +135,7 @@ class Aggregator {
       bool testOnly) const;
 
   int32_t myRole_;
-  std::unique_ptr<IInputProcessor<schedulerId>> inputProcessor_;
+  std::shared_ptr<IInputProcessor<schedulerId>> inputProcessor_;
   std::unique_ptr<Attributor<schedulerId>> attributor_;
   OutputMetricsData metrics_;
 

@@ -56,28 +56,26 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
       const std::string& globalParamsInputPath,
       const std::string& secretSharesInputPath,
       size_t numConversionPerUser) {
-    auto inputProcessor = SecretShareInputProcessor<schedulerId>(
-        globalParamsInputPath, secretSharesInputPath);
-    XLOG(INFO) << "Have " << inputProcessor.getLiftGameProcessedData().numRows
+    auto inputProcessor =
+        std::make_shared<SecretShareInputProcessor<schedulerId>>(
+            globalParamsInputPath, secretSharesInputPath);
+    XLOG(INFO) << "Have " << inputProcessor->getLiftGameProcessedData().numRows
                << " values in inputData.";
-    if (inputProcessor.getLiftGameProcessedData().numRows == 0) {
+    if (inputProcessor->getLiftGameProcessedData().numRows == 0) {
       XLOG(WARN) << "skipped calculating as numRows==0.";
       // skip game::run(), just output the default metrics.
       return GroupedLiftMetrics(
-                 inputProcessor.getLiftGameProcessedData().numPartnerCohorts,
-                 inputProcessor.getLiftGameProcessedData()
+                 inputProcessor->getLiftGameProcessedData().numPartnerCohorts,
+                 inputProcessor->getLiftGameProcessedData()
                      .numPublisherBreakdowns)
           .toJson();
     }
 
-    auto attributor = std::make_unique<Attributor<schedulerId>>(
-        party_,
-        std::make_unique<SecretShareInputProcessor<schedulerId>>(
-            inputProcessor));
+    auto attributor =
+        std::make_unique<Attributor<schedulerId>>(party_, inputProcessor);
     auto aggregator = Aggregator<schedulerId>(
         party_,
-        std::make_unique<SecretShareInputProcessor<schedulerId>>(
-            std::move(inputProcessor)),
+        inputProcessor,
         std::move(attributor),
         numConversionPerUser,
         communicationAgentFactory_);
