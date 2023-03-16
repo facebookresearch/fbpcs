@@ -22,6 +22,26 @@
 namespace global_parameters {
 
 /**
+ * This header provides a comprehensive way to pass in-binary global parameters
+ * around across multiple stages/containers. The list of global parameters are
+ * maintained as a map from their name to a boost::variant containing their
+ * values. It's user's responsibility to ensure the right type is used when
+ * retrieving values stored in boost::variant.
+ * This header also provides serialization APIs to convert the map from global
+ * parameter names to their values into string.
+ * To add a new type of value, inserting that type in to the boost::variant
+ * statement below should be sufficient.
+ */
+
+inline const std::string KAdvRowCount = "Advertiser_Row_Count";
+inline const std::string KPubRowCount = "Publisher_Row_Count";
+
+inline const std::string KAdvDataWidth = "Advertiser_Data_Width";
+inline const std::string KPubDataWidth = "Publisher_Data_Width";
+
+inline const std::string KMatchedUserCount = "Matched_User_Count";
+
+/**
  * This variant decides what are the supported types of each global parameter.
  */
 using GlobalParameterType = boost::variant<
