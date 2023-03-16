@@ -22,7 +22,7 @@ class UdpEncryptorApp {
       const std::vector<std::string>& indexFiles,
       const std::vector<std::string>& serializedDataFiles,
       const std::string& globalParameters,
-      const std::string& dataFile,
+      const std::vector<std::string>& dataFiles,
       const std::string& expandedKeyFile);
 
  private:

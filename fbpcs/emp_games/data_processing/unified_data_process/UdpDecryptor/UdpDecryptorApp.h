@@ -37,14 +37,13 @@ class UdpDecryptorApp {
   std::tuple<SecString, SecString> invokeUdpDecryption(
       const std::string& dataFile,
       const std::string& expandedKeyFile,
-      const std::string& globalParameterFile) const {
+      const std::string& globalParameterFile,
+      size_t intersectionSize) const {
     auto gp = global_parameters::readFromFile(globalParameterFile);
     auto publisherWidth =
         boost::get<int32_t>(gp.at(global_parameters::KPubDataWidth));
     auto advertiserWidth =
         boost::get<int32_t>(gp.at(global_parameters::KAdvDataWidth));
-    auto intersectionSize =
-        boost::get<int32_t>(gp.at(global_parameters::KMatchedUserCount));
 
     if (amIPublisher_) {
       auto myData = decryption_->decryptMyData(
