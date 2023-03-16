@@ -9,6 +9,7 @@
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, DefaultDict, Dict, List, Optional, Type, TypeVar, Union
 
@@ -929,21 +930,24 @@ class PrivateComputationService:
             return private_computation_instance
 
         # post-checks to make sure the pl instance has the updated status
-        private_computation_instance = self._update_instance(
-            private_computation_instance=private_computation_instance
-        )
-
-        if not private_computation_instance.stage_flow.is_failed_status(
-            private_computation_instance.infra_config.status
-        ):
-            raise ValueError(
-                f"Failed to cancel the current stage unexpectedly. Instance {instance_id} has status {private_computation_instance.infra_config.status}"
+        polling_frequency_seconds = 5
+        timeout_seconds = 120
+        for _ in range(timeout_seconds // polling_frequency_seconds):
+            time.sleep(polling_frequency_seconds)
+            private_computation_instance = self._update_instance(
+                private_computation_instance=private_computation_instance
             )
+            if private_computation_instance.stage_flow.is_failed_status(
+                private_computation_instance.infra_config.status
+            ):
+                self.logger.info(
+                    f"The current stage {stage} of instance {instance_id} has been canceled."
+                )
+                return private_computation_instance
 
-        self.logger.info(
-            f"The current stage {stage} of instance {instance_id} has been canceled."
+        raise TimeoutError(
+            f"Timed out after {timeout_seconds} seconds while waiting for {stage} of instance {instance_id} to be cancelled."
         )
-        return private_computation_instance
 
     @staticmethod
     def get_ts_now() -> int:
