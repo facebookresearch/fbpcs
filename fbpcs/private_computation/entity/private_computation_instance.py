@@ -44,6 +44,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
 from fbpcs.private_computation.entity.product_config import (
+    AnonymizerConfig,
     AttributionConfig,
     LiftConfig,
     PrivateIdDfcaConfig,
@@ -123,6 +124,8 @@ class PrivateComputationInstance(InstanceBase):
             return LiftConfig.schema()
         elif json_object["infra_config"]["game_type"] == "PRIVATE_ID_DFCA":
             return PrivateIdDfcaConfig.schema()
+        elif json_object["infra_config"]["game_type"] == "ANONYMIZER":
+            return AnonymizerConfig.schema()
         raise RuntimeError(f"Invalid product config: {json_object}")
 
     @classmethod
