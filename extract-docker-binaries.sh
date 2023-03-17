@@ -9,20 +9,21 @@ set -e
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <emp_games|data_processing|pid> [-t TAG] [-d DOCKER_IMAGE_NAME]
+Usage: $PROG_NAME <emp_games|data_processing|pid|validation|smart_agent> [-t TAG] [-d DOCKER_IMAGE_NAME]
 
 package:
   emp_games - extracts the binaries from fbpcs/emp-games docker image
   data_processing - extracts the binaries from fbpcs/data-processing docker image
   pid - extracts the binaries from private-id docker image
   validation - extracts the binaries from the onedocker docker image
+  smart_agent - extracts the binaries from the onedocker docker image
 -t TAG: uses the image with the given tag (default: latest)
 -d DOCKER_IMAGE_NAME: defines the image name to extract from
 EOF
   exit 1
 }
 
-PACKAGES="emp_games data_processing pid validation"
+PACKAGES="emp_games data_processing pid validation smart_agent"
 PACKAGE=$1
 if [[ ! " $PACKAGES " =~ $PACKAGE ]]; then
    usage
@@ -52,6 +53,7 @@ if [ -z "$DOCKER_IMAGE_NAME" ]; then
     data_processing) DOCKER_IMAGE_NAME="fbpcs/data-processing";;
     pid) DOCKER_IMAGE_NAME="fbpcs/onedocker/test";;
     validation) DOCKER_IMAGE_NAME="fbpcs/onedocker/test";;
+    smart_agent) DOCKER_IMAGE_NAME="fbpcs/onedocker/test";;
   esac
 fi
 DOCKER_IMAGE_PATH="${DOCKER_IMAGE_NAME}:${TAG}"
@@ -100,5 +102,11 @@ fi
 if [ "$PACKAGE" = "validation" ]; then
 docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
 docker cp temp_container:/usr/local/bin/pc_pre_validation_cli "$SCRIPT_DIR/binaries_out/."
+docker rm -f temp_container
+fi
+
+if [ "$PACKAGE" = "smart_agent" ]; then
+docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
+docker cp temp_container:/usr/local/bin/smart_agent_server "$SCRIPT_DIR/binaries_out/."
 docker rm -f temp_container
 fi
