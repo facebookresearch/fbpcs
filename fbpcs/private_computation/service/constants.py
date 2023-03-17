@@ -40,6 +40,7 @@ DEFAULT_PADDING_SIZE: typing.Dict[PrivateComputationGameType, typing.Optional[in
     PrivateComputationGameType.LIFT: 25,
     PrivateComputationGameType.ATTRIBUTION: 4,
     PrivateComputationGameType.PRIVATE_ID_DFCA: None,
+    PrivateComputationGameType.ANONYMIZER: None,
 }
 DEFAULT_LOG_COST_TO_S3 = True
 DEFAULT_SORT_STRATEGY = "sort"
