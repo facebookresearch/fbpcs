@@ -26,8 +26,11 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Print Tracker Hash
+        run: echo ${{ inputs.tracker_hash }}
+
       - uses: actions/checkout@v3
-      
+
       - id: set-matrix
         run: echo "matrix=$(find fbpcs/tests/github/bolt_configs/*.yml -printf "%f\n" | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
 

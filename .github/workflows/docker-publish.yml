@@ -22,8 +22,8 @@ env:
   PL_CONTAINER_NAME: e2e_pl_container
   PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
-  FBPCF_VERSION: 2.1.132  # Please also update line 8 in .github/workflows/build_fbpcs_images.yml
-  PID_VERSION: 0.0.8
+  FBPCF_VERSION: 2.1.132  # Please also update line 10 in .github/workflows/build_fbpcs_images.yml
+  PID_VERSION: 0.0.8  # Please also update line 11 in .github/workflows/build_fbpcs_images.yml
 
 jobs:
   ### Build and publish rc/onedocker image
