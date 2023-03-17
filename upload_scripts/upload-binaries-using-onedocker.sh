@@ -9,13 +9,14 @@ set -e
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <emp_games|data_processing|pid|validation> <tag> -c <config>
+Usage: $PROG_NAME <emp_games|data_processing|pid|validation|smart_agent> <tag> -c <config>
 
 package:
   emp_games - extracts the binaries from fbpcs/emp-games docker image
   data_processing - extracts the binaries from fbpcs/data-processing docker image
   pid - extracts the binaries from private-id docker image
   validation - extracts the binaries from the onedocker docker image
+  smart_agent - extracts the binaries from the onedocker docker image
 
 tag: used to determine the subfolder/version in s3 for each binary
 
@@ -24,7 +25,7 @@ EOF
   exit 1
 }
 
-PACKAGES="emp_games data_processing pid validation"
+PACKAGES="emp_games data_processing pid validation smart_agent"
 PACKAGE=$1
 TAG=$2
 
@@ -102,5 +103,11 @@ fi
 if [ "$PACKAGE" = "validation" ]; then
 cd binaries_out || exit
 onedocker_upload validation/pc_pre_validation_cli pc_pre_validation_cli
+cd .. || exit
+fi
+
+if [ "$PACKAGE" = "smart_agent" ]; then
+cd binaries_out || exit
+onedocker_upload smart_agent/smart_agent_server smart_agent_server
 cd .. || exit
 fi

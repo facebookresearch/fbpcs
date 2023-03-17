@@ -41,6 +41,7 @@ binary_names=(
     'data_processing/attribution_id_combiner'
     'data_processing/private_id_dfca_id_combiner'
     'validation/pc_pre_validation_cli'
+    'smart_agent/smart_agent_server'
 )
 
 s3_path="s3://one-docker-repository-prod"
