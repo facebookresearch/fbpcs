@@ -1,18 +1,12 @@
-name: Build, Test, and Publish the FBPCS Docker Images
+name: Build and Publish Data Processing and EMP Games Docker Images
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 env:
-  FBPCF_VERSION: 2.1.132  # Please also update line 25 in .github/workflows/docker-publish.yml
-  PID_VERSION: 0.0.8  # Please also update line 26 in .github/workflows/docker-publish.yml
+  FBPCF_VERSION: 2.1.132  # Please also update line 29 in .github/workflows/docker-publish.yml
   REGISTRY: ghcr.io
-  LOCAL_IMAGE_NAME: fbpcs/onedocker/test
-  RC_REGISTRY_URL: ghcr.io/${{ github.repository }}/rc
-  RC_REGISTRY_IMAGE_NAME: ghcr.io/${{ github.repository }}/rc/onedocker
 
 jobs:
   output_version:
@@ -23,12 +17,6 @@ jobs:
     steps:
       - id: set_version
         run: echo "version=${{ env.FBPCF_VERSION }}" >> $GITHUB_OUTPUT
-
-  build_coordinator_image:
-    name: Build the Coordinator image
-    uses: ./.github/workflows/coordinator-publish.yml
-    with:
-      new_tag: ${{ github.sha }}
 
   build_and_publish_data_processing_image:
     name: Build and Publish Data Processing Image
@@ -49,37 +37,3 @@ jobs:
       tag: latest
       fbpcf_version: ${{needs.output_version.outputs.fbpcf_version}}
       push_to_registry: true
-
-  build_test_onedocker_image:
-    name: Build the bundled test version of the onedocker image
-    needs: [build_and_publish_data_processing_image, build_and_publish_emp_games_image]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: docker/onedocker/test/Dockerfile.ubuntu
-          tags: |
-            ${{ env.RC_REGISTRY_IMAGE_NAME }}:${{ github.sha }}
-          build-args: |
-            tag=${{ github.sha }}
-            os_release=20.04
-            private_id_tag=${{ env.PID_VERSION }}
-            repository_url=${{ env.RC_REGISTRY_URL }}
-          push: true
-          pull: true
-          cache-from: type=gha,scope=onedocker-test-${{ github.ref_name }}
-          cache-to: type=gha,scope=onedocker-test-${{ github.ref_name }},mode=max
