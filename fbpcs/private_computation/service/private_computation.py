@@ -62,6 +62,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 )
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
+    AnonymizerConfig,
     AttributionConfig,
     AttributionRule,
     CommonProductConfig,
@@ -312,6 +313,10 @@ class PrivateComputationService:
             )
         elif game_type is PrivateComputationGameType.PRIVATE_ID_DFCA:
             product_config = PrivateIdDfcaConfig(
+                common=common,
+            )
+        elif game_type is PrivateComputationGameType.ANONYMIZER:
+            product_config = AnonymizerConfig(
                 common=common,
             )
         instance = PrivateComputationInstance(

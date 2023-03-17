@@ -157,3 +157,14 @@ class PrivateIdDfcaConfig(ProductConfig):
     """
 
     pass
+
+
+@dataclass_json
+@dataclass
+class AnonymizerConfig(ProductConfig):
+    """Stores metadata of anonymizer config in product config in a private computation instance
+
+    Public attributes:
+    """
+
+    pass
