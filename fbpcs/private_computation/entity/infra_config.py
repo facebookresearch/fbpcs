@@ -49,6 +49,7 @@ class PrivateComputationGameType(Enum):
     LIFT = "LIFT"
     ATTRIBUTION = "ATTRIBUTION"
     PRIVATE_ID_DFCA = "PRIVATE_ID_DFCA"
+    ANONYMIZER = "ANONYMIZER"
 
 
 UnionedPCInstance = Union[PostProcessingInstance, StageStateInstance]

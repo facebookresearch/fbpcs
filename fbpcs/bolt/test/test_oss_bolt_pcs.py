@@ -39,6 +39,7 @@ from fbpcs.private_computation.entity.private_computation_status import (
 )
 from fbpcs.private_computation.entity.product_config import (
     AggregationType,
+    AnonymizerConfig,
     AttributionConfig,
     AttributionRule,
     CommonProductConfig,
@@ -317,6 +318,8 @@ class TestBoltPCSClient(unittest.IsolatedAsyncioTestCase):
             product_config = LiftConfig(common=common)
         elif self.test_game_type is PrivateComputationGameType.PRIVATE_ID_DFCA:
             product_config = PrivateIdDfcaConfig(common=common)
+        elif self.test_game_type is PrivateComputationGameType.ANONYMIZER:
+            product_config = AnonymizerConfig(common=common)
         test_instance = PrivateComputationInstance(
             infra_config=infra_config,
             product_config=product_config,
