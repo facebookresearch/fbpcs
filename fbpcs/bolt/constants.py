@@ -13,6 +13,9 @@ from fbpcs.private_computation.entity.infra_config import PrivateComputationGame
 from fbpcs.private_computation.entity.private_computation_status import (
     PrivateComputationInstanceStatus,
 )
+from fbpcs.private_computation.stage_flows.private_computation_anonymizer_stage_flow import (
+    PrivateComputationAnonymizerStageFlow,
+)
 from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
     PrivateComputationBaseStageFlow,
 )
@@ -33,6 +36,7 @@ DEFAULT_STAGE_FLOW: Dict[
     PrivateComputationGameType.ATTRIBUTION: PrivateComputationPCF2StageFlow,
     PrivateComputationGameType.LIFT: PrivateComputationStageFlow,
     PrivateComputationGameType.PRIVATE_ID_DFCA: PrivateComputationPrivateIdDfcaStageFlow,
+    PrivateComputationGameType.ANONYMIZER: PrivateComputationAnonymizerStageFlow,
 }
 DEFAULT_MAX_PARALLEL_RUNS = 10
 DEFAULT_NUM_TRIES = 4
