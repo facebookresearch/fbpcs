@@ -8,7 +8,6 @@
 #pragma once
 
 #include <folly/executors/CPUThreadPoolExecutor.h>
-#include <folly/experimental/coro/Task.h>
 #include <memory>
 #include <thread>
 #include "fbpcf/mpc_std_lib/unified_data_process/data_processor/IUdpEncryption.h"
@@ -25,7 +24,6 @@ class UdpEncryptor {
 
   UdpEncryptor(std::unique_ptr<UdpEncryption> udpEncryption, size_t chunkSize)
       : udpEncryption_(std::move(udpEncryption)),
-        udpThreadForMySelf_(nullptr),
         chunkSize_(chunkSize),
         bufferIndex_(0),
         bufferForMyData_{
@@ -54,16 +52,10 @@ class UdpEncryptor {
   std::vector<__m128i> getExpandedKey();
 
  private:
-  folly::coro::Task<void> processPeerDataCoro(size_t numberOfPeerRowsInBatch);
-
-  folly::coro::Task<void> processMyDataCoro(
-      std::unique_ptr<std::vector<std::vector<unsigned char>>> data);
-
   void processDataInBuffer();
 
   std::unique_ptr<UdpEncryption> udpEncryption_;
 
-  std::unique_ptr<std::thread> udpThreadForMySelf_;
   size_t chunkSize_;
 
   size_t bufferIndex_;
