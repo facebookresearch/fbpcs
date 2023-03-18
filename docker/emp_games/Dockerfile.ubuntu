@@ -25,6 +25,9 @@ COPY fbpcs/emp_games/pcf2_shard_combiner/ ./fbpcs/emp_games/pcf2_shard_combiner
 COPY fbpcs/emp_games/private_id_dfca_aggregator/ ./fbpcs/emp_games/private_id_dfca_aggregator
 COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
+COPY fbpcs/emp_games/data_processing/global_parameters ./fbpcs/emp_games/data_processing/global_parameters
+COPY fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor ./fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor
+COPY fbpcs/emp_games/data_processing/unified_data_process/UdpDecryptor ./fbpcs/emp_games/data_processing/unified_data_process/UdpDecryptor
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
 RUN ./make_and_install_binary.sh
