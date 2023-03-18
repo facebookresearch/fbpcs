@@ -7,6 +7,11 @@ ARG fbpcf_image
 
 FROM ${fbpcf_image} as dev
 
+WORKDIR /root/build
+RUN git clone https://github.com/ericniebler/range-v3
+
+
+
 RUN mkdir -p /root/build/emp_game
 WORKDIR /root/build/emp_game
 
@@ -25,6 +30,9 @@ COPY fbpcs/emp_games/pcf2_shard_combiner/ ./fbpcs/emp_games/pcf2_shard_combiner
 COPY fbpcs/emp_games/private_id_dfca_aggregator/ ./fbpcs/emp_games/private_id_dfca_aggregator
 COPY fbpcs/emp_games/lift/ ./fbpcs/emp_games/lift
 COPY fbpcs/emp_games/common/ ./fbpcs/emp_games/common
+COPY fbpcs/emp_games/data_processing/global_parameters ./fbpcs/emp_games/data_processing/global_parameters
+COPY fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor ./fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor
+COPY fbpcs/emp_games/data_processing/unified_data_process/UdpDecryptor ./fbpcs/emp_games/data_processing/unified_data_process/UdpDecryptor
 
 RUN cmake . -DTHREADING=ON -DUSE_RANDOM_DEVICE=ON
 RUN ./make_and_install_binary.sh
@@ -45,7 +53,8 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     libgoogle-glog0v5 \
     libssl1.1 \
     libre2-5 \
-    zlib1g
+    zlib1g \
+    librange-v3-dev
 
 COPY --from=dev /root/build/emp_game/bin/. /usr/local/bin/.
 RUN useradd -ms /bin/bash pcs

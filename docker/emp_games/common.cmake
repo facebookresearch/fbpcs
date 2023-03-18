@@ -18,7 +18,10 @@ file(GLOB emp_game_common_src
   "fbpcs/emp_games/common/**.c"
   "fbpcs/emp_games/common/**.cpp"
   "fbpcs/emp_games/common/**.h"
-  "fbpcs/emp_games/common/**.hpp")
+  "fbpcs/emp_games/common/**.hpp"
+  "fbpcs/emp_games/data_processing/global_parameters/**.cpp"
+  "fbpcs/emp_games/data_processing/global_parameters/**.h"
+  )
 list(FILTER emp_game_common_src EXCLUDE REGEX ".*Test.*")
 add_library(empgamecommon STATIC
   ${emp_game_common_src})
@@ -30,7 +33,7 @@ target_link_libraries(
   ${AWSSDK_LINK_LIBRARIES}
   ${EMP-OT_LIBRARIES}
   google-cloud-cpp::storage
-  Folly::folly
+  ${FOLLY_LIBRARIES}
   re2)
 
 # pcf2 lift input processing

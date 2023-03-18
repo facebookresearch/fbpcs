@@ -8,3 +8,4 @@ pcf2_attribution_calculator
 pcf2_aggregation_calculator
 shard_aggregator
 private_id_dfca_aggregator
+udp_encryptor
