@@ -119,12 +119,8 @@ UdpEncryptor::EncryptionResuts UdpEncryptor::getEncryptionResults() {
 
 std::vector<__m128i> UdpEncryptor::getExpandedKey() {
   processDataInBuffer();
-  for (size_t i = 0; i < myDataProcessingTasks_.size(); i++) {
-    std::move(myDataProcessingTasks_.at(i)).get();
-  }
-  /*
   folly::coro::blockingWait(
-      folly::coro::collectAllRange(std::move(myDataProcessingTasks_)));*/
+      folly::coro::collectAllRange(std::move(myDataProcessingTasks_)));
   return udpEncryption_->getExpandedKey();
 }
 
