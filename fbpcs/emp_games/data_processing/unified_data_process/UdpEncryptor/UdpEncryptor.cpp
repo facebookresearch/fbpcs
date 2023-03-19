@@ -8,8 +8,6 @@
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/UdpEncryptor.h"
 
 #include "folly/executors/CPUThreadPoolExecutor.h"
-#include "folly/experimental/coro/BlockingWait.h"
-#include "folly/experimental/coro/Collect.h"
 
 namespace unified_data_process {
 
@@ -28,23 +26,14 @@ void UdpEncryptor::processDataInBuffer() {
   }
   bufferForMyData_->resize(bufferIndex_);
   bufferIndex_ = 0;
+  if (bufferForMyData_->size() > 0) {
+    myDataProcessingTasks_.push_back(
+        folly::makeFutureWith([this, data = std::move(bufferForMyData_)]() {
+          udpEncryption_->processMyData(*data);
+        }).via(myDataProcessExecutor_.get()));
 
-  myDataProcessingTasks_.push_back(
-      processMyDataCoro(std::move(bufferForMyData_))
-          .scheduleOn(myDataProcessExecutor_.get())
-          .start());
-
-  bufferForMyData_ =
-      std::make_unique<std::vector<std::vector<unsigned char>>>(chunkSize_);
-}
-
-folly::coro::Task<void> UdpEncryptor::processMyDataCoro(
-    std::unique_ptr<std::vector<std::vector<unsigned char>>> data) {
-  if (data->size() == 0) {
-    co_return;
-  } else {
-    udpEncryption_->processMyData(*data);
-    co_return;
+    bufferForMyData_ =
+        std::make_unique<std::vector<std::vector<unsigned char>>>(chunkSize_);
   }
 }
 
@@ -84,12 +73,6 @@ void UdpEncryptor::pushLinesFromMe(
   }
 }
 
-folly::coro::Task<void> UdpEncryptor::processPeerDataCoro(
-    size_t numberOfPeerRowsInBatch) {
-  udpEncryption_->processPeerData(numberOfPeerRowsInBatch);
-  co_return;
-}
-
 // set the config for peer's data.
 void UdpEncryptor::setPeerConfig(
     size_t totalNumberOfPeerRows,
@@ -100,18 +83,18 @@ void UdpEncryptor::setPeerConfig(
   peerDataProcessingTasks_.reserve(totalNumberOfPeerRows / chunkSize_ + 1);
 
   while (numberOfProcessedRow < totalNumberOfPeerRows) {
+    auto numberOfPeerRowsInBatch =
+        std::min(chunkSize_, totalNumberOfPeerRows - numberOfProcessedRow);
     peerDataProcessingTasks_.push_back(
-        processPeerDataCoro(
-            std::min(chunkSize_, totalNumberOfPeerRows - numberOfProcessedRow))
-            .scheduleOn(peerProcessExecutor_.get())
-            .start());
+        folly::makeFutureWith([this, numberOfPeerRowsInBatch]() {
+          udpEncryption_->processPeerData(numberOfPeerRowsInBatch);
+        }).via(peerProcessExecutor_.get()));
     numberOfProcessedRow += chunkSize_;
   }
 }
 
 UdpEncryptor::EncryptionResuts UdpEncryptor::getEncryptionResults() {
-  folly::coro::blockingWait(
-      folly::coro::collectAllRange(std::move(peerDataProcessingTasks_)));
+  folly::collectAll(std::move(peerDataProcessingTasks_)).get();
 
   auto [ciphertexts, nonces, indexes] = udpEncryption_->getProcessedData();
   return EncryptionResuts{ciphertexts, nonces, indexes};
@@ -119,8 +102,8 @@ UdpEncryptor::EncryptionResuts UdpEncryptor::getEncryptionResults() {
 
 std::vector<__m128i> UdpEncryptor::getExpandedKey() {
   processDataInBuffer();
-  folly::coro::blockingWait(
-      folly::coro::collectAllRange(std::move(myDataProcessingTasks_)));
+  folly::collectAll(std::move(myDataProcessingTasks_)).get();
+
   return udpEncryption_->getExpandedKey();
 }
 
