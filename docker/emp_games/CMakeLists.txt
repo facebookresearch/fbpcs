@@ -16,6 +16,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-avx512f -march=haswell")
 include("common.cmake")
 include("perf_tools.cmake")
 
+# pcf2_udp encryption
+file(GLOB udp_encryptor_src
+  "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/**.cpp"
+  "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/**.h")
+list(FILTER udp_encryptor_src EXCLUDE REGEX ".*Test.*")
+add_executable(
+  udp_encryptor
+  ${udp_encryptor_src})
+target_link_libraries(
+  udp_encryptor
+  PUBLIC
+  empgamecommon
+  perftools
+)
+install(TARGETS udp_encryptor DESTINATION bin)
+
 # lift
 add_executable(
   lift_calculator

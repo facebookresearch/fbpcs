@@ -63,6 +63,7 @@ pcf2_aggregation_path="private_attribution/pcf2_aggregation"
 shard_aggregator_path="private_attribution/shard-aggregator"
 pcf2_shard_combiner_path="private_attribution/pcf2_shard-combiner"
 private_id_dfca_aggregator_path="private_id_dfca/private_id_dfca_aggregator"
+udp_encryptor_path="data_processing/unified_data_process/UdpEncryptor"
 
 if [ "$PACKAGE" = "emp_games" ]; then
 cd binaries_out || exit
@@ -76,6 +77,7 @@ onedocker_upload "$pcf2_aggregation_path" pcf2_aggregation_calculator
 onedocker_upload "$shard_aggregator_path" shard_aggregator
 onedocker_upload "$pcf2_shard_combiner_path" pcf2_shard_combiner
 onedocker_upload "$private_id_dfca_aggregator_path" private_id_dfca_aggregator
+onedocker_upload "$udp_encryptor_path" udp_encryptor
 cd .. || exit
 fi
 
