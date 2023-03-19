@@ -37,8 +37,7 @@ class UdpDecryptorApp {
   std::tuple<SecString, SecString> invokeUdpDecryption(
       const std::string& dataFile,
       const std::string& expandedKeyFile,
-      const std::string& globalParameterFile,
-      size_t intersectionSize) const {
+      const std::string& globalParameterFile) const {
     auto gp = global_parameters::readFromFile(globalParameterFile);
     auto publisherWidth =
         boost::get<int32_t>(gp.at(global_parameters::KPubDataWidth));
@@ -46,13 +45,13 @@ class UdpDecryptorApp {
         boost::get<int32_t>(gp.at(global_parameters::KAdvDataWidth));
 
     if (amIPublisher_) {
+      auto encryptionResults = fbpcf::mpc_std_lib::unified_data_process::
+          data_processor::readEncryptionResultsFromFile(dataFile);
       auto myData = decryption_->decryptMyData(
           fbpcf::mpc_std_lib::unified_data_process::data_processor::
               readExpandedKeyFromFile(expandedKeyFile),
           publisherWidth,
-          intersectionSize);
-      auto encryptionResults = fbpcf::mpc_std_lib::unified_data_process::
-          data_processor::readEncryptionResultsFromFile(dataFile);
+          encryptionResults.ciphertexts.size());
       auto peerData = decryption_->decryptPeerData(
           encryptionResults.ciphertexts,
           encryptionResults.nonces,
@@ -69,7 +68,7 @@ class UdpDecryptorApp {
           fbpcf::mpc_std_lib::unified_data_process::data_processor::
               readExpandedKeyFromFile(expandedKeyFile),
           advertiserWidth,
-          intersectionSize);
+          encryptionResults.ciphertexts.size());
       return {peerData, myData};
     }
   }
