@@ -548,7 +548,7 @@ Aggregator<schedulerId>::revealPopulationOutput(
     }
   }
   auto testOutput = test.extractIntShare().getValue();
-  NativeIntp<isSigned, width> controlOutput;
+  NativeIntp<isSigned, width> controlOutput(0);
   if (!testOnly) {
     controlOutput = control.extractIntShare().getValue();
   }
