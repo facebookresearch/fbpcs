@@ -285,7 +285,7 @@ std::vector<std::vector<uint8_t>> test(
             intersectionSize, i, encryptionFiles.size());
 
     auto [publisherData, advertiserData] = decryptionApp.invokeUdpDecryption(
-        encryptionFiles.at(i), expandedKeyFile, parameterFile, shardSize);
+        encryptionFiles.at(i), expandedKeyFile, parameterFile);
 
     if constexpr (schedulerId == 0) {
       auto data = publisherData.openToParty(0).getValue();
