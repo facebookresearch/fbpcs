@@ -222,9 +222,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                 None,
                 schema.And(
                     schema.Use(str.upper),
-                    # TODO(T148164182): try replacing this with "lambda s: any(s == g.value for g in PrivateComputationGameType)"
-                    lambda s: s
-                    in ("LIFT", "ATTRIBUTION", "PRIVATE_ID_DFCA", "ANONYMIZER"),
+                    lambda s: s in (g.value for g in PrivateComputationGameType),
                     schema.Use(PrivateComputationGameType),
                 ),
             ),
