@@ -8,8 +8,6 @@
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/UdpEncryptor.h"
 
 #include "folly/executors/CPUThreadPoolExecutor.h"
-#include "folly/experimental/coro/BlockingWait.h"
-#include "folly/experimental/coro/Collect.h"
 
 namespace unified_data_process {
 
@@ -21,30 +19,25 @@ namespace unified_data_process {
  * background thread.
  */
 void UdpEncryptor::processDataInBuffer() {
-  if (myDataProcessingTasks_.size() == 0) {
+  if (myDataProcessingFutures_.size() == 0) {
     // this is the first time of executing processingMyData, need to call
     // preparation first
     udpEncryption_->prepareToProcessMyData(bufferForMyData_->at(0).size());
   }
   bufferForMyData_->resize(bufferIndex_);
   bufferIndex_ = 0;
+  if (bufferForMyData_->size() > 0) {
+    auto [promise, future] = folly::makePromiseContract<folly::Unit>();
+    myDataProcessExecutor_->add([this,
+                                 data = std::move(bufferForMyData_),
+                                 p = std::move(promise)]() mutable {
+      udpEncryption_->processMyData(*data);
+      p.setValue(folly::Unit());
+    });
+    myDataProcessingFutures_.push_back(std::move(future));
 
-  myDataProcessingTasks_.push_back(
-      processMyDataCoro(std::move(bufferForMyData_))
-          .scheduleOn(myDataProcessExecutor_.get())
-          .start());
-
-  bufferForMyData_ =
-      std::make_unique<std::vector<std::vector<unsigned char>>>(chunkSize_);
-}
-
-folly::coro::Task<void> UdpEncryptor::processMyDataCoro(
-    std::unique_ptr<std::vector<std::vector<unsigned char>>> data) {
-  if (data->size() == 0) {
-    co_return;
-  } else {
-    udpEncryption_->processMyData(*data);
-    co_return;
+    bufferForMyData_ =
+        std::make_unique<std::vector<std::vector<unsigned char>>>(chunkSize_);
   }
 }
 
@@ -84,12 +77,6 @@ void UdpEncryptor::pushLinesFromMe(
   }
 }
 
-folly::coro::Task<void> UdpEncryptor::processPeerDataCoro(
-    size_t numberOfPeerRowsInBatch) {
-  udpEncryption_->processPeerData(numberOfPeerRowsInBatch);
-  co_return;
-}
-
 // set the config for peer's data.
 void UdpEncryptor::setPeerConfig(
     size_t totalNumberOfPeerRows,
@@ -97,21 +84,24 @@ void UdpEncryptor::setPeerConfig(
     const std::vector<int32_t>& indexes) {
   udpEncryption_->prepareToProcessPeerData(peerDataWidth, indexes);
   size_t numberOfProcessedRow = 0;
-  peerDataProcessingTasks_.reserve(totalNumberOfPeerRows / chunkSize_ + 1);
+  peerDataProcessingFutures_.reserve(totalNumberOfPeerRows / chunkSize_ + 1);
 
   while (numberOfProcessedRow < totalNumberOfPeerRows) {
-    peerDataProcessingTasks_.push_back(
-        processPeerDataCoro(
-            std::min(chunkSize_, totalNumberOfPeerRows - numberOfProcessedRow))
-            .scheduleOn(peerProcessExecutor_.get())
-            .start());
+    auto numberOfPeerRowsInBatch =
+        std::min(chunkSize_, totalNumberOfPeerRows - numberOfProcessedRow);
+    auto [promise, future] = folly::makePromiseContract<folly::Unit>();
+    peerProcessExecutor_->add(
+        [this, numberOfPeerRowsInBatch, p = std::move(promise)]() mutable {
+          udpEncryption_->processPeerData(numberOfPeerRowsInBatch);
+          p.setValue(folly::Unit());
+        });
+    peerDataProcessingFutures_.push_back(std::move(future));
     numberOfProcessedRow += chunkSize_;
   }
 }
 
 UdpEncryptor::EncryptionResuts UdpEncryptor::getEncryptionResults() {
-  folly::coro::blockingWait(
-      folly::coro::collectAllRange(std::move(peerDataProcessingTasks_)));
+  folly::collectAll(std::move(peerDataProcessingFutures_)).get();
 
   auto [ciphertexts, nonces, indexes] = udpEncryption_->getProcessedData();
   return EncryptionResuts{ciphertexts, nonces, indexes};
@@ -119,8 +109,8 @@ UdpEncryptor::EncryptionResuts UdpEncryptor::getEncryptionResults() {
 
 std::vector<__m128i> UdpEncryptor::getExpandedKey() {
   processDataInBuffer();
-  folly::coro::blockingWait(
-      folly::coro::collectAllRange(std::move(myDataProcessingTasks_)));
+  folly::collectAll(std::move(myDataProcessingFutures_)).get();
+
   return udpEncryption_->getExpandedKey();
 }
 
