@@ -46,6 +46,7 @@ data_processing_repo="s3://$one_docker_repo/data_processing"
 private_id_repo="s3://$one_docker_repo/pid"
 validation_repo="s3://$one_docker_repo/validation"
 smart_agent_repo="s3://$one_docker_repo/smart_agent"
+udp_encryptor_package="s3://$one_docker_repo/data_processing/unified_data_process/UdpEncryptor/${TAG}/udp_encryptor"
 
 if [ "$PACKAGE" = "emp_games" ]; then
 cd binaries_out || exit
@@ -59,6 +60,7 @@ aws s3 cp pcf2_aggregation_calculator "$pcf2_aggregation"
 aws s3 cp shard_aggregator "$shard_aggregator_package"
 aws s3 cp pcf2_shard_combiner "$pcf2_shard_combiner_package"
 aws s3 cp private_id_dfca_aggregator "$private_id_dfca_aggregator_package"
+aws s3 cp udp_encryptor "$udp_encryptor_package"
 cd .. || exit
 fi
 
