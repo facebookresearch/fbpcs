@@ -6,22 +6,17 @@
  */
 
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/UdpEncryptorApp.h"
-#include <boost/serialization/vector.hpp>
+
 #include <fbpcf/io/api/BufferedReader.h>
 #include <fbpcf/io/api/BufferedWriter.h>
 #include <fbpcf/io/api/FileReader.h>
 #include <fbpcf/io/api/FileWriter.h>
 #include <cstdint>
-#include <future>
 #include <iterator>
 #include <string>
-#include <thread>
-#include <unordered_map>
 #include "fbpcf/mpc_std_lib/unified_data_process/data_processor/UdpUtil.h"
 #include "fbpcs/emp_games/data_processing/global_parameters/GlobalParameters.h"
 #include "folly/String.h"
-#include "folly/experimental/coro/BlockingWait.h"
-#include "folly/experimental/coro/Collect.h"
 
 namespace unified_data_process {
 
@@ -31,10 +26,30 @@ void UdpEncryptorApp::invokeUdpEncryption(
     const std::string& globalParameters,
     const std::vector<std::string>& dataFiles,
     const std::string& expandedKeyFile) {
-  std::vector<folly::coro::Task<void>> tasks;
-  tasks.push_back(processPeerData(indexFiles, globalParameters));
-  tasks.push_back(processMyData(serializedDataFiles));
-  folly::coro::blockingWait(folly::coro::collectAllRange(std::move(tasks)));
+  std::vector<folly::SemiFuture<folly::Unit>> futures;
+  auto executor = std::make_shared<folly::CPUThreadPoolExecutor>(2);
+  {
+    auto [promise, future] = folly::makePromiseContract<folly::Unit>();
+    executor->add(
+        [this, &serializedDataFiles, p = std::move(promise)]() mutable {
+          processMyData(serializedDataFiles);
+          p.setValue(folly::Unit());
+        });
+    futures.push_back(std::move(future));
+  }
+  {
+    auto [promise, future] = folly::makePromiseContract<folly::Unit>();
+    executor->add([this,
+                   &indexFiles,
+                   &globalParameters,
+                   p = std::move(promise)]() mutable {
+      processPeerData(indexFiles, globalParameters);
+      p.setValue(folly::Unit());
+    });
+    futures.push_back(std::move(future));
+  }
+
+  folly::collectAll(std::move(futures)).get();
 
   fbpcf::mpc_std_lib::unified_data_process::data_processor::
       writeExpandedKeyToFile(encryptor_->getExpandedKey(), expandedKeyFile);
@@ -47,7 +62,7 @@ void UdpEncryptorApp::invokeUdpEncryption(
   }
 }
 
-folly::coro::Task<std::vector<int32_t>> UdpEncryptorApp::readIndexFile(
+std::vector<int32_t> UdpEncryptorApp::readIndexFile(
     const std::string& fileName) {
   auto reader = std::make_unique<fbpcf::io::BufferedReader>(
       std::make_unique<fbpcf::io::FileReader>(fileName));
@@ -61,11 +76,11 @@ folly::coro::Task<std::vector<int32_t>> UdpEncryptorApp::readIndexFile(
     rst.push_back(stoi(data.at(1)));
   }
   reader->close();
-  co_return rst;
+  return rst;
 }
 
-folly::coro::Task<std::vector<std::vector<unsigned char>>>
-UdpEncryptorApp::readDataFile(const std::string& fileName) {
+std::vector<std::vector<unsigned char>> UdpEncryptorApp::readDataFile(
+    const std::string& fileName) {
   auto reader = std::make_unique<fbpcf::io::BufferedReader>(
       std::make_unique<fbpcf::io::FileReader>(fileName));
 
@@ -75,24 +90,30 @@ UdpEncryptorApp::readDataFile(const std::string& fileName) {
     rst.push_back(std::vector<unsigned char>(line.begin(), line.end()));
   }
   reader->close();
-  co_return rst;
+  return rst;
 }
 
-folly::coro::Task<void> UdpEncryptorApp::processPeerData(
+void UdpEncryptorApp::processPeerData(
     const std::vector<std::string>& indexFiles,
     const std::string& globalParameterFile) const {
   auto executor =
       std::make_shared<folly::CPUThreadPoolExecutor>(indexFiles.size());
 
-  std::vector<folly::coro::Task<std::vector<int32_t>>> tasks;
+  std::vector<folly::SemiFuture<std::vector<int32_t>>> futures;
   for (auto& file : indexFiles) {
-    tasks.push_back(UdpEncryptorApp::readIndexFile(file));
+    auto [promise, future] = folly::makePromiseContract<std::vector<int32_t>>();
+    executor->add([&file, p = std::move(promise)]() mutable {
+      p.setValue(UdpEncryptorApp::readIndexFile(file));
+    });
+    futures.push_back(std::move(future));
   }
   auto globalParameters = global_parameters::readFromFile(globalParameterFile);
-  auto indexInFiles = co_await folly::coro::collectAllRange(std::move(tasks));
+  auto indexInFiles = folly::collectAll(std::move(futures)).get();
 
   std::vector<int32_t> indexes;
-  for (auto& indexInFile : indexInFiles) {
+  for (auto& indexInFileFuture : indexInFiles) {
+    indexInFileFuture.throwUnlessValue();
+    auto& indexInFile = indexInFileFuture.value();
     indexes.insert(
         indexes.end(),
         std::make_move_iterator(indexInFile.begin()),
@@ -106,20 +127,25 @@ folly::coro::Task<void> UdpEncryptorApp::processPeerData(
                     : globalParameters.at(global_parameters::KPubDataWidth));
 
   encryptor_->setPeerConfig(totalNumberOfPeerRows, peerDataWidth, indexes);
-  co_return;
+  return;
 }
 
-folly::coro::Task<void> UdpEncryptorApp::processMyData(
+void UdpEncryptorApp::processMyData(
     const std::vector<std::string>& serializedDataFiles) const {
   auto executor = std::make_shared<folly::CPUThreadPoolExecutor>(
       serializedDataFiles.size() + 1);
 
-  std::vector<folly::SemiFuture<std::vector<std::vector<unsigned char>>>> tasks;
+  std::vector<folly::SemiFuture<std::vector<std::vector<unsigned char>>>>
+      futures;
 
   for (size_t i = 1; i < serializedDataFiles.size(); i++) {
-    tasks.push_back(readDataFile(serializedDataFiles.at(i))
-                        .scheduleOn(executor.get())
-                        .start());
+    auto [promise, future] =
+        folly::makePromiseContract<std::vector<std::vector<unsigned char>>>();
+    executor->add(
+        [file = serializedDataFiles.at(i), p = std::move(promise)]() mutable {
+          p.setValue(readDataFile(file));
+        });
+    futures.push_back(std::move(future));
   }
   {
     // process the first file in main thread.
@@ -133,11 +159,12 @@ folly::coro::Task<void> UdpEncryptorApp::processMyData(
     reader->close();
   }
 
-  auto data = co_await folly::coro::collectAllRange(std::move(tasks));
+  auto data = folly::collectAll(std::move(futures)).get();
   for (auto& datum : data) {
-    encryptor_->pushLinesFromMe(std::move(datum));
+    datum.throwUnlessValue();
+    encryptor_->pushLinesFromMe(std::move(datum.value()));
   }
-  co_return;
+  return;
 }
 
 } // namespace unified_data_process

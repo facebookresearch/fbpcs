@@ -26,17 +26,16 @@ class UdpEncryptorApp {
       const std::string& expandedKeyFile);
 
  private:
-  static folly::coro::Task<std::vector<int32_t>> readIndexFile(
-      const std::string& fileName);
-  static folly::coro::Task<std::vector<std::vector<unsigned char>>>
-  readDataFile(const std::string& fileName);
+  static std::vector<int32_t> readIndexFile(const std::string& fileName);
 
-  folly::coro::Task<void> processPeerData(
+  static std::vector<std::vector<unsigned char>> readDataFile(
+      const std::string& fileName);
+
+  void processPeerData(
       const std::vector<std::string>& indexFiles,
       const std::string& globalParameterFile) const;
 
-  folly::coro::Task<void> processMyData(
-      const std::vector<std::string>& serializedDataFiles) const;
+  void processMyData(const std::vector<std::string>& serializedDataFiles) const;
 
   std::unique_ptr<UdpEncryptor> encryptor_;
   bool amIPublisher_;
