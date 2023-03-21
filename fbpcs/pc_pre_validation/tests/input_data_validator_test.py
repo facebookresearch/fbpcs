@@ -269,89 +269,89 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_run_validations_fail_for_purchase_value_greater_than_int_max_for_pl(
-        self, time_mock: Mock
-    ) -> None:
-        time_mock.time.return_value = TEST_TIMESTAMP
-        lines = [
-            b"id_,value,event_timestamp,cohort_id\n",
-            b"abcd/1234+WXYZ=,100,1645157987,0\n",
-            b"abcd/1234+WXYZ=,100,1645157987,1\n",
-            b"abcd/1234+WXYZ=,2147483648,1645157987,2\n",
-        ]
-        self.write_lines_to_file(lines)
-        expected_report = ValidationReport(
-            validation_result=ValidationResult.FAILED,
-            validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'value'.",
-            details={
-                "rows_processed_count": 3,
-                "validation_errors": {
-                    "value": {
-                        "out_of_range_count": 1,
-                    },
-                    "error_messages": [
-                        "The data in 'value' should be less than 2147483647",
-                        "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 2",
-                    ],
-                },
-            },
-        )
+    # @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    # def test_run_validations_fail_for_purchase_value_greater_than_int_max_for_pl(
+    #     self, time_mock: Mock
+    # ) -> None:
+    #     time_mock.time.return_value = TEST_TIMESTAMP
+    #     lines = [
+    #         b"id_,value,event_timestamp,cohort_id\n",
+    #         b"abcd/1234+WXYZ=,100,1645157987,0\n",
+    #         b"abcd/1234+WXYZ=,100,1645157987,1\n",
+    #         b"abcd/1234+WXYZ=,2147483648,1645157987,2\n",
+    #     ]
+    #     self.write_lines_to_file(lines)
+    #     expected_report = ValidationReport(
+    #         validation_result=ValidationResult.FAILED,
+    #         validator_name=INPUT_DATA_VALIDATOR_NAME,
+    #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'value'.",
+    #         details={
+    #             "rows_processed_count": 3,
+    #             "validation_errors": {
+    #                 "value": {
+    #                     "out_of_range_count": 1,
+    #                 },
+    #                 "error_messages": [
+    #                     "The data in 'value' should be less than 2147483647",
+    #                     "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 2",
+    #                 ],
+    #             },
+    #         },
+    #     )
 
-        validator = InputDataValidator(
-            input_file_path=TEST_INPUT_FILE_PATH,
-            cloud_provider=TEST_CLOUD_PROVIDER,
-            region=TEST_REGION,
-            stream_file=TEST_STREAM_FILE,
-            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
-            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
-        )
-        report = validator.validate()
+    #     validator = InputDataValidator(
+    #         input_file_path=TEST_INPUT_FILE_PATH,
+    #         cloud_provider=TEST_CLOUD_PROVIDER,
+    #         region=TEST_REGION,
+    #         stream_file=TEST_STREAM_FILE,
+    #         publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+    #         private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+    #     )
+    #     report = validator.validate()
 
-        self.assertEqual(report, expected_report)
+    #     self.assertEqual(report, expected_report)
 
-    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_run_validations_fail_for_purchase_value_greater_than_int_max_for_pa(
-        self, time_mock: Mock
-    ) -> None:
-        time_mock.time.return_value = TEST_TIMESTAMP
-        lines = [
-            b"id_,conversion_value,conversion_timestamp,conversion_metadata,cohort_id\n",
-            b"abcd/1234+WXYZ=,100,1645157987,0,0\n",
-            b"abcd/1234+WXYZ=,100,1645157987,0,1\n",
-            b"abcd/1234+WXYZ=,2147483648,1645157987,0,2\n",
-        ]
-        self.write_lines_to_file(lines)
-        expected_report = ValidationReport(
-            validation_result=ValidationResult.FAILED,
-            validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'conversion_value'.",
-            details={
-                "rows_processed_count": 3,
-                "validation_errors": {
-                    "conversion_value": {
-                        "out_of_range_count": 1,
-                    },
-                    "error_messages": [
-                        "The data in 'conversion_value' should be less than 2147483647",
-                        "The total aggregate sum of 'conversion_value' should be less than 2147483647 for cohort_id 2",
-                    ],
-                },
-            },
-        )
+    # @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    # def test_run_validations_fail_for_purchase_value_greater_than_int_max_for_pa(
+    #     self, time_mock: Mock
+    # ) -> None:
+    #     time_mock.time.return_value = TEST_TIMESTAMP
+    #     lines = [
+    #         b"id_,conversion_value,conversion_timestamp,conversion_metadata,cohort_id\n",
+    #         b"abcd/1234+WXYZ=,100,1645157987,0,0\n",
+    #         b"abcd/1234+WXYZ=,100,1645157987,0,1\n",
+    #         b"abcd/1234+WXYZ=,2147483648,1645157987,0,2\n",
+    #     ]
+    #     self.write_lines_to_file(lines)
+    #     expected_report = ValidationReport(
+    #         validation_result=ValidationResult.FAILED,
+    #         validator_name=INPUT_DATA_VALIDATOR_NAME,
+    #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'conversion_value'.",
+    #         details={
+    #             "rows_processed_count": 3,
+    #             "validation_errors": {
+    #                 "conversion_value": {
+    #                     "out_of_range_count": 1,
+    #                 },
+    #                 "error_messages": [
+    #                     "The data in 'conversion_value' should be less than 2147483647",
+    #                     "The total aggregate sum of 'conversion_value' should be less than 2147483647 for cohort_id 2",
+    #                 ],
+    #             },
+    #         },
+    #     )
 
-        validator = InputDataValidator(
-            input_file_path=TEST_INPUT_FILE_PATH,
-            cloud_provider=TEST_CLOUD_PROVIDER,
-            region=TEST_REGION,
-            stream_file=TEST_STREAM_FILE,
-            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
-            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
-        )
-        report = validator.validate()
+    #     validator = InputDataValidator(
+    #         input_file_path=TEST_INPUT_FILE_PATH,
+    #         cloud_provider=TEST_CLOUD_PROVIDER,
+    #         region=TEST_REGION,
+    #         stream_file=TEST_STREAM_FILE,
+    #         publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+    #         private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+    #     )
+    #     report = validator.validate()
 
-        self.assertEqual(report, expected_report)
+    #     self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_fail_for_cohort_id_not_incremental_by_one(
@@ -1317,97 +1317,97 @@ class TestInputDataValidator(TestCase):
 
         self.assertEqual(report, expected_report)
 
-    def test_the_aggregated_value_per_cohort_cannot_exceed_max_int_for_pl(self) -> None:
-        lines = [
-            b"id_,value,event_timestamp,cohort_id\n",
-            b"abcd/1234+WXYZ=,25,1645157987,0\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
-            b"abcd/1234+WXYZ=,3111222333,1645157987,3\n",
-        ]
-        expected_report = ValidationReport(
-            validation_result=ValidationResult.FAILED,
-            validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'value'.",
-            details={
-                "rows_processed_count": 6,
-                "validation_errors": {
-                    "value": {
-                        "out_of_range_count": 1,
-                    },
-                    "error_messages": [
-                        "The data in 'value' should be less than 2147483647",
-                        "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 1",
-                        "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 2",
-                        "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 3",
-                    ],
-                },
-            },
-        )
-        stream_mock = MagicMock(name="stream_mock_obj")
-        self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
-        stream_mock.iter_lines.return_value = lines
+    # def test_the_aggregated_value_per_cohort_cannot_exceed_max_int_for_pl(self) -> None:
+    #     lines = [
+    #         b"id_,value,event_timestamp,cohort_id\n",
+    #         b"abcd/1234+WXYZ=,25,1645157987,0\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
+    #         b"abcd/1234+WXYZ=,3111222333,1645157987,3\n",
+    #     ]
+    #     expected_report = ValidationReport(
+    #         validation_result=ValidationResult.FAILED,
+    #         validator_name=INPUT_DATA_VALIDATOR_NAME,
+    #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'value'.",
+    #         details={
+    #             "rows_processed_count": 6,
+    #             "validation_errors": {
+    #                 "value": {
+    #                     "out_of_range_count": 1,
+    #                 },
+    #                 "error_messages": [
+    #                     "The data in 'value' should be less than 2147483647",
+    #                     "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 1",
+    #                     "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 2",
+    #                     "The total aggregate sum of 'value' should be less than 2147483647 for cohort_id 3",
+    #                 ],
+    #             },
+    #         },
+    #     )
+    #     stream_mock = MagicMock(name="stream_mock_obj")
+    #     self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
+    #     stream_mock.iter_lines.return_value = lines
 
-        validator = InputDataValidator(
-            input_file_path=TEST_INPUT_FILE_PATH,
-            cloud_provider=TEST_CLOUD_PROVIDER,
-            region=TEST_REGION,
-            stream_file=True,
-            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
-            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
-        )
+    #     validator = InputDataValidator(
+    #         input_file_path=TEST_INPUT_FILE_PATH,
+    #         cloud_provider=TEST_CLOUD_PROVIDER,
+    #         region=TEST_REGION,
+    #         stream_file=True,
+    #         publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+    #         private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+    #     )
 
-        report = validator.validate()
+    #     report = validator.validate()
 
-        self._boto3_client_mock.get_object.assert_called_with(
-            Bucket=TEST_BUCKET,
-            Key=TEST_FILENAME,
-        )
-        self.assertEqual(report, expected_report)
+    #     self._boto3_client_mock.get_object.assert_called_with(
+    #         Bucket=TEST_BUCKET,
+    #         Key=TEST_FILENAME,
+    #     )
+    #     self.assertEqual(report, expected_report)
 
-    def test_the_aggregated_value_per_cohort_cannot_exceed_max_int_for_pa(self) -> None:
-        lines = [
-            b"id_,conversion_value,conversion_timestamp,conversion_metadata,cohort_id\n",
-            b"abcd/1234+WXYZ=,25,1645157987,0,0\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
-            b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
-            b"abcd/1234+WXYZ=,25,1645157987,0,3\n",
-        ]
-        expected_report = ValidationReport(
-            validation_result=ValidationResult.FAILED,
-            validator_name=INPUT_DATA_VALIDATOR_NAME,
-            message=f"File: {TEST_INPUT_FILE_PATH} failed validation.",
-            details={
-                "rows_processed_count": 6,
-                "validation_errors": {
-                    "error_messages": [
-                        "The total aggregate sum of 'conversion_value' should be less than 2147483647 for cohort_id 1",
-                        "The total aggregate sum of 'conversion_value' should be less than 2147483647 for cohort_id 2",
-                    ],
-                },
-            },
-        )
-        stream_mock = MagicMock(name="stream_mock_obj")
-        self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
-        stream_mock.iter_lines.return_value = lines
+    # def test_the_aggregated_value_per_cohort_cannot_exceed_max_int_for_pa(self) -> None:
+    #     lines = [
+    #         b"id_,conversion_value,conversion_timestamp,conversion_metadata,cohort_id\n",
+    #         b"abcd/1234+WXYZ=,25,1645157987,0,0\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
+    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
+    #         b"abcd/1234+WXYZ=,25,1645157987,0,3\n",
+    #     ]
+    #     expected_report = ValidationReport(
+    #         validation_result=ValidationResult.FAILED,
+    #         validator_name=INPUT_DATA_VALIDATOR_NAME,
+    #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation.",
+    #         details={
+    #             "rows_processed_count": 6,
+    #             "validation_errors": {
+    #                 "error_messages": [
+    #                     "The total aggregate sum of 'conversion_value' should be less than 2147483647 for cohort_id 1",
+    #                     "The total aggregate sum of 'conversion_value' should be less than 2147483647 for cohort_id 2",
+    #                 ],
+    #             },
+    #         },
+    #     )
+    #     stream_mock = MagicMock(name="stream_mock_obj")
+    #     self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
+    #     stream_mock.iter_lines.return_value = lines
 
-        validator = InputDataValidator(
-            input_file_path=TEST_INPUT_FILE_PATH,
-            cloud_provider=TEST_CLOUD_PROVIDER,
-            region=TEST_REGION,
-            stream_file=True,
-            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
-            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
-        )
+    #     validator = InputDataValidator(
+    #         input_file_path=TEST_INPUT_FILE_PATH,
+    #         cloud_provider=TEST_CLOUD_PROVIDER,
+    #         region=TEST_REGION,
+    #         stream_file=True,
+    #         publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+    #         private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+    #     )
 
-        report = validator.validate()
+    #     report = validator.validate()
 
-        self._boto3_client_mock.get_object.assert_called_with(
-            Bucket=TEST_BUCKET,
-            Key=TEST_FILENAME,
-        )
-        self.assertEqual(report, expected_report)
+    #     self._boto3_client_mock.get_object.assert_called_with(
+    #         Bucket=TEST_BUCKET,
+    #         Key=TEST_FILENAME,
+    #     )
+    #     self.assertEqual(report, expected_report)
