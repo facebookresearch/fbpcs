@@ -18,7 +18,10 @@ file(GLOB emp_game_common_src
   "fbpcs/emp_games/common/**.c"
   "fbpcs/emp_games/common/**.cpp"
   "fbpcs/emp_games/common/**.h"
-  "fbpcs/emp_games/common/**.hpp")
+  "fbpcs/emp_games/common/**.hpp"
+  "fbpcs/emp_games/data_processing/global_parameters/**.cpp"
+  "fbpcs/emp_games/data_processing/global_parameters/**.h"
+  )
 list(FILTER emp_game_common_src EXCLUDE REGEX ".*Test.*")
 add_library(empgamecommon STATIC
   ${emp_game_common_src})
