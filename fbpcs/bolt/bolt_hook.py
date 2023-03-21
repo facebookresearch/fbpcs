@@ -25,6 +25,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 
+from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow import (
+    PrivateComputationBaseStageFlow,
+)
+
 # only do these imports when type checking (support forward reference)
 if TYPE_CHECKING:
     from fbpcs.bolt.bolt_client import BoltClient
@@ -35,6 +39,7 @@ class BoltHookEvent(Enum):
     """Checkpoints in the BoltRunner that can be hooked with BoltHooks"""
 
     STAGE_WAIT_FOR_COMPLETED = "STAGE_WAIT_FOR_COMPLETED"
+    STAGE_RUN_NEXT_STAGE = "STAGE_RUN_NEXT_STAGE"
 
 
 class BoltHookTiming(Enum):
@@ -110,6 +115,7 @@ class BoltHookCommonInjectionArgs(Generic[T, U]):
     job: "BoltJob[T, U]"
     publisher_client: "BoltClient[T]"
     partner_client: "BoltClient[U]"
+    stage: "Optional[PrivateComputationBaseStageFlow]" = None
 
     @property
     def publisher_id(self) -> str:

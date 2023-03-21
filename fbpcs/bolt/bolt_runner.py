@@ -192,7 +192,7 @@ class BoltRunner(Generic[T, U]):
                                 job=job,
                                 event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
                                 stage=stage,
-                                role=None,
+                                role=PrivateComputationRole.PARTNER,
                             )
                             bolt_metrics.append(
                                 BoltMetric(
@@ -340,6 +340,7 @@ class BoltRunner(Generic[T, U]):
                         job=job,
                         publisher_client=self.publisher_client,
                         partner_client=self.partner_client,
+                        stage=stage,
                     )
                 )
                 for hook in all_hooks

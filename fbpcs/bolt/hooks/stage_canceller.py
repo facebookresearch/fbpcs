@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Optional, TypeVar
 
 from fbpcs.bolt.bolt_checkpoint import bolt_checkpoint
+from fbpcs.bolt.bolt_client import BoltClient
 
 from fbpcs.bolt.bolt_hook import (
     BoltHook,
@@ -32,19 +33,28 @@ class BoltStageCancellerHookArgs(BoltHookArgs):
 
 class BoltStageCancellerHook(BoltHook[BoltStageCancellerHookArgs]):
     @bolt_checkpoint()
+    async def _try_cancel_current_stage(
+        self, instance_id: str, client: BoltClient[T]
+    ) -> None:
+        try:
+            await client.cancel_current_stage(instance_id)
+        except Exception as e:
+            # It is possible that the stage has already completed etc.
+            self.logger.error(f"An error occurred in cancel: {e}", exc_info=True)
+
     async def _inject(self, injection_args: BoltHookCommonInjectionArgs[T, U]) -> None:
         cancel_coros = []
         if self.hook_args.role in (PrivateComputationRole.PUBLISHER, None):
             cancel_coros.append(
-                injection_args.publisher_client.cancel_current_stage(
-                    injection_args.publisher_id
+                self._try_cancel_current_stage(
+                    injection_args.publisher_id, injection_args.publisher_client
                 )
             )
 
         if self.hook_args.role in (PrivateComputationRole.PARTNER, None):
             cancel_coros.append(
-                injection_args.partner_client.cancel_current_stage(
-                    injection_args.partner_id
+                self._try_cancel_current_stage(
+                    injection_args.partner_id, injection_args.partner_client
                 )
             )
 
