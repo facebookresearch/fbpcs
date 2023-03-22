@@ -17,6 +17,9 @@
 #include "fbpcs/emp_games/common/SchedulerStatistics.h"
 
 #include "fbpcs/emp_games/he_aggregation/AggregationInputMetrics.h"
+#include "fbpcs/emp_games/he_aggregation/HEAggGame.h"
+
+#include <folly/json.h>
 
 namespace pcf2_he {
 
@@ -31,10 +34,10 @@ class HEAggApp {
       const std::string& inputFilePath,
       const std::string& outputFilePath,
       const std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
-      const double delta,
-      const double eps,
-      const common::InputEncryption inputEncryption,
-      const bool addDpNoise = true)
+      double delta,
+      double eps,
+      common::InputEncryption inputEncryption,
+      bool addDpNoise = true)
       : communicationAgentFactory_(std::move(communicationAgentFactory)),
         secretShareFilePath_(secretShareFilePath),
         inputFilePath_(inputFilePath),
@@ -69,26 +72,15 @@ class HEAggApp {
 
     XLOG(INFO) << "Finished Reading input file ";
 
-    auto gateStatistics =
-        fbpcf::scheduler::SchedulerKeeper<schedulerId>::getGateStatistics();
-    XLOGF(
-        INFO,
-        "Non-free gate count = {}, Free gate count = {}",
-        gateStatistics.first,
-        gateStatistics.second);
+    HEAggGame game(std::move(communicationAgentFactory_));
 
-    auto trafficStatistics =
-        fbpcf::scheduler::SchedulerKeeper<schedulerId>::getTrafficStatistics();
-    XLOGF(
-        INFO,
-        "Sent network traffic = {}, Received network traffic = {}",
-        trafficStatistics.first,
-        trafficStatistics.second);
-    fbpcf::scheduler::SchedulerKeeper<schedulerId>::deleteEngine();
-    schedulerStatistics_.nonFreeGates = gateStatistics.first;
-    schedulerStatistics_.freeGates = gateStatistics.second;
-    schedulerStatistics_.sentNetwork = trafficStatistics.first;
-    schedulerStatistics_.receivedNetwork = trafficStatistics.second;
+    std::unordered_map<uint64_t, uint64_t> output =
+        game.computeAggregations(MY_ROLE, input);
+
+    if (MY_ROLE == common::PUBLISHER) {
+      XLOG(INFO, "Writing output ...");
+      writeOutputData(output, outputFilePath_);
+    }
     schedulerStatistics_.details = metricCollector_->collectMetrics();
   }
 
@@ -108,6 +100,15 @@ class HEAggApp {
 
     return AggregationInputMetrics{
         inputEncryption, inputSecretShareFilePath, inputClearTextFilePath};
+  }
+  void writeOutputData(
+      const std::unordered_map<uint64_t, uint64_t> output,
+      const std::string outputPath) {
+    folly::dynamic res = folly::dynamic::object();
+    for (auto i = output.begin(); i != output.end(); i++) {
+      res.insert(std::to_string(i->first), std::to_string(i->second));
+    }
+    fbpcf::io::FileIOWrappers::writeFile(outputPath, folly::toJson(res));
   }
 
  private:

@@ -30,3 +30,6 @@ DECLARE_int32(input_encryption);
 DECLARE_int32(max_num_touchpoints);
 DECLARE_int32(max_num_conversions);
 DECLARE_bool(use_new_output_format);
+DECLARE_int32(ciphertext_size);
+DECLARE_int32(plaintext_size);
+DECLARE_int32(decryption_table_size);
