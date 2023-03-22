@@ -50,5 +50,11 @@ RUN chmod -R u-x ~/
 RUN chmod -R u+rw /tmp
 RUN chmod -R u+rwx /home/onedocker/package/
 
+# Add TLS Plugin
+WORKDIR /home/onedocker/package
+ADD ../tls/tls_cert_installer.py .
+ADD ../tls_workflow.json .
+COPY ../tls/write_routing.sh .
+
 CMD ["/bin/bash"]
 WORKDIR /home/onedocker

@@ -1,0 +1,11 @@
+{
+    "StartAt": "State1",
+    "States": {
+        "State1": {
+            "PluginName": "python3 tls_cert_installer.py",
+            "CmdArgsList": [],
+            "Timeout": null,
+            "IsEnd": true
+        }
+    }
+}
