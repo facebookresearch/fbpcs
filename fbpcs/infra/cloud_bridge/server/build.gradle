@@ -18,6 +18,7 @@ plugins {
   id 'org.springframework.boot' version '2.7.0'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'java'
+  id 'io.freefair.lombok' version '5.1.0'
 }
 
 group = 'com.facebook'
@@ -39,6 +40,8 @@ dependencies {
   implementation 'org.apache.commons:commons-lang3'
   implementation platform('com.amazonaws:aws-java-sdk-bom:1.12.+')
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+  compileOnly 'org.projectlombok:lombok:1.18.26'
+  annotationProcessor 'org.projectlombok:lombok:1.18.26'
 }
 
 test {
