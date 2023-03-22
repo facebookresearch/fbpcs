@@ -6,7 +6,7 @@
  */
 
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/UdpEncryptor.h"
-#include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/test/UdpEncryptionMock.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/test/UdpEncryptionMock.h"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -19,7 +19,8 @@ TEST(UdpEncryptorTestWithMock, testProcessingPeerData) {
   int totalRow = 1200;
   size_t dataWidth = 32;
   std::vector<int32_t> indexes{3, 31, 6, 12, 5};
-  auto mock = std::make_unique<unified_data_process::UdpEncryptionMock>();
+  auto mock = std::make_unique<fbpcf::mpc_std_lib::unified_data_process::
+                                   data_processor::UdpEncryptionMock>();
 
   EXPECT_CALL(*mock, prepareToProcessPeerData(dataWidth, indexes)).Times(1);
   EXPECT_CALL(*mock, processPeerData(chunkSize)).Times(totalRow / chunkSize);
@@ -55,7 +56,8 @@ TEST(UdpEncryptorTestWithMock, testProcessingMyData) {
     }
   }
 
-  auto mock = std::make_unique<unified_data_process::UdpEncryptionMock>();
+  auto mock = std::make_unique<fbpcf::mpc_std_lib::unified_data_process::
+                                   data_processor::UdpEncryptionMock>();
 
   EXPECT_CALL(*mock, prepareToProcessMyData(width)).Times(1);
   for (size_t i = 0; i < testData.size(); i++) {
@@ -101,7 +103,8 @@ TEST(UdpEncryptorTestWithMock, testProcessingBothSidesData) {
     }
   }
 
-  auto mock = std::make_unique<unified_data_process::UdpEncryptionMock>();
+  auto mock = std::make_unique<fbpcf::mpc_std_lib::unified_data_process::
+                                   data_processor::UdpEncryptionMock>();
 
   EXPECT_CALL(*mock, prepareToProcessMyData(myWidth)).Times(1);
   for (size_t i = 0; i < testData.size(); i++) {
