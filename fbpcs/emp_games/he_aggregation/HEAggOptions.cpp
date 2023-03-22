@@ -63,3 +63,6 @@ DEFINE_int32(
 DEFINE_int32(max_num_touchpoints, 4, "Maximum touchpoints per user");
 DEFINE_int32(max_num_conversions, 4, "Maximum conversions per user");
 DEFINE_bool(use_new_output_format, false, "New Format of Attribution output");
+DEFINE_int32(ciphertext_size, 64, "Size of HE ciphertext");
+DEFINE_int32(plaintext_size, 8, "Size of plaintext");
+DEFINE_int32(decryption_table_size, 2000000, "Size of the Decryption Table");
