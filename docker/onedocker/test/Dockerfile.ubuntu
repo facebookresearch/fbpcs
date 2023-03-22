@@ -26,6 +26,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libboost-context1.71.0 \
     libboost-regex1.71.0 \
+    libboost-serialization1.71.0\
     libevent-2.1-7 \
     libcurl4 \
     libdouble-conversion3 \
