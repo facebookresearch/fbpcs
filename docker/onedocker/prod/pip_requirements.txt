@@ -1,4 +1,4 @@
-fbpcp == 0.5.0
+fbpcp ~= 0.5
 jmespath ~= 0.10
 s3transfer ~= 0.3
 parameterized ~= 0.7
