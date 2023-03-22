@@ -94,6 +94,7 @@ class TestPCF2AggregationStageService(IsolatedAsyncioTestCase):
             wait_for_containers_to_start_up=True,
             existing_containers=None,
             env_vars_list=None,
+            opa_workflow_path=None,
         )
         self.assertEqual(
             containers,

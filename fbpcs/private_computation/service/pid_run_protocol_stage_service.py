@@ -35,7 +35,10 @@ from fbpcs.private_computation.service.argument_helper import (
     TLS_ARG_KEY_PRIVATE_CERT_PATH,
     TLS_ARG_KEY_SERVER_CERT_PATH,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_SERVER_PORT_NUMBER
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_SERVER_PORT_NUMBER,
+    TLS_OPA_WORKFLOW_PATH,
+)
 from fbpcs.private_computation.service.pid_utils import (
     get_metrics_filepath,
     get_sharded_filepath,
@@ -245,6 +248,9 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             container_type=container_type,
             env_vars_list=env_vars_list,
+            opa_workflow_path=TLS_OPA_WORKFLOW_PATH
+            if pc_instance.has_feature(PCSFeature.PCF_TLS)
+            else None,
         )
 
     @classmethod

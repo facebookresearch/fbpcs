@@ -111,10 +111,11 @@ class TestComputeMetricsStageService(IsolatedAsyncioTestCase):
                     binary_version="latest",
                     binary_name=binary_name,
                     timeout=None,
-                    wait_for_containers_to_start_up=True,
-                    existing_containers=None,
                     env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
                     env_vars_list=None,
+                    wait_for_containers_to_start_up=True,
+                    existing_containers=None,
+                    opa_workflow_path=None,
                 )
                 self.assertEqual(
                     containers,
