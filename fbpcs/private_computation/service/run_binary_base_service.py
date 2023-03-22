@@ -37,6 +37,7 @@ class RunBinaryBaseService:
         container_type: Optional[ContainerType] = None,
         certificate_request: Optional[CertificateRequest] = None,
         env_vars_list: Optional[List[Dict[str, str]]] = None,
+        opa_workflow_path: Optional[str] = None,
     ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class RunBinaryBaseService:
                 else env_vars,
                 container_type=container_type,
                 certificate_request=certificate_request,
+                opa_workflow_path=opa_workflow_path,
             )
 
             pending_containers = self.get_pending_containers(

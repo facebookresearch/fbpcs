@@ -27,6 +27,7 @@ from fbpcs.private_computation.entity.private_computation_instance import (
 from fbpcs.private_computation.service.constants import (
     DEFAULT_LOG_COST_TO_S3,
     DEFAULT_PADDING_SIZE,
+    TLS_OPA_WORKFLOW_PATH,
 )
 
 from fbpcs.private_computation.service.mpc.mpc import (
@@ -183,6 +184,9 @@ class PCF2BaseStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             env_vars_list=env_vars_list,
+            opa_workflow_path=TLS_OPA_WORKFLOW_PATH
+            if pc_instance.has_feature(PCSFeature.PCF_TLS)
+            else None,
         )
         stage_state = StageStateInstance(
             pc_instance.infra_config.instance_id,

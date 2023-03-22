@@ -36,6 +36,7 @@ from fbpcs.private_computation.entity.product_config import (
 from fbpcs.private_computation.service.constants import (
     DEFAULT_CONTAINER_TIMEOUT_IN_SEC,
     DEFAULT_PID_PROTOCOL,
+    TLS_OPA_WORKFLOW_PATH,
 )
 from fbpcs.private_computation.service.pid_run_protocol_stage_service import (
     PIDRunProtocolStageService,
@@ -139,6 +140,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 env_vars=env_vars,
                 container_type=None,
                 certificate_request=None,
+                opa_workflow_path=None,
             )
             # test the return value is as expected
             self.assertEqual(
@@ -307,6 +309,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 env_vars=[expected_env_vars],
                 container_type=None,
                 certificate_request=None,
+                opa_workflow_path=TLS_OPA_WORKFLOW_PATH,
             )
             # test the return value is as expected
             self.assertEqual(

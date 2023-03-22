@@ -42,6 +42,7 @@ from fbpcs.private_computation.service.constants import (
     SERVER_PRIVATE_KEY_PATH_ENV_VAR,
     SERVER_PRIVATE_KEY_REF_ENV_VAR,
     SERVER_PRIVATE_KEY_REGION_ENV_VAR,
+    TLS_OPA_WORKFLOW_PATH,
 )
 from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc import MPCService
@@ -113,6 +114,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             ],
             wait_for_containers_to_start_up=True,
             existing_containers=None,
+            opa_workflow_path=TLS_OPA_WORKFLOW_PATH,
         )
         self.assertEqual(
             containers,

@@ -28,7 +28,10 @@ from fbpcs.private_computation.entity.product_config import (
     AttributionConfig,
     AttributionRule,
 )
-from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_LOG_COST_TO_S3,
+    TLS_OPA_WORKFLOW_PATH,
+)
 
 from fbpcs.private_computation.service.mpc.mpc import (
     map_private_computation_role_to_mpc_party,
@@ -188,6 +191,9 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             env_vars_list=env_vars_list,
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
+            opa_workflow_path=TLS_OPA_WORKFLOW_PATH
+            if pc_instance.has_feature(PCSFeature.PCF_TLS)
+            else None,
         )
         server_uris = gen_tls_server_hostnames_for_publisher(
             server_domain=pc_instance.infra_config.server_domain,
