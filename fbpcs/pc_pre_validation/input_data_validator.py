@@ -153,8 +153,9 @@ class InputDataValidator(Validator):
                     except ValueError:
                         # Values with a bad format are counted already by _validate_row()
                         pass
-            if cohort_id is not None:
-                validation_issues.update_cohort_aggregate(cohort_id, value_int)
+            # Temporarily disable the aggregated value check. TODO T147920505
+            # if cohort_id is not None:
+            # validation_issues.update_cohort_aggregate(cohort_id, value_int)
 
     def _download_locally(
         self, validation_issues: InputDataValidationIssues, rows_processed_count: int
