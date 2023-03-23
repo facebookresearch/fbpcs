@@ -63,7 +63,7 @@ pcf2_aggregation_path="private_attribution/pcf2_aggregation"
 shard_aggregator_path="private_attribution/shard-aggregator"
 pcf2_shard_combiner_path="private_attribution/pcf2_shard-combiner"
 private_id_dfca_aggregator_path="private_id_dfca/private_id_dfca_aggregator"
-udp_encryptor_path="data_processing/unified_data_process/UdpEncryptor"
+udp_encryptor_path="data_processing/unified_data_process/udp_encryptor"
 
 if [ "$PACKAGE" = "emp_games" ]; then
 cd binaries_out || exit
