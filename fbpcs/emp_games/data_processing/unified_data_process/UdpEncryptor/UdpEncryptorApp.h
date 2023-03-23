@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <fbpcf/io/api/BufferedReader.h>
+#include <cstdint>
+
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/UdpEncryptor.h"
 
 namespace unified_data_process {
@@ -28,8 +31,11 @@ class UdpEncryptorApp {
  private:
   static std::vector<uint64_t> readIndexFile(const std::string& fileName);
 
-  static std::vector<std::vector<unsigned char>> readDataFile(
-      const std::string& fileName);
+  static std::
+      tuple<std::vector<uint64_t>, std::vector<std::vector<unsigned char>>>
+      readDataFile(const std::string& fileName);
+  static std::tuple<uint64_t, std::vector<unsigned char>> readOneLineData(
+      std::shared_ptr<fbpcf::io::BufferedReader> file);
 
   void processPeerData(
       const std::vector<std::string>& indexFiles,

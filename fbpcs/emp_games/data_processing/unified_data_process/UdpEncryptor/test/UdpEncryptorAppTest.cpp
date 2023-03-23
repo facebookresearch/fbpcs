@@ -74,14 +74,10 @@ void writeDataToFile(
       std::make_unique<fbpcf::io::FileWriter>(file));
   std::string newLine("\n");
   for (size_t i = 0; i < indexes.size(); i++) {
-    // intend to use this piece of code in the end, comment out for now as
-    // implementations are not done yet.
-    /*
     std::string line;
     line = std::to_string(indexes.at(i)) + ", " +
         std::string(data.at(i).begin(), data.at(i).end());
-    */
-    writer->writeString(std::string(data.at(i).begin(), data.at(i).end()));
+    writer->writeString(line);
     writer->writeString(newLine);
   }
 }
