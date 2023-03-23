@@ -8,6 +8,7 @@
 
 import asyncio
 import logging
+import time
 from enum import auto, Enum
 from types import TracebackType
 from typing import Any, Awaitable, Callable, Dict, Optional, Tuple, Type, TypeVar, Union
@@ -46,7 +47,7 @@ class RetryHandler:
 
     Synchronous function usage:
     with RetryHandler(MyException, max_attempts=3) as retry_handler:
-        await retry_handler.execute_sync(blocking_func_we_want_to_retry, arg1, arg2, arg3=999)
+        retry_handler.execute_sync(blocking_func_we_want_to_retry, arg1, arg2, arg3=999)
     """
 
     def __init__(
@@ -114,7 +115,7 @@ class RetryHandler:
         self.logger.error("Out of retry attempts. Raising last error.")
         raise saved_err
 
-    async def execute_sync(
+    def execute_sync(
         self, f: Callable[..., T], *args: Any, **kwargs: Dict[str, Any]
     ) -> T:
         """
@@ -129,7 +130,7 @@ class RetryHandler:
                 self.logger.warning(
                     f"Caught exception during attempt [{attempt} / {self.max_attempts}]"
                 )
-                await asyncio.sleep(self._get_backoff_time(attempt))
+                time.sleep(self._get_backoff_time(attempt))
                 saved_err = e
             except BaseException as e:
                 self.logger.warning(

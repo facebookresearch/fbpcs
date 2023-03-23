@@ -8,7 +8,7 @@
 
 import logging
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import AsyncMock, create_autospec
+from unittest.mock import AsyncMock, create_autospec, Mock
 
 from fbpcs.common.service.retry_handler import BackoffType, RetryHandler
 
@@ -116,6 +116,33 @@ class TestRetryHandler(IsolatedAsyncioTestCase):
                     await handler.execute(foo)
             # Assert
             logger.warning.assert_called_once()
+
+    def test_execute_sync(self) -> None:
+        with self.subTest("first_attempt"):
+            # Arrange
+            foo = Mock(return_value=123)
+            # Act
+            with RetryHandler() as handler:
+                actual = handler.execute_sync(foo)
+            # Assert
+            self.assertEqual(123, actual)
+
+        with self.subTest("second_attempt"):
+            # Arrange
+            foo = Mock(side_effect=[DummyExceptionType(), 123])
+            # Act
+            with RetryHandler() as handler:
+                actual = handler.execute_sync(foo)
+            # Assert
+            self.assertEqual(123, actual)
+
+        with self.subTest("out_of_attempts"):
+            # Arrange
+            foo = Mock(side_effect=DummyExceptionType())
+            # Act & Assert
+            with self.assertRaises(DummyExceptionType):
+                with RetryHandler() as handler:
+                    handler.execute_sync(foo)
 
     #############################
     # Logically private methods #
