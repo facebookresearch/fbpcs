@@ -81,7 +81,7 @@ void UdpEncryptor::pushLinesFromMe(
 void UdpEncryptor::setPeerConfig(
     size_t totalNumberOfPeerRows,
     size_t peerDataWidth,
-    const std::vector<int32_t>& indexes) {
+    const std::vector<uint64_t>& indexes) {
   udpEncryption_->prepareToProcessPeerData(peerDataWidth, indexes);
   size_t numberOfProcessedRow = 0;
   peerDataProcessingFutures_.reserve(totalNumberOfPeerRows / chunkSize_ + 1);

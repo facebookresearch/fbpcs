@@ -62,13 +62,13 @@ void UdpEncryptorApp::invokeUdpEncryption(
   }
 }
 
-std::vector<int32_t> UdpEncryptorApp::readIndexFile(
+std::vector<uint64_t> UdpEncryptorApp::readIndexFile(
     const std::string& fileName) {
   auto reader = std::make_unique<fbpcf::io::BufferedReader>(
       std::make_unique<fbpcf::io::FileReader>(fileName));
   reader->readLine(); // header, useless
 
-  std::vector<int32_t> rst;
+  std::vector<uint64_t> rst;
   while (!reader->eof()) {
     std::vector<std::string> data;
     auto line = reader->readLine();
@@ -99,9 +99,10 @@ void UdpEncryptorApp::processPeerData(
   auto executor =
       std::make_shared<folly::CPUThreadPoolExecutor>(indexFiles.size());
 
-  std::vector<folly::SemiFuture<std::vector<int32_t>>> futures;
+  std::vector<folly::SemiFuture<std::vector<uint64_t>>> futures;
   for (auto& file : indexFiles) {
-    auto [promise, future] = folly::makePromiseContract<std::vector<int32_t>>();
+    auto [promise, future] =
+        folly::makePromiseContract<std::vector<uint64_t>>();
     executor->add([&file, p = std::move(promise)]() mutable {
       p.setValue(UdpEncryptorApp::readIndexFile(file));
     });
@@ -110,7 +111,7 @@ void UdpEncryptorApp::processPeerData(
   auto globalParameters = global_parameters::readFromFile(globalParameterFile);
   auto indexInFiles = folly::collectAll(std::move(futures)).get();
 
-  std::vector<int32_t> indexes;
+  std::vector<uint64_t> indexes;
   for (auto& indexInFileFuture : indexInFiles) {
     indexInFileFuture.throwUnlessValue();
     auto& indexInFile = indexInFileFuture.value();

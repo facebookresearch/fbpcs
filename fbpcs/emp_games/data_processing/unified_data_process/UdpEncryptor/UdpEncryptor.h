@@ -45,7 +45,7 @@ class UdpEncryptor {
   void setPeerConfig(
       size_t totalNumberOfPeerRows,
       size_t peerDataWidth,
-      const std::vector<int32_t>& indexes);
+      const std::vector<uint64_t>& indexes);
 
   EncryptionResuts getEncryptionResults();
 

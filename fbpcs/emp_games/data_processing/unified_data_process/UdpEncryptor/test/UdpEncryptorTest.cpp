@@ -18,7 +18,7 @@ TEST(UdpEncryptorTestWithMock, testProcessingPeerData) {
   int chunkSize = 500;
   int totalRow = 1200;
   size_t dataWidth = 32;
-  std::vector<int32_t> indexes{3, 31, 6, 12, 5};
+  std::vector<uint64_t> indexes{3, 31, 6, 12, 5};
   auto mock = std::make_unique<fbpcf::mpc_std_lib::unified_data_process::
                                    data_processor::UdpEncryptionMock>();
 
@@ -84,7 +84,7 @@ TEST(UdpEncryptorTestWithMock, testProcessingBothSidesData) {
   size_t peerTotalRow = 1500;
   size_t myWidth = 32;
   size_t peerWidth = 35;
-  std::vector<int32_t> indexes{3, 31, 6, 12, 5};
+  std::vector<uint64_t> indexes{3, 31, 6, 12, 5};
 
   std::vector<std::vector<std::vector<unsigned char>>> testData;
   std::vector<std::vector<std::vector<unsigned char>>> testData1;
