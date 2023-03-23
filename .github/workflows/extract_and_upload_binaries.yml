@@ -36,7 +36,6 @@ env:
   IMAGE_TAG: ${{ github.event.inputs.image_tag }}
   IMAGE_NAME: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}
   IMAGE_PATH: ghcr.io/${{ github.repository }}/${{ github.event.inputs.image_name }}:${{ github.event.inputs.image_tag }}
-  FBPCP_VERSION: 0.3.4
 
 jobs:
 
@@ -48,15 +47,15 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Print Tracker Hash
       run: echo ${{ github.event.inputs.tracker_hash}}
 
     - name: Install OneDocker CLI
-      run: python3 -m pip install fbpcp==$FBPCP_VERSION
+      run: python3 -m pip install -r fbpcs/pip_requirements.txt
 
-    - uses: docker/login-action@v1
+    - uses: docker/login-action@v2
       with:
          registry: ${{ env.REGISTRY }}
          username: ${{ github.actor }}
@@ -73,7 +72,7 @@ jobs:
       run: diff <(sort binaries_out_lists/${{ github.event.inputs.package_name }}.txt) <(ls -1 binaries_out)
 
     - name: Set AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         aws-region: ${{ github.event.inputs.aws_region }}
