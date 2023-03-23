@@ -68,11 +68,15 @@ TEST(UdpEncryptorTestWithMock, testProcessingMyData) {
   UdpEncryptor encryptor(std::move(mock), chunkSize);
   for (size_t i = 0; i < testData1.size() / 2; i++) {
     for (size_t j = 0; j < testData1.at(i).size(); j++) {
-      encryptor.pushOneLineFromMe(std::move(testData1.at(i).at(j)));
+      encryptor.pushOneLineFromMe(
+          std::move(testData1.at(i).at(j)), 0 /* temporary placeholder */);
     }
   }
   for (size_t i = testData1.size() / 2; i < testData1.size(); i++) {
-    encryptor.pushLinesFromMe(std::move(testData1.at(i)));
+    auto size = testData1.at(i).size();
+    encryptor.pushLinesFromMe(
+        std::move(testData1.at(i)),
+        std::vector<uint64_t>(size) /* temporary placeholder */);
   }
   encryptor.getExpandedKey();
 }
@@ -125,11 +129,15 @@ TEST(UdpEncryptorTestWithMock, testProcessingBothSidesData) {
 
   for (size_t i = 0; i < testData1.size() / 2; i++) {
     for (size_t j = 0; j < testData1.at(i).size(); j++) {
-      encryptor.pushOneLineFromMe(std::move(testData1.at(i).at(j)));
+      encryptor.pushOneLineFromMe(
+          std::move(testData1.at(i).at(j)), 0 /* temporary placeholder */);
     }
   }
   for (size_t i = testData1.size() / 2; i < testData1.size(); i++) {
-    encryptor.pushLinesFromMe(std::move(testData1.at(i)));
+    auto size = testData1.at(i).size();
+    encryptor.pushLinesFromMe(
+        std::move(testData1.at(i)),
+        std::vector<uint64_t>(size) /* temporary placeholder */);
   }
   encryptor.getExpandedKey();
   encryptor.getEncryptionResults();
