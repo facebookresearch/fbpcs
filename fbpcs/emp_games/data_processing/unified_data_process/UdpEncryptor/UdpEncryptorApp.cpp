@@ -79,18 +79,37 @@ std::vector<uint64_t> UdpEncryptorApp::readIndexFile(
   return rst;
 }
 
-std::vector<std::vector<unsigned char>> UdpEncryptorApp::readDataFile(
-    const std::string& fileName) {
-  auto reader = std::make_unique<fbpcf::io::BufferedReader>(
-      std::make_unique<fbpcf::io::FileReader>(fileName));
+std::tuple<uint64_t, std::vector<unsigned char>>
+UdpEncryptorApp::readOneLineData(
+    std::shared_ptr<fbpcf::io::BufferedReader> file) {
+  auto line = file->readLine();
+  std::string spliter(", ");
+  auto pos = line.find(spliter);
+  if (pos == std::string::npos) {
+    throw std::invalid_argument("bad line!");
+  }
+  auto indexChar = std::string(line.begin(), line.begin() + pos);
+  auto index = std::atoi(indexChar.c_str());
+  return {
+      index,
+      std::vector<unsigned char>(
+          std::make_move_iterator(line.begin() + pos + spliter.length()),
+          std::make_move_iterator(line.end()))};
+}
 
-  std::vector<std::vector<unsigned char>> rst;
+std::tuple<std::vector<uint64_t>, std::vector<std::vector<unsigned char>>>
+UdpEncryptorApp::readDataFile(const std::string& fileName) {
+  auto reader = std::make_shared<fbpcf::io::BufferedReader>(
+      std::make_unique<fbpcf::io::FileReader>(fileName));
+  std::vector<uint64_t> rstIndex;
+  std::vector<std::vector<unsigned char>> rstData;
   while (!reader->eof()) {
-    auto line = reader->readLine();
-    rst.push_back(std::vector<unsigned char>(line.begin(), line.end()));
+    auto [index, data] = readOneLineData(reader);
+    rstIndex.push_back(index);
+    rstData.push_back(data);
   }
   reader->close();
-  return rst;
+  return {std::move(rstIndex), std::move(rstData)};
 }
 
 void UdpEncryptorApp::processPeerData(
@@ -136,12 +155,15 @@ void UdpEncryptorApp::processMyData(
   auto executor = std::make_shared<folly::CPUThreadPoolExecutor>(
       serializedDataFiles.size() + 1);
 
-  std::vector<folly::SemiFuture<std::vector<std::vector<unsigned char>>>>
+  std::vector<folly::SemiFuture<std::tuple<
+      std::vector<uint64_t>,
+      std::vector<std::vector<unsigned char>>>>>
       futures;
 
   for (size_t i = 1; i < serializedDataFiles.size(); i++) {
-    auto [promise, future] =
-        folly::makePromiseContract<std::vector<std::vector<unsigned char>>>();
+    auto [promise, future] = folly::makePromiseContract<std::tuple<
+        std::vector<uint64_t>,
+        std::vector<std::vector<unsigned char>>>>();
     executor->add(
         [file = serializedDataFiles.at(i), p = std::move(promise)]() mutable {
           p.setValue(readDataFile(file));
@@ -150,12 +172,13 @@ void UdpEncryptorApp::processMyData(
   }
   {
     // process the first file in main thread.
-    auto reader = std::make_unique<fbpcf::io::BufferedReader>(
+    auto reader = std::make_shared<fbpcf::io::BufferedReader>(
         std::make_unique<fbpcf::io::FileReader>(serializedDataFiles.at(0)));
     while (!reader->eof()) {
-      auto line = reader->readLine();
-      encryptor_->pushOneLineFromMe(
-          std::vector<unsigned char>(line.begin(), line.end()));
+      auto [index, data] = readOneLineData(reader);
+      // comment out 2nd parameter for now as the
+      // underlying change hasn't been done yet.
+      encryptor_->pushOneLineFromMe(std::move(data) /*, index*/);
     }
     reader->close();
   }
@@ -163,7 +186,10 @@ void UdpEncryptorApp::processMyData(
   auto data = folly::collectAll(std::move(futures)).get();
   for (auto& datum : data) {
     datum.throwUnlessValue();
-    encryptor_->pushLinesFromMe(std::move(datum.value()));
+    auto& [index, data] = datum.value();
+    // comment out 2nd parameter for now as the
+    // underlying change hasn't been done yet.
+    encryptor_->pushLinesFromMe(std::move(data) /*, std::move(index)*/);
   }
   return;
 }
