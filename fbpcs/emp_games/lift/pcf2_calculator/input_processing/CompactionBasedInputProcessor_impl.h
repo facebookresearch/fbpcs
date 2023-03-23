@@ -121,20 +121,25 @@ CompactionBasedInputProcessor<schedulerId>::compactData(
   SecString publisherDataShares;
   SecString partnerDataShares;
 
+  std::vector<uint64_t> uint64Index(intersectionMap.size());
+  for (size_t i = 0; i < intersectionMap.size(); i++) {
+    uint64Index.at(i) = intersectionMap.at(i);
+  }
+
   if (myRole_ == common::PUBLISHER) {
     XLOG(INFO) << "Begin processing my data (publisher)";
     publisherDataShares =
-        dataProcessor_->processMyData(plaintextData, intersectionMap.size());
+        dataProcessor_->processMyData(plaintextData, uint64Index.size());
     XLOG(INFO) << "Begin processing peers data (partner)";
     partnerDataShares = dataProcessor_->processPeersData(
-        partnerRows, intersectionMap, partnerSerializer->getRowSizeBytes());
+        partnerRows, uint64Index, partnerSerializer->getRowSizeBytes());
   } else if (myRole_ == common::PARTNER) {
     XLOG(INFO) << "Begin processing peers data (publisher)";
     publisherDataShares = dataProcessor_->processPeersData(
-        publisherRows, intersectionMap, publisherSerializer->getRowSizeBytes());
+        publisherRows, uint64Index, publisherSerializer->getRowSizeBytes());
     XLOG(INFO) << "Begin processing my data (partner)";
     partnerDataShares =
-        dataProcessor_->processMyData(plaintextData, intersectionMap.size());
+        dataProcessor_->processMyData(plaintextData, uint64Index.size());
   }
 
   auto expectedIntersectionSize = std::transform_reduce(

@@ -44,10 +44,10 @@ std::vector<std::vector<unsigned char>> generateRandomDataForTest(
   return rst;
 }
 
-std::vector<int32_t> generateRandomIndex(
+std::vector<uint64_t> generateRandomIndex(
     size_t count,
     size_t intersectionSize) {
-  std::vector<int32_t> rst(intersectionSize);
+  std::vector<uint64_t> rst(intersectionSize);
   std::map<int32_t, int32_t> swaps;
   for (size_t i = 0; i < intersectionSize; i++) {
     auto target = folly::Random::secureRand32(i, count);
@@ -75,7 +75,7 @@ void writeDataToFile(
 
 void writeIndexToFile(
     const std::string& file,
-    const std::vector<int32_t>& indexes) {
+    const std::vector<uint64_t>& indexes) {
   auto writer = std::make_unique<fbpcf::io::BufferedWriter>(
       std::make_unique<fbpcf::io::FileWriter>(file));
   std::string header("dummy header");
@@ -103,11 +103,11 @@ void distributeDataToFiles(
 
 void distributeIndexesToFiles(
     const std::vector<std::string>& files,
-    const std::vector<int32_t>& indexes) {
+    const std::vector<uint64_t>& indexes) {
   for (size_t i = 0; i < files.size(); i++) {
     writeIndexToFile(
         files.at(i),
-        std::vector<int32_t>(
+        std::vector<uint64_t>(
             indexes.begin() + i * indexes.size() / files.size(),
             indexes.begin() + (i + 1) * indexes.size() / files.size()));
   }

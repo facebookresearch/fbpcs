@@ -33,16 +33,22 @@ UdpProcessGame<schedulerId>::playDataProcessor(
   auto dataProcessor = dataProcessorFactory_->create();
   typename UdpProcessGame<schedulerId>::SecString publisherShares;
   typename UdpProcessGame<schedulerId>::SecString advertiserShares;
+
+  std::vector<uint64_t> uint64Index(indexes.size());
+  for (size_t i = 0; i < indexes.size(); i++) {
+    uint64Index.at(i) = indexes.at(i);
+  }
+
   if (myId_ == common::PUBLISHER) {
     XLOG(INFO) << "Start to process my data...";
     publisherShares = dataProcessor->processMyData(metaData, intersectionSize);
     XLOG(INFO) << "Start to process peer's data...";
-    advertiserShares =
-        dataProcessor->processPeersData(peersDataSize, indexes, peersDataWidth);
+    advertiserShares = dataProcessor->processPeersData(
+        peersDataSize, uint64Index, peersDataWidth);
   } else {
     XLOG(INFO) << "Start to process peer's data...";
-    publisherShares =
-        dataProcessor->processPeersData(peersDataSize, indexes, peersDataWidth);
+    publisherShares = dataProcessor->processPeersData(
+        peersDataSize, uint64Index, peersDataWidth);
     XLOG(INFO) << "Start to process my data...";
     advertiserShares = dataProcessor->processMyData(metaData, intersectionSize);
   }

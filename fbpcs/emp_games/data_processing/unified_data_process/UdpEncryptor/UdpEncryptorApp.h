@@ -26,7 +26,7 @@ class UdpEncryptorApp {
       const std::string& expandedKeyFile);
 
  private:
-  static std::vector<int32_t> readIndexFile(const std::string& fileName);
+  static std::vector<uint64_t> readIndexFile(const std::string& fileName);
 
   static std::vector<std::vector<unsigned char>> readDataFile(
       const std::string& fileName);
