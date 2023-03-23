@@ -39,7 +39,9 @@ target_link_libraries(
 # pcf2 lift input processing
 file(GLOB_RECURSE pcf2_lift_input_processing_src
   "fbpcs/emp_games/lift/pcf2_calculator/input_processing/**.cpp"
-  "fbpcs/emp_games/lift/pcf2_calculator/input_processing/**.h")
+  "fbpcs/emp_games/lift/pcf2_calculator/input_processing/**.h"
+  "fbpcs/emp_games/data_processing/unified_data_process/UdpDecryptor/**.h"
+  "fbpcs/emp_games/data_processing/unified_data_process/UdpDecryptor/**.cpp")
 list(FILTER pcf2_lift_input_processing_src EXCLUDE REGEX ".*Test.*")
 add_library(pcf2_lift_input_processing STATIC
   ${pcf2_lift_input_processing_src})

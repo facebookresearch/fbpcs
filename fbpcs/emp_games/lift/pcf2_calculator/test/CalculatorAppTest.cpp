@@ -42,6 +42,7 @@ void runCalculatorApp(
     const int epoch,
     const std::string& inputPath,
     const std::string& inputGlobalParamsPath,
+    const std::string& inputExpandedKeyPath,
     const std::string& outputPath,
     bool useXorEncryption,
     std::unique_ptr<
@@ -58,8 +59,10 @@ void runCalculatorApp(
       epoch,
       std::vector<std::string>{inputPath},
       inputGlobalParamsPath,
+      inputExpandedKeyPath,
       std::vector<std::string>{outputPath},
       inputGlobalParamsPath != "",
+      false, /* useDecoupledUDP */
       metricCollector,
       0,
       1,
@@ -237,6 +240,7 @@ class CalculatorAppTestFixture
         epoch_,
         publisherInputPath,
         inputGlobalParamsPath,
+        "", // inputExpandedKeyPath
         publisherOutputPath,
         useXorEncryption,
         std::move(communicationAgentFactoryAlice));
@@ -249,6 +253,7 @@ class CalculatorAppTestFixture
         epoch_,
         partnerInputPath,
         inputGlobalParamsPath,
+        "", // inputExpandedKeyPath
         partnerOutputPath,
         useXorEncryption,
         std::move(communicationAgentFactoryBob));

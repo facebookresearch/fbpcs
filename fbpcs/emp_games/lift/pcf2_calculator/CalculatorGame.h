@@ -13,6 +13,7 @@
 #include "fbpcs/emp_games/lift/pcf2_calculator/Aggregator.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/Attributor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/CalculatorGameConfig.h"
+#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/DecoupledUDPInputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputProcessor.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/SecretShareInputProcessor.h"
@@ -54,11 +55,23 @@ class CalculatorGame : public fbpcf::frontend::MpcGame<schedulerId> {
 
   std::string playFromSecretShares(
       const std::string& globalParamsInputPath,
-      const std::string& secretSharesInputPath,
+      const std::string& inputExpandedKeyPath,
+      const std::string& inputPath,
+      bool useDecoupledUDP,
       size_t numConversionPerUser) {
-    auto inputProcessor =
-        std::make_shared<SecretShareInputProcessor<schedulerId>>(
-            globalParamsInputPath, secretSharesInputPath);
+    std::shared_ptr<IInputProcessor<schedulerId>> inputProcessor;
+    if (useDecoupledUDP) {
+      inputProcessor =
+          std::make_shared<DecoupledUDPInputProcessor<schedulerId>>(
+              party_,
+              globalParamsInputPath,
+              inputExpandedKeyPath,
+              inputPath,
+              numConversionPerUser);
+    } else {
+      inputProcessor = std::make_shared<SecretShareInputProcessor<schedulerId>>(
+          globalParamsInputPath, inputPath);
+    }
     XLOG(INFO) << "Have " << inputProcessor->getLiftGameProcessedData().numRows
                << " values in inputData.";
     if (inputProcessor->getLiftGameProcessedData().numRows == 0) {

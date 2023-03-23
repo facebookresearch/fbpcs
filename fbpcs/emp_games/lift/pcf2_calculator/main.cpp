@@ -41,6 +41,10 @@ DEFINE_string(
     "out.csv_global_params_0",
     "Input file name of global parameter setup. Used when reading inputs in secret share format rather than plaintext.");
 DEFINE_string(
+    input_expanded_key_path,
+    "out.csv_expanded_key_0", // TODO
+    "Input file name of the expanded key for UDP decryption. Used when decoupled UDP is enabled.");
+DEFINE_string(
     output_directory,
     "",
     "Local or s3 path where output files are written to");
@@ -164,6 +168,9 @@ int main(int argc, char** argv) {
   bool readInputFromSecretShares = private_measurement::isFeatureFlagEnabled(
       FLAGS_pc_feature_flags, "private_lift_unified_data_process");
 
+  bool useDecoupledUDP = private_measurement::isFeatureFlagEnabled(
+      FLAGS_pc_feature_flags, "pcs_private_lift_decoupled_udp");
+
   {
     // Build a quick list of input/output files to log
     std::ostringstream inputFileLogList;
@@ -184,8 +191,9 @@ int main(int argc, char** argv) {
                << "\tpc_feature_flags:" << FLAGS_pc_feature_flags
                << "\tinput: " << inputFileLogList.str()
                << "\toutput: " << outputFileLogList.str() << "\n"
-               << "\tread from secret share: : " << readInputFromSecretShares
-               << "\n"
+               << "\tread from secret share: " << readInputFromSecretShares
+               << "\tuse decoupled udp: " << useDecoupledUDP
+               << "\tinput expanded key path: " << FLAGS_input_expanded_key_path
                << "\tinput global params path: "
                << FLAGS_input_global_params_path << "\n"
                << "\trun_id: " << FLAGS_run_id;
@@ -203,8 +211,10 @@ int main(int argc, char** argv) {
         private_lift::startCalculatorAppsForShardedFiles<common::PUBLISHER>(
             inputFilepaths,
             FLAGS_input_global_params_path,
+            FLAGS_input_expanded_key_path,
             outputFilepaths,
             readInputFromSecretShares,
+            useDecoupledUDP,
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
@@ -220,8 +230,10 @@ int main(int argc, char** argv) {
         private_lift::startCalculatorAppsForShardedFiles<common::PARTNER>(
             inputFilepaths,
             FLAGS_input_global_params_path,
+            FLAGS_input_expanded_key_path,
             outputFilepaths,
             readInputFromSecretShares,
+            useDecoupledUDP,
             concurrency,
             FLAGS_server_ip,
             FLAGS_port,
