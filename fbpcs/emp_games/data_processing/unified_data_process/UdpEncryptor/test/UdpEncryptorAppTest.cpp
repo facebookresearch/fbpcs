@@ -12,6 +12,8 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 #include "fbpcf/mpc_std_lib/unified_data_process/data_processor/UdpDecryption.h"
@@ -45,17 +47,17 @@ std::vector<std::vector<unsigned char>> generateRandomDataForTest(
 }
 
 std::vector<uint64_t> generateRandomIndex(
-    size_t count,
-    size_t intersectionSize) {
-  std::vector<uint64_t> rst(intersectionSize);
+    size_t upperBound,
+    size_t outputSize) {
+  std::vector<uint64_t> rst(outputSize);
   std::map<int32_t, int32_t> swaps;
-  for (size_t i = 0; i < intersectionSize; i++) {
-    auto target = folly::Random::secureRand32(i, count);
+  for (size_t i = 0; i < outputSize; i++) {
+    auto target = folly::Random::secureRand32(i, upperBound);
     swaps.emplace(target, target);
     swaps.emplace(i, i);
     std::swap(swaps.at(i), swaps.at(target));
   }
-  for (size_t i = 0; i < intersectionSize; i++) {
+  for (size_t i = 0; i < outputSize; i++) {
     rst.at(i) = swaps.at(i);
   }
   return rst;
@@ -63,12 +65,23 @@ std::vector<uint64_t> generateRandomIndex(
 
 void writeDataToFile(
     const std::string& file,
+    const std::vector<uint64_t>& indexes,
     const std::vector<std::vector<unsigned char>>& data) {
+  if (indexes.size() != data.size()) {
+    throw std::invalid_argument("indexes and data have different length.");
+  }
   auto writer = std::make_unique<fbpcf::io::BufferedWriter>(
       std::make_unique<fbpcf::io::FileWriter>(file));
   std::string newLine("\n");
-  for (auto& line : data) {
-    writer->writeString(std::string(line.begin(), line.end()));
+  for (size_t i = 0; i < indexes.size(); i++) {
+    // intend to use this piece of code in the end, comment out for now as
+    // implementations are not done yet.
+    /*
+    std::string line;
+    line = std::to_string(indexes.at(i)) + ", " +
+        std::string(data.at(i).begin(), data.at(i).end());
+    */
+    writer->writeString(std::string(data.at(i).begin(), data.at(i).end()));
     writer->writeString(newLine);
   }
 }
@@ -91,10 +104,14 @@ void writeIndexToFile(
 
 void distributeDataToFiles(
     const std::vector<std::string>& files,
+    const std::vector<uint64_t>& indexes,
     const std::vector<std::vector<unsigned char>>& data) {
   for (size_t i = 0; i < files.size(); i++) {
     writeDataToFile(
         files.at(i),
+        std::vector<uint64_t>(
+            indexes.begin() + i * data.size() / files.size(),
+            indexes.begin() + (i + 1) * data.size() / files.size()),
         std::vector<std::vector<unsigned char>>(
             data.begin() + i * data.size() / files.size(),
             data.begin() + (i + 1) * data.size() / files.size()));
@@ -187,24 +204,57 @@ TestData generateTestData(
       generateRandomDataForTest(publisherRowCount, publisherWidth);
   auto advertiserData =
       generateRandomDataForTest(advertiserRowCount, advertiserWidth);
-  auto publisherIndex =
-      generateRandomIndex(advertiserRowCount, intersectionSize);
-  auto advertiserIndex =
+  // users are given random indexes for the sake of performance
+  // intend to use this piece of code in the end, comment out for now as
+  // implementations are not done yet.
+  /*
+  auto publisherRandomIndexForAllUser =
+      generateRandomIndex(publisherRowCount * 100, publisherRowCount);
+  auto advertiserRandomIndexForAllUser =
+      generateRandomIndex(advertiserRowCount * 200, advertiserRowCount);
+  */
+  std::vector<uint64_t> publisherRandomIndexForAllUser(publisherRowCount);
+  // generate 0 to n-1 vector
+  std::iota(
+      publisherRandomIndexForAllUser.begin(),
+      publisherRandomIndexForAllUser.end(),
+      0);
+
+  std::vector<uint64_t> advertiserRandomIndexForAllUser(advertiserRowCount);
+  // generate 0 to n-1 vector
+  std::iota(
+      advertiserRandomIndexForAllUser.begin(),
+      advertiserRandomIndexForAllUser.end(),
+      0);
+
+  auto publisherActualIndexForMatchedUser =
       generateRandomIndex(publisherRowCount, intersectionSize);
-
-  distributeDataToFiles(publisherDataFiles, publisherData);
-  distributeDataToFiles(advertiserDataFiles, advertiserData);
-
-  distributeIndexesToFiles(publisherIndexFiles, publisherIndex);
-  distributeIndexesToFiles(advertiserIndexFiles, advertiserIndex);
+  auto advertiserActualIndexForMatchedUser =
+      generateRandomIndex(advertiserRowCount, intersectionSize);
 
   std::vector<std::vector<unsigned char>> publisherExpectedOutput;
   std::vector<std::vector<unsigned char>> advertiserExpectedOutput;
+  std::vector<uint64_t> publisherCherryPickIndex;
+  std::vector<uint64_t> advertiserCherryPickIndex;
 
   for (size_t i = 0; i < intersectionSize; i++) {
-    advertiserExpectedOutput.push_back(advertiserData.at(publisherIndex.at(i)));
-    publisherExpectedOutput.push_back(publisherData.at(advertiserIndex.at(i)));
+    publisherExpectedOutput.push_back(
+        publisherData.at(publisherActualIndexForMatchedUser.at(i)));
+    advertiserExpectedOutput.push_back(
+        advertiserData.at(advertiserActualIndexForMatchedUser.at(i)));
+    publisherCherryPickIndex.push_back(advertiserRandomIndexForAllUser.at(
+        advertiserActualIndexForMatchedUser.at(i)));
+    advertiserCherryPickIndex.push_back(publisherRandomIndexForAllUser.at(
+        publisherActualIndexForMatchedUser.at(i)));
   }
+
+  distributeDataToFiles(
+      publisherDataFiles, publisherRandomIndexForAllUser, publisherData);
+  distributeDataToFiles(
+      advertiserDataFiles, advertiserRandomIndexForAllUser, advertiserData);
+
+  distributeIndexesToFiles(publisherIndexFiles, publisherCherryPickIndex);
+  distributeIndexesToFiles(advertiserIndexFiles, advertiserCherryPickIndex);
 
   global_parameters::GlobalParameters gp;
   gp.emplace(global_parameters::KAdvDataWidth, advertiserWidth);
