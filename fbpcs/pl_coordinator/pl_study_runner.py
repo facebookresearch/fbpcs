@@ -440,7 +440,7 @@ async def _run_study_async_helper(
         backoff_type=BackoffType.CONSTANT,
         max_attempts=10,
     ) as retry_handler:
-        end_state_study_data = await retry_handler.execute_sync(
+        end_state_study_data = retry_handler.execute_sync(
             _get_study_data, study_id, client
         )
 
