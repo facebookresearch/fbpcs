@@ -46,7 +46,7 @@ data_processing_repo="s3://$one_docker_repo/data_processing"
 private_id_repo="s3://$one_docker_repo/pid"
 validation_repo="s3://$one_docker_repo/validation"
 smart_agent_repo="s3://$one_docker_repo/smart_agent"
-udp_encryptor_package="s3://$one_docker_repo/data_processing/unified_data_process/UdpEncryptor/${TAG}/udp_encryptor"
+udp_encryptor_package="s3://$one_docker_repo/data_processing/unified_data_process/udp_encryptor/${TAG}/udp_encryptor"
 
 if [ "$PACKAGE" = "emp_games" ]; then
 cd binaries_out || exit
