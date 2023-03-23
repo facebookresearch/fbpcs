@@ -1096,9 +1096,9 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ContainerInstance(instance_id="id", status=ContainerInstanceStatus.STARTED)
         ]
         # pyre-ignore
-        self.onedocker_service.container_svc.get_instance.return_value = (
+        self.onedocker_service.container_svc.get_instances.return_value = [
             ContainerInstance(instance_id="id", status=ContainerInstanceStatus.FAILED)
-        )
+        ]
         state_instance = StageStateInstance(
             instance_id=self.test_private_computation_id,
             stage_name="AGGREGATE",
