@@ -176,9 +176,7 @@ void UdpEncryptorApp::processMyData(
         std::make_unique<fbpcf::io::FileReader>(serializedDataFiles.at(0)));
     while (!reader->eof()) {
       auto [index, data] = readOneLineData(reader);
-      // comment out 2nd parameter for now as the
-      // underlying change hasn't been done yet.
-      encryptor_->pushOneLineFromMe(std::move(data) /*, index*/);
+      encryptor_->pushOneLineFromMe(std::move(data), index);
     }
     reader->close();
   }
@@ -187,9 +185,7 @@ void UdpEncryptorApp::processMyData(
   for (auto& datum : data) {
     datum.throwUnlessValue();
     auto& [index, data] = datum.value();
-    // comment out 2nd parameter for now as the
-    // underlying change hasn't been done yet.
-    encryptor_->pushLinesFromMe(std::move(data) /*, std::move(index)*/);
+    encryptor_->pushLinesFromMe(std::move(data), std::move(index));
   }
   return;
 }

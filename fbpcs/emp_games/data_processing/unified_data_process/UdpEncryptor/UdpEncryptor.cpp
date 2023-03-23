@@ -6,6 +6,9 @@
  */
 
 #include "fbpcs/emp_games/data_processing/unified_data_process/UdpEncryptor/UdpEncryptor.h"
+#include <iterator>
+#include <memory>
+#include <stdexcept>
 
 #include "folly/executors/CPUThreadPoolExecutor.h"
 
@@ -25,26 +28,36 @@ void UdpEncryptor::processDataInBuffer() {
     udpEncryption_->prepareToProcessMyData(bufferForMyData_->at(0).size());
   }
   bufferForMyData_->resize(bufferIndex_);
+  indexesForMyData_->resize(bufferIndex_);
   bufferIndex_ = 0;
   if (bufferForMyData_->size() > 0) {
     auto [promise, future] = folly::makePromiseContract<folly::Unit>();
     myDataProcessExecutor_->add([this,
                                  data = std::move(bufferForMyData_),
+                                 indexes = std::move(indexesForMyData_),
                                  p = std::move(promise)]() mutable {
-      udpEncryption_->processMyData(*data);
+      // comment out 2nd parameter for now as the
+      // underlying change hasn't been done yet.
+      udpEncryption_->processMyData(*data /*, *indexes*/);
       p.setValue(folly::Unit());
     });
     myDataProcessingFutures_.push_back(std::move(future));
 
     bufferForMyData_ =
-        std::make_unique<std::vector<std::vector<unsigned char>>>(chunkSize_);
+        std::make_unique<std::vector<std::vector<unsigned char>>>(0);
+    indexesForMyData_ = std::make_unique<std::vector<uint64_t>>(0);
+    bufferForMyData_->reserve(chunkSize_);
+    indexesForMyData_->reserve(chunkSize_);
   }
 }
 
 // load a line that is to be processed later.
 void UdpEncryptor::pushOneLineFromMe(
-    std::vector<unsigned char>&& serializedLine) {
-  bufferForMyData_->at(bufferIndex_++) = std::move(serializedLine);
+    std::vector<unsigned char>&& serializedLine,
+    uint64_t index) {
+  bufferForMyData_->push_back(std::move(serializedLine));
+  indexesForMyData_->push_back(index);
+  bufferIndex_++;
   if (bufferIndex_ >= chunkSize_) {
     processDataInBuffer();
   }
@@ -52,25 +65,40 @@ void UdpEncryptor::pushOneLineFromMe(
 
 // load multiple lines into the buffer.
 void UdpEncryptor::pushLinesFromMe(
-    std::vector<std::vector<unsigned char>>&& serializedLines) {
+    std::vector<std::vector<unsigned char>>&& serializedLines,
+    std::vector<uint64_t>&& indexes) {
+  if (serializedLines.size() != indexes.size()) {
+    throw std::invalid_argument(
+        "data's and indexes' lengths are not the same.");
+  }
   size_t inputIndex = 0;
 
   while (inputIndex < serializedLines.size()) {
     if (chunkSize_ - bufferIndex_ <= serializedLines.size() - inputIndex) {
-      std::copy(
-          serializedLines.begin() + inputIndex,
-          serializedLines.begin() + inputIndex + chunkSize_ - bufferIndex_,
-          bufferForMyData_->begin() + bufferIndex_);
+      bufferForMyData_->insert(
+          bufferForMyData_->end(),
+          std::make_move_iterator(serializedLines.begin() + inputIndex),
+          std::make_move_iterator(
+              serializedLines.begin() + inputIndex + chunkSize_ -
+              bufferIndex_));
+      indexesForMyData_->insert(
+          indexesForMyData_->end(),
+          std::make_move_iterator(indexes.begin() + inputIndex),
+          std::make_move_iterator(
+              indexes.begin() + inputIndex + chunkSize_ - bufferIndex_));
       inputIndex += chunkSize_ - bufferIndex_;
       // the buffer is full, the index should be changed to chunkSize_
       bufferIndex_ = chunkSize_;
       processDataInBuffer();
     } else {
-      std::copy(
-          serializedLines.begin() + inputIndex,
-          serializedLines.end(),
-          bufferForMyData_->begin() + bufferIndex_);
-
+      bufferForMyData_->insert(
+          bufferForMyData_->end(),
+          std::make_move_iterator(serializedLines.begin() + inputIndex),
+          std::make_move_iterator(serializedLines.end()));
+      indexesForMyData_->insert(
+          indexesForMyData_->end(),
+          std::make_move_iterator(indexes.begin() + inputIndex),
+          std::make_move_iterator(indexes.end()));
       bufferIndex_ += serializedLines.size() - inputIndex;
       inputIndex = serializedLines.size();
     }
@@ -100,11 +128,11 @@ void UdpEncryptor::setPeerConfig(
   }
 }
 
-UdpEncryptor::EncryptionResuts UdpEncryptor::getEncryptionResults() {
+UdpEncryptor::EncryptionResults UdpEncryptor::getEncryptionResults() {
   folly::collectAll(std::move(peerDataProcessingFutures_)).get();
 
   auto [ciphertexts, nonces, indexes] = udpEncryption_->getProcessedData();
-  return EncryptionResuts{ciphertexts, nonces, indexes};
+  return EncryptionResults{ciphertexts, nonces, indexes};
 }
 
 std::vector<__m128i> UdpEncryptor::getExpandedKey() {
