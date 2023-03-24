@@ -34,7 +34,11 @@ void CalculatorApp<schedulerId>::run() {
       } else {
         XLOG(INFO) << "Reading input data from secret shares.";
         output = game.playFromSecretShares(
-            inputGlobalParamsPath_, inputPaths_.at(i), numConversionsPerUser_);
+            inputGlobalParamsPath_,
+            inputExpandedKeyPath_,
+            inputPaths_.at(i),
+            useDecoupledUDP_,
+            numConversionsPerUser_);
       }
 
       XLOG(INFO) << "done calculating";

@@ -34,8 +34,10 @@ class CalculatorApp {
       const int epoch,
       const std::vector<std::string>& inputPaths,
       const std::string& inputGlobalParamsPath,
+      const std::string& inputExpandedKeyPath,
       const std::vector<std::string>& outputPaths,
       bool readInputFromSecretShares,
+      bool useDecoupledUDP,
       std::shared_ptr<fbpcf::util::MetricCollector> metricCollector,
       const int startFileIndex = 0,
       const int numFiles = 1,
@@ -47,8 +49,10 @@ class CalculatorApp {
         epoch_(epoch),
         inputPaths_(inputPaths),
         inputGlobalParamsPath_(inputGlobalParamsPath),
+        inputExpandedKeyPath_(inputExpandedKeyPath),
         outputPaths_(outputPaths),
         readInputFromSecretShares_(readInputFromSecretShares),
+        useDecoupledUDP_(useDecoupledUDP),
         metricCollector_(metricCollector),
         startFileIndex_(startFileIndex),
         numFiles_(numFiles),
@@ -76,8 +80,10 @@ class CalculatorApp {
   int epoch_;
   std::vector<std::string> inputPaths_;
   const std::string inputGlobalParamsPath_;
+  const std::string inputExpandedKeyPath_;
   std::vector<std::string> outputPaths_;
   const bool readInputFromSecretShares_;
+  const bool useDecoupledUDP_;
   std::shared_ptr<fbpcf::util::MetricCollector> metricCollector_;
   int startFileIndex_;
   int numFiles_;

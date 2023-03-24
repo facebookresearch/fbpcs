@@ -12,43 +12,56 @@
 #include "fbpcf/engine/util/IPrg.h"
 #include "folly/logging/xlog.h"
 
-#include "fbpcf/mpc_std_lib/unified_data_process/adapter/IAdapter.h"
-#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/IDataProcessor.h"
+#include "fbpcf/mpc_std_lib/unified_data_process/data_processor/UdpDecryption.h"
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
+#include "fbpcs/emp_games/data_processing/unified_data_process/UdpDecryptor/UdpDecryptorApp.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/Constants.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/GlobalSharingUtils.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/IInputProcessor.h"
-#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/LiftCompactionUtils.h"
-
 namespace private_lift {
 /**
  * This class handles the deserialization of serialized metadata produced from
  * UDP.
  */
 template <int schedulerId>
-class PostUDPInputProcessor : public IInputProcessor<schedulerId> {
+class DecoupledUDPInputProcessor : public IInputProcessor<schedulerId> {
  public:
   using SecString = typename fbpcf::mpc_std_lib::unified_data_process::
       data_processor::IDataProcessor<schedulerId>::SecString;
 
-  PostUDPInputProcessor(
+  DecoupledUDPInputProcessor(
       int myRole,
-      /* sending in shares */
-      const std::vector<std::vector<bool>>& publisherMetadataShares,
-      const std::vector<std::vector<bool>>& partnerMetadataShares,
+      const std::string& inputGlobalParamsPath,
+      const std::string& inputExpandedKeyPath,
+      const std::string& inputCiphertextsPath,
       int32_t numConversionsPerUser)
       : myRole_{myRole}, numConversionsPerUser_{numConversionsPerUser} {
-    liftGameProcessedData_.numRows = publisherMetadataShares.size();
+    // Run UDP decryption
+    unified_data_process::UdpDecryptorApp<schedulerId> decryptionApp{
+        std::make_unique<fbpcf::mpc_std_lib::unified_data_process::
+                             data_processor::UdpDecryption<schedulerId>>(
+            myRole, 1 - myRole),
+        myRole == common::PUBLISHER};
+    std::tuple<SecString, SecString> publisherPartnerJointMetadataShares =
+        decryptionApp.invokeUdpDecryption(
+            inputCiphertextsPath, inputExpandedKeyPath, inputGlobalParamsPath);
 
-    // [publisherShares, partnerShares]
-    auto publisherPartnerJointMetadataShares =
-        fromMemoryToMPCTypes(publisherMetadataShares, partnerMetadataShares);
+    liftGameProcessedData_.numRows =
+        std::get<0>(publisherPartnerJointMetadataShares).size();
 
-    extractCompactedData(
-        std::get<0>(publisherPartnerJointMetadataShares),
-        std::get<1>(publisherPartnerJointMetadataShares));
+    XLOG(INFO, "Begin extraction to MPC types");
+    auto publisherShares = std::get<0>(publisherPartnerJointMetadataShares);
+    auto partnerShares = std::get<1>(publisherPartnerJointMetadataShares);
+    input_processing::extractCompactedData(
+        liftGameProcessedData_,
+        controlPopulation_,
+        cohortGroupIds_,
+        breakdownBitGroupIds_,
+        publisherShares,
+        partnerShares,
+        numConversionsPerUser_);
 
     input_processing::computeIndexSharesAndSetTestGroupIds(
         liftGameProcessedData_,
@@ -66,18 +79,8 @@ class PostUDPInputProcessor : public IInputProcessor<schedulerId> {
   }
 
  private:
-  std::pair<SecString, SecString> fromMemoryToMPCTypes(
-      const std::vector<std::vector<bool>>& publisherInputShares,
-      const std::vector<std::vector<bool>>& partnerInputShares);
-
-  // deserializes the compacted data into MPC structured values
-  void extractCompactedData(
-      const SecString& publisherDataShares,
-      const SecString& partnerDataShares);
-
   int32_t myRole_;
 
-  InputData inputData_;
   int32_t numConversionsPerUser_;
 
   SecBit<schedulerId> controlPopulation_;
@@ -87,7 +90,4 @@ class PostUDPInputProcessor : public IInputProcessor<schedulerId> {
 
   LiftGameProcessedData<schedulerId> liftGameProcessedData_;
 };
-
 } // namespace private_lift
-
-#include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/PostUDPInputProcessor_impl.h"
