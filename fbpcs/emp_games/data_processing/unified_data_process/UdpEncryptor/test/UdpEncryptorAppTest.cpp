@@ -200,28 +200,12 @@ TestData generateTestData(
       generateRandomDataForTest(publisherRowCount, publisherWidth);
   auto advertiserData =
       generateRandomDataForTest(advertiserRowCount, advertiserWidth);
+
   // users are given random indexes for the sake of performance
-  // intend to use this piece of code in the end, comment out for now as
-  // implementations are not done yet.
-  /*
   auto publisherRandomIndexForAllUser =
       generateRandomIndex(publisherRowCount * 100, publisherRowCount);
   auto advertiserRandomIndexForAllUser =
       generateRandomIndex(advertiserRowCount * 200, advertiserRowCount);
-  */
-  std::vector<uint64_t> publisherRandomIndexForAllUser(publisherRowCount);
-  // generate 0 to n-1 vector
-  std::iota(
-      publisherRandomIndexForAllUser.begin(),
-      publisherRandomIndexForAllUser.end(),
-      0);
-
-  std::vector<uint64_t> advertiserRandomIndexForAllUser(advertiserRowCount);
-  // generate 0 to n-1 vector
-  std::iota(
-      advertiserRandomIndexForAllUser.begin(),
-      advertiserRandomIndexForAllUser.end(),
-      0);
 
   auto publisherActualIndexForMatchedUser =
       generateRandomIndex(publisherRowCount, intersectionSize);
