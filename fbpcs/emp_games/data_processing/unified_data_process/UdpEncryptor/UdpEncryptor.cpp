@@ -36,9 +36,7 @@ void UdpEncryptor::processDataInBuffer() {
                                  data = std::move(bufferForMyData_),
                                  indexes = std::move(indexesForMyData_),
                                  p = std::move(promise)]() mutable {
-      // comment out 2nd parameter for now as the
-      // underlying change hasn't been done yet.
-      udpEncryption_->processMyData(*data /*, *indexes*/);
+      udpEncryption_->processMyData(*data, *indexes);
       p.setValue(folly::Unit());
     });
     myDataProcessingFutures_.push_back(std::move(future));
