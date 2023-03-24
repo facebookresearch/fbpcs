@@ -89,8 +89,8 @@ resource "aws_iam_role_policy" "mrpid_sfn_access_publisher_s3_policy" {
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::mrpid-publisher-${var.md5hash_aws_account_id}/*",
-        "arn:aws:s3:::mrpid-publisher-${var.md5hash_aws_account_id}"
+        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}/*",
+        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}"
       ]
     }
   ]
