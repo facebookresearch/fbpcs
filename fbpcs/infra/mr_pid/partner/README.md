@@ -60,14 +60,14 @@ export TF_LOG_STREAMING=/tmp/deploymentStream.log
  * For standard `deploy`, run the following command
 
 ```
-/bin/bash mrpid_partner_deploy.sh deploy -r <> -t <> -a <> -p <> -b <optional>
-example: /bin/bash mrpid_partner_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
+/bin/bash mrpid_partner_deploy.sh deploy -r <> -t <> -a <> -p <> -i <> -u <> -b <optional>
+example: /bin/bash mrpid_partner_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545 -i 510d2d50b15742c0ac63b346de16a0b4 -u nuu5
 ```
 
  * For standard `undeploy`, run the following command
 ```
-/bin/bash mrpid_partner_deploy.sh undeploy -r <> -t <> -a <> -p <> -b <optional>
-example: /bin/bash mrpid_partner_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
+/bin/bash mrpid_partner_deploy.sh undeploy -r <> -t <> -a <> -p <> -i <> -u <> -b <optional>
+example: /bin/bash mrpid_partner_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545 -i 510d2d50b15742c0ac63b346de16a0b4 -u nuu5
 ```
 
 # Notes
