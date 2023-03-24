@@ -62,13 +62,13 @@ export TF_LOG_STREAMING=/tmp/deploymentStream.log
 
 ```
 /bin/bash mrpid_publisher_initial_deploy.sh deploy -r <> -t <> -a <> -p <> -b <optional>
-example: /bin/bash mrpid_publisher_initial_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
+example: /bin/bash mrpid_publisher_initial_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 510d2d50b15742c0ac63b346de16a0b4
 ```
 
  * For standard `undeploy`, run the following command
 ```
 /bin/bash mrpid_publisher_initial_deploy.sh undeploy -r <> -t <> -a <> -p <> -b <optional>
-example: /bin/bash mrpid_publisher_initial_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
+example: /bin/bash mrpid_publisher_initial_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 510d2d50b15742c0ac63b346de16a0b4
 ```
 10. wait for partner side deployment script completed, because we need to put partner side generated IAM roles into S3 bucket policy
 11. run `mrpid_publisher_final_deploy.sh`
@@ -77,14 +77,14 @@ Please use the same tag from initial script.
  * For standard `deploy`, run the following command
 
 ```
-/bin/bash mrpid_publisher_final_deploy.sh deploy -r <> -t <> -a <> -p <> -b <optional>
-example: /bin/bash mrpid_publisher_final_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
+/bin/bash mrpid_publisher_final_deploy.sh deploy -r <> -t <> -a <> -p <> -i <> -u <> -b <optional>
+example: /bin/bash mrpid_publisher_final_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 510d2d50b15742c0ac63b346de16a0b4 -i 43454354533545 -u nuu5
 ```
 
  * For standard `undeploy`, run the following command
 ```
-/bin/bash mrpid_publisher_final_deploy.sh undeploy -r <> -t <> -a <> -p <> -b <optional>
-example: /bin/bash mrpid_publisher_final_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
+/bin/bash mrpid_publisher_final_deploy.sh undeploy -r <> -t <> -a <> -p <> -i <> -u <> -b <optional>
+example: /bin/bash mrpid_publisher_final_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 510d2d50b15742c0ac63b346de16a0b4 -i 43454354533545 -u nuu5
 ```
 
 # Notes

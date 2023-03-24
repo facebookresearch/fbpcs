@@ -5,10 +5,7 @@ resource "aws_sfn_state_machine" "mrpid_publisher_sfn" {
 
   type = "STANDARD"
 
-  definition = <<EOF
-  {
-  }
-  EOF
+  definition = data.template_file.publisher_sfn_definition.rendered
 
   logging_configuration {
     log_destination = "${aws_cloudwatch_log_group.mrpid_publisher_sfn_log_group.arn}:*"
