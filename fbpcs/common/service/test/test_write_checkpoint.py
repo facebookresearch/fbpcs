@@ -43,7 +43,7 @@ def add(instance_id: str, x: int, y: int = 2) -> int:
 
 
 def raise_exception(instance_id: str) -> None:
-    raise DummyException
+    raise DummyException("dummy_exception")
 
 
 class DummyTraceLoggingService(SimpleTraceLoggingService):
@@ -87,8 +87,13 @@ class TestWriteCheckpoint(IsolatedAsyncioTestCase):
             self.assertEqual(res, -1)
 
         with self.subTest("raise exception"):
+            checkpoint = dummy_checkpoint()
             with self.assertRaises(DummyException):
-                res = dummy_checkpoint()(raise_exception)("instance_id")
+                checkpoint(raise_exception)("instance_id")
+
+            self.assertEqual(
+                checkpoint.checkpoint_data, {"exception": "dummy_exception"}
+            )
 
         with self.subTest("async add"):
             obj = DummyClass()
