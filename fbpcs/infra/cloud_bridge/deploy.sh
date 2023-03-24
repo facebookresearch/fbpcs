@@ -326,18 +326,38 @@ deploy_aws_resources() {
         -backend-config "key=tfstate/data_ingestion$tag_postfix.tfstate"
     echo "######################## Initializing terraform working directory completed ########################"
     echo "######################## Deploy Data Ingestion Terraform scripts started ########################"
-    terraform apply \
-        -auto-approve \
-        -var "region=$region" \
-        -var "tag_postfix=$tag_postfix" \
-        -var "aws_account_id=$aws_account_id" \
-        -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
-        -var "data_processing_output_bucket_arn=$data_bucket_arn" \
-        -var "data_ingestion_lambda_name=$data_ingestion_lambda_name" \
-        -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
-        -var "data_processing_lambda_s3_key=lambda.zip" \
-        -var "data_upload_key_path=$data_upload_key_path" \
-        -var "query_results_key_path=$query_results_key_path"
+    set +e
+    local data_ingestion_time_out=600
+    SECONDS=0
+    while [ $SECONDS -lt $data_ingestion_time_out ]
+    do
+        terraform apply \
+            -auto-approve \
+            -var "region=$region" \
+            -var "tag_postfix=$tag_postfix" \
+            -var "aws_account_id=$aws_account_id" \
+            -var "data_processing_output_bucket=$s3_bucket_data_pipeline" \
+            -var "data_processing_output_bucket_arn=$data_bucket_arn" \
+            -var "data_ingestion_lambda_name=$data_ingestion_lambda_name" \
+            -var "data_processing_lambda_s3_bucket=$s3_bucket_for_storage" \
+            -var "data_processing_lambda_s3_key=lambda.zip" \
+            -var "data_upload_key_path=$data_upload_key_path" \
+            -var "query_results_key_path=$query_results_key_path"
+        local return_code=$?
+        echo "Checking if the Data Ingestion deployment was successful..."
+        if [[ $return_code -eq 0 ]]; then
+            echo "Successfully created the Data Ingestion infra"
+            break
+        fi
+        if [[ $return_code -ne 0 ]] && [[ $SECONDS -gt $data_ingestion_time_out ]]; then
+            echo "Error: creating the Data Ingestion infra timed out"
+            set -e
+            exit 1
+        fi
+        echo "Warning - Data Ingestion provisioning failed. Retrying..."
+        sleep 5
+    done
+    set -e
     echo "######################## Deploy Data Ingestion Terraform scripts completed ########################"
     # store the outputs from data ingestion pipeline output into variables
     firehose_stream_name=$(terraform output firehose_stream_name | tr -d '"')
