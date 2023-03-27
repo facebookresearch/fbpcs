@@ -9,7 +9,9 @@ FROM ubuntu:${os_release}
 ENV TZ=America/Los_Angeles
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN useradd -ms /bin/bash onedocker
+ARG caAdminGroup=ca-admins
+RUN groupadd --gid 1001 ${caAdminGroup}
+RUN useradd -ms /bin/bash onedocker -g ${caAdminGroup}
 
 USER onedocker
 RUN mkdir -p /home/onedocker/package
@@ -44,11 +46,21 @@ RUN mkdir -p /home/onedocker/src
 ADD pip_requirements.txt /home/onedocker/src
 RUN python3.8 -m pip install -r /home/onedocker/src/pip_requirements.txt
 
+# Add TLS Plugin
+WORKDIR /home/onedocker/package
+ADD plugins/tls_cert_installer.py .
+ADD opa_workflows/tls_workflow.json .
+ADD plugins/write_routing.sh .
+
 # limit execution permission only to the directory where binaries are downloaded
 RUN chown -R onedocker /home/onedocker/package/
 RUN chmod -R u-x ~/
 RUN chmod -R u+rw /tmp
 RUN chmod -R u+rwx /home/onedocker/package/
+
+# Give runtime user special permission to run the install certificate binary
+ENV WRITE_ROUTING_SCRIPT="/home/onedocker/package/write_routing.sh"
+RUN echo "%${caAdminGroup} ALL=(ALL) NOPASSWD: ${WRITE_ROUTING_SCRIPT}" >> /etc/sudoers
 
 CMD ["/bin/bash"]
 WORKDIR /home/onedocker
