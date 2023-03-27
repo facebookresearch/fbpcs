@@ -1,4 +1,4 @@
-name: One command runner test
+name: Private Lift Test
 run-name: ${{ inputs.test_name }} on ${{ inputs.tag }} for build ${{ inputs.build_id }}
 
 on:
@@ -41,6 +41,11 @@ on:
         description: The name of the type of tests that are being run
         default: 'PL E2E Tests'
         type: string
+      test_config:
+        description: The yaml file name that will be passed in the --config parameter to the E2E runner
+        default: 'config_one_command_runner_test.yml'
+        type: string
+        required: true
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
@@ -84,6 +89,12 @@ on:
         options:
           - PL E2E Tests
           - Multi-key PL E2E Tests
+          - UDP Tests
+      test_config:
+        description: The yaml file name that will be passed in the --config parameter to the E2E runner
+        default: 'config_one_command_runner_test.yml'
+        type: string
+        required: false
       tracker_hash:
         description: '[Internal usage] Used for tracking workflow job status within Meta infra'
         required: false
@@ -94,6 +105,7 @@ env:
   FBPCS_IMAGE_NAME: pc-coordinator-prod
   FBPCS_GRAPH_API_TOKEN: ${{ secrets.FBPCS_GRAPH_API_TOKEN }}
   CONSOLE_OUTPUT_FILE: /tmp/output.txt
+  CONFIG_YAML: ./fbpcs/tests/github/${{ inputs.test_config }}
 
 jobs:
   ### Private Lift E2E tests
@@ -132,7 +144,7 @@ jobs:
           ${{ inputs.study_id }} \
           --objective_ids=${{ inputs.objective_id }} \
           --input_paths=${{ inputs.input_path }} \
-          --config=./fbpcs/tests/github/config_one_command_runner_test.yml \
+          --config="$CONFIG_YAML" \
           -- \
           --version=${{ inputs.tag }} \
           --image_version=${{ inputs.coordinator_tag }} \
