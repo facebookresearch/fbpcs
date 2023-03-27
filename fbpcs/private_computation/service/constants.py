@@ -82,4 +82,4 @@ SERVER_HOSTNAME_ENV_VAR = "SERVER_HOSTNAME"
 SERVER_IP_ADDRESS_ENV_VAR = "IP_ADDRESS"
 
 # OneDocker plugin architecture workflow paths
-TLS_OPA_WORKFLOW_PATH = "/home/onedocker/tls_workflow.json"
+TLS_OPA_WORKFLOW_PATH = "/home/onedocker/package/tls_workflow.json"
