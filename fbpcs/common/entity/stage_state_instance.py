@@ -67,7 +67,7 @@ class StageStateInstance(InstanceBase):
         self,
         onedocker_svc: OneDockerService,
     ) -> StageStateInstanceStatus:
-        self.containers = self._update_containers(onedocker_svc)
+        self.containers = self._get_updated_containers(onedocker_svc)
         statuses = {container.status for container in self.containers}
         # updating stage state status based on containers status
         if ContainerInstanceStatus.FAILED in statuses:
@@ -84,24 +84,33 @@ class StageStateInstance(InstanceBase):
 
         return self.status
 
-    def _update_containers(
+    def _get_updated_containers(
         self, onedocker_svc: OneDockerService
     ) -> List[ContainerInstance]:
-        return [
-            self._update_container(onedocker_svc, container)
-            for container in self.containers
-        ]
+        containers_to_update = self.get_containers_to_update(self.containers)
+        updated_containers = onedocker_svc.get_containers(
+            [self.containers[idx].instance_id for idx in containers_to_update]
+        )
+        new_updated_containers = self.containers.copy()
+        for i, updated_container in zip(containers_to_update, updated_containers):
+            if updated_container is not None:
+                # replace existing container with the new updated container
+                new_updated_containers[i] = updated_container
 
-    def _update_container(
-        self, onedocker_svc: OneDockerService, container: ContainerInstance
-    ) -> ContainerInstance:
-        # Stop updating from OneDocker, when the container is already stopped.
-        if container.status in (
-            ContainerInstanceStatus.COMPLETED,
-            ContainerInstanceStatus.FAILED,
-        ):
-            return container
-        return onedocker_svc.get_container(container.instance_id) or container
+        return new_updated_containers
+
+    @classmethod
+    def get_containers_to_update(
+        cls,
+        existing_containers: List[ContainerInstance],
+    ) -> List[int]:
+        # only update containers that previously not stopped
+        return [
+            i
+            for i, container in enumerate(existing_containers)
+            if container.status
+            not in (ContainerInstanceStatus.COMPLETED, ContainerInstanceStatus.FAILED)
+        ]
 
     def stop_containers(self, onedocker_svc: OneDockerService) -> None:
         container_ids = [instance.instance_id for instance in self.containers]
