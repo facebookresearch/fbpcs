@@ -76,7 +76,7 @@ class TestStageStateInstance(unittest.TestCase):
 
     @patch("fbpcp.service.onedocker.OneDockerService")
     @patch(
-        "fbpcs.common.entity.stage_state_instance.StageStateInstance._update_containers"
+        "fbpcs.common.entity.stage_state_instance.StageStateInstance._get_updated_containers"
     )
     def test_update_status_translation(
         self, mock_update_containers, mock_onedocker_svc
