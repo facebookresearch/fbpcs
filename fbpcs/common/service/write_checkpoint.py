@@ -59,7 +59,11 @@ class write_checkpoint:
         @functools.wraps(func)
         async def wrapper_async(*args: Any, **kwargs: Any) -> Any:  # pyre-ignore
             with self._get_trace_logger_cm(func, *args, **kwargs) as checkpoint_data:
-                res = await func(*args, **kwargs)
+                try:
+                    res = await func(*args, **kwargs)
+                except Exception as ex:
+                    checkpoint_data["exception"] = str(ex)
+                    raise ex
                 if self.dump_return_val:
                     checkpoint_data["return_value"] = str(res)
                 return res
@@ -67,7 +71,11 @@ class write_checkpoint:
         @functools.wraps(func)
         def wrapper_sync(*args: Any, **kwargs: Any) -> Any:  # pyre-ignore
             with self._get_trace_logger_cm(func, *args, **kwargs) as checkpoint_data:
-                res = func(*args, **kwargs)
+                try:
+                    res = func(*args, **kwargs)
+                except Exception as ex:
+                    checkpoint_data["exception"] = str(ex)
+                    raise ex
                 if self.dump_return_val:
                     checkpoint_data["return_value"] = str(res)
                 return res
