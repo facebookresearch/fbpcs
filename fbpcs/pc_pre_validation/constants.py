@@ -24,6 +24,14 @@ TIMESTAMP_OUT_OF_RANGE_MAX_THRESHOLD = 0.15
 # 15 minutes
 STREAMING_DURATION_LIMIT_IN_SECONDS: int = 15 * 60
 
+# use a LARGE container with 16 vCPUs
+# This is the max number of concurrent processes that can run concurrently
+MAX_PARALLELISM: int = 16
+
+# 10 MB
+# Smallest chunk size before another worker is added
+MIN_CHUNK_SIZE: int = 10 * 1024 * 1024
+
 ID_FIELD_PREFIX = "id_"
 COHORT_ID_FIELD = "cohort_id"
 CONVERSION_VALUE_FIELD = "conversion_value"

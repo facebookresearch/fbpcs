@@ -7,7 +7,7 @@
 import os
 import random
 import time
-from typing import Iterable
+from typing import Any, Dict, Iterable
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock, patch
 
@@ -65,6 +65,7 @@ class TestInputDataValidator(TestCase):
         boto3_client_mock = patched_boto3_client.start()
         boto3_client_mock.__init__(return_value=boto3_client_mock)
         self._boto3_client_mock = boto3_client_mock
+        self.count: int = 0
 
     def tearDown(self) -> None:
         os.remove(TEST_TEMP_FILEPATH)
@@ -177,17 +178,20 @@ class TestInputDataValidator(TestCase):
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
             b"id_,value,event_timestamp\n",
-            b"abcd/1234+WXYZ=,100,1645157987\n",
-            b"abcd/1234+WXYZ=,100,1645157987\n",
-            b"abcd/1234+WXYZ=,100,1645157987\n",
         ]
+        lines.extend(
+            [
+                b"abcd/1234+WXYZ=,100,1645157987\n",
+            ]
+            * 10000
+        )
         self.write_lines_to_file(lines)
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
             message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
             details={
-                "rows_processed_count": 3,
+                "rows_processed_count": 10000,
             },
         )
 
@@ -208,19 +212,25 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
+        self.storage_service_mock.get_file_size.return_value = 35 * 1024 * 1024
         lines = [
             b"id_,value,event_timestamp,cohort_id\n",
-            b"abcd/1234+WXYZ=,100,1645157987,0\n",
-            b"abcd/1234+WXYZ=,100,1645157987,1\n",
-            b"abcd/1234+WXYZ=,100,1645157987,2\n",
         ]
+        lines.extend(
+            [
+                b"abcd/1234+WXYZ=,100,1645157987,0\n",
+                b"abcd/1234+WXYZ=,100,1645157987,1\n",
+                b"abcd/1234+WXYZ=,100,1645157987,2\n",
+            ]
+            * 10000
+        )
         self.write_lines_to_file(lines)
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
             message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
             details={
-                "rows_processed_count": 3,
+                "rows_processed_count": 30000,
             },
         )
 
@@ -241,19 +251,25 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
+        self.storage_service_mock.get_file_size.return_value = 35 * 1024 * 1024
         lines = [
             b"id_,value,event_timestamp,cohort_id\n",
-            b"abcd/1234+WXYZ=,100,1645157987,23434\n",
-            b"abcd/1234+WXYZ=,100,1645157987,23425\n",
-            b"abcd/1234+WXYZ=,100,1645157987,23436\n",
         ]
+        lines.extend(
+            [
+                b"abcd/1234+WXYZ=,100,1645157987,23434\n",
+                b"abcd/1234+WXYZ=,100,1645157987,23425\n",
+                b"abcd/1234+WXYZ=,100,1645157987,23436\n",
+            ]
+            * 10000
+        )
         self.write_lines_to_file(lines)
         expected_report = ValidationReport(
             validation_result=ValidationResult.FAILED,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
             message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: Cohort Id Format is invalid. Cohort ID should start with 0 and increment by 1.",
             details={
-                "rows_processed_count": 3,
+                "rows_processed_count": 30000,
             },
         )
 
@@ -274,22 +290,28 @@ class TestInputDataValidator(TestCase):
     #     self, time_mock: Mock
     # ) -> None:
     #     time_mock.time.return_value = TEST_TIMESTAMP
+    #     self.storage_service_mock.get_file_size.return_value = 35 * 1024 * 1024
     #     lines = [
     #         b"id_,value,event_timestamp,cohort_id\n",
-    #         b"abcd/1234+WXYZ=,100,1645157987,0\n",
-    #         b"abcd/1234+WXYZ=,100,1645157987,1\n",
-    #         b"abcd/1234+WXYZ=,2147483648,1645157987,2\n",
     #     ]
+    #     lines.extend(
+    #         [
+    #             b"abcd/1234+WXYZ=,100,1645157987,0\n",
+    #             b"abcd/1234+WXYZ=,100,1645157987,1\n",
+    #             b"abcd/1234+WXYZ=,2147483648,1645157987,2\n",
+    #         ]
+    #         * 10000
+    #     )
     #     self.write_lines_to_file(lines)
     #     expected_report = ValidationReport(
     #         validation_result=ValidationResult.FAILED,
     #         validator_name=INPUT_DATA_VALIDATOR_NAME,
     #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'value'.",
     #         details={
-    #             "rows_processed_count": 3,
+    #             "rows_processed_count": 30000,
     #             "validation_errors": {
     #                 "value": {
-    #                     "out_of_range_count": 1,
+    #                     "out_of_range_count": 10000,
     #                 },
     #                 "error_messages": [
     #                     "The data in 'value' should be less than 2147483647",
@@ -316,22 +338,28 @@ class TestInputDataValidator(TestCase):
     #     self, time_mock: Mock
     # ) -> None:
     #     time_mock.time.return_value = TEST_TIMESTAMP
+    #     self.storage_service_mock.get_file_size.return_value = 35 * 1024 * 1024
     #     lines = [
     #         b"id_,conversion_value,conversion_timestamp,conversion_metadata,cohort_id\n",
-    #         b"abcd/1234+WXYZ=,100,1645157987,0,0\n",
-    #         b"abcd/1234+WXYZ=,100,1645157987,0,1\n",
-    #         b"abcd/1234+WXYZ=,2147483648,1645157987,0,2\n",
     #     ]
+    #     lines.extend(
+    #         [
+    #             b"abcd/1234+WXYZ=,100,1645157987,0,0\n",
+    #             b"abcd/1234+WXYZ=,100,1645157987,0,1\n",
+    #             b"abcd/1234+WXYZ=,2147483648,1645157987,0,2\n",
+    #         ]
+    #         * 10000
+    #     )
     #     self.write_lines_to_file(lines)
     #     expected_report = ValidationReport(
     #         validation_result=ValidationResult.FAILED,
     #         validator_name=INPUT_DATA_VALIDATOR_NAME,
     #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'conversion_value'.",
     #         details={
-    #             "rows_processed_count": 3,
+    #             "rows_processed_count": 30000,
     #             "validation_errors": {
     #                 "conversion_value": {
-    #                     "out_of_range_count": 1,
+    #                     "out_of_range_count": 10000,
     #                 },
     #                 "error_messages": [
     #                     "The data in 'conversion_value' should be less than 2147483647",
@@ -634,7 +662,6 @@ class TestInputDataValidator(TestCase):
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
-
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
@@ -942,7 +969,7 @@ class TestInputDataValidator(TestCase):
     def test_run_validations_it_skips_input_data_processing_when_the_file_is_too_large(
         self, time_mock: Mock
     ) -> None:
-        file_size = 3567123432
+        file_size = 99567123432
         time_mock.time.return_value = TEST_TIMESTAMP
         self.storage_service_mock.get_file_size.return_value = file_size
         expected_report = ValidationReport(
@@ -1240,20 +1267,71 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(report, expected_report)
 
     def test_it_streams_the_file_when_streaming_is_enabled(self) -> None:
-        lines = [
-            b"id_,value,event_timestamp\n",
-            b"abcd/1234+WXYZ=,25,1645157987\n",
-            b"abcd/1234+WXYZ=,25,1645157987\n",
-        ]
+        def mock_iter_lines(Bucket: str, Key: str, Range: str) -> Dict[str, Any]:
+            start_lines = [
+                b"id_,value,event_timestamp\n",
+            ]
+            start_lines.extend(
+                [
+                    b"abcd/1234+WXYZ=,25,1645157987\n",
+                    b"abcd/1234+WXYZ=,25,1645157987\n",
+                ]
+                * 5
+            )
+            start_lines.extend([b"end incomplete\n"])
+            mid_lines = [
+                b"start incomplete\n",
+            ]
+            mid_lines.extend(
+                [
+                    b"abcd/1234+WXYZ=,25,1645157987\n",
+                    b"abcd/1234+WXYZ=,25,1645157987\n",
+                ]
+                * 5
+            )
+            mid_lines.extend([b"end incomplete\n"])
+
+            end_lines = [
+                b"start incomplete\n",
+            ]
+            end_lines.extend(
+                [
+                    b"abcd/1234+WXYZ=,25,1645157987\n",
+                    b"abcd/1234+WXYZ=,25,1645157987\n",
+                ]
+                * 5
+            )
+            stream_mock = MagicMock(name="stream_mock_obj")
+
+            if Range == "":
+                stream_mock.iter_lines.return_value = iter(start_lines)
+            elif Range == "bytes=0-9175039":
+                stream_mock.iter_lines.return_value = iter(start_lines)
+            elif Range == "bytes=9175040-18350079":
+                stream_mock.iter_lines.return_value = iter(mid_lines)
+            elif Range == "bytes=18350080-27525119":
+                stream_mock.iter_lines.return_value = iter(mid_lines)
+            elif Range == "bytes=27525120-36700159":
+                stream_mock.iter_lines.return_value = iter(end_lines)
+            else:
+                raise Exception(f"Unexpected range {Range}")
+
+            return {
+                "Body": stream_mock,
+                "ContentLength": 100,
+            }
+
+        self._boto3_client_mock.get_object.side_effect = mock_iter_lines
+
+        content_length = 35 * 1024 * 1024
+        self.storage_service_mock.get_file_size.return_value = content_length
+
         expected_report = ValidationReport(
             validation_result=ValidationResult.SUCCESS,
             validator_name=INPUT_DATA_VALIDATOR_NAME,
             message=f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
-            details={"rows_processed_count": 2},
+            details={"rows_processed_count": 39},
         )
-        stream_mock = MagicMock(name="stream_mock_obj")
-        self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
-        stream_mock.iter_lines.return_value = lines
 
         validator = InputDataValidator(
             input_file_path=TEST_INPUT_FILE_PATH,
@@ -1265,11 +1343,6 @@ class TestInputDataValidator(TestCase):
         )
 
         report = validator.validate()
-
-        self._boto3_client_mock.get_object.assert_called_with(
-            Bucket=TEST_BUCKET,
-            Key=TEST_FILENAME,
-        )
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
@@ -1277,7 +1350,7 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock
     ) -> None:
         lines = [b"id_,value,event_timestamp\n"]
-        lines.extend([b"abcd/1234+WXYZ=,25,1645157987\n"] * 100001)
+        lines.extend([b"abcd/1234+WXYZ=,25,1645157987\n"] * 100002)
 
         expected_warning = " ".join(
             [
@@ -1295,10 +1368,9 @@ class TestInputDataValidator(TestCase):
         )
         stream_mock = MagicMock(name="stream_mock_obj")
         self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
-        stream_mock.iter_lines.return_value = lines
+        stream_mock.iter_lines.side_effect = [iter(lines), iter(lines[1:])]
         start_time = time.time()
         time_mock.time.side_effect = [
-            start_time,
             start_time,
             start_time,
             start_time + 1200,
@@ -1314,25 +1386,51 @@ class TestInputDataValidator(TestCase):
         )
 
         report = validator.validate()
-
         self.assertEqual(report, expected_report)
 
     # def test_the_aggregated_value_per_cohort_cannot_exceed_max_int_for_pl(self) -> None:
-    #     lines = [
-    #         b"id_,value,event_timestamp,cohort_id\n",
-    #         b"abcd/1234+WXYZ=,25,1645157987,0\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
-    #         b"abcd/1234+WXYZ=,3111222333,1645157987,3\n",
-    #     ]
+    #     def mock_iter_lines(Bucket: str, Key: str, Range: str) -> Dict[str, Any]:
+    #         lines1 = [
+    #             b"id_,value,event_timestamp,cohort_id\n",
+    #             b"abcd/1234+WXYZ=,25,1645157987,0\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
+    #             b"incomplete\n",
+    #         ]
+    #         lines2 = [
+    #             b"incomplete\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,1\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,2\n",
+    #             b"abcd/1234+WXYZ=,3111222333,1645157987,3\n",
+    #             b"abcd/1234+WXYZ=,3111222333,1645157987,4\n",
+    #         ]
+    #         stream_mock = MagicMock(name="stream_mock_obj")
+
+    #         if Range == "":
+    #             stream_mock.iter_lines.return_value = iter(lines1)
+    #         elif Range == "bytes=0-7864319":
+    #             stream_mock.iter_lines.return_value = iter(lines1)
+    #         elif Range == "bytes=7864320-15728639":
+    #             stream_mock.iter_lines.return_value = iter(lines2)
+    #         else:
+    #             raise Exception(f"Unexpected range {Range}")
+
+    #         return {
+    #             "Body": stream_mock,
+    #             "ContentLength": 100,
+    #         }
+
+    #     self._boto3_client_mock.get_object.side_effect = mock_iter_lines
+
+    #     content_length = 15 * 1024 * 1024
+    #     self.storage_service_mock.get_file_size.return_value = content_length
     #     expected_report = ValidationReport(
     #         validation_result=ValidationResult.FAILED,
     #         validator_name=INPUT_DATA_VALIDATOR_NAME,
     #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation, with errors on 'value'.",
     #         details={
-    #             "rows_processed_count": 6,
+    #             "rows_processed_count": 7,
     #             "validation_errors": {
     #                 "value": {
     #                     "out_of_range_count": 1,
@@ -1346,9 +1444,6 @@ class TestInputDataValidator(TestCase):
     #             },
     #         },
     #     )
-    #     stream_mock = MagicMock(name="stream_mock_obj")
-    #     self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
-    #     stream_mock.iter_lines.return_value = lines
 
     #     validator = InputDataValidator(
     #         input_file_path=TEST_INPUT_FILE_PATH,
@@ -1360,29 +1455,51 @@ class TestInputDataValidator(TestCase):
     #     )
 
     #     report = validator.validate()
-
-    #     self._boto3_client_mock.get_object.assert_called_with(
-    #         Bucket=TEST_BUCKET,
-    #         Key=TEST_FILENAME,
-    #     )
     #     self.assertEqual(report, expected_report)
 
     # def test_the_aggregated_value_per_cohort_cannot_exceed_max_int_for_pa(self) -> None:
-    #     lines = [
-    #         b"id_,conversion_value,conversion_timestamp,conversion_metadata,cohort_id\n",
-    #         b"abcd/1234+WXYZ=,25,1645157987,0,0\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
-    #         b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
-    #         b"abcd/1234+WXYZ=,25,1645157987,0,3\n",
-    #     ]
+    #     def mock_iter_lines(Bucket: str, Key: str, Range: str) -> Dict[str, Any]:
+    #         lines1 = [
+    #             b"id_,conversion_value,conversion_timestamp,conversion_metadata,cohort_id\n",
+    #             b"abcd/1234+WXYZ=,25,1645157987,0,0\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
+    #             b"abcd/1234+WXYZ=,25,1645157987,0,3\n",
+    #             b"incomplete\n",
+    #         ]
+    #         lines2 = [
+    #             b"incomplete\n",
+    #             b"abcd/1234+WXYZ=,25,1645157987,0,0\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,0,1\n",
+    #             b"abcd/1234+WXYZ=,2111222333,1645157987,0,2\n",
+    #             b"abcd/1234+WXYZ=,25,1645157987,0,4\n",
+    #         ]
+    #         stream_mock = MagicMock(name="stream_mock_obj")
+
+    #         if Range == "":
+    #             stream_mock.iter_lines.return_value = iter(lines1)
+    #         elif Range == "bytes=0-7864319":
+    #             stream_mock.iter_lines.return_value = iter(lines1)
+    #         elif Range == "bytes=7864320-15728639":
+    #             stream_mock.iter_lines.return_value = iter(lines2)
+    #         else:
+    #             raise Exception(f"Unexpected range {Range}")
+
+    #         return {
+    #             "Body": stream_mock,
+    #             "ContentLength": 100,
+    #         }
+
+    #     self._boto3_client_mock.get_object.side_effect = mock_iter_lines
+
+    #     content_length = 15 * 1024 * 1024
+    #     self.storage_service_mock.get_file_size.return_value = content_length
     #     expected_report = ValidationReport(
     #         validation_result=ValidationResult.FAILED,
     #         validator_name=INPUT_DATA_VALIDATOR_NAME,
     #         message=f"File: {TEST_INPUT_FILE_PATH} failed validation.",
     #         details={
-    #             "rows_processed_count": 6,
+    #             "rows_processed_count": 7,
     #             "validation_errors": {
     #                 "error_messages": [
     #                     "The total aggregate sum of 'conversion_value' should be less than 2147483647 for cohort_id 1",
@@ -1391,10 +1508,6 @@ class TestInputDataValidator(TestCase):
     #             },
     #         },
     #     )
-    #     stream_mock = MagicMock(name="stream_mock_obj")
-    #     self._boto3_client_mock.get_object.return_value = {"Body": stream_mock}
-    #     stream_mock.iter_lines.return_value = lines
-
     #     validator = InputDataValidator(
     #         input_file_path=TEST_INPUT_FILE_PATH,
     #         cloud_provider=TEST_CLOUD_PROVIDER,
@@ -1405,9 +1518,4 @@ class TestInputDataValidator(TestCase):
     #     )
 
     #     report = validator.validate()
-
-    #     self._boto3_client_mock.get_object.assert_called_with(
-    #         Bucket=TEST_BUCKET,
-    #         Key=TEST_FILENAME,
-    #     )
     #     self.assertEqual(report, expected_report)

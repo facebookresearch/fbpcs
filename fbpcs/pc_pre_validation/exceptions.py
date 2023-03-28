@@ -8,3 +8,7 @@
 
 class InputDataValidationException(Exception):
     pass
+
+
+class TimeoutException(Exception):
+    pass
