@@ -5,6 +5,9 @@
 
 # pyre-strict
 
+
+from __future__ import annotations
+
 from collections import Counter
 from typing import Any, Dict, Optional
 
@@ -198,3 +201,16 @@ class InputDataValidationIssues:
             fields_counts[field].update(counts)
         else:
             fields_counts[field] = counts
+
+    def merge(self, other: InputDataValidationIssues) -> None:
+        """
+        Merge all the counters into this instance.
+        """
+        self.empty_counter = self.empty_counter + other.empty_counter
+        self.format_error_counter = (
+            self.format_error_counter + other.format_error_counter
+        )
+        self.range_error_counter = self.range_error_counter + other.range_error_counter
+        self.cohort_id_aggregates = (
+            self.cohort_id_aggregates + other.cohort_id_aggregates
+        )
