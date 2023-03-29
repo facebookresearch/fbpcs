@@ -9,6 +9,8 @@
 import logging
 from typing import DefaultDict, List, Optional
 
+from fbpcp.entity.container_type import ContainerType
+
 from fbpcp.service.onedocker import OneDockerService
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.common.service.trace_logging_service import (
@@ -142,6 +144,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
             env_vars=env_vars,
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
+            container_type=ContainerType.LARGE,
         )
 
         stage_state = StageStateInstance(

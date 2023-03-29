@@ -10,6 +10,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.container_type import ContainerType
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -152,6 +153,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             env_vars=env_vars,
             wait_for_containers_to_start_up=True,
             existing_containers=None,
+            container_type=ContainerType.LARGE,
         )
 
         mock_stage_state_instance.assert_called_with(
@@ -219,6 +221,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             env_vars=env_vars,
             wait_for_containers_to_start_up=False,
             existing_containers=None,
+            container_type=ContainerType.LARGE,
         )
 
         mock_stage_state_instance.assert_called_with(
@@ -468,6 +471,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             env_vars=env_vars,
             wait_for_containers_to_start_up=True,
             existing_containers=None,
+            container_type=ContainerType.LARGE,
         )
 
         mock_stage_state_instance.assert_called_with(
