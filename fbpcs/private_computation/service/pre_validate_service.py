@@ -11,6 +11,7 @@ import logging
 from typing import Any, Dict, List
 
 from fbpcp.entity.container_instance import ContainerInstanceStatus
+from fbpcp.entity.container_type import ContainerType
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
@@ -69,6 +70,7 @@ class PreValidateService:
             binary_name,
             timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
             env_vars=env_vars,
+            container_type=ContainerType.LARGE,
         )
         logger.info("Started container instances")
 
