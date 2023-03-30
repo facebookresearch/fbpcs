@@ -494,7 +494,6 @@ class TestInputDataValidator(TestCase):
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_success_for_pa_fields(self, time_mock: Mock) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,conversion_value,conversion_timestamp,conversion_metadata\n",
             b"abcd/1234+WXYZ=,,1645157987,0\n",
@@ -535,7 +534,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_madid,id_email,id_phone,conversion_value,conversion_timestamp,conversion_metadata\n",
             b"abcd/1234+WXYZ=,abcd/1234+WXYZ=,abcd/1234+WXYZ=,,1645157987,0\n",
@@ -1035,7 +1033,6 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock
     ) -> None:
         time_mock.time.return_value = TEST_TIMESTAMP
-        cloud_provider = CloudProvider.AWS
         lines = [
             b"id_,partner_user_id\n",
             b"abcd/1234+WXYZ=,\n",

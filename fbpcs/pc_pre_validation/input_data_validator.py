@@ -149,19 +149,19 @@ class InputDataValidator(Validator):
         self._validate_line_ending(line)
         csv_row_reader = csv.DictReader([header_row, line])
         for row in csv_row_reader:
-            value_int = 0
+            # value_int = 0
             cohort_id = None
             for field, value in row.items():
                 self._validate_row(validation_issues, field, value)
                 if field.startswith(COHORT_ID_FIELD):
                     cohort_id = int(value)
                     cohort_id_set.add(cohort_id)
-                if field in VALUE_FIELDS:
-                    try:
-                        value_int = int(value)
-                    except ValueError:
-                        # Values with a bad format are counted already by _validate_row()
-                        pass
+                # if field in VALUE_FIELDS:
+                #     try:
+                #         value_int = int(value)
+                #     except ValueError:
+                #         # Values with a bad format are counted already by _validate_row()
+                #         pass
             # Temporarily disable the aggregated value check. TODO T147920505
             # if cohort_id is not None:
             # validation_issues.update_cohort_aggregate(cohort_id, value_int)
@@ -316,9 +316,6 @@ class InputDataValidator(Validator):
         return ",".join(field_names)
 
     def __validate__(self) -> ValidationReport:
-        rows_processed_count = 0
-        streaming_timed_out = False
-        seed_validation_issues = InputDataValidationIssues()
         validation_issues = InputDataValidationIssues()
 
         try:
@@ -330,7 +327,7 @@ class InputDataValidator(Validator):
             )
             if not self._stream_file:
                 validation_report = self._download_locally(
-                    validation_issues, rows_processed_count
+                    validation_issues, validation_issues.rows_processed_count
                 )
                 if validation_report:
                     return validation_report
@@ -340,63 +337,19 @@ class InputDataValidator(Validator):
             if not self._stream_file:
                 self._create_shards()
 
-            cohort_id_set = set()
+            self._run_workers(validation_issues, header_row)
 
-            validation_issues_queue = Queue(self._parallelism)
-            cohort_id_set_queue = Queue(self._parallelism)
-            rows_processed_queue = Queue(self._parallelism)
-            exception_queue = Queue(self._parallelism)
-
-            workers = []
-            for i in range(self._parallelism):
-                w = Process(
-                    target=self._validation_worker_streaming
-                    if self._stream_file
-                    else self._validation_worker_local_download,
-                    args=(
-                        i,
-                        header_row,
-                        seed_validation_issues,
-                        validation_issues_queue,
-                        cohort_id_set_queue,
-                        rows_processed_queue,
-                        exception_queue,
-                    ),
-                )
-                workers.append(w)
-                w.start()
-
-            for _, w in enumerate(workers):
-                w.join()
-                if not validation_issues_queue.empty():
-                    validation_issues.merge(validation_issues_queue.get())
-                if not cohort_id_set_queue.empty():
-                    cohort_id_set |= cohort_id_set_queue.get()
-                if not rows_processed_queue.empty():
-                    rows_processed_count += rows_processed_queue.get()
-
-            for i, _ in enumerate(workers):
-                if not exception_queue.empty():
-                    e = exception_queue.get()
-                    if type(e) == TimeoutException:
-                        streaming_timed_out = True
-                    else:
-                        raise e
-                if w.exitcode != 0:
-                    raise InputDataValidationException(
-                        f"Worker {i} failed with exit code {w.exitcode}"
-                    )
-
-            self._validate_cohort_ids(cohort_id_set)
+            self._validate_cohort_ids(validation_issues.cohort_id_set)
 
         except InputDataValidationException as e:
             return self._format_validation_report(
                 f"File: {self._input_file_path} failed validation. Error: {e}",
-                rows_processed_count,
+                validation_issues.rows_processed_count,
                 validation_issues,
                 had_exception=True,
             )
 
+        rows_processed_count = validation_issues.rows_processed_count
         validation_issues.set_max_issue_count_til_error(
             {
                 ID_FIELD_PREFIX: {
@@ -418,8 +371,57 @@ class InputDataValidator(Validator):
             f"File: {self._input_file_path}",
             rows_processed_count,
             validation_issues,
-            streaming_timed_out=(streaming_timed_out),
+            streaming_timed_out=(validation_issues.streaming_timed_out),
         )
+
+    def _run_workers(
+        self, validation_issues: InputDataValidationIssues, header_row: str
+    ) -> None:
+        seed_validation_issues = InputDataValidationIssues()
+        validation_issues_queue = Queue(self._parallelism)
+        cohort_id_set_queue = Queue(self._parallelism)
+        rows_processed_queue = Queue(self._parallelism)
+        exception_queue = Queue(self._parallelism)
+
+        workers = []
+        for i in range(self._parallelism):
+            w = Process(
+                target=self._validation_worker_streaming
+                if self._stream_file
+                else self._validation_worker_local_download,
+                args=(
+                    i,
+                    header_row,
+                    seed_validation_issues,
+                    validation_issues_queue,
+                    cohort_id_set_queue,
+                    rows_processed_queue,
+                    exception_queue,
+                ),
+            )
+            workers.append(w)
+            w.start()
+
+        for _, w in enumerate(workers):
+            w.join()
+            if not validation_issues_queue.empty():
+                validation_issues.merge(validation_issues_queue.get())
+            if not cohort_id_set_queue.empty():
+                validation_issues.cohort_id_set |= cohort_id_set_queue.get()
+            if not rows_processed_queue.empty():
+                validation_issues.rows_processed_count += rows_processed_queue.get()
+
+        for i, _ in enumerate(workers):
+            if not exception_queue.empty():
+                e = exception_queue.get()
+                if type(e) == TimeoutException:
+                    validation_issues.streaming_timed_out = True
+                else:
+                    raise e
+            if w.exitcode != 0:
+                raise InputDataValidationException(
+                    f"Worker {i} failed with exit code {w.exitcode}"
+                )
 
     def _stream_field_names(self) -> Sequence[str]:
         try:
