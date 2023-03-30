@@ -1519,3 +1519,69 @@ class TestInputDataValidator(TestCase):
 
     #     report = validator.validate()
     #     self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_errors_when_row_missing_comma(
+        self, time_mock: Mock
+    ) -> None:
+        exception_message = "CSV format error - line is missing expected comma(s)."
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,100,1645157987\n",
+            b"abcd/1234+WXYZ=,\n",
+            b"abcd/1234+WXYZ=,100,1645157987\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 1,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_errors_when_row_has_too_many_values(
+        self, time_mock: Mock
+    ) -> None:
+        exception_message = "CSV format error - line has too many values."
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp\n",
+            b"abcd/1234+WXYZ=,100,1645157987\n",
+            b"1,2,3,4\n",
+            b"abcd/1234+WXYZ=,100,1645157987\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 1,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
