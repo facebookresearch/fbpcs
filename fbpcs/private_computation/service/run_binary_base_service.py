@@ -16,7 +16,7 @@ from fbpcp.entity.container_instance import ContainerInstance, ContainerInstance
 from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
-from fbpcs.common.service.retry_handler import RetryHandler
+from fbpcs.common.service.retry_handler import BackoffType, RetryHandler
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 
 DEFAULT_WAIT_FOR_CONTAINER_POLL = 5
@@ -145,7 +145,13 @@ class RunBinaryBaseService:
         container_ids = [container.instance_id for container in containers]
         finished_containers = []
 
-        updated_containers = onedocker_svc.get_containers(container_ids)
+        with RetryHandler(
+            ThrottlingError, backoff_type=BackoffType.LINEAR
+        ) as retry_handler:
+            updated_containers = retry_handler.execute_sync(
+                onedocker_svc.get_containers,
+                container_ids,
+            )
         pending_container_ids = (
             RunBinaryBaseService._remove_finished_containers_from_container_ids(
                 onedocker_svc, updated_containers, container_ids, finished_containers
@@ -153,7 +159,14 @@ class RunBinaryBaseService:
         )
         while pending_container_ids:
             await asyncio.sleep(poll)
-            updated_containers = onedocker_svc.get_containers(pending_container_ids)
+            with RetryHandler(
+                ThrottlingError, backoff_type=BackoffType.LINEAR
+            ) as retry_handler:
+                updated_containers = retry_handler.execute_sync(
+                    onedocker_svc.get_containers,
+                    pending_container_ids,
+                )
+
             pending_container_ids = (
                 RunBinaryBaseService._remove_finished_containers_from_container_ids(
                     onedocker_svc,

@@ -12,10 +12,12 @@ from enum import Enum
 from typing import List, Optional, Union
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.util.typing import checked_cast
 from fbpcs.common.entity.instance_base import InstanceBase
 from fbpcs.common.entity.pcs_container_instance import PCSContainerInstance
+from fbpcs.common.service.retry_handler import BackoffType, RetryHandler
 
 
 class StageStateInstanceStatus(Enum):
@@ -88,9 +90,14 @@ class StageStateInstance(InstanceBase):
         self, onedocker_svc: OneDockerService
     ) -> List[ContainerInstance]:
         containers_to_update = self.get_containers_to_update(self.containers)
-        updated_containers = onedocker_svc.get_containers(
-            [self.containers[idx].instance_id for idx in containers_to_update]
-        )
+        with RetryHandler(
+            ThrottlingError, backoff_type=BackoffType.LINEAR
+        ) as retry_handler:
+            updated_containers = retry_handler.execute_sync(
+                onedocker_svc.get_containers,
+                [self.containers[idx].instance_id for idx in containers_to_update],
+            )
+
         new_updated_containers = self.containers.copy()
         for i, updated_container in zip(containers_to_update, updated_containers):
             if updated_container is not None:
