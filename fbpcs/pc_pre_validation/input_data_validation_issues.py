@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 from fbpcs.pc_pre_validation.constants import (
     ALL_FIELDS,
@@ -33,6 +33,9 @@ class InputDataValidationIssues:
         self.max_issue_count_til_error: Dict[str, Dict[str, int]] = {}
         self.cohort_id_aggregates: Counter[int] = Counter()
         self.value_field_name: str = ""
+        self.streaming_timed_out = False
+        self.rows_processed_count = 0
+        self.cohort_id_set: Set[int] = set()
 
     def get_errors(self) -> Dict[str, Any]:
         errors = {}
