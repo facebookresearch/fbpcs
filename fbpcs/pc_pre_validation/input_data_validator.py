@@ -549,6 +549,14 @@ class InputDataValidator(Validator):
     def _validate_row(
         self, validation_issues: InputDataValidationIssues, field: str, value: str
     ) -> None:
+        if value is None:
+            raise InputDataValidationException(
+                "CSV format error - line is missing expected value(s)."
+            )
+        if field is None:
+            raise InputDataValidationException(
+                "CSV format error - line has too many values."
+            )
         if field.startswith(ID_FIELD_PREFIX):
             field = ID_FIELD_PREFIX
 
