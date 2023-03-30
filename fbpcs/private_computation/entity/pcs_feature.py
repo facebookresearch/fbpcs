@@ -29,6 +29,7 @@ class PCSFeature(Enum):
         "pid_filter_low_quality_identifier_thresh166"
     )
     PUBLISHER_PC_PRE_VALIDATION = "publisher_pc_pre_validation"
+    PARTNER_PC_PRE_VALIDATION = "partner_pc_pre_validation"
     PRIVATE_ATTRIBUTION_REFORMATTED_OUTPUT = "private_attribution_reformatted_output"
     PRIVATE_COMPUTATION_TRANSLATOR = "private_computation_translator"
 
