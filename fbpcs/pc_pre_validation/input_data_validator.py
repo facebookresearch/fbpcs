@@ -527,7 +527,7 @@ class InputDataValidator(Validator):
         )
         if run_partner_pre_validation_check and partner_header_matches == 0:
             raise InputDataValidationException(
-                f"Failed to parse {self._private_computation_role} the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
+                f"Failed to parse the {self._private_computation_role} header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
             )
 
         publisher_header_matches = sum(
@@ -539,7 +539,7 @@ class InputDataValidator(Validator):
         )
         if run_publisher_pre_validation_check and publisher_header_matches == 0:
             raise InputDataValidationException(
-                f"Failed to parse {self._private_computation_role} the header row. The header row fields must have either: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
+                f"Failed to parse the {self._private_computation_role} header row. The header row fields must have either: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or: {PA_PUBLISHER_FIELDS}"
             )
 
         if run_partner_pre_validation_check and partner_header_matches > 1:
@@ -549,7 +549,7 @@ class InputDataValidator(Validator):
 
         if publisher_header_matches > 1:
             raise InputDataValidationException(
-                f"The {self._private_computation_role} header row fields must contain just one of the following: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
+                f"The {self._private_computation_role} header row fields must contain just one of the following: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or: {PA_PUBLISHER_FIELDS}"
             )
 
     def _validate_line_ending(self, line: str) -> None:
