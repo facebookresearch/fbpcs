@@ -522,24 +522,34 @@ class InputDataValidator(Validator):
                 f"Failed to parse the header row. The header row fields must have columns with prefix {ID_FIELD_PREFIX}"
             )
 
-        if (
-            not (match_pa_fields or match_pl_fields or match_private_id_dfca_fields)
-            and run_partner_pre_validation_check
-        ):
+        partner_header_matches = sum(
+            [match_pa_fields, match_pl_fields, match_private_id_dfca_fields]
+        )
+        if run_partner_pre_validation_check and partner_header_matches == 0:
             raise InputDataValidationException(
                 f"Failed to parse {self._private_computation_role} the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
             )
 
-        if (
-            not (
-                match_private_id_dfca_fields
-                or match_pl_publisher_fields
-                or match_pa_publisher_fields
-            )
-            and run_publisher_pre_validation_check
-        ):
+        publisher_header_matches = sum(
+            [
+                match_private_id_dfca_fields,
+                match_pl_publisher_fields,
+                match_pa_publisher_fields,
+            ]
+        )
+        if run_publisher_pre_validation_check and publisher_header_matches == 0:
             raise InputDataValidationException(
                 f"Failed to parse {self._private_computation_role} the header row. The header row fields must have either: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
+            )
+
+        if run_partner_pre_validation_check and partner_header_matches > 1:
+            raise InputDataValidationException(
+                f"The {self._private_computation_role} header row fields must contain just one of the following: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
+            )
+
+        if publisher_header_matches > 1:
+            raise InputDataValidationException(
+                f"The {self._private_computation_role} header row fields must contain just one of the following: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
             )
 
     def _validate_line_ending(self, line: str) -> None:

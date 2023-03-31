@@ -19,7 +19,9 @@ from fbpcs.pc_pre_validation.constants import (
     INPUT_DATA_TMP_FILE_PATH,
     INPUT_DATA_VALIDATOR_NAME,
     PA_FIELDS,
+    PA_PUBLISHER_FIELDS,
     PL_FIELDS,
+    PL_PUBLISHER_FIELDS,
     PRIVATE_ID_DFCA_FIELDS,
 )
 from fbpcs.pc_pre_validation.enums import ValidationResult
@@ -658,6 +660,71 @@ class TestInputDataValidator(TestCase):
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_errors_when_too_many_partner_header_types_found(
+        self, time_mock: Mock
+    ) -> None:
+        exception_message = f"The {TEST_PRIVATE_COMPUTATION_ROLE} header row fields must contain just one of the following: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp,conversion_value,conversion_timestamp,conversion_metadata\n",
+            b"1,2,3,4,5,6\n",
+            b"1,2,3,4,5,6\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_errors_when_too_many_publisher_header_types_found(
+        self, time_mock: Mock
+    ) -> None:
+        publisher_role = PrivateComputationRole.PUBLISHER
+        exception_message = f"The {publisher_role} header row fields must contain just one of the following: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,partner_user_id,opportunity_timestamp,event_timestamp\n",
+            b"1,2,3,4\n",
+            b"1,2,3,4\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=publisher_role,
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
