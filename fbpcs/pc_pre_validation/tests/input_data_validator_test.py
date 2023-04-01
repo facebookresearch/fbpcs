@@ -1160,7 +1160,7 @@ class TestInputDataValidator(TestCase):
         self.assertEqual(report, expected_report)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_validator_it_does_not_set_incorrect_timestamps(
+    def test_validator_it_does_not_allow_an_incorrect_timestamp_range(
         self, time_mock: Mock
     ) -> None:
         validator = InputDataValidator(
@@ -1176,9 +1176,11 @@ class TestInputDataValidator(TestCase):
 
         self.assertIsNone(validator._start_timestamp)
         self.assertIsNone(validator._end_timestamp)
+        self.assertTrue(validator._timestamp_range_not_valid)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
-    def test_validator_it_ignores_bad_timestamps(self, time_mock: Mock) -> None:
+    def test_validator_when_start_timestamp_is_not_valid(self, time_mock: Mock) -> None:
+        end_timestamp = "1640000000"
         validator = InputDataValidator(
             input_file_path=TEST_INPUT_FILE_PATH,
             cloud_provider=TEST_CLOUD_PROVIDER,
@@ -1186,12 +1188,33 @@ class TestInputDataValidator(TestCase):
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
-            start_timestamp="bad-timestamp",
-            end_timestamp="",
+            start_timestamp="test",
+            end_timestamp=end_timestamp,
         )
 
         self.assertIsNone(validator._start_timestamp)
+        self.assertTrue(validator._start_timestamp_not_valid)
+        self.assertEqual(validator._end_timestamp, int(end_timestamp))
+        self.assertFalse(validator._timestamp_range_not_valid)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_validator_when_end_timestamp_is_not_valid(self, time_mock: Mock) -> None:
+        start_timestamp = "1640000000"
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+            start_timestamp=start_timestamp,
+            end_timestamp="test",
+        )
+
         self.assertIsNone(validator._end_timestamp)
+        self.assertTrue(validator._end_timestamp_not_valid)
+        self.assertEqual(validator._start_timestamp, int(start_timestamp))
+        self.assertFalse(validator._timestamp_range_not_valid)
 
     @patch("fbpcs.pc_pre_validation.input_data_validator.time")
     def test_run_validations_reports_for_pa_when_timestamps_are_not_valid(
@@ -1679,6 +1702,83 @@ class TestInputDataValidator(TestCase):
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_warns_when_timestamp_range_not_valid(
+        self, time_mock: Mock
+    ) -> None:
+        expected_warning = " ".join(
+            [
+                f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
+                "- Warning: the timestamp range is not valid",
+            ]
+        )
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp,cohort_id\n",
+            b"abcd/1234+WXYZ=,100,1645157987,0\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=expected_warning,
+            details={
+                "rows_processed_count": 1,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+            start_timestamp="1670000000",
+            end_timestamp="1650000000",
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_warns_when_start_timestamp_not_valid(
+        self, time_mock: Mock
+    ) -> None:
+        expected_warning = " ".join(
+            [
+                f"File: {TEST_INPUT_FILE_PATH} completed validation successfully",
+                "- Warning: the start timestamp is not valid",
+                "- Warning: the end timestamp is not valid",
+            ]
+        )
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp,cohort_id\n",
+            b"abcd/1234+WXYZ=,100,1645157987,0\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=expected_warning,
+            details={
+                "rows_processed_count": 1,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+            start_timestamp="test1",
+            end_timestamp="test2",
         )
         report = validator.validate()
         self.assertEqual(report, expected_report)
