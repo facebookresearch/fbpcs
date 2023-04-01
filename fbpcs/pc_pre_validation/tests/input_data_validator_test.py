@@ -578,7 +578,7 @@ class TestInputDataValidator(TestCase):
     def test_run_validations_errors_when_pa_pl_data_fields_not_found(
         self, time_mock: Mock
     ) -> None:
-        exception_message = f"Failed to parse {TEST_PRIVATE_COMPUTATION_ROLE} the header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
+        exception_message = f"Failed to parse the {TEST_PRIVATE_COMPUTATION_ROLE} header row. The header row fields must have either: {PL_FIELDS} or: {PA_FIELDS} or: {PRIVATE_ID_DFCA_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
             b"id_,header,row\n",
@@ -701,7 +701,7 @@ class TestInputDataValidator(TestCase):
         self, time_mock: Mock
     ) -> None:
         publisher_role = PrivateComputationRole.PUBLISHER
-        exception_message = f"The {publisher_role} header row fields must contain just one of the following: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or {PA_PUBLISHER_FIELDS}"
+        exception_message = f"The {publisher_role} header row fields must contain just one of the following: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or: {PA_PUBLISHER_FIELDS}"
         time_mock.time.return_value = TEST_TIMESTAMP
         lines = [
             b"id_,partner_user_id,opportunity_timestamp,event_timestamp\n",
@@ -724,6 +724,39 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            private_computation_role=publisher_role,
+        )
+        report = validator.validate()
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_errors_when_publisher_header_not_found(
+        self, time_mock: Mock
+    ) -> None:
+        publisher_role = PrivateComputationRole.PUBLISHER
+        publisher_pc_pre_validation = True
+        exception_message = f"Failed to parse the {publisher_role} header row. The header row fields must have either: {PRIVATE_ID_DFCA_FIELDS} or: {PL_PUBLISHER_FIELDS} or: {PA_PUBLISHER_FIELDS}"
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,test1,test2\n",
+            b"1,2,3\n",
+        ]
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: {exception_message}",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=publisher_pc_pre_validation,
             private_computation_role=publisher_role,
         )
         report = validator.validate()
