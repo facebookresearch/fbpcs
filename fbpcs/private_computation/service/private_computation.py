@@ -942,11 +942,21 @@ class PrivateComputationService:
             private_computation_instance = self._update_instance(
                 private_computation_instance=private_computation_instance
             )
-            if private_computation_instance.stage_flow.is_failed_status(
-                private_computation_instance.infra_config.status
+            stage_instance = private_computation_instance.get_stage_instance()
+            if stage_instance is None:
+                return private_computation_instance
+            running_containers = stage_instance.get_running_containers(
+                stage_instance.containers
+            )
+
+            if (
+                private_computation_instance.stage_flow.is_failed_status(
+                    private_computation_instance.infra_config.status
+                )
+                and len(running_containers) == 0
             ):
                 self.logger.info(
-                    f"The current stage {stage} of instance {instance_id} has been canceled."
+                    f"The current stage {stage} of instance {instance_id} has been canceled. All containers are stopped."
                 )
                 return private_computation_instance
 
