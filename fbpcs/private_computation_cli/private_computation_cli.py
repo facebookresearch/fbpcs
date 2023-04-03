@@ -412,9 +412,11 @@ def main(argv: Optional[List[str]] = None) -> None:
         graphapi_domain = arguments["--graphapi_domain"]
         objective_ids = arguments["--objective_ids"]
         input_paths = arguments["--input_paths"]
-        if not objective_ids and config.get(
+        use_automatic_objective_selection = config.get(
             "automatic_objective_selection_for_testing"
-        ):
+        )
+        logger.info(f"Objective ids: {objective_ids}\nUse Automatic Objective selection? {use_automatic_objective_selection}")
+        if not objective_ids and use_automatic_objective_selection:
             runnable_objective_ids = get_runnable_objectives(
                 study_id, config, logger, graphapi_version, graphapi_domain
             )
