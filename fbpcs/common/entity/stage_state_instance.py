@@ -89,7 +89,7 @@ class StageStateInstance(InstanceBase):
     def _get_updated_containers(
         self, onedocker_svc: OneDockerService
     ) -> List[ContainerInstance]:
-        containers_to_update = self.get_containers_to_update(self.containers)
+        containers_to_update = self.get_running_containers(self.containers)
         with RetryHandler(
             ThrottlingError, backoff_type=BackoffType.LINEAR
         ) as retry_handler:
@@ -107,11 +107,11 @@ class StageStateInstance(InstanceBase):
         return new_updated_containers
 
     @classmethod
-    def get_containers_to_update(
+    def get_running_containers(
         cls,
         existing_containers: List[ContainerInstance],
     ) -> List[int]:
-        # only update containers that previously not stopped
+        # return containers that is not in terminated state
         return [
             i
             for i, container in enumerate(existing_containers)

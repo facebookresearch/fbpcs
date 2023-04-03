@@ -184,7 +184,7 @@ class TestStageStateInstance(unittest.TestCase):
 
         # Ack
         self.assertEqual(
-            self.stage_state_instance.get_containers_to_update(
+            self.stage_state_instance.get_running_containers(
                 self.stage_state_instance.containers
             ),
             [2, 3],
