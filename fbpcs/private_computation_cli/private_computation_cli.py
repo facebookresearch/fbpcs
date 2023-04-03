@@ -412,7 +412,9 @@ def main(argv: Optional[List[str]] = None) -> None:
         graphapi_domain = arguments["--graphapi_domain"]
         objective_ids = arguments["--objective_ids"]
         input_paths = arguments["--input_paths"]
-        if not objective_ids and config.get("automatic_objective_selection_for_testing"):
+        if not objective_ids and config.get(
+            "automatic_objective_selection_for_testing"
+        ):
             runnable_objective_ids = get_runnable_objectives(
                 study_id, config, logger, graphapi_version, graphapi_domain
             )
@@ -423,11 +425,6 @@ def main(argv: Optional[List[str]] = None) -> None:
                     f"Not enough objectives available ({len(runnable_objective_ids)}) for the number of input paths {len(input_paths)}"
                 )
                 raise
-
-        elif not objective_ids:
-            raise ValueError(
-                "Either objective_ids or automatic_objective_selection_for_testing: true in your config.yml must be specified when using the run_study command."
-            )
 
         run_study(
             config=config,
