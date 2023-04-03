@@ -72,7 +72,7 @@ std::vector<uint64_t> UdpEncryptorApp::readIndexFile(
   while (!reader->eof()) {
     std::vector<std::string> data;
     auto line = reader->readLine();
-    folly::split(",", std::move(line), data);
+    folly::split(',', std::move(line), data);
     rst.push_back(stoi(data.at(1)));
   }
   reader->close();

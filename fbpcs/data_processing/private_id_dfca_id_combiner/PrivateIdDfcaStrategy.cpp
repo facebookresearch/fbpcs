@@ -54,7 +54,7 @@ bool PrivateIdDfcaStrategy::getFileType(std::string headerLine) {
   // Inspect the headers and verify if this is the publisher or partner
   // dataset
   std::vector<std::string> header;
-  folly::split(",", headerLine, header);
+  folly::split(',', headerLine, header);
 
   bool isPublisherDataset = verifyHeaderContainsCols(header, publisherCols);
   bool isPartnerDataset = verifyHeaderContainsCols(header, partnerCols);
@@ -77,7 +77,7 @@ FileMetaData PrivateIdDfcaStrategy::processHeader(
   auto aggregatedCols = isPublisherDataset ? publisherCols : partnerCols;
 
   std::vector<std::string> header;
-  folly::split(",", headerLine, header);
+  folly::split(',', headerLine, header);
 
   meta.aggregatedCols = aggregatedCols;
   meta.isPublisherDataset = isPublisherDataset;

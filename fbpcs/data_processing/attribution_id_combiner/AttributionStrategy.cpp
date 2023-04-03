@@ -71,7 +71,7 @@ bool AttributionStrategy::getFileType(std::string headerLine) {
   // Inspect the headers and verify if this is the publisher or partner
   // dataset
   std::vector<std::string> header;
-  folly::split(",", headerLine, header);
+  folly::split(',', headerLine, header);
 
   bool isPublisherDataset = verifyHeaderContainsCols(header, publisherCols);
   bool isPartnerDataset = verifyHeaderContainsCols(header, partnerCols);
@@ -119,7 +119,7 @@ FileMetaData AttributionStrategy::processHeader(
       isPublisherDataset ? publisherOptionalCols : partnerOptionalCols;
 
   std::vector<std::string> header;
-  folly::split(",", headerLine, header);
+  folly::split(',', headerLine, header);
   // Adding optional columns to aggregatedCols if available
   for (auto& colName : aggregatedOptionalCols) {
     auto iter = std::find(header.begin(), header.end(), colName);

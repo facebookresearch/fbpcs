@@ -46,7 +46,7 @@ void HashBasedSharder::shardLine(
     const std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>>& outFiles,
     const std::vector<int32_t>& idColumnIndices) {
   std::vector<std::string> cols;
-  folly::split(",", line, cols);
+  folly::split(',', line, cols);
 
   std::string id = "";
   for (auto idColumnIdx : idColumnIndices) {

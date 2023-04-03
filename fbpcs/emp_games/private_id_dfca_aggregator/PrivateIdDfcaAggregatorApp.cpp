@@ -67,7 +67,7 @@ void PrivateIdDfcaAggregatorApp::runPublisher(const std::string& outputPath) {
 
     std::vector<char> buf(partnerData.begin(), partnerData.end());
     std::vector<std::string> partnerLines;
-    folly::split("\n", buf, partnerLines);
+    folly::split('\n', buf, partnerLines);
 
     sortedIdSwapper->run(partnerLines);
 
