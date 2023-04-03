@@ -7,7 +7,7 @@
 import asyncio
 import json
 import logging
-from typing import DefaultDict, List, Optional
+from typing import DefaultDict, Dict, List, Optional
 
 from fbpcp.entity.container_instance import ContainerInstance
 from fbpcp.service.onedocker import OneDockerService
@@ -182,16 +182,14 @@ class PIDShardStageService(PrivateComputationStageService):
         except Exception:
             self._logger.info("Failed to trace logging in PID Shard stage service.")
 
-    async def _prepare_checkpoint_data(self, pc_instance):
+    async def _prepare_checkpoint_data(self, pc_instance) -> Dict:
         pid_shard_checkpoint_data = {}
         data_path = pc_instance.pid_stage_output_data_path
         pid_shard_info_path = f"{get_sharded_filepath(data_path, 0)}" + PID_LOG_SUFIX
         try:
             if not self._storage_svc.file_exists(pid_shard_info_path):
-                error_msg = f"PID shard metrics for {pc_instance.infra_config.instance_id=} is empty"
-                self._add_trace_logging(
-                    pc_instance, CheckpointStatus.FAILED, {"error": error_msg}
-                )
+                # The stage output is not ready yet
+                return pid_shard_checkpoint_data
 
             loop = asyncio.get_running_loop()
             pid_shard_info_json_str = await loop.run_in_executor(
