@@ -154,7 +154,7 @@ std::unordered_map<std::string, long> CostEstimation::readNetworkSnapshot() {
     if (line.find("eth0:") != std::string::npos ||
         line.find("eth1:") != std::string::npos) {
       std::vector<folly::StringPiece> pieces;
-      folly::split(" ", line, pieces, true);
+      folly::split(' ', line, pieces, true);
       result["rx"] += std::stoul(pieces.at(1).toString());
       result["tx"] += std::stoul(pieces.at(9).toString());
     } else {

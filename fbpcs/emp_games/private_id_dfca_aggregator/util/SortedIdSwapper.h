@@ -42,11 +42,11 @@ class SortedIdSwapper {
            !publisherShardReader_->isFinished()) {
       auto publisherLine = publisherShardReader_->peekNextLine();
       folly::StringPiece publisherPrivateId, publisherUserId;
-      folly::split(",", publisherLine, publisherPrivateId, publisherUserId);
+      folly::split(',', publisherLine, publisherPrivateId, publisherUserId);
 
       folly::StringPiece partnerPrivateId, partnerUserId;
       folly::split(
-          ",", partnerLines[partnerIdx], partnerPrivateId, partnerUserId);
+          ',', partnerLines[partnerIdx], partnerPrivateId, partnerUserId);
 
       auto compareRes = publisherPrivateId.compare(partnerPrivateId.toString());
 

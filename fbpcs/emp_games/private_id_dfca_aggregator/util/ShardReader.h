@@ -49,7 +49,7 @@ class ShardReader {
       } else {
         auto line = bufferedReader_->readLine();
         folly::StringPiece privateId, userId;
-        folly::split(",", line, privateId, userId);
+        folly::split(',', line, privateId, userId);
 
         // Discard the header and unmatched PID results
         if (privateId.toString() == "id_" || userId.toString() == "0") {

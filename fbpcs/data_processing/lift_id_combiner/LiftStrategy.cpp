@@ -40,7 +40,7 @@ void LiftStrategy::aggregate(
   std::string idSwapOutFileHeaderLine;
   getline(idSwapOutFile, idSwapOutFileHeaderLine);
   std::vector<std::string> idSwapOutFileHeader;
-  folly::split(",", idSwapOutFileHeaderLine, idSwapOutFileHeader);
+  folly::split(',', idSwapOutFileHeaderLine, idSwapOutFileHeader);
   idSwapOutFile.clear();
   idSwapOutFile.seekg(0);
   std::string line;
@@ -77,7 +77,7 @@ void LiftStrategy::aggregate(
     getline(sortedOutFile, line); // skip header
     while (getline(sortedOutFile, line)) {
       std::vector<std::string> row;
-      folly::split(",", line, row);
+      folly::split(',', line, row);
       if (row.at(timestampIndex) == "0") {
         row.insert(row.end() - 1, "0");
       } else {
@@ -169,7 +169,7 @@ bool LiftStrategy::getFileType(std::string headerLine) {
   // Inspect the headers and verify if this is the publisher or partner
   // dataset
   std::vector<std::string> header;
-  folly::split(",", headerLine, header);
+  folly::split(',', headerLine, header);
 
   bool isPublisherDataset =
       combiner::verifyHeaderContainsCols(header, requiredPublisherCols);
@@ -193,7 +193,7 @@ FileMetaData LiftStrategy::processHeader(
   // Inspect the headers and verify if this is the publisher or partner dataset
   std::string headerLine = file->readLine();
   std::vector<std::string> header;
-  folly::split(",", headerLine, header);
+  folly::split(',', headerLine, header);
   meta.isPublisherDataset = getFileType(headerLine);
   meta.headerLine = headerLine;
   return meta;

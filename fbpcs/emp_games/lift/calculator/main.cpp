@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
     folly::split(',', FLAGS_input_filenames, inputFilenames);
 
     std::vector<std::string> outputFilenames;
-    folly::split(",", FLAGS_output_filenames, outputFilenames);
+    folly::split(',', FLAGS_output_filenames, outputFilenames);
 
     // Make sure the number of input files equals output files
     if (inputFilenames.size() != outputFilenames.size()) {

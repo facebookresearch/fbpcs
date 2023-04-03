@@ -108,7 +108,7 @@ void GenericSharder::shard() {
   detail::strRemoveBlanks(line);
 
   std::vector<std::string> header;
-  folly::split(",", line, header);
+  folly::split(',', line, header);
 
   // find indices of columns with its column name start with kIdColumnPrefix
   std::vector<int32_t> idColumnIndices;
@@ -175,7 +175,7 @@ void GenericSharder::shardLine(
     const std::vector<std::unique_ptr<fbpcf::io::BufferedWriter>>& outFiles,
     const std::vector<int32_t>& idColumnIndices) {
   std::vector<std::string> cols;
-  folly::split(",", line, cols);
+  folly::split(',', line, cols);
 
   std::string id = "";
   for (auto idColumnIdx : idColumnIndices) {

@@ -56,7 +56,7 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
 
   std::string line = bufferedReaderForFilter->readLine();
   line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
-  folly::split(",", line, header);
+  folly::split(',', line, header);
 
   auto idIter = header.begin();
   std::vector<std::int64_t> idColumnIndices;
@@ -91,7 +91,7 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
       line = bufferedReaderForFilter->readLine();
       std::vector<std::string> cols;
       line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
-      folly::split(",", line, cols);
+      folly::split(',', line, cols);
       auto rowSize = cols.size();
       auto headerSize = header.size();
 
@@ -146,7 +146,7 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
     line = bufferedReader->readLine();
     std::vector<std::string> cols;
     line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
-    folly::split(",", line, cols);
+    folly::split(',', line, cols);
     auto rowSize = cols.size();
     auto headerSize = header.size();
 
