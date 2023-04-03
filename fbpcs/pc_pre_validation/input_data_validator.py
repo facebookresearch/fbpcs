@@ -113,22 +113,32 @@ class InputDataValidator(Validator):
         else:
             self._s3_client = boto3.client("s3")
 
+        self._start_timestamp_not_valid: bool = False
+        self._end_timestamp_not_valid: bool = False
+        self._timestamp_range_not_valid: bool = False
+
+        self._start_timestamp: Optional[int] = None
+        self._end_timestamp: Optional[int] = None
+
         start = None
         end = None
+
         if start_timestamp and TIMESTAMP_REGEX.match(start_timestamp):
             start = int(start_timestamp)
+            self._start_timestamp = start
+        elif start_timestamp and not TIMESTAMP_REGEX.match(start_timestamp):
+            self._start_timestamp_not_valid = True
 
         if end_timestamp and TIMESTAMP_REGEX.match(end_timestamp):
             end = int(end_timestamp)
+            self._end_timestamp = end
+        elif end_timestamp and not TIMESTAMP_REGEX.match(end_timestamp):
+            self._end_timestamp_not_valid = True
 
-        # Skip setting the timestamps and log a warning if the range is not valid
         if start and end and start > end:
-            print("Warning: the start_timestamp is after the end_timestamp")
-            self._start_timestamp: Optional[int] = None
-            self._end_timestamp: Optional[int] = None
-        else:
-            self._start_timestamp: Optional[int] = start
-            self._end_timestamp: Optional[int] = end
+            self._timestamp_range_not_valid = True
+            self._start_timestamp = None
+            self._end_timestamp = None
 
     @property
     def name(self) -> str:
@@ -645,6 +655,14 @@ class InputDataValidator(Validator):
             )
             timed_out_warning_message = ", with some warnings."
 
+        timestamp_warnings = ""
+        if self._timestamp_range_not_valid:
+            timestamp_warnings += " - Warning: the timestamp range is not valid"
+        if self._start_timestamp_not_valid:
+            timestamp_warnings += " - Warning: the start timestamp is not valid"
+        if self._end_timestamp_not_valid:
+            timestamp_warnings += " - Warning: the end timestamp is not valid"
+
         if validation_errors:
             error_fields = ", ".join(
                 sorted(self._get_error_keys(list(validation_errors.keys())))
@@ -659,7 +677,7 @@ class InputDataValidator(Validator):
             return ValidationReport(
                 validation_result=ValidationResult.FAILED,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} failed validation{fields_string}.{timed_out_message}",
+                message=f"{message} failed validation{fields_string}.{timed_out_message}{timestamp_warnings}",
                 details=details,
             )
         elif validation_warnings:
@@ -667,7 +685,7 @@ class InputDataValidator(Validator):
             return ValidationReport(
                 validation_result=ValidationResult.SUCCESS,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} completed validation successfully, with warnings on '{warning_fields}'.",
+                message=f"{message} completed validation successfully, with warnings on '{warning_fields}'.{timestamp_warnings}",
                 details={
                     "rows_processed_count": rows_processed_count,
                     "validation_warnings": validation_warnings,
@@ -677,7 +695,7 @@ class InputDataValidator(Validator):
             return ValidationReport(
                 validation_result=ValidationResult.SUCCESS,
                 validator_name=INPUT_DATA_VALIDATOR_NAME,
-                message=f"{message} completed validation successfully{timed_out_warning_message}{timed_out_message}",
+                message=f"{message} completed validation successfully{timed_out_warning_message}{timed_out_message}{timestamp_warnings}",
                 details={
                     "rows_processed_count": rows_processed_count,
                 },
