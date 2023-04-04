@@ -22,7 +22,10 @@ from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.service.argument_helper import get_tls_arguments
-from fbpcs.private_computation.service.constants import DEFAULT_LOG_COST_TO_S3
+from fbpcs.private_computation.service.constants import (
+    DEFAULT_LOG_COST_TO_S3,
+    TLS_OPA_WORKFLOW_PATH,
+)
 
 from fbpcs.private_computation.service.mpc.mpc import (
     map_private_computation_role_to_mpc_party,
@@ -148,14 +151,19 @@ class SecureRandomShardStageService(PrivateComputationStageService):
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
-
+        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
+        if enable_tls:
+            if server_hostnames and len(server_hostnames) != len(game_args):
+                raise ValueError(
+                    f"TLS is enabled but there is a mismatch between the number of server_hostnames ({len(server_hostnames)}) and the number of containers ({len(game_args)}) to be spawned."
+                )
         _, cmd_args_list = self._mpc_service.convert_cmd_args_list(
             game_name=game_name,
             game_args=game_args,
             mpc_party=map_private_computation_role_to_mpc_party(
                 pc_instance.infra_config.role
             ),
-            server_ips=server_ips,
+            server_ips=server_hostnames if enable_tls else server_ips,
         )
 
         server_uris = gen_tls_server_hostnames_for_publisher(
@@ -193,6 +201,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             env_vars_list=env_vars_list,
+            opa_workflow_path=TLS_OPA_WORKFLOW_PATH if enable_tls else None,
         )
         stage_state = StageStateInstance(
             pc_instance.infra_config.instance_id,

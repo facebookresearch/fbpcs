@@ -45,6 +45,7 @@ from fbpcs.private_computation.service.constants import (
     SERVER_PRIVATE_KEY_PATH_ENV_VAR,
     SERVER_PRIVATE_KEY_REF_ENV_VAR,
     SERVER_PRIVATE_KEY_REGION_ENV_VAR,
+    TLS_OPA_WORKFLOW_PATH,
 )
 from fbpcs.private_computation.service.mpc.mpc import MPCService
 
@@ -163,6 +164,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
                 wait_for_containers_to_start_up=True,
                 existing_containers=None,
                 env_vars_list=None,
+                opa_workflow_path=None,
             )
             self.assertEqual(
                 containers,
@@ -329,6 +331,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
             # asserts
             self.mock_mpc_svc.start_containers.assert_called_once()
             call_kwargs = self.mock_mpc_svc.start_containers.call_args[1]
+            self.assertEqual(TLS_OPA_WORKFLOW_PATH, call_kwargs["opa_workflow_path"])
             call_env_args_list = call_kwargs["env_vars_list"]
 
             self.assertTrue(call_env_args_list)
