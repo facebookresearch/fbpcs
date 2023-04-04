@@ -10,6 +10,7 @@ from unittest.mock import call, MagicMock, patch
 
 from fbpcp.entity.cloud_provider import CloudProvider
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcp.entity.container_type import ContainerType, ContainerTypeConfig
 from fbpcp.gateway.ecs import ECSGateway
 from fbpcp.service.container_aws import AWSContainerService
@@ -37,6 +38,7 @@ TEST_CMD_1 = "test_1"
 TEST_CMD_2 = "test_2"
 TEST_CLOUD_PROVIDER = CloudProvider.AWS
 TEST_CONTAINER_TYPE = ContainerType.MEDIUM
+TEST_CONTAINER_PERMISSION = ContainerPermissionConfig("test-role-id")
 
 
 class TestPcsContainerService(unittest.TestCase):
@@ -109,12 +111,14 @@ class TestPcsContainerService(unittest.TestCase):
                 cmd=TEST_CMD_1,
                 env_vars=TEST_ENV_VARS,
                 container_type=TEST_CONTAINER_TYPE,
+                permission=TEST_CONTAINER_PERMISSION,
             ),
             call(
                 container_definition=f"{TEST_TASK_DEFNITION}#{TEST_CONTAINER_DEFNITION}",
                 cmd=TEST_CMD_2,
                 env_vars=TEST_ENV_VARS_2,
                 container_type=TEST_CONTAINER_TYPE,
+                permission=TEST_CONTAINER_PERMISSION,
             ),
         ]
 
@@ -126,6 +130,7 @@ class TestPcsContainerService(unittest.TestCase):
             cmds=cmd_list,
             env_vars=[TEST_ENV_VARS, TEST_ENV_VARS_2],
             container_type=TEST_CONTAINER_TYPE,
+            permission=TEST_CONTAINER_PERMISSION,
         )
 
         # Assert
