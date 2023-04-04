@@ -416,7 +416,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             "automatic_objective_selection_for_testing"
         )
         logger.info(f"Objective ids: {objective_ids} Use Automatic Objective selection? {use_automatic_objective_selection}")
-        if not objective_ids and use_automatic_objective_selection:
+        if (not objective_ids or not any(objective_ids)) and use_automatic_objective_selection:
             runnable_objective_ids = get_runnable_objectives(
                 study_id, config, logger, graphapi_version, graphapi_domain
             )
