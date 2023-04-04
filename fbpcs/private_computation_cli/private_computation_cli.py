@@ -324,24 +324,24 @@ def main(argv: Optional[List[str]] = None) -> None:
     logging_service_client = ClientManager(logging_service_host, logging_service_port)
 
     # validate token before run study/attribution
-    if arguments["run_attribution"] or arguments["run_study"]:
-        graph_client = BoltGraphAPIClient(
-            config=config,
-            logger=logger,
-            graphapi_version=arguments["--graphapi_version"],
-            graphapi_domain=arguments["--graphapi_domain"],
-        )
+    # if arguments["run_attribution"] or arguments["run_study"]:
+    #     graph_client = BoltGraphAPIClient(
+    #         config=config,
+    #         logger=logger,
+    #         graphapi_version=arguments["--graphapi_version"],
+    #         graphapi_domain=arguments["--graphapi_domain"],
+    #     )
 
-        study_id_or_dataset_id = arguments["<study_id>"] or arguments["--dataset_id"]
-        trace_logging_svc = _get_trace_logging_service(
-            config=config,
-            client=graph_client,
-            study_id_or_dataset_id=study_id_or_dataset_id,
-        )
-        token_validator = TokenValidator(
-            client=graph_client, trace_logging_svc=trace_logging_svc
-        )
-        token_validator.validate_common_rules()
+    #     study_id_or_dataset_id = arguments["<study_id>"] or arguments["--dataset_id"]
+    #     trace_logging_svc = _get_trace_logging_service(
+    #         config=config,
+    #         client=graph_client,
+    #         study_id_or_dataset_id=study_id_or_dataset_id,
+    #     )
+    #     token_validator = TokenValidator(
+    #         client=graph_client, trace_logging_svc=trace_logging_svc
+    #     )
+    #     token_validator.validate_common_rules()
 
     if arguments["create_instance"]:
         logger.info(f"Create instance: {instance_id}")
@@ -415,11 +415,12 @@ def main(argv: Optional[List[str]] = None) -> None:
         use_automatic_objective_selection = config.get(
             "automatic_objective_selection_for_testing"
         )
-        logger.info(f"Objective ids: {objective_ids}\nUse Automatic Objective selection? {use_automatic_objective_selection}")
+        logger.info(f"Objective ids: {objective_ids} Use Automatic Objective selection? {use_automatic_objective_selection}")
         if not objective_ids and use_automatic_objective_selection:
             runnable_objective_ids = get_runnable_objectives(
                 study_id, config, logger, graphapi_version, graphapi_domain
             )
+            logger.info(f"Selecting from {len(runnable_objective_ids)} runnable objectives")
             try:
                 objective_ids = random.sample(runnable_objective_ids, len(input_paths))
             except ValueError:

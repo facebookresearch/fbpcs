@@ -134,7 +134,7 @@ jobs:
           echo aws_region=$(echo ${{ inputs.test_name == 'UDP Tests' && 'us-west-1' || 'us-west-2' }}) >> $GITHUB_OUTPUT
 
       - name: Set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ inputs.test_name == 'UDP Tests' && secrets.AWS_E2E_UDP_TEST_ROLE_TO_ASSUME || secrets.AWS_E2E_TEST_ROLE_TO_ASSUME }}
           aws-region: ${{ steps.aws_region.outputs.aws_region }}
