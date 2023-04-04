@@ -98,7 +98,9 @@ def main() -> None:
             os.system(
                 f"sudo /home/onedocker/package/write_routing.sh {ip_address} {server_hostname}"
             )
-            logging.info(f"Wrote IP address and host name to {HOST_FILE_PATH}")
+            logging.info(
+                f"Wrote IP address {ip_address} and host name {server_hostname} to {HOST_FILE_PATH}"
+            )
         else:
             logging.info(
                 "Routing not configured because at least one of ip_address and server_hostname is not specified."
