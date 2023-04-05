@@ -177,6 +177,7 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
     ca_certificate: Optional[str] = immutable_field(default=None)
     server_key_ref: Optional[str] = immutable_field(default=None)
     server_domain: Optional[str] = immutable_field(default=None)
+    container_permission_id: Optional[str] = immutable_field(default=None)
 
     num_secure_random_shards: int = 1
     num_udp_containers: int = 1
