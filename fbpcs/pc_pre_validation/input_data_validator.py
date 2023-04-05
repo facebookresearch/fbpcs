@@ -79,6 +79,7 @@ class InputDataValidator(Validator):
         region: str,
         stream_file: bool,
         publisher_pc_pre_validation: bool,
+        partner_pc_pre_validation: bool,
         private_computation_role: PrivateComputationRole,
         access_key_id: Optional[str] = None,
         access_key_data: Optional[str] = None,
@@ -93,6 +94,7 @@ class InputDataValidator(Validator):
         self._num_id_columns = 0
         self._stream_file = stream_file
         self._publisher_pc_pre_validation = publisher_pc_pre_validation
+        self._partner_pc_pre_validation = partner_pc_pre_validation
         self._private_computation_role: PrivateComputationRole = (
             private_computation_role
         )
@@ -526,6 +528,7 @@ class InputDataValidator(Validator):
 
         run_partner_pre_validation_check = (
             self._private_computation_role is PrivateComputationRole.PARTNER
+            and self._partner_pc_pre_validation
         )
         if not match_id_fields:
             raise InputDataValidationException(

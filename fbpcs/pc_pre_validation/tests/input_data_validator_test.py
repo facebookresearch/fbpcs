@@ -43,6 +43,7 @@ TEST_INPUT_FILE_PATH = (
 TEST_REGION = "us-west-2"
 TEST_STREAM_FILE = False
 TEST_PUBLISHER_PC_PRE_VALIDATION = False
+TEST_PARTNER_PC_PRE_VALIDATION = True
 TEST_PRIVATE_COMPUTATION_ROLE: PrivateComputationRole = PrivateComputationRole.PARTNER
 TEST_TIMESTAMP: float = time.time()
 TEST_TEMP_FILEPATH = f"{INPUT_DATA_TMP_FILE_PATH}/{TEST_FILENAME}-{TEST_TIMESTAMP}"
@@ -88,6 +89,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             access_key_id=access_key_id,
             access_key_data=access_key_data,
@@ -118,6 +120,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -148,6 +151,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=True,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -169,6 +173,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=True,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -203,6 +208,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -242,6 +248,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -281,6 +288,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -410,6 +418,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -448,6 +457,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -487,6 +497,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -525,6 +536,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -568,6 +580,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -601,6 +614,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -634,6 +648,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -659,6 +674,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -691,6 +707,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -724,6 +741,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=publisher_role,
         )
         report = validator.validate()
@@ -757,6 +775,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=publisher_pc_pre_validation,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=publisher_role,
         )
         report = validator.validate()
@@ -789,6 +808,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -839,6 +859,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -888,6 +909,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -938,6 +960,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -973,6 +996,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1024,6 +1048,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1053,6 +1078,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1091,6 +1117,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1122,6 +1149,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1153,6 +1181,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1169,6 +1198,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1650000000",
             end_timestamp="1640000000",
@@ -1187,6 +1217,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="test",
             end_timestamp=end_timestamp,
@@ -1206,6 +1237,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp=start_timestamp,
             end_timestamp="test",
@@ -1252,6 +1284,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
@@ -1297,6 +1330,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
@@ -1337,6 +1371,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
@@ -1377,6 +1412,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1640000000",
             end_timestamp="1650000000",
@@ -1459,6 +1495,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=True,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
 
@@ -1502,6 +1539,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=True,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
 
@@ -1668,6 +1706,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1701,6 +1740,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
         )
         report = validator.validate()
@@ -1737,6 +1777,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="1670000000",
             end_timestamp="1650000000",
@@ -1776,6 +1817,7 @@ class TestInputDataValidator(TestCase):
             region=TEST_REGION,
             stream_file=TEST_STREAM_FILE,
             publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
             start_timestamp="test1",
             end_timestamp="test2",

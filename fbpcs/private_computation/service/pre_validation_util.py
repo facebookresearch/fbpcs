@@ -20,6 +20,7 @@ def get_cmd_args(
     binary_config: OneDockerBinaryConfig,
     pre_validation_file_stream_flag: bool,
     publisher_pc_pre_validation_flag: bool,
+    partner_pc_pre_validation_flag: bool,
     input_path_start_ts: Optional[str],
     input_path_end_ts: Optional[str],
     private_computation_role: Optional[PrivateComputationRole] = None,
@@ -46,5 +47,8 @@ def get_cmd_args(
 
     if publisher_pc_pre_validation_flag:
         args.append("--publisher-pc-pre-validation=enabled")
+
+    if partner_pc_pre_validation_flag:
+        args.append("--partner-pc-pre-validation=enabled")
 
     return " ".join(args)

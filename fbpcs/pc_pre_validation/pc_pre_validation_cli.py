@@ -24,6 +24,7 @@ Usage:
         [--private-computation-role=<private-computation-role>]
         [--pre-validation-file-stream=<pre-validation-file-stream>]
         [--publisher-pc-pre-validation=<publisher-pc-pre-validation>]
+        [--partner-pc-pre-validation=<partner-pc-pre-validation>]
 """
 
 
@@ -51,6 +52,8 @@ PRE_VALIDATION_FILE_STREAM_ENABLED = "enabled"
 PUBLISHER_PC_PRE_VALIDATION_FLAG = "--publisher-pc-pre-validation"
 PUBLISHER_PC_PRE_VALIDATION_ENABLED = "enabled"
 PRIVATE_COMPUTATION_ROLE = "--private-computation-role"
+PARTNER_PC_PRE_VALIDATION_FLAG = "--partner-pc-pre-validation"
+PARTNER_PC_PRE_VALIDATION_ENABLED = "enabled"
 
 
 def main(argv: OptionalType[List[str]] = None) -> None:
@@ -69,6 +72,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
             Optional(BINARY_VERSION): optional_string,
             Optional(PRE_VALIDATION_FILE_STREAM_FLAG): optional_string,
             Optional(PUBLISHER_PC_PRE_VALIDATION_FLAG): optional_string,
+            Optional(PARTNER_PC_PRE_VALIDATION_FLAG): optional_string,
             Optional(PRIVATE_COMPUTATION_ROLE): optional_string,
         }
     )
@@ -82,6 +86,9 @@ def main(argv: OptionalType[List[str]] = None) -> None:
         arguments[PUBLISHER_PC_PRE_VALIDATION_FLAG]
         == PUBLISHER_PC_PRE_VALIDATION_ENABLED
     )
+    partner_pc_pre_validation = (
+        arguments[PARTNER_PC_PRE_VALIDATION_FLAG] == PARTNER_PC_PRE_VALIDATION_ENABLED
+    )
 
     validators = [
         cast(
@@ -92,6 +99,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
                 region=arguments[REGION],
                 stream_file=stream_file,
                 publisher_pc_pre_validation=publisher_pc_pre_validation,
+                partner_pc_pre_validation=partner_pc_pre_validation,
                 private_computation_role=arguments[PRIVATE_COMPUTATION_ROLE],
                 start_timestamp=arguments[START_TIMESTAMP],
                 end_timestamp=arguments[END_TIMESTAMP],
