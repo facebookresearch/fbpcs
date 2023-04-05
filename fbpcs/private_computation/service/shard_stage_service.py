@@ -30,6 +30,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
 )
@@ -183,6 +184,8 @@ class ShardStageService(PrivateComputationStageService):
 
         binary_name = sharder.get_binary_name(ShardType.ROUND_ROBIN)
         env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
+        container_permission = gen_container_permission(private_computation_instance)
+
         return await sharder.start_containers(
             cmd_args_list=args_list,
             onedocker_svc=onedocker_svc,
@@ -193,4 +196,5 @@ class ShardStageService(PrivateComputationStageService):
             env_vars=env_vars,
             wait_for_containers_to_start_up=wait_for_containers_to_start_up,
             existing_containers=private_computation_instance.get_existing_containers_for_retry(),
+            permission=container_permission,
         )
