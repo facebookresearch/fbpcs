@@ -124,6 +124,7 @@ class TestPIDPrepareStageService(IsolatedAsyncioTestCase):
                 container_type=None,
                 certificate_request=None,
                 opa_workflow_path=None,
+                permission=None,
             )
             # test the return value is as expected
             self.assertEqual(
