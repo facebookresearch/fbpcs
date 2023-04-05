@@ -10,6 +10,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcp.entity.container_type import ContainerType
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
@@ -62,10 +63,12 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             num_files_per_mpc_container=1,
             pcs_features=pcs_features if pcs_features else {PCSFeature.UNKNOWN},
             status_updates=[],
+            container_permission_id=self.container_permission_id,
         )
 
     def setUp(self) -> None:
         # create partner PrivateComputationInstance
+        self.container_permission_id = "test-container-permission"
         self._infra_config: InfraConfig = self._get_infra_config()
         self._common: CommonProductConfig = CommonProductConfig(
             input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
@@ -85,6 +88,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 repository_path="test_path/",
             )
         )
+
         # create publisher PrivateComputationInstance
         infra_config_publisher: InfraConfig = InfraConfig(
             instance_id="123",
@@ -97,6 +101,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=1,
             num_files_per_mpc_container=1,
             status_updates=[],
+            container_permission_id=self.container_permission_id,
         )
         common_publisher: CommonProductConfig = CommonProductConfig(
             input_path="https://a-test-bucket.s3.us-west-2.amazonaws.com/lift/test/input_data1.csv",
@@ -154,6 +159,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             wait_for_containers_to_start_up=True,
             existing_containers=None,
             container_type=ContainerType.LARGE,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
 
         mock_stage_state_instance.assert_called_with(
@@ -222,6 +228,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             wait_for_containers_to_start_up=False,
             existing_containers=None,
             container_type=ContainerType.LARGE,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
 
         mock_stage_state_instance.assert_called_with(
@@ -472,6 +479,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             wait_for_containers_to_start_up=True,
             existing_containers=None,
             container_type=ContainerType.LARGE,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
 
         mock_stage_state_instance.assert_called_with(
