@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Union
 
 from fbpcp.entity.cluster_instance import Cluster
 from fbpcp.entity.container_instance import ContainerInstance
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import PcpError
 from fbpcp.service.container import ContainerService
@@ -48,12 +49,14 @@ class PCSContainerService(ContainerService):
         cmd: str,
         env_vars: Optional[Dict[str, str]] = None,
         container_type: Optional[ContainerType] = None,
+        permission: Optional[ContainerPermissionConfig] = None,
     ) -> ContainerInstance:
         instance = self.inner_container_service.create_instance(
             container_definition=container_definition,
             cmd=cmd,
             env_vars=env_vars,
             container_type=container_type,
+            permission=permission,
         )
         log_url = None
         if self.log_retriever:
@@ -67,6 +70,7 @@ class PCSContainerService(ContainerService):
         cmds: List[str],
         env_vars: Optional[Union[Dict[str, str], List[Dict[str, str]]]] = None,
         container_type: Optional[ContainerType] = None,
+        permission: Optional[ContainerPermissionConfig] = None,
     ) -> List[ContainerInstance]:
         """
         Args:
@@ -78,6 +82,7 @@ class PCSContainerService(ContainerService):
             is the same as the length of the cmds list, such that each item corresponds
             to one instance.
             container_type: The type of container to create.
+            permission: A configuration which describes the container permissions
         Returns:
             A list of ContainerInstances.
         """
@@ -92,6 +97,7 @@ class PCSContainerService(ContainerService):
                 cmd=cmds[i],
                 env_vars=env_vars[i] if type(env_vars) is list else env_vars,
                 container_type=container_type,
+                permission=permission,
             )
             for i in range(len(cmds))
         ]
