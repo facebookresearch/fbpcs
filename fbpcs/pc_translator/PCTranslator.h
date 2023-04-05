@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "fbpcs/pc_translator/input_processing/PCInstructionSet.h"
 
 namespace pc_translator {
 
@@ -23,7 +24,7 @@ namespace pc_translator {
 class PCTranslator {
  public:
   explicit PCTranslator(const std::string& pcsFeatures)
-      : pcsfeatures_(pcsFeatures) {}
+      : pcsFeatures_(pcsFeatures) {}
 
   /*
    * Method to encode the configurable fields in input dataset as per the active
@@ -41,12 +42,19 @@ class PCTranslator {
   std::string decode(const std::string& aggregatedOutputDataset);
 
  private:
-  std::string pcsfeatures_;
-  void retrieveInstructionSets(std::vector<std::string>& instructionSetNames);
+  std::string pcsFeatures_;
+  const std::string instructionSetBasePath =
+      "https://pc-translator.s3.us-west-2.amazonaws.com/";
+  std::vector<std::shared_ptr<PCInstructionSet>> retrieveInstructionSets(
+      std::vector<std::string>& instructionSetNames);
   std::vector<std::string> retrieveInstructionSetNamesForRun(
-      const std::string& pcsfeatures);
-  void parseInstructionSet(const std::string& instructionSet);
-  void transformDataset(const std::string& input);
+      const std::string& pcsFeatures);
+  std::shared_ptr<PCInstructionSet> parseInstructionSet(
+      std::string& instructionSet);
+  void transformDataset(
+      const std::string& input_data,
+      const std::vector<std::shared_ptr<pc_translator::PCInstructionSet>>&
+          pcInstructionSets);
 };
 
 } // namespace pc_translator
