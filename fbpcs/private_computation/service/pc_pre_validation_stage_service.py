@@ -38,6 +38,7 @@ from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
 )
@@ -135,6 +136,8 @@ class PCPreValidationStageService(PrivateComputationStageService):
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
+        container_permission = gen_container_permission(pc_instance)
+
         container_instances = await RunBinaryBaseService().start_containers(
             cmd_args_list=[cmd_args],
             onedocker_svc=self._onedocker_svc,
@@ -145,6 +148,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             container_type=ContainerType.LARGE,
+            permission=container_permission,
         )
 
         stage_state = StageStateInstance(
