@@ -321,6 +321,8 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     delta=1,
                 )
 
+                self.assertIsNone(args.infra_config.container_permission_id)
+
                 if pcs_features is not None:
                     if PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value in pcs_features:
                         self.assertTrue(
