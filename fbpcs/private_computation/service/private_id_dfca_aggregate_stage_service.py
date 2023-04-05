@@ -30,6 +30,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     gen_tls_server_hostnames_for_publisher,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
@@ -136,6 +137,7 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
             ca_certificate_provider=ca_certificate_provider,
             ca_certificate_path=ca_certificate_path,
         )
+        container_permission = gen_container_permission(pc_instance)
 
         container_instances = await self._mpc_service.start_containers(
             cmd_args_list=cmd_args_list,
@@ -146,6 +148,7 @@ class PrivateIdDfcaAggregateStageService(PrivateComputationStageService):
             env_vars=env_vars,
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
+            permission=container_permission,
         )
         server_uris = gen_tls_server_hostnames_for_publisher(
             server_domain=pc_instance.infra_config.server_domain,
