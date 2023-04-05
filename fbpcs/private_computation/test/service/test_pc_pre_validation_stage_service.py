@@ -121,6 +121,13 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         self, mock_stage_state_instance, mock_run_binary_base_service_start_containers
     ) -> None:
         pc_instance = self._pc_instance
+        infra_config: InfraConfig = self._get_infra_config(
+            private_computation_role=PrivateComputationRole.PARTNER,
+            pcs_features={
+                PCSFeature.PARTNER_PC_PRE_VALIDATION,
+            },
+        )
+        pc_instance.infra_config = infra_config
         mock_container_instance = MagicMock()
         mock_onedocker_svc = MagicMock()
         mock_run_binary_base_service_start_containers.return_value = [
@@ -134,6 +141,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 f"--region={region}",
                 "--binary-version=latest",
                 f"--private-computation-role={PrivateComputationRole.PARTNER}",
+                "--partner-pc-pre-validation=enabled",
             ]
         )
         pc_validator_config = PCValidatorConfig(
@@ -184,6 +192,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
             pcs_features={
                 PCSFeature.PRE_VALIDATION_FILE_STREAM,
                 PCSFeature.PUBLISHER_PC_PRE_VALIDATION,
+                PCSFeature.PARTNER_PC_PRE_VALIDATION,
             },
         )
         pc_instance.infra_config = infra_config
@@ -202,6 +211,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 f"--private-computation-role={PrivateComputationRole.PUBLISHER}",
                 "--pre-validation-file-stream=enabled",
                 "--publisher-pc-pre-validation=enabled",
+                "--partner-pc-pre-validation=enabled",
             ]
         )
         pc_validator_config = PCValidatorConfig(
@@ -357,6 +367,13 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         self, mock_run_binary_base_service_start_containers
     ) -> None:
         pc_instance = self._pc_instance
+        infra_config: InfraConfig = self._get_infra_config(
+            private_computation_role=PrivateComputationRole.PARTNER,
+            pcs_features={
+                PCSFeature.PARTNER_PC_PRE_VALIDATION,
+            },
+        )
+        pc_instance.infra_config = infra_config
         mock_onedocker_svc = MagicMock()
         exception_message = "Unexpected exception.."
         mock_run_binary_base_service_start_containers.side_effect = [
@@ -386,6 +403,13 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         self, mock_get_pc_status_from_stage_state
     ) -> None:
         pc_instance = self._pc_instance
+        infra_config: InfraConfig = self._get_infra_config(
+            private_computation_role=PrivateComputationRole.PARTNER,
+            pcs_features={
+                PCSFeature.PARTNER_PC_PRE_VALIDATION,
+            },
+        )
+        pc_instance.infra_config = infra_config
         task_id = "test-task-id-123"
         cluster_name = "test-cluster-name"
         account_id = "1234567890"
@@ -435,6 +459,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 {
                     PCSFeature.PRE_VALIDATION_FILE_STREAM,
                     PCSFeature.PUBLISHER_PC_PRE_VALIDATION,
+                    PCSFeature.PARTNER_PC_PRE_VALIDATION,
                 }
             ),
             product_config=self._product_config,
@@ -454,6 +479,7 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
                 f"--private-computation-role={PrivateComputationRole.PARTNER}",
                 "--pre-validation-file-stream=enabled",
                 "--publisher-pc-pre-validation=enabled",
+                "--partner-pc-pre-validation=enabled",
             ]
         )
         pc_validator_config = PCValidatorConfig(
@@ -591,7 +617,9 @@ class TestPCPreValidationStageService(IsolatedAsyncioTestCase):
         mock_onedocker_svc = MagicMock()
         infra_config: InfraConfig = self._get_infra_config(
             private_computation_role=PrivateComputationRole.PARTNER,
-            pcs_features={},
+            pcs_features={
+                PCSFeature.PARTNER_PC_PRE_VALIDATION,
+            },
         )
         pc_instance.infra_config = infra_config
         with self.subTest("pc_pre_validator_enabled"):

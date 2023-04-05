@@ -49,6 +49,7 @@ class TestPCPreValidationCLI(TestCase):
             region=expected_region,
             stream_file=False,
             publisher_pc_pre_validation=False,
+            partner_pc_pre_validation=False,
             private_computation_role=None,
             start_timestamp=None,
             end_timestamp=None,
@@ -103,6 +104,7 @@ class TestPCPreValidationCLI(TestCase):
             f"--private-computation-role={expected_pc_computation_role}",
             "--pre-validation-file-stream=enabled",
             "--publisher-pc-pre-validation=enabled",
+            "--partner-pc-pre-validation=enabled",
         ]
 
         validation_cli.main(argv)
@@ -113,6 +115,7 @@ class TestPCPreValidationCLI(TestCase):
             region=expected_region,
             stream_file=True,
             publisher_pc_pre_validation=True,
+            partner_pc_pre_validation=True,
             private_computation_role=PrivateComputationRole.PARTNER.name,
             start_timestamp=expected_start_timestamp,
             end_timestamp=expected_end_timestamp,

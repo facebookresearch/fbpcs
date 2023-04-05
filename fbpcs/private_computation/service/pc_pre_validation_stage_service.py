@@ -122,12 +122,16 @@ class PCPreValidationStageService(PrivateComputationStageService):
         publisher_pc_pre_validation_flag = pc_instance.has_feature(
             PCSFeature.PUBLISHER_PC_PRE_VALIDATION
         )
+        partner_pc_pre_validation_flag = pc_instance.has_feature(
+            PCSFeature.PARTNER_PC_PRE_VALIDATION
+        )
         cmd_args = get_cmd_args(
             input_path=pc_instance.product_config.common.input_path,
             region=region,
             binary_config=binary_config,
             pre_validation_file_stream_flag=pre_validation_file_stream_flag,
             publisher_pc_pre_validation_flag=publisher_pc_pre_validation_flag,
+            partner_pc_pre_validation_flag=partner_pc_pre_validation_flag,
             private_computation_role=pc_instance.infra_config.role,
             input_path_start_ts=pc_instance.product_config.common.input_path_start_ts,
             input_path_end_ts=pc_instance.product_config.common.input_path_end_ts,
@@ -220,6 +224,7 @@ class PCPreValidationStageService(PrivateComputationStageService):
     ) -> bool:
         if (
             pc_instance.infra_config.role == PrivateComputationRole.PARTNER
+            and pc_instance.has_feature(PCSFeature.PARTNER_PC_PRE_VALIDATION)
             and self._pc_validator_config.pc_pre_validator_enabled
         ):
             self._logger.info(

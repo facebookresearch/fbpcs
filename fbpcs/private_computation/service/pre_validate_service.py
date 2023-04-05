@@ -56,6 +56,7 @@ class PreValidateService:
                 binary_config=binary_config,
                 pre_validation_file_stream_flag=True,
                 publisher_pc_pre_validation_flag=True,
+                partner_pc_pre_validation_flag=True,
                 private_computation_role=PrivateComputationRole.PARTNER,
                 input_path_start_ts=None,
                 input_path_end_ts=None,
