@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <fbpcf/io/api/FileIOWrappers.h>
 #include <gtest/gtest.h>
 #include "../../emp_games/common/TestUtil.h"
 #include "fbpcs/pc_translator/PCTranslator.h"
@@ -16,6 +17,8 @@ class TestPCTranslator : public ::testing::Test {
   std::string pcs_features_;
   std::string test_instruction_set_base_path_;
   std::string test_publisher_input_path_;
+  std::string test_transformed_output_path_;
+  std::string expected_transformed_output_path_;
 
   void SetUp() override {
     pcs_features_ =
@@ -23,7 +26,18 @@ class TestPCTranslator : public ::testing::Test {
     std::string baseDir =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
     test_instruction_set_base_path_ = baseDir + "input_processing/";
-    test_publisher_input_path_ = baseDir + "publisher_unittest.csv";
+    test_publisher_input_path_ = "/tmp/publisher_unittest.csv";
+    test_transformed_output_path_ = "/tmp/transformed_publisher_input.csv";
+    expected_transformed_output_path_ =
+        baseDir + "expected_transformed_publisher_input.csv";
+    auto contents =
+        fbpcf::io::FileIOWrappers::readFile(baseDir + "publisher_unittest.csv");
+    fbpcf::io::FileIOWrappers::writeFile(test_publisher_input_path_, contents);
+  }
+
+  void TearDown() override {
+    std::remove(test_publisher_input_path_.c_str());
+    std::remove(test_transformed_output_path_.c_str());
   }
 };
 
@@ -31,6 +45,10 @@ TEST_F(TestPCTranslator, TestEncode) {
   auto pcTranslator = std::make_shared<PCTranslator>(
       pcs_features_, test_instruction_set_base_path_);
   auto outputPath = pcTranslator->encode(test_publisher_input_path_);
-  EXPECT_EQ(outputPath, "");
+  auto contents = fbpcf::io::FileIOWrappers::readFile(outputPath);
+  auto expectedContents =
+      fbpcf::io::FileIOWrappers::readFile(expected_transformed_output_path_);
+  EXPECT_EQ(outputPath, test_transformed_output_path_);
+  EXPECT_EQ(contents, expectedContents);
 }
 } // namespace pc_translator

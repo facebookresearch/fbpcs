@@ -55,6 +55,12 @@ class PCTranslator {
   std::string transformDataset(
       const std::string& inputData,
       std::shared_ptr<pc_translator::PCInstructionSet> pcInstructionSet);
+
+  void putOutputData(
+      const std::string& output_dataset_path,
+      std::vector<std::string>& outputHeader,
+      std::vector<std::vector<std::string>>& outputContent,
+      const std::vector<uint32_t>& encodedIndexes);
 };
 
 } // namespace pc_translator
