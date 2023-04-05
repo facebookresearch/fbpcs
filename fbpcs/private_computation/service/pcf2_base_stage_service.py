@@ -41,6 +41,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     gen_tls_server_hostnames_for_publisher,
     generate_env_vars_dict,
     generate_env_vars_dicts_list,
@@ -173,7 +174,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             env_vars = generate_env_vars_dict(
                 repository_path=binary_config.repository_path,
             )
-
+        container_permission = gen_container_permission(pc_instance)
         container_instances = await self._mpc_service.start_containers(
             cmd_args_list=cmd_args_list,
             onedocker_svc=self._mpc_service.onedocker_svc,
@@ -187,6 +188,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             opa_workflow_path=TLS_OPA_WORKFLOW_PATH
             if pc_instance.has_feature(PCSFeature.PCF_TLS)
             else None,
+            permission=container_permission,
         )
         stage_state = StageStateInstance(
             pc_instance.infra_config.instance_id,

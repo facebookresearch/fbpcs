@@ -5,10 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 from collections import defaultdict
+from typing import Set
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
@@ -52,6 +54,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
         self.stage_svc = PCF2AttributionStageService(
             onedocker_binary_config_map, self.mock_mpc_svc
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_attribution_stage(self) -> None:
         containers = [
@@ -60,7 +63,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             )
         ]
         self.mock_mpc_svc.start_containers.return_value = containers
-        private_computation_instance = self._create_pc_instance()
+        private_computation_instance = self._create_pc_instance(pcs_features=set())
         binary_name = "private_attribution/pcf2_attribution"
         test_server_ips = [
             f"192.0.2.{i}"
@@ -93,6 +96,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             existing_containers=None,
             env_vars_list=None,
             opa_workflow_path=None,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
         self.assertEqual(
             containers,
@@ -106,7 +110,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
         )
 
     def test_get_game_args(self) -> None:
-        private_computation_instance = self._create_pc_instance()
+        private_computation_instance = self._create_pc_instance(pcs_features=set())
 
         run_name_base = (
             private_computation_instance.infra_config.instance_id
@@ -156,7 +160,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
 
     def test_get_game_args_with_feature_flags(self) -> None:
         private_computation_instance = self._create_pc_instance(
-            [PCSFeature.PRIVATE_ATTRIBUTION_REFORMATTED_OUTPUT]
+            {PCSFeature.PRIVATE_ATTRIBUTION_REFORMATTED_OUTPUT}
         )
 
         run_name_base = (
@@ -206,7 +210,9 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             self.stage_svc.get_game_args(private_computation_instance, "", ""),
         )
 
-    def _create_pc_instance(self, pcs_features=[]) -> PrivateComputationInstance:
+    def _create_pc_instance(
+        self, pcs_features: Set[PCSFeature]
+    ) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
             instance_id="test_instance_123",
             role=PrivateComputationRole.PARTNER,
@@ -222,6 +228,7 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
             run_id=self.run_id,
             log_cost_bucket="test_log_cost_bucket",
             pcs_features=pcs_features,
+            container_permission_id=self.container_permission_id,
         )
 
         common: CommonProductConfig = CommonProductConfig(
