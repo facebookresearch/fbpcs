@@ -11,6 +11,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -56,6 +57,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             onedocker_binary_config_map,
             self.mock_mpc_svc,
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_run_async_with_udp(self) -> None:
         containers = [
@@ -97,6 +99,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             existing_containers=None,
             env_vars_list=None,
             opa_workflow_path=None,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
         self.assertEqual(
             containers,
@@ -166,6 +169,7 @@ class TestPCF2LiftMetadataCompactionStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             pcs_features={PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS},
             log_cost_bucket="test_log_cost_bucket",
+            container_permission_id=self.container_permission_id,
         )
 
         common: CommonProductConfig = CommonProductConfig(
