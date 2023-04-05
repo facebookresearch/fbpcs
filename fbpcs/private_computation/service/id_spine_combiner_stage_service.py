@@ -46,6 +46,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
 )
@@ -277,6 +278,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             # Use large FARGATE container for SNMK
             logging.info("Setting id spine combiner stage container to LARGE")
             container_type = ContainerType.LARGE
+        container_permission = gen_container_permission(private_computation_instance)
 
         return await combiner_service.start_containers(
             cmd_args_list=args,
@@ -289,6 +291,7 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=wait_for_containers_to_start_up,
             existing_containers=private_computation_instance.get_existing_containers_for_retry(),
             container_type=container_type,
+            permission=container_permission,
         )
 
     async def get_mutated_num_mpc_containers(
