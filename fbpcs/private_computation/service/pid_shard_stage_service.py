@@ -32,6 +32,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
     stop_stage_service,
@@ -153,6 +154,8 @@ class PIDShardStageService(PrivateComputationStageService):
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
+        container_permission = gen_container_permission(pc_instance)
+
         return await sharding_binary_service.start_containers(
             cmd_args_list=[args],
             onedocker_svc=self._onedocker_svc,
@@ -162,6 +165,7 @@ class PIDShardStageService(PrivateComputationStageService):
             env_vars=env_vars,
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
+            permission=container_permission,
         )
 
     def stop_service(
