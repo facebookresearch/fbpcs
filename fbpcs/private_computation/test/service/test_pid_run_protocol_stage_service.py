@@ -11,6 +11,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 
 from fbpcs.data_processing.service.pid_run_protocol_binary_service import (
@@ -71,6 +72,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
         self.pc_instance_id = "test_instance_123"
         self.port = 15200
         self.use_row_numbers = True
+        self.container_permission_id = "test-container-permission"
 
     async def test_pid_run_protocol_stage(self) -> None:
         async def _run_sub_test(
@@ -141,7 +143,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 container_type=None,
                 certificate_request=None,
                 opa_workflow_path=None,
-                permission=None,
+                permission=ContainerPermissionConfig(self.container_permission_id),
             )
             # test the return value is as expected
             self.assertEqual(
@@ -311,7 +313,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 container_type=None,
                 certificate_request=None,
                 opa_workflow_path=TLS_OPA_WORKFLOW_PATH,
-                permission=None,
+                permission=ContainerPermissionConfig(self.container_permission_id),
             )
             # test the return value is as expected
             self.assertEqual(
@@ -373,6 +375,7 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
             run_id=run_id,
             server_domain=server_domain,
             pcs_features=set() if not use_tls else {PCSFeature.PCF_TLS},
+            container_permission_id=self.container_permission_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
