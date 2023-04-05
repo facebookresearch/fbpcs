@@ -10,6 +10,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcs.common.entity.stage_state_instance import StageStateInstance
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -60,6 +61,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
         self.pc_instance_id = "test_instance_123"
         self.container_timeout = 789
         self.test_hmac_key = "CoXbp7BOEvAN9L1CB2DAORHHr3hB7wE7tpxMYm07tc0="
+        self.container_permission_id = "test-container-permission"
 
     async def test_pid_shard_stage_service(self) -> None:
         async def _run_sub_test(
@@ -108,7 +110,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
                 container_type=None,
                 certificate_request=None,
                 opa_workflow_path=None,
-                permission=None,
+                permission=ContainerPermissionConfig(self.container_permission_id),
             )
             # test the return value is as expected
             self.assertEqual(
@@ -162,6 +164,7 @@ class TestPIDShardStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=test_num_containers,
             num_files_per_mpc_container=test_num_containers,
             status_updates=[],
+            container_permission_id=self.container_permission_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path=self.input_path,
