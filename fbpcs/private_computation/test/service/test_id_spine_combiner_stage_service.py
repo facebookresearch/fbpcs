@@ -7,7 +7,9 @@
 from collections import defaultdict
 from typing import Optional
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import patch
+from unittest.mock import ANY, patch
+
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 
 from fbpcs.data_processing.service.id_spine_combiner import IdSpineCombinerService
 
@@ -51,6 +53,7 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
         self.stage_svc = IdSpineCombinerStageService(
             self.storage_svc, self.onedocker_service, self.onedocker_binary_config_map
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_id_spine_combiner(self) -> None:
 
@@ -75,7 +78,23 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
                         "",
                         "",
                     )
-                    mock_combine.assert_called()
+
+                    # TODO: T149505091 - Assert specific container arguments expected during this stage
+                    mock_combine.assert_called_once_with(
+                        cmd_args_list=ANY,
+                        onedocker_svc=ANY,
+                        binary_version=ANY,
+                        binary_name=ANY,
+                        timeout=ANY,
+                        wait_for_containers_to_finish=ANY,
+                        env_vars=ANY,
+                        wait_for_containers_to_start_up=ANY,
+                        existing_containers=ANY,
+                        container_type=ANY,
+                        permission=ContainerPermissionConfig(
+                            self.container_permission_id
+                        ),
+                    )
                     self.assertEqual(pc_instance.infra_config.run_id, test_run_id)
                     self.assertEqual(
                         pc_instance.infra_config.log_cost_bucket, test_log_cost_bucket
@@ -97,6 +116,7 @@ class TestIdSpineCombinerStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             run_id=test_run_id,
             log_cost_bucket="test-log-bucket",
+            container_permission_id=self.container_permission_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
