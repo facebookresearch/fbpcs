@@ -204,6 +204,7 @@ class PrivateComputationService:
         ca_certificate: Optional[str] = None,
         server_domain: Optional[str] = None,
         server_key_secret_ref: Optional[str] = None,
+        container_permission_id: Optional[str] = None,
     ) -> PrivateComputationInstance:
         self.logger.info(f"Creating instance: {instance_id}")
         self.metric_svc.bump_entity_key(PCSERVICE_ENTITY_NAME, "create_instance")
@@ -261,6 +262,7 @@ class PrivateComputationService:
             ca_certificate=ca_certificate,
             server_key_ref=server_key_secret_ref,
             server_domain=server_domain,
+            container_permission_id=container_permission_id,
         )
         multikey_enabled = True
         if pid_configs and "multikey_enabled" in pid_configs.keys():
