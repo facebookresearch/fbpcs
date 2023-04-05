@@ -37,6 +37,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
 )
 
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     gen_tls_server_hostnames_for_publisher,
     generate_env_vars_dict,
     generate_env_vars_dicts_list,
@@ -131,6 +132,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             env_vars = generate_env_vars_dict(
                 repository_path=binary_config.repository_path,
             )
+        container_permission = gen_container_permission(pc_instance)
 
         container_instances = await self._mpc_service.start_containers(
             cmd_args_list=cmd_args_list,
@@ -142,6 +144,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             env_vars_list=env_vars_list,
+            permission=container_permission,
         )
         server_uris = gen_tls_server_hostnames_for_publisher(
             server_domain=pc_instance.infra_config.server_domain,

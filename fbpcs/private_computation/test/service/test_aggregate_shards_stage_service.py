@@ -11,6 +11,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.infra.certificate.private_key import StaticPrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -63,6 +64,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
         self.stage_svc = AggregateShardsStageService(
             onedocker_binary_config_map, self.mock_mpc_svc
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_aggregate_shards(self) -> None:
         containers = [
@@ -103,6 +105,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             wait_for_containers_to_start_up=True,
             existing_containers=None,
             env_vars_list=None,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
         self.assertEqual(
             containers,
@@ -235,6 +238,7 @@ class TestAggregateShardsStageService(IsolatedAsyncioTestCase):
             run_id=self.run_id,
             pcs_features=pcs_features if pcs_features else {PCSFeature.PCS_DUMMY},
             log_cost_bucket="test_log_cost_bucket",
+            container_permission_id=self.container_permission_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
