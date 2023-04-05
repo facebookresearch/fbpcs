@@ -12,6 +12,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.infra.certificate.private_key import StaticPrivateKeyReferenceProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
@@ -71,6 +72,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             onedocker_binary_config_map,
             self.mock_mpc_svc,
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_compute_metrics(self) -> None:
         containers = [
@@ -79,9 +81,8 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             )
         ]
         self.mock_mpc_svc.start_containers.return_value = containers
-
         private_computation_instance = self._create_pc_instance(
-            pcs_features={PCSFeature.PCF_TLS}
+            pcs_features={PCSFeature.PCF_TLS},
         )
         binary_name = "private_lift/pcf2_lift"
         num_containers = private_computation_instance.infra_config.num_mpc_containers
@@ -115,6 +116,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             wait_for_containers_to_start_up=True,
             existing_containers=None,
             opa_workflow_path=TLS_OPA_WORKFLOW_PATH,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
         self.assertEqual(
             containers,
@@ -331,6 +333,7 @@ class TestPCF2LiftStageService(IsolatedAsyncioTestCase):
             run_id=self.run_id,
             log_cost_bucket="test_log_cost_bucket",
             pcs_features=pcs_features,
+            container_permission_id=self.container_permission_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
