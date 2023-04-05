@@ -6,6 +6,7 @@
 
 import time
 import unittest
+from enum import Enum
 from typing import List, Optional, Tuple
 from unittest import mock
 from unittest.mock import AsyncMock
@@ -37,6 +38,12 @@ from fbpcs.private_computation.stage_flows.private_computation_base_stage_flow i
 from fbpcs.private_computation.stage_flows.private_computation_stage_flow import (
     PrivateComputationStageFlow,
 )
+
+
+class WaitStageCompleteResult(Enum):
+    SUCCESS = 1
+    FAILURE = 2
+    TIMEOUT = 3
 
 
 class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
@@ -289,12 +296,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
     )
     @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
     @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_stage_flow")
-    @mock.patch(
-        "fbpcs.bolt.bolt_runner.StageTimeoutException", wraps=StageTimeoutException
-    )
     async def test_stage_timeout_retry(
         self,
-        mock_stage_timeout_exception,
         mock_get_stage_flow,
         mock_next_stage,
         mock_run_next_stage,
@@ -303,11 +306,19 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
         mock_sleep,
     ) -> None:
         mock_sleep.side_effect = lambda x: time.sleep(1)
-        for job_stage_timeout, num_tries in [(0, DEFAULT_NUM_TRIES), (2, 2)]:
-            with self.subTest(job_stage_timeout=job_stage_timeout, num_tries=num_tries):
+        for job_stage_timeout, num_tries, expect_success in [
+            (0, DEFAULT_NUM_TRIES, False),
+            (2, 2, True),
+        ]:
+            with self.subTest(
+                job_stage_timeout=job_stage_timeout,
+                num_tries=num_tries,
+                expect_success=expect_success,
+            ):
                 mock_get_stage_flow.reset_mock()
                 mock_run_next_stage.reset_mock()
-                mock_stage_timeout_exception.reset_mock()
+                self.test_runner.publisher_client.reset_mock()
+                self.test_runner.partner_client.reset_mock()
                 test_job = BoltJob(
                     job_name="test",
                     publisher_bolt_args=mock_publisher_args,
@@ -341,9 +352,19 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                 self.test_runner.partner_client.update_instance.side_effect = (
                     state_status_responses
                 )
-                await self.test_runner.run_async([test_job])
+                job_summary = await self.test_runner.run_async([test_job])
 
-                self.assertEqual(mock_stage_timeout_exception.call_count, num_tries)
+                self.assertEqual(job_summary.is_success, expect_success)
+
+                # Verify cancel called - Every alternate time
+                self.assertEqual(
+                    self.test_runner.publisher_client.cancel_current_stage.call_count,
+                    num_tries / 2,
+                )
+                self.assertEqual(
+                    self.test_runner.partner_client.cancel_current_stage.call_count,
+                    num_tries / 2,
+                )
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_runner.BoltRunner.get_next_valid_stage")
@@ -379,7 +400,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
 
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     @mock.patch("fbpcs.bolt.bolt_client.BoltClient.has_feature")
-    async def test_wait_stage_complete(self, mock_sleep, mock_has_feature) -> None:
+    async def test_wait_stage_complete(self, mock_has_feature, mock_sleep) -> None:
         for (
             stage,
             publisher_statuses,
@@ -387,6 +408,8 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             result,
         ) in self._get_wait_stage_complete_data():
             self.test_runner.partner_client.cancel_current_stage = mock.AsyncMock()
+            self.test_runner.publisher_client.cancel_current_stage = mock.AsyncMock()
+
             mock_has_feature.return_value = True
             with self.subTest(
                 stage=stage,
@@ -401,7 +424,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     side_effect=[BoltState(status) for status in partner_statuses]
                 )
 
-                if not result:
+                if result == WaitStageCompleteResult.FAILURE:
                     with self.assertRaises(StageFailedException):
                         # stage should fail and raise an exception
                         await self.test_runner.wait_stage_complete(
@@ -421,6 +444,29 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                         )
                     else:
                         self.test_runner.partner_client.cancel_current_stage.assert_not_called()
+                elif result == WaitStageCompleteResult.TIMEOUT:
+                    mock_sleep.side_effect = lambda x: time.sleep(1)
+
+                    with self.assertRaises(StageTimeoutException):
+                        await self.test_runner.wait_stage_complete(
+                            publisher_id="test_pub_id",
+                            partner_id="test_part_id",
+                            stage=stage,
+                            poll_interval=1,
+                            previous_attempt_timeout=True,
+                            previous_attempt_cancelled=False,
+                        )
+                    if not stage.is_joint_stage:
+                        self.test_runner.partner_client.cancel_current_stage.assert_called_once_with(
+                            instance_id="test_part_id"
+                        )
+                        self.test_runner.publisher_client.cancel_current_stage.assert_called_once_with(
+                            instance_id="test_pub_id"
+                        )
+                    else:
+                        self.test_runner.publisher_client.cancel_current_stage.assert_not_called()
+                        self.test_runner.partner_client.cancel_current_stage.assert_not_called()
+
                 else:
                     # stage should succeed
                     await self.test_runner.wait_stage_complete(
@@ -693,7 +739,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             PrivateComputationBaseStageFlow,
             List[PrivateComputationInstanceStatus],
             List[PrivateComputationInstanceStatus],
-            bool,
+            WaitStageCompleteResult,
         ]
     ]:
         """
@@ -703,6 +749,9 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
             * Order of the partner statuses
             * Does the stage succeed
         """
+        timeout_stage = DummyRetryableStageFlow.RETRYABLE_STAGE
+        timeout_stage.timeout = 3
+
         return [
             (
                 PrivateComputationStageFlow.ID_MATCH,
@@ -720,7 +769,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
                     PrivateComputationInstanceStatus.ID_MATCHING_COMPLETED,
                 ],
-                True,
+                WaitStageCompleteResult.SUCCESS,
             ),
             (
                 PrivateComputationStageFlow.ID_MATCH,
@@ -738,7 +787,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
                     PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
                 ],
-                False,
+                WaitStageCompleteResult.FAILURE,
             ),
             (
                 PrivateComputationStageFlow.PC_PRE_VALIDATION,
@@ -756,7 +805,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
                     PrivateComputationInstanceStatus.PC_PRE_VALIDATION_COMPLETED,
                 ],
-                True,
+                WaitStageCompleteResult.SUCCESS,
             ),
             (
                 PrivateComputationStageFlow.PC_PRE_VALIDATION,
@@ -774,7 +823,25 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
                     PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
                     PrivateComputationInstanceStatus.PC_PRE_VALIDATION_FAILED,
                 ],
-                False,
+                WaitStageCompleteResult.FAILURE,
+            ),
+            (
+                timeout_stage,
+                [
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                ],
+                [
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                    timeout_stage.started_status,
+                ],
+                WaitStageCompleteResult.TIMEOUT,
             ),
         ]
 
