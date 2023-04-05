@@ -13,6 +13,7 @@ from typing import Dict, List, Optional
 from fbpcp.entity.certificate_request import CertificateRequest
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcp.entity.container_type import ContainerType
 from fbpcp.error.pcp import ThrottlingError
 from fbpcp.service.onedocker import OneDockerService
@@ -38,6 +39,7 @@ class RunBinaryBaseService:
         certificate_request: Optional[CertificateRequest] = None,
         env_vars_list: Optional[List[Dict[str, str]]] = None,
         opa_workflow_path: Optional[str] = None,
+        permission: Optional[ContainerPermissionConfig] = None,
     ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
 
@@ -62,6 +64,7 @@ class RunBinaryBaseService:
                 container_type=container_type,
                 certificate_request=certificate_request,
                 opa_workflow_path=opa_workflow_path,
+                permission=permission,
             )
 
             pending_containers = self.get_pending_containers(
