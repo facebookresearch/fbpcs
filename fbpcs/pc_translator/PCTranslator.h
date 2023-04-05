@@ -26,11 +26,12 @@ class PCTranslator {
   explicit PCTranslator(const std::string& pcsFeatures)
       : pcsFeatures_(pcsFeatures) {}
 
-  /*
-   * Method to encode the configurable fields in input dataset as per the active
-   * pc instruction sets for the run. This method will output the path of
-   * transformed input dataset, which can be used in further PC run.
-   */
+  explicit PCTranslator(
+      const std::string& pcsFeatures,
+      const std::string& instructionSetBasePath)
+      : pcsFeatures_(pcsFeatures),
+        instructionSetBasePath_(instructionSetBasePath) {}
+
   std::string encode(const std::string& inputDataset);
 
   /*
@@ -43,7 +44,7 @@ class PCTranslator {
 
  private:
   std::string pcsFeatures_;
-  const std::string instructionSetBasePath =
+  std::string instructionSetBasePath_ =
       "https://pc-translator.s3.us-west-2.amazonaws.com/";
   std::vector<std::shared_ptr<PCInstructionSet>> retrieveInstructionSets(
       std::vector<std::string>& instructionSetNames);
@@ -51,10 +52,9 @@ class PCTranslator {
       const std::string& pcsFeatures);
   std::shared_ptr<PCInstructionSet> parseInstructionSet(
       std::string& instructionSet);
-  void transformDataset(
-      const std::string& input_data,
-      const std::vector<std::shared_ptr<pc_translator::PCInstructionSet>>&
-          pcInstructionSets);
+  std::string transformDataset(
+      const std::string& inputData,
+      std::shared_ptr<pc_translator::PCInstructionSet> pcInstructionSet);
 };
 
 } // namespace pc_translator

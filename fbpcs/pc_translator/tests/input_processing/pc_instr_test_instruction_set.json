@@ -30,10 +30,6 @@
                 {
                     "constraint_type": "EQ",
                     "value": "0"
-                },
-                {
-                    "constraint_type": "EQ",
-                    "value": "1"
                 }
             ]
         },

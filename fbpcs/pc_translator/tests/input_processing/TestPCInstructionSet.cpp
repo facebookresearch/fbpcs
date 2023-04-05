@@ -13,7 +13,6 @@
 #include <gtest/gtest.h>
 #include "../../../emp_games/common/TestUtil.h"
 #include "fbpcs/pc_translator/input_processing/PCInstructionSet.h"
-#include "folly/Random.h"
 
 namespace pc_translator {
 class TestPCInstructionSet : public ::testing::Test {
@@ -24,7 +23,7 @@ class TestPCInstructionSet : public ::testing::Test {
   void SetUp() override {
     std::string baseDir =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
-    testInstructionSetPath_ = baseDir + "test_instruction_set.json";
+    testInstructionSetPath_ = baseDir + "pc_instr_test_instruction_set.json";
   }
 };
 
@@ -35,7 +34,7 @@ TEST_F(TestPCInstructionSet, TestStandardWorkflowTest) {
   auto groupByIds = pcInstructionSet->getGroupByIds();
   auto filterConstraints = pcInstructionSet->getFilterConstraints();
   EXPECT_EQ(groupByIds.size(), 2);
-  EXPECT_EQ(filterConstraints.size(), 4);
+  EXPECT_EQ(filterConstraints.size(), 3);
   EXPECT_EQ(filterConstraints[0].getName(), "gender");
   EXPECT_EQ(filterConstraints[0].getType(), "EQ");
   EXPECT_EQ(filterConstraints[0].getValue(), 0);
