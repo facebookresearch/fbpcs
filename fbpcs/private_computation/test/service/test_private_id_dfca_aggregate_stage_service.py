@@ -9,6 +9,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
 from fbpcs.onedocker_binary_config import OneDockerBinaryConfig
 from fbpcs.private_computation.entity.infra_config import (
@@ -50,6 +51,7 @@ class TestPrivateIdDfcaAggregateStageService(IsolatedAsyncioTestCase):
         self.stage_svc = PrivateIdDfcaAggregateStageService(
             onedocker_binary_config_map, self.mock_mpc_svc
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_private_id_dfca_aggregate(self) -> None:
         containers = [
@@ -89,6 +91,7 @@ class TestPrivateIdDfcaAggregateStageService(IsolatedAsyncioTestCase):
             env_vars={"ONEDOCKER_REPOSITORY_PATH": "test_path/"},
             wait_for_containers_to_start_up=True,
             existing_containers=None,
+            permission=ContainerPermissionConfig(self.container_permission_id),
         )
         self.assertEqual(
             containers,
@@ -116,6 +119,7 @@ class TestPrivateIdDfcaAggregateStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             run_id=self.run_id,
             pcs_features={PCSFeature.PCS_DUMMY},
+            container_permission_id=self.container_permission_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
