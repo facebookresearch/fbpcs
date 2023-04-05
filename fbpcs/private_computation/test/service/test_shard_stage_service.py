@@ -6,7 +6,9 @@
 
 from collections import defaultdict
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import patch
+from unittest.mock import ANY, patch
+
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 
 from fbpcs.data_processing.service.sharding_service import ShardingService
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
@@ -46,6 +48,7 @@ class TestShardStageService(IsolatedAsyncioTestCase):
         self.stage_svc = ShardStageService(
             self.onedocker_service, self.onedocker_binary_config_map
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_reshard_data(self) -> None:
         private_computation_instance = self.create_sample_instance()
@@ -62,7 +65,20 @@ class TestShardStageService(IsolatedAsyncioTestCase):
                 "",
                 "",
             )
-            mock_shard.assert_called()
+
+            # TODO: T149505024 - Assert specific container arguments expected from Shard stage
+            mock_shard.assert_called_once_with(
+                cmd_args_list=ANY,
+                onedocker_svc=ANY,
+                binary_version=ANY,
+                binary_name=ANY,
+                timeout=ANY,
+                wait_for_containers_to_finish=ANY,
+                env_vars=ANY,
+                wait_for_containers_to_start_up=ANY,
+                existing_containers=ANY,
+                permission=ContainerPermissionConfig(self.container_permission_id),
+            )
 
     def create_sample_instance(self) -> PrivateComputationInstance:
         infra_config: InfraConfig = InfraConfig(
@@ -76,6 +92,7 @@ class TestShardStageService(IsolatedAsyncioTestCase):
             num_mpc_containers=self.test_num_containers,
             num_files_per_mpc_container=NUM_NEW_SHARDS_PER_FILE,
             status_updates=[],
+            container_permission_id=self.container_permission_id,
         )
         common: CommonProductConfig = CommonProductConfig(
             input_path="456",
