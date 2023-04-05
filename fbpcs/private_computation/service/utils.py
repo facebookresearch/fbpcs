@@ -11,6 +11,8 @@ import asyncio
 import re
 from typing import Dict, List, Optional
 
+from fbpcp.entity.container_permission import ContainerPermissionConfig
+
 from fbpcp.service.onedocker import OneDockerService
 from fbpcp.service.storage import StorageService
 from fbpcs.common.entity.stage_state_instance import StageStateInstanceStatus
@@ -329,3 +331,19 @@ def gen_tls_server_hostnames_for_publisher(
         return None
     else:
         return [f"node{i}.{server_domain}" for i in range(num_containers)]
+
+
+def gen_container_permission(
+    pc_instance: PrivateComputationInstance,
+) -> Optional[ContainerPermissionConfig]:
+    """Returns a container permission configuration, when specified by the PC Instance,
+    which can be used to override the default permissions during container start
+
+    Arguments:
+        pc_instance: The PC instance for which containers are being started
+    """
+    container_permission_id = pc_instance.infra_config.container_permission_id
+    if container_permission_id is not None:
+        return ContainerPermissionConfig(container_permission_id)
+
+    return None
