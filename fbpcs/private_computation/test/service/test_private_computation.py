@@ -193,6 +193,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         expected_ca_certificate = "test ca certificate"
         expected_server_domain = "example.com"
         expected_server_key_secret_ref = "test_secret_id"
+        expected_container_permission_id = "test container permission id"
 
         for (
             test_game_type,
@@ -203,6 +204,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ca_certificate,
             server_domain,
             server_key_secret_ref,
+            container_permission_id,
         ) in (
             (
                 self._get_subtest_args(
@@ -252,6 +254,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     ca_certificate=expected_ca_certificate,
                     server_domain=expected_server_domain,
                     server_key_secret_ref=expected_server_key_secret_ref,
+                    container_permission_id=expected_container_permission_id,
                 )
             ),
             # test PCSFeature.PCF_TLS for lift with partner
@@ -291,6 +294,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     ca_certificate=ca_certificate,
                     server_domain=server_domain,
                     server_key_secret_ref=server_key_secret_ref,
+                    container_permission_id=container_permission_id,
                 )
                 # check instance_repository.create is called with the correct arguments
                 # pyre-fixme[16]: Callable `create` has no attribute `assert_called`.
@@ -320,8 +324,6 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     # pyre-ignore
                     delta=1,
                 )
-
-                self.assertIsNone(args.infra_config.container_permission_id)
 
                 if pcs_features is not None:
                     if PCSFeature.PRIVATE_ATTRIBUTION_MR_PID.value in pcs_features:
@@ -381,6 +383,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                         args.infra_config.server_key_ref,
                         expected_server_key_secret_ref,
                     )
+                    self.assertEqual(
+                        args.infra_config.container_permission_id,
+                        expected_container_permission_id,
+                    )
 
                 if (
                     pcs_features is not None
@@ -401,6 +407,10 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(
                         args.infra_config.server_key_ref,
+                        None,
+                    )
+                    self.assertEqual(
+                        args.infra_config.container_permission_id,
                         None,
                     )
 
@@ -1438,11 +1448,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         ca_certificate: Optional[str] = None,
         server_domain: Optional[str] = None,
         server_key_secret_ref: Optional[str] = None,
+        container_permission_id: Optional[str] = None,
     ) -> Tuple[
         PrivateComputationGameType,
         int,
         Optional[List[str]],
         PrivateComputationRole,
+        Optional[str],
         Optional[str],
         Optional[str],
         Optional[str],
@@ -1457,6 +1469,7 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
             ca_certificate,
             server_domain,
             server_key_secret_ref,
+            container_permission_id,
         )
 
 
