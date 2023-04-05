@@ -13,6 +13,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+from fbpcp.entity.container_permission import ContainerPermissionConfig
 
 from fbpcp.service.storage import StorageService
 from fbpcs.infra.certificate.null_certificate_provider import NullCertificateProvider
@@ -122,6 +123,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
             onedocker_binary_config_map,
             self.mock_mpc_svc,
         )
+        self.container_permission_id = "test-container-permission"
 
     async def test_run_async_with_udp(self) -> None:
         containers = [
@@ -165,6 +167,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
                 existing_containers=None,
                 env_vars_list=None,
                 opa_workflow_path=None,
+                permission=ContainerPermissionConfig(self.container_permission_id),
             )
             self.assertEqual(
                 containers,
@@ -409,6 +412,7 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
             status_updates=[],
             log_cost_bucket="test_log_cost_bucket",
             pcs_features=pcs_features if pcs_features else set(),
+            container_permission_id=self.container_permission_id,
         )
 
         common: CommonProductConfig = CommonProductConfig(
