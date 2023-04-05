@@ -37,6 +37,7 @@ from fbpcs.private_computation.service.private_computation_stage_service import 
     PrivateComputationStageService,
 )
 from fbpcs.private_computation.service.utils import (
+    gen_container_permission,
     generate_env_vars_dict,
     get_pc_status_from_stage_state,
     stop_stage_service,
@@ -174,6 +175,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
             # Use large FARGATE container for SNMK
             logging.info("Setting pid prepare stage container to LARGE")
             container_type = ContainerType.LARGE
+        container_permission = gen_container_permission(pc_instance)
 
         return await pid_prepare_binary_service.start_containers(
             cmd_args_list=args_list,
@@ -185,6 +187,7 @@ class PIDPrepareStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             container_type=container_type,
+            permission=container_permission,
         )
 
     def stop_service(
