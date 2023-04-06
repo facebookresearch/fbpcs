@@ -14,24 +14,27 @@
 #include <fbpcf/mpc_std_lib/oram/encoder/IOramEncoder.h>
 #include <fbpcf/mpc_std_lib/oram/encoder/OramEncoder.h>
 #include <algorithm>
+#include <cstdint>
+#include <iterator>
 #include <set>
 #include <stdexcept>
+#include <string>
 #include "fbpcs/emp_games/common/Csv.h"
 #include "folly/String.h"
 
 namespace pc_translator {
 
-std::string PCTranslator::encode(const std::string& inputDataset) {
+std::string PCTranslator::encode(const std::string& inputDatasetPath) {
   auto validInstructionSetNames =
       PCTranslator::retrieveInstructionSetNamesForRun(pcsFeatures_);
   auto pcInstructionSets =
       PCTranslator::retrieveInstructionSets(validInstructionSetNames);
   if (pcInstructionSets.empty()) {
     // No instruction set found. return the input dataset path.
-    return inputDataset;
+    return inputDatasetPath;
   }
   return PCTranslator::transformDataset(
-      inputDataset, pcInstructionSets.front());
+      inputDatasetPath, pcInstructionSets.front());
 }
 
 std::string PCTranslator::decode(
@@ -79,30 +82,43 @@ std::vector<std::string> PCTranslator::retrieveInstructionSetNamesForRun(
 }
 
 std::string PCTranslator::transformDataset(
-    const std::string& inputData,
+    const std::string& inputDatasetPath,
     std::shared_ptr<pc_translator::PCInstructionSet> pcInstructionSet) {
   // Parse the input CSV
   auto lineNo = 0;
   std::vector<std::vector<uint32_t>> inputColums;
+  std::vector<std::string> outputHeader;
+  std::vector<std::vector<std::string>> outputContent;
   private_measurement::csv::readCsv(
-      inputData,
+      inputDatasetPath,
       [&](const std::vector<std::string>& header,
           const std::vector<std::string>& parts) {
         std::vector<uint32_t> inputColumnPerRow;
+        std::string column;
+        std::uint32_t value;
+        bool found = false;
+        std::vector<std::string> outputContentPerRow;
         for (std::vector<std::string>::size_type i = 0; i < header.size();
              ++i) {
-          auto& column = header[i];
-          auto value = std::atoi(parts[i].c_str());
-          auto iter = std::find(
-              pcInstructionSet->getGroupByIds().begin(),
-              pcInstructionSet->getGroupByIds().end(),
-              column);
-          if (iter != pcInstructionSet->getGroupByIds().end()) {
+          column = header[i];
+          value = std::atoi(parts[i].c_str());
+          found =
+              (std::find(
+                   pcInstructionSet->getGroupByIds().begin(),
+                   pcInstructionSet->getGroupByIds().end(),
+                   column) != pcInstructionSet->getGroupByIds().end());
+          if (found) {
             inputColumnPerRow.push_back(value);
+          } else {
+            if (lineNo == 0) {
+              outputHeader.push_back(header[i]);
+            }
+            outputContentPerRow.push_back(parts[i]);
           }
         }
 
         inputColums.push_back(inputColumnPerRow);
+        outputContent.push_back(outputContentPerRow);
         lineNo++;
       });
 
@@ -114,9 +130,34 @@ std::string PCTranslator::transformDataset(
 
   auto encodedIndexes = encoder->generateORAMIndexes(inputColums);
 
-  // TODO : Append the enodedIndexes at the end of publisher output and return
-  // output path.
-  return "";
+  auto dir = inputDatasetPath.substr(0, inputDatasetPath.rfind("/") + 1);
+  auto output_dataset_path = dir + "transformed_publisher_input.csv";
+
+  PCTranslator::putOutputData(
+      output_dataset_path, outputHeader, outputContent, encodedIndexes);
+  return output_dataset_path;
+}
+
+void PCTranslator::putOutputData(
+    const std::string& output_dataset_path,
+    std::vector<std::string>& outputHeader,
+    std::vector<std::vector<std::string>>& outputContent,
+    const std::vector<uint32_t>& encodedIndexes) {
+  outputHeader.push_back("breakdown_id");
+
+  if (outputContent.size() != encodedIndexes.size()) {
+    throw std::runtime_error(
+        "Encoded index vector size should match the input vector size.");
+  }
+
+  for (std::vector<std::string>::size_type i = 0; i < encodedIndexes.size();
+       ++i) {
+    auto indexVec = std::to_string(encodedIndexes[i]);
+    outputContent[i].push_back(indexVec);
+  }
+
+  private_measurement::csv::writeCsv(
+      output_dataset_path, outputHeader, outputContent);
 }
 
 std::shared_ptr<PCInstructionSet> PCTranslator::parseInstructionSet(
