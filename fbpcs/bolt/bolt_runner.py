@@ -121,11 +121,15 @@ class BoltRunner(Generic[T, U]):
                 stage = await self.get_next_valid_stage(job=job, stage_flow=stage_flow)
                 # hierarchy: BoltJob num_tries --> BoltRunner num_tries --> default
                 max_tries = job.num_tries or self.num_tries
+
                 while stage is not None:
                     stage_time = time()
                     # the following log is used by log_analyzer
                     logger.info(f"Valid stage found: {stage}")
                     tries = 0
+                    previous_attempt_timeout = False
+                    previous_attempt_cancelled = False
+
                     while tries < max_tries:
                         tries += 1
                         try:
@@ -188,6 +192,8 @@ class BoltRunner(Generic[T, U]):
                                     poll_interval=job.poll_interval,
                                     logger=logger,
                                     stage_timeout_override=job.stage_timeout_override,
+                                    previous_attempt_cancelled=previous_attempt_cancelled,
+                                    previous_attempt_timeout=previous_attempt_timeout,
                                 ),
                                 job=job,
                                 event=BoltHookEvent.STAGE_WAIT_FOR_COMPLETED,
@@ -202,6 +208,7 @@ class BoltRunner(Generic[T, U]):
                                 )
                             )
                             break
+
                         except Exception as e:
                             if tries >= max_tries:
                                 logger.exception(e)
@@ -223,6 +230,11 @@ class BoltRunner(Generic[T, U]):
                             logger.info(
                                 f"Retrying stage {stage}, Retries left: {self.num_tries - tries}."
                             )
+
+                            if isinstance(e, StageTimeoutException):
+                                previous_attempt_timeout = True
+                                previous_attempt_cancelled = e.stage_cancelled
+
                             await asyncio.sleep(RETRY_INTERVAL)
                     bolt_metrics.append(
                         BoltMetric(
@@ -532,6 +544,8 @@ class BoltRunner(Generic[T, U]):
         partner_id: str,
         stage: PrivateComputationBaseStageFlow,
         poll_interval: int,
+        previous_attempt_timeout: Optional[bool] = False,
+        previous_attempt_cancelled: Optional[bool] = False,
         logger: Optional[logging.Logger] = None,
         stage_timeout_override: Optional[int] = None,
     ) -> None:
@@ -559,7 +573,10 @@ class BoltRunner(Generic[T, U]):
                 return
             if (
                 publisher_state.pc_instance_status
-                in [fail_status, PrivateComputationInstanceStatus.TIMEOUT]
+                in [
+                    fail_status,
+                    PrivateComputationInstanceStatus.TIMEOUT,
+                ]
                 or partner_state.pc_instance_status is fail_status
             ):
                 try:
@@ -606,9 +623,82 @@ class BoltRunner(Generic[T, U]):
             )
             # keep polling
             await asyncio.sleep(poll_interval)
-        raise StageTimeoutException(
-            f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status if publisher_state else 'Not Found'}. Partner status: {partner_state.pc_instance_status if partner_state else 'Not Found'}."
+
+        stage_cancelled = await self._handle_stage_timeout(
+            stage=stage,
+            previous_attempt_timeout=previous_attempt_timeout,
+            previous_attempt_cancelled=previous_attempt_cancelled,
+            publisher_state=publisher_state,
+            partner_state=partner_state,
+            publisher_id=publisher_id,
+            partner_id=partner_id,
+            poll_interval=poll_interval,
+            logger=logger,
         )
+        raise StageTimeoutException(
+            msg=f"Stage {stage.name} timed out after {timeout}s. Publisher status: {publisher_state.pc_instance_status if publisher_state else 'Not Found'}. Partner status: {partner_state.pc_instance_status if partner_state else 'Not Found'}.",
+            stage_cancelled=stage_cancelled,
+        )
+
+    @bolt_checkpoint(
+        dump_return_val=True,
+    )
+    async def _handle_stage_timeout(
+        self,
+        stage: PrivateComputationBaseStageFlow,
+        previous_attempt_timeout: bool,
+        previous_attempt_cancelled: bool,
+        publisher_state: Optional[BoltState],
+        partner_state: Optional[BoltState],
+        publisher_id: str,
+        partner_id: str,
+        poll_interval: int,
+        logger: logging.Logger,
+    ) -> bool:
+        # Handle stuck containers by canceling the stage on the publisher or partner side.
+        # Note: We skip doing this for joint stages due to known issues with restarting containers for joint stages.
+        stage_cancelled = False
+        if not previous_attempt_timeout or previous_attempt_cancelled:
+            # Kill the containers if we hit 2 consecutive stage timeouts
+            return stage_cancelled
+
+        if not stage.is_joint_stage:
+            publisher_timeout = (
+                publisher_state is not None
+                and publisher_state.pc_instance_status is not stage.completed_status
+            )
+            partner_timeout = (
+                partner_state is not None
+                and partner_state.pc_instance_status is not stage.completed_status
+            )
+
+            try:
+                if publisher_timeout:
+                    logger.error(
+                        f"Publisher timeout. Canceling stage on publisher side {stage.name}."
+                    )
+                    await self.publisher_client.cancel_current_stage(
+                        instance_id=publisher_id
+                    )
+                    await self.wait_valid_publisher_status(
+                        instance_id=publisher_id,
+                        poll_interval=poll_interval,
+                        timeout=WAIT_VALID_STATUS_TIMEOUT,
+                    )
+                if partner_timeout:
+                    logger.error(
+                        f"Partner timeout. Canceling stage on partner side {stage.name}."
+                    )
+                    await self.partner_client.cancel_current_stage(
+                        instance_id=partner_id
+                    )
+                stage_cancelled = True
+            except Exception as e:
+                logger.error(
+                    f"Unable to cancel current stage {stage.name}. Error: type: {type(e)}, message: {e}."
+                )
+
+        return stage_cancelled
 
     @bolt_checkpoint(
         dump_return_val=True,

@@ -11,7 +11,13 @@ class StageFailedException(ValueError):
 
 
 class StageTimeoutException(RuntimeError):
-    pass
+    def __init__(
+        self,
+        msg: str,
+        stage_cancelled: bool = False,
+    ) -> None:
+        super().__init__(msg)
+        self.stage_cancelled = stage_cancelled
 
 
 class WaitValidStatusTimeout(RuntimeError):
