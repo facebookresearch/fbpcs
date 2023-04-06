@@ -6,15 +6,17 @@
  */
 
 #include "fbpcs/pc_translator/input_processing/PCInstructionSet.h"
-
+#include <fbpcf/mpc_std_lib/oram/encoder/IFilter.h>
 #include <folly/json.h>
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
 namespace pc_translator {
 
+using IFilter = fbpcf::mpc_std_lib::oram::IFilter;
 const std::vector<std::string>& PCInstructionSet::getGroupByIds() const {
   return groupByIds;
 }
@@ -40,7 +42,22 @@ PCInstructionSet PCInstructionSet::fromDynamic(const folly::dynamic& obj) {
     for (auto constraint : constraints) {
       auto constraintType = constraint["constraint_type"].asString();
       auto constraintValue = constraint["value"].asInt();
-      FilterConstraint filterConstraint(name, constraintType, constraintValue);
+
+      std::map<std::string, IFilter::FilterType> filterMap = {
+          {"EQ", IFilter::FilterType::EQ},
+          {"NEQ", IFilter::FilterType::NEQ},
+          {"LT", IFilter::FilterType::LT},
+          {"LTE", IFilter::FilterType::LTE},
+          {"GT", IFilter::FilterType::GT},
+          {"GTE", IFilter::FilterType::GTE}};
+
+      auto it = filterMap.find(constraintType);
+      if (it == filterMap.end()) {
+        throw std::invalid_argument(
+            "Constraint type must be - GT, LT, GTE, LTE, EQ, NEQ");
+      }
+
+      FilterConstraint filterConstraint(name, it->second, constraintValue);
       pcInstructionSet.filterConstraints.push_back(filterConstraint);
     }
   }

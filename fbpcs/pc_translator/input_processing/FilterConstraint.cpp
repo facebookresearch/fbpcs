@@ -6,16 +6,21 @@
  */
 
 #include "fbpcs/pc_translator/input_processing/FilterConstraint.h"
+#include <fbpcf/mpc_std_lib/oram/encoder/IFilter.h>
 
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
+using fbpcf::mpc_std_lib::oram::IFilter;
 namespace pc_translator {
+
+using IFilter = fbpcf::mpc_std_lib::oram::IFilter;
+
 FilterConstraint::FilterConstraint(
     const std::string& name,
-    const std::string& type,
+    const IFilter::FilterType type,
     int value)
     : name_(name), type_(type), value_(value) {}
 
@@ -23,7 +28,7 @@ std::string FilterConstraint::getName() const {
   return name_;
 }
 
-std::string FilterConstraint::getType() const {
+IFilter::FilterType FilterConstraint::getType() const {
   return type_;
 }
 

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <fbpcf/mpc_std_lib/oram/encoder/IFilter.h>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -14,12 +15,16 @@
 
 namespace pc_translator {
 
+using IFilter = fbpcf::mpc_std_lib::oram::IFilter;
 /*
  * Class to store each filter constraint include in the PC instruction set.
  */
 class FilterConstraint {
  public:
-  FilterConstraint(const std::string& name, const std::string& type, int value);
+  FilterConstraint(
+      const std::string& name,
+      const IFilter::FilterType type,
+      int value);
 
   /*
    * Name of the filter constraint i.e. the field on which this filter is to be
@@ -30,13 +35,13 @@ class FilterConstraint {
   /*
    * Constraint type i.e. LT, LTE, EQ, NEQ etc.
    */
-  std::string getType() const;
+  IFilter::FilterType getType() const;
 
   int getValue() const;
 
  private:
   std::string name_;
-  std::string type_;
+  IFilter::FilterType type_;
   int value_;
 };
 

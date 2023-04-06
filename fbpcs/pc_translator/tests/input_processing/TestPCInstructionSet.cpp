@@ -15,6 +15,9 @@
 #include "fbpcs/pc_translator/input_processing/PCInstructionSet.h"
 
 namespace pc_translator {
+
+using IFilter = fbpcf::mpc_std_lib::oram::IFilter;
+
 class TestPCInstructionSet : public ::testing::Test {
  public:
  protected:
@@ -36,7 +39,7 @@ TEST_F(TestPCInstructionSet, TestStandardWorkflowTest) {
   EXPECT_EQ(groupByIds.size(), 2);
   EXPECT_EQ(filterConstraints.size(), 3);
   EXPECT_EQ(filterConstraints[0].getName(), "gender");
-  EXPECT_EQ(filterConstraints[0].getType(), "EQ");
+  EXPECT_EQ(filterConstraints[0].getType(), IFilter::FilterType::EQ);
   EXPECT_EQ(filterConstraints[0].getValue(), 0);
 }
 

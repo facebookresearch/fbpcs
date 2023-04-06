@@ -24,6 +24,8 @@
 
 namespace pc_translator {
 
+using IFilter = fbpcf::mpc_std_lib::oram::IFilter;
+
 std::string PCTranslator::encode(const std::string& inputDatasetPath) {
   auto validInstructionSetNames =
       PCTranslator::retrieveInstructionSetNamesForRun(pcsFeatures_);
@@ -89,6 +91,7 @@ std::string PCTranslator::transformDataset(
   std::vector<std::vector<uint32_t>> inputColums;
   std::vector<std::string> outputHeader;
   std::vector<std::vector<std::string>> outputContent;
+  auto filters = std::make_unique<std::vector<std::unique_ptr<IFilter>>>(0);
   private_measurement::csv::readCsv(
       inputDatasetPath,
       [&](const std::vector<std::string>& header,
@@ -96,19 +99,32 @@ std::string PCTranslator::transformDataset(
         std::vector<uint32_t> inputColumnPerRow;
         std::string column;
         std::uint32_t value;
-        bool found = false;
+        auto groupByIndex = 0;
         std::vector<std::string> outputContentPerRow;
         for (std::vector<std::string>::size_type i = 0; i < header.size();
              ++i) {
+          bool foundGroupByField = false;
           column = header[i];
           value = std::atoi(parts[i].c_str());
-          found =
+          foundGroupByField =
               (std::find(
                    pcInstructionSet->getGroupByIds().begin(),
                    pcInstructionSet->getGroupByIds().end(),
                    column) != pcInstructionSet->getGroupByIds().end());
-          if (found) {
+
+          if (foundGroupByField) {
             inputColumnPerRow.push_back(value);
+            for (const auto& filterConstraint :
+                 pcInstructionSet->getFilterConstraints()) {
+              if (filterConstraint.getName() == column) {
+                filters->push_back(std::make_unique<
+                                   fbpcf::mpc_std_lib::oram::SingleValueFilter>(
+                    filterConstraint.getType(),
+                    groupByIndex,
+                    filterConstraint.getValue()));
+              }
+            }
+            groupByIndex++;
           } else {
             if (lineNo == 0) {
               outputHeader.push_back(header[i]);
@@ -122,8 +138,6 @@ std::string PCTranslator::transformDataset(
         lineNo++;
       });
 
-  auto filters = std::make_unique<
-      std::vector<std::unique_ptr<fbpcf::mpc_std_lib::oram::IFilter>>>(0);
   std::unique_ptr<fbpcf::mpc_std_lib::oram::IOramEncoder> encoder =
       std::make_unique<fbpcf::mpc_std_lib::oram::OramEncoder>(
           std::move(filters));
