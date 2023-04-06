@@ -53,3 +53,4 @@ mpc:
         base_dir: /fbpcs_instances
 graphapi:
   access_token: TODO
+automatic_objective_selection_for_testing: true
