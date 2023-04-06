@@ -10,7 +10,7 @@ on:
         type: string
       objective_id:
         description: Lift objective id
-        required: true
+        required: false
         type: string
       input_path:
         description: S3 path to synthetic data
@@ -59,8 +59,7 @@ on:
         default: '32102205110410'
       objective_id:
         description: Lift objective id
-        required: true
-        default: '23502204952992'
+        required: false
       input_path:
         description: S3 path to synthetic data
         required: true
