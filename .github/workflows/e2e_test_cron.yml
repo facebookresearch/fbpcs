@@ -2,66 +2,41 @@ name: End to End Tests on RC
 run-name: End to End test on RC
 
 on:
-  # TODO: T143464183 Re-enable the cron workflow when new objective IDs have been created specifically for this workflow.
-  # schedule:
-  #   - cron: '0 16-22/2 * * 1-5' # Every 2 hours from 16:00 - 22:00 UTC (8-2 PST and 9-3 PDT) M-F
+  schedule:
+    - cron: '0 16-22/2 * * 1-5' # Every 2 hours from 16:00 - 22:00 UTC (8-2 PST and 9-3 PDT) M-F
   workflow_dispatch:
 
 
-env:
-  PL_OBJECTIVE_IDS: '26302205209752 48202203915710 12702205218446 47602203893549'
-  MK_PL_OBJECTIVE_IDS: '51102205479562 13102207513846 32102207325119 27202207265494'
-
-
 jobs:
-  select_pl_objective_id:
-    name: Select the PL Objective ID
-    runs-on: ubuntu-latest
-    outputs:
-      pl_objective_id: ${{ steps.select_pl_objective_id.outputs.objective_id }}
-    steps:
-      - name: Select PL Objective ID
-        id: select_pl_objective_id
-        run: |
-          hour=$(date -u +"%H")
-          idx=$(( ($hour - 16)/2 ))
-          objective_ids_array=(${{ env.PL_OBJECTIVE_IDS }})
-          OBJECTIVE_ID=${objective_ids_array[$idx]}
-          echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
-
-  select_mk_pl_objective_id:
-    name: Select the Multi-Key PL Objective ID
-    runs-on: ubuntu-latest
-    outputs:
-      pl_objective_id: ${{ steps.select_pl_objective_id.outputs.objective_id }}
-    steps:
-      - name: Select MK PL Objective ID
-        id: select_pl_objective_id
-        run: |
-          hour=$(date -u +"%H")
-          idx=$(( ($hour - 16)/2 ))
-          objective_ids_array=(${{ env.MK_PL_OBJECTIVE_IDS }})
-          OBJECTIVE_ID=${objective_ids_array[$idx]}
-          echo "objective_id=$OBJECTIVE_ID" >> $GITHUB_OUTPUT
-
   pl_test:
     name: PL E2E Test
-    needs: select_pl_objective_id
     uses: ./.github/workflows/one_command_runner_test.yml
     with:
-      study_id: '32102205110410'
-      objective_id: ${{ needs.select_pl_objective_id.outputs.pl_objective_id }}
+      study_id: '322561936733136'
+      input_path: "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_input.csv"
+      expected_result_path: "https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_pcf2.json"
       build_id: cron
       test_name: PL E2E Tests
+      test_config: config_pl_test.yml
+    secrets: inherit # pass all secrets
+
+  pl_test:
+    name: UDP PL E2E Test
+    uses: ./.github/workflows/one_command_runner_test.yml
+    with:
+      study_id: '44902210680731'
+      input_path: "https://fbpcs-github-e2e-runner.s3.us-west-1.amazonaws.com/lift/inputs/partner_e2e_input.csv"
+      expected_result_path: "https://fbpcs-github-e2e-runner.s3.us-west-1.amazonaws.com/lift/results/partner_expected_result_pcf2.json"
+      build_id: cron
+      test_name: UDP Tests
+      test_config: rc_udp_pl_test.yml
     secrets: inherit # pass all secrets
 
   mk_pl_test:
     name: Multi-Key PL E2E Test
-    needs: select_mk_pl_objective_id
     uses: ./.github/workflows/one_command_runner_test.yml
     with:
       study_id: '38402205691678'
-      objective_id: ${{ needs.select_mk_pl_objective_id.outputs.pl_objective_id }}
       input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/inputs/partner_e2e_multikey_input.csv
       expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/lift/results/partner_expected_result_multikey.json
       build_id: cron
