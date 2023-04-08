@@ -10,7 +10,9 @@ Install docker
 1. Download the `infra` directory
   * run the following command:
 ```
-git clone https://github.com/facebookresearch/fbpcs.git
+git clone https://github.com/facebookresearch/fbpcs.git mrpid-infra
+cd mrpid-infra
+git checkout 3d263fd21f631ec531d039f93f449095002d493d
 ```
 2. Change to `mr_pid/publisher` directory
   * run the following command
