@@ -63,51 +63,53 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
     cd "$SCRIPT_DIR" || exit
     mkdir -p binaries_out
 
+TEMP_CONTAINER_NAME="temp_container_$TAG"
+
+clean_up_container() {
+  docker rm -f "$TEMP_CONTAINER_NAME"
+}
+
+trap "clean_up_container" EXIT
 if [ "$PACKAGE" = "emp_games" ]; then
-docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
-docker cp temp_container:/usr/local/bin/lift_calculator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/pcf2_lift_calculator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/pcf2_lift_metadata_compaction "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/udp_encryptor "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/decoupled_attribution_calculator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/decoupled_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/pcf2_attribution_calculator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/pcf2_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/shard_aggregator "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/pcf2_shard_combiner "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/private_id_dfca_aggregator "$SCRIPT_DIR/binaries_out/."
-docker rm -f temp_container
+docker create -ti --name "$TEMP_CONTAINER_NAME" "${DOCKER_IMAGE_PATH}"
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/lift_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/pcf2_lift_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/pcf2_lift_metadata_compaction "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/udp_encryptor "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/decoupled_attribution_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/decoupled_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/pcf2_attribution_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/pcf2_aggregation_calculator "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/shard_aggregator "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/pcf2_shard_combiner "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/private_id_dfca_aggregator "$SCRIPT_DIR/binaries_out/."
 fi
 
 if [ "$PACKAGE" = "data_processing" ]; then
-docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
-docker cp temp_container:/usr/local/bin/sharder "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/sharder_hashed_for_pid "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/secure_random_sharder "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/pid_preparer "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/lift_id_combiner "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/attribution_id_combiner "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/private_id_dfca_id_combiner "$SCRIPT_DIR/binaries_out/."
-docker rm -f temp_container
+docker create -ti --name "$TEMP_CONTAINER_NAME" "${DOCKER_IMAGE_PATH}"
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/sharder "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/sharder_hashed_for_pid "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/secure_random_sharder "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/pid_preparer "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/lift_id_combiner "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/attribution_id_combiner "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/private_id_dfca_id_combiner "$SCRIPT_DIR/binaries_out/."
 fi
 
 if [ "$PACKAGE" = "pid" ]; then
-docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
-docker cp temp_container:/usr/local/bin/private-id-server "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/private-id-client "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/private-id-multi-key-server "$SCRIPT_DIR/binaries_out/."
-docker cp temp_container:/usr/local/bin/private-id-multi-key-client "$SCRIPT_DIR/binaries_out/."
-docker rm -f temp_container
+docker create -ti --name "$TEMP_CONTAINER_NAME" "${DOCKER_IMAGE_PATH}"
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/private-id-server "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/private-id-client "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/private-id-multi-key-server "$SCRIPT_DIR/binaries_out/."
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/private-id-multi-key-client "$SCRIPT_DIR/binaries_out/."
 fi
 
 if [ "$PACKAGE" = "validation" ]; then
-docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
-docker cp temp_container:/usr/local/bin/pc_pre_validation_cli "$SCRIPT_DIR/binaries_out/."
-docker rm -f temp_container
+docker create -ti --name "$TEMP_CONTAINER_NAME" "${DOCKER_IMAGE_PATH}"
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/pc_pre_validation_cli "$SCRIPT_DIR/binaries_out/."
 fi
 
 if [ "$PACKAGE" = "smart_agent" ]; then
-docker create -ti --name temp_container "${DOCKER_IMAGE_PATH}"
-docker cp temp_container:/usr/local/bin/smart_agent_server "$SCRIPT_DIR/binaries_out/."
-docker rm -f temp_container
+docker create -ti --name "$TEMP_CONTAINER_NAME" "${DOCKER_IMAGE_PATH}"
+docker cp "$TEMP_CONTAINER_NAME":/usr/local/bin/smart_agent_server "$SCRIPT_DIR/binaries_out/."
 fi
