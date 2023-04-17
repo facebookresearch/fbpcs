@@ -14,8 +14,6 @@ usage() {
         [ -r, --region | MR-PID Partner AWS region, e.g. us-west-2 ]
         [ -a, --account_id | MR-PID Partner AWS account ID]
         [ -p, --publisher_account_id | MR-PID Publisher AWS account ID]
-        [ -i, --pce_instance_id | Publisher PCE instance ID]
-        [ -u, --partner_unique_tag | Partner Deployment unique Tag]
         [ -b, --bucket | optional. S3 bucket name for storing configs: tfstate]"
     exit 1
 }
@@ -38,8 +36,6 @@ while [ $# -gt 0 ]; do
         -r|--region) region="$2" ;;
         -a|--account_id) aws_account_id="$2" ;;
         -p|--publisher_account_id) publisher_account_id="$2" ;;
-        -i|--pce_instance_id) pce_instance_id="$2" ;;
-        -u|--partner_unique_tag) partner_unique_tag="$2" ;;
         -b|--bucket) s3_bucket_for_storage="$2" ;;
         *) usage ;;
     esac
@@ -64,6 +60,8 @@ undeploy_aws_resources () {
     check_s3_object_exist "$s3_bucket_for_storage" "tfstate/pid$tag_postfix.tfstate" "$aws_account_id"
     echo "All tfstate files exist. Continue..."
 
+    md5hash_aws_account_id=$(echo -n $aws_account_id | md5sum | awk '{print $1}')
+
     echo "########################Delete MR-PID resources########################"
     cd /terraform_deployment/terraform_scripts
     terraform init \
@@ -74,9 +72,8 @@ undeploy_aws_resources () {
         -auto-approve \
         -var "aws_region=$region" \
         -var "pid_id=$pid_id" \
-        -var "pce_instance_id=$pce_instance_id" \
-        -var "publisher_account_id=$publisher_account_id" \
-        -var "partner_unique_tag=$partner_unique_tag"
+        -var "md5hash_aws_account_id=$md5hash_aws_account_id" \
+        -var "publisher_account_id=$publisher_account_id"
 }
 
 deploy_aws_resources () {
@@ -86,6 +83,8 @@ deploy_aws_resources () {
     echo "########################Started MR-PID AWS Infrastructure Deployment########################"
     echo "creating s3 bucket, if it does not exist"
     validate_or_create_s3_bucket "$s3_bucket_for_storage" "$region" "$aws_account_id"
+
+    md5hash_aws_account_id=$(echo -n $aws_account_id | md5sum | awk '{print $1}')
 
     # Deploy MR-PID Partner Terraform scripts
     cd /terraform_deployment/terraform_scripts
@@ -97,9 +96,8 @@ deploy_aws_resources () {
         -auto-approve \
         -var "aws_region=$region" \
         -var "pid_id=$pid_id" \
-        -var "pce_instance_id=$pce_instance_id" \
-        -var "publisher_account_id=$publisher_account_id" \
-        -var "partner_unique_tag=$partner_unique_tag"
+        -var "md5hash_aws_account_id=$md5hash_aws_account_id" \
+        -var "publisher_account_id=$publisher_account_id"
 
     state_machine_arn=$(terraform output mrpid_partner_sfn_arn | tr -d '"' )
 
@@ -140,8 +138,6 @@ fi
 echo "MR-PID Partner AWS region is $region."
 echo "MR-PID Partner AWS acount ID is $aws_account_id"
 echo "MR-PID Publisher AWS acount ID is $publisher_account_id"
-echo "Publisher PCE instance ID is $pce_instance_id"
-echo "Partner Deployment unique Tag is $partner_unique_tag"
 echo "The S3 bucket for storing the Terraform state file is $s3_bucket_for_storage and it is in region $region"
 
 if "$undeploy"

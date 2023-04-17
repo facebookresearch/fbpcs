@@ -9,7 +9,7 @@ variable "pid_id" {
   description = "The identifier for marking the cloud resources in MR PID"
 }
 
-variable "pce_instance_id" {
+variable "md5hash_partner_account_id" {
   type        = string
-  description = "Publisher PCE instance ID"
+  description = "MD5 hashed Partner AWS account ID"
 }

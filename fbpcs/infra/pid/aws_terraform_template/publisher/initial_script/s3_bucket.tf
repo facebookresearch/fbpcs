@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "mrpid_publisher_intermediate_bucket" {
-  bucket = "mrpid-publisher-${var.pce_instance_id}"
+  bucket = "mrpid-publisher-${var.md5hash_partner_account_id}"
   force_destroy = true
 }
 
@@ -13,7 +13,7 @@ resource "aws_s3_bucket_public_access_block" "mrpid_block_public_access" {
 }
 
 resource "aws_s3_bucket" "mrpid_publisher_confs_bucket" {
-  bucket = "mrpid-publisher-${var.pce_instance_id}-confs"
+  bucket = "mrpid-publisher-${var.md5hash_partner_account_id}-confs"
   force_destroy = true
 }
 
@@ -55,37 +55,37 @@ sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /de
         "collect_list": [
           {
             "file_path": "/mnt/var/log/spark/PubStageOneConsole.log",
-            "log_group_name": "mrpid-publisher-ec2-log-group-${var.pce_instance_id}",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_one_console_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PubStageTwoConsole.log",
-            "log_group_name": "mrpid-publisher-ec2-log-group-${var.pce_instance_id}",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_two_console_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PubStageThreeConsole.log",
-            "log_group_name": "mrpid-publisher-ec2-log-group-${var.pce_instance_id}",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_three_console_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PubStageOneYarn.log",
-            "log_group_name": "mrpid-publisher-ec2-log-group-${var.pce_instance_id}",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_one_yarn_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PubStageTwoYarn.log",
-            "log_group_name": "mrpid-publisher-ec2-log-group-${var.pce_instance_id}",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_two_yarn_log",
             "timezone": "UTC"
           },
           {
             "file_path": "/mnt/var/log/spark/PubStageThreeYarn.log",
-            "log_group_name": "mrpid-publisher-ec2-log-group-${var.pce_instance_id}",
+            "log_group_name": "mrpid-publisher-ec2-log-group-${var.md5hash_partner_account_id}",
             "log_stream_name": "publisher_stage_three_yarn_log",
             "timezone": "UTC"
           }
