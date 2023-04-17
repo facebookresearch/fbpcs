@@ -92,7 +92,8 @@ input_validation () {
     local region=$1
     local tag_postfix=$2
     local aws_account_id=$3
-    local s3_bucket_for_storage=$4
+    local partner_aws_account_id=$4
+    local s3_bucket_for_storage=$5
     echo "######################input validation############################"
 
     echo "validate AWS credential..."
@@ -135,6 +136,7 @@ input_validation () {
         exit 1
     fi
 
+    echo "Partner's AWS account ID is $partner_aws_account_id"
     echo "validate input: s3 buckets..."
     echo "The S3 bucket for storing Terraform state file is $s3_bucket_for_storage"
     validate_bucket_name "$s3_bucket_for_storage"

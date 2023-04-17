@@ -1,5 +1,5 @@
 resource "aws_iam_role" "mrpid_publisher_emr_role" {
-  name = "mrpid-publisher-emr-role-${var.pce_instance_id}"
+  name = "mrpid-publisher-emr-role-${var.md5hash_partner_account_id}"
 
   assume_role_policy = <<POLICY
 {

@@ -66,7 +66,7 @@ data "template_file" "publisher_sfn_definition" {
           {
             "Name": "install-cloudwatch-agent",
             "ScriptBootstrapAction": {
-              "Path": "s3://mrpid-publisher-${var.pce_instance_id}-confs/cloudwatch_agent/cloudwatch_agent_install.sh",
+              "Path": "s3://mrpid-publisher-${var.md5hash_partner_account_id}-confs/cloudwatch_agent/cloudwatch_agent_install.sh",
               "Args": []
             }
           }
@@ -106,7 +106,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=2 --class com.meta.mr.multikey.publisher.PubStageOne {} s3://mrpid-publisher-${var.pce_instance_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageOneConsole.log;exit_status=$(echo $?);applicationId=$(grep URL < /mnt/var/log/spark/PubStageOneConsole.log | head -n 1 | cut -d / -f5);yarn logs -applicationId $applicationId | sudo tee /mnt/var/log/spark/PubStageOneYarn.log;test $exit_status -eq 0', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.inputPath))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=2 --class com.meta.mr.multikey.publisher.PubStageOne {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageOneConsole.log;exit_status=$(echo $?);applicationId=$(grep URL < /mnt/var/log/spark/PubStageOneConsole.log | head -n 1 | cut -d / -f5);yarn logs -applicationId $applicationId | sudo tee /mnt/var/log/spark/PubStageOneYarn.log;test $exit_status -eq 0', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.inputPath))"
           }
         }
       },
@@ -126,7 +126,7 @@ data "template_file" "publisher_sfn_definition" {
     "Wait_for_stage_two_ready": {
       "Type": "Task",
       "Parameters": {
-        "Bucket": "mrpid-partner-${var.partner_unique_tag}",
+        "Bucket": "mrpid-partner-${var.md5hash_partner_account_id}",
         "Key.$": "States.Format('{}/step_1_meta_enc_kc_kp/_SUCCESS', $.instanceId)"
       },
       "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
@@ -162,7 +162,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=2 --class com.meta.mr.multikey.publisher.PubStageTwo {} s3://mrpid-publisher-${var.pce_instance_id}/{} {} s3://mrpid-partner-${var.partner_unique_tag}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageTwoConsole.log;exit_status=$(echo $?);applicationId=$(grep URL < /mnt/var/log/spark/PubStageTwoConsole.log | head -n 1 | cut -d / -f5);yarn logs -applicationId $applicationId | sudo tee /mnt/var/log/spark/PubStageTwoYarn.log;test $exit_status -eq 0', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.instanceId))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=2 --class com.meta.mr.multikey.publisher.PubStageTwo {} s3://mrpid-publisher-${var.md5hash_partner_account_id}/{} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} 2>&1 | sudo tee /mnt/var/log/spark/PubStageTwoConsole.log;exit_status=$(echo $?);applicationId=$(grep URL < /mnt/var/log/spark/PubStageTwoConsole.log | head -n 1 | cut -d / -f5);yarn logs -applicationId $applicationId | sudo tee /mnt/var/log/spark/PubStageTwoYarn.log;test $exit_status -eq 0', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.instanceId, $.outputPath, $.instanceId))"
           }
         }
       },
@@ -182,7 +182,7 @@ data "template_file" "publisher_sfn_definition" {
     "Wait_for_stage_three_ready": {
       "Type": "Task",
       "Parameters": {
-        "Bucket": "mrpid-partner-${var.partner_unique_tag}",
+        "Bucket": "mrpid-partner-${var.md5hash_partner_account_id}",
         "Key.$": "States.Format('{}/step_3_meta_all_enc_kc_kp_rc_sc_rp/_SUCCESS', $.instanceId)"
       },
       "Resource": "arn:aws:states:::aws-sdk:s3:getObject",
@@ -218,7 +218,7 @@ data "template_file" "publisher_sfn_definition" {
           "ActionOnFailure": "TERMINATE_JOB_FLOW",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=2 --class com.meta.mr.multikey.publisher.PubStageThree {} {} s3://mrpid-partner-${var.partner_unique_tag}/{} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageThreeConsole.log;exit_status=$(echo $?);applicationId=$(grep URL < /mnt/var/log/spark/PubStageThreeConsole.log | head -n 1 | cut -d / -f5);yarn logs -applicationId $applicationId | sudo tee /mnt/var/log/spark/PubStageThreeYarn.log;test $exit_status -eq 0', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.outputPath, $.instanceId, $.numPidContainers))"
+            "Args.$": "States.Array('bash', '-c', States.Format('set -o pipefail;spark-submit --deploy-mode cluster --master yarn --jars {} --num-executors 10 --executor-cores 5 --executor-memory 3G --conf spark.driver.memory=10G --conf spark.sql.shuffle.partitions=10 --conf spark.yarn.maxAppAttempts=2 --class com.meta.mr.multikey.publisher.PubStageThree {} {} s3://mrpid-partner-${var.md5hash_partner_account_id}/{} {} 2>&1 | sudo tee /mnt/var/log/spark/PubStageThreeConsole.log;exit_status=$(echo $?);applicationId=$(grep URL < /mnt/var/log/spark/PubStageThreeConsole.log | head -n 1 | cut -d / -f5);yarn logs -applicationId $applicationId | sudo tee /mnt/var/log/spark/PubStageThreeYarn.log;test $exit_status -eq 0', $.pidMrMultikeyJarPath, $.pidMrMultikeyJarPath, $.outputPath, $.instanceId, $.numPidContainers))"
           }
         }
       },

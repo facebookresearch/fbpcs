@@ -1,5 +1,5 @@
 resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_partner_account" {
-  bucket = "mrpid-publisher-${var.pce_instance_id}"
+  bucket = "mrpid-publisher-${var.md5hash_partner_account_id}"
 
   policy = <<EOF
 {
@@ -15,8 +15,8 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_partner_account" {
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}/*",
-        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}"
+        "arn:aws:s3:::mrpid-publisher-${var.md5hash_partner_account_id}/*",
+        "arn:aws:s3:::mrpid-publisher-${var.md5hash_partner_account_id}"
       ]
     },
     {
@@ -26,8 +26,8 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_partner_account" {
       },
       "Action": "s3:*",
       "Resource": [
-        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}/*",
-        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}"
+        "arn:aws:s3:::mrpid-publisher-${var.md5hash_partner_account_id}/*",
+        "arn:aws:s3:::mrpid-publisher-${var.md5hash_partner_account_id}"
       ],
       "Condition": {
         "Bool": {
@@ -42,8 +42,8 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_partner_account" {
       },
       "Action": "s3:*",
       "Resource": [
-        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}/*",
-        "arn:aws:s3:::mrpid-publisher-${var.pce_instance_id}"
+        "arn:aws:s3:::mrpid-publisher-${var.md5hash_partner_account_id}/*",
+        "arn:aws:s3:::mrpid-publisher-${var.md5hash_partner_account_id}"
       ],
       "Condition": {
         "NumericLessThan": {

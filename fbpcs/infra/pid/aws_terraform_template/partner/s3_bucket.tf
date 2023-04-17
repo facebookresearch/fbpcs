@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "mrpid_partner_intermediate_bucket" {
-  bucket = "mrpid-partner-${var.partner_unique_tag}"
+  bucket = "mrpid-partner-${var.md5hash_aws_account_id}"
   force_destroy = true
 }
 
@@ -22,15 +22,15 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_publisher_account"
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": ["arn:aws:iam::${var.publisher_account_id}:role/mrpid-publisher-ec2-role-${var.pce_instance_id}", "arn:aws:iam::${var.publisher_account_id}:role/mrpid-publisher-sfn-role-${var.pce_instance_id}"]
+        "AWS": ["arn:aws:iam::${var.publisher_account_id}:role/mrpid-publisher-ec2-role-${var.md5hash_aws_account_id}", "arn:aws:iam::${var.publisher_account_id}:role/mrpid-publisher-sfn-role-${var.md5hash_aws_account_id}"]
       },
       "Action": [
         "s3:GetObject",
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::mrpid-partner-${var.partner_unique_tag}/*",
-        "arn:aws:s3:::mrpid-partner-${var.partner_unique_tag}"
+        "arn:aws:s3:::mrpid-partner-${var.md5hash_aws_account_id}/*",
+        "arn:aws:s3:::mrpid-partner-${var.md5hash_aws_account_id}"
       ]
     },
     {
@@ -40,8 +40,8 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_publisher_account"
       },
       "Action": "s3:*",
       "Resource": [
-        "arn:aws:s3:::mrpid-partner-${var.partner_unique_tag}/*",
-        "arn:aws:s3:::mrpid-partner-${var.partner_unique_tag}"
+        "arn:aws:s3:::mrpid-partner-${var.md5hash_aws_account_id}/*",
+        "arn:aws:s3:::mrpid-partner-${var.md5hash_aws_account_id}"
       ],
       "Condition": {
         "Bool": {
@@ -56,8 +56,8 @@ resource "aws_s3_bucket_policy" "mrpid_allow_read_access_from_publisher_account"
       },
       "Action": "s3:*",
       "Resource": [
-        "arn:aws:s3:::mrpid-partner-${var.partner_unique_tag}/*",
-        "arn:aws:s3:::mrpid-partner-${var.partner_unique_tag}"
+        "arn:aws:s3:::mrpid-partner-${var.md5hash_aws_account_id}/*",
+        "arn:aws:s3:::mrpid-partner-${var.md5hash_aws_account_id}"
       ],
       "Condition": {
         "NumericLessThan": {
@@ -71,7 +71,7 @@ EOF
 }
 
 resource "aws_s3_bucket" "mrpid_partner_confs_bucket" {
-  bucket = "mrpid-partner-${var.partner_unique_tag}-confs"
+  bucket = "mrpid-partner-${var.md5hash_aws_account_id}-confs"
   force_destroy = true
 }
 

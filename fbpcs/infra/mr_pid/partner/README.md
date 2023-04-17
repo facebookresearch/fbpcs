@@ -10,9 +10,7 @@ Install docker
 1. Download the `infra` directory
   * run the following command:
 ```
-git clone https://github.com/facebookresearch/fbpcs.git mrpid-infra
-cd mrpid-infra
-git checkout 3d263fd21f631ec531d039f93f449095002d493d
+git clone https://github.com/facebookresearch/fbpcs.git
 ```
 2. Change to `mr_pid/partner` directory
   * run the following command
@@ -62,14 +60,14 @@ export TF_LOG_STREAMING=/tmp/deploymentStream.log
  * For standard `deploy`, run the following command
 
 ```
-/bin/bash mrpid_partner_deploy.sh deploy -r <> -t <> -a <> -p <> -i <> -u <> -b <optional>
-example: /bin/bash mrpid_partner_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545 -i 510d2d50b15742c0ac63b346de16a0b4 -u nuu5
+/bin/bash mrpid_partner_deploy.sh deploy -r <> -t <> -a <> -p <> -b <optional>
+example: /bin/bash mrpid_partner_deploy.sh deploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
 ```
 
  * For standard `undeploy`, run the following command
 ```
-/bin/bash mrpid_partner_deploy.sh undeploy -r <> -t <> -a <> -p <> -i <> -u <> -b <optional>
-example: /bin/bash mrpid_partner_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545 -i 510d2d50b15742c0ac63b346de16a0b4 -u nuu5
+/bin/bash mrpid_partner_deploy.sh undeploy -r <> -t <> -a <> -p <> -b <optional>
+example: /bin/bash mrpid_partner_deploy.sh undeploy -r us-west-2 -t your-tag-name -a 627672676272 -p 43454354533545
 ```
 
 # Notes
