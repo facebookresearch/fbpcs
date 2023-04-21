@@ -889,12 +889,13 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
         joint_stage = PrivateComputationStageFlow.COMPUTE
         non_joint_stage = PrivateComputationStageFlow.POST_PROCESSING_HANDLERS
 
-        def _run_sub_test(cert, hostnames, stage):
+        def _run_sub_test(cert, hostnames, stage, game_type):
             stage_svc = AsyncMock(spec=self._get_dummy_stage_svc())
             pl_instance = self.create_sample_instance(
                 status=stage.previous_stage.completed_status,
                 role=PrivateComputationRole.PARTNER,
                 pcs_features={PCSFeature.PCF_TLS},
+                game_type=game_type,
             )
             self.private_computation_service.instance_repository.read = MagicMock(
                 return_value=pl_instance
@@ -911,15 +912,21 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
 
         # Act & Assert
         with self.assertRaises(ValueError):
-            _run_sub_test(None, None, joint_stage)
+            _run_sub_test(None, None, joint_stage, PrivateComputationGameType.LIFT)
 
         with self.assertRaises(ValueError):
-            _run_sub_test(valid_cert, None, joint_stage)
+            _run_sub_test(
+                valid_cert, None, joint_stage, PrivateComputationGameType.LIFT
+            )
 
         with self.assertRaises(ValueError):
-            _run_sub_test(None, valid_hostnames, joint_stage)
+            _run_sub_test(
+                None, valid_hostnames, joint_stage, PrivateComputationGameType.LIFT
+            )
 
-        _run_sub_test(None, None, non_joint_stage)
+        _run_sub_test(None, None, non_joint_stage, PrivateComputationGameType.LIFT)
+
+        _run_sub_test(None, None, joint_stage, PrivateComputationGameType.ATTRIBUTION)
 
     def test_run_stage_partner_tls(
         self,
