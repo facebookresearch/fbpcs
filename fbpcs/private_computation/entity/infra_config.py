@@ -52,6 +52,11 @@ class PrivateComputationGameType(Enum):
     ANONYMIZER = "ANONYMIZER"
 
 
+TLS_SUPPORTED_GAME_TYPES: Set[PrivateComputationGameType] = {
+    PrivateComputationGameType.LIFT
+}
+
+
 UnionedPCInstance = Union[PostProcessingInstance, StageStateInstance]
 
 
@@ -193,6 +198,14 @@ class InfraConfig(DataClassJsonMixin, DataclassMutabilityMixin):
 
         return PrivateComputationBaseStageFlow.cls_name_to_cls(
             self._stage_flow_cls_name
+        )
+
+    @property
+    def is_tls_enabled(self) -> bool:
+        """Returns true if the TLS feature is enabled; otherwise, false."""
+        return (
+            PCSFeature.PCF_TLS in self.pcs_features
+            and self.game_type in TLS_SUPPORTED_GAME_TYPES
         )
 
     def is_stage_flow_completed(self) -> bool:

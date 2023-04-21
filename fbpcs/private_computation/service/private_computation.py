@@ -653,7 +653,7 @@ class PrivateComputationService:
     ) -> CertificateProvider:
         if (
             pc_instance.infra_config.role == PrivateComputationRole.PUBLISHER
-            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+            and pc_instance.infra_config.is_tls_enabled
         ):
             return PCInstanceServerCertificateProvider(pc_instance)
         else:
@@ -664,7 +664,7 @@ class PrivateComputationService:
     ) -> PrivateKeyReferenceProvider:
         if (
             pc_instance.infra_config.role == PrivateComputationRole.PUBLISHER
-            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+            and pc_instance.infra_config.is_tls_enabled
             and pc_instance.infra_config.server_key_ref
             and pc_instance.infra_config.pce_config
         ):
@@ -681,13 +681,13 @@ class PrivateComputationService:
     ) -> CertificateProvider:
         if (
             pc_instance.infra_config.role == PrivateComputationRole.PUBLISHER
-            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+            and pc_instance.infra_config.is_tls_enabled
         ):
             return PCInstanceCaCertificateProvider(pc_instance)
         if (
             pc_instance.infra_config.role == PrivateComputationRole.PARTNER
             and ca_certificate
-            and pc_instance.has_feature(PCSFeature.PCF_TLS)
+            and pc_instance.infra_config.is_tls_enabled
         ):
             return BasicCaCertificateProvider(ca_certificate)
         return NullCertificateProvider()
@@ -715,7 +715,7 @@ class PrivateComputationService:
         )
 
         # TODO: T136265785 refactor the tls input validation logic into a TLS config class
-        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
+        enable_tls = pc_instance.infra_config.is_tls_enabled
         if enable_tls:
             self._validate_tls_data(
                 pc_instance, stage, server_hostnames, ca_certificate

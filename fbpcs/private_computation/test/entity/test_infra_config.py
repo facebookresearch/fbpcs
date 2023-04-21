@@ -13,6 +13,7 @@ from fbpcs.private_computation.entity.infra_config import (
     PrivateComputationRole,
     StatusUpdate,
 )
+from fbpcs.private_computation.entity.pcs_feature import PCSFeature
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstanceStatus,
 )
@@ -24,6 +25,56 @@ class TestInfraConfig(unittest.TestCase):
 
     def test_is_stage_flow_completed(self) -> None:
         pass
+
+    def test_is_tls_enabled_when_flag_missing(self):
+        # Arrange
+        config = self._create_config(PrivateComputationGameType.LIFT, set())
+
+        # Act
+        is_tls_enabled = config.is_tls_enabled
+
+        # Assert
+        self.assertFalse(is_tls_enabled)
+
+    def test_is_tls_enabled_when_not_supported(self):
+        # Arrange
+        config = self._create_config(
+            PrivateComputationGameType.ATTRIBUTION, {PCSFeature.PCF_TLS}
+        )
+
+        # Act
+        is_tls_enabled = config.is_tls_enabled
+
+        # Assert
+        self.assertFalse(is_tls_enabled)
+
+    @patch("fbpcs.private_computation.entity.infra_config.InfraConfig")
+    def test_is_tls_enabled_when_supported_and_flag_present(self, mock_infra_config):
+        # Arrange
+        config = self._create_config(
+            PrivateComputationGameType.LIFT, {PCSFeature.PCF_TLS}
+        )
+
+        # Act
+        is_tls_enabled = config.is_tls_enabled
+
+        # Assert
+        self.assertTrue(is_tls_enabled)
+
+    def _create_config(self, game_type, pcs_features):
+        return InfraConfig(
+            instance_id="test-instance-id",
+            role=PrivateComputationRole.PARTNER,
+            status=PrivateComputationInstanceStatus.CREATED,
+            status_update_ts=1,
+            instances=[],
+            game_type=game_type,
+            num_pid_containers=1,
+            num_mpc_containers=1,
+            num_files_per_mpc_container=1,
+            status_updates=[],
+            pcs_features=pcs_features,
+        )
 
 
 class TestInfraConfigFreeFunctions(unittest.TestCase):
