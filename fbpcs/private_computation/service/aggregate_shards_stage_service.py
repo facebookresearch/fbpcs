@@ -116,7 +116,7 @@ class AggregateShardsStageService(PrivateComputationStageService):
 
         env_vars = None
         env_vars_list = None
-        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+        if pc_instance.infra_config.is_tls_enabled:
             env_vars_list = generate_env_vars_dicts_list(
                 num_containers=len(cmd_args_list),
                 repository_path=binary_config.repository_path,

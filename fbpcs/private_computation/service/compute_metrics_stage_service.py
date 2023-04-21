@@ -165,7 +165,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
 
         env_vars = None
         env_vars_list = None
-        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+        if pc_instance.infra_config.is_tls_enabled:
             env_vars_list = generate_env_vars_dicts_list(
                 num_containers=len(cmd_args_list),
                 repository_path=binary_config.repository_path,
@@ -195,7 +195,7 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             opa_workflow_path=TLS_OPA_WORKFLOW_PATH
-            if pc_instance.has_feature(PCSFeature.PCF_TLS)
+            if pc_instance.infra_config.is_tls_enabled
             else None,
             permission=container_permission,
         )

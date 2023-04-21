@@ -216,7 +216,7 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
 
         issuer_certificate = None
         server_hostnames = None
-        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+        if pc_instance.infra_config.is_tls_enabled:
             issuer_certificate = pc_instance.infra_config.ca_certificate
             server_hostnames = pc_instance.server_uris
 

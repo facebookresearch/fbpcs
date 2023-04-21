@@ -137,7 +137,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
 
-        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
+        enable_tls = pc_instance.infra_config.is_tls_enabled
         if enable_tls and pc_instance.current_stage.is_joint_stage:
             if server_hostnames and len(server_hostnames) != len(game_args):
                 raise ValueError(
@@ -158,7 +158,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
         )
         env_vars = None
         env_vars_list = None
-        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+        if pc_instance.infra_config.is_tls_enabled:
             env_vars_list = generate_env_vars_dicts_list(
                 num_containers=len(cmd_args_list),
                 repository_path=binary_config.repository_path,
@@ -186,7 +186,7 @@ class PCF2BaseStageService(PrivateComputationStageService):
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             env_vars_list=env_vars_list,
             opa_workflow_path=TLS_OPA_WORKFLOW_PATH
-            if pc_instance.has_feature(PCSFeature.PCF_TLS)
+            if pc_instance.infra_config.is_tls_enabled
             else None,
             permission=container_permission,
         )
