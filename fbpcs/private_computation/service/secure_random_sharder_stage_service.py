@@ -152,7 +152,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
         should_wait_spin_up: bool = (
             pc_instance.infra_config.role is PrivateComputationRole.PARTNER
         )
-        enable_tls = pc_instance.has_feature(PCSFeature.PCF_TLS)
+        enable_tls = pc_instance.infra_config.is_tls_enabled
         if enable_tls:
             if server_hostnames and len(server_hostnames) != len(game_args):
                 raise ValueError(
@@ -175,7 +175,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
 
         env_vars = None
         env_vars_list = None
-        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+        if pc_instance.infra_config.is_tls_enabled:
             env_vars_list = generate_env_vars_dicts_list(
                 num_containers=len(cmd_args_list),
                 repository_path=binary_config.repository_path,
@@ -263,7 +263,7 @@ class SecureRandomShardStageService(PrivateComputationStageService):
         output_shards_base_path = pc_instance.secure_random_sharder_output_base_path
 
         tls_args = get_tls_arguments(
-            pc_instance.has_feature(PCSFeature.PCF_TLS),
+            pc_instance.infra_config.is_tls_enabled,
             server_certificate_path,
             ca_certificate_path,
         )

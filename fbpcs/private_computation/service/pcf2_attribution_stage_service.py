@@ -94,7 +94,7 @@ class PCF2AttributionStageService(PCF2BaseStageService):
         run_name_base = f"{private_computation_instance.infra_config.instance_id}_{GameNames.PCF2_ATTRIBUTION.value}"
 
         tls_args = get_tls_arguments(
-            private_computation_instance.has_feature(PCSFeature.PCF_TLS),
+            private_computation_instance.infra_config.is_tls_enabled,
             server_certificate_path,
             ca_certificate_path,
         )

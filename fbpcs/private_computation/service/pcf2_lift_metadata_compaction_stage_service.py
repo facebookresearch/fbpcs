@@ -112,7 +112,7 @@ class PCF2LiftMetadataCompactionStageService(PCF2BaseStageService):
         )
 
         tls_args = get_tls_arguments(
-            private_computation_instance.has_feature(PCSFeature.PCF_TLS),
+            private_computation_instance.infra_config.is_tls_enabled,
             server_certificate_path,
             ca_certificate_path,
         )

@@ -103,7 +103,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         """
         self._logger.info(f"[{self}] Starting PIDRunProtocolStageService")
         tls_args = get_tls_arguments(
-            pc_instance.has_feature(PCSFeature.PCF_TLS),
+            pc_instance.infra_config.is_tls_enabled,
             server_certificate_path,
             ca_certificate_path,
         )
@@ -180,7 +180,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             server_ips,
             server_hostnames,
             num_shards,
-            pc_instance.has_feature(PCSFeature.PCF_TLS),
+            pc_instance.infra_config.is_tls_enabled,
         )
         use_row_numbers = pc_instance.product_config.common.pid_use_row_numbers
         if use_row_numbers:
@@ -208,7 +208,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
         onedocker_binary_config = self._onedocker_binary_config_map[binary_name]
         env_vars = None
         env_vars_list = None
-        if pc_instance.has_feature(PCSFeature.PCF_TLS):
+        if pc_instance.infra_config.is_tls_enabled:
             env_vars_list = generate_env_vars_dicts_list(
                 num_containers=num_shards,
                 repository_path=onedocker_binary_config.repository_path,
@@ -251,7 +251,7 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             container_type=container_type,
             env_vars_list=env_vars_list,
             opa_workflow_path=TLS_OPA_WORKFLOW_PATH
-            if pc_instance.has_feature(PCSFeature.PCF_TLS)
+            if pc_instance.infra_config.is_tls_enabled
             else None,
             permission=container_permission,
         )
