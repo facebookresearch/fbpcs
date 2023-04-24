@@ -52,7 +52,7 @@ def main() -> None:
     logger = logging.getLogger()
     streamHandler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter("%(levelname)s:%(filename)s:%(message)s")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     streamHandler.setFormatter(formatter)
     logger.addHandler(streamHandler)
 
