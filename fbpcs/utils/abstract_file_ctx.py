@@ -41,6 +41,8 @@ def abstract_file_reader_path(path: pathlib.Path) -> pathlib.Path:
         return pathlib.Path(path)
 
 
+# pyre-fixme[24]: Generic type `contextlib.AbstractContextManager` expects 1 type
+#  parameter.
 def abstract_file_writer_ctx(path: pathlib.Path) -> contextlib.AbstractContextManager:
     if path.parts[0].lower() == S3_PATH_DRIVE:
         region = os.environ.get("PL_AWS_REGION")
