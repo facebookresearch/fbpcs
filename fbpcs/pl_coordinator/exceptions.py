@@ -10,6 +10,7 @@ import functools
 import logging
 import sys
 from enum import Enum
+from typing import Optional
 
 from fbpcs.pl_coordinator.constants import FBPCS_GRAPH_API_TOKEN
 
@@ -76,6 +77,7 @@ class OneCommandRunnerExitCode(Enum):
     ERROR_READ_STUDY = 80
     ERROR_CREATE_PL_INSTANCE = 81
     ERROR_READ_PL_INSTANCE = 82
+    ERROR_UPDATE_PL_INSTANCE = 83
 
     # PA validation specific error
     ERROR_READ_DATASET = 90
@@ -145,7 +147,13 @@ class PCInstanceCalculationException(OneCommandRunnerBaseException, RuntimeError
 
 
 class GraphAPIGenericException(RuntimeError):
-    pass
+    def __init__(
+        self,
+        msg: str,
+        status_code: Optional[int] = None,
+    ) -> None:
+        super().__init__(msg)
+        self.status_code = status_code
 
 
 class GraphAPITokenNotFound(OneCommandRunnerBaseException, GraphAPIGenericException):

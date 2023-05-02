@@ -78,6 +78,7 @@ SEC_IN_HOUR = 3600
 SEC_IN_DAY = 86400
 INSTANCE_LIFESPAN: int = SEC_IN_DAY
 STUDY_EXPIRE_TIME: int = 90 * SEC_IN_DAY
+RETRY_BACKOFF_SECONDS = 3
 CREATE_INSTANCE_TRIES = 3
 
 LOG_COMPONENT = "pl_study_runner"
@@ -260,6 +261,28 @@ async def _run_prep(
 
     instance_ids_to_timestamps: Dict[str, TimestampValues] = {}
 
+    # Validate access to existing instances
+    for cell_id in cell_obj_instance:
+        for objective_id in cell_obj_instance[cell_id]:
+            if "instance_id" in cell_obj_instance[cell_id][objective_id]:
+                instance_id = cell_obj_instance[cell_id][objective_id]["instance_id"]
+                run_id = (
+                    _get_run_id(study_data, instance_id) if run_id is None else run_id
+                )
+                if run_id is None:
+                    logger.warn(
+                        f"Skipping access validation for instance {instance_id} for {cell_id} {objective_id}"
+                    )
+                else:
+                    await _validate_access_to_instance(
+                        client,
+                        instance_id,
+                        run_id,
+                    )
+                    logger.info(
+                        f"Validated access to instance {instance_id} for {cell_id} {objective_id}"
+                    )
+
     # create new instances
     try:
         study_start_time = str(_date_to_timestamp(study_data[START_TIME]))
@@ -323,6 +346,51 @@ async def _run_prep(
         pcs_features,
         cell_obj_instance,
     )
+
+
+def _get_run_id(study_data: Dict[str, Any], instance_id: str) -> Optional[str]:
+    instances_data: List[Dict[str, Any]] = (
+        study_data[INSTANCES]["data"] if INSTANCES in study_data else []
+    )
+    for instance_data in instances_data:
+        if instance_data["id"] == instance_id:
+            return instance_data[RUN_ID] if RUN_ID in instance_data else None
+
+    return None
+
+
+@bolt_checkpoint(dump_params=True, component=LOG_COMPONENT)
+async def _validate_access_to_instance(
+    client: BoltGraphAPIClient[BoltPLGraphAPICreateInstanceArgs],
+    instance_id: str,
+    run_id: str,
+) -> None:
+
+    tries = 0
+    while tries < CREATE_INSTANCE_TRIES:
+        tries += 1
+        try:
+            await client.update_run_id(
+                instance_id=instance_id,
+                run_id=run_id,
+            )
+        except GraphAPIGenericException as err:
+            logging.error(err)
+            if err.status_code is not None and err.status_code == 403:
+                raise PCStudyValidationException(
+                    cause=f"Validating access to instance {instance_id} failed.",
+                    remediation="Check access token has permission to update the instance",
+                    exit_code=OneCommandRunnerExitCode.ERROR_UPDATE_PL_INSTANCE,
+                )
+            if tries >= CREATE_INSTANCE_TRIES:
+                logging.error(
+                    f"Error: Validating access to instance failed {instance_id}"
+                )
+                raise err
+            logging.info(
+                f"Instance validation failed for instance {instance_id}. Will retry"
+            )
+            await asyncio.sleep(RETRY_BACKOFF_SECONDS)
 
 
 @bolt_checkpoint(
