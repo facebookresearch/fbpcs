@@ -47,6 +47,7 @@ class SecretScrubber:
     REPLACEMENT_STR: str = "********"
 
     def __init__(self) -> None:
+        # pyre-fixme[24]: Generic type `re.Pattern` expects 1 type parameter.
         self.patterns: Dict[str, re.Pattern] = {
             secret.name: re.compile(secret.regex_pattern_str) for secret in self.SECRETS
         }

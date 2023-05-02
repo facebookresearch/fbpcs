@@ -18,6 +18,7 @@ from typing import Dict, List, Tuple
 # initiate
 print("Loading lambda function...")
 
+# pyre-fixme[24]: Generic type `re.Pattern` expects 1 type parameter.
 BROWSER_NAME_REGEXES: List[Tuple[re.Pattern, str]] = [
     (re.compile(r".*Chrome.*Mobile Safari/[0-9.]+$"), "Chrome Mobile"),
     (re.compile(r".*Chrome.*Safari/[0-9.]+$"), "Chrome Desktop"),
@@ -31,6 +32,7 @@ BROWSER_NAME_REGEXES: List[Tuple[re.Pattern, str]] = [
     (re.compile(r".*FB4A.*"), "Facebook for Android"),
 ]
 
+# pyre-fixme[24]: Generic type `re.Pattern` expects 1 type parameter.
 DEVICE_OS_REGEXES: List[Tuple[re.Pattern, str]] = [
     (re.compile(r".*(CPU OS|iPhone OS|CPU iPhone).*"), "iOS"),
     (re.compile(r".*Android.*"), "Android"),
@@ -38,6 +40,7 @@ DEVICE_OS_REGEXES: List[Tuple[re.Pattern, str]] = [
     (re.compile(r".*Mac OS X.*"), "Mac OS X"),
 ]
 
+# pyre-fixme[24]: Generic type `re.Pattern` expects 1 type parameter.
 OS_VERSION_REGEXES: List[re.Pattern] = [
     re.compile(r".*(CPU OS|iPhone OS|CPU iPhone) +(\d+)[_\.](\d+)(?:[_\.](\d+))?.*"),
     re.compile(r".*(Intel Mac OS X) +(\d+)[_\.](\d+)(?:[_\.](\d+))?.*"),
