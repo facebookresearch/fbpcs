@@ -160,6 +160,23 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         self._check_err(r, msg)
 
     @bolt_checkpoint()
+    async def update_run_id(
+        self,
+        instance_id: str,
+        run_id: str,
+    ) -> None:
+        """Update the run_id of the instance.
+
+        Args:
+            - instance_id: The study instance identifier
+            - run_id: The run_id to store in the instance
+        """
+        params = self.params.copy()
+        params["run_id"] = run_id
+        r = requests.post(f"{self.graphapi_url}/{instance_id}", params=params)
+        self._check_err(r, "updating run_id")
+
+    @bolt_checkpoint()
     async def cancel_current_stage(
         self,
         instance_id: str,
@@ -293,7 +310,7 @@ class BoltGraphAPIClient(BoltClient[BoltGraphAPICreateInstanceArgs]):
         if r.status_code != 200:
             err_msg = f"Error {msg}: {r.content}"
             self.logger.error(err_msg)
-            raise GraphAPIGenericException(err_msg)
+            raise GraphAPIGenericException(msg=err_msg, status_code=r.status_code)
 
     @bolt_checkpoint(dump_params=True, include=["adspixels_id"])
     def get_adspixels(self, adspixels_id: str, fields: List[str]) -> requests.Response:
