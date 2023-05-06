@@ -5,8 +5,10 @@
 ARG os_release="20.04"
 ARG tag="latest"
 ARG private_id_tag="latest"
-FROM fbpcs/data-processing:${tag} as data_processing
-FROM fbpcs/emp-games:${tag} as emp_games
+# Use the local repository as default
+ARG repository_url="fbpcs"
+FROM ${repository_url}/data-processing:${tag} as data_processing
+FROM ${repository_url}/emp-games:${tag} as emp_games
 FROM ghcr.io/facebookresearch/private-id:${private_id_tag} as private_id
 
 FROM ubuntu:${os_release}
