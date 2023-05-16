@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include <glog/logging.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -13,6 +12,7 @@
 #include <fstream>
 #include <functional>
 #include <string>
+#include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/common/Csv.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/InputData.h"
@@ -36,7 +36,7 @@ InputData::InputData(
   };
 
   if (!private_measurement::csv::readCsv(filepath, readLine)) {
-    LOG(FATAL) << "Failed to read input file " << filepath;
+    XLOG(FATAL) << "Failed to read input file " << filepath;
   }
 }
 
@@ -56,13 +56,13 @@ bool InputData::setTimestamps(
     int64_t parsed = 0;
     iss >> parsed;
     if (iss.fail()) {
-      LOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
+      XLOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
     }
     // secret-share-lift can have negative input timestamps
     if (liftMpcType_ == LiftMPCType::Standard && parsed < epoch_ &&
         parsed != 0) {
-      LOG(FATAL) << "Timestamp " << parsed << " is before epoch " << epoch_
-                 << ", which is unexpected.";
+      XLOG(FATAL) << "Timestamp " << parsed << " is before epoch " << epoch_
+                  << ", which is unexpected.";
     }
     timestampArrays.back().push_back(parsed < epoch_ ? 0 : parsed - epoch_);
     allZeroTimestamps &= parsed == 0;
@@ -85,7 +85,7 @@ void InputData::setValuesFields(std::string& str) {
     std::istringstream iss{values[i]};
     iss >> parsed;
     if (iss.fail()) {
-      LOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
+      XLOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
     }
     purchaseValueArrays_.back().push_back(parsed);
     totalValue_ += parsed;
@@ -139,7 +139,7 @@ void InputData::addFromCSV(
       iss >> parsed;
 
       if (iss.fail()) {
-        LOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
+        XLOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
       }
     }
 
@@ -164,8 +164,8 @@ void InputData::addFromCSV(
       // secret-share-lift can have negative input timestamps
       if (liftMpcType_ == LiftMPCType::Standard && parsed < epoch_ &&
           parsed != 0) {
-        LOG(FATAL) << "Timestamp " << parsed << " is before epoch " << epoch_
-                   << ", which is unexpected.";
+        XLOG(FATAL) << "Timestamp " << parsed << " is before epoch " << epoch_
+                    << ", which is unexpected.";
       }
       opportunityTimestamps_.push_back(parsed < epoch_ ? 0 : parsed - epoch_);
       isADummyRow &= parsed == 0;
@@ -236,7 +236,7 @@ void InputData::addFromCSV(
     } else if (column != "id_") { // Do nothing with the id_ column as Lift
                                   // games assume the ids are already matched
       // We shouldn't fail if there are extra columns in the input
-      LOG(WARNING) << "Warning: Unknown column in csv: " << column;
+      XLOG(WARNING) << "Warning: Unknown column in csv: " << column;
     }
   }
 

@@ -8,7 +8,6 @@
 #pragma once
 
 #include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <gtest/gtest.h>
 #include <fstream>
 #include <map>
@@ -16,6 +15,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "folly/logging/xlog.h"
 
 #include <fbpcs/emp_games/common/Csv.h>
 #include <fbpcs/emp_games/lift/common/GroupedLiftMetrics.h>
@@ -64,8 +64,8 @@ class LiftCalculator {
       std::istringstream iss{values[i]};
       iss >> parsed;
       if (iss.fail()) {
-        LOG(ERROR) << "Failed to parse '" << iss.str() << "' to "
-                   << typeid(T).name();
+        XLOG(ERR) << "Failed to parse '" << iss.str() << "' to "
+                  << typeid(T).name();
         throw std::runtime_error("Parse Error");
       }
       out.push_back(parsed);

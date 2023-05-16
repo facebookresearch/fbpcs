@@ -6,7 +6,6 @@
  */
 
 #include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
@@ -16,6 +15,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+#include "folly/logging/xlog.h"
 
 #include "fbpcs/emp_games/lift/pcf2_calculator/OutputMetricsData.h"
 #include "fbpcs/emp_games/lift/pcf2_calculator/test/common/LiftCalculator.h"
@@ -46,7 +46,7 @@ std::tuple<uint64_t, bool> LiftCalculator::parseUint64OrDie(
     std::istringstream iss(inParts.at(colNameToIndex.at(column)));
     iss >> res;
     if (iss.fail()) {
-      LOG(ERROR) << "Failed to parse '" << iss.str() << "' to uint64_t";
+      XLOG(ERR) << "Failed to parse '" << iss.str() << "' to uint64_t";
       throw std::runtime_error("Parse error");
     } else {
       return {res, true};
@@ -91,7 +91,7 @@ GroupedLiftMetrics LiftCalculator::compute(
         private_measurement::csv::splitByComma(linePartner, true);
 
     if (partsPublisher.empty()) {
-      LOG(ERROR) << "Empty publisher line";
+      XLOG(ERR) << "Empty publisher line";
       throw std::runtime_error("Empty publisher lines");
     }
 
@@ -129,7 +129,7 @@ GroupedLiftMetrics LiftCalculator::compute(
           << " breakdownId has to be less than numPublisherBreakdown, check constructor of LiftCalculator.";
 
     if (partsPartner.empty()) {
-      LOG(ERROR) << "Empty partner line";
+      XLOG(ERR) << "Empty partner line";
       throw std::runtime_error("Empty partner line");
     }
     eventTimestamps = parseArray<uint64_t>(
@@ -142,8 +142,8 @@ GroupedLiftMetrics LiftCalculator::compute(
       values = parseArray<int64_t>(partsPartner.at(valuesIdx));
 
       if (eventTimestamps.size() != values.size()) {
-        LOG(ERROR) << "Size of event_timestamps (" << eventTimestamps.size()
-                   << ") and values (" << values.size() << ") are inconsistent";
+        XLOG(ERR) << "Size of event_timestamps (" << eventTimestamps.size()
+                  << ") and values (" << values.size() << ") are inconsistent";
         throw std::runtime_error("Inconsistent size error");
       }
     }
