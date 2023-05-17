@@ -1,0 +1,63 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "firehose:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:firehose:${REGION}:${ACCOUNT_ID}:deliverystream/${FIREHOSE_STREAM_NAME}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "athena:*"
+            ],
+            "Resource": [
+                "arn:aws:athena:${REGION}:${ACCOUNT_ID}:datacatalog/AwsDataCatalog",
+                "arn:aws:athena:${REGION}:${ACCOUNT_ID}:workgroup/primary"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${DATA_BUCKET_NAME}",
+                "arn:aws:s3:::${DATA_BUCKET_NAME}/*",
+                "arn:aws:s3:::${CONFIG_BUCKET_NAME}",
+                "arn:aws:s3:::${CONFIG_BUCKET_NAME}/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "glue:*"
+            ],
+            "Resource": [
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:catalog",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:database/default",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:database/${DATEBASE_NAME}",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/${DATEBASE_NAME}/*",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/default/${TABLE_NAME}",
+                "arn:aws:glue:${REGION}:${ACCOUNT_ID}:table/default/events_data",
+                "${EVENTS_DATA_CRAWLER_ARN}"
+            ]
+        },
+        {
+            "Action": [
+                "lambda:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${DATA_INGESTION_LAMBDA_NAME}"
+        },
+        {
+            "Action": [
+                "logs:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
