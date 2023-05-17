@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include "LiftCalculator.h"
 #include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -16,7 +16,7 @@
 
 #include "../../../../common/Csv.h"
 #include "../../OutputMetricsData.h"
-#include "LiftCalculator.h"
+#include "folly/logging/xlog.h"
 
 namespace private_lift {
 std::unordered_map<std::string, int32_t> LiftCalculator::mapColToIndex(
@@ -45,7 +45,7 @@ std::vector<uint64_t> LiftCalculator::parseArray(std::string array) const {
     std::istringstream iss{values[i]};
     iss >> parsed;
     if (iss.fail()) {
-      LOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
+      XLOG(FATAL) << "Failed to parse '" << iss.str() << "' to int64_t";
     }
     out.push_back(parsed);
   }
@@ -95,7 +95,7 @@ OutputMetricsData LiftCalculator::compute(
         private_measurement::csv::splitByComma(linePartner, true);
 
     if (partsPublisher.empty()) {
-      LOG(FATAL) << "Empty publisher line";
+      XLOG(FATAL) << "Empty publisher line";
     }
 
     // Opportunity is actually an optional column
@@ -104,8 +104,8 @@ OutputMetricsData LiftCalculator::compute(
           partsPublisher.at(colNameToIndex.at("opportunity"))};
       issOpportunity >> opportunity;
       if (issOpportunity.fail()) {
-        LOG(FATAL) << "Failed to parse '" << issOpportunity.str()
-                   << "' to uint64_t";
+        XLOG(FATAL) << "Failed to parse '" << issOpportunity.str()
+                    << "' to uint64_t";
       }
     } else {
       // If it isn't present, assume all lines had opportunities
@@ -116,43 +116,44 @@ OutputMetricsData LiftCalculator::compute(
         partsPublisher.at(colNameToIndex.at("test_flag"))};
     issTestFlag >> testFlag;
     if (issTestFlag.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issTestFlag.str() << "' to uint64_t";
+      XLOG(FATAL) << "Failed to parse '" << issTestFlag.str()
+                  << "' to uint64_t";
     }
 
     std::istringstream issOpportunityTimestamp{
         partsPublisher.at(colNameToIndex.at("opportunity_timestamp"))};
     issOpportunityTimestamp >> opportunityTimestamp;
     if (issOpportunityTimestamp.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issOpportunityTimestamp.str()
-                 << "' to uint64_t";
+      XLOG(FATAL) << "Failed to parse '" << issOpportunityTimestamp.str()
+                  << "' to uint64_t";
     }
 
     std::istringstream issNumClicks{
         partsPublisher.at(colNameToIndex.at("num_clicks"))};
     issNumClicks >> numClicks;
     if (issNumClicks.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issNumClicks.str()
-                 << "' to uint64_t";
+      XLOG(FATAL) << "Failed to parse '" << issNumClicks.str()
+                  << "' to uint64_t";
     }
 
     std::istringstream issNumImpressions{
         partsPublisher.at(colNameToIndex.at("num_impressions"))};
     issNumImpressions >> numImpressions;
     if (issNumImpressions.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issNumImpressions.str()
-                 << "' to uint64_t";
+      XLOG(FATAL) << "Failed to parse '" << issNumImpressions.str()
+                  << "' to uint64_t";
     }
 
     std::istringstream issTotalSpend{
         partsPublisher.at(colNameToIndex.at("total_spend"))};
     issTotalSpend >> totalSpend;
     if (issTotalSpend.fail()) {
-      LOG(FATAL) << "Failed to parse '" << issTotalSpend.str()
-                 << "' to uint64_t";
+      XLOG(FATAL) << "Failed to parse '" << issTotalSpend.str()
+                  << "' to uint64_t";
     }
 
     if (partsPartner.empty()) {
-      LOG(FATAL) << "Empty partner line";
+      XLOG(FATAL) << "Empty partner line";
     }
     eventTimestamps =
         parseArray(partsPartner.at(colNameToIndex.at("event_timestamps")));
@@ -174,8 +175,9 @@ OutputMetricsData LiftCalculator::compute(
       values = parseArray(partsPartner.at(valuesIdx));
 
       if (eventTimestamps.size() != values.size()) {
-        LOG(FATAL) << "Size of event_timestamps (" << eventTimestamps.size()
-                   << ") and values (" << values.size() << ") are inconsistent";
+        XLOG(FATAL) << "Size of event_timestamps (" << eventTimestamps.size()
+                    << ") and values (" << values.size()
+                    << ") are inconsistent";
       }
     }
     if (opportunity && opportunityTimestamp > 0) {

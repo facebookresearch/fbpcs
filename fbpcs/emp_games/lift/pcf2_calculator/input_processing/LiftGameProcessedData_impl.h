@@ -11,8 +11,8 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
-
 #include "fbpcs/emp_games/lift/pcf2_calculator/input_processing/LiftGameProcessedData.h"
+#include "folly/logging/xlog.h"
 
 namespace private_lift {
 
@@ -273,7 +273,7 @@ LiftGameProcessedData<schedulerId>::readParamsLine(
       } else if (column == "valueSquaredBits") {
         result.valueSquaredBits = std::stoul(value);
       } else {
-        LOG(WARNING) << "Warning: Unknown column in csv: " << column;
+        XLOG(WARNING) << "Warning: Unknown column in csv: " << column;
       }
     }
   };
@@ -353,7 +353,7 @@ LiftGameProcessedData<schedulerId>::readSharesLine(
       } else if (column == "testReach") {
         testReachShares.push_back(std::stoul(value));
       } else if (column != "id_") {
-        LOG(WARNING) << "Warning: Unknown column in csv: " << column;
+        XLOG(WARNING) << "Warning: Unknown column in csv: " << column;
       }
     }
   };
