@@ -52,6 +52,8 @@ RUN terraform --version
 RUN mkdir -p /terraform_deployment/config
 COPY deploy.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
+COPY deploy_tee.sh /terraform_deployment
+RUN chmod +x /terraform_deployment/deploy_tee.sh
 COPY util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/util.sh
 COPY pceValidator.sh /terraform_deployment
