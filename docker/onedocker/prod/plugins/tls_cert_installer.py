@@ -48,6 +48,17 @@ def _get_secret(secret_id: str, region: str) -> str:
     return secret_svc.get_secret(secret_id).value
 
 
+def _set_boto_log_level(log_level: int) -> None:
+    """Sets the log level for all Boto3 loggers. The default value is DEBUG.
+
+    Arguments:
+        log_level: A logging log level
+    """
+    logging.getLogger("boto3").setLevel(log_level)
+    logging.getLogger("boto").setLevel(log_level)
+    logging.getLogger("botocore").setLevel(log_level)
+
+
 def main() -> None:
     logger = logging.getLogger()
     streamHandler = logging.StreamHandler(sys.stdout)
@@ -55,6 +66,9 @@ def main() -> None:
     logger.setLevel(logging.INFO)
     streamHandler.setFormatter(formatter)
     logger.addHandler(streamHandler)
+
+    # disable verbose default logging from boto
+    _set_boto_log_level(logging.WARNING)
 
     logging.info("Reading certificate content from environment variables...")
     server_certificate = _get_env_var_if_set(SERVER_CERTIFICATE, "")
