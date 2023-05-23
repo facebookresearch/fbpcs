@@ -83,6 +83,7 @@ class GraphApiTraceLoggingService(TraceLoggingService):
             aggregate_msg = {}
             for msg in group_mgs_list:
                 if not aggregate_msg:
+                    # pyre-fixme[16]: `SupportsGetItem` has no attribute `copy`.
                     aggregate_msg = msg.copy()
                     continue
 
