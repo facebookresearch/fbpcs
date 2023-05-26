@@ -22,7 +22,7 @@ env:
   PL_CONTAINER_NAME: e2e_pl_container
   PA_CONTAINER_NAME: e2e_pa_container
   TIME_RANGE: 24 hours
-  FBPCF_VERSION: 2.1.144  # Please also update line 8 in .github/workflows/build_fbpcs_images.yml
+  FBPCF_VERSION: 2.1.148  # Please also update line 8 in .github/workflows/build_fbpcs_images.yml
   PID_VERSION: 0.0.9
 
 jobs:
