@@ -50,6 +50,7 @@ class TestPCPreValidationCLI(TestCase):
             stream_file=False,
             publisher_pc_pre_validation=False,
             partner_pc_pre_validation=False,
+            enable_for_tee=False,
             private_computation_role=None,
             start_timestamp=None,
             end_timestamp=None,
@@ -105,6 +106,7 @@ class TestPCPreValidationCLI(TestCase):
             "--pre-validation-file-stream=enabled",
             "--publisher-pc-pre-validation=enabled",
             "--partner-pc-pre-validation=enabled",
+            "--enable-for-tee=enabled",
         ]
 
         validation_cli.main(argv)
@@ -116,6 +118,7 @@ class TestPCPreValidationCLI(TestCase):
             stream_file=True,
             publisher_pc_pre_validation=True,
             partner_pc_pre_validation=True,
+            enable_for_tee=True,
             private_computation_role=PrivateComputationRole.PARTNER.name,
             start_timestamp=expected_start_timestamp,
             end_timestamp=expected_end_timestamp,
