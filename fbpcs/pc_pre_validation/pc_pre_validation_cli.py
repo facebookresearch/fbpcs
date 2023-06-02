@@ -25,6 +25,7 @@ Usage:
         [--pre-validation-file-stream=<pre-validation-file-stream>]
         [--publisher-pc-pre-validation=<publisher-pc-pre-validation>]
         [--partner-pc-pre-validation=<partner-pc-pre-validation>]
+        [--enable-for-tee=<enable-for-tee>]
 """
 
 
@@ -54,6 +55,8 @@ PUBLISHER_PC_PRE_VALIDATION_ENABLED = "enabled"
 PRIVATE_COMPUTATION_ROLE = "--private-computation-role"
 PARTNER_PC_PRE_VALIDATION_FLAG = "--partner-pc-pre-validation"
 PARTNER_PC_PRE_VALIDATION_ENABLED = "enabled"
+ENABLE_FOR_TEE_FLAG = "--enable-for-tee"
+ENABLE_FOR_TEE_ENABLED = "enabled"
 
 
 def main(argv: OptionalType[List[str]] = None) -> None:
@@ -73,6 +76,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
             Optional(PRE_VALIDATION_FILE_STREAM_FLAG): optional_string,
             Optional(PUBLISHER_PC_PRE_VALIDATION_FLAG): optional_string,
             Optional(PARTNER_PC_PRE_VALIDATION_FLAG): optional_string,
+            Optional(ENABLE_FOR_TEE_FLAG): optional_string,
             Optional(PRIVATE_COMPUTATION_ROLE): optional_string,
         }
     )
@@ -89,6 +93,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
     partner_pc_pre_validation = (
         arguments[PARTNER_PC_PRE_VALIDATION_FLAG] == PARTNER_PC_PRE_VALIDATION_ENABLED
     )
+    enable_for_tee = arguments[ENABLE_FOR_TEE_FLAG] == ENABLE_FOR_TEE_ENABLED
 
     validators = [
         cast(
@@ -100,6 +105,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
                 stream_file=stream_file,
                 publisher_pc_pre_validation=publisher_pc_pre_validation,
                 partner_pc_pre_validation=partner_pc_pre_validation,
+                enable_for_tee=enable_for_tee,
                 private_computation_role=arguments[PRIVATE_COMPUTATION_ROLE],
                 start_timestamp=arguments[START_TIMESTAMP],
                 end_timestamp=arguments[END_TIMESTAMP],
