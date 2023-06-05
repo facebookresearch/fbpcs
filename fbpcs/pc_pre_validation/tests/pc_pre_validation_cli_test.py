@@ -56,6 +56,7 @@ class TestPCPreValidationCLI(TestCase):
             end_timestamp=None,
             access_key_id=None,
             access_key_data=None,
+            tee_local_file_path=None,
         )
         binary_file_validator_mock.assert_called_with(
             region=expected_region,
@@ -93,6 +94,7 @@ class TestPCPreValidationCLI(TestCase):
         expected_pc_computation_role: PrivateComputationRole = (
             PrivateComputationRole.PARTNER.name
         )
+        expected_tee_local_file_path = "/tmp/local_file_path"
         argv = [
             f"--input-file-path={expected_input_file_path}",
             f"--cloud-provider={cloud_provider_str}",
@@ -107,6 +109,7 @@ class TestPCPreValidationCLI(TestCase):
             "--publisher-pc-pre-validation=enabled",
             "--partner-pc-pre-validation=enabled",
             "--enable-for-tee=enabled",
+            f"--tee-local-file-path={expected_tee_local_file_path}",
         ]
 
         validation_cli.main(argv)
@@ -124,6 +127,7 @@ class TestPCPreValidationCLI(TestCase):
             end_timestamp=expected_end_timestamp,
             access_key_id=expected_access_key_id,
             access_key_data=expected_access_key_data,
+            tee_local_file_path=expected_tee_local_file_path,
         )
         binary_file_validator_mock.assert_called_with(
             region=expected_region,

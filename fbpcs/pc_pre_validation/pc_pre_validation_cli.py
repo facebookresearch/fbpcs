@@ -26,6 +26,7 @@ Usage:
         [--publisher-pc-pre-validation=<publisher-pc-pre-validation>]
         [--partner-pc-pre-validation=<partner-pc-pre-validation>]
         [--enable-for-tee=<enable-for-tee>]
+        [--tee-local-file-path=<local-file-path>]
 """
 
 
@@ -57,6 +58,7 @@ PARTNER_PC_PRE_VALIDATION_FLAG = "--partner-pc-pre-validation"
 PARTNER_PC_PRE_VALIDATION_ENABLED = "enabled"
 ENABLE_FOR_TEE_FLAG = "--enable-for-tee"
 ENABLE_FOR_TEE_ENABLED = "enabled"
+TEE_LOCAL_FILE_PATH = "--tee-local-file-path"
 
 
 def main(argv: OptionalType[List[str]] = None) -> None:
@@ -77,6 +79,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
             Optional(PUBLISHER_PC_PRE_VALIDATION_FLAG): optional_string,
             Optional(PARTNER_PC_PRE_VALIDATION_FLAG): optional_string,
             Optional(ENABLE_FOR_TEE_FLAG): optional_string,
+            Optional(TEE_LOCAL_FILE_PATH): optional_string,
             Optional(PRIVATE_COMPUTATION_ROLE): optional_string,
         }
     )
@@ -111,6 +114,7 @@ def main(argv: OptionalType[List[str]] = None) -> None:
                 end_timestamp=arguments[END_TIMESTAMP],
                 access_key_id=arguments[ACCESS_KEY_ID],
                 access_key_data=arguments[ACCESS_KEY_DATA],
+                tee_local_file_path=arguments[TEE_LOCAL_FILE_PATH],
             ),
         ),
         cast(
