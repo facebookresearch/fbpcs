@@ -157,6 +157,7 @@ class TestInputDataValidator(TestCase):
             partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             enable_for_tee=TEST_ENABLE_FOR_TEE,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+            tee_local_file_path=None,
         )
         report = validator.validate()
 
@@ -180,6 +181,72 @@ class TestInputDataValidator(TestCase):
             partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
             enable_for_tee=TEST_ENABLE_FOR_TEE,
             private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+        )
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    def test_run_validations_local_file_path_invalid(self) -> None:
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.FAILED,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_INPUT_FILE_PATH} failed validation. Error: ENABLE_FOR_TEE is enabled but local file path is not provided.",
+            details={
+                "rows_processed_count": 0,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
+            enable_for_tee=True,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+            tee_local_file_path=None,
+        )
+
+        report = validator.validate()
+
+        self.assertEqual(report, expected_report)
+
+    @patch("fbpcs.pc_pre_validation.input_data_validator.time")
+    def test_run_validations_success_for_pl_fields_with_local_file_path(
+        self, time_mock: Mock
+    ) -> None:
+        time_mock.time.return_value = TEST_TIMESTAMP
+        lines = [
+            b"id_,value,event_timestamp\n",
+        ]
+        lines.extend(
+            [
+                b"abcd/1234+WXYZ=,100,1645157987\n",
+            ]
+            * 10000
+        )
+
+        self.write_lines_to_file(lines)
+        expected_report = ValidationReport(
+            validation_result=ValidationResult.SUCCESS,
+            validator_name=INPUT_DATA_VALIDATOR_NAME,
+            message=f"File: {TEST_TEMP_FILEPATH} completed validation successfully",
+            details={
+                "rows_processed_count": 10000,
+            },
+        )
+
+        validator = InputDataValidator(
+            input_file_path=TEST_INPUT_FILE_PATH,
+            cloud_provider=TEST_CLOUD_PROVIDER,
+            region=TEST_REGION,
+            stream_file=TEST_STREAM_FILE,
+            publisher_pc_pre_validation=TEST_PUBLISHER_PC_PRE_VALIDATION,
+            partner_pc_pre_validation=TEST_PARTNER_PC_PRE_VALIDATION,
+            enable_for_tee=True,
+            private_computation_role=TEST_PRIVATE_COMPUTATION_ROLE,
+            tee_local_file_path=TEST_TEMP_FILEPATH,
         )
         report = validator.validate()
 
