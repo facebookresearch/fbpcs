@@ -610,6 +610,9 @@ class InputDataValidator(Validator):
 
         if value.strip() == "":
             validation_issues.count_empty_field(field)
+        elif self._enable_for_tee and field == ID_FIELD_PREFIX:
+            if not self._is_valid_list(value, VALIDATION_REGEXES[ID_FIELD_PREFIX]):
+                validation_issues.count_format_error_field(field)
         elif field in VALIDATION_REGEXES and not VALIDATION_REGEXES[field].match(value):
             validation_issues.count_format_error_field(field)
         elif field.endswith(TIMESTAMP):
@@ -738,3 +741,22 @@ class InputDataValidator(Validator):
                 validation_issues.set_value_field_name(field_name)
                 # The header row should have either 'value' or 'conversion_value'
                 break
+
+    def _is_valid_list(self, str_list: str, valid_regex: Pattern[str]) -> bool:
+        # Check that the string starts with "[" and ends with "]"
+        if not (str_list.startswith("[") and str_list.endswith("]")):
+            return False
+
+        # Remove the brackets and split the string by commas
+        inner_strs = str_list[1:-1].split(",")
+
+        # Strip whitespace and validate each string with the provided regex pattern
+        for inner_str in inner_strs:
+            inner_str = inner_str.strip()
+
+            # Check if the string matches the regex
+            if not valid_regex.match(inner_str):
+                return False
+
+        # If we made it this far, the input is a valid list of strings matching the pattern
+        return True
