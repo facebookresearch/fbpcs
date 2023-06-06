@@ -19,10 +19,11 @@ Error handling:
 """
 
 import csv
+import os
 import sys
 import time
 from multiprocessing import Process, Queue
-from typing import List, Optional, Sequence, Set
+from typing import List, Optional, Pattern, Sequence, Set
 
 import boto3
 from botocore.client import BaseClient
@@ -86,6 +87,7 @@ class InputDataValidator(Validator):
         access_key_data: Optional[str] = None,
         start_timestamp: Optional[str] = None,
         end_timestamp: Optional[str] = None,
+        tee_local_file_path: Optional[str] = None,
     ) -> None:
         self._input_file_path = input_file_path
         self._local_file_path: str = self._get_local_filepath()
@@ -97,6 +99,7 @@ class InputDataValidator(Validator):
         self._publisher_pc_pre_validation = publisher_pc_pre_validation
         self._partner_pc_pre_validation = partner_pc_pre_validation
         self._enable_for_tee = enable_for_tee
+        self._tee_local_file_path = tee_local_file_path
         self._private_computation_role: PrivateComputationRole = (
             private_computation_role
         )
@@ -333,13 +336,21 @@ class InputDataValidator(Validator):
         validation_issues = InputDataValidationIssues()
 
         try:
-            self._file_size = self._get_file_size()
+            if self._enable_for_tee:
+                if self._tee_local_file_path is None:
+                    raise InputDataValidationException(
+                        "ENABLE_FOR_TEE is enabled but local file path is not provided."
+                    )
+                self._local_file_path = self._tee_local_file_path
+                self._file_size = self._get_local_file_size()
+            else:
+                self._file_size = self._get_file_size()
             # Add a worker only if each one is alredy going to process MIN_CHUNK_SIZE
             # but capped at MAX_PARALLELISM
             self._parallelism = min(
                 int(self._file_size / MIN_CHUNK_SIZE) + 1, MAX_PARALLELISM
             )
-            if not self._stream_file:
+            if not self._stream_file and not self._enable_for_tee:
                 validation_report = self._download_locally(
                     validation_issues, validation_issues.rows_processed_count
                 )
@@ -382,7 +393,9 @@ class InputDataValidator(Validator):
             }
         )
         return self._format_validation_report(
-            f"File: {self._input_file_path}",
+            f"File: {self._input_file_path}"
+            if not self._enable_for_tee
+            else f"File: {self._local_file_path}",
             rows_processed_count,
             validation_issues,
             streaming_timed_out=(validation_issues.streaming_timed_out),
@@ -487,6 +500,14 @@ class InputDataValidator(Validator):
         except Exception as e:
             raise InputDataValidationException(
                 f"Failed to get the input file size. Please check the file path and its permission.\n\t{e}"
+            )
+
+    def _get_local_file_size(self) -> int:
+        try:
+            return os.path.getsize(self._local_file_path)
+        except Exception as e:
+            raise InputDataValidationException(
+                f"Failed to get the local input file size. Please check the file path and its permission.\n\t{e}"
             )
 
     def _download_input_file(self) -> None:
