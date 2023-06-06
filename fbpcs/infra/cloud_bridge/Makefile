@@ -40,6 +40,7 @@ image-build: $(SERVER_JAR) external_deps
 	# Cleanup copied resources
 	@echo "\nCleaning up dependencies..."
 	$(RM) -r aws_terraform_template
+	$(RM) -r kia_source_code
 	$(RM) config.yml
 	@echo "Done"
 
@@ -50,6 +51,7 @@ image-run: image-build
 clean:
 	server/gradlew -p server clean
 	$(RM) -r aws_terraform_template
+	$(RM) -r kia_source_code
 	$(RM) config.yml
 
 distclean: clean
@@ -57,8 +59,18 @@ distclean: clean
 
 
 # Dockerfile will not accept these resources as links, so they need to be copied in
-external_deps: config.yml aws_terraform_template
+external_deps: kia_source_code config.yml aws_terraform_template
 	@echo "Dependencies Copied\n"
+
+kia_source_code:
+	mkdir -p key_injection_agent/kia_source_code
+	mkdir -p key_injection_agent/kia_source_code/private_computation
+	mkdir -p key_injection_agent/kia_source_code/private_computation/tee_lift
+	chmod +x key_injection_agent/kia_source_code
+	cp -r ../../../private_computation/tee_lift/key_injection_agent/kia_runner.py key_injection_agent/kia_source_code/
+	cp -r ../../../private_computation/tee_lift/key_injection_agent key_injection_agent/kia_source_code/private_computation/tee_lift
+	cp -r ../../../private_computation/tee_lift/pc_crypto key_injection_agent/kia_source_code/private_computation/tee_lift
+	cp -r ../../../private_computation/tee_lift/utils key_injection_agent/kia_source_code/private_computation/tee_lift
 
 config.yml:
 	cp ../../private_computation_cli/config.yml .

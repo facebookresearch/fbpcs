@@ -90,6 +90,30 @@ undeploy_aws_resources() {
         -var "query_results_key_path=$query_results_key_path"
     echo "########################Deletion completed########################"
 
+    echo "######################## Delete KIA Lambda fuction ########################"
+    cd /terraform_deployment/terraform_scripts/key_injection_agent/
+
+    log_streaming_data "starting to undeploy key injection agent."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/key_injection_agent_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "kia_lambda_function_name=$kia_lambda_function_name" \
+        -var "kia_lambda_input_bucket=$s3_bucket_data" \
+        -var "kia_lambda_s3_bucket=$s3_bucket_config" \
+        -var "kia_lambda_s3_key=kialambda.zip"
+
+    log_streaming_data "undeployed key injection agent."
+
+    echo "######################## Deleted KIA Lambda fuction ########################"
+
     if "$build_semi_automated_data_pipeline"
     then
         echo "Undeploy Semi automated data_pipeline..."
@@ -248,6 +272,29 @@ deploy_aws_resources() {
         semi_automated_glue_job_arn=$(terraform output semi_automated_glue_job_arn | tr -d '"')
     fi
 
+    echo "######################## Deploying Key Injection Agent AWS Lambda"
+    cd /terraform_deployment/terraform_scripts/key_injection_agent
+
+    log_streaming_data "starting to deploy key injection agent."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/key_injection_agent_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "kia_lambda_function_name=$kia_lambda_function_name" \
+        -var "kia_lambda_input_bucket=$s3_bucket_data" \
+        -var "kia_lambda_s3_bucket=$s3_bucket_config" \
+        -var "kia_lambda_s3_key=kialambda.zip"
+
+    log_streaming_data "deployed key injection agent."
+
+    echo "######################## Deployed Key Injection Agent AWS Lambda"
     echo "########################Finished AWS Infrastructure Deployment########################"
     log_streaming_data "finished deploying resources..."
 
@@ -287,6 +334,7 @@ table_name=${s3_bucket_data//-/_}
 data_upload_key_path="semi-automated-data-ingestion"
 query_results_key_path="query-results"
 data_ingestion_lambda_name="cb-data-ingestion-stream-processor${tag_postfix}"
+kia_lambda_function_name="cb-kia${tag_postfix}"
 fb_pc_iam_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_iam_policy_no_compute.json"
 fb_pc_data_bucket_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_data_bucket_policy.json"
 data_bucket_policy_name="fb-pc-data-bucket-policy${tag_postfix}"
