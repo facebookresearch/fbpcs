@@ -35,11 +35,95 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeployController {
   private final Logger logger = LoggerFactory.getLogger(DeployController.class);
 
-  private DeploymentRunner runner;
+  private DeploymentRunner deploymentRunner;
+  private InstallationRunner installationRunner;
   private Semaphore singleProvisioningLock = new Semaphore(1);
   private LogStreamer logStreamer = new LogStreamer();
   private Validator validator = new Validator();
 
+  // == For PC toolkit installation
+  @PostMapping(
+      path = "/v2/installation",
+      consumes = "application/json",
+      produces = "application/json")
+  public APIReturn installToolkit(@RequestBody ToolkitInstallationParams installationParams) {
+    logger.info("Received PC toolkit installation request: " + installationParams.toString());
+    return runInstallation(true /* shouldInstall */, installationParams);
+  }
+
+  private APIReturn runInstallation(
+      boolean shouldInstall, ToolkitInstallationParams installationParams) {
+    try {
+      installationParams.validate();
+      Validator.ValidatorResult preValidationResult =
+          validator.validateForInstallation(installationParams, shouldInstall);
+      if (!preValidationResult.isSuccessful) {
+        return new APIReturn(APIReturn.Status.STATUS_FAIL, preValidationResult.message);
+      }
+    } catch (final Exception ex) {
+      return new APIReturn(APIReturn.Status.STATUS_FAIL, ex.getMessage());
+    }
+    logger.info("  Validated input (installation params)");
+
+    try {
+      if (!singleProvisioningLock.tryAcquire()) {
+        String errorMessage = "Another installation is in progress";
+        logger.error("  " + errorMessage);
+        return new APIReturn(APIReturn.Status.STATUS_FAIL, errorMessage);
+      }
+      logger.info("  No installation conflicts found");
+      logStreamer.startFresh();
+      installationRunner =
+          new InstallationRunner(
+              shouldInstall,
+              installationParams,
+              () -> {
+                singleProvisioningLock.release();
+              });
+      installationRunner.start();
+      return new APIReturn(
+          APIReturn.Status.STATUS_SUCCESS,
+          (shouldInstall ? "Installation" : "Uninstallation") + " started successfully");
+    } catch (InstallationException ex) {
+      return new APIReturn(APIReturn.Status.STATUS_ERROR, ex.getMessage());
+    } finally {
+      logger.info("  Installation request finalized");
+    }
+  }
+
+  @GetMapping(path = "/v2/installation", produces = "application/json")
+  public APIReturn installationStatus() {
+    logger.info("Received status request");
+
+    InstallationRunner.InstallationState state;
+    String output = "";
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode rootNode = mapper.createObjectNode();
+    try {
+      synchronized (this) {
+        if (installationRunner == null) {
+          logger.debug("  No installation created yet");
+          output = "";
+        } else {
+          state = installationRunner.getInstallationState();
+          output = installationRunner.getOutput();
+
+          rootNode.put("state", state.toString());
+          if (state == InstallationRunner.InstallationState.STATE_HALTED) {
+            rootNode.put("exitValue", installationRunner.getExitValue());
+            readAndMapResourceOutputFromFile(rootNode);
+            installationRunner = null;
+          }
+        }
+        return new APIReturn(APIReturn.Status.STATUS_SUCCESS, output, rootNode);
+      }
+    } catch (final Exception e) {
+      logger.error(" Error happened : " + e.getMessage());
+    }
+    return new APIReturn(APIReturn.Status.STATUS_ERROR, output, rootNode);
+  }
+
+  // === For MPC deployment & undeployment
   @PostMapping(
       path = "/v1/deployment",
       consumes = "application/json",
@@ -78,14 +162,14 @@ public class DeployController {
       }
       logger.info("  No deployment conflicts found");
       logStreamer.startFresh();
-      runner =
+      deploymentRunner =
           new DeploymentRunner(
               shouldDeploy,
               deployment,
               () -> {
                 singleProvisioningLock.release();
               });
-      runner.start();
+      deploymentRunner.start();
       if (shouldDeploy) {
         return new APIReturn(APIReturn.Status.STATUS_SUCCESS, "Deployment Started Successfully");
       } else {
@@ -122,19 +206,19 @@ public class DeployController {
     ObjectNode rootNode = mapper.createObjectNode();
     try {
       synchronized (this) {
-        if (runner == null) {
+        if (deploymentRunner == null) {
           logger.debug("  No deployment created yet");
           output = "";
         } else {
-          state = runner.getDeploymentState();
-          output = runner.getOutput();
+          state = deploymentRunner.getDeploymentState();
+          output = deploymentRunner.getOutput();
 
           rootNode.put("state", state.toString());
           if (state == DeploymentRunner.DeploymentState.STATE_HALTED) {
-            rootNode.put("exitValue", runner.getExitValue());
+            rootNode.put("exitValue", deploymentRunner.getExitValue());
             // TODO refactor whole class to include a Response Structure
             readAndMapResourceOutputFromFile(rootNode);
-            runner = null;
+            deploymentRunner = null;
           }
         }
         return new APIReturn(APIReturn.Status.STATUS_SUCCESS, output, rootNode);
@@ -158,7 +242,7 @@ public class DeployController {
     logger.info("Received getStream log request: refresh " + refresh);
     List<String> result = new ArrayList<>();
     result = logStreamer.getStreamingLogs(refresh);
-    if (runner == null) {
+    if (deploymentRunner == null) {
       logStreamer.pause();
     }
     return result;

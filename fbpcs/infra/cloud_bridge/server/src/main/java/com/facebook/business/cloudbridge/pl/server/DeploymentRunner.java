@@ -134,8 +134,8 @@ public class DeploymentRunner extends Thread {
     }
     environmentVariables.put("TF_LOG_STREAMING", Constants.DEPLOYMENT_STREAMING_LOG_FILE);
     environmentVariables.put("TF_RESOURCE_OUTPUT", Constants.DEPLOYMENT_RESOURCE_OUTPUT_FILE);
-    if (deployment.logLevel != DeploymentParams.LogLevel.DISABLED) {
-      if (deployment.logLevel == null) deployment.logLevel = DeploymentParams.LogLevel.DEBUG;
+    if (deployment.logLevel != LogLevel.DISABLED) {
+      if (deployment.logLevel == null) deployment.logLevel = LogLevel.DEBUG;
       environmentVariables.put("TF_LOG", deployment.logLevel.getLevel());
       environmentVariables.put("TF_LOG_PATH", "/tmp/terraform.log");
     }

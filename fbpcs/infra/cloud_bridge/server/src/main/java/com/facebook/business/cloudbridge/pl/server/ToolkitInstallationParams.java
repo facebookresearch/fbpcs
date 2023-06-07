@@ -11,22 +11,17 @@ import com.amazonaws.regions.Regions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeploymentParams {
+public class ToolkitInstallationParams {
   public String region;
-  public String accountId;
-  public String pubAccountId;
-  public String vpcId;
+  public String awsAccountId;
   public String configStorage;
   public String dataStorage;
-  public String tag;
-  public boolean enableSemiAutomatedDataIngestion;
-  public LogLevel logLevel;
-
   public String awsAccessKeyId;
   public String awsSecretAccessKey;
   public String awsSessionToken;
-  public String publisherPCEId;
-  public String publisherPCEInstanceId;
+  public String tag;
+  public LogLevel logLevel;
+
   private final Logger logger = LoggerFactory.getLogger(DeploymentParams.class);
 
   public boolean validRegion() {
@@ -35,28 +30,13 @@ public class DeploymentParams {
     } catch (IllegalArgumentException e) {
       return false;
     }
-
     return true;
   }
 
   // Amazon account identifier format can be found in
   // https://docs.aws.amazon.com/general/latest/gr/acct-identifiers.html
-  private boolean validAccountID(String id) {
-    return id != null && id.matches("^\\d{12}$");
-  }
-
-  public boolean validPubAccountID() {
-    return validAccountID(pubAccountId);
-  }
-
-  public boolean validAccountID() {
-    return validAccountID(accountId);
-  }
-
-  // Amazon VPC ID identifier format can be found in
-  // https://aws.amazon.com/about-aws/whats-new/2018/02/longer-format-resource-ids-are-now-available-in-amazon-ec2/
-  public boolean validVpcID() {
-    return vpcId != null && !vpcId.isEmpty() && vpcId.matches("^vpc-[a-z0-9]{17}$");
+  public boolean validAwsAccountID() {
+    return awsAccountId != null && awsAccountId.matches("^\\d{12}$");
   }
 
   public boolean validConfigStorage() {
@@ -99,14 +79,8 @@ public class DeploymentParams {
     if (!validRegion()) {
       logAndThrow("Invalid Region: " + region);
     }
-    if (!validAccountID()) {
-      logAndThrow("Invalid Account ID: " + accountId);
-    }
-    if (!validPubAccountID()) {
-      logAndThrow("Invalid Publisher Account ID: " + pubAccountId);
-    }
-    if (!validVpcID()) {
-      logAndThrow("Invalid VPC ID: " + vpcId);
+    if (!validAwsAccountID()) {
+      logAndThrow("Invalid AWS Account ID: " + awsAccountId);
     }
     if (!validTagPostfix()) {
       logAndThrow(
@@ -133,28 +107,32 @@ public class DeploymentParams {
         new StringBuilder()
             .append("{Region: ")
             .append(region)
-            .append(", Account ID: ")
-            .append(accountId)
-            .append(", Publisher Account ID: ")
-            .append(pubAccountId)
-            .append(", VPC ID: ")
-            .append(vpcId)
+            .append(", AWS Account ID: ")
+            .append(awsAccountId)
             .append(", Configuration Storage: ")
             .append(configStorage)
             .append(", Data Storage: ")
             .append(dataStorage)
             .append(", Tag: ")
-            .append(tag)
-            .append(", publisherPCEId: ")
-            .append(publisherPCEId)
-            .append(", publisherPCEInstanceId: ")
-            .append(publisherPCEInstanceId)
-            .append(", Enable Semi-Automated Data Ingestion: ")
-            .append(String.valueOf(enableSemiAutomatedDataIngestion));
+            .append(tag);
     if (logLevel != null) {
       sb.append(", Terraform Log Level: ").append(logLevel);
     }
     sb.append("}");
     return sb.toString();
+  }
+
+  public DeploymentParams toDeploymentParams() {
+    DeploymentParams params = new DeploymentParams();
+    params.region = region;
+    params.accountId = awsAccountId;
+    params.configStorage = configStorage;
+    params.dataStorage = dataStorage;
+    params.tag = tag;
+    params.logLevel = logLevel;
+    params.awsAccessKeyId = awsAccessKeyId;
+    params.awsSecretAccessKey = awsSecretAccessKey;
+    params.awsSessionToken = awsSessionToken;
+    return params;
   }
 }

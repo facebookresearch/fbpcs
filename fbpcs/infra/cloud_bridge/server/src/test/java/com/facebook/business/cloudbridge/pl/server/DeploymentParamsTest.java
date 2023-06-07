@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-import com.facebook.business.cloudbridge.pl.server.DeploymentParams.LogLevel;
+import com.facebook.business.cloudbridge.pl.server.LogLevel;
 import org.junit.Before;
 import org.junit.Test;
 
