@@ -199,4 +199,20 @@ public class Validator {
     // TODO S3 bucket limit validation T119080329
     return new ValidatorResult(true, "No pre validation issues found so far!");
   }
+
+  public ValidatorResult validateForInstallation(
+      ToolkitInstallationParams installationParams, boolean install) {
+    final ValidatorResult credentialsValidationResult =
+        validateCredentials(installationParams.toDeploymentParams());
+    if (!credentialsValidationResult.isSuccessful) {
+      return credentialsValidationResult;
+    }
+
+    ValidatorResult dataStorageValidationRes =
+        validateDataBucket(installationParams.toDeploymentParams());
+    if (!dataStorageValidationRes.isSuccessful) {
+      return dataStorageValidationRes;
+    }
+    return new ValidatorResult(true, "No pre validation issues found so far!");
+  }
 }
