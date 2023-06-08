@@ -40,7 +40,7 @@ image-build: $(SERVER_JAR) external_deps
 	# Cleanup copied resources
 	@echo "\nCleaning up dependencies..."
 	$(RM) -r aws_terraform_template
-	$(RM) -r kia_source_code
+	$(RM) -r key_injection_agent/kia_source_code
 	$(RM) config.yml
 	@echo "Done"
 
@@ -51,7 +51,7 @@ image-run: image-build
 clean:
 	server/gradlew -p server clean
 	$(RM) -r aws_terraform_template
-	$(RM) -r kia_source_code
+	$(RM) -r key_injection_agent/kia_source_code
 	$(RM) config.yml
 
 distclean: clean
