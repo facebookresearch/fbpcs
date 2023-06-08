@@ -28,7 +28,7 @@ resource "aws_s3_bucket_object" "upload_lambda" {
 }
 
 locals {
-  kia_lambda_log_group       = "/aws/lambda/${var.kia_lambda_function_name}-${var.tag_postfix}"
+  kia_lambda_log_group       = "/aws/lambda/${var.kia_lambda_function_name}"
   kia_lambda_stream_name = "kia-lambda-log-stream"
 }
 
@@ -41,8 +41,8 @@ resource "aws_cloudwatch_log_stream" "kia-lambda-log-stream" {
   log_group_name = aws_cloudwatch_log_group.kia-lambda-log-group.name
 }
 
-resource "aws_iam_role_policy" "kia_lambda_s3_access_policy" {
-  name = "kia_lambda_s3_access_policy"
+resource "aws_iam_role_policy" "kia_lambda_access_policy" {
+  name = "kia_lambda_access_policy"
   role = aws_iam_role.kia_lambda_iam.name
   policy = <<EOF
 {
@@ -52,7 +52,9 @@ resource "aws_iam_role_policy" "kia_lambda_s3_access_policy" {
       "Sid": "AllowLambdaAccessToS3",
       "Effect": "Allow",
       "Action": [
-         "s3:*"
+         "s3:GetObject",
+         "s3:PutObject",
+         "s3:ListObjects"
       ],
       "Resource":[
         "arn:aws:s3:::${var.kia_lambda_input_bucket}",
@@ -66,7 +68,19 @@ resource "aws_iam_role_policy" "kia_lambda_s3_access_policy" {
          "kms:CreateKey",
          "kms:CreateAlias",
          "kms:GenerateDataKey",
-         "kms:TagResource"
+         "kms:TagResource",
+         "kms:ScheduleKeyDeletion"
+
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowLambdaAccessToCloudWatch",
+      "Effect": "Allow",
+      "Action": [
+         "logs:CreateLogGroup",
+         "logs:CreateLogStream",
+         "logs:PutLogEvents"
       ],
       "Resource": "*"
     }
@@ -74,6 +88,7 @@ resource "aws_iam_role_policy" "kia_lambda_s3_access_policy" {
 }
 EOF
 }
+
 resource "aws_iam_role" "kia_lambda_iam" {
   name = "kia_lambda-iam${var.tag_postfix}"
 
