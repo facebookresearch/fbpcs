@@ -63,4 +63,7 @@ ENV WRITE_ROUTING_SCRIPT="/home/onedocker/package/write_routing.sh"
 RUN echo "%${caAdminGroup} ALL=(ALL) NOPASSWD: ${WRITE_ROUTING_SCRIPT}" >> /etc/sudoers
 
 CMD ["/bin/bash"]
+
+# Switch to non-root user for security purposes
+USER onedocker
 WORKDIR /home/onedocker
