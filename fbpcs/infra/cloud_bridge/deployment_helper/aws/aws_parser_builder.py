@@ -126,6 +126,13 @@ class AwsParserBuilder:
         )
 
         iam_policy_command_group.add_argument(
+            "--kia_lambda_name",
+            type=str,
+            required=False,
+            help="KIA Lambda name",
+        )
+
+        iam_policy_command_group.add_argument(
             "--events_data_crawler_arn",
             type=str,
             required=False,

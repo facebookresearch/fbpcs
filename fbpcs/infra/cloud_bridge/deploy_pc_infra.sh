@@ -309,6 +309,7 @@ deploy_aws_resources() {
         --region "$region" \
         --firehose_stream_name "$firehose_stream_name" \
         --data_ingestion_lambda_name "$data_ingestion_lambda_name" \
+        --kia_lambda_name "$kia_lambda_function_name" \
         --data_bucket_name "$s3_bucket_data" \
         --config_bucket_name "$s3_bucket_config" \
         --database_name "$database_name" \

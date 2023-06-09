@@ -54,6 +54,13 @@
         },
         {
             "Action": [
+                "lambda:InvokeFunction"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${KIA_LAMBDA_NAME}"
+        },
+        {
+            "Action": [
                 "logs:*"
             ],
             "Effect": "Allow",
