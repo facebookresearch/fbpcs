@@ -32,6 +32,7 @@ class TestAwsDeploymentHelperTool(unittest.TestCase):
         test_cluster_name = "test-cluster"
         test_ecs_task_execution_role_name = "test-ecs-execution-role"
         test_data_ingestion_lambda_name = "test-di-lambda-name"
+        test_kia_lambda_name = "test-kia-lambda-name"
         test_events_data_crawler_arn = "test-events-data-crawler-arn"
         test_semi_automated_glue_job_arn = "test-semi-automated-glue-job-arn"
 
@@ -70,6 +71,7 @@ class TestAwsDeploymentHelperTool(unittest.TestCase):
             cli_args.cluster_name = test_cluster_name
             cli_args.ecs_task_execution_role_name = test_ecs_task_execution_role_name
             cli_args.data_ingestion_lambda_name = test_data_ingestion_lambda_name
+            cli_args.kia_lambda_name = test_kia_lambda_name
             cli_args.events_data_crawler_arn = test_events_data_crawler_arn
             cli_args.semi_automated_glue_job_arn = test_semi_automated_glue_job_arn
             aws_deployment_helper_tool = AwsDeploymentHelperTool(cli_args)
@@ -88,6 +90,7 @@ class TestAwsDeploymentHelperTool(unittest.TestCase):
                     cluster_name=test_cluster_name,
                     ecs_task_execution_role_name=test_ecs_task_execution_role_name,
                     data_ingestion_lambda_name=test_data_ingestion_lambda_name,
+                    kia_lambda_name=test_kia_lambda_name,
                     events_data_crawler_arn=test_events_data_crawler_arn,
                     semi_automated_glue_job_arn=test_semi_automated_glue_job_arn,
                 ),

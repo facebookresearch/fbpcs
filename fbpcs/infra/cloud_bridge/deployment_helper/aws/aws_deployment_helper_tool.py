@@ -49,6 +49,7 @@ class AwsDeploymentHelperTool:
                 cluster_name=self.cli_args.cluster_name,
                 ecs_task_execution_role_name=self.cli_args.ecs_task_execution_role_name,
                 data_ingestion_lambda_name=self.cli_args.data_ingestion_lambda_name,
+                kia_lambda_name=self.cli_args.kia_lambda_name,
                 events_data_crawler_arn=self.cli_args.events_data_crawler_arn,
                 semi_automated_glue_job_arn=self.cli_args.semi_automated_glue_job_arn,
             )
