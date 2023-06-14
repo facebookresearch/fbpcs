@@ -63,15 +63,16 @@ public class DeployController {
     } catch (final Exception ex) {
       return new APIReturn(APIReturn.Status.STATUS_FAIL, ex.getMessage());
     }
-    logger.info("  Validated input (installation params)");
+    String operation = shouldInstall ? "Installation" : "Uninstallation";
+    logger.info("  Validated input (installation/uninstallaion params)");
 
     try {
       if (!singleProvisioningLock.tryAcquire()) {
-        String errorMessage = "Another installation is in progress";
+        String errorMessage = "Another " + operation + "is in progress";
         logger.error("  " + errorMessage);
         return new APIReturn(APIReturn.Status.STATUS_FAIL, errorMessage);
       }
-      logger.info("  No installation conflicts found");
+      logger.info("  No " + operation + "conflicts found");
       logStreamer.startFresh();
       installationRunner =
           new InstallationRunner(
@@ -81,14 +82,21 @@ public class DeployController {
                 singleProvisioningLock.release();
               });
       installationRunner.start();
-      return new APIReturn(
-          APIReturn.Status.STATUS_SUCCESS,
-          (shouldInstall ? "Installation" : "Uninstallation") + " started successfully");
+      return new APIReturn(APIReturn.Status.STATUS_SUCCESS, operation + " started successfully");
     } catch (InstallationException ex) {
       return new APIReturn(APIReturn.Status.STATUS_ERROR, ex.getMessage());
     } finally {
-      logger.info("  Installation request finalized");
+      logger.info(operation + "request finalized");
     }
+  }
+
+  @DeleteMapping(
+      path = "/v2/installation",
+      consumes = "application/json",
+      produces = "application/json")
+  public APIReturn uninstallToolkit(@RequestBody ToolkitInstallationParams installationParams) {
+    logger.info("Received PC toolkit uninstallation request: " + installationParams.toString());
+    return runInstallation(false /* shouldInstall */, installationParams);
   }
 
   @GetMapping(path = "/v2/installation", produces = "application/json")
