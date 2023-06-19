@@ -1,0 +1,41 @@
+{
+    "publisher_input": {
+        "num_impressions": "int",
+        "num_clicks": "int",
+        "total_spend": "int",
+        "opportunity_timstamp": "int",
+        "test_flag": "int",
+        "age": "int",
+        "gender": "Optional[int]",
+        "breakdown_id": "Optional[int]"
+    },
+    "partner_input": {
+        "value": "int",
+        "event_timestamp": "int",
+        "partner_cohort_id": "Optional[int]"
+    },
+    "aggregated_metrics": {
+        "filter": {
+            "age": [
+                {
+                    "constraint_type": "GTE",
+                    "value": "25"
+                },
+                {
+                    "constraint_type": "LTE",
+                    "value": "40"
+                }
+            ],
+            "gender": [
+                {
+                    "constraint_type": "EQ",
+                    "value": "0"
+                }
+            ]
+        },
+        "group_by": [
+            "age",
+            "gender"
+        ]
+    }
+}
