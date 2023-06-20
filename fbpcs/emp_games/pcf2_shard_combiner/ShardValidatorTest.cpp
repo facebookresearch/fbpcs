@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <fbpcf/exception/exceptions.h>
+#include <fbpcs/emp_games/common/TestUtil.h>
 #include <fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h>
 #include <fbpcs/emp_games/pcf2_shard_combiner/ShardValidator.h>
 #include <fbpcs/emp_games/pcf2_shard_combiner/ShardValidator_impl.h>
@@ -19,8 +20,8 @@ class ShardValidatorTest : public ::testing::Test {
   void SetUp() override {
     // Get full path of current source file
     std::string filePath = __FILE__;
-    baseDir_ = filePath.substr(0, filePath.rfind("/")) +
-        "/test/shard_validation_test/";
+    baseDir_ = private_measurement::test_util::getBaseDirFromPath(__FILE__) +
+        "test/shard_validation_test/";
   }
   std::string baseDir_;
   static constexpr int schedulerId = 0;

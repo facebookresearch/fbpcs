@@ -17,7 +17,7 @@
 #include <fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h>
 #include <fbpcf/engine/communication/test/AgentFactoryCreationHelper.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
-
+#include <fbpcs/emp_games/common/TestUtil.h>
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/test/TestUtils.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h"
@@ -238,7 +238,8 @@ class ShardCombinerGameTestFixture
  protected:
   void SetUp() override {
     std::string filePath = __FILE__;
-    baseDir_ = filePath.substr(0, filePath.rfind("/")) + "/test/";
+    baseDir_ =
+        private_measurement::test_util::getBaseDirFromPath(__FILE__) + "test/";
   }
 
   std::string baseDir_;

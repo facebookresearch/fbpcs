@@ -23,6 +23,7 @@
 #include <fbpcf/io/api/FileIOWrappers.h>
 #include "fbpcf/engine/communication/test/AgentFactoryCreationHelper.h"
 
+#include <fbpcs/emp_games/common/TestUtil.h>
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/AggMetrics.h"
 #include "fbpcs/emp_games/pcf2_shard_combiner/ShardCombinerApp.h"
@@ -180,7 +181,8 @@ class ShardCombinerAppTestFixture
  protected:
   void SetUp() override {
     std::string filePath = __FILE__;
-    baseDir_ = filePath.substr(0, filePath.rfind("/")) + "/test/";
+    baseDir_ =
+        private_measurement::test_util::getBaseDirFromPath(__FILE__) + "test/";
     tempDir_ = std::filesystem::temp_directory_path();
 
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
