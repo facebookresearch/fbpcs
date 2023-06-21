@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include <fbpcs/emp_games/common/TestUtil.h>
 #include "ShardAggregatorValidation.h"
 
 namespace measurement::private_attribution {
@@ -26,8 +27,8 @@ class ShardAggregatorValidationTest : public ::testing::Test {
   void SetUp() override {
     // Get full path of current source file
     std::string filePath = __FILE__;
-    baseDir_ = filePath.substr(0, filePath.rfind("/")) +
-        "/test/shard_validation_test/";
+    baseDir_ = private_measurement::test_util::getBaseDirFromPath(__FILE__) +
+        "test/shard_validation_test/";
   }
 
   std::string baseDir_;

@@ -19,7 +19,7 @@
 #include <folly/test/JsonTestUtil.h>
 
 #include <fbpcf/io/api/FileIOWrappers.h>
-
+#include <fbpcs/emp_games/common/TestUtil.h>
 namespace measurement::private_attribution {
 
 class AggMetricsTest : public ::testing::Test {
@@ -27,7 +27,8 @@ class AggMetricsTest : public ::testing::Test {
   void SetUp() override {
     // Get full path of current source file
     std::string filePath = __FILE__;
-    baseDir_ = filePath.substr(0, filePath.rfind("/")) + "/test/";
+    baseDir_ =
+        private_measurement::test_util::getBaseDirFromPath(__FILE__) + "test/";
   }
 
   std::string baseDir_;

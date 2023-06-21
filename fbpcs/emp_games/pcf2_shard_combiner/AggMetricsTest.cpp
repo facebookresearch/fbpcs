@@ -21,7 +21,8 @@ class AggMetricsTest : public ::testing::Test {
  protected:
   void SetUp() override {
     std::string filePath = __FILE__;
-    baseDir_ = filePath.substr(0, filePath.rfind("/")) + "/test/";
+    baseDir_ =
+        private_measurement::test_util::getBaseDirFromPath(__FILE__) + "test/";
   }
   std::string baseDir_;
 };

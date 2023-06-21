@@ -23,6 +23,7 @@
 #include <fbpcf/engine/communication/test/SocketInTestHelper.h>
 #include <fbpcf/engine/communication/test/TlsCommunicationUtils.h>
 #include <fbpcf/io/api/FileIOWrappers.h>
+#include <fbpcs/emp_games/common/TestUtil.h>
 
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/private_id_dfca_aggregator/PrivateIdDfcaAggregatorApp.h"
@@ -33,7 +34,9 @@ class PrivateIdDfcaAggregatorAppTestFixture
  protected:
   void SetUp() override {
     std::string filePath = __FILE__;
-    epxectedResultsDir_ = filePath.substr(0, filePath.rfind("/")) + "/outputs/";
+    epxectedResultsDir_ =
+        private_measurement::test_util::getBaseDirFromPath(__FILE__) +
+        "outputs/";
     tempDir_ = std::filesystem::temp_directory_path();
 
     tlsDir_ = fbpcf::engine::communication::setUpTlsFiles();
