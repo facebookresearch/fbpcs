@@ -100,7 +100,8 @@ cleanup_generated_resources() {
 
 log_streaming_data() {
     local text=$1
-    echo "$(date +"%M:%S") -> $text" >> "$TF_LOG_STREAMING"
+    TIMESTAMP_FORMAT=$(date +"%Y-%m-%d %H:%M:%S (%Z)")
+    echo "[${TIMESTAMP_FORMAT}] -> $text" >> "$TF_LOG_STREAMING"
 }
 
 log_resource_output() {
