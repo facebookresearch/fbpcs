@@ -10,7 +10,7 @@ RUN apt-get update
 RUN apt-get install -y software-properties-common
 RUN apt-get update && apt-get install -y \
     awscli \
-    gcc=4:10.2.1-1 \
+    gcc \
     git \
     unzip \
     vim
