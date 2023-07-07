@@ -138,6 +138,7 @@ expected_column_list = [
     "event_type",
     "action_source",
     "event_id",
+    "cohort_id",
 ]
 for column_name in expected_column_list:
     if column_name not in listColumns:
