@@ -57,6 +57,7 @@ RUN chown -R onedocker /home/onedocker/package/
 RUN chmod -R u-x ~/
 RUN chmod -R u+rw /tmp
 RUN chmod -R u+rwx /home/onedocker/package/
+ENV ONEDOCKER_EXE_PATH="/home/onedocker/package"
 
 # Give runtime user special permission to run the install certificate binary
 ENV WRITE_ROUTING_SCRIPT="/home/onedocker/package/write_routing.sh"
