@@ -327,7 +327,7 @@ deploy_aws_resources() {
     echo "######################## Initializing terraform working directory completed ########################"
     echo "######################## Deploy Data Ingestion Terraform scripts started ########################"
     set +e
-    local data_ingestion_time_out=600
+    local data_ingestion_time_out=1200
     SECONDS=0
     while [ $SECONDS -lt $data_ingestion_time_out ]
     do
