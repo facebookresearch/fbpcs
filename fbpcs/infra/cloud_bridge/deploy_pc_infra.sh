@@ -114,6 +114,30 @@ undeploy_aws_resources() {
 
     echo "######################## Deleted KIA Lambda fuction ########################"
 
+    echo "######################## Delete Pl Clean Up Agent Lambda fuction ########################"
+    cd /terraform_deployment/terraform_scripts/clean_up_agent/
+
+    log_streaming_data "starting to undeploy Pl Clean up agent."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/clean_up_agent_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "clean_up_agent_lambda_function_name=$clean_up_agent_lambda_function_name" \
+        -var "clean_up_agent_lambda_input_bucket=$s3_bucket_data" \
+        -var "clean_up_agent_lambda_source_bucket=$s3_bucket_config" \
+        -var "clean_up_agent_lambda_s3_key=source.zip"
+
+    log_streaming_data "undeployed Pl Clean up agent."
+
+    echo "######################## Deleted Pl Clean Up Agent Lambda fuction ########################"
+
     if "$build_semi_automated_data_pipeline"
     then
         echo "Undeploy Semi automated data_pipeline..."
@@ -295,6 +319,31 @@ deploy_aws_resources() {
     log_streaming_data "deployed key injection agent."
 
     echo "######################## Deployed Key Injection Agent AWS Lambda"
+
+    echo "######################## Deploying Clean Up Agent Agent AWS Lambda"
+    cd /terraform_deployment/terraform_scripts/clean_up_agent
+
+    log_streaming_data "starting to deploy Clean Up agent."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/clean_up_agent_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "clean_up_agent_lambda_function_name=$clean_up_agent_lambda_function_name" \
+        -var "clean_up_agent_lambda_input_bucket=$s3_bucket_data" \
+        -var "clean_up_agent_lambda_source_bucket=$s3_bucket_config" \
+        -var "clean_up_agent_lambda_s3_key=source.zip"
+
+    log_streaming_data "deployed clean up agent."
+
+    echo "######################## Deployed Clean Up Agent AWS Lambda"
+
     echo "########################Finished AWS Infrastructure Deployment########################"
     log_streaming_data "finished deploying resources..."
 
@@ -336,6 +385,7 @@ data_upload_key_path="semi-automated-data-ingestion"
 query_results_key_path="query-results"
 data_ingestion_lambda_name="cb-data-ingestion-stream-processor${tag_postfix}"
 kia_lambda_function_name="cb-kia${tag_postfix}"
+clean_up_agent_lambda_function_name="cb-clean-up-agent${tag_postfix}"
 fb_pc_iam_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_iam_policy_no_compute.json"
 fb_pc_data_bucket_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_data_bucket_policy.json"
 data_bucket_policy_name="fb-pc-data-bucket-policy${tag_postfix}"
