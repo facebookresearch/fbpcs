@@ -53,7 +53,9 @@ resource "aws_iam_role_policy" "clean_up_agent_lambda_access_policy" {
             "Effect": "Allow",
             "Action": [
                 "s3:GetObject",
-                "s3:ListObjects",
+                "s3:ListBucket",
+                "s3:ListBucketVersions",
+                "s3:ListObjectsV2",
                 "s3:DeleteObject"
             ],
             "Resource": [
