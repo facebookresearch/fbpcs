@@ -41,6 +41,7 @@ image-build: $(SERVER_JAR) external_deps
 	@echo "\nCleaning up dependencies..."
 	$(RM) -r aws_terraform_template
 	$(RM) -r key_injection_agent/kia_source_code
+	$(RM) -r clean_up_agent/clean_up_agent_source_code
 	$(RM) config.yml
 	@echo "Done"
 
@@ -52,6 +53,7 @@ clean:
 	server/gradlew -p server clean
 	$(RM) -r aws_terraform_template
 	$(RM) -r key_injection_agent/kia_source_code
+	$(RM) -r clean_up_agent/clean_up_agent_source_code
 	$(RM) config.yml
 
 distclean: clean
@@ -59,7 +61,7 @@ distclean: clean
 
 
 # Dockerfile will not accept these resources as links, so they need to be copied in
-external_deps: kia_source_code config.yml aws_terraform_template
+external_deps: kia_source_code clean_up_agent_source_code config.yml aws_terraform_template
 	@echo "Dependencies Copied\n"
 
 kia_source_code:
@@ -71,6 +73,16 @@ kia_source_code:
 	cp -r ../../../private_computation/tee_lift/key_injection_agent key_injection_agent/kia_source_code/private_computation/tee_lift
 	cp -r ../../../private_computation/tee_lift/pc_crypto key_injection_agent/kia_source_code/private_computation/tee_lift
 	cp -r ../../../private_computation/tee_lift/utils key_injection_agent/kia_source_code/private_computation/tee_lift
+
+clean_up_agent_source_code:
+	mkdir -p clean_up_agent/clean_up_agent_source_code
+	mkdir -p clean_up_agent/clean_up_agent_source_code/private_computation
+	mkdir -p clean_up_agent/clean_up_agent_source_code/private_computation/tee_lift
+	mkdir -p clean_up_agent/clean_up_agent_source_code/private_computation/tee_lift/pl_clean_up
+	chmod +x clean_up_agent/clean_up_agent_source_code
+	cp -r ../../../private_computation/tee_lift/pl_clean_up/pl_run_clean_up.py clean_up_agent/clean_up_agent_source_code/
+	cp -r ../../../private_computation/tee_lift/pl_clean_up/pl_clean_up_input.py clean_up_agent/clean_up_agent_source_code/private_computation/tee_lift/pl_clean_up/
+	cp -r ../../../private_computation/tee_lift/utils clean_up_agent/clean_up_agent_source_code/private_computation/tee_lift
 
 config.yml:
 	cp ../../private_computation_cli/config.yml .

@@ -28,8 +28,8 @@ resource "aws_s3_bucket_object" "upload_lambda" {
 }
 
 locals {
-  kia_lambda_log_group       = "/aws/lambda/${var.clean_up_agent_lambda_function_name}"
-  kia_lambda_stream_name = "clean-up-agent-lambda-log-stream"
+  clean_up_agent_lambda_log_group       = "/aws/lambda/${var.clean_up_agent_lambda_function_name}"
+  clean_up_agent_lambda_stream_name     = "clean-up-agent-lambda-log-stream"
 }
 
 resource "aws_cloudwatch_log_group" "clean-up-agent-lambda-log-group" {
@@ -46,58 +46,53 @@ resource "aws_iam_role_policy" "clean_up_agent_lambda_access_policy" {
   role = aws_iam_role.clean_up_agent_lambda_iam.name
   policy = <<EOF
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowLambdaAccessToS3",
-      "Effect": "Allow",
-      "Action": [
-         "s3:GetObject",
-         "s3:ListObjects"
-         "s3:DeleteObject",
-      ],
-      "Resource":[
-        "arn:aws:s3:::${var.clean_up_agent_lambda_input_bucket}",
-        "arn:aws:s3:::${var.clean_up_agent_lambda_input_bucket}/*"
-      ]
-    },
-    {
-      "Sid": "AllowLambdaAccessToModifyS3BucketPolicy",
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutBucketPolicy"
-
-      ],
-      "Resource":[
-        "arn:aws:s3:::${var.clean_up_agent_lambda_input_bucket}"
-      ]
-    },
-    {
-      "Sid": "AllowLambdaAccessToKMSKey",
-      "Effect": "Allow",
-      "Action": [
-         "kms:DescribeKey",
-         "kms:ScheduleKeyDeletion"
-
-      ],
-      "Resource": "*",
-      "Condition": {
-          "StringEquals": {
-              "aws:ResourceTag/Name": "CreatedBy",
-              "aws:ResourceTag/Value": "KIALambda"
-          }
-    },
-    {
-      "Sid": "AllowLambdaAccessToCloudWatch",
-      "Effect": "Allow",
-      "Action": [
-         "logs:CreateLogGroup",
-         "logs:CreateLogStream",
-         "logs:PutLogEvents"
-      ],
-      "Resource": "*"
-    }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowLambdaAccessToS3",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:ListObjects",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${var.clean_up_agent_lambda_input_bucket}",
+                "arn:aws:s3:::${var.clean_up_agent_lambda_input_bucket}/*"
+            ]
+        },
+        {
+            "Sid": "AllowLambdaAccessToModifyS3BucketPolicy",
+            "Effect": "Allow",
+            "Action": "s3:PutBucketPolicy",
+            "Resource": "arn:aws:s3:::${var.clean_up_agent_lambda_input_bucket}"
+        },
+        {
+            "Sid": "AllowLambdaAccessToKMSKey",
+            "Effect": "Allow",
+            "Action": [
+                "kms:DescribeKey",
+                "kms:ScheduleKeyDeletion"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:ResourceTag/Name": "CreatedBy",
+                    "aws:ResourceTag/Value": "KIALambda"
+                }
+            }
+        },
+        {
+            "Sid": "AllowLambdaAccessToCloudWatch",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+        }
+    ]
 }
 EOF
 }
@@ -134,7 +129,8 @@ resource "aws_lambda_function" "clean_up_agent_lambda" {
   publish          = true
   environment {
     variables = {
-      DEBUG = "false"
+      DEBUG = "false",
+      encrypted_file_bucket = var.clean_up_agent_lambda_input_bucket
     }
   }
 
