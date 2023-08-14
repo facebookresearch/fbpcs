@@ -138,3 +138,24 @@ resource "aws_lambda_function" "clean_up_agent_lambda" {
 
   depends_on = [aws_s3_bucket_object.upload_lambda]
 }
+
+resource "aws_cloudwatch_event_rule" "clean_up_agent_schedule_rule" {
+  name        = "pc-clean-up-schedule-rule${var.tag_postfix}"
+  description = "PC Clean up Schedule Rule."
+  schedule_expression = "rate(1 hour)"
+}
+
+resource "aws_cloudwatch_event_target" "clean_up_agent_schedule_target" {
+  rule      = aws_cloudwatch_event_rule.clean_up_agent_schedule_rule.name
+  target_id = "LambdaFunction"
+  arn       = aws_lambda_function.clean_up_agent_lambda.arn
+  input     = jsonencode({})
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.clean_up_agent_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.clean_up_agent_schedule_rule.arn
+}
