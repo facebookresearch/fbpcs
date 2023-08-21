@@ -32,3 +32,8 @@ variable "kia_lambda_s3_key" {
   description = "S3 key for source code zip file for KIA."
   default     = ""
 }
+
+variable "clean_up_agent_lambda_iam_role" {
+  description = "IAM Role arn of the clean up agent lambda."
+  default     = ""
+}

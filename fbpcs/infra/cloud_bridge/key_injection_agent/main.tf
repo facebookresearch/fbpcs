@@ -121,7 +121,8 @@ resource "aws_lambda_function" "kia_lambda" {
   publish          = true
   environment {
     variables = {
-      DEBUG = "false"
+      DEBUG = "false",
+      clean_up_agent_lambda_iam_role = var.clean_up_agent_lambda_iam_role
     }
   }
 

@@ -296,30 +296,6 @@ deploy_aws_resources() {
         semi_automated_glue_job_arn=$(terraform output semi_automated_glue_job_arn | tr -d '"')
     fi
 
-    echo "######################## Deploying Key Injection Agent AWS Lambda"
-    cd /terraform_deployment/terraform_scripts/key_injection_agent
-
-    log_streaming_data "starting to deploy key injection agent."
-
-    terraform init -reconfigure \
-        -backend-config "bucket=$s3_bucket_config" \
-        -backend-config "region=$region" \
-        -backend-config "key=tfstate/key_injection_agent_$tag_postfix.tfstate"
-
-    terraform apply \
-        -auto-approve \
-        -var "region=$region" \
-        -var "tag_postfix=$tag_postfix" \
-        -var "aws_account_id=$aws_account_id" \
-        -var "kia_lambda_function_name=$kia_lambda_function_name" \
-        -var "kia_lambda_input_bucket=$s3_bucket_data" \
-        -var "kia_lambda_s3_bucket=$s3_bucket_config" \
-        -var "kia_lambda_s3_key=kialambda.zip"
-
-    log_streaming_data "deployed key injection agent."
-
-    echo "######################## Deployed Key Injection Agent AWS Lambda"
-
     echo "######################## Deploying Clean Up Agent Agent AWS Lambda"
     cd /terraform_deployment/terraform_scripts/clean_up_agent
 
@@ -343,6 +319,33 @@ deploy_aws_resources() {
     log_streaming_data "deployed clean up agent."
 
     echo "######################## Deployed Clean Up Agent AWS Lambda"
+    # Store the clean up agent IAM role arn as a variable, we need to send this to KIA lambda.
+    clean_up_agent_lambda_iam_role_arn=$(terraform output clean_up_agent_lambda_iam_role_arn | tr -d '"')
+
+    echo "######################## Deploying Key Injection Agent AWS Lambda"
+    cd /terraform_deployment/terraform_scripts/key_injection_agent
+
+    log_streaming_data "starting to deploy key injection agent."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/key_injection_agent_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "kia_lambda_function_name=$kia_lambda_function_name" \
+        -var "kia_lambda_input_bucket=$s3_bucket_data" \
+        -var "kia_lambda_s3_bucket=$s3_bucket_config" \
+        -var "clean_up_agent_lambda_iam_role=$clean_up_agent_lambda_iam_role_arn" \
+        -var "kia_lambda_s3_key=kialambda.zip"
+
+    log_streaming_data "deployed key injection agent."
+
+    echo "######################## Deployed Key Injection Agent AWS Lambda"
 
     echo "########################Finished AWS Infrastructure Deployment########################"
     log_streaming_data "finished deploying resources..."
