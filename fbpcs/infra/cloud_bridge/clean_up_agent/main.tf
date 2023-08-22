@@ -67,8 +67,8 @@ resource "aws_iam_role_policy" "clean_up_agent_lambda_access_policy" {
             "Sid": "AllowLambdaAccessToModifyS3BucketPolicy",
             "Effect": "Allow",
             "Action": [
-              "s3:GetBucketAcl",
-              "s3:PutBucketPolicy"
+                "s3:GetBucketPolicy",
+                "s3:PutBucketPolicy"
             ],
             "Resource": "arn:aws:s3:::${var.clean_up_agent_lambda_input_bucket}"
         },
