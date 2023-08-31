@@ -67,6 +67,7 @@ COPY config.yml /terraform_deployment/config
 COPY cli.py /terraform_deployment
 RUN mkdir -p /terraform_deployment/fbpcs/infra/cloud_bridge
 COPY deployment_helper /terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper
+COPY advertiser_infra_logging /terraform_deployment/terraform_scripts/advertiser_infra_logging
 
 ###################################################################
 # Install cryptography and prerequisite libraries. Needed for KIA.
