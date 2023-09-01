@@ -2,6 +2,18 @@ provider "aws" {
   region = var.region
 }
 
+provider "archive" {}
+
+terraform {
+  backend "s3" {}
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
+}
+
 ## Create the cloudwatch log group name for TEE-PL data S3 buckets 
 locals {
   s3_cloudwatch_log_group = "/aws/cloudtrail/s3/${var.s3_bucket_name}"

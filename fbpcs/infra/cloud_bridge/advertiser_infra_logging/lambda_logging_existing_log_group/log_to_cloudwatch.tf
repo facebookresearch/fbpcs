@@ -2,6 +2,18 @@ provider "aws" {
   region = var.region
 }
 
+provider "archive" {}
+
+terraform {
+  backend "s3" {}
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
+}
+
 locals {
   lambda_cloudwatch_log_group = "/aws/lambda/${var.lambda_name}"
 }
@@ -11,10 +23,9 @@ data "aws_kinesis_stream" "logs_kinesis_stream" {
   name = var.kinesis_log_stream_name
 }
 
-## Create a cloudwatch lambda log group
-resource "aws_cloudwatch_log_group" "lambda_logs" {
-  name              = local.lambda_cloudwatch_log_group
-  retention_in_days = 7
+## Find existing cloudwatch lambda log group if it exists
+data "aws_cloudwatch_log_group" "lambda_logs" {
+  name = local.lambda_cloudwatch_log_group
 }
 
 ## Find the existing lambda log function
@@ -29,7 +40,7 @@ locals {
 
 ## Create a policy for lambda to be able to write logs to cloudwatch log group
 resource "aws_iam_policy" "cloudwatch_logs" {
-  name = "${var.lambda_name}-lambda-cloudwatch-policy"
+  name = "${var.lambda_name}-cpol"
 
   policy = <<EOF
 {
@@ -43,7 +54,7 @@ resource "aws_iam_policy" "cloudwatch_logs" {
                 "logs:PutLogEvents"
             ],  
             "Resource": [
-                "${aws_cloudwatch_log_group.lambda_logs.arn}:*"
+                "${data.aws_cloudwatch_log_group.lambda_logs.arn}:*"
             ]   
         }  
     ]   
@@ -61,7 +72,7 @@ resource "aws_iam_role_policy_attachment" "updated_lambda_role_policy_attachment
 
 ## Create IAM Role for CloudWatch to publish logs to Kinesis
 resource "aws_iam_role" "cloudwatch_log" {
-  name = "${var.lambda_name}_cloudwatch_log_role"
+  name = "${var.lambda_name}_crol"
 
   assume_role_policy = <<EOF
 {
@@ -81,7 +92,7 @@ EOF
 
 ## Create IAM Policy for CloudWatch to publish logs to Kinesis
 resource "aws_iam_role_policy" "kinesis_write_policy" {
-  name = "${var.lambda_name}_cloudwatch_kinesis_write_policy"
+  name = "${var.lambda_name}_kpol"
   role = aws_iam_role.cloudwatch_log.id
 
   policy = <<EOF
@@ -106,8 +117,8 @@ EOF
 
 ## Push lambda cloudwatch log group to Kinesis stream
 resource "aws_cloudwatch_log_subscription_filter" "cloudwatch_log_to_kinesis_subscription" {
-  name            = "${var.lambda_name}-cloudwatch-log-to-kinesis-subscription"
-  log_group_name  = aws_cloudwatch_log_group.lambda_logs.name
+  name            = "${var.lambda_name}-sub"
+  log_group_name  = local.lambda_cloudwatch_log_group
   filter_pattern  = "" # forward all lambda logs to kinesis stream
   destination_arn = data.aws_kinesis_stream.logs_kinesis_stream.arn
   role_arn        = aws_iam_role.cloudwatch_log.arn
