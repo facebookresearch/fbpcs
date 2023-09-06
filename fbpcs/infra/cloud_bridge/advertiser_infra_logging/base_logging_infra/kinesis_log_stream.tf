@@ -29,7 +29,7 @@ resource "aws_kinesis_stream" "logs_kinesis_stream" {
 
 ## Setup Kinesis read policy 
 resource "aws_iam_policy" "kinesis_read_policy" {
-  name = "kinesis-read-policy"
+  name = var.kinesis_read_policy_name
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -49,7 +49,7 @@ resource "aws_iam_policy" "kinesis_read_policy" {
 
 ## Setup Kinesis read role for any service that only belongs to the advertiser's account to assume
 resource "aws_iam_role" "kinesis_read_role" {
-  name = "kinesis-read-role"
+  name = var.kinesis_read_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
