@@ -15,3 +15,15 @@ variable "kinesis_log_stream_name" {
   default     = "kinesis-log-stream-advertiser"
 }
 
+variable "kinesis_read_policy_name" {
+  type        = string
+  description = "Name of the kinesis read policy name"
+  default     = "kinesis-read-policy"
+}
+
+variable "kinesis_read_role_name" {
+  type        = string
+  description = "Name of the kinesis read role name"
+  default     = "kinesis-read-role"
+}
+
