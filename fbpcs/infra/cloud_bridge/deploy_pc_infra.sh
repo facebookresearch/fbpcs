@@ -90,6 +90,93 @@ undeploy_aws_resources() {
         -var "query_results_key_path=$query_results_key_path"
     echo "########################Deletion completed########################"
 
+    echo "######################## Destroy Advertiser Side S3 Buckets Logging Infrastructure ######################"
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/s3_bucket_logging
+
+    log_streaming_data "starting to destroy advertiser side S3 buckets logging infra"
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/s3_logging_infra_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "s3_bucket_name=$s3_bucket_data" \
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "s3_bucket_name=$s3_bucket_config" \
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    log_streaming_data "destroyed S3 buckets logging infra"
+    echo "######################## Destroyed Advertiser Side S3 bucket logging Infrastructure ######################"
+
+    echo "######################## Destroy Advertiser Side Lambda Logging Infrastructure ######################"
+
+    log_streaming_data "starting to destroy Advertiser side lambda logging infra"
+
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_new_log_group
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "lambda_name=$data_ingestion_lambda_name" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_existing_log_group
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "lambda_name=$kia_lambda_function_name" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "lambda_name=$clean_up_agent_lambda_function_name" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    log_streaming_data "destroyed lambda logging infra"
+    echo "######################## Destroyed Advertiser Side Lambda Logging Infrastructure ######################"
+
+    echo "######################## Destroy Advertiser Side Common Logging Infrastructure ######################"
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/base_logging_infra
+
+    log_streaming_data "starting to destroy Advertiser side common logging infra like logging bucket and kinesis stream"
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/base_logging_infra_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "kinesis_read_policy_name=$kinesis_read_policy_name" \
+        -var "kinesis_read_role_name=$kinesis_read_role_name"
+
+    log_streaming_data "destroyed common logging infra"
+    echo "######################## Destroyed Advertiser Side Common Logging Infrastructure ######################"
+
     echo "######################## Delete KIA Lambda fuction ########################"
     cd /terraform_deployment/terraform_scripts/key_injection_agent/
 
@@ -161,85 +248,6 @@ undeploy_aws_resources() {
             -var "aws_account_id=$aws_account_id" \
             -var "data_upload_key_path=$data_upload_key_path"
     fi
-
-    echo "######################## Destroy Advertiser Side S3 Buckets Logging Infrastructure ######################"
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/s3_bucket_logging
-
-    log_streaming_data "starting to destroy advertiser side S3 buckets logging infra"
-
-    terraform init -reconfigure \
-        -backend-config "bucket=$s3_bucket_config" \
-        -backend-config "region=$region" \
-        -backend-config "key=tfstate/s3_logging_infra_$tag_postfix.tfstate"
-
-    terraform destroy \
-        -auto-approve \
-        -var "region=$region" \
-        -var "s3_bucket_name=$s3_bucket_data" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket"
-
-    terraform destroy \
-        -auto-approve \
-        -var "region=$region" \
-        -var "s3_bucket_name=$s3_bucket_config" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket"
-
-    log_streaming_data "destroyed S3 buckets logging infra"
-    echo "######################## Destroyed Advertiser Side S3 bucket logging Infrastructure ######################"
-
-    echo "######################## Destroy Advertiser Side Lambda Logging Infrastructure ######################"
-
-    log_streaming_data "starting to destroy Advertiser side lambda logging infra"
-
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_new_log_group
-
-    terraform init -reconfigure \
-        -backend-config "bucket=$s3_bucket_config" \
-        -backend-config "region=$region" \
-        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
-
-    terraform destroy \
-        -auto-approve \
-        -var "region=$region" \
-        -var "lambda_name=$data_ingestion_lambda_name" \
-
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_existing_log_group
-
-    terraform init -reconfigure \
-        -backend-config "bucket=$s3_bucket_config" \
-        -backend-config "region=$region" \
-        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
-
-    terraform destroy \
-        -auto-approve \
-        -var "region=$region" \
-        -var "lambda_name=$kia_lambda_function_name" \
-
-    terraform destroy \
-        -auto-approve \
-        -var "region=$region" \
-        -var "lambda_name=$clean_up_agent_lambda_function_name" \
-
-    log_streaming_data "destroyed lambda logging infra"
-    echo "######################## Destroyed Advertiser Side Lambda Logging Infrastructure ######################"
-
-    echo "######################## Destroy Advertiser Side Common Logging Infrastructure ######################"
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/base_logging_infra
-
-    log_streaming_data "starting to destroy Advertiser side common logging infra like logging bucket and kinesis stream"
-
-    terraform init -reconfigure \
-        -backend-config "bucket=$s3_bucket_config" \
-        -backend-config "region=$region" \
-        -backend-config "key=tfstate/base_logging_infra_$tag_postfix.tfstate"
-
-    terraform destroy \
-        -auto-approve \
-        -var "region=$region" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket"
-
-    log_streaming_data "destroyed common logging infra"
-    echo "######################## Destroyed Advertiser Side Common Logging Infrastructure ######################"
 
     echo "######################## Undeploy resources policy ########################"
     log_streaming_data "Undeploying resources policies..."
@@ -440,7 +448,10 @@ deploy_aws_resources() {
     terraform apply \
         -auto-approve \
         -var "region=$region" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket"
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "kinesis_read_policy_name=$kinesis_read_policy_name" \
+        -var "kinesis_read_role_name=$kinesis_read_role_name"
 
     log_streaming_data "deployed common logging infra"
     echo "######################## Deployed Advertiser Side Common Logging Infrastructure ######################"
@@ -459,14 +470,16 @@ deploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "s3_bucket_name=$s3_bucket_data" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket"
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
 
 
     terraform apply \
         -auto-approve \
         -var "region=$region" \
         -var "s3_bucket_name=$s3_bucket_config" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket"
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
 
     log_streaming_data "deployed S3 buckets logging infra"
     echo "######################## Deployed Advertiser Side S3 bucket logging Infrastructure ######################"
@@ -486,6 +499,7 @@ deploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "lambda_name=$data_ingestion_lambda_name" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
 
     cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_existing_log_group
 
@@ -498,11 +512,13 @@ deploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "lambda_name=$kia_lambda_function_name" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
 
     terraform apply \
         -auto-approve \
         -var "region=$region" \
         -var "lambda_name=$clean_up_agent_lambda_function_name" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name"
 
     log_streaming_data "deployed lambda logging infra"
     echo "######################## Deployed Advertiser Side Lambda Logging Infrastructure ######################"
@@ -553,6 +569,9 @@ fb_pc_iam_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_help
 fb_pc_data_bucket_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_data_bucket_policy.json"
 data_bucket_policy_name="fb-pc-data-bucket-policy${tag_postfix}"
 s3_logging_bucket="s3-log-bucket-advertiser$tag_postfix"
+kinesis_stream_name="kinesis-log-stream-advertiser$tag_postfix"
+kinesis_read_role_name="kinesis-read-role$tag_postfix"
+kinesis_read_policy_name="kinesis-read-policy$tag_postfix"
 
 if "$undeploy"
 then
