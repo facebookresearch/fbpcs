@@ -68,7 +68,7 @@ public class DeployController {
 
     try {
       if (!singleProvisioningLock.tryAcquire()) {
-        String errorMessage = "Another " + operation + "is in progress";
+        String errorMessage = "Another " + operation + " is in progress";
         logger.error("  " + errorMessage);
         return new APIReturn(APIReturn.Status.STATUS_FAIL, errorMessage);
       }
