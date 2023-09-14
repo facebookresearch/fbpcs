@@ -54,6 +54,8 @@ COPY deploy.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy.sh
 COPY deploy_pc_infra.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/deploy_pc_infra.sh
+COPY upgrade.sh /terraform_deployment
+RUN chmod +x /terraform_deployment/upgrade.sh
 COPY util.sh /terraform_deployment
 RUN chmod +x /terraform_deployment/util.sh
 COPY pceValidator.sh /terraform_deployment
