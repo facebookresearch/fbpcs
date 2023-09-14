@@ -98,7 +98,7 @@ undeploy_aws_resources() {
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
         -backend-config "region=$region" \
-        -backend-config "key=tfstate/s3_logging_infra_$tag_postfix.tfstate"
+        -backend-config "key=tfstate/s3_logging_infra_$s3_bucket_data.tfstate"
 
     terraform destroy \
         -auto-approve \
@@ -106,6 +106,11 @@ undeploy_aws_resources() {
         -var "s3_bucket_name=$s3_bucket_data" \
         -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/s3_logging_infra_$s3_bucket_config.tfstate"
 
     terraform destroy \
         -auto-approve \
@@ -126,7 +131,7 @@ undeploy_aws_resources() {
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
         -backend-config "region=$region" \
-        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
+        -backend-config "key=tfstate/lambda_logging_infra_$data_ingestion_lambda_name.tfstate"
 
     terraform destroy \
         -auto-approve \
@@ -139,13 +144,18 @@ undeploy_aws_resources() {
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
         -backend-config "region=$region" \
-        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
+        -backend-config "key=tfstate/lambda_logging_infra_$kia_lambda_function_name.tfstate"
 
     terraform destroy \
         -auto-approve \
         -var "region=$region" \
         -var "lambda_name=$kia_lambda_function_name" \
         -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/lambda_logging_infra_$clean_up_agent_lambda_function_name.tfstate"
 
     terraform destroy \
         -auto-approve \
@@ -464,7 +474,7 @@ deploy_aws_resources() {
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
         -backend-config "region=$region" \
-        -backend-config "key=tfstate/s3_logging_infra_$tag_postfix.tfstate"
+        -backend-config "key=tfstate/s3_logging_infra_$s3_bucket_data.tfstate"
 
     terraform apply \
         -auto-approve \
@@ -473,6 +483,10 @@ deploy_aws_resources() {
         -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name"
 
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/s3_logging_infra_$s3_bucket_config.tfstate"
 
     terraform apply \
         -auto-approve \
@@ -493,7 +507,7 @@ deploy_aws_resources() {
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
         -backend-config "region=$region" \
-        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
+        -backend-config "key=tfstate/lambda_logging_infra_$data_ingestion_lambda_name.tfstate"
 
     terraform apply \
         -auto-approve \
@@ -506,13 +520,18 @@ deploy_aws_resources() {
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
         -backend-config "region=$region" \
-        -backend-config "key=tfstate/lambda_logging_infra_$tag_postfix.tfstate"
+        -backend-config "key=tfstate/lambda_logging_infra_$kia_lambda_function_name.tfstate"
 
     terraform apply \
         -auto-approve \
         -var "region=$region" \
         -var "lambda_name=$kia_lambda_function_name" \
         -var "kinesis_log_stream_name=$kinesis_stream_name"
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/lambda_logging_infra_$clean_up_agent_lambda_function_name.tfstate"
 
     terraform apply \
         -auto-approve \
