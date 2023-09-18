@@ -64,6 +64,7 @@ COPY aws_terraform_template /terraform_deployment/terraform_scripts
 COPY data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
 COPY key_injection_agent /terraform_deployment/terraform_scripts/key_injection_agent
 COPY clean_up_agent /terraform_deployment/terraform_scripts/clean_up_agent
+COPY measurement_validation_agent /terraform_deployment/terraform_scripts/measurement_validation_agent
 COPY semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
 COPY config.yml /terraform_deployment/config
 COPY cli.py /terraform_deployment
@@ -83,8 +84,11 @@ RUN pip3 install \
     --target awsbundle \
     cryptography -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 
-RUN pip install pyqldb -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
-RUN pip3 install pyion2json -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
+RUN pip install pyqldb -t /terraform_deployment/terraform_scripts/measurement_validation_agent/mva_source_code/
+RUN pip3 install pyion2json -t /terraform_deployment/terraform_scripts/measurement_validation_agent/mva_source_code/
+RUN pip3 install dataclasses-json -t /terraform_deployment/terraform_scripts/measurement_validation_agent/mva_source_code/
+RUN pip3 install injector -t /terraform_deployment/terraform_scripts/measurement_validation_agent/mva_source_code/
+
 # #########################################
 # Spring Boot
 # #########################################

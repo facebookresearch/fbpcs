@@ -41,6 +41,7 @@ image-build: $(SERVER_JAR) external_deps
 	@echo "\nCleaning up dependencies..."
 	$(RM) -r aws_terraform_template
 	$(RM) -r key_injection_agent/kia_source_code
+	$(RM) -r measurement_validation_agent/mva_source_code
 	$(RM) -r clean_up_agent/clean_up_agent_source_code
 	$(RM) config.yml
 	@echo "Done"
@@ -61,7 +62,7 @@ distclean: clean
 
 
 # Dockerfile will not accept these resources as links, so they need to be copied in
-external_deps: kia_source_code clean_up_agent_source_code config.yml aws_terraform_template
+external_deps: mva_source_code kia_source_code clean_up_agent_source_code config.yml aws_terraform_template
 	@echo "Dependencies Copied\n"
 
 kia_source_code:
@@ -83,6 +84,25 @@ kia_source_code:
 	cp -r ../../../smart/private_computation/audit_log_service/srcs/repository key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs
 	cp -r ../../../smart/private_computation/audit_log_service/srcs/entity key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs
 
+
+mva_source_code:
+	mkdir -p measurement_validation_agent/mva_source_code
+	mkdir -p measurement_validation_agent/mva_source_code/private_computation
+	mkdir -p measurement_validation_agent/mva_source_code/private_computation/tee_lift
+	mkdir -p measurement_validation_agent/mva_source_code/smart/
+	mkdir -p measurement_validation_agent/mva_source_code/smart/private_computation/
+	mkdir -p measurement_validation_agent/mva_source_code/smart/private_computation/audit_log_service
+	mkdir -p measurement_validation_agent/mva_source_code/smart/private_computation/audit_log_service/srcs
+	mkdir -p measurement_validation_agent/mva_source_code/smart/private_computation/audit_log_service/srcs/repository
+	mkdir -p measurement_validation_agent/mva_source_code/smart/private_computation/audit_log_service/srcs/entity
+	mkdir -p measurement_validation_agent/mva_source_code/smart/private_computation/audit_log_service/srcs/entity/measurement
+	chmod +x measurement_validation_agent/mva_source_code
+	cp -r ../../../private_computation/tee_lift/measurement_validation_agent/measurement_validation_runner.py measurement_validation_agent/mva_source_code/
+	cp -r ../../../private_computation/tee_lift/measurement_validation_agent measurement_validation_agent/mva_source_code/private_computation/tee_lift
+	cp -r ../../../private_computation/tee_lift/pc_crypto measurement_validation_agent/mva_source_code/private_computation/tee_lift
+	cp -r ../../../private_computation/tee_lift/utils measurement_validation_agent/mva_source_code/private_computation/tee_lift
+	cp -r ../../../smart/private_computation/audit_log_service/srcs/repository measurement_validation_agent/mva_source_code/smart/private_computation/audit_log_service/srcs
+	cp -r ../../../smart/private_computation/audit_log_service/srcs/entity measurement_validation_agent/mva_source_code/smart/private_computation/audit_log_service/srcs
 
 clean_up_agent_source_code:
 	mkdir -p clean_up_agent/clean_up_agent_source_code
