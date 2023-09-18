@@ -394,6 +394,30 @@ deploy_aws_resources() {
         semi_automated_glue_job_arn=$(terraform output semi_automated_glue_job_arn | tr -d '"')
     fi
 
+    echo "######################## Deploying Measurment verification Agent Agent AWS Lambda"
+    cd /terraform_deployment/terraform_scripts/measurement_validation_agent
+
+    log_streaming_data "starting to deploy Measurement verification agent."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/measurement_verification_agent_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "aws_account_id=$aws_account_id" \
+        -var "measurement_validation_agent_lambda_function_name=$measurement_validation_agent_lambda_function_name" \
+        -var "measurement_validation_agent_lambda_input_bucket=$s3_bucket_data" \
+        -var "measurement_validation_agent_lambda_source_bucket=$s3_bucket_config" \
+        -var "measurement_validation_agent_lambda_s3_key=mva_source.zip"
+
+    log_streaming_data "deployed measurement verification agent."
+
+    echo "######################## Deployed Measurement Verification Agent AWS Lambda"
+
     echo "######################## Deploying Clean Up Agent Agent AWS Lambda"
     cd /terraform_deployment/terraform_scripts/clean_up_agent
 
@@ -584,6 +608,7 @@ query_results_key_path="query-results"
 data_ingestion_lambda_name="cb-data-ingestion-stream-processor${tag_postfix}"
 kia_lambda_function_name="cb-kia${tag_postfix}"
 clean_up_agent_lambda_function_name="cb-clean-up-agent${tag_postfix}"
+measurement_validation_agent_lambda_function_name="measurement_validation_agent${tag_postfix}"
 fb_pc_iam_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_iam_policy_no_compute.json"
 fb_pc_data_bucket_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_data_bucket_policy.json"
 data_bucket_policy_name="fb-pc-data-bucket-policy${tag_postfix}"
