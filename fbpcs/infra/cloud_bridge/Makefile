@@ -68,11 +68,21 @@ kia_source_code:
 	mkdir -p key_injection_agent/kia_source_code
 	mkdir -p key_injection_agent/kia_source_code/private_computation
 	mkdir -p key_injection_agent/kia_source_code/private_computation/tee_lift
+	mkdir -p key_injection_agent/kia_source_code/smart/
+	mkdir -p key_injection_agent/kia_source_code/smart/private_computation/
+	mkdir -p key_injection_agent/kia_source_code/smart/private_computation/audit_log_service
+	mkdir -p key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs
+	mkdir -p key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs/repository
+	mkdir -p key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs/entity
+	mkdir -p key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs/entity/measurement
 	chmod +x key_injection_agent/kia_source_code
 	cp -r ../../../private_computation/tee_lift/key_injection_agent/kia_runner.py key_injection_agent/kia_source_code/
 	cp -r ../../../private_computation/tee_lift/key_injection_agent key_injection_agent/kia_source_code/private_computation/tee_lift
 	cp -r ../../../private_computation/tee_lift/pc_crypto key_injection_agent/kia_source_code/private_computation/tee_lift
 	cp -r ../../../private_computation/tee_lift/utils key_injection_agent/kia_source_code/private_computation/tee_lift
+	cp -r ../../../smart/private_computation/audit_log_service/srcs/repository key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs
+	cp -r ../../../smart/private_computation/audit_log_service/srcs/entity key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs
+
 
 clean_up_agent_source_code:
 	mkdir -p clean_up_agent/clean_up_agent_source_code
