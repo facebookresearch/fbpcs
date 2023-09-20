@@ -82,6 +82,9 @@ RUN pip3 install \
     --only-binary=:all: --upgrade \
     --target awsbundle \
     cryptography -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
+
+RUN pip install pyqldb -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
+RUN pip3 install pyion2json -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 # #########################################
 # Spring Boot
 # #########################################
