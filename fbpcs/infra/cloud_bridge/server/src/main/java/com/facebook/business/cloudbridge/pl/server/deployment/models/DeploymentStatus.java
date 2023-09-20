@@ -7,16 +7,20 @@
 
 package com.facebook.business.cloudbridge.pl.server.deployment.models;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
 public enum DeploymentStatus {
   NOT_STARTED("NOT_STARTED"),
   STARTED("STARTED"),
   ERROR("ERROR"),
-  COMPLETED("COMPLETED");
+  COMPLETED("COMPLETED"),
+  ;
 
   private final String status;
+
+  private DeploymentStatus(final String status) {
+    this.status = status;
+  }
+
+  public String getStatus() {
+    return this.status;
+  }
 }
