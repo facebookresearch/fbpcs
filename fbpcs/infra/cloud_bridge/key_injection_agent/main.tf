@@ -83,6 +83,14 @@ resource "aws_iam_role_policy" "kia_lambda_access_policy" {
          "logs:PutLogEvents"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "AllowToAssumeRole",
+      "Effect": "Allow",
+      "Action": [
+        "sts:AssumeRole"
+      ],
+      "Resource": "*"
     }
   ]
 }
