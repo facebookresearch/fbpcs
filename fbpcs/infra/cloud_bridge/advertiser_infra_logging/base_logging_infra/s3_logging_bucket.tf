@@ -38,3 +38,17 @@ resource "aws_s3_bucket_policy" "s3_logging_bucket_policy" {
 }
 POLICY
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "logging_bucket_config" {
+  bucket = aws_s3_bucket.s3_logging_bucket.id
+
+  rule {
+    id = "${var.s3_logging_bucket_name}-logging-bucket"
+
+    expiration {
+      days = 30
+    }
+
+    status = "Enabled"
+  }
+}
