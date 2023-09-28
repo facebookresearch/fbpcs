@@ -90,6 +90,27 @@ undeploy_aws_resources() {
         -var "query_results_key_path=$query_results_key_path"
     echo "########################Deletion completed########################"
 
+    echo "######################## Deleting Advertiser Side KMS Logging Infrastructure ######################"
+    log_streaming_data "starting to delete Advertiser side KMS logging infra"
+
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/kms_logging
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/kms_logging_infra_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "user_identity_regex=$kms_user_identity_regex" \
+        -var "installation_tag=log$tag_postfix"
+
+    echo "######################## Cleaned up Advertiser Side KMS Logging Infrastructure ######################"
+    log_streaming_data "Cleaned up Advertiser side KMS logging infra"
+
     echo "######################## Destroy Advertiser Side S3 Buckets Logging Infrastructure ######################"
     cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/s3_bucket_logging
 
@@ -542,6 +563,27 @@ deploy_aws_resources() {
     log_streaming_data "deployed lambda logging infra"
     echo "######################## Deployed Advertiser Side Lambda Logging Infrastructure ######################"
 
+    echo "######################## Deploy Advertiser Side KMS Logging Infrastructure ######################"
+    log_streaming_data "starting to deploy Advertiser side KMS logging infra"
+
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/kms_logging
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/kms_logging_infra_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "user_identity_regex=$kms_user_identity_regex" \
+        -var "installation_tag=log$tag_postfix"
+
+    echo "######################## Deployed Advertiser Side KMS Logging Infrastructure ######################"
+    log_streaming_data "finished deploying Advertiser side KMS logging infra"
+
     echo "########################Finished AWS Infrastructure Deployment########################"
     log_streaming_data "finished deploying resources..."
 
@@ -591,6 +633,7 @@ s3_logging_bucket="s3-log-bucket-advertiser$tag_postfix"
 kinesis_stream_name="kinesis-log-stream-advertiser$tag_postfix"
 kinesis_read_role_name="kinesis-read-role$tag_postfix"
 kinesis_read_policy_name="kinesis-read-policy$tag_postfix"
+kms_user_identity_regex=".*${kia_lambda_function_name}|${data_ingestion_lambda_name}|${clean_up_agent_lambda_function_name}.*"
 
 if "$undeploy"
 then
