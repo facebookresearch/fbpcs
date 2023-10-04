@@ -90,6 +90,26 @@ undeploy_aws_resources() {
         -var "query_results_key_path=$query_results_key_path"
     echo "########################Deletion completed########################"
 
+    echo "######################## Deleting Advertiser Side Athena Logging Infrastructure ######################"
+    log_streaming_data "starting to delete Advertiser side Athena logging infra"
+
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/athena_logging
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/athena_logging_infra_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "installation_tag=athena$tag_postfix"
+
+    echo "######################## Cleaned up Advertiser Side Athena Logging Infrastructure ######################"
+    log_streaming_data "Cleaned up Advertiser side Athena logging infra"
+
     echo "######################## Deleting Advertiser Side KMS Logging Infrastructure ######################"
     log_streaming_data "starting to delete Advertiser side KMS logging infra"
 
@@ -583,6 +603,26 @@ deploy_aws_resources() {
 
     echo "######################## Deployed Advertiser Side KMS Logging Infrastructure ######################"
     log_streaming_data "finished deploying Advertiser side KMS logging infra"
+
+    echo "######################## Deploy Advertiser Side Athena Logging Infrastructure ######################"
+    log_streaming_data "starting to deploy Advertiser side Athena logging infra"
+
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/athena_logging
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/athena_logging_infra_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "s3_logging_bucket_name=$s3_logging_bucket" \
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "installation_tag=athena$tag_postfix"
+
+    echo "######################## Deployed Advertiser Side Athena Logging Infrastructure ######################"
+    log_streaming_data "finished deploying Advertiser side Athena logging infra"
 
     echo "########################Finished AWS Infrastructure Deployment########################"
     log_streaming_data "finished deploying resources..."
