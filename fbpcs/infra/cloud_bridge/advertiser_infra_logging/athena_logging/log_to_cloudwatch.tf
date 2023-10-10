@@ -14,9 +14,9 @@ terraform {
   }
 }
 
-## create a cloudwatch log group name to capture Athena operations usage
+## create a cloudwatch log group name to capture Athena/Glue operations usage
 locals {
-  athena_cloudwatch_log_group = "/aws/athena/${var.installation_tag}"
+  athena_glue_cloudwatch_log_group = "/aws/athena_glue/${var.installation_tag}"
 }
 
 ## Get the existing resource for S3 logging bucket
@@ -29,15 +29,15 @@ data "aws_kinesis_stream" "logs_kinesis_stream" {
   name = var.kinesis_log_stream_name
 }
 
-## Create a cloudwatch athena log group
-resource "aws_cloudwatch_log_group" "cloudtrail_athena_logs" {
-  name              = local.athena_cloudwatch_log_group
+## Create a cloudwatch athena/glue log group
+resource "aws_cloudwatch_log_group" "cloudtrail_athena_glue_logs" {
+  name              = local.athena_glue_cloudwatch_log_group
   retention_in_days = 7
 }
 
-### Setup athena cloudtrail iam role and policies to write to cloudwatch log group
+### Setup athena & glue cloudtrail iam role and policies to write to cloudwatch log group
 resource "aws_iam_role" "cloudtrail_cloudwatch_role" {
-  name = "${var.installation_tag}-athena-ct-role"
+  name = "${var.installation_tag}-athena-glue-ct-role"
 
   assume_role_policy = <<EOF
 {
@@ -57,7 +57,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "cloudtrail_cloudwatch_write_policy" {
-  name = "${var.installation_tag}-athena-ct-policy"
+  name = "${var.installation_tag}-athena-glue-ct-policy"
   role = aws_iam_role.cloudtrail_cloudwatch_role.id
 
   policy = <<EOF
@@ -72,7 +72,7 @@ resource "aws_iam_role_policy" "cloudtrail_cloudwatch_write_policy" {
                 "logs:PutLogEvents"
             ],  
             "Resource": [
-                "${aws_cloudwatch_log_group.cloudtrail_athena_logs.arn}:*"
+                "${aws_cloudwatch_log_group.cloudtrail_athena_glue_logs.arn}:*"
             ]   
         }  
     ]   
@@ -82,12 +82,12 @@ EOF
 
 
 ### Setup athena logging for cloudtrail to cloudwatch log group
-resource "aws_cloudtrail" "cloudtrail_athena_cloudwatch_logging" {
-  name                       = "${var.installation_tag}-athena-trail"
+resource "aws_cloudtrail" "cloudtrail_athena_glue_cloudwatch_logging" {
+  name                       = "${var.installation_tag}-athena-glue-trail"
   s3_bucket_name             = var.s3_logging_bucket_name
-  s3_key_prefix              = "athena_logs"
+  s3_key_prefix              = "athena_glue_logs"
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch_role.arn
-  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail_athena_logs.arn}:*"
+  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail_athena_glue_logs.arn}:*"
 
   event_selector {
     read_write_type           = "All"
@@ -97,7 +97,7 @@ resource "aws_cloudtrail" "cloudtrail_athena_cloudwatch_logging" {
 
 ## Create IAM Role for CloudWatch to publish logs to Kinesis
 resource "aws_iam_role" "cloudwatch_kinesis_role" {
-  name = "${var.installation_tag}-athena-cw-role"
+  name = "${var.installation_tag}-athena-glue-cw-role"
 
   assume_role_policy = <<EOF
 {
@@ -115,9 +115,9 @@ resource "aws_iam_role" "cloudwatch_kinesis_role" {
 EOF
 }
 
-## Create IAM Policy for CloudWatch to publish athena logs to the advertiser infra common Kinesis stream
+## Create IAM Policy for CloudWatch to publish athena and glue logs to the advertiser infra common Kinesis stream
 resource "aws_iam_role_policy" "cloudwatch_kinesis_write_policy" {
-  name = "${var.installation_tag}-athena-cw-policy"
+  name = "${var.installation_tag}-athena-glue-cw-policy"
   role = aws_iam_role.cloudwatch_kinesis_role.id
 
   policy = <<EOF
@@ -176,11 +176,11 @@ locals {
   tee_pl_eks_cluster_name_regex = join("|", local.tee_pl_eks_cluster_name_list)
 }
 
-## Push athena cloudwatch log group to Kinesis stream
+## Push athena/glue cloudwatch log group to Kinesis stream
 resource "aws_cloudwatch_log_subscription_filter" "cloudwatch_log_to_kinesis_subscription" {
-  name            = "${var.installation_tag}-athena-log-filter"
-  log_group_name  = aws_cloudwatch_log_group.cloudtrail_athena_logs.name
-  filter_pattern  = "{($.eventSource = \"athena.amazonaws.com\") && ($.userIdentity.sessionContext.sessionIssuer.userName = %^eksctl-.*${local.tee_pl_eks_cluster_name_regex}.*%)}"
+  name            = "${var.installation_tag}-athena-glue-log-filter"
+  log_group_name  = aws_cloudwatch_log_group.cloudtrail_athena_glue_logs.name
+  filter_pattern  = "{($.eventSource = \"athena.amazonaws.com\" || $.eventSource = \"glue.amazonaws.com\") && ($.userIdentity.sessionContext.sessionIssuer.userName = %^eksctl-.*${local.tee_pl_eks_cluster_name_regex}.*%)}"
   destination_arn = data.aws_kinesis_stream.logs_kinesis_stream.arn
   role_arn        = aws_iam_role.cloudwatch_kinesis_role.arn
 }
