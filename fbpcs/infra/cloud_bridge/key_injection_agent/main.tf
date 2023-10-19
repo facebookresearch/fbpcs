@@ -124,7 +124,7 @@ resource "aws_lambda_function" "kia_lambda" {
   runtime          = "python3.9"
   s3_bucket        = var.kia_lambda_s3_bucket
   s3_key           = var.kia_lambda_s3_key
-  memory_size      = 3072
+  memory_size      = 2048
   timeout          = 900
   publish          = true
   environment {
