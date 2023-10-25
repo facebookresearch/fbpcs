@@ -64,7 +64,7 @@ class TestTraceLoggingService(TestCase):
                 for fail_to_log in (False, True):
                     with self.subTest(
                         checkpoint_data=checkpoint_data,
-                        bad_funtion_payload=bad_function_payload,
+                        bad_function_payload=bad_function_payload,
                         fail_to_log=fail_to_log,
                     ):
                         svc = DummyTraceLoggingService(fail_to_log=fail_to_log)

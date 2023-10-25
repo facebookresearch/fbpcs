@@ -21,7 +21,7 @@ from fbpcs.utils.config_yaml.exceptions import (  # @manual=//measurement/privat
 from fbpcs.utils.deprecated import deprecated_msg
 
 
-# Backward compatible for partners still using the old config settins
+# Backward compatible for partners still using the old config settings
 DEPRECATED_CLASSES = {
     "fbpcp.service.mpc_game.MPCGameService": "fbpcs.private_computation.service.mpc.mpc_game.MPCGameService"
 }
