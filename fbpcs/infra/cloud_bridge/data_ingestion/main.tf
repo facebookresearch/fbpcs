@@ -164,6 +164,15 @@ resource "aws_iam_role_policy_attachment" "lambda_kinesis_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"
 }
 
+## Create log group explicitly
+locals {
+  data_ingestion_lambda_log_group = "/aws/lambda/${var.data_ingestion_lambda_name}"
+}
+
+resource "aws_cloudwatch_log_group" "data-ingestion-log-group" {
+  name = local.data_ingestion_lambda_log_group
+}
+
 resource "aws_lambda_function" "lambda_processor" {
   s3_bucket     = var.data_processing_lambda_s3_bucket
   s3_key        = var.data_processing_lambda_s3_key
