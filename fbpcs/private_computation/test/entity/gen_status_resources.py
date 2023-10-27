@@ -41,5 +41,9 @@ def gen_status_files(output_dir: pathlib.Path) -> None:
             os.chmod(path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
 
-if __name__ == "__main__":
+def main() -> None:
     gen_status_files(OUTPUT_DIR)
+
+
+if __name__ == "__main__":
+    main()

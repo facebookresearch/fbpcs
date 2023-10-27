@@ -209,6 +209,10 @@ class DownloadLogsCli:
         return tempfile_path
 
 
-if __name__ == "__main__":
+def main() -> None:
     cli = DownloadLogsCli()
     cli.run()
+
+
+if __name__ == "__main__":
+    main()
