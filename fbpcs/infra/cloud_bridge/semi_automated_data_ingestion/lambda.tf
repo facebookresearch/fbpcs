@@ -32,6 +32,15 @@ resource "aws_iam_role" "lambda_iam" {
 EOF
 }
 
+## Create log group explicitly
+locals {
+  semi_data_ingestion_lambda_log_group = "/aws/lambda/manual-upload-trigger${var.tag_postfix}"
+}
+
+resource "aws_cloudwatch_log_group" "semi-data-ingestion-lambda-log-group" {
+  name = local.semi_data_ingestion_lambda_log_group
+}
+
 resource "aws_lambda_function" "lambda_trigger" {
   s3_bucket     = var.app_data_input_bucket_id
   s3_key        = "${var.data_upload_key_path}/${var.lambda_trigger_s3_key}"

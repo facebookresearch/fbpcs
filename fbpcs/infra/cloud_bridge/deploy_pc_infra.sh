@@ -167,7 +167,7 @@ undeploy_aws_resources() {
 
     log_streaming_data "starting to destroy Advertiser side lambda logging infra"
 
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_new_log_group
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_existing_log_group
 
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
@@ -179,8 +179,6 @@ undeploy_aws_resources() {
         -var "region=$region" \
         -var "lambda_name=$data_ingestion_lambda_name" \
         -var "kinesis_log_stream_name=$kinesis_stream_name"
-
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_existing_log_group
 
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
@@ -543,7 +541,7 @@ deploy_aws_resources() {
 
     log_streaming_data "starting to deploy Advertiser side lambda logging infra"
 
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_new_log_group/
+    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_existing_log_group
 
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
@@ -555,8 +553,6 @@ deploy_aws_resources() {
         -var "region=$region" \
         -var "lambda_name=$data_ingestion_lambda_name" \
         -var "kinesis_log_stream_name=$kinesis_stream_name"
-
-    cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/lambda_logging_existing_log_group
 
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
