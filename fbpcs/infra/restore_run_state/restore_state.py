@@ -119,6 +119,10 @@ class RestoreRunState:
         )
 
 
-if __name__ == "__main__":
+def main() -> None:
     cli = RestoreRunState()
     cli.run()
+
+
+if __name__ == "__main__":
+    main()

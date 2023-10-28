@@ -136,7 +136,7 @@ def gen_dummy_pc_instance() -> PrivateComputationInstance:
     )
 
 
-if __name__ == "__main__":
+def main() -> None:
     for path, instance in zip(
         (STAGE_STATE_PATH, LIFT_PC_PATH),
         (
@@ -166,3 +166,7 @@ if __name__ == "__main__":
 
         with open(path, "w") as f:
             f.write(json_output)
+
+
+if __name__ == "__main__":
+    main()
