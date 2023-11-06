@@ -403,4 +403,4 @@ AttributionRule<schedulerId>::fromIdOrThrow(std::int64_t id) {
 
   throw std::runtime_error(fmt::format("Unknown attribution id: {}", id));
 }
-} // namespace pcf2_attribution
+}; // namespace pcf2_attribution
