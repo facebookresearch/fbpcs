@@ -127,4 +127,4 @@ const AttributionRule AttributionRule::fromIdOrThrow(int64_t id) {
   throw std::runtime_error(fmt::format("Unknown attribution id: {}", id));
 }
 
-}; // namespace aggregation::private_attribution
+} // namespace aggregation::private_attribution
