@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -168,7 +168,8 @@ locals {
 
 ## Create a list of TEE-PL EKS cluster names
 locals {
-  tee_pl_eks_cluster_name_list = [for cluster_name, params in data.aws_eks_cluster.filtered_cluster : cluster_name if contains(local.vpc_name_list, params.tags["MainStack"])]
+  tee_pl_filtered_eks_clusters = [for cluster in data.aws_eks_cluster.filtered_cluster : cluster if can(cluster.tags["MainStack"])]
+  tee_pl_eks_cluster_name_list = [for cluster in local.tee_pl_filtered_eks_clusters : cluster.name if contains(local.vpc_name_list, cluster.tags["MainStack"])]
 }
 
 ## Create the filter regex of TEE-PL EKS cluster names
@@ -178,6 +179,7 @@ locals {
 
 ## Push athena/glue cloudwatch log group to Kinesis stream
 resource "aws_cloudwatch_log_subscription_filter" "cloudwatch_log_to_kinesis_subscription" {
+  count           = local.tee_pl_eks_cluster_name_regex != "" ? 1 : 0
   name            = "${var.installation_tag}-athena-glue-log-filter"
   log_group_name  = aws_cloudwatch_log_group.cloudtrail_athena_glue_logs.name
   filter_pattern  = "{($.eventSource = \"athena.amazonaws.com\" || $.eventSource = \"glue.amazonaws.com\") && ($.userIdentity.sessionContext.sessionIssuer.userName = %^eksctl-.*${local.tee_pl_eks_cluster_name_regex}.*%)}"
