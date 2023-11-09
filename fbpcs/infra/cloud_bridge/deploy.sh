@@ -164,6 +164,25 @@ undeploy_aws_resources() {
         -var "query_results_key_path=$query_results_key_path"
     echo "########################Deletion completed########################"
 
+    echo "######################## Delete S3 bucket notification ########################"
+    cd /terraform_deployment/terraform_scripts/s3_bucket_notification/
+
+    log_streaming_data "starting to undeploy s3 bucket notification."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/s3_bucket_notification_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "data_upload_key_path=$data_upload_key_path"
+
+    log_streaming_data "undeployed key injection agent."
+
+    echo "######################## Deleted s3 bucket notification ########################"
+
     if "$build_semi_automated_data_pipeline"
     then
         echo "Undeploy Semi automated data_pipeline..."
@@ -395,7 +414,29 @@ deploy_aws_resources() {
         echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
         # Store the outputs into variables
         semi_automated_glue_job_arn=$(terraform output semi_automated_glue_job_arn | tr -d '"')
+        semi_automated_lambda_arn=$(terraform output semi_automated_lambda_arn | tr -d '"')
     fi
+
+    echo "######################## Deploying S3 bucket notification"
+    cd /terraform_deployment/terraform_scripts/s3_bucket_notification
+
+    log_streaming_data "starting to deploy s3 bucket notification."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_for_storage" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/s3_bucket_notification_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "semi_automated_lambda_arn=$semi_automated_lambda_arn" \
+        -var "data_bucket_name=$s3_bucket_data_pipeline" \
+        -var "data_upload_key_path=$data_upload_key_path"
+
+    log_streaming_data "deployed s3 bucket notification."
+
+    echo "######################## Deployed S3 bucket notification"
 
     echo "########################Finished AWS Infrastructure Deployment########################"
     log_streaming_data "finished deploying resources..."

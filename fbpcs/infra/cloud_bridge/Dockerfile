@@ -65,6 +65,7 @@ COPY data_ingestion /terraform_deployment/terraform_scripts/data_ingestion
 COPY key_injection_agent /terraform_deployment/terraform_scripts/key_injection_agent
 COPY clean_up_agent /terraform_deployment/terraform_scripts/clean_up_agent
 COPY semi_automated_data_ingestion /terraform_deployment/terraform_scripts/semi_automated_data_ingestion
+COPY s3_bucket_notification /terraform_deployment/terraform_scripts/s3_bucket_notification
 COPY config.yml /terraform_deployment/config
 COPY cli.py /terraform_deployment
 RUN mkdir -p /terraform_deployment/fbpcs/infra/cloud_bridge
