@@ -23,4 +23,11 @@ resource "aws_s3_bucket_notification" "semi_auto_bucket_notification" {
     filter_prefix       = "${var.data_upload_key_path}/"
     filter_suffix       = ".csv"
   }
+
+  lambda_function {
+    lambda_function_arn = var.ingestion_input_data_validation_lambda_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "${var.data_validation_key_path}/"
+    filter_suffix       = ".csv"
+  }
 }

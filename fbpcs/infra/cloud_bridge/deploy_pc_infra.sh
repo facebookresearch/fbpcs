@@ -245,6 +245,25 @@ undeploy_aws_resources() {
 
     echo "######################## Deleted s3 bucket notification ########################"
 
+    echo "######################## Delete data preprocessing AWS resources ########################"
+    cd /terraform_deployment/terraform_scripts/data_preprocessing/
+
+    log_streaming_data "starting to undeploy data preprocessing."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/data_preprocessing_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix"
+
+    log_streaming_data "undeployed data preprocessing AWS resources."
+
+    echo "######################## Deleted data preprocessing AWS resources ########################"
+
     echo "######################## Delete KIA Lambda fuction ########################"
     cd /terraform_deployment/terraform_scripts/key_injection_agent/
 
@@ -504,6 +523,33 @@ deploy_aws_resources() {
 
     echo "######################## Deployed Key Injection Agent AWS Lambda"
 
+
+    echo "######################## Deploying data preprocessing AWS resources"
+    cd /terraform_deployment/terraform_scripts/data_preprocessing
+
+    log_streaming_data "starting to deploy data preprocessing AWS resources."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/data_preprocessing_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "tag_postfix=$tag_postfix" \
+        -var "ingestion_input_data_validation_lambda_function_name=$ingestion_input_data_validation_lambda_function_name" \
+        -var "ingestion_input_data_validation_lambda_input_bucket=$s3_bucket_data" \
+        -var "ingestion_input_data_validation_lambda_s3_bucket=$s3_bucket_config" \
+        -var "ingestion_input_data_validation_lambda_s3_key=ingestion_input_data_validation_lambda.zip" \
+        -var "data_bucket_arn=$data_bucket_arn"
+
+    ingestion_input_data_validation_lambda_arn=$(terraform output ingestion_input_data_validation_lambda_arn | tr -d '"')
+
+    log_streaming_data "deployed data preprocessing AWS resources."
+
+    echo "######################## Deployed data preprocessing AWS resources"
+
     echo "######################## Deploying S3 bucket notification"
     cd /terraform_deployment/terraform_scripts/s3_bucket_notification
 
@@ -519,7 +565,9 @@ deploy_aws_resources() {
         -var "region=$region" \
         -var "semi_automated_lambda_arn=$semi_automated_lambda_arn" \
         -var "data_bucket_name=$s3_bucket_data" \
-        -var "data_upload_key_path=$data_upload_key_path"
+        -var "data_upload_key_path=$data_upload_key_path" \
+        -var "ingestion_input_data_validation_lambda_arn=$ingestion_input_data_validation_lambda_arn" \
+        -var "data_validation_key_path=$data_validation_key_path"
 
     log_streaming_data "deployed s3 bucket notification."
 
@@ -699,9 +747,11 @@ database_name="mpc-events-db${tag_postfix}"
 glue_crawler_name="mpc-events-crawler${tag_postfix}"
 table_name=${s3_bucket_data//-/_}
 data_upload_key_path="semi-automated-data-ingestion"
+data_validation_key_path="uploaded-data"
 query_results_key_path="query-results"
 data_ingestion_lambda_name="cb-data-ingestion-stream-processor${tag_postfix}"
 kia_lambda_function_name="cb-kia${tag_postfix}"
+ingestion_input_data_validation_lambda_function_name="cb-ingestion-input-data-validation${tag_postfix}"
 clean_up_agent_lambda_function_name="cb-clean-up-agent${tag_postfix}"
 fb_pc_iam_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_iam_policy_no_compute.json"
 fb_pc_data_bucket_policy="/terraform_deployment/fbpcs/infra/cloud_bridge/deployment_helper/aws/iam_policies/fb_pc_data_bucket_policy.json"

@@ -41,6 +41,7 @@ image-build: $(SERVER_JAR) external_deps
 	@echo "\nCleaning up dependencies..."
 	$(RM) -r aws_terraform_template
 	$(RM) -r key_injection_agent/kia_source_code
+	$(RM) -r data_preprocessing/ingestion_input_data_validation_source_code
 	$(RM) -r clean_up_agent/clean_up_agent_source_code
 	$(RM) config.yml
 	@echo "Done"
@@ -53,6 +54,7 @@ clean:
 	server/gradlew -p server clean
 	$(RM) -r aws_terraform_template
 	$(RM) -r key_injection_agent/kia_source_code
+	$(RM) -r data_preprocessing/ingestion_input_data_validation_source_code
 	$(RM) -r clean_up_agent/clean_up_agent_source_code
 	$(RM) config.yml
 
@@ -61,7 +63,7 @@ distclean: clean
 
 
 # Dockerfile will not accept these resources as links, so they need to be copied in
-external_deps: kia_source_code clean_up_agent_source_code config.yml aws_terraform_template
+external_deps: kia_source_code data_preprocessing_source_code clean_up_agent_source_code config.yml aws_terraform_template
 	@echo "Dependencies Copied\n"
 
 kia_source_code:
@@ -83,6 +85,17 @@ kia_source_code:
 	cp -r ../../../smart/private_computation/audit_log_service/srcs/repository key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs
 	cp -r ../../../smart/private_computation/audit_log_service/srcs/entity key_injection_agent/kia_source_code/smart/private_computation/audit_log_service/srcs
 
+data_preprocessing_source_code:
+	mkdir -p data_preprocessing/ingestion_input_data_validation_source_code/private_computation/tee_lift
+	mkdir -p data_preprocessing/ingestion_input_data_validation_source_code/private_computation/tee_lift/key_injection_agent
+	chmod +x data_preprocessing/ingestion_input_data_validation_source_code
+	cp -r ../../../private_computation/tee_lift/data_preprocessing/ingestion_input_data_validation_worker.py data_preprocessing/ingestion_input_data_validation_source_code
+	cp -r ../../../private_computation/tee_lift/data_preprocessing/ingestion_input_data_validation_runner.py data_preprocessing/ingestion_input_data_validation_source_code
+	cp -r ../../../private_computation/tee_lift/data_preprocessing/ingestion_input_data_validation_validator.py  data_preprocessing/ingestion_input_data_validation_source_code
+	cp -r ../../../private_computation/tee_lift/data_preprocessing/ingestion_input_data_validation_result_generator.py data_preprocessing/ingestion_input_data_validation_source_code
+	cp -r ../../../private_computation/tee_lift/data_preprocessing data_preprocessing/ingestion_input_data_validation_source_code/private_computation/tee_lift
+	cp -r ../../../private_computation/tee_lift/utils data_preprocessing/ingestion_input_data_validation_source_code/private_computation/tee_lift
+	cp -r ../../../private_computation/tee_lift/key_injection_agent/file_handler data_preprocessing/ingestion_input_data_validation_source_code/private_computation/tee_lift/key_injection_agent
 
 clean_up_agent_source_code:
 	mkdir -p clean_up_agent/clean_up_agent_source_code
