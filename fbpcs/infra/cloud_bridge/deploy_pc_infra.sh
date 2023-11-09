@@ -226,6 +226,25 @@ undeploy_aws_resources() {
     log_streaming_data "destroyed common logging infra"
     echo "######################## Destroyed Advertiser Side Common Logging Infrastructure ######################"
 
+    echo "######################## Delete S3 bucket notification ########################"
+    cd /terraform_deployment/terraform_scripts/s3_bucket_notification/
+
+    log_streaming_data "starting to undeploy s3 bucket notification."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/s3_bucket_notification_$tag_postfix.tfstate"
+
+    terraform destroy \
+        -auto-approve \
+        -var "region=$region" \
+        -var "data_upload_key_path=$data_upload_key_path"
+
+    log_streaming_data "undeployed key injection agent."
+
+    echo "######################## Deleted s3 bucket notification ########################"
+
     echo "######################## Delete KIA Lambda fuction ########################"
     cd /terraform_deployment/terraform_scripts/key_injection_agent/
 
@@ -431,6 +450,7 @@ deploy_aws_resources() {
         echo "######################## Deploy Semi-automated Data Ingestion Terraform scripts completed ########################"
         # Store the outputs into variables
         semi_automated_glue_job_arn=$(terraform output semi_automated_glue_job_arn | tr -d '"')
+        semi_automated_lambda_arn=$(terraform output semi_automated_lambda_arn | tr -d '"')
     fi
 
     echo "######################## Deploying Clean Up Agent Agent AWS Lambda"
@@ -483,6 +503,27 @@ deploy_aws_resources() {
     log_streaming_data "deployed key injection agent."
 
     echo "######################## Deployed Key Injection Agent AWS Lambda"
+
+    echo "######################## Deploying S3 bucket notification"
+    cd /terraform_deployment/terraform_scripts/s3_bucket_notification
+
+    log_streaming_data "starting to deploy s3 bucket notification."
+
+    terraform init -reconfigure \
+        -backend-config "bucket=$s3_bucket_config" \
+        -backend-config "region=$region" \
+        -backend-config "key=tfstate/s3_bucket_notification_$tag_postfix.tfstate"
+
+    terraform apply \
+        -auto-approve \
+        -var "region=$region" \
+        -var "semi_automated_lambda_arn=$semi_automated_lambda_arn" \
+        -var "data_bucket_name=$s3_bucket_data" \
+        -var "data_upload_key_path=$data_upload_key_path"
+
+    log_streaming_data "deployed s3 bucket notification."
+
+    echo "######################## Deployed S3 bucket notification"
 
     echo "######################## Deploy Advertiser Side Common Logging Infrastructure ######################"
     cd /terraform_deployment/terraform_scripts/advertiser_infra_logging/base_logging_infra
