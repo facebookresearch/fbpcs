@@ -56,16 +56,6 @@ resource "aws_lambda_function" "lambda_trigger" {
   }
 }
 
-resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = var.app_data_input_bucket_id
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.lambda_trigger.arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_prefix       = "${var.data_upload_key_path}/"
-    filter_suffix       = ".csv"
-  }
-}
-
 resource "aws_lambda_permission" "allow_bucket" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
