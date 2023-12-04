@@ -86,6 +86,7 @@ RUN pip3 install \
     cryptography -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 
 RUN pip3 install pyqldb -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
+RUN pip3 install retrying -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 RUN pip3 install pyion2json -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 RUN pip3 install dataclasses-json -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 RUN pip3 install injector -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
