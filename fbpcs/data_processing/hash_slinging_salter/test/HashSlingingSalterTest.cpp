@@ -38,4 +38,4 @@ TEST(HashSalterTest, HashSalterSameAsPythonTest) {
       private_lift::hash_slinging_salter::base64SaltedHashFromBase64Key(
           piiKey, b64Salt);
   EXPECT_EQ(b64SaltedHashFromCpp, b64SaltedHashFromPy);
-};
+}
