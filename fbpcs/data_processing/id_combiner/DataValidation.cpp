@@ -60,7 +60,7 @@ void validateCsvData(std::istream& dataFile) {
     for (auto& v : rowVec) {
       try {
         folly::to<std::uint64_t>(v);
-      } catch (std::exception& e) {
+      } catch (std::exception&) {
         XLOG(FATAL) << v << " failed to parse to int";
       }
     }
