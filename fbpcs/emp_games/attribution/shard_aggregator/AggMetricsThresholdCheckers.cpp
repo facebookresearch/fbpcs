@@ -113,16 +113,16 @@ constructAdObjectFormatThresholdChecker(int64_t threshold) {
     for (const auto& [rule, metricsMap] : metrics->getAsMap()) {
       for (const auto& [aggregationName, aggregationData] :
            metricsMap->getAsMap()) {
-        for (const auto& [id, metrics] : aggregationData->getAsMap()) {
+        for (const auto& [id, metrics_2] : aggregationData->getAsMap()) {
           auto condition =
-              metrics->getAtKey("convs")->getEmpIntValue() >= kAnonymityLevel;
-          metrics->getAtKey("sales")->setEmpIntValue(emp::If(
+              metrics_2->getAtKey("convs")->getEmpIntValue() >= kAnonymityLevel;
+          metrics_2->getAtKey("sales")->setEmpIntValue(emp::If(
               condition,
-              metrics->getAtKey("sales")->getEmpIntValue(),
+              metrics_2->getAtKey("sales")->getEmpIntValue(),
               hiddenMetric));
-          metrics->getAtKey("convs")->setEmpIntValue(emp::If(
+          metrics_2->getAtKey("convs")->setEmpIntValue(emp::If(
               condition,
-              metrics->getAtKey("convs")->getEmpIntValue(),
+              metrics_2->getAtKey("convs")->getEmpIntValue(),
               hiddenMetric));
         }
       }
