@@ -151,7 +151,7 @@ const std::vector<std::vector<O>> privatelyShareArraysFrom(
 
       // Perform the padding
       std::vector<T> paddedVec(vec.begin(), vec.end());
-      for (size_t i = 0; i < paddedLength - arrayLength; i++) {
+      for (size_t i_2_2 = 0; i_2_2 < paddedLength - arrayLength; i_2_2++) {
         const T paddingCopy = paddingValue;
         paddedVec.push_back(paddingCopy);
       }
