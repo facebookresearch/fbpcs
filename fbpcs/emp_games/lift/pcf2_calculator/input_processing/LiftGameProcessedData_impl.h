@@ -74,8 +74,8 @@ void LiftGameProcessedData<schedulerId>::writeToCSV(
       purchaseValueSquared.begin(),
       purchaseValueSquared.end(),
       std::back_inserter(purchaseValueSquaredShares),
-      [](const SecValueSquared<schedulerId>& purchaseValueSquared) {
-        return purchaseValueSquared.extractIntShare().getValue();
+      [](const SecValueSquared<schedulerId>& purchaseValueSquared_2) {
+        return purchaseValueSquared_2.extractIntShare().getValue();
       });
   std::vector<bool> testReachShares = testReach.extractBit().getValue();
 
