@@ -157,11 +157,11 @@ checkThresholdAndUpdateMetric(
     return getGroupLiftChecker<schedulerId, usingBatch, inputEncryption>(
         threshold, sentinelVal);
   } else {
-    return [threshold, sentinelVal](
-               AggMetrics_sp<schedulerId, usingBatch, inputEncryption>) {
-      // for any other type do nothing.
-      XLOG(WARN) << "Threshold: " << threshold << " is unused";
-    };
+    return
+        [threshold](AggMetrics_sp<schedulerId, usingBatch, inputEncryption>) {
+          // for any other type do nothing.
+          XLOG(WARN) << "Threshold: " << threshold << " is unused";
+        };
   }
 }
 
