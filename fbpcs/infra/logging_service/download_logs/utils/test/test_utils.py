@@ -5,6 +5,7 @@
 
 # pyre-strict
 
+import shutil
 import unittest
 from unittest.mock import mock_open, patch
 
@@ -50,5 +51,22 @@ class TestUtils(unittest.TestCase):
         pass
 
     def test_copy_file(self) -> None:
-        # T124341053
-        pass
+        source = "source_path"
+        destination = "destination_path"
+        with patch("shutil.copy2") as mock_copy:
+            with self.subTest("Test successful file copy"):
+                mock_copy.return_value = destination
+                result = self.utils.copy_file(source, destination)
+                mock_copy.assert_called_once_with(src=source, dst=destination)
+                self.assertEqual(result, destination)
+            with self.subTest("Test SameFileError"):
+                mock_copy.side_effect = shutil.SameFileError
+                with self.assertRaisesRegex(
+                    shutil.SameFileError,
+                    f"{source} and {destination} represents same file",
+                ):
+                    self.utils.copy_file(source, destination)
+            with self.subTest("Test PermissionError"):
+                mock_copy.side_effect = PermissionError
+                with self.assertRaisesRegex(PermissionError, "Permission denied"):
+                    self.utils.copy_file(source, destination)
