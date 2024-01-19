@@ -198,7 +198,7 @@ class Utils:
             file_path = shutil.copy2(src=source, dst=destination)
         except shutil.SameFileError as err:
             raise shutil.SameFileError(
-                f"{source} and {destination} represents same file)"
+                f"{source} and {destination} represents same file"
             ) from err
         except PermissionError as err:
             raise PermissionError("Permission denied") from err
