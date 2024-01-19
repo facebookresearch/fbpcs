@@ -52,8 +52,8 @@ class MetadataCompactorGameTestFixture : public ::testing::TestWithParam<bool> {
     auto future1 = std::async(
         createCompactorGame<1>, 1, GetParam(), std::move(factories[1]));
 
-    auto compactorGame0 = future0.get();
-    auto compactorGame1 = future1.get();
+    auto compactorGame0_2 = future0.get();
+    auto compactorGame1_2 = future1.get();
   }
 };
 
