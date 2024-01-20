@@ -8,10 +8,10 @@ variable "s3_bucket_name" {
   description = "Name of the data S3 bucket used in execution of TEE-PL"
 }
 
-variable "s3_logging_bucket_name" {
+variable "installation_tag" {
   type        = string
-  description = "Name of the S3 bucket where all logs generated from other TEE-PL advertiser side S3 buckets will be stored"
-  default     = "s3-log-bucket-advertiser"
+  description = "Name of the TEE-PL advertiser infra installation tag"
+  default     = "default-installation-tag"
 }
 
 variable "kinesis_log_stream_name" {
