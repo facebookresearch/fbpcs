@@ -103,9 +103,8 @@ undeploy_aws_resources() {
     terraform destroy \
         -auto-approve \
         -var "region=$region" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name" \
-        -var "installation_tag=athena$tag_postfix"
+        -var "installation_tag=$env_tag"
 
     echo "######################## Cleaned up Advertiser Side Athena Logging Infrastructure ######################"
     log_streaming_data "Cleaned up Advertiser side Athena logging infra"
@@ -123,10 +122,9 @@ undeploy_aws_resources() {
     terraform destroy \
         -auto-approve \
         -var "region=$region" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name" \
         -var "user_identity_regex=$kms_user_identity_regex" \
-        -var "installation_tag=log$tag_postfix"
+        -var "installation_tag=$env_tag"
 
     echo "######################## Cleaned up Advertiser Side KMS Logging Infrastructure ######################"
     log_streaming_data "Cleaned up Advertiser side KMS logging infra"
@@ -145,8 +143,8 @@ undeploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "s3_bucket_name=$s3_bucket_data" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
-        -var "kinesis_log_stream_name=$kinesis_stream_name"
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "installation_tag=$env_tag"
 
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
@@ -157,8 +155,8 @@ undeploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "s3_bucket_name=$s3_bucket_config" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
-        -var "kinesis_log_stream_name=$kinesis_stream_name"
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "installation_tag=$env_tag"
 
     log_streaming_data "destroyed S3 buckets logging infra"
     echo "######################## Destroyed Advertiser Side S3 bucket logging Infrastructure ######################"
@@ -221,7 +219,8 @@ undeploy_aws_resources() {
         -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name" \
         -var "kinesis_read_policy_name=$kinesis_read_policy_name" \
-        -var "kinesis_read_role_name=$kinesis_read_role_name"
+        -var "kinesis_read_role_name=$kinesis_read_role_name" \
+        -var "installation_tag=$env_tag"
 
     log_streaming_data "destroyed common logging infra"
     echo "######################## Destroyed Advertiser Side Common Logging Infrastructure ######################"
@@ -589,7 +588,8 @@ deploy_aws_resources() {
         -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name" \
         -var "kinesis_read_policy_name=$kinesis_read_policy_name" \
-        -var "kinesis_read_role_name=$kinesis_read_role_name"
+        -var "kinesis_read_role_name=$kinesis_read_role_name" \
+        -var "installation_tag=$env_tag"
 
     log_streaming_data "deployed common logging infra"
     echo "######################## Deployed Advertiser Side Common Logging Infrastructure ######################"
@@ -608,8 +608,8 @@ deploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "s3_bucket_name=$s3_bucket_data" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
-        -var "kinesis_log_stream_name=$kinesis_stream_name"
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "installation_tag=$env_tag"
 
     terraform init -reconfigure \
         -backend-config "bucket=$s3_bucket_config" \
@@ -620,8 +620,9 @@ deploy_aws_resources() {
         -auto-approve \
         -var "region=$region" \
         -var "s3_bucket_name=$s3_bucket_config" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
-        -var "kinesis_log_stream_name=$kinesis_stream_name"
+        -var "kinesis_log_stream_name=$kinesis_stream_name" \
+        -var "installation_tag=$env_tag"
+
 
     log_streaming_data "deployed S3 buckets logging infra"
     echo "######################## Deployed Advertiser Side S3 bucket logging Infrastructure ######################"
@@ -681,10 +682,9 @@ deploy_aws_resources() {
     terraform apply \
         -auto-approve \
         -var "region=$region" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name" \
         -var "user_identity_regex=$kms_user_identity_regex" \
-        -var "installation_tag=log$tag_postfix"
+        -var "installation_tag=$env_tag"
 
     echo "######################## Deployed Advertiser Side KMS Logging Infrastructure ######################"
     log_streaming_data "finished deploying Advertiser side KMS logging infra"
@@ -702,9 +702,8 @@ deploy_aws_resources() {
     terraform apply \
         -auto-approve \
         -var "region=$region" \
-        -var "s3_logging_bucket_name=$s3_logging_bucket" \
         -var "kinesis_log_stream_name=$kinesis_stream_name" \
-        -var "installation_tag=athena$tag_postfix"
+        -var "installation_tag=$env_tag"
 
     echo "######################## Deployed Advertiser Side Athena Logging Infrastructure ######################"
     log_streaming_data "finished deploying Advertiser side Athena logging infra"
