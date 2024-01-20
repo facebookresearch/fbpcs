@@ -27,3 +27,8 @@ variable "kinesis_read_role_name" {
   default     = "kinesis-read-role"
 }
 
+variable "installation_tag" {
+  type        = string
+  description = "Name of the TEE-PL advertiser infra installation tag"
+  default     = "default-installation-tag"
+}
