@@ -6,6 +6,12 @@ resource "aws_cloudwatch_log_group" "cloudtrail_logs_s3" {
   retention_in_days = 7
 }
 
+resource "aws_cloudwatch_log_group" "cloudtrail_logs_service" {
+  name              = "/aws/cloudtrail/${var.installation_tag}-cw-logs"
+  retention_in_days = 7
+}
+
+
 ### Setup common cloudtrail iam role and policies to write to cloudwatch log group
 resource "aws_iam_role" "cloudtrail_cloudwatch_role" {
   name = "${var.installation_tag}-ct-role"
@@ -43,7 +49,8 @@ resource "aws_iam_role_policy" "cloudtrail_cloudwatch_write_policy" {
                 "logs:PutLogEvents"
             ],
             "Resource": [
-                "${aws_cloudwatch_log_group.cloudtrail_logs_s3.arn}:*"
+                "${aws_cloudwatch_log_group.cloudtrail_logs_s3.arn}:*",
+                "${aws_cloudwatch_log_group.cloudtrail_logs_service.arn}:*"
             ]
         }
     ]
@@ -58,6 +65,20 @@ resource "aws_cloudtrail" "cloudtrail_cloudwatch_logging_s3" {
   s3_key_prefix              = "pl_advertiser_logs_s3"
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch_role.arn
   cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail_logs_s3.arn}:*"
+
+  event_selector {
+    read_write_type           = "All"
+    include_management_events = true
+  }
+  depends_on = [aws_s3_bucket_policy.s3_logging_bucket_policy]
+}
+
+resource "aws_cloudtrail" "cloudtrail_cloudwatch_logging_service" {
+  name                       = "${var.installation_tag}-ct-trail-service"
+  s3_bucket_name             = var.s3_logging_bucket_name
+  s3_key_prefix              = "pl_advertiser_logs_service"
+  cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch_role.arn
+  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail_logs_service.arn}:*"
 
   event_selector {
     read_write_type           = "All"
