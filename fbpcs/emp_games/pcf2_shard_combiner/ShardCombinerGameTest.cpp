@@ -255,13 +255,13 @@ TEST_P(ShardCombinerGameTestFixture, TestAggLogic) {
   std::string publisherFileName = "input_publisher.json";
   std::string expectedOutFileNamePrefix = "expected_out_shards_";
   auto testFn = [&](int32_t numShards,
-                    bool usingBatch,
-                    common::SchedulerType schedulerType) {
+                    bool usingBatch_2,
+                    common::SchedulerType schedulerType_2) {
     std::string expectedOutFileName =
         folly::sformat("{}{}.json", expectedOutFileNamePrefix, numShards);
-    if (usingBatch) {
+    if (usingBatch_2) {
       runTestWithParams<true>(
-          schedulerType,
+          schedulerType_2,
           baseDir_ + "combiner_logic_test/",
           partnerFileName,
           publisherFileName,
@@ -269,7 +269,7 @@ TEST_P(ShardCombinerGameTestFixture, TestAggLogic) {
           expectedOutFileName);
     } else {
       runTestWithParams<false>(
-          schedulerType,
+          schedulerType_2,
           baseDir_ + "combiner_logic_test/",
           partnerFileName,
           publisherFileName,
