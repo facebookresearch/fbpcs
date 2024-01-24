@@ -57,7 +57,7 @@ void aggregateLiftNonIdColumns(
       try {
         int32_t val = std::stoi(dRow[col]);
         columnValues[col].push_back(val);
-      } catch (std::exception& err) {
+      } catch (std::exception&) {
         XLOG(FATAL)
             << "Error: Exception caught during casting string to int.\n"
             << "\tFor PL, non-id columns has to be int to aggregate in case of duplicates.";
