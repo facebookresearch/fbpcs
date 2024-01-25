@@ -162,9 +162,9 @@ void GenericSharder::shard() {
 
   bufferedReader->close();
 
-  for (auto i = 0; i < numShards; ++i) {
-    outFiles.at(i)->close();
-    XLOG(INFO, fmt::format("Shard {} has {} rows", i, getRowsForShard(i)));
+  for (auto i_2 = 0; i_2 < numShards; ++i_2) {
+    outFiles.at(i_2)->close();
+    XLOG(INFO, fmt::format("Shard {} has {} rows", i_2, getRowsForShard(i_2)));
   }
 
   XLOG(INFO) << "All file writes successful";
