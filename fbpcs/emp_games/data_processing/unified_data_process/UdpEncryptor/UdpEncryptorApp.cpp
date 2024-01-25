@@ -184,8 +184,8 @@ void UdpEncryptorApp::processMyData(
   auto data = folly::collectAll(std::move(futures)).get();
   for (auto& datum : data) {
     datum.throwUnlessValue();
-    auto& [index, data] = datum.value();
-    encryptor_->pushLinesFromMe(std::move(data), std::move(index));
+    auto& [index, data_2] = datum.value();
+    encryptor_->pushLinesFromMe(std::move(data_2), std::move(index));
   }
   return;
 }
