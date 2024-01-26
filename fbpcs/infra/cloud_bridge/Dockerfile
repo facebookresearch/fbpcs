@@ -20,9 +20,11 @@ RUN pip install \
     awscli
 
 # Note: the dataclasses backport can be removed once Python 3 is upgraded to 3.7
+# Note: pin the s3transfer==0.8.0 to fix the error "is_s3express_bucket"
 RUN pip3 install \
     boto3 \
-    dataclasses
+    dataclasses \
+    s3transfer==0.10.0
 
 ##########################################
 # Install fbpcp modules
