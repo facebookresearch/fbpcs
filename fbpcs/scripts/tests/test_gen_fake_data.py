@@ -17,6 +17,7 @@ class TestGenFakeData(unittest.TestCase):
         res = gen_fake_data._gen_adjusted_purchase_rate(
             is_test=True, purchase_rate=0.9, incrementality_rate=0.2
         )
+        # pyre-fixme[16]: `TestGenFakeData` has no attribute `assertEquals`.
         self.assertEquals(1.0, res)
 
         # test user - exceed upper bound; except error

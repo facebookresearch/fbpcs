@@ -425,6 +425,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                 f"Selecting from {len(runnable_objective_ids)} runnable objectives"
             )
             try:
+                # pyre-fixme[20]: Argument `k` expected.
                 objective_ids = random.sample(runnable_objective_ids, len(input_paths))
             except ValueError:
                 logger.error(
