@@ -109,6 +109,7 @@ class TestTerraformDeployment(unittest.TestCase):
             return_value = self.terraform_deployment.terraform_init(
                 backend_config=backend_config, **kwargs
             )
+            # pyre-fixme[16]: `TestTerraformDeployment` has no attribute `assertEquals`.
             self.assertEquals(expected_value, return_value)
 
         with self.subTest("BackendConigWhiteSpaces"):

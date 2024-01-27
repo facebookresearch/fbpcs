@@ -21,7 +21,7 @@ app = FastAPI()
 app.include_router(handler.router)
 
 
-if __name__ == "__main__":
+def main() -> None:
     # uvicorn.run(app, host="0.0.0.0", port=8000)
     from multiprocessing import Process
 
@@ -47,3 +47,7 @@ if __name__ == "__main__":
     logging.info("Terminating server...")
     server.terminate()
     server.join()
+
+
+if __name__ == "__main__":
+    main()  # pragma: no cover
