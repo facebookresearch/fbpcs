@@ -57,8 +57,6 @@ class TestPrivateComputationInstance(unittest.TestCase):
         with self.subTest("Previous stage name matches"):
             containers = self.instance.get_existing_containers_for_retry()
             self.assertIsNotNone(containers)
-            # pyre-fixme[16]: `TestPrivateComputationInstance` has no attribute
-            #  `assertEquals`.
             self.assertEquals(1, len(containers))
             self.assertEquals(self.mock_container, containers[0])
 

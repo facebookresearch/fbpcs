@@ -116,7 +116,6 @@ class TestBoltJob(unittest.TestCase):
                 final_stage=PrivateComputationStageFlow.AGGREGATE,
                 stage_timeout_override=-10,
             )
-            # pyre-fixme[16]: `TestBoltJob` has no attribute `assertEquals`.
             self.assertEquals(0, job.stage_timeout_override)
 
         with self.subTest("override_timeout_too_high"):
