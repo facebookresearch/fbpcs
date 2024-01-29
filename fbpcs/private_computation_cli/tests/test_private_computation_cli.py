@@ -238,7 +238,6 @@ class TestPrivateComputationCli(TestCase):
         ]
         pc_cli.main(argv)
         create_mock.assert_called_once()
-        # pyre-fixme[16]: `TestPrivateComputationCli` has no attribute `assertEquals`.
         self.assertEquals(create_mock.call_args.kwargs["stage_timeout_override"], 4567)
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
@@ -345,7 +344,6 @@ class TestPrivateComputationCli(TestCase):
         )
         pc_cli.main(argv)
         run_study_mock.assert_called_once()
-        # pyre-fixme[16]: `TestPrivateComputationCli` has no attribute `assertEquals`.
         self.assertEquals(
             run_study_mock.call_args.kwargs["stage_timeout_override"], 4567
         )
