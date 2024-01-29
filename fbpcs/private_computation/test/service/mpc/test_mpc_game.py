@@ -115,7 +115,6 @@ class TestMPCGameService(unittest.TestCase):
             )
 
     def test_prepare_args_with_extra_arg(self) -> None:
-        # pyre-fixme[16]: `TestMPCGameService` has no attribute `assertRaisesRegexp`.
         with self.assertRaisesRegexp(
             ValueError,
             r"Unexpected kwargs: \['extra_arg'\].*",
