@@ -54,7 +54,8 @@ public class PCEValidatorRunner {
     if (credentialValidationResult.isSuccessful == false) {
       return new PCEValidatorAPIReturn(
           PCEValidatorAPIReturn.Status.STATUS_FAIL,
-          "The AWS access key ID and secret access key provided are invalid. Please review the information provided and try again.");
+          "The AWS access key ID and secret access key provided are invalid. Please review the"
+              + " information provided and try again.");
     }
 
     final ShellCommandRunner.CommandRunnerResult pceValidationResult =

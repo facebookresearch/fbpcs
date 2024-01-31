@@ -93,7 +93,8 @@ public class Validator {
       return new ValidatorResult(
           false,
           String.format(
-              "VPC limit is at peak in region %s. Contact your Meta representatives for more information if needed.",
+              "VPC limit is at peak in region %s. Contact your Meta representatives for more"
+                  + " information if needed.",
               deploymentParams.region));
     }
 
