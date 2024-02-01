@@ -20,11 +20,9 @@ RUN pip install \
     awscli
 
 # Note: the dataclasses backport can be removed once Python 3 is upgraded to 3.7
-# Note: pin the s3transfer==0.8.0 to fix the error "is_s3express_bucket"
 RUN pip3 install \
     boto3 \
-    dataclasses \
-    s3transfer==0.10.0
+    dataclasses
 
 ##########################################
 # Install fbpcp modules
@@ -92,6 +90,10 @@ RUN pip3 install retrying -t /terraform_deployment/terraform_scripts/key_injecti
 RUN pip3 install pyion2json -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 RUN pip3 install dataclasses-json -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
 RUN pip3 install injector -t /terraform_deployment/terraform_scripts/key_injection_agent/kia_source_code/
+
+# Note: pin the s3transfer==0.8.0 to fix the error "is_s3express_bucket"
+RUN pip3 install s3transfer==0.10.0
+
 # #########################################
 # Spring Boot
 # #########################################
