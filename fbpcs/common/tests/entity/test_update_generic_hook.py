@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# pyer-strict
+# pyre-strict
 
 import unittest
 from dataclasses import dataclass, field
@@ -14,6 +14,7 @@ from fbpcs.common.entity.dataclasses_mutability import MutabilityMetadata, mutab
 from fbpcs.common.entity.update_generic_hook import UpdateGenericHook
 
 
+# pyre-fixme[3]: Return type must be annotated.
 def after_update_input(obj: "DummyInstance"):
     obj.output_path = obj.input_path + ":output"
     obj.storage = obj.input_path + ":storage"
@@ -21,6 +22,7 @@ def after_update_input(obj: "DummyInstance"):
 
 # create a hook obj
 # update output_path and storage in one hook when input_path is changed
+# pyre-fixme[24]: Generic type `UpdateGenericHook` expects 1 type parameter.
 input_updated_hook: UpdateGenericHook = UpdateGenericHook(after_update_input)
 
 
