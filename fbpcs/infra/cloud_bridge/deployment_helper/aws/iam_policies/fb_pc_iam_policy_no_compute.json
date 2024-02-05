@@ -54,7 +54,8 @@
         },
         {
             "Action": [
-                "lambda:InvokeFunction"
+                "lambda:InvokeFunction",
+                "lambda:GetFunction"
             ],
             "Effect": "Allow",
             "Resource": "arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${KIA_LAMBDA_NAME}"
