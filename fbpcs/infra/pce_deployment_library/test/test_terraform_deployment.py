@@ -109,7 +109,7 @@ class TestTerraformDeployment(unittest.TestCase):
             return_value = self.terraform_deployment.terraform_init(
                 backend_config=backend_config, **kwargs
             )
-            self.assertEquals(expected_value, return_value)
+            self.assertEqual(expected_value, return_value)
 
         with self.subTest("BackendConigWhiteSpaces"):
             backend_config = {
@@ -123,7 +123,7 @@ class TestTerraformDeployment(unittest.TestCase):
             return_value = self.terraform_deployment.terraform_init(
                 backend_config=backend_config, **kwargs
             )
-            self.assertEquals(expected_value, return_value)
+            self.assertEqual(expected_value, return_value)
 
         with self.subTest("UnsetReconfigureNoBackendConfig"):
             expected_command = "terraform init -input=false -dry-run=true"
@@ -134,7 +134,7 @@ class TestTerraformDeployment(unittest.TestCase):
             return_value = self.terraform_deployment.terraform_init(
                 reconfigure=reconfigure, **kwargs
             )
-            self.assertEquals(expected_value, return_value)
+            self.assertEqual(expected_value, return_value)
 
         with self.subTest("SetReconfigure"):
             expected_command = "terraform init -input=false -dry-run=true -reconfigure"
@@ -145,7 +145,7 @@ class TestTerraformDeployment(unittest.TestCase):
             return_value = self.terraform_deployment.terraform_init(
                 reconfigure=reconfigure, **kwargs
             )
-            self.assertEquals(expected_value, return_value)
+            self.assertEqual(expected_value, return_value)
 
     def test_create(self) -> None:
         # T126572515

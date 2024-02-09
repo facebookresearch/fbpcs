@@ -17,7 +17,7 @@ class TestGenFakeData(unittest.TestCase):
         res = gen_fake_data._gen_adjusted_purchase_rate(
             is_test=True, purchase_rate=0.9, incrementality_rate=0.2
         )
-        self.assertEquals(1.0, res)
+        self.assertEqual(1.0, res)
 
         # test user - exceed upper bound; except error
         with self.assertRaises(ValueError):
@@ -29,7 +29,7 @@ class TestGenFakeData(unittest.TestCase):
         res = gen_fake_data._gen_adjusted_purchase_rate(
             is_test=False, purchase_rate=0.1, incrementality_rate=0.2
         )
-        self.assertEquals(0.0, res)
+        self.assertEqual(0.0, res)
 
         # control user - exceed lower bound; except error
         with self.assertRaises(ValueError):

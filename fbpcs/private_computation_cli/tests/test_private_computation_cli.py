@@ -238,7 +238,7 @@ class TestPrivateComputationCli(TestCase):
         ]
         pc_cli.main(argv)
         create_mock.assert_called_once()
-        self.assertEquals(create_mock.call_args.kwargs["stage_timeout_override"], 4567)
+        self.assertEqual(create_mock.call_args.kwargs["stage_timeout_override"], 4567)
 
     @patch("fbpcs.private_computation_cli.private_computation_cli.validate")
     def test_validate(self, validate_mock) -> None:
@@ -344,7 +344,7 @@ class TestPrivateComputationCli(TestCase):
         )
         pc_cli.main(argv)
         run_study_mock.assert_called_once()
-        self.assertEquals(
+        self.assertEqual(
             run_study_mock.call_args.kwargs["stage_timeout_override"], 4567
         )
 
