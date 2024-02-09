@@ -57,8 +57,8 @@ class TestPrivateComputationInstance(unittest.TestCase):
         with self.subTest("Previous stage name matches"):
             containers = self.instance.get_existing_containers_for_retry()
             self.assertIsNotNone(containers)
-            self.assertEquals(1, len(containers))
-            self.assertEquals(self.mock_container, containers[0])
+            self.assertEqual(1, len(containers))
+            self.assertEqual(self.mock_container, containers[0])
 
         with self.subTest("Previous stage name does not match."):
             self.mock_instance.stage_name = "RESHARD"

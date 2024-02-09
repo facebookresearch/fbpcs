@@ -116,7 +116,7 @@ class TestBoltJob(unittest.TestCase):
                 final_stage=PrivateComputationStageFlow.AGGREGATE,
                 stage_timeout_override=-10,
             )
-            self.assertEquals(0, job.stage_timeout_override)
+            self.assertEqual(0, job.stage_timeout_override)
 
         with self.subTest("override_timeout_too_high"):
             job = BoltJob(
@@ -126,6 +126,6 @@ class TestBoltJob(unittest.TestCase):
                 final_stage=PrivateComputationStageFlow.AGGREGATE,
                 stage_timeout_override=DEFAULT_CONTAINER_TIMEOUT_IN_SEC + 100,
             )
-            self.assertEquals(
+            self.assertEqual(
                 DEFAULT_CONTAINER_TIMEOUT_IN_SEC, job.stage_timeout_override
             )

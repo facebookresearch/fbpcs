@@ -115,7 +115,7 @@ class TestMPCGameService(unittest.TestCase):
             )
 
     def test_prepare_args_with_extra_arg(self) -> None:
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             ValueError,
             r"Unexpected kwargs: \['extra_arg'\].*",
         ):
