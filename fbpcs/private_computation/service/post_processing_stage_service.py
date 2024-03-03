@@ -141,21 +141,21 @@ class PostProcessingStageService(PrivateComputationStageService):
         handler: PostProcessingHandler,
     ) -> None:
         self._logger.info(f"Starting post processing handler: {handler_name=}")
-        post_processing_instance.handler_statuses[
-            handler_name
-        ] = PostProcessingHandlerStatus.STARTED
+        post_processing_instance.handler_statuses[handler_name] = (
+            PostProcessingHandlerStatus.STARTED
+        )
         try:
             await handler.run(self._storage_svc, private_computation_instance)
             self._logger.info(f"Completed post processing handler: {handler_name=}")
-            post_processing_instance.handler_statuses[
-                handler_name
-            ] = PostProcessingHandlerStatus.COMPLETED
+            post_processing_instance.handler_statuses[handler_name] = (
+                PostProcessingHandlerStatus.COMPLETED
+            )
         except Exception as e:
             self._logger.exception(e)
             self._logger.error(f"Failed post processing handler: {handler_name=}")
-            post_processing_instance.handler_statuses[
-                handler_name
-            ] = PostProcessingHandlerStatus.FAILED
+            post_processing_instance.handler_statuses[handler_name] = (
+                PostProcessingHandlerStatus.FAILED
+            )
             post_processing_instance.status = PostProcessingInstanceStatus.FAILED
 
     def get_status(

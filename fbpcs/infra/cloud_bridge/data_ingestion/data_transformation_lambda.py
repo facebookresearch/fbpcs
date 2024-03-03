@@ -204,11 +204,11 @@ def lambda_handler(
 def _parse_client_user_agent(client_user_agent: str) -> Dict[str, str]:
     parsed_fields = {}
 
-    for (regex, browserName) in BROWSER_NAME_REGEXES:
+    for regex, browserName in BROWSER_NAME_REGEXES:
         if regex.match(client_user_agent):
             parsed_fields[BROWSER_NAME] = browserName
             break
-    for (regex, deviceOs) in DEVICE_OS_REGEXES:
+    for regex, deviceOs in DEVICE_OS_REGEXES:
         if regex.match(client_user_agent):
             parsed_fields[DEVICE_OS] = deviceOs
             break

@@ -20,9 +20,7 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 from fbpcs.utils.config_yaml.config_yaml_dict import ConfigYamlDict
 
 
-def parse_bolt_config(
-    config: Dict[str, Any], logger: logging.Logger
-) -> Tuple[
+def parse_bolt_config(config: Dict[str, Any], logger: logging.Logger) -> Tuple[
     BoltRunner[BoltPCSCreateInstanceArgs, BoltPCSCreateInstanceArgs],
     List[BoltJob[BoltPCSCreateInstanceArgs, BoltPCSCreateInstanceArgs]],
 ]:

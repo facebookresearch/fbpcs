@@ -58,9 +58,11 @@ class RunBinaryBaseService:
                 version=binary_version,
                 cmd_args_list=[cmd_args_list[i] for i in containers_to_start],
                 timeout=timeout,
-                env_vars=[env_vars_list[i] for i in containers_to_start]
-                if env_vars_list
-                else env_vars,
+                env_vars=(
+                    [env_vars_list[i] for i in containers_to_start]
+                    if env_vars_list
+                    else env_vars
+                ),
                 container_type=container_type,
                 certificate_request=certificate_request,
                 opa_workflow_path=opa_workflow_path,

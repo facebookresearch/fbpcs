@@ -136,9 +136,9 @@ class PCF2AggregationStageService(PCF2BaseStageService):
             }
 
             if private_computation_instance.feature_flags is not None:
-                game_args[
-                    "pc_feature_flags"
-                ] = private_computation_instance.feature_flags
+                game_args["pc_feature_flags"] = (
+                    private_computation_instance.feature_flags
+                )
 
             if (
                 self._log_cost_to_s3

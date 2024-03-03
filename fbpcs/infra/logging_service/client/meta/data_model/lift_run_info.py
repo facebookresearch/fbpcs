@@ -13,6 +13,7 @@ from fbpcs.infra.logging_service.client.meta.data_model.computation_run_info imp
     ComputationRunInfo,
 )
 
+
 # Log metadata for a Private Lift study run
 @dataclass_json
 @dataclass

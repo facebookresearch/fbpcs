@@ -135,9 +135,11 @@ def _faked_data(
         # by zeroes, or all non-zeroes. The number of non-zeroes would
         # match that of the event_timestamps column.
         InputColumn.values: [
-            has_purchase * random.randint(1, 100)
-            if i >= (num_conversions - row_num % num_conversions - 1)
-            else 0
+            (
+                has_purchase * random.randint(1, 100)
+                if i >= (num_conversions - row_num % num_conversions - 1)
+                else 0
+            )
             for i in range(num_conversions)
         ],
         InputColumn.value_squared: value * value,

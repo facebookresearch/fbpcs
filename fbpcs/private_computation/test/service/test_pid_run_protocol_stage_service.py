@@ -276,9 +276,11 @@ class TestPIDRunProtocolStageService(IsolatedAsyncioTestCase):
                 server_certificate_path="tls/server_certificate.pem",
                 ca_certificate_path="tls/ca_certificate.pem",
                 server_ips=self.server_ips,
-                server_hostnames=["node0.meta.com"]
-                if pc_role is PrivateComputationRole.PARTNER
-                else None,
+                server_hostnames=(
+                    ["node0.meta.com"]
+                    if pc_role is PrivateComputationRole.PARTNER
+                    else None
+                ),
             )
             binary_name = PIDRunProtocolBinaryService.get_binary_name(
                 pid_protocol, pc_role

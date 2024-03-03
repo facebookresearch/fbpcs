@@ -204,10 +204,12 @@ class AggregateShardsStageService(PrivateComputationStageService):
                 "metrics_format_type": metrics_format_type,
                 "num_shards": num_shards,
                 "output_path": self.get_output_path(pc_instance),
-                "threshold": 0
-                if isinstance(pc_instance.product_config, AttributionConfig)
-                # pyre-ignore Undefined attribute [16]
-                else pc_instance.product_config.k_anonymity_threshold,
+                "threshold": (
+                    0
+                    if isinstance(pc_instance.product_config, AttributionConfig)
+                    # pyre-ignore Undefined attribute [16]
+                    else pc_instance.product_config.k_anonymity_threshold
+                ),
                 "run_name": run_name,
                 "log_cost": self._log_cost_to_s3,
                 "log_cost_s3_bucket": pc_instance.infra_config.log_cost_bucket,

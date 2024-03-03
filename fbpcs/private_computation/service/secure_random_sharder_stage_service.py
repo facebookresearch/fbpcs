@@ -129,12 +129,10 @@ class SecureRandomShardStageService(PrivateComputationStageService):
             An updated version of pc_instance that stores an StageStateInstance
         """
         logging.info(f"[{self}] Starting Secure Random Sharding.")
-        game_args = await (
-            self._get_secure_random_sharder_args(
-                pc_instance,
-                server_certificate_path,
-                ca_certificate_path,
-            )
+        game_args = await self._get_secure_random_sharder_args(
+            pc_instance,
+            server_certificate_path,
+            ca_certificate_path,
         )
 
         if server_ips and len(server_ips) != len(game_args):

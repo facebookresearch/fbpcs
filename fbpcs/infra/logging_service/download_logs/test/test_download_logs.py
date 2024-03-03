@@ -90,11 +90,11 @@ class TestDownloadLogs(unittest.TestCase):
                 self.aws_container_logs.cloudwatch_client.describe_log_groups.reset_mock(
                     side_effect=True
                 )
-                getattr(
-                    self.aws_container_logs.s3_client, s3_endpoint
-                ).side_effect = ClientError(
-                    error_response={"Error": {"Code": error_code}},
-                    operation_name=s3_endpoint,
+                getattr(self.aws_container_logs.s3_client, s3_endpoint).side_effect = (
+                    ClientError(
+                        error_response={"Error": {"Code": error_code}},
+                        operation_name=s3_endpoint,
+                    )
                 )
                 with self.assertRaisesRegex(Exception, exc_regex):
                     self.aws_container_logs.upload_logs_to_s3_from_cloudwatch(

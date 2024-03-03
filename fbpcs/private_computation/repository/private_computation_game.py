@@ -277,9 +277,9 @@ PRIVATE_COMPUTATION_GAME_CONFIG: Dict[str, GameNamesValue] = {
 
 class PrivateComputationGameRepository(MPCGameRepository):
     def __init__(self) -> None:
-        self.private_computation_game_config: Dict[
-            str, GameNamesValue
-        ] = PRIVATE_COMPUTATION_GAME_CONFIG
+        self.private_computation_game_config: Dict[str, GameNamesValue] = (
+            PRIVATE_COMPUTATION_GAME_CONFIG
+        )
 
     def get_game(self, name: str) -> MPCGameConfig:
         if name not in self.private_computation_game_config:

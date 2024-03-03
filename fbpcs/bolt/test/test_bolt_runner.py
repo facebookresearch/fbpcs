@@ -161,7 +161,7 @@ class TestBoltRunner(unittest.IsolatedAsyncioTestCase):
     @mock.patch("fbpcs.bolt.bolt_runner.asyncio.sleep")
     async def test_get_server_ips_after_start(self, mock_sleep) -> None:
         mock_server_ips = ["1.1.1.1"]
-        for (test_stage, test_publisher_status) in (
+        for test_stage, test_publisher_status in (
             (  # test Non-joint stage should get None server ips
                 DummyNonJointStageFlow.NON_JOINT_STAGE,
                 DummyNonJointStageFlow.NON_JOINT_STAGE.completed_status,

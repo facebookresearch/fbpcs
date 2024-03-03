@@ -134,9 +134,9 @@ class PCF2LiftStageService(PCF2BaseStageService):
             }
 
             if private_computation_instance.feature_flags is not None:
-                game_args[
-                    "pc_feature_flags"
-                ] = private_computation_instance.feature_flags
+                game_args["pc_feature_flags"] = (
+                    private_computation_instance.feature_flags
+                )
 
             if private_computation_instance.has_feature(
                 PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS
@@ -147,9 +147,9 @@ class PCF2LiftStageService(PCF2BaseStageService):
                     private_computation_instance.pcf2_lift_metadata_compaction_output_base_path
                     + "_secret_shares"
                 )
-                game_args[
-                    "input_global_params_path"
-                ] = f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params_{shard}"
+                game_args["input_global_params_path"] = (
+                    f"{private_computation_instance.pcf2_lift_metadata_compaction_output_base_path}_global_params_{shard}"
+                )
 
             if (
                 self._log_cost_to_s3

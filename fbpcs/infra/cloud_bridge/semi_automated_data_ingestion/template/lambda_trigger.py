@@ -20,6 +20,7 @@ client = boto3.client("glue")
 # same name as the aws_glue_job resource in glue.tf
 glueJobName = "TO_BE_UPDATED_DURING_DEPLOYMENT"
 
+
 # Define Lambda function
 def lambda_handler(event, context):
 

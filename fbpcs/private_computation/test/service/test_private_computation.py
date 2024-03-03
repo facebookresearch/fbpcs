@@ -348,9 +348,11 @@ class TestPrivateComputationService(unittest.IsolatedAsyncioTestCase):
                 ):
                     self.assertEqual(
                         args.stage_flow,
-                        PrivateComputationMRStageFlow
-                        if test_game_type is PrivateComputationGameType.ATTRIBUTION
-                        else PrivateComputationMrPidPCF2LiftStageFlow,
+                        (
+                            PrivateComputationMRStageFlow
+                            if test_game_type is PrivateComputationGameType.ATTRIBUTION
+                            else PrivateComputationMrPidPCF2LiftStageFlow
+                        ),
                     )
                 elif test_game_type is PrivateComputationGameType.ATTRIBUTION:
                     self.assertEqual(

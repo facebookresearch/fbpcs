@@ -250,9 +250,11 @@ class PIDRunProtocolStageService(PrivateComputationStageService):
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             container_type=container_type,
             env_vars_list=env_vars_list,
-            opa_workflow_path=TLS_OPA_WORKFLOW_PATH
-            if pc_instance.infra_config.is_tls_enabled
-            else None,
+            opa_workflow_path=(
+                TLS_OPA_WORKFLOW_PATH
+                if pc_instance.infra_config.is_tls_enabled
+                else None
+            ),
             permission=container_permission,
         )
 

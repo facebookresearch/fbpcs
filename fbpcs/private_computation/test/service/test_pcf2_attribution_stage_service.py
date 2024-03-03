@@ -140,16 +140,16 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
         test_game_args = [
             {
                 **common_game_args,
-                "run_name": f"{run_name_base}_0"
-                if self.stage_svc._log_cost_to_s3
-                else "",
+                "run_name": (
+                    f"{run_name_base}_0" if self.stage_svc._log_cost_to_s3 else ""
+                ),
                 "file_start_index": 0,
             },
             {
                 **common_game_args,
-                "run_name": f"{run_name_base}_1"
-                if self.stage_svc._log_cost_to_s3
-                else "",
+                "run_name": (
+                    f"{run_name_base}_1" if self.stage_svc._log_cost_to_s3 else ""
+                ),
                 "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
             },
         ]
@@ -192,16 +192,16 @@ class TestPCF2AttributionStageService(IsolatedAsyncioTestCase):
         test_game_args = [
             {
                 **common_game_args,
-                "run_name": f"{run_name_base}_0"
-                if self.stage_svc._log_cost_to_s3
-                else "",
+                "run_name": (
+                    f"{run_name_base}_0" if self.stage_svc._log_cost_to_s3 else ""
+                ),
                 "file_start_index": 0,
             },
             {
                 **common_game_args,
-                "run_name": f"{run_name_base}_1"
-                if self.stage_svc._log_cost_to_s3
-                else "",
+                "run_name": (
+                    f"{run_name_base}_1" if self.stage_svc._log_cost_to_s3 else ""
+                ),
                 "file_start_index": private_computation_instance.infra_config.num_files_per_mpc_container,
             },
         ]

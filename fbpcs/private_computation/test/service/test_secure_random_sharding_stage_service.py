@@ -228,8 +228,8 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
         ]
         for i in range(len(self.magic_mocks_read)):
             self.mock_storage_svc.read = self.magic_mocks_read[i]
-            union_sizes, intersection_sizes = await (
-                self.stage_svc.get_union_stats(private_computation_instance)
+            union_sizes, intersection_sizes = await self.stage_svc.get_union_stats(
+                private_computation_instance
             )
             self.assertEqual(test_union_sizes[i], union_sizes)
             self.assertEqual(test_intersection_sizes[i], intersection_sizes)
@@ -244,8 +244,8 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
         ]
         for i in range(len(self.magic_mocks_read)):
             self.mock_storage_svc.read = self.magic_mocks_read[i]
-            union_sizes, intersection_sizes = await (
-                self.stage_svc.get_union_stats(private_computation_instance)
+            union_sizes, intersection_sizes = await self.stage_svc.get_union_stats(
+                private_computation_instance
             )
             shards_per_file = self.stage_svc.get_dynamic_shards_num(
                 union_sizes, intersection_sizes
@@ -258,8 +258,8 @@ class TestSecureRandomShardingStageService(IsolatedAsyncioTestCase):
         for i in range(len(self.magic_mocks_read)):
             private_computation_instance = self._create_pc_instance()
             self.mock_storage_svc.read = self.magic_mocks_read[i]
-            union_sizes, intersection_sizes = await (
-                self.stage_svc.get_union_stats(private_computation_instance)
+            union_sizes, intersection_sizes = await self.stage_svc.get_union_stats(
+                private_computation_instance
             )
             shards_per_file = self.stage_svc.get_dynamic_shards_num(
                 union_sizes, intersection_sizes

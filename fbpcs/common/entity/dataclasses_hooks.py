@@ -31,13 +31,11 @@ class DataclassHook(Generic[T]):
         previous_field_value: Any,
         new_field_value: Any,
         hook_event: HookEventType,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @property
     @abstractmethod
-    def triggers(self) -> Iterable[HookEventType]:
-        ...
+    def triggers(self) -> Iterable[HookEventType]: ...
 
 
 @dataclass

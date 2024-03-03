@@ -23,8 +23,8 @@ def get_tls_arguments(
     return {
         "use_tls": has_tls_feature,
         TLS_ARG_KEY_CA_CERT_PATH: ca_certificate_path if has_tls_feature else "",
-        TLS_ARG_KEY_SERVER_CERT_PATH: server_certificate_path
-        if has_tls_feature
-        else "",
+        TLS_ARG_KEY_SERVER_CERT_PATH: (
+            server_certificate_path if has_tls_feature else ""
+        ),
         TLS_ARG_KEY_PRIVATE_CERT_PATH: PRIVATE_KEY_PATH if has_tls_feature else "",
     }

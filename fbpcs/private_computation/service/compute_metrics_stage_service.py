@@ -194,9 +194,11 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             env_vars_list=env_vars_list,
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
-            opa_workflow_path=TLS_OPA_WORKFLOW_PATH
-            if pc_instance.infra_config.is_tls_enabled
-            else None,
+            opa_workflow_path=(
+                TLS_OPA_WORKFLOW_PATH
+                if pc_instance.infra_config.is_tls_enabled
+                else None
+            ),
             permission=container_permission,
         )
         server_uris = gen_tls_server_hostnames_for_publisher(
@@ -267,9 +269,9 @@ class ComputeMetricsStageService(PrivateComputationStageService):
             "run_id": private_computation_instance.infra_config.run_id,
         }
         if private_computation_instance.feature_flags is not None:
-            common_compute_game_args[
-                "pc_feature_flags"
-            ] = private_computation_instance.feature_flags
+            common_compute_game_args["pc_feature_flags"] = (
+                private_computation_instance.feature_flags
+            )
 
         game_args = []
 
@@ -359,9 +361,11 @@ class ComputeMetricsStageService(PrivateComputationStageService):
                     "file_start_index": i
                     * private_computation_instance.infra_config.num_files_per_mpc_container,
                     "use_xor_encryption": True,
-                    "run_name": private_computation_instance.infra_config.instance_id
-                    if self._log_cost_to_s3
-                    else "",
+                    "run_name": (
+                        private_computation_instance.infra_config.instance_id
+                        if self._log_cost_to_s3
+                        else ""
+                    ),
                     "max_num_touchpoints": private_computation_instance.product_config.common.padding_size,
                     "max_num_conversions": private_computation_instance.product_config.common.padding_size,
                 },

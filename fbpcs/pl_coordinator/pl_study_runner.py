@@ -832,10 +832,10 @@ async def _create_new_instances(
         for objective_id in cell_obj_instances[cell_id]:
             # Create new instance for cell_obj pairs which has no valid instance.
             if "instance_id" not in cell_obj_instances[cell_id][objective_id]:
-                cell_obj_instances[cell_id][objective_id][
-                    "instance_id"
-                ] = await _create_instance_retry(
-                    client, study_id, cell_id, objective_id, run_id, logger
+                cell_obj_instances[cell_id][objective_id]["instance_id"] = (
+                    await _create_instance_retry(
+                        client, study_id, cell_id, objective_id, run_id, logger
+                    )
                 )
                 cell_obj_instances[cell_id][objective_id][
                     STATUS

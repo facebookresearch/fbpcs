@@ -393,9 +393,11 @@ class InputDataValidator(Validator):
             }
         )
         return self._format_validation_report(
-            f"File: {self._input_file_path}"
-            if not self._enable_for_tee
-            else f"File: {self._local_file_path}",
+            (
+                f"File: {self._input_file_path}"
+                if not self._enable_for_tee
+                else f"File: {self._local_file_path}"
+            ),
             rows_processed_count,
             validation_issues,
             streaming_timed_out=(validation_issues.streaming_timed_out),
@@ -413,9 +415,11 @@ class InputDataValidator(Validator):
         workers = []
         for i in range(self._parallelism):
             w = Process(
-                target=self._validation_worker_streaming
-                if self._stream_file
-                else self._validation_worker_local_download,
+                target=(
+                    self._validation_worker_streaming
+                    if self._stream_file
+                    else self._validation_worker_local_download
+                ),
                 args=(
                     i,
                     header_row,

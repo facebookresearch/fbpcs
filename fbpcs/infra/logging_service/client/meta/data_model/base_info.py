@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from dataclasses_json import dataclass_json
 
+
 # Base data model of log metadata
 @dataclass_json
 @dataclass

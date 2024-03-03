@@ -89,7 +89,10 @@ class Utils:
             List[str],
             Dict[str, Any],
         ],
-    ) -> Union[List[str], Dict[str, Any],]:
+    ) -> Union[
+        List[str],
+        Dict[str, Any],
+    ]:
         """
         Calls other scrub functions based on the content type
         """

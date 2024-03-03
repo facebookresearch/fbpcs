@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from fbpcs.infra.logging_service.client.meta.data_model.base_info import BaseInfo
 
+
 # Log metadata for a private computation run
 @dataclass_json
 @dataclass

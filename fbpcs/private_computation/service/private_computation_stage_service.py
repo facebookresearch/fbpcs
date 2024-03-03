@@ -66,15 +66,13 @@ class PrivateComputationStageService(abc.ABC):
         server_hostnames: Optional[List[str]] = None,
         # TODO: T142417412 - refactor run_async interface to be more flexible
         server_private_key_ref_provider: Optional[PrivateKeyReferenceProvider] = None,
-    ) -> PrivateComputationInstance:
-        ...
+    ) -> PrivateComputationInstance: ...
 
     @abc.abstractmethod
     def get_status(
         self,
         pc_instance: PrivateComputationInstance,
-    ) -> PrivateComputationInstanceStatus:
-        ...
+    ) -> PrivateComputationInstanceStatus: ...
 
     def stop_service(
         self,

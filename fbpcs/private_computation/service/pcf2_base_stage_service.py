@@ -185,9 +185,11 @@ class PCF2BaseStageService(PrivateComputationStageService):
             wait_for_containers_to_start_up=should_wait_spin_up,
             existing_containers=pc_instance.get_existing_containers_for_retry(),
             env_vars_list=env_vars_list,
-            opa_workflow_path=TLS_OPA_WORKFLOW_PATH
-            if pc_instance.infra_config.is_tls_enabled
-            else None,
+            opa_workflow_path=(
+                TLS_OPA_WORKFLOW_PATH
+                if pc_instance.infra_config.is_tls_enabled
+                else None
+            ),
             permission=container_permission,
         )
         stage_state = StageStateInstance(
@@ -222,5 +224,4 @@ class PCF2BaseStageService(PrivateComputationStageService):
         private_computation_instance: PrivateComputationInstance,
         server_certificate_path: str,
         ca_certificate_path: str,
-    ) -> List[Dict[str, Any]]:
-        ...
+    ) -> List[Dict[str, Any]]: ...

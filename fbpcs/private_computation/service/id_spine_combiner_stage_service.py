@@ -238,12 +238,10 @@ class IdSpineCombinerStageService(PrivateComputationStageService):
                 # Update number of MPC containers based on spine file size.
                 # The spine file size are shared between publisher and partner.
                 # The spine file size would be the size of id combiner.
-                new_num_mpc_containers = await (
-                    self.get_mutated_num_mpc_containers(
-                        spine_path,
-                        private_computation_instance.infra_config.num_pid_containers,
-                        private_computation_instance.infra_config.game_type,
-                    )
+                new_num_mpc_containers = await self.get_mutated_num_mpc_containers(
+                    spine_path,
+                    private_computation_instance.infra_config.num_pid_containers,
+                    private_computation_instance.infra_config.game_type,
                 )
                 self._logger.info(
                     f"[{self}] Mutate num MPC containers from {private_computation_instance.infra_config.num_mpc_containers} to {new_num_mpc_containers}"

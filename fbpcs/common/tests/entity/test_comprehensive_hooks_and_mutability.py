@@ -126,6 +126,7 @@ priority_range_hook: RangeHook = RangeHook("priority", 1, 5)
 # generic hooks: track the highest pressure
 ##########################
 
+
 # keep track of the highest pressure
 def set_highest_pressure(obj: InstanceBase) -> None:
     # pyre-ignore Undefined attribute [16]: `InstanceBase` has no attribute `pressure`

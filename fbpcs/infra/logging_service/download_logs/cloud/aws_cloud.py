@@ -31,6 +31,7 @@ from fbpcs.infra.logging_service.download_logs.cloud_error.cloud_error import (
 from fbpcs.infra.logging_service.download_logs.utils.utils import Utils
 from tqdm import tqdm
 
+
 # TODO: Convert this to factory
 class AwsCloud(CloudBaseClass):
     """

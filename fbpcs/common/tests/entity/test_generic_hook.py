@@ -13,6 +13,7 @@ from fbpcs.common.entity.dataclasses_hooks import DataclassHookMixin, HookEventT
 from fbpcs.common.entity.generic_hook import GenericHook
 from fbpcs.common.entity.instance_base import InstanceBase
 
+
 # keep tracking the highest pressure
 def set_highest_pressure(obj: InstanceBase) -> None:
     pressure: int = getattr(obj, "pressure", None)

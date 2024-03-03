@@ -307,9 +307,11 @@ class PrivateComputationService:
                 common=common,
                 k_anonymity_threshold=unwrap_or_default(
                     optional=k_anonymity_threshold,
-                    default=DEFAULT_K_ANONYMITY_THRESHOLD_PA
-                    if game_type is PrivateComputationGameType.ATTRIBUTION
-                    else DEFAULT_K_ANONYMITY_THRESHOLD_PL,
+                    default=(
+                        DEFAULT_K_ANONYMITY_THRESHOLD_PA
+                        if game_type is PrivateComputationGameType.ATTRIBUTION
+                        else DEFAULT_K_ANONYMITY_THRESHOLD_PL
+                    ),
                 ),
                 breakdown_key=breakdown_key,
             )
@@ -833,9 +835,9 @@ class PrivateComputationService:
                     ):
                         continue
 
-                    res[
-                        f"{s}_{stage_name}|container_{i}|{container.status.value}"
-                    ] = self.log_retriever.get_log_url(container.instance_id)
+                    res[f"{s}_{stage_name}|container_{i}|{container.status.value}"] = (
+                        self.log_retriever.get_log_url(container.instance_id)
+                    )
 
         return res
 

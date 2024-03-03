@@ -72,9 +72,9 @@ class TestTraceLoggingService(TestCase):
                             "run_id": "run123",
                             "instance_id": "instance456",
                             "checkpoint_name": "foo",
-                            "checkpoint_data": checkpoint_data.copy()
-                            if checkpoint_data
-                            else None,
+                            "checkpoint_data": (
+                                checkpoint_data.copy() if checkpoint_data else None
+                            ),
                         }
 
                         try:

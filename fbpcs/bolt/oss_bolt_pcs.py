@@ -64,9 +64,11 @@ class BoltPCSCreateInstanceArgs(BoltCreateInstanceArgs, DataClassJsonMixin):
                 # if no value is provided in the yaml file, then the dataclass json
                 # library will return the default stage flow. Otherwise, if it was
                 # provided in the yaml file, we should decode the string.
-                decoder=lambda x: x
-                if x is PrivateComputationBaseStageFlow
-                else PrivateComputationBaseStageFlow.cls_name_to_cls(x),
+                decoder=lambda x: (
+                    x
+                    if x is PrivateComputationBaseStageFlow
+                    else PrivateComputationBaseStageFlow.cls_name_to_cls(x)
+                ),
             )
         },
     )

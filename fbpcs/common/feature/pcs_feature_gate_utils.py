@@ -37,9 +37,11 @@ def get_stage_flow(
 ) -> Type[PrivateComputationBaseStageFlow]:
     selected_stage_flow_cls = unwrap_or_default(
         optional=stage_flow_cls,
-        default=PrivateComputationPCF2StageFlow
-        if game_type is PrivateComputationGameType.ATTRIBUTION
-        else PrivateComputationStageFlow,
+        default=(
+            PrivateComputationPCF2StageFlow
+            if game_type is PrivateComputationGameType.ATTRIBUTION
+            else PrivateComputationStageFlow
+        ),
     )
 
     # warning, enabled feature gating will override stage flow, Please contact PSI team to have a similar adoption
