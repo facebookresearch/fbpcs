@@ -3,6 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-unsafe
+
 """
 PrivateComputationBaseStageFlow has a mapping from subclass name -> subclass.
 This only works if the subclass is imported somewhere in the global namespace.
