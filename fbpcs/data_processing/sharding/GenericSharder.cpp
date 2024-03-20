@@ -65,15 +65,6 @@ void strReplaceNullColumnWithEmpty(std::string& str) {
 static const std::string kIdColumnPrefix = "id_";
 static const std::string numIds = "num_ids";
 
-/*
-  The chunk size for writing to cloud storage (currently
-  only AWS S3) must be greater than 5 MB, per the AWS
-  documentation. Otherwise multipart upload will fail.
-
-  The number below is 5 MB in bytes.
-*/
-static const uint64_t kBufferedWriterChunkSize = 5'242'880;
-
 std::vector<std::string> GenericSharder::genOutputPaths(
     const std::string& outputBasePath,
     std::size_t startIndex,
