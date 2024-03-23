@@ -112,7 +112,9 @@ public class DeploymentParams {
       logAndThrow(
           "Invalid Tag Postfix: "
               + tag
-              + "\nMake sure the tag length is less than 20 characters, and using lowercase letters, numbers and dash only.");
+              + "\n"
+              + "Make sure the tag length is less than 20 characters, and using lowercase letters,"
+              + " numbers and dash only.");
     }
     if (!validConfigStorage()) {
       logAndThrow("Invalid Configuration Storage: " + configStorage);
