@@ -53,7 +53,6 @@ std::vector<double> DotproductGame<schedulerId>::computeDotProduct(
   XLOG(INFO, "Performed the OR for all labels");
 
   constexpr uint64_t divisor = static_cast<uint64_t>(1e9);
-  constexpr double tolerance = 1e-7;
 
   auto prgFactory = std::make_unique<fbpcf::engine::util::AesPrgFactory>();
 
