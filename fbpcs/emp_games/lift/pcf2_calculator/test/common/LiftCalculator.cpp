@@ -156,10 +156,6 @@ GroupedLiftMetrics LiftCalculator::compute(
     }
 
     if (opportunity && opportunityTimestamp > 0) {
-      uint64_t value_subsum = 0;
-      uint64_t convCount = 0;
-      bool converted = false;
-      bool countedMatchAlready = false;
       if (testFlag) {
         updateTestMetrics(
             groupedLiftMetrics,

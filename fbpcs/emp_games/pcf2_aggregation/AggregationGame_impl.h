@@ -208,11 +208,6 @@ AggregationOutputMetrics AggregationGame<schedulerId>::computeAggregations(
 
   const int8_t indicatorSumWidth = adIdWidth;
   bool isPublisher = (myRole == common::PUBLISHER);
-  auto oramRole = isPublisher
-      ? fbpcf::mpc_std_lib::oram::IWriteOnlyOram<
-            fbpcf::mpc_std_lib::util::AggregationValue>::Alice
-      : fbpcf::mpc_std_lib::oram::IWriteOnlyOram<
-            fbpcf::mpc_std_lib::util::AggregationValue>::Bob;
 
   PrivateAggregationMetrics<schedulerId> aggregationMetrics{
       aggregationFormats,
@@ -294,11 +289,6 @@ AggregationGame<schedulerId>::computeAggregationsReformatted(
 
   const int64_t indicatorSumWidth = adIdWidth;
   bool isPublisher = (myRole == common::PUBLISHER);
-  auto oramRole = isPublisher
-      ? fbpcf::mpc_std_lib::oram::IWriteOnlyOram<
-            fbpcf::mpc_std_lib::util::AggregationValue>::Alice
-      : fbpcf::mpc_std_lib::oram::IWriteOnlyOram<
-            fbpcf::mpc_std_lib::util::AggregationValue>::Bob;
 
   PrivateAggregationMetrics<schedulerId> aggregationMetrics{
       aggregationFormats,
