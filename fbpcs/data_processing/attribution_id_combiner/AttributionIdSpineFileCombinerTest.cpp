@@ -58,7 +58,6 @@ class AttributionIdSpineFileCombinerTest : public testing::Test {
     std::string spineIdContentPath =
         "/tmp/AttributionIdSpineFileCombinerTestSpineIdContent" +
         std::to_string(randStart);
-    constexpr size_t kBufferedReaderChunkSize = 4096;
     data_processing::test_utils::writeVecToFile(dataContent, dataContentPath);
     data_processing::test_utils::writeVecToFile(
         spineIdContent, spineIdContentPath);
