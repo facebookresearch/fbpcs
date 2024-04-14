@@ -133,8 +133,10 @@ int main(int argc, char* argv[]) {
                                                    : "")(
         "partner_input_basepath",
         (std::strcmp(party_str, "Partner") == 0) ? FLAGS_input_base_path : "")(
-        "output_path",
-        FLAGS_output_path)("num_shards", FLAGS_num_shards)("first_shard_index", FLAGS_first_shard_index)("metrics_format_type", FLAGS_metrics_format_type)("threshold", FLAGS_threshold);
+        "output_path", FLAGS_output_path)("num_shards", FLAGS_num_shards)(
+        "first_shard_index", FLAGS_first_shard_index)(
+        "metrics_format_type", FLAGS_metrics_format_type)(
+        "threshold", FLAGS_threshold);
 
     folly::dynamic costDict =
         cost.getEstimatedCostDynamic(run_name, party_str, extra_info);

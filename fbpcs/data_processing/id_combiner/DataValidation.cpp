@@ -53,9 +53,9 @@ void validateCsvData(std::istream& dataFile) {
     std::vector<std::string> rowVec = split(kCommaSplitRegex, row);
     if (headerSize != rowVec.size()) {
       XLOG(FATAL) << "Row at index <" << row_i
-                  << "> and header sizes mismatch. "
-                  << "Row size is " << rowVec.size() << " and header size is "
-                  << headerSize << ". Header: " << vectorToString(header);
+                  << "> and header sizes mismatch. " << "Row size is "
+                  << rowVec.size() << " and header size is " << headerSize
+                  << ". Header: " << vectorToString(header);
     }
     for (auto& v : rowVec) {
       try {

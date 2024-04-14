@@ -42,9 +42,8 @@ MrPidLiftIdCombiner::MrPidLiftIdCombiner(
       sortStrategy(sortStrategy),
       maxIdColumnCnt(maxIdColumnCnt),
       outputPath{outputStr} {
-  XLOG(INFO) << "Starting attribution id combiner run on: "
-             << "spine_path: " << spineIdFilePath
-             << ", output_path: " << outputStr
+  XLOG(INFO) << "Starting attribution id combiner run on: " << "spine_path: "
+             << spineIdFilePath << ", output_path: " << outputStr
              << ", tmp_directory: " << tmpDirectory
              << ", sorting_strategy: " << sortStrategy
              << ", max_id_column_cnt: " << maxIdColumnCnt

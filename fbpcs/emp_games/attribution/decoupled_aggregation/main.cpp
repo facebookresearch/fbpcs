@@ -145,8 +145,10 @@ int main(int argc, char* argv[]) {
           (std::strcmp(party, "Publisher") == 0) ? FLAGS_output_base_path : "")(
           "partner_output_basepath",
           (std::strcmp(party, "Partner") == 0) ? FLAGS_output_base_path : "")(
-          "num_files",
-          FLAGS_num_files)("file_start_index", FLAGS_file_start_index)("concurrency", FLAGS_concurrency)("use_xor_encryption", FLAGS_use_xor_encryption);
+          "num_files", FLAGS_num_files)(
+          "file_start_index", FLAGS_file_start_index)(
+          "concurrency", FLAGS_concurrency)(
+          "use_xor_encryption", FLAGS_use_xor_encryption);
 
       folly::dynamic costDict =
           cost.getEstimatedCostDynamic(run_name, party, extra_info);

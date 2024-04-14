@@ -189,21 +189,20 @@ int main(int argc, char* argv[]) {
         (FLAGS_party == static_cast<int32_t>(common::PUBLISHER)) ? "Publisher"
                                                                  : "Partner";
     folly::dynamic extra_info = folly::dynamic::object(
-      "publisher_input_basepath",
-      party_str == "Publisher" ? FLAGS_input_base_path : "")
-      ("partner_input_basepath",
-      party_str == "Partner" ? FLAGS_input_base_path : "")
-      ("output_path", FLAGS_output_path)
-      ("num_shards", FLAGS_num_shards)
-      ("first_shard_index", FLAGS_first_shard_index)
-      ("metrics_format_type", FLAGS_metrics_format_type)
-      ("threshold", FLAGS_threshold)
-      ("use_xor_encryption", FLAGS_use_xor_encryption)
-      ("non_free_gates", schedulerStatistics.nonFreeGates)
-      ("free_gates", schedulerStatistics.freeGates)
-      ("scheduler_transmitted_network", schedulerStatistics.sentNetwork)
-      ("scheduler_received_network", schedulerStatistics.receivedNetwork)
-      ("mpc_traffic_details", schedulerStatistics.details);
+        "publisher_input_basepath",
+        party_str == "Publisher" ? FLAGS_input_base_path : "")(
+        "partner_input_basepath",
+        party_str == "Partner" ? FLAGS_input_base_path : "")(
+        "output_path", FLAGS_output_path)("num_shards", FLAGS_num_shards)(
+        "first_shard_index", FLAGS_first_shard_index)(
+        "metrics_format_type", FLAGS_metrics_format_type)(
+        "threshold", FLAGS_threshold)(
+        "use_xor_encryption", FLAGS_use_xor_encryption)(
+        "non_free_gates", schedulerStatistics.nonFreeGates)(
+        "free_gates", schedulerStatistics.freeGates)(
+        "scheduler_transmitted_network", schedulerStatistics.sentNetwork)(
+        "scheduler_received_network", schedulerStatistics.receivedNetwork)(
+        "mpc_traffic_details", schedulerStatistics.details);
 
     folly::dynamic costDict =
         cost.getEstimatedCostDynamic(FLAGS_run_name, party_str, extra_info);

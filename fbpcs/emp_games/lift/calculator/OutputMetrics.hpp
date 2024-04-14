@@ -91,8 +91,7 @@ std::string OutputMetrics<MY_ROLE>::playGame() {
 template <int32_t MY_ROLE>
 void OutputMetrics<MY_ROLE>::writeOutputToFile(std::ostream& outfile) {
   // Start by outputting the overall results
-  outfile << "Overall"
-          << ",";
+  outfile << "Overall" << ",";
   outfile << metrics_.testEvents << ",";
   outfile << metrics_.controlEvents << ",";
   // Value metrics are only relevant for conversion lift

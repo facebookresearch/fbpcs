@@ -116,17 +116,20 @@ int main(int argc, char* argv[]) {
     auto party = (FLAGS_party == common::PUBLISHER) ? "Publisher" : "Partner";
 
     folly::dynamic extra_info = folly::dynamic::object(
-        "publisher_input_path", (FLAGS_party == common::PUBLISHER) ? FLAGS_input_base_path : "")
-        ("partner_input_basepath", (FLAGS_party == common::PARTNER) ? FLAGS_input_base_path : "")
-        ("publisher_output_basepath", (FLAGS_party == common::PUBLISHER) ? FLAGS_output_base_path : "")
-        ("partner_output_basepath", (FLAGS_party ==  common::PARTNER) ? FLAGS_output_base_path : "")
-        ("num_features", FLAGS_num_features)
-        ("label_width", FLAGS_label_width)
-        ("non_free_gates", schedulerStatistics.nonFreeGates)
-        ("free_gates", schedulerStatistics.freeGates)
-        ("scheduler_transmitted_network", schedulerStatistics.sentNetwork)
-        ("scheduler_received_network", schedulerStatistics.receivedNetwork)
-        ("mpc_traffic_details", schedulerStatistics.details);
+        "publisher_input_path",
+        (FLAGS_party == common::PUBLISHER) ? FLAGS_input_base_path : "")(
+        "partner_input_basepath",
+        (FLAGS_party == common::PARTNER) ? FLAGS_input_base_path : "")(
+        "publisher_output_basepath",
+        (FLAGS_party == common::PUBLISHER) ? FLAGS_output_base_path : "")(
+        "partner_output_basepath",
+        (FLAGS_party == common::PARTNER) ? FLAGS_output_base_path : "")(
+        "num_features", FLAGS_num_features)("label_width", FLAGS_label_width)(
+        "non_free_gates", schedulerStatistics.nonFreeGates)(
+        "free_gates", schedulerStatistics.freeGates)(
+        "scheduler_transmitted_network", schedulerStatistics.sentNetwork)(
+        "scheduler_received_network", schedulerStatistics.receivedNetwork)(
+        "mpc_traffic_details", schedulerStatistics.details);
 
     folly::dynamic costDict =
         cost.getEstimatedCostDynamic(run_name, party, extra_info);

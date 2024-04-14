@@ -22,9 +22,8 @@
 namespace pid::combiner {
 MrPidAttributionIdCombiner::MrPidAttributionIdCombiner()
     : spineIdFilePath(FLAGS_spine_path), outputPath{FLAGS_output_path} {
-  XLOG(INFO) << "Starting attribution id combiner run on: "
-             << "spine_path: " << FLAGS_spine_path
-             << ", output_path: " << FLAGS_output_path
+  XLOG(INFO) << "Starting attribution id combiner run on: " << "spine_path: "
+             << FLAGS_spine_path << ", output_path: " << FLAGS_output_path
              << ", tmp_directory: " << FLAGS_tmp_directory
              << ", sorting_strategy: " << FLAGS_sort_strategy
              << ", max_id_column_cnt: " << FLAGS_max_id_column_cnt

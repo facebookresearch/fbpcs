@@ -75,8 +75,8 @@ UnionPIDDataPreparerResults UnionPIDDataPreparer::prepare() const {
     // pollute our test directory otherwise, which is just somewhat annoying.
     std::remove(tmpFilename.c_str());
     XLOG(FATAL) << kIdColumnPrefix
-                << " prefixed-column missing from input header"
-                << "Header: [" << folly::join(",", header) << "]";
+                << " prefixed-column missing from input header" << "Header: ["
+                << folly::join(",", header) << "]";
   }
 
   // Count number of appearance of each identifier.

@@ -113,8 +113,8 @@ void GenericSharder::shard() {
     // note: it's not *essential* to clean up tmpfile here, but it will
     // pollute our test directory otherwise, which is just somewhat annoying.
     XLOG(FATAL) << kIdColumnPrefix
-                << " prefixed-column missing from input header"
-                << "Header: [" << folly::join(",", header) << "]";
+                << " prefixed-column missing from input header" << "Header: ["
+                << folly::join(",", header) << "]";
   }
 
   pid_shard_info[numIds] = idColumnIndices.size();

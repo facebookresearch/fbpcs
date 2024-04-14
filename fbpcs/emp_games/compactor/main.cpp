@@ -171,15 +171,19 @@ int main(int argc, char** argv) {
 
     fbpcf::scheduler::SchedulerKeeper<0>::deleteEngine();
     folly::dynamic extra_info = folly::dynamic::object(
-        "publisher_input_path", (FLAGS_party == PUBLISHER_ROLE) ? FLAGS_input_file_path : "")
-        ("partner_input_basepath", (FLAGS_party == PARTNER_ROLE) ? FLAGS_input_file_path : "")
-        ("publisher_output_basepath", (FLAGS_party == PUBLISHER_ROLE) ? FLAGS_output_file_path : "")
-        ("partner_output_basepath", (FLAGS_party == PARTNER_ROLE) ? FLAGS_output_file_path : "")
-        ("non_free_gates", gateStats.first)
-        ("free_gates", gateStats.second)
-        ("scheduler_transmitted_network", trafficStats.first)
-        ("scheduler_received_network", trafficStats.second)
-        ("mpc_traffic_details", commAgentFactory->getMetricsCollector()->collectMetrics());
+        "publisher_input_path",
+        (FLAGS_party == PUBLISHER_ROLE) ? FLAGS_input_file_path : "")(
+        "partner_input_basepath",
+        (FLAGS_party == PARTNER_ROLE) ? FLAGS_input_file_path : "")(
+        "publisher_output_basepath",
+        (FLAGS_party == PUBLISHER_ROLE) ? FLAGS_output_file_path : "")(
+        "partner_output_basepath",
+        (FLAGS_party == PARTNER_ROLE) ? FLAGS_output_file_path : "")(
+        "non_free_gates", gateStats.first)("free_gates", gateStats.second)(
+        "scheduler_transmitted_network", trafficStats.first)(
+        "scheduler_received_network", trafficStats.second)(
+        "mpc_traffic_details",
+        commAgentFactory->getMetricsCollector()->collectMetrics());
 
     folly::dynamic costDict =
         cost.getEstimatedCostDynamic(run_name, party, extra_info);

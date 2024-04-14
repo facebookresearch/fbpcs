@@ -208,8 +208,8 @@ RevealedGroupIds runComputeIndexShares(
 
   for (int i = 0; i < publisherOutput.numRows; i++) {
     for (int j = 0; j < publisherOutput.indexShares.size(); j++) {
-      results.groupIds[i] |=
-          ((uint64_t)(publisherOutput.indexShares[j][i] ^ partnerOutput.indexShares[j][i]))
+      results.groupIds[i] |= ((uint64_t)(publisherOutput.indexShares[j][i] ^
+                                         partnerOutput.indexShares[j][i]))
           << j;
     }
   }
@@ -217,7 +217,8 @@ RevealedGroupIds runComputeIndexShares(
   for (int i = 0; i < publisherOutput.numRows; i++) {
     for (int j = 0; j < publisherOutput.testIndexShares.size(); j++) {
       results.testGroupIds[i] |=
-          ((uint64_t)(publisherOutput.testIndexShares[j][i] ^ partnerOutput.testIndexShares[j][i]))
+          ((uint64_t)(publisherOutput.testIndexShares[j][i] ^
+                      partnerOutput.testIndexShares[j][i]))
           << j;
     }
   }

@@ -73,9 +73,8 @@ void idSwap(
 
     auto rowSize = rowVec.size();
     if (rowSize != headerSize) {
-      XLOG(INFO) << "Mismatch between header and row '\n'"
-                 << "Header has size " << headerSize << " while row has size "
-                 << rowSize << '\n'
+      XLOG(INFO) << "Mismatch between header and row '\n'" << "Header has size "
+                 << headerSize << " while row has size " << rowSize << '\n'
                  << "row: " << vectorToString(rowVec) << "\n"
                  << "header: " << vectorToString(header) << "\n";
       std::exit(1);
@@ -86,8 +85,7 @@ void idSwap(
     auto idSearch = idToPrivateIDMap.find(rowId);
     if (idSearch == idToPrivateIDMap.end()) {
       XLOG(FATAL) << "ID is missing in the spineID file '\n'" << rowId
-                  << " does not have a corresponding private_id"
-                  << "\n";
+                  << " does not have a corresponding private_id" << "\n";
     }
 
     idToDataMap[rowId].push_back(rowVec);

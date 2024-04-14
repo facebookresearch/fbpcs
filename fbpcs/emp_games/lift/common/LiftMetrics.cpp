@@ -144,7 +144,16 @@ folly::dynamic LiftMetrics::toDynamic() const {
 
   return folly::dynamic::object("testConversions", testConversions)(
       "controlConversions", controlConversions)(
-      "testConverters", testConverters)("controlConverters", controlConverters)("testValue", testValue)("controlValue", controlValue)("testValueSquared", testValueSquared)("controlValueSquared", controlValueSquared)("testNumConvSquared", testNumConvSquared)("controlNumConvSquared", controlNumConvSquared)("testMatchCount", testMatchCount)("controlMatchCount", controlMatchCount)("reachedConversions", reachedConversions)("reachedValue", reachedValue)("testConvHistogram", testConvHistogramDynamic)("controlConvHistogram", controlConvHistogramDynamic);
+      "testConverters", testConverters)("controlConverters", controlConverters)(
+      "testValue", testValue)("controlValue", controlValue)(
+      "testValueSquared", testValueSquared)(
+      "controlValueSquared", controlValueSquared)(
+      "testNumConvSquared", testNumConvSquared)(
+      "controlNumConvSquared", controlNumConvSquared)(
+      "testMatchCount", testMatchCount)("controlMatchCount", controlMatchCount)(
+      "reachedConversions", reachedConversions)("reachedValue", reachedValue)(
+      "testConvHistogram", testConvHistogramDynamic)(
+      "controlConvHistogram", controlConvHistogramDynamic);
 }
 
 LiftMetrics LiftMetrics::fromDynamic(const folly::dynamic& obj) {

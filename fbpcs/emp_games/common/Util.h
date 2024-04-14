@@ -285,19 +285,18 @@ inline folly::dynamic getCostExtraInfo(
     bool useXorEncryption,
     common::SchedulerStatistics schedulerStatistics) {
   return folly::dynamic::object(
-        "publisher_input_basepath", (party == "Publisher") ? inputBasePath : "")
-        ("partner_input_basepath", (party == "Partner") ? inputBasePath : "")
-        ("publisher_output_basepath", (party == "Publisher") ? outputBasePath : "")
-        ("partner_output_basepath", (party == "Partner") ? outputBasePath : "")
-        ("num_files", numFiles)
-        ("file_start_index", fileStartIndex)
-        ("concurrency", concurrency)
-        ("use_xor_encryption", useXorEncryption)
-        ("non_free_gates", schedulerStatistics.nonFreeGates)
-        ("free_gates", schedulerStatistics.freeGates)
-        ("scheduler_transmitted_network", schedulerStatistics.sentNetwork)
-        ("scheduler_received_network", schedulerStatistics.receivedNetwork)
-        ("mpc_traffic_details", schedulerStatistics.details);
+      "publisher_input_basepath", (party == "Publisher") ? inputBasePath : "")(
+      "partner_input_basepath", (party == "Partner") ? inputBasePath : "")(
+      "publisher_output_basepath",
+      (party == "Publisher") ? outputBasePath : "")(
+      "partner_output_basepath", (party == "Partner") ? outputBasePath : "")(
+      "num_files", numFiles)("file_start_index", fileStartIndex)(
+      "concurrency", concurrency)("use_xor_encryption", useXorEncryption)(
+      "non_free_gates", schedulerStatistics.nonFreeGates)(
+      "free_gates", schedulerStatistics.freeGates)(
+      "scheduler_transmitted_network", schedulerStatistics.sentNetwork)(
+      "scheduler_received_network", schedulerStatistics.receivedNetwork)(
+      "mpc_traffic_details", schedulerStatistics.details);
 }
 
 } // namespace common

@@ -39,9 +39,8 @@ class CostEstimation {
 
     folly::dynamic toDynamic() const {
       folly::dynamic res = folly::dynamic::object("runtime", runtime)(
-          "networkRxBytes", networkRxBytes)(
-          "networkTxBytes",
-          networkTxBytes)("cost", cost)("peak mem", peakRSS)("current mem", curRSS);
+          "networkRxBytes", networkRxBytes)("networkTxBytes", networkTxBytes)(
+          "cost", cost)("peak mem", peakRSS)("current mem", curRSS);
       return res;
     }
   };

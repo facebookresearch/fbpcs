@@ -45,8 +45,8 @@ struct MeasurementTouchpointMedata {
   friend std::ostream& operator<<(
       std::ostream& os,
       const MeasurementTouchpointMedata& tp) {
-    return os << "Measurement Touchpoint Metadata {"
-              << " adId=" << tp.adId << "}";
+    return os << "Measurement Touchpoint Metadata {" << " adId=" << tp.adId
+              << "}";
   }
 };
 
