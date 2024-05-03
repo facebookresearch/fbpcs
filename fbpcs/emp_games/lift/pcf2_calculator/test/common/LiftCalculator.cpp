@@ -63,8 +63,6 @@ GroupedLiftMetrics LiftCalculator::compute(
     bool useAdvancedLift) const {
   uint64_t opportunity = 0;
   uint64_t numImpressions = 0;
-  uint64_t numClicks = 0;
-  uint64_t totalSpend = 0;
   uint64_t testFlag = 0;
   uint64_t opportunityTimestamp = 0;
   uint8_t breakdownId = 0;
@@ -111,7 +109,6 @@ GroupedLiftMetrics LiftCalculator::compute(
 
     std::tie(parsedVal, parseStatus) =
         parseUint64OrDie("num_clicks", partsPublisher, colNameToIndex);
-    numClicks = parseStatus ? parsedVal : 0;
 
     std::tie(parsedVal, parseStatus) =
         parseUint64OrDie("num_impressions", partsPublisher, colNameToIndex);
@@ -119,7 +116,6 @@ GroupedLiftMetrics LiftCalculator::compute(
 
     std::tie(parsedVal, parseStatus) =
         parseUint64OrDie("total_spend", partsPublisher, colNameToIndex);
-    totalSpend = parseStatus ? parsedVal : 0;
 
     std::tie(parsedVal, parseStatus) =
         parseUint64OrDie("breakdown_id", partsPublisher, colNameToIndex);
