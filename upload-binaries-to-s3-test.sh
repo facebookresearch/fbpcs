@@ -9,20 +9,19 @@ set -e
 PROG_NAME=$0
 usage() {
   cat << EOF >&2
-Usage: $PROG_NAME <emp_games|data_processing|pid|validation|smart_agent> <tag>
+Usage: $PROG_NAME <emp_games|data_processing|pid|validation> <tag>
 
 package:
   emp_games - extracts the binaries from fbpcs/emp-games docker image
   data_processing - extracts the binaries from fbpcs/data-processing docker image
   pid - extracts the binaries from private-id docker image
   validation - extracts the binaries from the onedocker docker image
-  smart_agent - extracts the binaries from the onedocker docker image
   tag: used to determine the subfolder/version in s3 for each binary
 EOF
   exit 1
 }
 
-PACKAGES="emp_games data_processing pid validation smart_agent"
+PACKAGES="emp_games data_processing pid validation"
 PACKAGE=$1
 TAG=$2
 if [[ ! " $PACKAGES " =~ $PACKAGE ]] || [[ ! " $TAG " =~ $TAG ]]; then
@@ -45,7 +44,6 @@ private_id_dfca_aggregator_package="s3://$one_docker_repo/private_id_dfca/privat
 data_processing_repo="s3://$one_docker_repo/data_processing"
 private_id_repo="s3://$one_docker_repo/pid"
 validation_repo="s3://$one_docker_repo/validation"
-smart_agent_repo="s3://$one_docker_repo/smart_agent"
 udp_encryptor_package="s3://$one_docker_repo/data_processing/unified_data_process/udp_encryptor/${TAG}/udp_encryptor"
 
 if [ "$PACKAGE" = "emp_games" ]; then
@@ -87,9 +85,4 @@ fi
 if [ "$PACKAGE" = "validation" ]; then
 cd binaries_out || exit
 aws s3 cp pc_pre_validation_cli "$validation_repo/pc_pre_validation_cli/${TAG}/pc_pre_validation_cli"
-fi
-
-if [ "$PACKAGE" = "smart_agent" ]; then
-cd binaries_out || exit
-aws s3 cp smart_agent_server "$smart_agent_repo/smart_agent_server/${TAG}/smart_agent_server"
 fi
