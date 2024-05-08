@@ -167,14 +167,14 @@ class TestStageStateInstance(unittest.TestCase):
             ip_address="192.0.2.100",
             status=ContainerInstanceStatus.STARTED,
         )
-        unkown_container = ContainerInstance(
+        unknown_container = ContainerInstance(
             instance_id="test_container_instance_101",
             ip_address="192.0.2.101",
             status=ContainerInstanceStatus.UNKNOWN,
         )
         self.stage_state_instance.containers.append(started_container)
-        self.stage_state_instance.containers.append(unkown_container)
-        # exsiting conatiner status: FAILED/COMPLETED/STARTED/UNKNOWN
+        self.stage_state_instance.containers.append(unknown_container)
+        # existing container status: FAILED/COMPLETED/STARTED/UNKNOWN
 
         updated_container = dataclasses.replace(started_container)
         updated_container.status = ContainerInstanceStatus.FAILED
@@ -195,7 +195,7 @@ class TestStageStateInstance(unittest.TestCase):
 
         # Asserts
         mock_onedocker_svc.get_containers.assert_called_once_with(
-            [started_container.instance_id, unkown_container.instance_id]
+            [started_container.instance_id, unknown_container.instance_id]
         )
         self.assertEqual(
             [o.status for o in self.stage_state_instance.containers],
