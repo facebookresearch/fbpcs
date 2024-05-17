@@ -109,7 +109,7 @@ class DotproductApp {
     std::vector<std::vector<bool>> allLabels;
     auto lineNo = 0;
 
-    bool success = private_measurement::csv::readCsv(
+    private_measurement::csv::readCsv(
         inputPath,
         [&](const std::vector<std::string>& header,
             const std::vector<std::string>& parts) {
