@@ -286,4 +286,6 @@ class BoltPCSClient(BoltClient[BoltPCSCreateInstanceArgs]):
     @bolt_checkpoint()
     async def log_failed_containers(self, instance_id: str) -> None:
         loop = asyncio.get_running_loop()
+        # pyre-fixme[32]: Variable argument conflicts with constraints on
+        #  `*asyncio.events._Ts`.
         await loop.run_in_executor(None, self.pcs.log_failed_containers, instance_id)
