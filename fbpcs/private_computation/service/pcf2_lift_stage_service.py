@@ -141,7 +141,9 @@ class PCF2LiftStageService(PCF2BaseStageService):
             if private_computation_instance.has_feature(
                 PCSFeature.PRIVATE_LIFT_UNIFIED_DATA_PROCESS
             ):
+                # pyre-fixme[61]: `shards_per_file` is undefined, or not always defined.
                 game_args["file_start_index"] = sum(shards_per_file[0:shard])
+                # pyre-fixme[61]: `shards_per_file` is undefined, or not always defined.
                 game_args["num_files"] = shards_per_file[shard]
                 game_args["input_base_path"] = (
                     private_computation_instance.pcf2_lift_metadata_compaction_output_base_path
