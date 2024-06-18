@@ -13,4 +13,4 @@ thriftpy2==0.4.14
 pytz>=2022.1
 thrift>=0.16.0 # logging_service client requires this
 tqdm==4.66.3 # fbpcp requires this version, so we must as well
-urllib3==1.26.18 # fbpcp requires this version, so we must as well
+urllib3==1.26.19 # fbpcp requires this version, so we must as well
