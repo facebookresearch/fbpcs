@@ -8,7 +8,20 @@
 
 from enum import Enum
 
+from measurement.private_measurement.pcp.pce.pce_service.pce_service_thrift_base.types import (
+    CloudProvider as CloudProviderThriftType,
+)
+
 
 class CloudProvider(Enum):
     AWS = 1
     GCP = 2
+
+    @staticmethod
+    def from_thrift(
+        provider_type: CloudProviderThriftType,
+    ) -> "CloudProvider":
+        return {
+            CloudProviderThriftType.AWS: CloudProvider.AWS,
+            CloudProviderThriftType.GCP: CloudProvider.GCP,
+        }[provider_type]
