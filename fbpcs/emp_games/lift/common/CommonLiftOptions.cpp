@@ -5,28 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactionOptions.h"
-#include <gflags/gflags.h>
 #include "fbpcs/emp_games/lift/common/CommonLiftOptions.h"
+#include <gflags/gflags.h>
 
-DEFINE_string(input_path, "", "Input file to run lift metadata compaction");
-DEFINE_string(
-    output_global_params_base_path,
-    "",
-    "Local or s3 base path where output global param files are written to");
-DEFINE_string(
-    output_global_params_path,
-    "",
-    "Output file to write global params from input data.");
-DEFINE_string(
-    output_secret_shares_base_path,
-    "",
-    "Local or s3 base path where output secret share files are written to");
-DEFINE_string(
-    output_secret_shares_path,
-    "",
-    "Output file to write compacted metadata secret share results.");
-// Common lift options
 DEFINE_bool(
     compute_publisher_breakdowns,
     true,
