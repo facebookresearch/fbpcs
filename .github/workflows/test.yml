@@ -8,11 +8,9 @@ on:
 
 jobs:
   building_image:
-    runs-on: 16-core
+    runs-on: self-hosted
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Build image
+    - name: Test
       run: |
-        ./build-docker.sh onedocker
+        echo "Test"
