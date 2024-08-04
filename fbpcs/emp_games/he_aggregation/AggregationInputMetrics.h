@@ -16,8 +16,6 @@
 #include "fbpcs/emp_games/he_aggregation/AttributionAdditiveSSResult.h"
 #include "fbpcs/emp_games/pcf2_aggregation/TouchpointMetadata.h"
 
-// using namespace pcf2_aggregation;
-
 namespace pcf2_he {
 
 /*
