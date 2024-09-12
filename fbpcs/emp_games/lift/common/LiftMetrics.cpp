@@ -138,9 +138,9 @@ LiftMetrics LiftMetrics::fromJson(const std::string& str) {
 
 folly::dynamic LiftMetrics::toDynamic() const {
   auto testConvHistogramDynamic =
-      folly::dynamic(testConvHistogram.begin(), testConvHistogram.end());
+      folly::dynamic::array_range(testConvHistogram);
   auto controlConvHistogramDynamic =
-      folly::dynamic(controlConvHistogram.begin(), controlConvHistogram.end());
+      folly::dynamic::array_range(controlConvHistogram);
 
   return folly::dynamic::object("testConversions", testConversions)(
       "controlConversions", controlConversions)(
