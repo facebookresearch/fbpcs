@@ -13,8 +13,10 @@
 #include "fbpcf/aws/AwsSdk.h"
 #include "fbpcs/performance_tools/CostEstimation.h"
 
+#include <gflags/gflags.h>
 #include "fbpcs/emp_games/common/Constants.h"
 #include "fbpcs/emp_games/common/Util.h"
+#include "fbpcs/emp_games/lift/common/CommonLiftOptions.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MainUtil.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactionOptions.h"
 

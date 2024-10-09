@@ -8,13 +8,13 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include "folly/Format.h"
 
 #include "fbpcf/engine/communication/SocketPartyCommunicationAgentFactory.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorApp.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorGame.h"
 #include "fbpcs/emp_games/lift/metadata_compaction/MetadataCompactorGameFactory.h"
-
 namespace private_lift {
 
 struct LiftMetadataCompactionFilePaths {
