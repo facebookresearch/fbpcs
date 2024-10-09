@@ -178,3 +178,31 @@ jobs:
       attribution_rule: last_touch_1d
       aggregation_type: measurement
       pcs_features: [shard_combiner_pcf2_release]
+  attribution_new_output_format:
+    # publisher player args
+    publisher:
+      # required args #
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/publisher_e2e_input.csv
+      # optional args #
+      output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/outputs
+      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/publisher_expected_result.json
+    # partner player args
+    partner:
+      # required args #
+      input_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/inputs/partner_e2e_input.csv
+      # optional args #
+      output_dir: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/outputs
+      expected_result_path: https://fbpcs-github-e2e.s3.us-west-2.amazonaws.com/attribution/results/partner_expected_result.json
+
+    # args shared by both publisher and partner
+    shared:
+      # required args #
+      game_type: attribution
+      # optional args #
+      num_mpc_containers: 1
+      num_pid_containers: 1
+      concurrency: 1
+      num_files_per_mpc_container: 1
+      attribution_rule: last_touch_1d
+      aggregation_type: measurement
+      pcs_features: [private_attribution_reformatted_output]
