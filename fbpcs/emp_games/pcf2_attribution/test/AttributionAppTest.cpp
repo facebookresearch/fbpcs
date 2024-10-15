@@ -111,9 +111,9 @@ class AttributionAppTest
     std::string baseDir_ =
         private_measurement::test_util::getBaseDirFromPath(__FILE__);
     std::string tempDir = std::filesystem::temp_directory_path();
-    std::string outputPathAlice_ = folly::sformat(
+    std::string outputPathAlice_2 = folly::sformat(
         "{}/output_path_alice.json_{}", tempDir, folly::Random::secureRand64());
-    std::string outputPathBob_ = folly::sformat(
+    std::string outputPathBob_2 = folly::sformat(
         "{}/output_path_bob.json_{}", tempDir, folly::Random::secureRand64());
 
     attributionRules_ = std::vector<string>{
@@ -127,8 +127,8 @@ class AttributionAppTest
       std::string filePrefix = baseDir_ + "test_correctness/" + attributionRule;
       inputFilenamesAlice_.push_back(filePrefix + ".publisher.csv");
       inputFilenamesBob_.push_back(filePrefix + ".partner.csv");
-      outputFilenamesAlice_.push_back(outputPathAlice_ + attributionRule);
-      outputFilenamesBob_.push_back(outputPathBob_ + attributionRule);
+      outputFilenamesAlice_.push_back(outputPathAlice_2 + attributionRule);
+      outputFilenamesBob_.push_back(outputPathBob_2 + attributionRule);
       expectedOutputFilenames_.push_back(filePrefix + ".json");
     }
   }
