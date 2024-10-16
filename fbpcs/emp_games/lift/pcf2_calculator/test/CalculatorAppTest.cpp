@@ -181,7 +181,6 @@ class CalculatorAppTestFixture
 
     auto [communicationAgentFactory0, communicationAgentFactory1] =
         fbpcf::engine::communication::getSocketAgentFactoryPair(tlsInfo);
-    int epoch = 1546300800;
 
     auto future0 = std::async(
         runUDPInputProcessorWithScheduler<0>,
