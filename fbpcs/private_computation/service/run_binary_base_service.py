@@ -10,13 +10,25 @@ import asyncio
 import logging
 from typing import Dict, List, Optional
 
+# pyre-fixme[21]: Could not find module `fbpcp.entity.certificate_request`.
 from fbpcp.entity.certificate_request import CertificateRequest
 
+# pyre-fixme[21]: Could not find module `fbpcp.entity.container_instance`.
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+
+# pyre-fixme[21]: Could not find module `fbpcp.entity.container_permission`.
 from fbpcp.entity.container_permission import ContainerPermissionConfig
+
+# pyre-fixme[21]: Could not find module `fbpcp.entity.container_type`.
 from fbpcp.entity.container_type import ContainerType
+
+# pyre-fixme[21]: Could not find module `fbpcp.error.pcp`.
 from fbpcp.error.pcp import ThrottlingError
+
+# pyre-fixme[21]: Could not find module `fbpcp.service.onedocker`.
 from fbpcp.service.onedocker import OneDockerService
+
+# pyre-fixme[21]: Could not find module `fbpcs.common.service.retry_handler`.
 from fbpcs.common.service.retry_handler import BackoffType, RetryHandler
 from fbpcs.private_computation.service.constants import DEFAULT_CONTAINER_TIMEOUT_IN_SEC
 
@@ -27,6 +39,7 @@ class RunBinaryBaseService:
     async def start_containers(
         self,
         cmd_args_list: List[str],
+        # pyre-fixme[11]: Annotation `OneDockerService` is not defined as a type.
         onedocker_svc: OneDockerService,
         binary_version: str,
         binary_name: str,
@@ -34,11 +47,16 @@ class RunBinaryBaseService:
         wait_for_containers_to_finish: bool = False,
         env_vars: Optional[Dict[str, str]] = None,
         wait_for_containers_to_start_up: bool = True,
+        # pyre-fixme[11]: Annotation `ContainerInstance` is not defined as a type.
         existing_containers: Optional[List[ContainerInstance]] = None,
+        # pyre-fixme[11]: Annotation `ContainerType` is not defined as a type.
         container_type: Optional[ContainerType] = None,
+        # pyre-fixme[11]: Annotation `CertificateRequest` is not defined as a type.
         certificate_request: Optional[CertificateRequest] = None,
         env_vars_list: Optional[List[Dict[str, str]]] = None,
         opa_workflow_path: Optional[str] = None,
+        # pyre-fixme[11]: Annotation `ContainerPermissionConfig` is not defined as a
+        #  type.
         permission: Optional[ContainerPermissionConfig] = None,
     ) -> List[ContainerInstance]:
         logger = logging.getLogger(__name__)
@@ -82,6 +100,7 @@ class RunBinaryBaseService:
             logger.info("Skipped container warm up")
             return pending_containers
 
+        # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
         with RetryHandler(
             ThrottlingError, logger=logger, backoff_seconds=30
         ) as retry_handler:
@@ -150,8 +169,12 @@ class RunBinaryBaseService:
         container_ids = [container.instance_id for container in containers]
         finished_containers = []
 
+        # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
         with RetryHandler(
-            ThrottlingError, backoff_type=BackoffType.LINEAR
+            # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
+            ThrottlingError,
+            # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
+            backoff_type=BackoffType.LINEAR,
         ) as retry_handler:
             updated_containers = retry_handler.execute_sync(
                 onedocker_svc.get_containers,
@@ -164,8 +187,12 @@ class RunBinaryBaseService:
         )
         while pending_container_ids:
             await asyncio.sleep(poll)
+            # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
             with RetryHandler(
-                ThrottlingError, backoff_type=BackoffType.LINEAR
+                # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
+                ThrottlingError,
+                # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
+                backoff_type=BackoffType.LINEAR,
             ) as retry_handler:
                 updated_containers = retry_handler.execute_sync(
                     onedocker_svc.get_containers,

@@ -11,6 +11,8 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    # pyre-fixme[21]: Could not find module
+    #  `fbpcs.private_computation.entity.private_computation_instance`.
     from fbpcs.private_computation.entity.private_computation_instance import (
         PrivateComputationInstance,
     )
@@ -29,6 +31,8 @@ class PostProcessingHandler(abc.ABC):
     async def run(
         self,
         storage_svc: StorageService,
+        # pyre-fixme[11]: Annotation `PrivateComputationInstance` is not defined as
+        #  a type.
         private_computation_instance: "PrivateComputationInstance",
     ) -> None:
         raise NotImplementedError

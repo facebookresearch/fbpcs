@@ -341,7 +341,10 @@ class BoltRunner(Generic[T, U]):
                 {stage, None}, {role, None}, {when, None}, {event, None}
             )
             for hook in job.hooks.get(
-                BoltHookKey(event=e, when=w, stage=s.name if s else s, role=r), []
+                # pyre-fixme[6]: For 3rd argument expected `Optional[str]` but got
+                #  `Union[None, PrivateComputationBaseStageFlow, str]`.
+                BoltHookKey(event=e, when=w, stage=s.name if s else s, role=r),
+                [],
             )
         )
 
