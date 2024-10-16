@@ -15,6 +15,8 @@ from fbpcs.post_processing_handler.exception import PostProcessingHandlerRuntime
 from fbpcs.post_processing_handler.post_processing_handler import PostProcessingHandler
 
 if TYPE_CHECKING:
+    # pyre-fixme[21]: Could not find module
+    #  `fbpcs.private_computation.entity.private_computation_instance`.
     from fbpcs.private_computation.entity.private_computation_instance import (
         PrivateComputationInstance,
     )
@@ -38,6 +40,8 @@ class PostProcessingDummyHandler(PostProcessingHandler):
     async def run(
         self,
         storage_svc: StorageService,
+        # pyre-fixme[11]: Annotation `PrivateComputationInstance` is not defined as
+        #  a type.
         private_computation_instance: "PrivateComputationInstance",
     ) -> None:
         if random.random() >= self.probability_of_failure:

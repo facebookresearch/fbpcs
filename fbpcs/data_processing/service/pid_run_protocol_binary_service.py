@@ -12,6 +12,9 @@ from typing import Optional
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
 
 from fbpcs.pid.entity.pid_instance import PIDProtocol
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.entity.private_computation_instance`.
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
@@ -35,6 +38,7 @@ class PIDRunProtocolBinaryService(RunBinaryBaseService):
         output_path: str,
         port: int,
         tls_args: TlsArgs,
+        # pyre-fixme[11]: Annotation `PrivateComputationRole` is not defined as a type.
         pc_role: PrivateComputationRole,
         use_row_numbers: bool = False,
         server_endpoint: Optional[str] = None,
@@ -66,12 +70,18 @@ class PIDRunProtocolBinaryService(RunBinaryBaseService):
         if use_row_numbers:
             cmd_ls.append("--use-row-numbers")
 
+        # pyre-fixme[16]: Module `entity` has no attribute
+        #  `private_computation_instance`.
         if tls_args.ca_cert_path and pc_role is PrivateComputationRole.PARTNER:
             cmd_ls.append(f"--tls-ca {tls_args.ca_cert_path}")
 
+        # pyre-fixme[16]: Module `entity` has no attribute
+        #  `private_computation_instance`.
         if tls_args.server_cert_path and pc_role is PrivateComputationRole.PUBLISHER:
             cmd_ls.append(f"--tls-cert {tls_args.server_cert_path}")
 
+        # pyre-fixme[16]: Module `entity` has no attribute
+        #  `private_computation_instance`.
         if tls_args.private_key_path and pc_role is PrivateComputationRole.PUBLISHER:
             cmd_ls.append(f"--tls-key {tls_args.private_key_path}")
 
@@ -82,10 +92,14 @@ class PIDRunProtocolBinaryService(RunBinaryBaseService):
 
     @staticmethod
     def get_binary_name(protocol: PIDProtocol, pc_role: PrivateComputationRole) -> str:
+        # pyre-fixme[16]: Module `entity` has no attribute
+        #  `private_computation_instance`.
         if pc_role is PrivateComputationRole.PUBLISHER:
             binary_name = OneDockerBinaryNames.PID_SERVER.value
             if protocol is PIDProtocol.UNION_PID_MULTIKEY:
                 binary_name = OneDockerBinaryNames.PID_MULTI_KEY_SERVER.value
+        # pyre-fixme[16]: Module `entity` has no attribute
+        #  `private_computation_instance`.
         elif pc_role is PrivateComputationRole.PARTNER:
             binary_name = OneDockerBinaryNames.PID_CLIENT.value
             if protocol is PIDProtocol.UNION_PID_MULTIKEY:

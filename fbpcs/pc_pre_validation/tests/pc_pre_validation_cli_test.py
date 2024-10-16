@@ -91,6 +91,8 @@ class TestPCPreValidationCLI(TestCase):
         expected_access_key_id = "access_key_id2"
         expected_access_key_data = "access_key_data3"
         expected_binary_version = "binary_version"
+        # pyre-fixme[9]: expected_pc_computation_role has type
+        #  `PrivateComputationRole`; used as `str`.
         expected_pc_computation_role: PrivateComputationRole = (
             PrivateComputationRole.PARTNER.name
         )

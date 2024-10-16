@@ -15,14 +15,27 @@ import sys
 import tempfile
 from typing import Dict, Optional
 
+# pyre-fixme[21]: Could not find module `fbpcp.entity.container_instance`.
 from fbpcp.entity.container_instance import ContainerInstance, ContainerInstanceStatus
+
+# pyre-fixme[21]: Could not find module `fbpcp.error.pcp`.
 from fbpcp.error.pcp import ThrottlingError
+
+# pyre-fixme[21]: Could not find module `fbpcp.service.onedocker`.
 from fbpcp.service.onedocker import OneDockerService
+
+# pyre-fixme[21]: Could not find module `fbpcp.service.storage`.
 from fbpcp.service.storage import PathType, StorageService
 
+# pyre-fixme[21]: Could not find module `fbpcs.common.service.retry_handler`.
 from fbpcs.common.service.retry_handler import RetryHandler
 from fbpcs.data_processing.pid_preparer.preparer import UnionPIDDataPreparerService
+
+# pyre-fixme[21]: Could not find module `fbpcs.onedocker_binary_names`.
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.service.run_binary_base_service`.
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
@@ -43,6 +56,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         output_path: str,
         log_path: Optional[pathlib.Path] = None,
         log_level: int = logging.INFO,
+        # pyre-fixme[11]: Annotation `StorageService` is not defined as a type.
         storage_svc: Optional[StorageService] = None,
     ) -> None:
         if log_path is not None:
@@ -95,6 +109,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         self,
         input_path: str,
         output_path: str,
+        # pyre-fixme[11]: Annotation `OneDockerService` is not defined as a type.
         onedocker_svc: OneDockerService,
         binary_version: str,
         max_column_count: int = 1,
@@ -102,6 +117,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
         container_timeout: Optional[int] = None,
         wait_for_container: bool = True,
         env_vars: Optional[Dict[str, str]] = None,
+        # pyre-fixme[11]: Annotation `ContainerInstance` is not defined as a type.
     ) -> ContainerInstance:
         return asyncio.run(
             self.prepare_on_container_async(
@@ -145,6 +161,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
 
         current_retry = 0
         status = ContainerInstanceStatus.UNKNOWN
+        # pyre-fixme[16]: Module `fbpcs` has no attribute `onedocker_binary_names`.
         exe = OneDockerBinaryNames.UNION_PID_PREPARER.value
         container = None
         while status is not ContainerInstanceStatus.COMPLETED:
@@ -162,6 +179,7 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
                 env_vars=env_vars,
             )
 
+            # pyre-fixme[16]: Module `fbpcs` has no attribute `common`.
             with RetryHandler(
                 ThrottlingError, logger=logger, backoff_seconds=30
             ) as retry_handler:
@@ -175,6 +193,8 @@ class CppUnionPIDDataPreparerService(UnionPIDDataPreparerService):
             # Busy wait until the container is finished
             if wait_for_container:
                 container = (
+                    # pyre-fixme[16]: Module `fbpcs` has no attribute
+                    #  `private_computation`.
                     await RunBinaryBaseService.wait_for_containers_async(
                         onedocker_svc, [container]
                     )

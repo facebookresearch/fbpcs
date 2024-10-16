@@ -11,8 +11,13 @@ import logging
 import pathlib
 from typing import Optional
 
+# pyre-fixme[21]: Could not find module `fbpcp.entity.container_instance`.
 from fbpcp.entity.container_instance import ContainerInstance
+
+# pyre-fixme[21]: Could not find module `fbpcp.service.onedocker`.
 from fbpcp.service.onedocker import OneDockerService
+
+# pyre-fixme[21]: Could not find module `fbpcp.service.storage`.
 from fbpcp.service.storage import StorageService
 
 
@@ -24,6 +29,7 @@ class UnionPIDDataPreparerService(abc.ABC):
         output_path: str,
         log_path: Optional[pathlib.Path] = None,
         log_level: int = logging.INFO,
+        # pyre-fixme[11]: Annotation `StorageService` is not defined as a type.
         storage_svc: Optional[StorageService] = None,
     ) -> None:
         pass
@@ -34,10 +40,12 @@ class UnionPIDDataPreparerService(abc.ABC):
         input_path: str,
         output_path: str,
         # TODO: Support custom log path
+        # pyre-fixme[11]: Annotation `OneDockerService` is not defined as a type.
         onedocker_svc: OneDockerService,
         binary_version: str,
         tmp_directory: str = "/tmp/",
         wait_for_container: bool = True,
+        # pyre-fixme[11]: Annotation `ContainerInstance` is not defined as a type.
     ) -> ContainerInstance:
         pass
 

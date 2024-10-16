@@ -8,8 +8,10 @@
 
 import typing
 
+# pyre-fixme[21]: Could not find module `fbpcs.pid.entity.pid_instance`.
 from fbpcs.pid.entity.pid_instance import PIDProtocol
 
+# pyre-fixme[21]: Could not find module `fbpcs.private_computation.entity.infra_config`.
 from fbpcs.private_computation.entity.infra_config import PrivateComputationGameType
 
 """
@@ -32,14 +34,21 @@ NUM_NEW_SHARDS_PER_FILE: int = round(
 
 DEFAULT_K_ANONYMITY_THRESHOLD_PL = 100
 DEFAULT_K_ANONYMITY_THRESHOLD_PA = 0
+# pyre-fixme[11]: Annotation `PIDProtocol` is not defined as a type.
+# pyre-fixme[16]: Module `fbpcs` has no attribute `pid`.
 DEFAULT_PID_PROTOCOL: PIDProtocol = PIDProtocol.UNION_PID
 DEFAULT_HMAC_KEY: str = ""
 DEFAULT_CONCURRENCY = 4
 ATTRIBUTION_TEST_CONCURRENCY = 1
+# pyre-fixme[11]: Annotation `PrivateComputationGameType` is not defined as a type.
 DEFAULT_PADDING_SIZE: typing.Dict[PrivateComputationGameType, typing.Optional[int]] = {
+    # pyre-fixme[16]: Module `entity` has no attribute `infra_config`.
     PrivateComputationGameType.LIFT: 25,
+    # pyre-fixme[16]: Module `entity` has no attribute `infra_config`.
     PrivateComputationGameType.ATTRIBUTION: 4,
+    # pyre-fixme[16]: Module `entity` has no attribute `infra_config`.
     PrivateComputationGameType.PRIVATE_ID_DFCA: None,
+    # pyre-fixme[16]: Module `entity` has no attribute `infra_config`.
     PrivateComputationGameType.ANONYMIZER: None,
 }
 DEFAULT_LOG_COST_TO_S3 = True

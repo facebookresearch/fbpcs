@@ -10,6 +10,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
+# pyre-fixme[21]: Could not find module `dataclasses_json`.
 from dataclasses_json import dataclass_json, DataClassJsonMixin
 
 
@@ -26,6 +27,7 @@ class PidWorkflowConfigs:
 
 
 @dataclass
+# pyre-fixme[11]: Annotation `DataClassJsonMixin` is not defined as a type.
 class PidMrConfig(DataClassJsonMixin):
     runConfigs: PidRunConfigs
     workflowConfigs: PidWorkflowConfigs

@@ -9,13 +9,22 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+# pyre-fixme[21]: Could not find module `fbpcp.service.container`.
 from fbpcp.service.container import ContainerService
+
+# pyre-fixme[21]: Could not find module `fbpcp.service.onedocker`.
 from fbpcp.service.onedocker import OneDockerService
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.entity.private_computation_instance`.
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
 from fbpcs.private_computation.service.mpc.entity.mpc_instance import MPCParty
 from fbpcs.private_computation.service.mpc.mpc_game import MPCGameService
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.service.run_binary_base_service`.
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
@@ -23,6 +32,7 @@ from fbpcs.private_computation.service.run_binary_base_service import (
 DEFAULT_BINARY_VERSION = "latest"
 
 
+# pyre-fixme[11]: Annotation `RunBinaryBaseService` is not defined as a type.
 class MPCService(RunBinaryBaseService):
     """MPCService is responsible for distributing a larger MPC game to multiple
     MPC workers
@@ -30,6 +40,7 @@ class MPCService(RunBinaryBaseService):
 
     def __init__(
         self,
+        # pyre-fixme[11]: Annotation `ContainerService` is not defined as a type.
         container_svc: ContainerService,
         task_definition: str,
         mpc_game_svc: MPCGameService,
@@ -45,11 +56,13 @@ class MPCService(RunBinaryBaseService):
                 f"Dependency is missing. container_svc={container_svc}, mpc_game_svc={mpc_game_svc}"
             )
 
+        # pyre-fixme[4]: Attribute must be annotated.
         self.container_svc = container_svc
         self.task_definition = task_definition
         self.mpc_game_svc: MPCGameService = mpc_game_svc
         self.logger: logging.Logger = logging.getLogger(__name__)
 
+        # pyre-fixme[4]: Attribute must be annotated.
         self.onedocker_svc = OneDockerService(self.container_svc, self.task_definition)
 
     """
@@ -138,6 +151,7 @@ class MPCService(RunBinaryBaseService):
 
 
 def map_private_computation_role_to_mpc_party(
+    # pyre-fixme[11]: Annotation `PrivateComputationRole` is not defined as a type.
     private_computation_role: PrivateComputationRole,
 ) -> MPCParty:
     """Convert PrivateComputationRole to MPCParty
@@ -151,8 +165,10 @@ def map_private_computation_role_to_mpc_party(
     Exceptions:
         ValueError: raised when there is no MPCParty associated with private_computation_role
     """
+    # pyre-fixme[16]: Module `private_computation` has no attribute `entity`.
     if private_computation_role is PrivateComputationRole.PUBLISHER:
         return MPCParty.SERVER
+    # pyre-fixme[16]: Module `private_computation` has no attribute `entity`.
     elif private_computation_role is PrivateComputationRole.PARTNER:
         return MPCParty.CLIENT
     else:
