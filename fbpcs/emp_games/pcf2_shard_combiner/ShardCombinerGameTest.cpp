@@ -343,13 +343,13 @@ TEST_P(ShardCombinerGameTestFixture, TestThresholdChecker) {
   std::string publisherFileName = "publisher_lift_input_shard.json";
   std::string expectedOutFileNamePrefix = "lift_expected_output_shards_";
   auto testFn = [&](int32_t numShards,
-                    bool usingBatch,
-                    common::SchedulerType schedulerType) {
+                    bool usingBatch_2,
+                    common::SchedulerType schedulerType_2) {
     std::string expectedOutFileName =
         folly::sformat("{}{}.json", expectedOutFileNamePrefix, numShards);
-    if (usingBatch) {
+    if (usingBatch_2) {
       runTestWithParams<true, ShardSchemaType::kGroupedLiftMetrics>(
-          schedulerType,
+          schedulerType_2,
           baseDir_ + "lift_threshold_test/",
           partnerFileName,
           publisherFileName,
@@ -357,7 +357,7 @@ TEST_P(ShardCombinerGameTestFixture, TestThresholdChecker) {
           expectedOutFileName);
     } else {
       runTestWithParams<false, ShardSchemaType::kGroupedLiftMetrics>(
-          schedulerType,
+          schedulerType_2,
           baseDir_ + "lift_threshold_test/",
           partnerFileName,
           publisherFileName,
