@@ -9,6 +9,9 @@
 from typing import Optional
 
 from fbpcs.infra.certificate.certificate_provider import CertificateProvider
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.entity.private_computation_instance`.
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationInstance,
 )
@@ -20,7 +23,9 @@ class PCInstanceServerCertificateProvider(CertificateProvider):
     from PC instance repo.
     """
 
+    # pyre-fixme[11]: Annotation `PrivateComputationInstance` is not defined as a type.
     def __init__(self, pc_instance: PrivateComputationInstance) -> None:
+        # pyre-fixme[4]: Attribute must be annotated.
         self.pc_instance = pc_instance
 
     def get_certificate(self) -> Optional[str]:

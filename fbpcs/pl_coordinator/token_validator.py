@@ -77,6 +77,9 @@ class TokenValidator:
                         instance_id="NO_INSTANCE",
                         checkpoint_name="FAIL_FAST_VALIDATION",
                         status=CheckpointStatus.FAILED,
+                        # pyre-fixme[6]: For 5th argument expected
+                        #  `Optional[Dict[str, str]]` but got `Dict[str,
+                        #  Union[TokenValidationRuleType, str]]`.
                         checkpoint_data={
                             "rule_name": rule.name,
                             "rule_type": rule.rule_type,

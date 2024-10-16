@@ -9,6 +9,7 @@
 import logging
 from typing import Any, Dict, Optional, Tuple
 
+# pyre-fixme[21]: Could not find module `fbpcp.util.arg_builder`.
 from fbpcp.util.arg_builder import build_cmd_args
 
 from fbpcs.private_computation.service.mpc.entity.mpc_game_config import MPCGameConfig

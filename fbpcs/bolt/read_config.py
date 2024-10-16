@@ -14,6 +14,9 @@ from fbpcs.bolt.bolt_job import BoltJob, BoltPlayerArgs
 from fbpcs.bolt.bolt_runner import BoltRunner
 from fbpcs.bolt.constants import DEFAULT_POLL_INTERVAL_SEC
 from fbpcs.bolt.oss_bolt_pcs import BoltPCSClient, BoltPCSCreateInstanceArgs
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation_cli.private_computation_service_wrapper`.
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     build_private_computation_service,
 )
@@ -45,6 +48,7 @@ def create_bolt_runner(
         runner_config["partner_client_config"]
     )
     publisher_client = BoltPCSClient(
+        # pyre-fixme[16]: Module `fbpcs` has no attribute `private_computation_cli`.
         build_private_computation_service(
             publisher_client_config["private_computation"],
             publisher_client_config["mpc"],
@@ -54,6 +58,7 @@ def create_bolt_runner(
         )
     )
     partner_client = BoltPCSClient(
+        # pyre-fixme[16]: Module `fbpcs` has no attribute `private_computation_cli`.
         build_private_computation_service(
             partner_client_config["private_computation"],
             partner_client_config["mpc"],

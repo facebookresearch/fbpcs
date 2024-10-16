@@ -10,23 +10,48 @@ import asyncio
 import logging
 from typing import Any, Dict, List
 
+# pyre-fixme[21]: Could not find module `fbpcp.entity.container_instance`.
 from fbpcp.entity.container_instance import ContainerInstanceStatus
+
+# pyre-fixme[21]: Could not find module `fbpcp.entity.container_type`.
 from fbpcp.entity.container_type import ContainerType
+
+# pyre-fixme[21]: Could not find module `fbpcs.onedocker_binary_names`.
 from fbpcs.onedocker_binary_names import OneDockerBinaryNames
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.entity.private_computation_instance`.
 from fbpcs.private_computation.entity.private_computation_instance import (
     PrivateComputationRole,
 )
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.service.pc_pre_validation_stage_service`.
 from fbpcs.private_computation.service.pc_pre_validation_stage_service import (
     PRE_VALIDATION_CHECKS_TIMEOUT,
 )
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.service.pre_validation_util`.
 from fbpcs.private_computation.service.pre_validation_util import get_cmd_args
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.service.private_computation`.
 from fbpcs.private_computation.service.private_computation import (
     PrivateComputationService,
 )
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation.service.run_binary_base_service`.
 from fbpcs.private_computation.service.run_binary_base_service import (
     RunBinaryBaseService,
 )
+
+# pyre-fixme[21]: Could not find module `fbpcs.private_computation.service.utils`.
 from fbpcs.private_computation.service.utils import generate_env_vars_dict
+
+# pyre-fixme[21]: Could not find module
+#  `fbpcs.private_computation_cli.private_computation_service_wrapper`.
 from fbpcs.private_computation_cli.private_computation_service_wrapper import (
     build_private_computation_service,
 )
@@ -35,14 +60,18 @@ from fbpcs.private_computation_cli.private_computation_service_wrapper import (
 class PreValidateService:
     @staticmethod
     async def run_pre_validate_async(
+        # pyre-fixme[11]: Annotation `PrivateComputationService` is not defined as a
+        #  type.
         pc_service: PrivateComputationService,
         input_paths: List[str],
         logger: logging.Logger,
     ) -> None:
         region = pc_service.pc_validator_config.region
         onedocker_svc = pc_service.onedocker_svc
+        # pyre-fixme[16]: Module `fbpcs` has no attribute `onedocker_binary_names`.
         binary_name = OneDockerBinaryNames.PC_PRE_VALIDATION.value
         binary_config = pc_service.onedocker_binary_config_map[binary_name]
+        # pyre-fixme[16]: Module `service` has no attribute `utils`.
         env_vars = generate_env_vars_dict(repository_path=binary_config.repository_path)
 
         """
@@ -50,6 +79,7 @@ class PreValidateService:
         Since this service runs on partner PCE, we are hardcoding PrivateComputationRole to PARTNER in the code below.
         """
         cmd_args = [
+            # pyre-fixme[16]: Module `service` has no attribute `pre_validation_util`.
             get_cmd_args(
                 input_path=input_path,
                 region=region,
@@ -57,6 +87,8 @@ class PreValidateService:
                 pre_validation_file_stream_flag=True,
                 publisher_pc_pre_validation_flag=True,
                 partner_pc_pre_validation_flag=True,
+                # pyre-fixme[16]: Module `entity` has no attribute
+                #  `private_computation_instance`.
                 private_computation_role=PrivateComputationRole.PARTNER,
                 input_path_start_ts=None,
                 input_path_end_ts=None,
@@ -64,17 +96,21 @@ class PreValidateService:
             for input_path in input_paths
         ]
 
+        # pyre-fixme[16]: Module `service` has no attribute `run_binary_base_service`.
         container_instances = await RunBinaryBaseService().start_containers(
             cmd_args,
             onedocker_svc,
             binary_config.binary_version,
             binary_name,
+            # pyre-fixme[16]: Module `service` has no attribute
+            #  `pc_pre_validation_stage_service`.
             timeout=PRE_VALIDATION_CHECKS_TIMEOUT,
             env_vars=env_vars,
             container_type=ContainerType.LARGE,
         )
         logger.info("Started container instances")
 
+        # pyre-fixme[16]: Module `service` has no attribute `run_binary_base_service`.
         completed_containers = await RunBinaryBaseService().wait_for_containers_async(
             onedocker_svc,
             container_instances,
@@ -119,6 +155,7 @@ class PreValidateService:
         input_paths: List[str],
         logger: logging.Logger,
     ) -> None:
+        # pyre-fixme[16]: Module `fbpcs` has no attribute `private_computation_cli`.
         pc_service = build_private_computation_service(
             config["private_computation"],
             config["mpc"],
